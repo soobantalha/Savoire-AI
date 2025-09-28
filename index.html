@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script defer src="/_vercel/insights/script.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Savoiré AI - AI that Understands You</title>
     <link rel="stylesheet" href="styles/main.css">
+    <!-- Vercel Analytics -->
+    <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
     <!-- VIP Background Elements -->
@@ -42,7 +43,18 @@
                     </div>
 
                     <!-- Quick Topics -->
-                    
+                    <div class="quick-topics">
+                        <p>Popular Topics: 
+                            <button class="vip-topic-chip" data-topic="Artificial Intelligence">AI & ML</button>
+                            <button class="vip-topic-chip" data-topic="Web Development">Web Dev</button>
+                            <button class="vip-topic-chip" data-topic="Data Science">Data Science</button>
+                            <button class="vip-topic-chip" data-topic="Business Management">Business</button>
+                            <button class="vip-topic-chip" data-topic="Psychology">Psychology</button>
+                            <button class="vip-topic-chip" data-topic="Computer Science">CS Fundamentals</button>
+                            <button class="vip-topic-chip" data-topic="Digital Marketing">Marketing</button>
+                            <button class="vip-topic-chip" data-topic="Finance">Finance</button>
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -84,6 +96,9 @@
     <footer class="vip-footer">
         <div class="container">
             <p> Savoiré AI by Sooban Talha Productions | AI that Understands You</p>
+            <div class="analytics-badge">
+                <span>📊 Analytics Powered by Vercel</span>
+            </div>
         </div>
     </footer>
 
