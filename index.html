@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré AI - Ultra-Satisfying Study Assistant</title>
-<link rel="stylesheet" href="styles/main.css">
+    <title>Savoiré AI - AI that Understands You</title>
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-    <!-- Luxury Header -->
-    <header class="luxury-header">
+    <!-- VIP Background Elements -->
+    <div class="vip-background"></div>
+    <div class="vip-grain"></div>
+    <div class="vip-particles" id="vipParticles"></div>
+
+    <!-- VIP Header -->
+    <header class="vip-header">
         <div class="container">
             <h1 class="brand-title">Savoiré AI</h1>
             <p class="brand-subtitle">by Sooban Talha Productions</p>
-            <p class="tagline">“AI that Understands You"</p>
+            <p class="tagline">"AI that Understands You"</p>
         </div>
     </header>
 
@@ -24,35 +29,34 @@
                     <h2>What do you want to master today?</h2>
                     <p class="hero-description">Enter any subject, topic, or concept for ultra-comprehensive study materials</p>
                     
-                    <div class="search-box">
+                    <!-- VIP Search Box -->
+                    <div class="vip-search-box">
                         <input type="text" 
                                id="topicInput" 
-                               placeholder="e.g., Quantum Physics, Calculus, French Revolution, Machine Learning..."
+                               placeholder="e.g., Class 11 Business Studies Chapter 1, Quantum Physics, Calculus..."
                                autocomplete="off">
-                        <button id="searchBtn" class="luxury-btn">
-                            <span class="btn-text">Generate Ultra Study Materials</span>
-                            <div class="btn-shine"></div>
+                        <button id="searchBtn" class="vip-btn">
+                            <span class="btn-text">Generate Study Materials</span>
                         </button>
                     </div>
 
                     <!-- Quick Topics -->
                     <div class="quick-topics">
                         <p>Try: 
-                            <button class="topic-chip" data-topic="Photosynthesis">Photosynthesis</button>
-                            <button class="topic-chip" data-topic="Python Programming">Python</button>
-                            <button class="topic-chip" data-topic="World War 2">World War 2</button>
-                            <button class="topic-chip" data-topic="Trigonometry">Trigonometry</button>
+                            <button class="vip-topic-chip" data-topic="Class 11 Business Studies ">Business Studies</button>
+                            <button class="vip-topic-chip" data-topic="Class 11 Accounts">Accountancy</button>
+                            <button class="vip-topic-chip" data-topic="Class 11 Economics">Economics</button>
                         </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Results Section -->
-        <section class="results-section" id="resultsSection" style="display: none;">
+        <!-- VIP Results Section -->
+        <section class="vip-results-section" id="resultsSection" style="display: none;">
             <div class="container">
                 <div class="results-header">
-                    <h3>Your Ultra-Satisfying Study Package</h3>
+                    <h3>A Study Package Designed Just for You</h3>
                     <div class="results-actions">
                         <button id="copyAllBtn" class="action-btn">📋 Copy All</button>
                         <button id="printBtn" class="action-btn">🖨️ Print</button>
@@ -80,8 +84,8 @@
         </section>
     </main>
 
-    <!-- Luxury Footer -->
-    <footer class="luxury-footer">
+    <!-- VIP Footer -->
+    <footer class="vip-footer">
         <div class="container">
             <p> Savoiré AI by Sooban Talha Productions | AI that Understands You</p>
         </div>
