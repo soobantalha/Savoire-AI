@@ -96,7 +96,7 @@ async function tryStudyModel(model, prompt) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'HTTP-Referer': 'https://savoireai.vercel.app',
+      'HTTP-Referer': 'https://savoire-ai.vercel.app',
       'X-Title': 'Savoiré AI'
     },
     body: JSON.stringify({
