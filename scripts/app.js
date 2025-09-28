@@ -6,7 +6,6 @@ const resultsContainer = document.getElementById('resultsContainer');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const copyAllBtn = document.getElementById('copyAllBtn');
 const printBtn = document.getElementById('printBtn');
-const savePdfBtn = document.getElementById('savePdfBtn');
 
 // Initialize luxury effects
 function initLuxuryEffects() {
@@ -87,6 +86,8 @@ async function generateStudyMaterials() {
     resultsSection.style.display = 'block';
 
     try {
+        console.log('Sending request for topic:', topic);
+        
         const response = await fetch('/api/study', {
             method: 'POST',
             headers: {
@@ -95,16 +96,30 @@ async function generateStudyMaterials() {
             body: JSON.stringify({ topic: topic })
         });
 
+        console.log('Response status:', response.status);
+
         if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
+            throw new Error(`API Error: ${response.status} - ${response.statusText}`);
         }
 
         const studyData = await response.json();
+        console.log('Received study data:', studyData);
+
         displayStudyResults(studyData);
+        showNotification('Study materials generated successfully!', 'success');
 
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error generating study materials:', error);
         showNotification('Failed to generate study materials. Please try again.', 'error');
+        
+        // Show error in results
+        resultsContainer.innerHTML = `
+            <div class="error-message">
+                <h3>🚨 Unable to Generate Materials</h3>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <p>Please check your API configuration and try again.</p>
+            </div>
+        `;
     } finally {
         showLoadingState(false);
     }
@@ -113,6 +128,7 @@ async function generateStudyMaterials() {
 // Show/hide loading state
 function showLoadingState(show) {
     loadingSpinner.style.display = show ? 'block' : 'none';
+    searchBtn.disabled = show;
 }
 
 // Display study results
@@ -199,30 +215,28 @@ function displayStudyResults(studyData) {
     `;
 
     resultsContainer.innerHTML = html;
-    
-    // Add smooth animations
-    setTimeout(() => {
-        document.querySelectorAll('.study-section').forEach((section, index) => {
-            setTimeout(() => {
-                section.style.opacity = '1';
-                section.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-    }, 100);
 }
 
 // Format section content based on type
 function formatSectionContent(content, type) {
+    if (!content) return '<p>Content not available</p>';
+    
     switch (type) {
         case 'list':
-            return `<ul>${content.map(item => `<li>${item}</li>`).join('')}</ul>`;
+            if (Array.isArray(content)) {
+                return `<ul>${content.map(item => `<li>${item}</li>`).join('')}</ul>`;
+            }
+            return `<p>${content}</p>`;
         case 'qa':
-            return content.map(qa => `
-                <div class="qa-item">
-                    <strong>Q: ${qa.question}</strong>
-                    <p>A: ${qa.answer}</p>
-                </div>
-            `).join('');
+            if (Array.isArray(content)) {
+                return content.map(qa => `
+                    <div class="qa-item">
+                        <strong>Q: ${qa.question}</strong>
+                        <p>A: ${qa.answer}</p>
+                    </div>
+                `).join('');
+            }
+            return `<p>${content}</p>`;
         case 'long-text':
             return `<div class="long-text">${content.replace(/\n/g, '</p><p>')}</div>`;
         default:
@@ -232,6 +246,9 @@ function formatSectionContent(content, type) {
 
 // Show notification
 function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(notif => notif.remove());
+    
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     notification.textContent = message;
@@ -240,18 +257,8 @@ function showNotification(message, type = 'info') {
     
     setTimeout(() => {
         notification.remove();
-    }, 3000);
+    }, 4000);
 }
-
-// Event Listeners
-searchBtn.addEventListener('click', generateStudyMaterials);
-topicInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') generateStudyMaterials();
-});
-
-copyAllBtn.addEventListener('click', copyAllContent);
-printBtn.addEventListener('click', () => window.print());
-savePdfBtn.addEventListener('click', saveAsPDF);
 
 // Copy all content
 async function copyAllContent() {
@@ -264,10 +271,14 @@ async function copyAllContent() {
     }
 }
 
-// Save as PDF (basic implementation)
-function saveAsPDF() {
-    showNotification('PDF export feature would be implemented with a library like jsPDF', 'info');
-}
+// Event Listeners
+searchBtn.addEventListener('click', generateStudyMaterials);
+topicInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') generateStudyMaterials();
+});
+
+copyAllBtn.addEventListener('click', copyAllContent);
+printBtn.addEventListener('click', () => window.print());
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', initLuxuryEffects);

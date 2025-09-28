@@ -15,6 +15,16 @@ const limiter = rateLimit({
 app.use(limiter);
 
 app.post('/study', async (req, res) => {
+  // Handle CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   const { topic } = req.body;
 
   if (!topic) {
@@ -86,7 +96,7 @@ async function tryStudyModel(model, prompt) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      'HTTP-Referer': 'https://savoire-ai.vercel.app',
+      'HTTP-Referer': 'https://savoireai.vercel.app',
       'X-Title': 'Savoiré AI'
     },
     body: JSON.stringify({
@@ -116,7 +126,7 @@ async function tryStudyModel(model, prompt) {
 function generateFallbackStudyMaterials(topic) {
   return {
     topic: topic,
-    ultra_long_notes: `# Comprehensive Guide to ${topic}\n\nThis topic covers fundamental concepts that are essential for understanding advanced principles. Start with basics and gradually move to complex aspects.`,
+    ultra_long_notes: `# Comprehensive Guide to ${topic}\n\n${topic} is a fundamental concept that forms the basis for more advanced learning. Understanding ${topic} requires breaking it down into core components and building up from basic principles to complex applications.\n\n## Core Concepts\n- Fundamental principles that define ${topic}\n- Key terminology and definitions\n- Historical context and development\n\n## Detailed Explanation\nThis section provides an in-depth exploration of ${topic}, covering all essential aspects that students need to master for comprehensive understanding and application in various contexts.`,
     key_tricks: [
       "Use mnemonics for memorization",
       "Create mind maps for visual learning",
@@ -125,20 +135,23 @@ function generateFallbackStudyMaterials(topic) {
       "Use spaced repetition for long-term retention"
     ],
     practice_questions: [
-      {"question": "What are the basic principles?", "answer": "The basic principles include..."},
-      {"question": "How does this apply practically?", "answer": "Practical applications involve..."}
+      {"question": "What are the basic principles of " + topic + "?", "answer": "The basic principles include fundamental concepts that form the foundation of this topic."},
+      {"question": "How does " + topic + " apply in practical scenarios?", "answer": "Practical applications involve real-world usage that demonstrates the importance of understanding these concepts."},
+      {"question": "What are the key components to remember about " + topic + "?", "answer": "Key components include essential elements that form the core understanding of this subject."}
     ],
-    advanced_tricks: ["Advanced technique 1", "Advanced technique 2"],
-    trick_notes: "Combine multiple techniques for best results",
-    short_notes: "• Key point 1\n• Key point 2\n• Key point 3",
+    advanced_tricks: ["Advanced analytical techniques", "Problem-solving frameworks", "Critical thinking approaches"],
+    trick_notes: "Combine multiple learning techniques for optimal results. Use visualization for complex concepts and practice regularly to reinforce understanding.",
+    short_notes: "• Core concept summary\n• Key points to remember\n• Essential formulas/rules\n• Common applications\n• Important exceptions",
     advanced_questions: [
-      {"question": "Advanced application question?", "answer": "Detailed advanced answer"}
+      {"question": "Analyze the complex relationships within " + topic, "answer": "Complex relationships involve interconnected concepts that require deep understanding and analytical thinking."},
+      {"question": "How would you solve advanced problems related to " + topic + "?", "answer": "Advanced problem-solving requires applying multiple concepts simultaneously and thinking critically about the relationships between different elements."}
     ],
-    real_world_applications: ["Industry use", "Research applications"],
-    common_misconceptions: ["Common misunderstanding 1", "Common misunderstanding 2"],
-    recommended_resources: ["Textbook Chapter 5", "Online course XYZ"],
+    real_world_applications: ["Industry applications", "Research implications", "Everyday usage scenarios"],
+    common_misconceptions: ["Common misunderstanding about basic principles", "Frequently confused concepts"],
+    recommended_resources: ["Recommended textbook: 'Mastering " + topic + "'", "Online course: 'Advanced " + topic + " Concepts'", "Practice workbook for " + topic],
     study_score: 82,
-    powered_by: "Savoiré AI Fallback System"
+    powered_by: "Savoiré AI by Sooban Talha Productions",
+    generated_at: new Date().toISOString()
   };
 }
 

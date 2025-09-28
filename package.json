@@ -1,0 +1,20 @@
+{
+  "name": "savoire-ai",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ultra-satisfying AI study assistant",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^3.3.2",
+    "express-rate-limit": "^6.8.1"
+  },
+  "devDependencies": {
+    "vercel": "^28.16.0"
+  }
+}
