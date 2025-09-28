@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script defer src="/_vercel/insights/script.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Savoiré AI - AI that Understands You</title>
@@ -33,7 +34,7 @@
                     <div class="vip-search-box">
                         <input type="text" 
                                id="topicInput" 
-                               placeholder="e.g., Class 11 Business Studies Chapter 1, Quantum Physics, Calculus..."
+                               placeholder="e.g., Machine Learning, World History, Calculus, Business Management..."
                                autocomplete="off">
                         <button id="searchBtn" class="vip-btn">
                             <span class="btn-text">Generate Study Materials</span>
@@ -42,10 +43,15 @@
 
                     <!-- Quick Topics -->
                     <div class="quick-topics">
-                        <p>Try: 
-                            <button class="vip-topic-chip" data-topic="Class 11 Business Studies ">Business Studies</button>
-                            <button class="vip-topic-chip" data-topic="Class 11 Accounts">Accountancy</button>
-                            <button class="vip-topic-chip" data-topic="Class 11 Economics">Economics</button>
+                        <p>Popular Topics: 
+                            <button class="vip-topic-chip" data-topic="Artificial Intelligence">AI & ML</button>
+                            <button class="vip-topic-chip" data-topic="Web Development">Web Dev</button>
+                            <button class="vip-topic-chip" data-topic="Data Science">Data Science</button>
+                            <button class="vip-topic-chip" data-topic="Business Management">Business</button>
+                            <button class="vip-topic-chip" data-topic="Psychology">Psychology</button>
+                            <button class="vip-topic-chip" data-topic="Computer Science">CS Fundamentals</button>
+                            <button class="vip-topic-chip" data-topic="Digital Marketing">Marketing</button>
+                            <button class="vip-topic-chip" data-topic="Finance">Finance</button>
                         </p>
                     </div>
                 </div>
@@ -56,10 +62,11 @@
         <section class="vip-results-section" id="resultsSection" style="display: none;">
             <div class="container">
                 <div class="results-header">
-                    <h3>A Study Package Designed Just for You</h3>
+                    <h3>Your Personalized Learning Dashboard</h3>
                     <div class="results-actions">
                         <button id="copyAllBtn" class="action-btn">📋 Copy All</button>
                         <button id="printBtn" class="action-btn">🖨️ Print</button>
+                        <button id="expandAllBtn" class="action-btn">📖 Expand All</button>
                     </div>
                 </div>
 
