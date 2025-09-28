@@ -475,9 +475,131 @@ function displayStudyResults(studyData) {
     }
 }
 
-// Format section content based on type (keep your existing function)
+// FIXED Format section content based on type
 function formatSectionContent(content, type) {
-    // ... (keep your existing formatSectionContent function)
+    if (!content) return '<p class="no-content">Content not available</p>';
+    
+    try {
+        switch (type) {
+            case 'bubble-list':
+                if (Array.isArray(content)) {
+                    return `<div class="bubble-container">${content.map(item => 
+                        `<div class="concept-bubble">${item}</div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'card-list':
+                if (Array.isArray(content)) {
+                    return `<div class="technique-grid">${content.map(item => 
+                        `<div class="technique-card">
+                            <div class="card-bullet">✦</div>
+                            <div class="card-text">${item}</div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'qa-grid':
+                if (Array.isArray(content)) {
+                    return `<div class="qa-grid">${content.map(qa => 
+                        `<div class="qa-card">
+                            <div class="question-box">
+                                <strong>${qa.question || 'Question'}</strong>
+                            </div>
+                            <div class="answer-box">
+                                ${qa.answer || 'Answer not available'}
+                            </div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'highlight-list':
+                if (Array.isArray(content)) {
+                    return `<div class="highlight-list">${content.map(item => 
+                        `<div class="highlight-item">
+                            <span class="highlight-bullet">🚀</span>
+                            <span>${item}</span>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'application-cards':
+                if (Array.isArray(content)) {
+                    return `<div class="application-grid">${content.map(item => 
+                        `<div class="application-card">
+                            <div class="app-icon">🌍</div>
+                            <div class="app-content">${item}</div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'warning-list':
+                if (Array.isArray(content)) {
+                    return `<div class="warning-container">${content.map(item => 
+                        `<div class="warning-item">
+                            <span class="warning-icon">⚠️</span>
+                            <span>${item}</span>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'tip-cards':
+                if (Array.isArray(content)) {
+                    return `<div class="tips-grid">${content.map((tip, i) => 
+                        `<div class="tip-card">
+                            <div class="tip-number">${i + 1}</div>
+                            <div class="tip-content">${tip}</div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'resource-links':
+                if (Array.isArray(content)) {
+                    return `<div class="resources-list">${content.map(item => 
+                        `<div class="resource-item">
+                            <span class="resource-bullet">📚</span>
+                            <span>${item}</span>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            case 'long-text':
+                const formattedLongText = typeof content === 'string' ? content.replace(/\n/g, '</p><p>') : content;
+                return `<div class="content-scrollable"><div class="formatted-content"><p>${formattedLongText}</p></div></div>`;
+                
+            case 'compact-text':
+                return `<div class="compact-notes">${content}</div>`;
+                
+            case 'qa-advanced':
+                if (Array.isArray(content)) {
+                    return content.map(qa => 
+                        `<div class="advanced-qa">
+                            <div class="advanced-question">
+                                <span class="q-marker">🧠</span>
+                                <strong>${qa.question || 'Advanced Question'}</strong>
+                            </div>
+                            <div class="advanced-answer">
+                                ${qa.answer || 'Answer not available'}
+                            </div>
+                        </div>`
+                    ).join('');
+                }
+                return `<div class="content-text">${content}</div>`;
+                
+            default:
+                return `<div class="content-text">${content}</div>`;
+        }
+    } catch (error) {
+        console.error('Error formatting content:', error);
+        return `<div class="content-text">${content}</div>`;
+    }
 }
 
 // Show notification
@@ -513,8 +635,8 @@ topicInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') generateStudyMaterials();
 });
 
-copyAllBtn.addEventListener('click', copyAllContent);
-printBtn.addEventListener('click', () => window.print());
+if (copyAllBtn) copyAllBtn.addEventListener('click', copyAllContent);
+if (printBtn) printBtn.addEventListener('click', () => window.print());
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', initLuxuryEffects);
