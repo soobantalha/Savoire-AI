@@ -959,3 +959,56 @@ body {
         color: black !important;
     }
 }
+/* Mobile Input Fixes */
+@media (max-width: 768px) {
+    #topicInput {
+        font-size: 16px; /* Prevents zoom on iOS */
+        position: relative;
+        z-index: 1;
+    }
+    
+    .vip-search-box {
+        position: relative;
+    }
+    
+    /* Prevent accidental focusing when scrolling */
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Fix for mobile viewport */
+    .main-content {
+        padding: 1rem 0;
+    }
+    
+    .hero-section {
+        margin-bottom: 2rem;
+    }
+}
+
+/* Prevent body scroll when input is focused on mobile */
+.body-no-scroll {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* Mobile Results Display Fix */
+@media (max-width: 768px) {
+    .vip-results-section {
+        margin-top: 1rem;
+        padding: 1rem;
+    }
+    
+    .results-header {
+        position: sticky;
+        top: 0;
+        background: rgba(26, 26, 26, 0.95);
+        backdrop-filter: blur(20px);
+        z-index: 100;
+        padding: 1rem;
+        margin: -1rem -1rem 1rem -1rem;
+        border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+    }
+}
