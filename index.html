@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savoiré AI - Ultra-Satisfying Study Assistant</title>
+    <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+    <!-- Luxury Header -->
+    <header class="luxury-header">
+        <div class="container">
+            <h1 class="brand-title">Savoiré AI</h1>
+            <p class="brand-subtitle">by Sooban Talha Productions</p>
+            <p class="tagline">Ultra-Satisfying Study Experience</p>
+        </div>
+    </header>
+
+    <!-- Main Search Section -->
+    <main class="main-content">
+        <section class="hero-section">
+            <div class="container">
+                <div class="search-container">
+                    <h2>What do you want to master today?</h2>
+                    <p class="hero-description">Enter any subject, topic, or concept for ultra-comprehensive study materials</p>
+                    
+                    <div class="search-box">
+                        <input type="text" 
+                               id="topicInput" 
+                               placeholder="e.g., Quantum Physics, Calculus, French Revolution, Machine Learning..."
+                               autocomplete="off">
+                        <button id="searchBtn" class="luxury-btn">
+                            <span class="btn-text">Generate Ultra Study Materials</span>
+                            <div class="btn-shine"></div>
+                        </button>
+                    </div>
+
+                    <!-- Quick Topics -->
+                    <div class="quick-topics">
+                        <p>Try: 
+                            <button class="topic-chip" data-topic="Photosynthesis">Photosynthesis</button>
+                            <button class="topic-chip" data-topic="Python Programming">Python</button>
+                            <button class="topic-chip" data-topic="World War 2">World War 2</button>
+                            <button class="topic-chip" data-topic="Trigonometry">Trigonometry</button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <div class="container">
+                <div class="results-header">
+                    <h3>Your Ultra-Satisfying Study Package</h3>
+                    <div class="results-actions">
+                        <button id="copyAllBtn" class="action-btn">📋 Copy All</button>
+                        <button id="printBtn" class="action-btn">🖨️ Print</button>
+                        <button id="savePdfBtn" class="action-btn">📄 Save PDF</button>
+                    </div>
+                </div>
+
+                <!-- Loading Animation -->
+                <div id="loadingSpinner" class="luxury-loading" style="display: none;">
+                    <div class="loading-content">
+                        <div class="professor-icon">👨‍🏫</div>
+                        <h4>Savoiré AI is crafting your ultimate study materials...</h4>
+                        <div class="luxury-loader">
+                            <div class="loader-dot"></div>
+                            <div class="loader-dot"></div>
+                            <div class="loader-dot"></div>
+                            <div class="loader-dot"></div>
+                        </div>
+                        <p>Generating 10+ comprehensive study components</p>
+                    </div>
+                </div>
+
+                <!-- Results Container -->
+                <div id="resultsContainer" class="study-results"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Luxury Footer -->
+    <footer class="luxury-footer">
+        <div class="container">
+            <p>© 2024 Savoiré AI by Sooban Talha Productions | Ultra-Satisfying Education</p>
+        </div>
+    </footer>
+
+    <script src="scripts/app.js"></script>
+</body>
+</html>
