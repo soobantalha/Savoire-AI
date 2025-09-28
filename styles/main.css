@@ -950,12 +950,12 @@ body {
     .study-card {
         break-inside: avoid;
         border: 1px solid #000;
-        background: rgb(250, 184, 1) !important;
+        background: white !important;
         color: black !important;
     }
     
     body {
-        background: rgba(231, 179, 7, 0.842) !important;
+        background: white !important;
         color: black !important;
     }
 }
