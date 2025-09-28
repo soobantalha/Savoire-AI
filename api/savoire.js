@@ -1,45 +1,44 @@
-import express from 'express';
-import cors from 'cors';
-import fetch from 'node-fetch';
-import rateLimit from 'express-rate-limit';
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50
-});
-app.use(limiter);
-
-app.post('/study', async (req, res) => {
+// Vercel serverless function - fixed version
+export default async function handler(req, res) {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle preflight
+  // Handle preflight request
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const { topic } = req.body;
-
-  if (!topic) {
-    return res.status(400).json({ error: 'Study topic is required' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const studyMaterials = await generateStudyMaterials(topic);
+    const { topic } = req.body;
+
+    if (!topic) {
+      return res.status(400).json({ error: 'Study topic is required' });
+    }
+
+    // Try to generate study materials with AI
+    let studyMaterials;
+    try {
+      studyMaterials = await generateStudyMaterials(topic);
+    } catch (aiError) {
+      console.error('AI generation failed, using fallback:', aiError);
+      studyMaterials = generateFallbackStudyMaterials(topic);
+    }
+
     res.status(200).json(studyMaterials);
+
   } catch (error) {
-    console.error('Study generation error:', error);
-    const fallbackMaterials = generateFallbackStudyMaterials(topic);
+    console.error('Unexpected error:', error);
+    // Use fallback materials
+    const fallbackMaterials = generateFallbackStudyMaterials(req.body?.topic || 'General Topic');
     res.status(200).json(fallbackMaterials);
   }
-});
+}
 
 // Enhanced AI study material generator
 async function generateStudyMaterials(topic) {
@@ -73,6 +72,7 @@ async function generateStudyMaterials(topic) {
     "study_score": 85
   }`;
 
+  // Try multiple models in sequence
   const models = [
     'x-ai/grok-4-fast:free',
     'deepseek/deepseek-chat-v3.1:free',
@@ -87,9 +87,11 @@ async function generateStudyMaterials(topic) {
       console.log(`Model ${model} failed, trying next`);
     }
   }
+
   throw new Error('All models failed');
 }
 
+// Try a specific model
 async function tryStudyModel(model, prompt) {
   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -107,11 +109,14 @@ async function tryStudyModel(model, prompt) {
     })
   });
 
-  if (!response.ok) throw new Error(`Model failed: ${response.status}`);
+  if (!response.ok) {
+    throw new Error(`Model ${model} failed: ${response.status}`);
+  }
 
   const data = await response.json();
   const content = data.choices[0].message.content;
   
+  // Extract JSON from response
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     const studyData = JSON.parse(jsonMatch[0]);
@@ -119,6 +124,7 @@ async function tryStudyModel(model, prompt) {
     studyData.generated_at = new Date().toISOString();
     return studyData;
   }
+
   throw new Error('No JSON found in response');
 }
 
@@ -154,5 +160,3 @@ function generateFallbackStudyMaterials(topic) {
     generated_at: new Date().toISOString()
   };
 }
-
-export default app;
