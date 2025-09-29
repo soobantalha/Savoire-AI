@@ -3,19 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savoiré AI - Smart Study Assistant</title>
     
     <!-- SEO Meta Tags -->
-    <title>Savoiré AI - Next Generation Study Assistant</title>
-    <meta name="description" content="AI-powered study companion that generates comprehensive learning materials for any topic instantly. Futuristic education technology.">
-    <meta name="keywords" content="AI study assistant, smart learning, education technology, study materials generator">
-    <meta name="author" content="Sooban Talha Productions">
-    
-    <!-- Google Search Console -->
-    <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE" />
+    <meta name="description" content="AI-powered study companion that generates comprehensive learning materials for any topic instantly">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" href="LOGO.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="LOGO.png">
+    <link rel="icon" type="image/png" href="assets/LOGO.png">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -24,184 +18,106 @@
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-    <!-- Futuristic Background Elements -->
-    <div class="matrix-background"></div>
-    <div class="neon-grid"></div>
-    <div class="hologram-effect"></div>
-    
-    <!-- Cyber Header -->
-    <header class="cyber-header">
+    <!-- Simple Background -->
+    <div class="background-gradient"></div>
+    <div class="background-lines"></div>
+
+    <!-- Clean Header -->
+    <header class="simple-header">
         <div class="container">
-            <div class="header-grid">
-                <div class="logo-section">
-                    <div class="hologram-logo">
-                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img">
-                        <div class="hologram-glow"></div>
-                    </div>
-                    <div class="brand-info">
-                        <h1 class="cyber-title">Savoiré<span class="ai-glitch">AI</span></h1>
-                        <p class="cyber-subtitle">by Sooban Talha Productions</p>
+            <div class="header-content">
+                <div class="logo">
+                    <img src="assets/LOGO.png" alt="Savoiré AI" class="logo-img">
+                    <div class="brand">
+                        <h1>Savoiré AI</h1>
+                        <p>by Sooban Talha Productions</p>
                     </div>
                 </div>
-                <div class="tech-features">
-                    <div class="feature-chip">🚀 AI-Powered</div>
-                    <div class="feature-chip">⚡ Instant Generation</div>
-                    <div class="feature-chip">🎯 30+ Components</div>
+                <div class="header-tagline">
+                    <p>"AI that Understands You"</p>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Interface -->
-    <main class="cyber-main">
-        <section class="hero-interface">
+    <!-- Main Chat Interface -->
+    <main class="chat-interface">
+        <section class="hero-section">
             <div class="container">
-                <div class="interface-container">
-                    <div class="welcome-panel">
-                        <h2 class="interface-title">
-                            <span class="typewriter">What knowledge shall we unlock today?</span>
-                        </h2>
-                        <p class="interface-subtitle">Enter any topic, chapter, or concept for instant ultra-comprehensive study materials</p>
+                <div class="search-container">
+                    <h2>What would you like to learn today?</h2>
+                    <p class="hero-description">Ask any subject, chapter, or topic for detailed study materials</p>
+                    
+                    <!-- Simple Search Box -->
+                    <div class="simple-search-box">
+                        <div class="input-wrapper">
+                            <i class="fas fa-book-open input-icon"></i>
+                            <input type="text" 
+                                   id="topicInput" 
+                                   placeholder="e.g., Class 9 Hindi Chapter 1, Calculus Basics, Physics Laws..."
+                                   autocomplete="off"
+                                   class="simple-input">
+                        </div>
+                        <button id="searchBtn" class="gold-button">
+                            <i class="fas fa-graduation-cap"></i>
+                            Generate Study Materials
+                        </button>
                     </div>
 
-                    <!-- Quantum Search Interface -->
-                    <div class="quantum-search">
-                        <div class="search-field">
-                            <div class="input-container">
-                                <i class="fas fa-search search-icon"></i>
-                                <input type="text" 
-                                       id="topicInput" 
-                                       placeholder="e.g., Class 10 Science Chapter 1, Machine Learning Basics, Calculus Derivatives..."
-                                       autocomplete="off"
-                                       class="cyber-input">
-                                <div class="input-glow"></div>
-                            </div>
-                            <button id="searchBtn" class="quantum-btn">
-                                <span class="btn-glow"></span>
-                                <span class="btn-content">
-                                    <i class="fas fa-bolt"></i>
-                                    Generate Quantum Materials
-                                </span>
-                                <span class="btn-particles"></span>
-                            </button>
-                        </div>
-
-                        <!-- Smart Quick Access -->
-                        <div class="quick-access">
-                            <div class="access-title">Quick Access:</div>
-                            <div class="access-grid">
-                                <button class="access-chip" data-topic="Class 10 Science Chapter 1">
-                                    <i class="fas fa-atom"></i>Science
-                                </button>
-                                <button class="access-chip" data-topic="Class 12 Physics Chapter 1">
-                                    <i class="fas fa-rocket"></i>Physics
-                                </button>
-                                <button class="access-chip" data-topic="Class 11 Business Studies Chapter 1">
-                                    <i class="fas fa-chart-line"></i>Business
-                                </button>
-                                <button class="access-chip" data-topic="Artificial Intelligence Basics">
-                                    <i class="fas fa-robot"></i>AI & ML
-                                </button>
-                                <button class="access-chip" data-topic="Web Development Fundamentals">
-                                    <i class="fas fa-code"></i>Web Dev
-                                </button>
-                                <button class="access-chip" data-topic="Psychology Introduction">
-                                    <i class="fas fa-brain"></i>Psychology
-                                </button>
-                            </div>
+                    <!-- Quick Topics -->
+                    <div class="quick-topics-simple">
+                        <p>Try these: </p>
+                        <div class="topic-buttons">
+                            <button class="topic-btn" data-topic="Class 9 Hindi Chapter 1">Class 9 Hindi Ch 1</button>
+                            <button class="topic-btn" data-topic="Class 10 Science Chapter 1">Class 10 Science</button>
+                            <button class="topic-btn" data-topic="Class 12 Physics Chapter 1">Class 12 Physics</button>
+                            <button class="topic-btn" data-topic="Business Studies Chapter 1">Business Studies</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Results Matrix -->
-        <section class="results-matrix" id="resultsSection" style="display: none;">
+        <!-- Results Section - Chat Style -->
+        <section class="results-section" id="resultsSection" style="display: none;">
             <div class="container">
-                <div class="matrix-header">
-                    <div class="result-info">
-                        <h3 class="matrix-title">Quantum Study Matrix Generated</h3>
-                        <div class="result-stats">
-                            <span class="stat-chip">
-                                <i class="fas fa-layer-group"></i>
-                                30+ Components
-                            </span>
-                            <span class="stat-chip">
-                                <i class="fas fa-bolt"></i>
-                                Instant Access
-                            </span>
-                        </div>
-                    </div>
-                    <div class="matrix-actions">
-                        <button id="pdfDownload" class="matrix-btn download-btn">
-                            <i class="fas fa-file-pdf"></i> PDF
+                <div class="results-header">
+                    <h3>Your Study Materials</h3>
+                    <div class="result-actions">
+                        <button id="pdfDownload" class="action-btn gold">
+                            <i class="fas fa-download"></i> PDF
                         </button>
-                        <button id="copyAllBtn" class="matrix-btn">
+                        <button id="copyAllBtn" class="action-btn">
                             <i class="fas fa-copy"></i> Copy
-                        </button>
-                        <button id="expandAllBtn" class="matrix-btn">
-                            <i class="fas fa-expand"></i> Expand
                         </button>
                     </div>
                 </div>
 
-                <!-- Loading Animation -->
-                <div id="loadingSpinner" class="quantum-loading" style="display: none;">
-                    <div class="loading-matrix">
-                        <div class="hologram-loader">
-                            <div class="loader-core"></div>
-                            <div class="loader-ring"></div>
-                            <div class="loader-particles"></div>
+                <!-- Loading -->
+                <div id="loadingSpinner" class="simple-loading" style="display: none;">
+                    <div class="loading-content">
+                        <div class="book-loader">
+                            <i class="fas fa-book-open"></i>
                         </div>
-                        <div class="loading-text">
-                            <h4>Quantum Matrix Initializing...</h4>
-                            <p>Assembling 30+ comprehensive study components</p>
-                            <div class="loading-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill"></div>
-                                </div>
-                                <span class="progress-text">Processing Knowledge Nodes</span>
-                            </div>
-                        </div>
+                        <h4>Creating your study materials...</h4>
+                        <p>Generating comprehensive content for better learning</p>
                     </div>
                 </div>
 
                 <!-- Results Container -->
-                <div id="resultsContainer" class="quantum-results"></div>
+                <div id="resultsContainer" class="study-content"></div>
             </div>
         </section>
     </main>
 
-    <!-- Cyber Footer -->
-    <footer class="cyber-footer">
+    <!-- Simple Footer -->
+    <footer class="simple-footer">
         <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <div class="footer-logo">
-                        <img src="LOGO.png" alt="Savoiré AI" class="logo-small">
-                        <span>Savoiré AI</span>
-                    </div>
-                    <p class="footer-tagline">Next Generation Learning Intelligence</p>
-                </div>
-                <div class="footer-tech">
-                    <span class="tech-badge">
-                        <i class="fas fa-shield-alt"></i>
-                        Secure AI Processing
-                    </span>
-                    <span class="tech-badge">
-                        <i class="fas fa-bolt"></i>
-                        Instant Generation
-                    </span>
-                </div>
-                <div class="footer-copyright">
-                    <p>&copy; 2024 Savoiré AI | by Sooban Talha Productions</p>
-                    <p class="ai-signature">AI that Understands You 🤖</p>
-                </div>
-            </div>
+            <p>Savoiré AI by Sooban Talha Productions | Making Learning Simple</p>
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <!-- PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="scripts/app.js"></script>
