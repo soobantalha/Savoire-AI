@@ -107,7 +107,7 @@ async function tryStudyModel(model, prompt) {
     body: JSON.stringify({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 4000,
+      max_tokens: 400000000,
       temperature: 0.7
     })
   });
