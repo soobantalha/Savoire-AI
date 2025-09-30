@@ -1,10 +1,11 @@
-// app.js - Enhanced with 5 Components & Better Layout
+// app.js - Ultra Premium AI with 11-Section Card Layout
 class SavoireAI {
     constructor() {
         this.initializeElements();
         this.setupEventListeners();
         this.setupQuickPrompts();
         this.chatHistory = [];
+        this.isGenerating = false;
     }
 
     initializeElements() {
@@ -18,6 +19,7 @@ class SavoireAI {
         // Action buttons
         this.clearChatBtn = document.getElementById('clearChat');
         this.downloadPDFBtn = document.getElementById('downloadPDF');
+        this.suggestPromptsBtn = document.getElementById('suggestPrompts');
         
         // Auto-resize textarea
         this.setupTextareaResize();
@@ -35,11 +37,13 @@ class SavoireAI {
         
         this.clearChatBtn.addEventListener('click', () => this.clearChat());
         this.downloadPDFBtn.addEventListener('click', () => this.downloadPDF());
+        this.suggestPromptsBtn.addEventListener('click', () => this.showPromptSuggestions());
+        
         this.messageInput.focus();
     }
 
     setupQuickPrompts() {
-        document.querySelectorAll('.prompt-card').forEach(card => {
+        document.querySelectorAll('.luxury-start-card').forEach(card => {
             card.addEventListener('click', () => {
                 const prompt = card.getAttribute('data-prompt');
                 this.messageInput.value = prompt;
@@ -51,13 +55,17 @@ class SavoireAI {
     setupTextareaResize() {
         this.messageInput.addEventListener('input', () => {
             this.messageInput.style.height = 'auto';
-            this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+            this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 150) + 'px';
         });
     }
 
     async sendMessage() {
+        if (this.isGenerating) return;
+        
         const message = this.messageInput.value.trim();
         if (!message) return;
+
+        this.isGenerating = true;
 
         // Add user message to chat
         this.addMessage(message, 'user');
@@ -69,19 +77,20 @@ class SavoireAI {
         this.hideWelcomeScreen();
 
         try {
-            // Get AI response with 5 components
+            // Get pure AI response with 11-section layout
             const response = await this.getAIResponse(message);
             this.addMessage(response, 'ai');
             
         } catch (error) {
             console.error('Error:', error);
             this.addMessage(
-                "I apologize, but I'm having trouble generating a response right now. Please try again in a moment.",
+                this.getErrorResponse(),
                 'ai'
             );
         } finally {
             this.hideLoading();
             this.scrollToBottom();
+            this.isGenerating = false;
         }
     }
 
@@ -94,368 +103,311 @@ class SavoireAI {
                 },
                 body: JSON.stringify({ 
                     topic: userMessage,
-                    format: 'structured',
-                    include_questions: true
+                    format: 'premium',
+                    components: 'all'
                 })
             });
 
             if (response.ok) {
                 const data = await response.json();
-                return this.formatStructuredResponse(data);
+                return this.displayStudyResults(data);
             } else {
-                throw new Error('API not available');
+                throw new Error('AI service unavailable');
             }
             
         } catch (error) {
-            // Enhanced fallback with 5 components
-            return this.generateStructuredResponse(userMessage);
+            throw new Error('Unable to connect to AI services');
         }
     }
 
-    generateStructuredResponse(userMessage) {
-        const subject = this.detectSubject(userMessage);
-        
-        return `
-<div class="response-container">
-
-<div class="component-section" data-component="introduction">
-    <div class="component-header">
-        <i class="fas fa-star"></i>
-        <h3>Introduction & Overview</h3>
-    </div>
-    <div class="component-content">
-        <p><strong>${userMessage}</strong> is a fundamental topic that forms the basis for advanced learning in ${subject}. This comprehensive guide covers all essential aspects you need to master.</p>
-        
-        <div class="key-points">
-            <div class="key-point">
-                <i class="fas fa-bullseye"></i>
-                <span><strong>Learning Objectives:</strong> Understand core concepts, applications, and problem-solving techniques</span>
-            </div>
-            <div class="key-point">
-                <i class="fas fa-clock"></i>
-                <span><strong>Study Time:</strong> 3-4 hours for basic mastery</span>
-            </div>
-            <div class="key-point">
-                <i class="fas fa-chart-line"></i>
-                <span><strong>Difficulty Level:</strong> Beginner to Intermediate</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="component-section" data-component="explanation">
-    <div class="component-header">
-        <i class="fas fa-book"></i>
-        <h3>Detailed Explanation</h3>
-    </div>
-    <div class="component-content">
-        <h4>Core Concepts</h4>
-        <ul>
-            <li><strong>Fundamental Principles:</strong> Basic theories and foundational ideas</li>
-            <li><strong>Key Definitions:</strong> Essential terminology with examples</li>
-            <li><strong>Practical Applications:</strong> Real-world usage scenarios</li>
-            <li><strong>Advanced Insights:</strong> Deeper understanding of complex aspects</li>
-        </ul>
-        
-        <h4>Step-by-Step Understanding</h4>
-        <div class="step-by-step">
-            <div class="step">
-                <span class="step-number">1</span>
-                <span class="step-text">Start with basic definitions and concepts</span>
-            </div>
-            <div class="step">
-                <span class="step-number">2</span>
-                <span class="step-text">Understand relationships between different elements</span>
-            </div>
-            <div class="step">
-                <span class="step-number">3</span>
-                <span class="step-text">Practice with simple examples</span>
-            </div>
-            <div class="step">
-                <span class="step-number">4</span>
-                <span class="step-text">Apply to complex problems</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="component-section" data-component="examples">
-    <div class="component-header">
-        <i class="fas fa-lightbulb"></i>
-        <h3>Examples & Applications</h3>
-    </div>
-    <div class="component-content">
-        <div class="example-grid">
-            <div class="example-card">
-                <div class="example-title">Basic Example</div>
-                <div class="example-content">
-                    <strong>Scenario:</strong> Simple application case<br>
-                    <strong>Solution:</strong> Step-by-step explanation<br>
-                    <strong>Key Learning:</strong> Fundamental concept application
-                </div>
-            </div>
-            
-            <div class="example-card">
-                <div class="example-title">Real-World Application</div>
-                <div class="example-content">
-                    <strong>Industry Use:</strong> Practical implementation<br>
-                    <strong>Benefits:</strong> Efficiency and effectiveness<br>
-                    <strong>Impact:</strong> Significant improvements
-                </div>
-            </div>
-            
-            <div class="example-card">
-                <div class="example-title">Advanced Case Study</div>
-                <div class="example-content">
-                    <strong>Complex Problem:</strong> Multi-faceted scenario<br>
-                    <strong>Approach:</strong> Analytical methodology<br>
-                    <strong>Outcome:</strong> Optimal solution
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="component-section" data-component="questions">
-    <div class="component-header">
-        <i class="fas fa-question-circle"></i>
-        <h3>Practice Questions & Solutions</h3>
-    </div>
-    <div class="component-content">
-        ${this.generateEnhancedQuestions(userMessage)}
-    </div>
-</div>
-
-<div class="component-section" data-component="summary">
-    <div class="component-header">
-        <i class="fas fa-check-circle"></i>
-        <h3>Key Takeaways & Tips</h3>
-    </div>
-    <div class="component-content">
-        <div class="takeaways-grid">
-            <div class="takeaway-item">
-                <i class="fas fa-graduation-cap"></i>
-                <div>
-                    <strong>Study Strategy</strong>
-                    <p>Focus on conceptual understanding first, then practice applications</p>
-                </div>
-            </div>
-            
-            <div class="takeaway-item">
-                <i class="fas fa-brain"></i>
-                <div>
-                    <strong>Memory Techniques</strong>
-                    <p>Use mnemonics and visual aids for better retention</p>
-                </div>
-            </div>
-            
-            <div class="takeaway-item">
-                <i class="fas fa-rocket"></i>
-                <div>
-                    <strong>Exam Preparation</strong>
-                    <p>Practice previous year questions and time management</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="pro-tip">
-            <strong>💡 Pro Tip:</strong> Regular revision and practical application are key to mastering this topic.
-        </div>
-    </div>
-</div>
-
-</div>
-
-<div class="response-footer">
-    <span class="ai-signature">Generated by Savoiré AI • ${new Date().toLocaleString()}</span>
-</div>
-        `;
-    }
-
-    generateEnhancedQuestions(topic) {
-        const questions = [
+    // Display study results in unique card-based layout
+    displayStudyResults(studyData) {
+        const sections = [
             {
-                question: `What are the fundamental principles of ${topic}?`,
-                answer: `The fundamental principles include core concepts that form the foundation. These principles are essential for understanding more complex aspects and practical applications.`,
-                difficulty: 'Easy'
+                title: '📚 Core Concepts & Fundamentals',
+                content: studyData.ultra_long_notes,
+                type: 'long-text',
+                icon: '📚'
             },
             {
-                question: `How does ${topic} apply in real-world scenarios?`,
-                answer: `Real-world applications involve practical implementations that demonstrate the importance and utility of these concepts in various industries and daily life situations.`,
-                difficulty: 'Medium'
+                title: '🎯 Key Concepts Breakdown',
+                content: studyData.key_concepts,
+                type: 'bubble-list',
+                icon: '🎯'
             },
             {
-                question: `What are the common challenges in understanding ${topic}?`,
-                answer: `Common challenges include conceptual complexity, abstract nature, and application difficulties. These can be overcome through systematic study and practical examples.`,
-                difficulty: 'Medium'
+                title: '💡 Smart Techniques & Tricks',
+                content: studyData.key_tricks,
+                type: 'card-list',
+                icon: '💡'
             },
             {
-                question: `Explain the relationship between different components of ${topic}.`,
-                answer: `The components are interconnected through complex relationships that require holistic understanding. Changes in one area can significantly impact others.`,
-                difficulty: 'Hard'
+                title: '❓ Practice Questions & Solutions',
+                content: studyData.practice_questions,
+                type: 'qa-grid',
+                icon: '❓'
             },
             {
-                question: `What future developments do you foresee in ${topic}?`,
-                answer: `Future advancements will likely involve technological integration, new methodologies, and expanded applications across various fields.`,
-                difficulty: 'Hard'
+                title: '🚀 Advanced Strategies',
+                content: studyData.advanced_tricks,
+                type: 'highlight-list',
+                icon: '🚀'
+            },
+            {
+                title: '📝 Quick Revision Notes',
+                content: studyData.short_notes,
+                type: 'compact-text',
+                icon: '📝'
+            },
+            {
+                title: '🧠 Advanced Challenge Questions',
+                content: studyData.advanced_questions,
+                type: 'qa-advanced',
+                icon: '🧠'
+            },
+            {
+                title: '🌍 Real-World Applications',
+                content: studyData.real_world_applications,
+                type: 'application-cards',
+                icon: '🌍'
+            },
+            {
+                title: '⚠️ Common Pitfalls & Misconceptions',
+                content: studyData.common_misconceptions,
+                type: 'warning-list',
+                icon: '⚠️'
+            },
+            {
+                title: '📊 Exam Success Tips',
+                content: studyData.exam_tips,
+                type: 'tip-cards',
+                icon: '📊'
+            },
+            {
+                title: '🔗 Recommended Resources',
+                content: studyData.recommended_resources,
+                type: 'resource-links',
+                icon: '🔗'
             }
         ];
 
-        return questions.map((q, index) => `
-            <div class="question-block" data-difficulty="${q.difficulty.toLowerCase()}">
-                <div class="question-header">
-                    <span class="question-number">Q${index + 1}</span>
-                    <span class="difficulty-badge ${q.difficulty.toLowerCase()}">${q.difficulty}</span>
-                </div>
-                <div class="question-text">${q.question}</div>
-                <div class="answer-section">
-                    <div class="answer-toggle">Show Answer ▼</div>
-                    <div class="answer-text">${q.answer}</div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    formatStructuredResponse(data) {
-        if (data.components) {
-            return this.formatAPIResponse(data);
-        } else {
-            return this.generateStructuredResponse(data.topic || 'the topic');
-        }
-    }
-
-    formatAPIResponse(data) {
-        // Format API response with 5 components structure
-        let response = `<div class="response-container">`;
-
-        // Component 1: Introduction
-        if (data.components.introduction) {
-            response += `
-                <div class="component-section" data-component="introduction">
-                    <div class="component-header">
-                        <i class="fas fa-star"></i>
-                        <h3>Introduction</h3>
-                    </div>
-                    <div class="component-content">
-                        ${data.components.introduction}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Component 2: Detailed Explanation
-        if (data.components.detailed_explanation) {
-            response += `
-                <div class="component-section" data-component="explanation">
-                    <div class="component-header">
-                        <i class="fas fa-book"></i>
-                        <h3>Detailed Explanation</h3>
-                    </div>
-                    <div class="component-content">
-                        ${data.components.detailed_explanation}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Component 3: Examples
-        if (data.components.real_world_applications) {
-            response += `
-                <div class="component-section" data-component="examples">
-                    <div class="component-header">
-                        <i class="fas fa-lightbulb"></i>
-                        <h3>Real-World Applications</h3>
-                    </div>
-                    <div class="component-content">
-                        <ul>
-                            ${data.components.real_world_applications.map(app => `<li>${app}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Component 4: Questions
-        if (data.components.practice_questions) {
-            response += `
-                <div class="component-section" data-component="questions">
-                    <div class="component-header">
-                        <i class="fas fa-question-circle"></i>
-                        <h3>Practice Questions</h3>
-                    </div>
-                    <div class="component-content">
-                        ${data.components.practice_questions.map((q, i) => `
-                            <div class="question-block">
-                                <div class="question-header">
-                                    <span class="question-number">Q${i + 1}</span>
-                                </div>
-                                <div class="question-text">${q.question}</div>
-                                <div class="answer-section">
-                                    <div class="answer-toggle">Show Answer ▼</div>
-                                    <div class="answer-text">${q.answer}</div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Component 5: Summary
-        response += `
-            <div class="component-section" data-component="summary">
-                <div class="component-header">
-                    <i class="fas fa-check-circle"></i>
-                    <h3>Key Takeaways</h3>
-                </div>
-                <div class="component-content">
-                    <div class="study-score">
-                        <strong>Study Score:</strong> ${data.study_score || 85}/100
-                    </div>
-                    ${data.components.short_notes ? `
-                        <div class="short-notes">
-                            <h4>Quick Revision Points:</h4>
-                            <p>${data.components.short_notes}</p>
+        let html = `
+            <div class="study-dashboard">
+                <div class="dashboard-header">
+                    <div class="topic-main">
+                        <h2>${studyData.topic || 'Study Topic'}</h2>
+                        <div class="topic-meta">
+                            <span class="curriculum-badge">${studyData.curriculum_alignment || 'Premium Learning'}</span>
+                            <span class="score-display">Mastery Score: ${studyData.study_score || 85}/100</span>
                         </div>
-                    ` : ''}
+                    </div>
+                    <div class="progress-summary">
+                        <div class="progress-circle">
+                            <svg width="80" height="80" viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r="35" stroke="#333" stroke-width="3" fill="none"></circle>
+                                <circle cx="40" cy="40" r="35" stroke="url(#goldGradient)" stroke-width="3" fill="none" 
+                                        stroke-dasharray="${2 * Math.PI * 35}" 
+                                        stroke-dashoffset="${2 * Math.PI * 35 * (1 - (studyData.study_score || 85)/100)}"
+                                        transform="rotate(-90 40 40)"></circle>
+                                <defs>
+                                    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#ffed4e;stop-opacity:1" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <span>${studyData.study_score || 85}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+        `;
+
+        sections.forEach((section, index) => {
+            if (section.content && (!Array.isArray(section.content) || section.content.length > 0)) {
+                html += `
+                    <div class="study-card" data-card-type="${section.type}">
+                        <div class="card-header">
+                            <span class="card-icon">${section.icon}</span>
+                            <h3>${section.title}</h3>
+                            <button class="card-toggle">+</button>
+                        </div>
+                        <div class="card-content">
+                            ${this.formatSectionContent(section.content, section.type)}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        html += `
+                </div>
+                
+                <div class="study-footer">
+                    <div class="completion-badge">
+                        <span class="badge-icon">🏆</span>
+                        <div class="badge-content">
+                            <strong>Study Package Complete</strong>
+                            <span>Generated by ${studyData.powered_by || 'Savoiré AI by Sooban Talha Productions'}</span>
+                            <small>${new Date(studyData.generated_at || new Date()).toLocaleString()}</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
 
-        response += `</div>`;
-        response += `<div class="response-footer">
-            <span class="ai-signature">Generated by Savoiré AI • ${new Date().toLocaleString()}</span>
-        </div>`;
-
-        return response;
+        return html;
     }
 
-    detectSubject(message) {
-        const lowerMessage = message.toLowerCase();
-        if (lowerMessage.includes('math') || lowerMessage.includes('calculus')) return 'Mathematics';
-        if (lowerMessage.includes('science') || lowerMessage.includes('physics') || lowerMessage.includes('chemistry') || lowerMessage.includes('biology')) return 'Science';
-        if (lowerMessage.includes('business') || lowerMessage.includes('commerce') || lowerMessage.includes('economics')) return 'Business';
-        if (lowerMessage.includes('computer') || lowerMessage.includes('programming') || lowerMessage.includes('coding')) return 'Computer Science';
-        return 'General Studies';
+    // Updated formatSectionContent function
+    formatSectionContent(content, type) {
+        if (!content) return '<p class="no-content">Content not available</p>';
+        
+        switch (type) {
+            case 'bubble-list':
+                if (Array.isArray(content)) {
+                    return `<div class="bubble-container">${content.map(item => 
+                        `<div class="concept-bubble">${this.escapeHtml(item)}</div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'card-list':
+                if (Array.isArray(content)) {
+                    return `<div class="technique-grid">${content.map(item => 
+                        `<div class="technique-card">
+                            <div class="card-bullet">✦</div>
+                            <div class="card-text">${this.escapeHtml(item)}</div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'qa-grid':
+                if (Array.isArray(content)) {
+                    return `<div class="qa-grid">${content.map(qa => 
+                        `<div class="qa-card">
+                            <div class="question-box">
+                                <strong>${this.escapeHtml(qa.question)}</strong>
+                            </div>
+                            <div class="answer-box">
+                                ${this.escapeHtml(qa.answer)}
+                            </div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'highlight-list':
+                if (Array.isArray(content)) {
+                    return `<div class="highlight-list">${content.map(item => 
+                        `<div class="highlight-item">
+                            <span class="highlight-bullet">🚀</span>
+                            <span>${this.escapeHtml(item)}</span>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'application-cards':
+                if (Array.isArray(content)) {
+                    return `<div class="application-grid">${content.map(item => 
+                        `<div class="application-card">
+                            <div class="app-icon">🌍</div>
+                            <div class="app-content">${this.escapeHtml(item)}</div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'warning-list':
+                if (Array.isArray(content)) {
+                    return `<div class="warning-container">${content.map(item => 
+                        `<div class="warning-item">
+                            <span class="warning-icon">⚠️</span>
+                            <span>${this.escapeHtml(item)}</span>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'tip-cards':
+                if (Array.isArray(content)) {
+                    return `<div class="tips-grid">${content.map((tip, i) => 
+                        `<div class="tip-card">
+                            <div class="tip-number">${i + 1}</div>
+                            <div class="tip-content">${this.escapeHtml(tip)}</div>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'resource-links':
+                if (Array.isArray(content)) {
+                    return `<div class="resources-list">${content.map(item => 
+                        `<div class="resource-item">
+                            <span class="resource-bullet">📚</span>
+                            <span>${this.escapeHtml(item)}</span>
+                        </div>`
+                    ).join('')}</div>`;
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            case 'long-text':
+                return `<div class="content-scrollable"><div class="formatted-content">${this.escapeHtml(content).replace(/\n/g, '</p><p>')}</div></div>`;
+                
+            case 'compact-text':
+                return `<div class="compact-notes">${this.escapeHtml(content)}</div>`;
+                
+            case 'qa-advanced':
+                if (Array.isArray(content)) {
+                    return content.map(qa => 
+                        `<div class="advanced-qa">
+                            <div class="advanced-question">
+                                <span class="q-marker">🧠</span>
+                                <strong>${this.escapeHtml(qa.question)}</strong>
+                            </div>
+                            <div class="advanced-answer">
+                                ${this.escapeHtml(qa.answer)}
+                            </div>
+                        </div>`
+                    ).join('');
+                }
+                return `<p>${this.escapeHtml(content)}</p>`;
+                
+            default:
+                return `<p>${this.escapeHtml(content)}</p>`;
+        }
+    }
+
+    escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
     addMessage(content, type) {
         const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}-message`;
+        messageDiv.className = `message-luxury ${type}-message-luxury`;
         
         const avatar = document.createElement('div');
-        avatar.className = 'message-avatar';
-        avatar.innerHTML = type === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+        avatar.className = 'message-avatar-luxury';
+        avatar.innerHTML = type === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-crown"></i>';
         
         const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
+        messageContent.className = 'message-content-luxury';
         
         const messageText = document.createElement('div');
         messageText.className = 'message-text';
         
         if (type === 'ai') {
             messageText.innerHTML = content;
-            // Add interactive functionality for answer toggles
+            // Add interactive functionality
             setTimeout(() => this.setupInteractiveElements(messageText), 100);
         } else {
             messageText.textContent = content;
@@ -469,37 +421,115 @@ class SavoireAI {
         this.scrollToBottom();
         
         // Add to chat history
-        this.chatHistory.push({ type, content, timestamp: new Date() });
+        this.chatHistory.push({ 
+            type, 
+            content: type === 'ai' ? this.stripHTML(content) : content,
+            timestamp: new Date(),
+            html: type === 'ai' ? content : null
+        });
     }
 
     setupInteractiveElements(container) {
-        // Answer toggle functionality
-        const answerToggles = container.querySelectorAll('.answer-toggle');
-        answerToggles.forEach(toggle => {
+        // Card toggle functionality
+        const cardToggles = container.querySelectorAll('.card-toggle');
+        cardToggles.forEach(toggle => {
             toggle.addEventListener('click', function() {
-                const answerText = this.nextElementSibling;
-                const isVisible = answerText.style.display === 'block';
+                const card = this.closest('.study-card');
+                const content = card.querySelector('.card-content');
+                const isExpanded = content.style.display !== 'none';
                 
-                answerText.style.display = isVisible ? 'none' : 'block';
-                this.textContent = isVisible ? 'Show Answer ▼' : 'Hide Answer ▲';
+                content.style.display = isExpanded ? 'none' : 'block';
+                this.textContent = isExpanded ? '+' : '−';
+                card.classList.toggle('collapsed', isExpanded);
             });
         });
 
-        // Initially hide all answers
-        const answerTexts = container.querySelectorAll('.answer-text');
-        answerTexts.forEach(answer => {
-            answer.style.display = 'none';
+        // Initially show all card contents
+        const cardContents = container.querySelectorAll('.card-content');
+        cardContents.forEach(content => {
+            content.style.display = 'block';
+        });
+
+        // Add gold hover effects
+        const studyCards = container.querySelectorAll('.study-card');
+        studyCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-5px) scale(1)';
+            });
         });
     }
 
+    stripHTML(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+    }
+
+    getErrorResponse() {
+        return `
+            <div class="study-dashboard">
+                <div class="dashboard-header">
+                    <div class="topic-main">
+                        <h2>Service Update</h2>
+                        <div class="topic-meta">
+                            <span class="curriculum-badge">System Notice</span>
+                            <span class="score-display">Status: Temporarily Unavailable</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="study-card">
+                        <div class="card-header">
+                            <span class="card-icon">⚠️</span>
+                            <h3>Service Maintenance</h3>
+                            <button class="card-toggle">+</button>
+                        </div>
+                        <div class="card-content">
+                            <div class="warning-container">
+                                <div class="warning-item">
+                                    <span class="warning-icon">🔧</span>
+                                    <span>Our AI services are currently undergoing maintenance</span>
+                                </div>
+                                <div class="warning-item">
+                                    <span class="warning-icon">⏰</span>
+                                    <span>Please try again in a few moments</span>
+                                </div>
+                                <div class="warning-item">
+                                    <span class="warning-icon">📞</span>
+                                    <span>Contact support if issues persist</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="study-footer">
+                    <div class="completion-badge">
+                        <span class="badge-icon">⚡</span>
+                        <div class="badge-content">
+                            <strong>Savoiré AI by Sooban Talha Productions</strong>
+                            <span>Premium Intelligence Platform</span>
+                            <small>${new Date().toLocaleString()}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     showLoading() {
-        this.loadingIndicator.style.display = 'flex';
+        this.loadingIndicator.style.display = 'block';
         this.sendButton.disabled = true;
+        this.sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span class="btn-text-gold">Processing...</span>';
     }
 
     hideLoading() {
         this.loadingIndicator.style.display = 'none';
         this.sendButton.disabled = false;
+        this.sendButton.innerHTML = '<i class="fas fa-paper-plane"></i><span class="btn-text-gold">Send</span>';
     }
 
     hideWelcomeScreen() {
@@ -508,92 +538,109 @@ class SavoireAI {
     }
 
     scrollToBottom() {
-        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        setTimeout(() => {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }, 100);
     }
 
     clearChat() {
-        this.chatMessages.innerHTML = '';
-        this.chatHistory = [];
-        this.welcomeScreen.style.display = 'block';
-        this.chatMessages.style.display = 'none';
+        if (confirm('Start a new premium session? Your current conversation will be cleared.')) {
+            this.chatMessages.innerHTML = '';
+            this.chatHistory = [];
+            this.welcomeScreen.style.display = 'block';
+            this.chatMessages.style.display = 'none';
+            this.showNotification('New premium session started', 'success');
+        }
+    }
+
+    showPromptSuggestions() {
+        const suggestions = [
+            "Explain artificial intelligence with business transformation strategies",
+            "Compare classical and modern economic theories with case studies",
+            "Describe blockchain technology with investment opportunities",
+            "Analyze climate change solutions with technological innovations", 
+            "Discuss quantum computing with real-world industry applications"
+        ];
+        
+        const randomPrompt = suggestions[Math.floor(Math.random() * suggestions.length)];
+        this.messageInput.value = randomPrompt;
+        this.messageInput.focus();
+        this.showNotification('Premium suggestion added!', 'info');
     }
 
     async downloadPDF() {
+        if (this.chatHistory.length === 0) {
+            this.showNotification('No conversation to export', 'warning');
+            return;
+        }
+
         const { jsPDF } = window.jspdf;
         
         try {
-            this.showNotification('Creating PDF document...', 'info');
+            this.showNotification('Creating luxury PDF document...', 'info');
             
-            // Create a temporary div for PDF generation
-            const pdfContent = document.createElement('div');
-            pdfContent.className = 'pdf-export';
-            pdfContent.style.cssText = `
-                background: white;
-                color: black;
-                padding: 20px;
-                max-width: 800px;
-                margin: 0 auto;
-            `;
-            
-            // Add header
-            const header = document.createElement('div');
-            header.innerHTML = `
-                <h1 style="color: #3b82f6; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-                    Savoiré AI - Chat History
-                </h1>
-                <p style="color: #666; font-size: 14px;">
-                    Generated on ${new Date().toLocaleString()} • by Sooban Talha Productions
-                </p>
-            `;
-            pdfContent.appendChild(header);
-            
-            // Add chat content
-            this.chatHistory.forEach(msg => {
-                const msgDiv = document.createElement('div');
-                msgDiv.style.cssText = `
-                    margin: 20px 0;
-                    padding: 15px;
-                    border-radius: 10px;
-                    background: ${msg.type === 'user' ? '#e3f2fd' : '#f5f5f5'};
-                    border-left: 4px solid ${msg.type === 'user' ? '#3b82f6' : '#666'};
-                `;
-                
-                if (msg.type === 'ai') {
-                    // Clean HTML for PDF
-                    const cleanContent = msg.content
-                        .replace(/<[^>]*>/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim();
-                    msgDiv.textContent = cleanContent;
-                } else {
-                    msgDiv.textContent = msg.content;
-                }
-                
-                pdfContent.appendChild(msgDiv);
-            });
-            
-            document.body.appendChild(pdfContent);
-            
-            const canvas = await html2canvas(pdfContent, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff'
-            });
-            
-            document.body.removeChild(pdfContent);
-            
-            const imgData = canvas.toDataURL('image/png');
             const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            let yPosition = 20;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const margin = 20;
+            const contentWidth = pageWidth - (2 * margin);
+
+            // Add luxury header
+            pdf.setFillColor(255, 215, 0);
+            pdf.rect(0, 0, pageWidth, 60, 'F');
             
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFontSize(24);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Savoiré AI', margin, 30);
             
-            const fileName = `Savoire-AI-Chat-${new Date().toISOString().split('T')[0]}.pdf`;
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text('Premium Intelligence Platform - Sooban Talha Productions', margin, 38);
+            pdf.text(`Generated on ${new Date().toLocaleString()}`, margin, 45);
+
+            yPosition = 70;
+
+            // Add chat content
+            pdf.setTextColor(0, 0, 0);
+            this.chatHistory.forEach((msg, index) => {
+                if (yPosition > 250) {
+                    pdf.addPage();
+                    yPosition = 20;
+                }
+
+                pdf.setFont('helvetica', 'bold');
+                pdf.setFontSize(14);
+                pdf.setTextColor(255, 215, 0);
+                pdf.text(`${msg.type.toUpperCase()}:`, margin, yPosition);
+                
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(0, 0, 0);
+                
+                const lines = pdf.splitTextToSize(msg.content, contentWidth);
+                pdf.text(lines, margin, yPosition + 8);
+                
+                yPosition += (lines.length * 5) + 20;
+            });
+
+            // Add luxury footer to each page
+            const totalPages = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(9);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text(
+                    `Page ${i} of ${totalPages} • Savoiré AI by Sooban Talha Productions • Premium Export`, 
+                    pageWidth / 2, 
+                    pdf.internal.pageSize.getHeight() - 10, 
+                    { align: 'center' }
+                );
+            }
+
+            const fileName = `Savoire-AI-Premium-${new Date().toISOString().split('T')[0]}.pdf`;
             pdf.save(fileName);
-            this.showNotification('PDF downloaded successfully!', 'success');
+            this.showNotification('Luxury PDF exported successfully!', 'success');
             
         } catch (error) {
             console.error('PDF generation error:', error);
@@ -603,24 +650,50 @@ class SavoireAI {
 
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
+        notification.className = `notification-luxury ${type}`;
+        
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle', 
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        
+        const colors = {
+            success: '#10b981',
+            error: '#ef4444',
+            warning: '#f59e0b', 
+            info: '#ffd700'
+        };
+        
+        notification.innerHTML = `
+            <i class="fas ${icons[type]}"></i>
+            <span>${message}</span>
+        `;
+        
         notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
+            background: ${colors[type]};
+            color: ${type === 'success' ? 'white' : 'black'};
+            padding: 1.2rem 1.8rem;
+            border-radius: 15px;
+            z-index: 10000;
+            animation: slideInLuxury 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow-gold-strong);
+            max-width: 400px;
+            font-weight: 600;
+            border: 2px solid var(--border-gold);
         `;
         
         document.body.appendChild(notification);
         
         setTimeout(() => {
-            notification.style.animation = 'slideOut 0.3s ease';
+            notification.style.animation = 'slideOutLuxury 0.3s ease';
             setTimeout(() => notification.remove(), 300);
         }, 4000);
     }
@@ -630,3 +703,22 @@ class SavoireAI {
 document.addEventListener('DOMContentLoaded', () => {
     new SavoireAI();
 });
+
+// Add CSS animations for luxury notifications
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInLuxury {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes slideOutLuxury {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    .notification-luxury {
+        font-family: 'Inter', sans-serif;
+    }
+`;
+document.head.appendChild(style);
