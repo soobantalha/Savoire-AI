@@ -1,4 +1,4 @@
-// Enhanced study.js with better academic understanding
+// Enhanced study.js with working AI integration
 module.exports = async (req, res) => {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -15,68 +15,69 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { topic } = req.body;
+    const { message } = req.body;
 
-    if (!topic) {
-      return res.status(400).json({ error: 'Study topic is required' });
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
     }
 
     // Try to generate study materials with AI
     let studyMaterials;
     try {
-      studyMaterials = await generateStudyMaterials(topic);
+      studyMaterials = await generateStudyMaterials(message);
     } catch (aiError) {
       console.error('AI generation failed, using fallback:', aiError);
-      studyMaterials = generateFallbackStudyMaterials(topic);
+      studyMaterials = generateFallbackStudyMaterials(message);
     }
 
     res.status(200).json(studyMaterials);
 
   } catch (error) {
     console.error('Unexpected error:', error);
-    const fallbackMaterials = generateFallbackStudyMaterials(req.body?.topic || 'General Topic');
+    const fallbackMaterials = generateFallbackStudyMaterials(req.body?.message || 'General Topic');
     res.status(200).json(fallbackMaterials);
   }
 };
 
-// Enhanced AI study material generator with academic understanding
-async function generateStudyMaterials(topic) {
+// Enhanced AI study material generator
+async function generateStudyMaterials(userInput) {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error('API key not configured');
   }
 
-  const studyPrompt = `As Savoiré AI - an expert educational assistant specializing in CBSE, ICSE, and State Board curricula, generate comprehensive study materials for: "${topic}".
+  const studyPrompt = `As Savoiré AI - an expert educational assistant, generate ULTRA-DETAILED study materials for: "${userInput}".
 
-  IMPORTANT: If this appears to be a specific academic request (like "class 11 business ch 1"), provide detailed, curriculum-aligned content.
-
-  Provide EXACTLY these 12 sections in JSON format:
+  Provide response in this EXACT JSON format:
 
   {
-    "topic": "${topic}",
-    "curriculum_alignment": "CBSE/ICSE/State Board - Class X Subject",
-    "ultra_long_notes": "Very detailed explanation (800-1000 words) with examples",
-    "key_concepts": ["concept1", "concept2", "concept3", "concept4", "concept5"],
+    "topic": "${userInput}",
+    "curriculum_alignment": "CBSE/ICSE/State Board - Appropriate Level",
+    "ultra_long_notes": "Very detailed explanation (1000-1500 words) covering all aspects comprehensively",
+    "key_concepts": ["concept1", "concept2", "concept3", "concept4", "concept5", "concept6", "concept7", "concept8"],
     "key_tricks": ["trick1", "trick2", "trick3", "trick4", "trick5"],
     "practice_questions": [
-      {"question": "Q1", "answer": "Detailed A1"},
-      {"question": "Q2", "answer": "Detailed A2"},
-      {"question": "Q3", "answer": "Detailed A3"}
+      {"question": "Detailed Q1", "answer": "Comprehensive A1"},
+      {"question": "Detailed Q2", "answer": "Comprehensive A2"},
+      {"question": "Detailed Q3", "answer": "Comprehensive A3"},
+      {"question": "Detailed Q4", "answer": "Comprehensive A4"},
+      {"question": "Detailed Q5", "answer": "Comprehensive A5"}
     ],
-    "advanced_tricks": ["adv1", "adv2", "adv3"],
-    "trick_notes": "Summary of all tricks and techniques",
-    "short_notes": "Concise bullet points for quick revision",
+    "advanced_tricks": ["adv1", "adv2", "adv3", "adv4"],
+    "trick_notes": "Detailed summary of all tricks and techniques",
+    "short_notes": "Comprehensive bullet points for quick revision",
     "advanced_questions": [
-      {"question": "Advanced Q1", "answer": "Advanced A1"},
-      {"question": "Advanced Q2", "answer": "Advanced A2"}
+      {"question": "Advanced Q1", "answer": "Advanced detailed A1"},
+      {"question": "Advanced Q2", "answer": "Advanced detailed A2"},
+      {"question": "Advanced Q3", "answer": "Advanced detailed A3"}
     ],
-    "real_world_applications": ["app1", "app2", "app3"],
-    "common_misconceptions": ["misconception1", "misconception2"],
-    "exam_tips": ["tip1", "tip2", "tip3"],
-    "recommended_resources": ["resource1", "resource2", "resource3"],
-    "study_score": 85
+    "real_world_applications": ["app1", "app2", "app3", "app4"],
+    "common_misconceptions": ["misconception1", "misconception2", "misconception3"],
+    "exam_tips": ["tip1", "tip2", "tip3", "tip4", "tip5"],
+    "recommended_resources": ["resource1", "resource2", "resource3", "resource4"],
+    "study_score": 92
   }
 
-  Make it exam-focused and practical for students.`;
+  Make it extremely detailed, comprehensive, and exam-focused.`;
 
   const models = [
     'x-ai/grok-4-fast:free',
@@ -107,7 +108,7 @@ async function tryStudyModel(model, prompt) {
     body: JSON.stringify({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 400000000,
+      max_tokens: 4000,
       temperature: 0.7
     })
   });
@@ -129,86 +130,131 @@ async function tryStudyModel(model, prompt) {
 
 // Enhanced fallback study materials
 function generateFallbackStudyMaterials(topic) {
-  // Check if it's a specific academic request
-  const isAcademicRequest = /class\s+\d+\s+.+\s+ch\s*\d+/i.test(topic);
-  
-  if (isAcademicRequest) {
-    return {
-      topic: topic,
-      curriculum_alignment: "CBSE Curriculum Aligned",
-      ultra_long_notes: `# Comprehensive Guide to ${topic}\n\n## Chapter Overview\nThis chapter covers fundamental concepts essential for board examinations. The content is structured to help students build strong conceptual understanding while preparing for competitive exams.\n\n## Detailed Explanation\n${topic} introduces students to core principles that form the foundation for advanced studies. Each concept is explained with real-world examples and practical applications to enhance understanding and retention.`,
-      key_concepts: [
-        "Fundamental Principles",
-        "Core Definitions",
-        "Important Formulas",
-        "Application Methods",
-        "Problem-solving Techniques"
-      ],
-      key_tricks: [
-        "Memory aids for complex concepts",
-        "Quick calculation methods",
-        "Diagram-based learning",
-        "Concept mapping",
-        "Spaced repetition technique"
-      ],
-      practice_questions: [
-        {"question": "Explain the basic concepts covered in this chapter", "answer": "This chapter covers fundamental principles that form the basis for understanding more complex topics in the curriculum."},
-        {"question": "What are the key applications of these concepts?", "answer": "These concepts find applications in various real-world scenarios and form the foundation for advanced topics in higher classes."},
-        {"question": "How would you solve typical problems from this chapter?", "answer": "Typical problems can be solved by applying the fundamental principles and using the step-by-step approach demonstrated in the chapter."}
-      ],
-      advanced_tricks: ["Advanced problem-solving techniques", "Time management strategies", "Exam-specific approaches"],
-      trick_notes: "Combine conceptual understanding with practical application. Use visualization techniques for better retention.",
-      short_notes: "• Key concept summaries\n• Important formulas/rules\n• Common question patterns\n• Exam-focused tips\n• Quick revision points",
-      advanced_questions: [
-        {"question": "Analyze the inter-relationships between different concepts in this chapter", "answer": "The concepts are interconnected and understanding their relationships helps in solving complex problems efficiently."},
-        {"question": "How would you approach a multi-concept problem from this chapter?", "answer": "Break down the problem into smaller parts, identify the relevant concepts for each part, and integrate the solutions systematically."}
-      ],
-      real_world_applications: ["Industry applications", "Daily life scenarios", "Technological implementations"],
-      common_misconceptions: ["Common errors in understanding basic concepts", "Frequently confused terminology"],
-      exam_tips: ["Focus on NCERT concepts", "Practice previous year questions", "Time management during exams"],
-      recommended_resources: ["NCERT Textbook", "Reference books for additional practice", "Online video lectures"],
-      study_score: 88,
-      powered_by: "Savoiré AI by Sooban Talha Productions",
-      generated_at: new Date().toISOString()
-    };
-  }
-
-  // General topic fallback
   return {
     topic: topic,
-    curriculum_alignment: "General Academic Topic",
-    ultra_long_notes: `# Comprehensive Guide to ${topic}\n\n${topic} is a fundamental concept that forms the basis for more advanced learning. Understanding ${topic} requires breaking it down into core components and building up from basic principles to complex applications.\n\n## Core Concepts\n- Fundamental principles that define ${topic}\n- Key terminology and definitions\n- Historical context and development\n\n## Detailed Explanation\nThis section provides an in-depth exploration of ${topic}, covering all essential aspects that students need to master for comprehensive understanding and application in various contexts.`,
+    curriculum_alignment: "CBSE Curriculum Aligned - Comprehensive Coverage",
+    ultra_long_notes: `# ULTRA-DETAILED COMPREHENSIVE GUIDE: ${topic.toUpperCase()}
+
+## 📚 Complete Chapter Overview
+This comprehensive guide provides an in-depth exploration of ${topic}, covering every aspect required for thorough understanding and examination success.
+
+## 🎯 Learning Objectives
+- Master fundamental concepts and principles
+- Develop advanced problem-solving skills
+- Understand real-world applications
+- Prepare for competitive examinations
+
+## 🔍 Detailed Conceptual Framework
+${topic} represents a critical area of study that forms the foundation for advanced learning. The subject encompasses multiple interconnected concepts that build upon each other systematically.
+
+### Core Principles
+1. **Fundamental Theorem**: The basic principle governing ${topic}
+2. **Key Definitions**: Essential terminology and concepts
+3. **Application Methods**: Practical implementation techniques
+4. **Problem-solving Approaches**: Systematic methods for addressing challenges
+
+## 💡 Advanced Insights
+- Interdisciplinary connections with related fields
+- Historical development and modern applications
+- Future trends and emerging research areas
+
+## 🏆 Examination Strategy
+Comprehensive preparation covering all question patterns and difficulty levels.`,
     key_concepts: [
-      "Fundamental Principles",
-      "Core Definitions",
-      "Basic Applications",
-      "Key Terminology",
-      "Essential Concepts"
+      "Fundamental Principles and Definitions",
+      "Core Theoretical Framework",
+      "Practical Application Methods",
+      "Advanced Analytical Techniques",
+      "Problem-solving Methodologies",
+      "Interdisciplinary Connections",
+      "Historical Context and Evolution",
+      "Future Development Prospects"
     ],
     key_tricks: [
-      "Use mnemonics for memorization",
-      "Create mind maps for visual learning",
-      "Practice with real-world examples",
-      "Teach someone else to reinforce learning",
-      "Use spaced repetition for long-term retention"
+      "Memory Palace Technique for complex concepts",
+      "Visual Mapping for interconnected ideas",
+      "Spaced Repetition System for long-term retention",
+      "Active Recall Methodology for better understanding",
+      "Interleaved Practice for comprehensive learning"
     ],
     practice_questions: [
-      {"question": "What are the basic principles of " + topic + "?", "answer": "The basic principles include fundamental concepts that form the foundation of this topic."},
-      {"question": "How does " + topic + " apply in practical scenarios?", "answer": "Practical applications involve real-world usage that demonstrates the importance of understanding these concepts."},
-      {"question": "What are the key components to remember about " + topic + "?", "answer": "Key components include essential elements that form the core understanding of this subject."}
+      {
+        "question": "Explain the fundamental principles of " + topic + " with detailed examples and applications",
+        "answer": "The fundamental principles encompass the core concepts that define " + topic + ". These include basic definitions, key theorems, and essential methodologies that form the foundation for advanced understanding. Practical applications demonstrate how these principles operate in real-world scenarios."
+      },
+      {
+        "question": "Describe the step-by-step approach to solving complex problems in " + topic,
+        "answer": "Solving complex problems requires a systematic approach: 1) Problem analysis and understanding, 2) Identification of relevant concepts, 3) Application of appropriate methodologies, 4) Step-by-step solution development, 5) Verification and validation of results."
+      },
+      {
+        "question": "What are the key differences between basic and advanced concepts in " + topic + "?",
+        "answer": "Basic concepts provide foundational understanding while advanced concepts involve complex applications, interdisciplinary connections, and sophisticated problem-solving techniques that build upon the fundamental principles."
+      },
+      {
+        "question": "How does " + topic + " relate to other subjects and real-world applications?",
+        "answer": topic + " has significant interdisciplinary connections and practical applications across various fields including technology, research, industry, and daily life scenarios."
+      },
+      {
+        "question": "What common mistakes should students avoid when studying " + topic + "?",
+        "answer": "Common mistakes include: superficial understanding of concepts, inadequate practice, ignoring fundamental principles, and failure to connect theoretical knowledge with practical applications."
+      }
     ],
-    advanced_tricks: ["Advanced analytical techniques", "Problem-solving frameworks", "Critical thinking approaches"],
-    trick_notes: "Combine multiple learning techniques for optimal results. Use visualization for complex concepts and practice regularly to reinforce understanding.",
-    short_notes: "• Core concept summary\n• Key points to remember\n• Essential formulas/rules\n• Common applications\n• Important exceptions",
+    advanced_tricks: [
+      "Metacognitive Strategies for advanced learning",
+      "Concept Integration Techniques",
+      "Advanced Problem Decomposition Methods",
+      "Critical Analysis Frameworks"
+    ],
+    trick_notes: "Combine multiple learning strategies for optimal results. Use visualization for complex concepts, practice regularly with varied problems, and constantly connect new knowledge with existing understanding.",
+    short_notes: `• **Core Concepts**: Fundamental principles and definitions
+• **Key Formulas**: Essential mathematical relationships
+• **Application Methods**: Practical implementation techniques
+• **Problem Types**: Classification of different question patterns
+• **Common Errors**: Typical mistakes and how to avoid them
+• **Exam Strategies**: Time management and answering techniques
+• **Advanced Topics**: Complex concepts and their applications
+• **Real-world Connections**: Practical implementations and examples`,
     advanced_questions: [
-      {"question": "Analyze the complex relationships within " + topic, "answer": "Complex relationships involve interconnected concepts that require deep understanding and analytical thinking."},
-      {"question": "How would you solve advanced problems related to " + topic + "?", "answer": "Advanced problem-solving requires applying multiple concepts simultaneously and thinking critically about the relationships between different elements."}
+      {
+        "question": "Analyze the complex interrelationships between different components of " + topic,
+        "answer": "The interrelationships involve sophisticated connections between various elements, creating a comprehensive framework that requires deep analytical thinking and conceptual understanding."
+      },
+      {
+        "question": "Develop a comprehensive strategy for mastering advanced aspects of " + topic,
+        "answer": "Mastering advanced aspects requires: systematic study approach, regular practice with challenging problems, continuous concept reinforcement, and application of multiple learning methodologies."
+      },
+      {
+        "question": "Evaluate the practical significance and future implications of " + topic,
+        "answer": topic + " has significant practical applications and future implications across multiple domains, making it essential for technological advancement and scientific progress."
+      }
     ],
-    real_world_applications: ["Industry applications", "Research implications", "Everyday usage scenarios"],
-    common_misconceptions: ["Common misunderstanding about basic principles", "Frequently confused concepts"],
-    exam_tips: ["Understand concepts thoroughly", "Practice regularly", "Review mistakes"],
-    recommended_resources: ["Recommended textbook: 'Mastering " + topic + "'", "Online course: 'Advanced " + topic + " Concepts'", "Practice workbook for " + topic],
-    study_score: 82,
+    real_world_applications: [
+      "Industrial and Technological Implementations",
+      "Scientific Research and Development",
+      "Educational and Academic Applications",
+      "Everyday Practical Scenarios"
+    ],
+    common_misconceptions: [
+      "Oversimplification of complex concepts",
+      "Confusion between related but distinct principles",
+      "Misapplication of fundamental theorems",
+      "Inadequate understanding of practical limitations"
+    ],
+    exam_tips: [
+      "Master NCERT concepts thoroughly before advanced study",
+      "Practice previous 10 years question papers regularly",
+      "Develop time management strategies for examinations",
+      "Focus on conceptual understanding rather than rote learning",
+      "Regular revision and self-assessment"
+    ],
+    recommended_resources: [
+      "NCERT Textbook - Comprehensive coverage",
+      "Reference books for advanced practice",
+      "Online video lectures and tutorials",
+      "Practice workbooks and question banks",
+      "Educational apps for interactive learning"
+    ],
+    study_score: 95,
     powered_by: "Savoiré AI by Sooban Talha Productions",
     generated_at: new Date().toISOString()
   };

@@ -1,344 +1,135 @@
-// DOM Elements
-const chatMessages = document.getElementById('chat-messages');
-const userInput = document.getElementById('user-input');
-const sendMessageBtn = document.getElementById('send-message');
+// ULTRA-ADVANCED AI STUDY ASSISTANT
+class SavoireAI {
+    constructor() {
+        this.initializeApp();
+        this.bindEvents();
+        this.initializeParticles();
+    }
 
-// Create luxury floating particles
-function createLuxuryParticles() {
-    const particlesContainer = document.createElement('div');
-    particlesContainer.style.position = 'fixed';
-    particlesContainer.style.top = '0';
-    particlesContainer.style.left = '0';
-    particlesContainer.style.width = '100%';
-    particlesContainer.style.height = '100%';
-    particlesContainer.style.pointerEvents = 'none';
-    particlesContainer.style.zIndex = '-1';
-    document.body.appendChild(particlesContainer);
+    initializeApp() {
+        this.chatMessages = document.getElementById('chatMessages');
+        this.messageInput = document.getElementById('messageInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.welcomeScreen = document.getElementById('welcomeScreen');
+        this.loadingIndicator = document.getElementById('loadingIndicator');
+        this.clearChatBtn = document.getElementById('clearChat');
+        this.downloadPDFBtn = document.getElementById('downloadPDF');
+        
+        this.conversationHistory = [];
+        this.isGenerating = false;
+    }
 
-    for (let i = 0; i < 20; i++) {
+    bindEvents() {
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
+
+        this.clearChatBtn.addEventListener('click', () => this.clearChat());
+        this.downloadPDFBtn.addEventListener('click', () => this.downloadPDF());
+
+        // Auto-resize textarea
+        this.messageInput.addEventListener('input', () => this.autoResize());
+
+        // Quick prompt cards
+        document.querySelectorAll('.prompt-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const prompt = card.getAttribute('data-prompt');
+                this.messageInput.value = prompt;
+                this.sendMessage();
+            });
+        });
+
+        // Theme toggle
+        document.querySelector('.theme-toggle').addEventListener('click', () => this.toggleTheme());
+    }
+
+    initializeParticles() {
+        const particlesContainer = document.createElement('div');
+        particlesContainer.className = 'quantum-particles';
+        document.body.appendChild(particlesContainer);
+
+        for (let i = 0; i < 50; i++) {
+            this.createParticle(particlesContainer);
+        }
+    }
+
+    createParticle(container) {
         const particle = document.createElement('div');
-        particle.className = 'luxury-particle';
+        particle.className = 'quantum-particle';
 
-        const size = Math.random() * 10 + 5;
+        const size = Math.random() * 6 + 2;
         const posX = Math.random() * 100;
         const posY = Math.random() * 100;
-        const delay = Math.random() * 10;
-        const duration = Math.random() * 10 + 10;
+        const duration = Math.random() * 20 + 10;
+        const delay = Math.random() * 5;
 
         particle.style.cssText = `
-            position: absolute;
+            position: fixed;
             width: ${size}px;
             height: ${size}px;
-            background: radial-gradient(circle, rgba(110, 69, 226, 0.6), rgba(255, 107, 107, 0.3));
+            background: radial-gradient(circle, 
+                rgba(59, 130, 246, 0.8), 
+                rgba(139, 92, 246, 0.4),
+                transparent 70%);
             border-radius: 50%;
             left: ${posX}%;
             top: ${posY}%;
-            animation: float ${duration}s infinite ease-in-out ${delay}s;
+            animation: quantumFloat ${duration}s infinite ease-in-out ${delay}s;
+            pointer-events: none;
+            z-index: -1;
             filter: blur(1px);
         `;
 
-        particlesContainer.appendChild(particle);
-    }
-}
-
-// Initialize luxury effects
-function initLuxuryEffects() {
-    createLuxuryParticles();
-
-    // Add luxury glow effect to buttons
-    document.querySelectorAll('button').forEach(btn => {
-        btn.addEventListener('mouseenter', function() {
-            this.style.filter = 'drop-shadow(0 0 20px rgba(110, 69, 226, 0.8))';
-        });
-
-        btn.addEventListener('mouseleave', function() {
-            this.style.filter = 'none';
-        });
-    });
-}
-
-// Add message to chat
-function addMessage(content, isUser = false, isError = false) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message');
-    messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
-
-    if (isError) {
-        messageDiv.classList.add('error-message');
+        container.appendChild(particle);
     }
 
-    if (isUser) {
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                <div class="message-text">${content}</div>
-                <div class="message-time">${new Date().toLocaleTimeString()}</div>
-            </div>
-        `;
-    } else {
-        messageDiv.innerHTML = `
-            <div class="message-content">
-                ${content}
-                <div class="message-time">${new Date().toLocaleTimeString()}</div>
-            </div>
-        `;
+    autoResize() {
+        this.messageInput.style.height = 'auto';
+        this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
     }
 
-    chatMessages.appendChild(messageDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+    async sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message || this.isGenerating) return;
 
-// Show loading animation
-function showLoading() {
-    const loadingDiv = document.createElement('div');
-    loadingDiv.classList.add('message', 'ai-message', 'loading-message');
-    loadingDiv.id = 'loading-message';
+        // Hide welcome screen
+        this.welcomeScreen.style.display = 'none';
+        this.chatMessages.style.display = 'block';
 
-    loadingDiv.innerHTML = `
-        <div class="message-content">
-            <div class="ai-thinking">
-                <div class="chef-icon">👨‍🍳</div>
-                <div class="thinking-text">Célestique AI is crafting your gourmet recipe...</div>
-                <div class="luxury-loader">
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                    <div class="dot"></div>
-                </div>
-            </div>
-        </div>
-    `;
+        // Add user message
+        this.addMessage(message, 'user');
 
-    chatMessages.appendChild(loadingDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+        // Clear input
+        this.messageInput.value = '';
+        this.autoResize();
 
-// Remove loading animation
-function hideLoading() {
-    const loadingMsg = document.getElementById('loading-message');
-    if (loadingMsg) {
-        loadingMsg.remove();
-    }
-}
+        // Show loading
+        this.showLoading();
 
-// NEW: Recipe Rating Component
-function createRatingComponent(recipeId) {
-    const ratingDiv = document.createElement('div');
-    ratingDiv.className = 'recipe-rating';
-    ratingDiv.innerHTML = `
-        <div class="rating-title">Rate this recipe:</div>
-        <div class="stars-container">
-            <span class="star" data-rating="1">★</span>
-            <span class="star" data-rating="2">★</span>
-            <span class="star" data-rating="3">★</span>
-            <span class="star" data-rating="4">★</span>
-            <span class="star" data-rating="5">★</span>
-        </div>
-        <div class="rating-feedback"></div>
-    `;
+        this.isGenerating = true;
+        this.sendButton.disabled = true;
 
-    // Add star click events
-    const stars = ratingDiv.querySelectorAll('.star');
-    stars.forEach(star => {
-        star.addEventListener('click', function() {
-            const rating = parseInt(this.getAttribute('data-rating'));
-            rateRecipe(recipeId, rating, ratingDiv);
-        });
-    });
+        try {
+            const studyData = await this.generateStudyMaterials(message);
+            this.hideLoading();
+            this.displayStudyMaterials(studyData);
+        } catch (error) {
+            this.hideLoading();
+            this.showError(error.message);
+        }
 
-    return ratingDiv;
-}
-
-// NEW: Rate recipe function
-function rateRecipe(recipeId, rating, ratingDiv) {
-    const stars = ratingDiv.querySelectorAll('.star');
-    const feedback = ratingDiv.querySelector('.rating-feedback');
-    
-    // Update star colors
-    stars.forEach(star => {
-        const starRating = parseInt(star.getAttribute('data-rating'));
-        star.style.color = starRating <= rating ? '#FFD700' : '#666';
-    });
-
-    // Show feedback
-    const messages = [
-        "Thanks for your feedback!",
-        "Great! We'll improve based on your rating.",
-        "Thank you! Your opinion matters to us.",
-        "Excellent! We're glad you liked it!",
-        "Perfect! We appreciate your feedback!"
-    ];
-    
-    feedback.textContent = messages[rating - 1];
-    feedback.style.color = '#4CAF50';
-    
-    // Save rating to localStorage
-    const ratings = JSON.parse(localStorage.getItem('recipeRatings') || '{}');
-    ratings[recipeId] = rating;
-    localStorage.setItem('recipeRatings', JSON.stringify(ratings));
-}
-
-// NEW: Save Recipe Component
-function createSaveRecipeComponent(recipeData) {
-    const saveDiv = document.createElement('div');
-    saveDiv.className = 'save-recipe-container';
-    saveDiv.innerHTML = `
-        <button class="save-recipe-btn">
-            <span class="save-icon">💾</span>
-            Save Recipe
-        </button>
-        <div class="save-feedback"></div>
-    `;
-
-    const saveBtn = saveDiv.querySelector('.save-recipe-btn');
-    const feedback = saveDiv.querySelector('.save-feedback');
-
-    saveBtn.addEventListener('click', function() {
-        saveRecipeToCollection(recipeData, feedback);
-    });
-
-    return saveDiv;
-}
-
-// NEW: Save recipe function
-function saveRecipeToCollection(recipeData, feedbackElement) {
-    const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
-    
-    // Check if already saved
-    const isAlreadySaved = savedRecipes.some(recipe => recipe.name === recipeData.name);
-    
-    if (isAlreadySaved) {
-        feedbackElement.textContent = 'Recipe already saved!';
-        feedbackElement.style.color = '#FFA500';
-    } else {
-        savedRecipes.push({
-            ...recipeData,
-            savedAt: new Date().toISOString(),
-            id: Date.now().toString()
-        });
-        localStorage.setItem('savedRecipes', JSON.stringify(savedRecipes));
-        
-        feedbackElement.textContent = 'Recipe saved successfully!';
-        feedbackElement.style.color = '#4CAF50';
-        
-        // Update button
-        const saveBtn = feedbackElement.previousElementSibling;
-        saveBtn.innerHTML = '<span class="save-icon">✅</span> Saved!';
-        saveBtn.disabled = true;
-    }
-    
-    setTimeout(() => {
-        feedbackElement.textContent = '';
-    }, 3000);
-}
-
-// Format recipe response
-function formatRecipe(recipe) {
-    if (recipe.error) {
-        return `
-            <div class="recipe-error">
-                <h3>🚨 Unable to Generate Recipe</h3>
-                <p><strong>Error:</strong> ${recipe.error}</p>
-                ${recipe.details ? `<p><strong>Details:</strong> ${recipe.details}</p>` : ''}
-                <p>Please check your API configuration and try again.</p>
-                ${recipe.fallback ? formatRecipe(recipe.fallback) : ''}
-            </div>
-        `;
+        this.isGenerating = false;
+        this.sendButton.disabled = false;
     }
 
-    const recipeId = 'recipe_' + Date.now();
-    
-    return `
-        <div class="recipe-card" data-recipe-id="${recipeId}">
-            <div class="recipe-header">
-                <h3 class="recipe-title">✨ ${recipe.name}</h3>
-                <div class="recipe-badges">
-                    <span class="badge cuisine">${recipe.cuisine || 'International'}</span>
-                    <span class="badge difficulty">${recipe.difficulty || 'Medium'}</span>
-                    ${recipe.score ? `<span class="badge score">⭐ ${recipe.score}/100</span>` : ''}
-                </div>
-            </div>
+    async generateStudyMaterials(message) {
+        console.log('Sending request to AI:', message);
 
-            <div class="recipe-meta">
-                ${recipe.prep_time ? `<span class="meta-item">⏱️ Prep: ${recipe.prep_time}</span>` : ''}
-                ${recipe.cook_time ? `<span class="meta-item">🔥 Cook: ${recipe.cook_time}</span>` : ''}
-                ${recipe.serves ? `<span class="meta-item">👥 Serves: ${recipe.serves}</span>` : ''}
-            </div>
-
-            <div class="recipe-section">
-                <h4 class="section-title">🥘 Ingredients</h4>
-                <ul class="ingredients-list">
-                    ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
-                </ul>
-            </div>
-
-            <div class="recipe-section">
-                <h4 class="section-title">📋 Instructions</h4>
-                <ol class="instructions-list">
-                    ${recipe.instructions.map(step => `<li>${step}</li>`).join('')}
-                </ol>
-            </div>
-
-            ${recipe.chef_tips && recipe.chef_tips.length > 0 ? `
-                <div class="recipe-section">
-                    <h4 class="section-title">💡 Chef's Tips</h4>
-                    <ul class="tips-list">
-                        ${recipe.chef_tips.map(tip => `<li>${tip}</li>`).join('')}
-                    </ul>
-                </div>
-            ` : ''}
-
-            ${recipe.nutritional_notes ? `
-                <div class="recipe-section">
-                    <h4 class="section-title">🥗 Nutritional Notes</h4>
-                    <p>${recipe.nutritional_notes}</p>
-                </div>
-            ` : ''}
-
-            ${recipe.wine_pairing ? `
-                <div class="recipe-section">
-                    <h4 class="section-title">🍷 Wine Pairing</h4>
-                    <p>${recipe.wine_pairing}</p>
-                </div>
-            ` : ''}
-
-            <!-- NEW: Interactive Components -->
-            <div class="recipe-interactive">
-                <div class="interactive-section">
-                    ${createSaveRecipeComponent(recipe).outerHTML}
-                </div>
-                <div class="interactive-section">
-                    ${createRatingComponent(recipeId).outerHTML}
-                </div>
-            </div>
-
-            <div class="recipe-footer">
-                <div class="powered-by">
-                    Crafted by ${recipe.powered_by || 'Célestique AI'} 
-                    ${recipe.generated_at ? `• Generated: ${new Date(recipe.generated_at).toLocaleString()}` : ''}
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-// Send message to API
-async function sendMessage() {
-    const message = userInput.value.trim();
-    if (!message) return;
-
-    // Add user message
-    addMessage(message, true);
-
-    // Clear input
-    userInput.value = '';
-
-    // Show loading
-    showLoading();
-
-    try {
-        console.log('Sending request to API:', message);
-
-        // FIXED: Use the correct endpoint path
-        const response = await fetch('/api/recipe', {
+        const response = await fetch('/api/study', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -346,409 +137,722 @@ async function sendMessage() {
             body: JSON.stringify({ message })
         });
 
-        console.log('API Response status:', response.status);
-
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API Error:', errorText);
-            throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+            throw new Error(`API Error: ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('Received recipe data:', data);
+        console.log('Received study data:', data);
+        return data;
+    }
 
-        // Hide loading
-        hideLoading();
+    addMessage(content, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
+        
+        const avatar = type === 'user' ? '👤' : '🤖';
+        const time = new Date().toLocaleTimeString();
 
-        // Format and display recipe
-        const formattedRecipe = formatRecipe(data);
-        addMessage(formattedRecipe);
-
-    } catch (error) {
-        console.error('Error sending message:', error);
-
-        // Hide loading
-        hideLoading();
-
-        // Show error message with helpful information
-        const errorMessage = `
-            <div class="recipe-error">
-                <h3>🚨 Connection Error</h3>
-                <p><strong>Unable to reach Célestique AI:</strong></p>
-                <p>${error.message}</p>
-                <div class="error-suggestions">
-                    <h4>💡 Troubleshooting:</h4>
-                    <ul>
-                        <li>Check your internet connection</li>
-                        <li>Ensure OPENROUTER_API_KEY is set in Vercel environment variables</li>
-                        <li>Verify the API endpoint is deployed correctly</li>
-                        <li>Try refreshing the page and trying again</li>
-                    </ul>
+        if (type === 'user') {
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-text">${this.escapeHtml(content)}</div>
+                    <div class="message-time">${time}</div>
                 </div>
-            </div>
-        `;
-        addMessage(errorMessage, false, true);
-    }
-}
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    ${content}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+        }
 
-// NEW: View Saved Recipes Component
-function createSavedRecipesViewer() {
-    const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
-    
-    if (savedRecipes.length === 0) {
+        this.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
+        
+        // Add to conversation history
+        this.conversationHistory.push({ type, content, time });
+    }
+
+    displayStudyMaterials(data) {
+        const formattedContent = this.formatStudyData(data);
+        this.addMessage(formattedContent, 'ai');
+    }
+
+    formatStudyData(data) {
+        if (data.error) {
+            return `
+                <div class="error-message">
+                    <h3>🚨 Unable to Generate Study Materials</h3>
+                    <p><strong>Error:</strong> ${data.error}</p>
+                    <p>Please try again or check your connection.</p>
+                </div>
+            `;
+        }
+
         return `
-            <div class="saved-recipes-empty">
-                <div class="empty-icon">📚</div>
-                <h4>No Saved Recipes Yet</h4>
-                <p>Save your favorite recipes to see them here!</p>
-            </div>
-        `;
-    }
+            <div class="study-materials" data-topic="${this.escapeHtml(data.topic)}">
+                <!-- Header -->
+                <div class="study-header">
+                    <h1 class="study-title">🎓 ${this.escapeHtml(data.topic)}</h1>
+                    <div class="study-meta">
+                        <span class="curriculum-badge">${data.curriculum_alignment || 'Comprehensive Study Guide'}</span>
+                        <span class="score-badge">⭐ ${data.study_score || 90}/100</span>
+                    </div>
+                </div>
 
-    return `
-        <div class="saved-recipes-list">
-            <h4>Your Saved Recipes (${savedRecipes.length})</h4>
-            ${savedRecipes.map(recipe => `
-                <div class="saved-recipe-item">
-                    <div class="saved-recipe-header">
-                        <h5>${recipe.name}</h5>
-                        <span class="saved-date">${new Date(recipe.savedAt).toLocaleDateString()}</span>
+                <!-- Ultra Detailed Notes -->
+                <div class="study-section">
+                    <h2 class="section-title">📖 Comprehensive Study Notes</h2>
+                    <div class="ultra-notes">
+                        ${this.formatNotes(data.ultra_long_notes)}
                     </div>
-                    <div class="saved-recipe-meta">
-                        <span class="badge">${recipe.cuisine}</span>
-                        <span class="badge">${recipe.difficulty}</span>
+                </div>
+
+                <!-- Key Concepts -->
+                <div class="study-section">
+                    <h2 class="section-title">🔑 Key Concepts</h2>
+                    <div class="concepts-grid">
+                        ${data.key_concepts ? data.key_concepts.map(concept => `
+                            <div class="concept-card">
+                                <div class="concept-icon">💡</div>
+                                <div class="concept-text">${this.escapeHtml(concept)}</div>
+                            </div>
+                        `).join('') : ''}
                     </div>
-                    <button class="view-recipe-btn" onclick="loadSavedRecipe('${recipe.id}')">
-                        View Recipe
+                </div>
+
+                <!-- Practice Questions -->
+                <div class="study-section">
+                    <h2 class="section-title">❓ Practice Questions</h2>
+                    <div class="questions-container">
+                        ${data.practice_questions ? data.practice_questions.map((q, index) => `
+                            <div class="question-block">
+                                <div class="question-header">
+                                    <span class="question-number">Q${index + 1}</span>
+                                    <span class="question-difficulty">Medium</span>
+                                </div>
+                                <div class="question-text">${this.escapeHtml(q.question)}</div>
+                                <div class="answer-section">
+                                    <strong>Answer:</strong>
+                                    <div class="answer-text">${this.escapeHtml(q.answer)}</div>
+                                </div>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                </div>
+
+                <!-- Advanced Questions -->
+                ${data.advanced_questions && data.advanced_questions.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">🚀 Advanced Questions</h2>
+                    <div class="questions-container advanced-questions">
+                        ${data.advanced_questions.map((q, index) => `
+                            <div class="question-block advanced">
+                                <div class="question-header">
+                                    <span class="question-number">Advanced Q${index + 1}</span>
+                                    <span class="question-difficulty">Hard</span>
+                                </div>
+                                <div class="question-text">${this.escapeHtml(q.question)}</div>
+                                <div class="answer-section">
+                                    <strong>Detailed Solution:</strong>
+                                    <div class="answer-text">${this.escapeHtml(q.answer)}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Learning Tricks -->
+                <div class="study-section">
+                    <h2 class="section-title">🎯 Learning Techniques</h2>
+                    <div class="tricks-container">
+                        ${data.key_tricks ? data.key_tricks.map(trick => `
+                            <div class="trick-card">
+                                <div class="trick-icon">⚡</div>
+                                <div class="trick-text">${this.escapeHtml(trick)}</div>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                </div>
+
+                <!-- Exam Tips -->
+                <div class="study-section">
+                    <h2 class="section-title">📝 Exam Preparation</h2>
+                    <div class="tips-grid">
+                        ${data.exam_tips ? data.exam_tips.map(tip => `
+                            <div class="tip-item">
+                                <span class="tip-bullet">✅</span>
+                                <span>${this.escapeHtml(tip)}</span>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="study-footer">
+                    <div class="powered-by">
+                        Generated by ${data.powered_by || 'Savoiré AI'} • 
+                        ${data.generated_at ? new Date(data.generated_at).toLocaleString() : new Date().toLocaleString()}
+                    </div>
+                </div>
+
+                <!-- Download Button -->
+                <div class="download-section">
+                    <button class="download-pdf-btn" onclick="savoireAI.downloadStudyPDF(this)">
+                        <i class="fas fa-download"></i> Download Complete Study Guide (PDF)
                     </button>
                 </div>
-            `).join('')}
-        </div>
-    `;
-}
-
-// NEW: Load saved recipe
-function loadSavedRecipe(recipeId) {
-    const savedRecipes = JSON.parse(localStorage.getItem('savedRecipes') || '[]');
-    const recipe = savedRecipes.find(r => r.id === recipeId);
-    
-    if (recipe) {
-        const formattedRecipe = formatRecipe(recipe);
-        addMessage(formattedRecipe);
-    }
-}
-
-// Event listeners
-sendMessageBtn.addEventListener('click', sendMessage);
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
-    initLuxuryEffects();
-
-    // Welcome message
-    setTimeout(() => {
-        const welcomeMessage = `
-            <div class="welcome-message">
-                <h3>🌟 Welcome to Célestique AI</h3>
-                <p>I'm your personal AI chef, powered by <strong>DeepSeek AI</strong>. Simply tell me what you'd like to cook, and I'll create a gourmet recipe just for you!</p>
-
-                <div class="example-prompts">
-                    <h4>Try asking me:</h4>
-                    <div class="prompt-suggestions">
-                        <button class="suggestion-btn" onclick="userInput.value='chocolate lava cake'; sendMessage();">🍫 Chocolate Lava Cake</button>
-                        <button class="suggestion-btn" onclick="userInput.value='seafood pasta'; sendMessage();">🦐 Seafood Pasta</button>
-                        <button class="suggestion-btn" onclick="userInput.value='healthy salad'; sendMessage();">🥗 Healthy Salad</button>
-                        <button class="suggestion-btn" onclick="userInput.value='homemade pizza'; sendMessage();">🍕 Homemade Pizza</button>
-                    </div>
-                </div>
-
-                <!-- NEW: Saved Recipes Viewer -->
-                <div class="saved-recipes-section">
-                    <h4>📚 Your Recipe Collection</h4>
-                    ${createSavedRecipesViewer()}
-                </div>
             </div>
         `;
-        addMessage(welcomeMessage);
-    }, 1000);
-});
+    }
 
-// Add enhanced CSS for the new components
-const style = document.createElement('style');
-style.textContent = `
-    .luxury-loader {
+    formatNotes(notes) {
+        if (!notes) return '<p>No notes available.</p>';
+        
+        // Convert markdown-like formatting to HTML
+        return notes
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/### (.*?)(?=\n|$)/g, '<h3>$1</h3>')
+            .replace(/## (.*?)(?=\n|$)/g, '<h2>$1</h2>')
+            .replace(/# (.*?)(?=\n|$)/g, '<h1>$1</h1>');
+    }
+
+    showLoading() {
+        this.loadingIndicator.style.display = 'flex';
+        this.scrollToBottom();
+    }
+
+    hideLoading() {
+        this.loadingIndicator.style.display = 'none';
+    }
+
+    showError(message) {
+        const errorMessage = `
+            <div class="error-message">
+                <h3>⚠️ Connection Issue</h3>
+                <p>${this.escapeHtml(message)}</p>
+                <p>Please check your internet connection and try again.</p>
+            </div>
+        `;
+        this.addMessage(errorMessage, 'ai');
+    }
+
+    clearChat() {
+        this.chatMessages.innerHTML = '';
+        this.conversationHistory = [];
+        this.welcomeScreen.style.display = 'block';
+        this.chatMessages.style.display = 'none';
+    }
+
+    async downloadPDF() {
+        if (this.conversationHistory.length === 0) {
+            alert('No conversation to download!');
+            return;
+        }
+
+        try {
+            this.downloadPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            this.downloadPDFBtn.disabled = true;
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            let yPosition = 20;
+            const pageHeight = pdf.internal.pageSize.height;
+            const margin = 20;
+            const lineHeight = 7;
+
+            // Add header
+            pdf.setFontSize(20);
+            pdf.setTextColor(59, 130, 246);
+            pdf.text('Savoiré AI - Study Session', margin, yPosition);
+            
+            yPosition += 15;
+            pdf.setFontSize(10);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(`Generated on: ${new Date().toLocaleString()}`, margin, yPosition);
+            
+            yPosition += 20;
+
+            // Add conversation
+            pdf.setFontSize(12);
+            pdf.setTextColor(0, 0, 0);
+
+            this.conversationHistory.forEach((msg, index) => {
+                if (yPosition > pageHeight - 50) {
+                    pdf.addPage();
+                    yPosition = margin;
+                }
+
+                pdf.setFont('helvetica', msg.type === 'user' ? 'bold' : 'normal');
+                pdf.setTextColor(msg.type === 'user' ? 59 : 0, msg.type === 'user' ? 130 : 0, msg.type === 'user' ? 246 : 0);
+                pdf.text(`${msg.type === 'user' ? 'You' : 'Savoiré AI'}:`, margin, yPosition);
+                
+                yPosition += lineHeight;
+                
+                pdf.setFont('helvetica', 'normal');
+                pdf.setTextColor(0, 0, 0);
+                
+                const lines = pdf.splitTextToSize(this.stripHtml(msg.content), 170);
+                lines.forEach(line => {
+                    if (yPosition > pageHeight - 20) {
+                        pdf.addPage();
+                        yPosition = margin;
+                    }
+                    pdf.text(line, margin, yPosition);
+                    yPosition += lineHeight;
+                });
+                
+                yPosition += 10;
+            });
+
+            pdf.save(`savoire-ai-session-${Date.now()}.pdf`);
+            
+        } catch (error) {
+            console.error('PDF generation failed:', error);
+            alert('PDF generation failed. Please try again.');
+        } finally {
+            this.downloadPDFBtn.innerHTML = '<i class="fas fa-download"></i> PDF';
+            this.downloadPDFBtn.disabled = false;
+        }
+    }
+
+    async downloadStudyPDF(button) {
+        const studyElement = button.closest('.study-materials');
+        const topic = studyElement.getAttribute('data-topic');
+
+        try {
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating PDF...';
+            button.disabled = true;
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            // Capture the study materials as image
+            const canvas = await html2canvas(studyElement, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = pdf.internal.pageSize.getWidth();
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            pdf.save(`savoire-ai-${topic.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`);
+            
+        } catch (error) {
+            console.error('Study PDF generation failed:', error);
+            alert('PDF generation failed. Please try again.');
+        } finally {
+            button.innerHTML = '<i class="fas fa-download"></i> Download Complete Study Guide (PDF)';
+            button.disabled = false;
+        }
+    }
+
+    scrollToBottom() {
+        setTimeout(() => {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }, 100);
+    }
+
+    escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    stripHtml(html) {
+        if (!html) return '';
+        const tmp = document.createElement('DIV');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+    }
+
+    toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const icon = document.querySelector('.theme-toggle i');
+        if (document.body.classList.contains('light-theme')) {
+            icon.className = 'fas fa-sun';
+        } else {
+            icon.className = 'fas fa-moon';
+        }
+    }
+}
+
+// Initialize the app
+const savoireAI = new SavoireAI();
+
+// Make available globally
+window.savoireAI = savoireAI;
+
+// Add enhanced styles
+const enhancedStyles = document.createElement('style');
+enhancedStyles.textContent = `
+    /* Quantum Particles Animation */
+    @keyframes quantumFloat {
+        0%, 100% { 
+            transform: translate(0, 0) rotate(0deg); 
+            opacity: 0.7;
+        }
+        25% { 
+            transform: translate(10px, -15px) rotate(90deg); 
+            opacity: 1;
+        }
+        50% { 
+            transform: translate(-5px, 10px) rotate(180deg); 
+            opacity: 0.5;
+        }
+        75% { 
+            transform: translate(15px, 5px) rotate(270deg); 
+            opacity: 0.8;
+        }
+    }
+
+    /* Study Materials Styling */
+    .study-materials {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 20px;
+        padding: 2rem;
+        margin: 1rem 0;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .study-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .study-title {
+        font-size: 2.2rem;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 1rem;
+    }
+
+    .study-meta {
         display: flex;
-        gap: 8px;
-        margin-top: 10px;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
 
-    .luxury-loader .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: linear-gradient(45deg, var(--primary), var(--accent));
-        animation: luxuryBounce 1.4s infinite ease-in-out both;
-    }
-
-    .luxury-loader .dot:nth-child(1) { animation-delay: -0.32s; }
-    .luxury-loader .dot:nth-child(2) { animation-delay: -0.16s; }
-    .luxury-loader .dot:nth-child(3) { animation-delay: 0s; }
-
-    @keyframes luxuryBounce {
-        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-        40% { transform: scale(1.2); opacity: 1; }
-    }
-
-    .ai-thinking {
-        text-align: center;
-        padding: 20px;
-        background: linear-gradient(135deg, rgba(110, 69, 226, 0.1), rgba(255, 107, 107, 0.1));
-        border-radius: 15px;
-        border: 1px solid rgba(110, 69, 226, 0.3);
-    }
-
-    .chef-icon {
-        font-size: 2rem;
-        margin-bottom: 10px;
-    }
-
-    .thinking-text {
-        font-style: italic;
-        color: var(--primary);
-        margin-bottom: 15px;
-    }
-
-    .recipe-error {
-        background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 69, 58, 0.1));
-        border: 1px solid rgba(255, 107, 107, 0.3);
-        border-radius: 15px;
-        padding: 20px;
-        margin: 10px 0;
-    }
-
-    .recipe-error h3 {
-        color: var(--accent);
-        margin-bottom: 10px;
-    }
-
-    .error-suggestions {
-        margin-top: 15px;
-        padding: 15px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-    }
-
-    .error-suggestions h4 {
-        color: var(--gold);
-        margin-bottom: 10px;
-    }
-
-    .prompt-suggestions {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .suggestion-btn {
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        border: none;
-        color: white;
-        padding: 10px 15px;
+    .curriculum-badge, .score-badge {
+        background: rgba(59, 130, 246, 0.2);
+        border: 1px solid #3b82f6;
+        padding: 0.5rem 1rem;
         border-radius: 25px;
-        cursor: pointer;
-        transition: all 0.3s ease;
         font-size: 0.9rem;
+        font-weight: 600;
     }
 
-    .suggestion-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(110, 69, 226, 0.4);
+    .score-badge {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: #f59e0b;
+        color: #f59e0b;
     }
 
-    .powered-by {
-        font-size: 0.8rem;
-        color: var(--secondary);
-        text-align: center;
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    .study-section {
+        margin-bottom: 2.5rem;
     }
 
-    /* NEW: Interactive Components Styles */
-    .recipe-interactive {
+    .section-title {
+        font-size: 1.5rem;
+        color: #3b82f6;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .ultra-notes {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 15px;
+        padding: 2rem;
+        line-height: 1.8;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .concepts-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
     }
 
-    .interactive-section {
+    .concept-card {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px;
+        padding: 1.2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .concept-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+    }
+
+    .concept-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .concept-text {
+        font-weight: 500;
+    }
+
+    .questions-container {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        gap: 1.5rem;
     }
 
-    .save-recipe-btn {
-        background: linear-gradient(135deg, #4CAF50, #45a049);
-        border: none;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 25px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .save-recipe-btn:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-    }
-
-    .save-recipe-btn:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-    }
-
-    .save-feedback {
-        margin-top: 8px;
-        font-size: 0.8rem;
-        text-align: center;
-        min-height: 20px;
-    }
-
-    .recipe-rating {
-        text-align: center;
-    }
-
-    .rating-title {
-        font-size: 0.9rem;
-        margin-bottom: 10px;
-        color: var(--secondary);
-    }
-
-    .stars-container {
-        display: flex;
-        gap: 5px;
-        justify-content: center;
-    }
-
-    .star {
-        font-size: 1.5rem;
-        color: #666;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .star:hover {
-        transform: scale(1.2);
-        color: #FFD700;
-    }
-
-    .rating-feedback {
-        margin-top: 8px;
-        font-size: 0.8rem;
-        min-height: 20px;
-    }
-
-    /* Saved Recipes Styles */
-    .saved-recipes-section {
-        margin-top: 25px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .saved-recipes-empty {
-        text-align: center;
-        padding: 30px;
+    .question-block {
         background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        margin-top: 15px;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border-left: 4px solid #10b981;
     }
 
-    .empty-icon {
-        font-size: 3rem;
-        margin-bottom: 15px;
+    .question-block.advanced {
+        border-left-color: #f59e0b;
+        background: rgba(245, 158, 11, 0.05);
     }
 
-    .saved-recipes-list {
-        margin-top: 15px;
-    }
-
-    .saved-recipe-item {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 10px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .saved-recipe-header {
+    .question-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 1rem;
     }
 
-    .saved-recipe-header h5 {
-        margin: 0;
-        color: var(--primary);
+    .question-number {
+        font-weight: 700;
+        color: #3b82f6;
+        font-size: 1.1rem;
     }
 
-    .saved-date {
+    .question-difficulty {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        padding: 0.3rem 0.8rem;
+        border-radius: 15px;
         font-size: 0.8rem;
-        color: var(--secondary);
+        font-weight: 600;
     }
 
-    .saved-recipe-meta {
+    .question-block.advanced .question-difficulty {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+    }
+
+    .question-text {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        line-height: 1.6;
+    }
+
+    .answer-section {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        padding: 1rem;
+        border-left: 3px solid #3b82f6;
+    }
+
+    .answer-text {
+        line-height: 1.6;
+        margin-top: 0.5rem;
+    }
+
+    .tricks-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .trick-card {
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        padding: 1.2rem;
         display: flex;
-        gap: 8px;
-        margin-bottom: 12px;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.3s ease;
     }
 
-    .view-recipe-btn {
-        background: rgba(110, 69, 226, 0.2);
-        border: 1px solid var(--primary);
-        color: var(--primary);
-        padding: 8px 15px;
-        border-radius: 20px;
+    .trick-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);
+    }
+
+    .trick-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .tips-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .tip-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.8rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+    }
+
+    .tip-bullet {
+        color: #10b981;
+        font-size: 1.2rem;
+    }
+
+    .study-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .powered-by {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .download-section {
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .download-pdf-btn {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: none;
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 1rem;
     }
 
-    .view-recipe-btn:hover {
-        background: var(--primary);
-        color: white;
-        transform: translateY(-1px);
+    .download-pdf-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
     }
 
+    .download-pdf-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .error-message {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .error-message h3 {
+        color: #ef4444;
+        margin-bottom: 1rem;
+    }
+
+    /* Enhanced Message Styles */
+    .ai-message .message-content {
+        max-width: 90%;
+    }
+
+    .user-message .message-content {
+        max-width: 70%;
+    }
+
+    /* Light Theme */
+    .light-theme {
+        --primary-bg: #f8fafc;
+        --secondary-bg: #ffffff;
+        --card-bg: #f1f5f9;
+        --text-primary: #1e293b;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --user-message-bg: #3b82f6;
+        --ai-message-bg: #ffffff;
+    }
+
+    /* Responsive Design */
     @media (max-width: 768px) {
-        .recipe-interactive {
-            grid-template-columns: 1fr;
-            gap: 15px;
+        .study-materials {
+            padding: 1.5rem;
+            margin: 0.5rem 0;
         }
-        
-        .saved-recipe-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 5px;
+
+        .study-title {
+            font-size: 1.8rem;
+        }
+
+        .concepts-grid,
+        .tricks-container,
+        .tips-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ai-message .message-content,
+        .user-message .message-content {
+            max-width: 95%;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+        }
+    }
+
+    /* Smooth animations */
+    .study-materials {
+        animation: materialAppear 0.6s ease-out;
+    }
+
+    @keyframes materialAppear {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
         }
     }
 `;
-
-document.head.appendChild(style);
-
-// Make functions globally available for onclick events
-window.loadSavedRecipe = loadSavedRecipe;
+document.head.appendChild(enhancedStyles);
