@@ -3,11 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré AI | Premium Learning Intelligence</title>
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="World's most advanced AI learning companion with luxury interface">
-    <meta name="keywords" content="AI, premium education, luxury learning, smart tutor">
+    <title>Savoiré AI | Advanced Intelligence</title>
     
     <!-- Icons -->
     <link rel="icon" type="image/png" href="LOGO.png">
@@ -16,186 +12,111 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-    <!-- Luxury Background -->
-    <div class="luxury-background">
-        <div class="gold-particle"></div>
-        <div class="gold-particle"></div>
-        <div class="gold-particle"></div>
-        <div class="gold-glow"></div>
-    </div>
-
-    <!-- Premium Header -->
-    <header class="luxury-header">
+    <!-- Header -->
+    <header class="header">
         <div class="container">
             <div class="header-content">
-                <div class="brand-luxury">
-                    <div class="logo-premium">
-                        <div class="logo-gold-frame">
-                            <img src="LOGO.png" alt="Savoiré AI" class="logo-img">
-                        </div>
-                    </div>
-                    <div class="brand-text-luxury">
-                        <h1>Savoiré AI</h1>
-                        <p class="brand-tagline">by Sooban Talha Productions</p>
-                    </div>
-                </div>
-                
-                <div class="header-controls-luxury">
-                    <div class="status-premium">
-                        <div class="status-gold-dot"></div>
-                        <span>AI ACTIVE</span>
-                    </div>
-                    <button class="luxury-btn secondary">
-                        <i class="fas fa-crown"></i>
-                    </button>
+                <div class="logo">SA</div>
+                <div class="brand">
+                    <h1>Savoiré AI</h1>
+                    <p>by Sooban Talha Productions</p>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Luxury Interface -->
-    <main class="luxury-interface">
+    <!-- Main Chat Interface -->
+    <main>
         <div class="container">
-            <!-- Welcome Luxury Screen -->
-            <div class="welcome-luxury" id="welcomeScreen">
-                <div class="luxury-hero-content">
-                    <div class="ai-crown">
-                        <div class="crown-glow">
-                            <i class="fas fa-crown"></i>
-                        </div>
+            <div class="chat-container">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <i class="fas fa-brain"></i>
                     </div>
-                    
-                    <h1 class="luxury-title">
-                        Welcome to <span class="gold-gradient-text">Savoiré AI</span>
-                    </h1>
-                    
-                    <p class="luxury-subtitle">
-                        The world's most advanced AI learning intelligence. Ask absolutely anything and receive comprehensive, structured mastery.
+                    <h1 class="welcome-title">How can I help you today?</h1>
+                    <p class="welcome-subtitle">
+                        Ask anything and get comprehensive, detailed explanations with multiple perspectives and examples.
                     </p>
 
-                    <!-- Luxury Quick Start -->
-                    <div class="luxury-quick-start">
-                        <div class="quick-grid-luxury">
-                            <div class="luxury-start-card" data-prompt="Explain quantum physics with real-world business applications">
-                                <div class="start-icon-gold">
-                                    <i class="fas fa-atom"></i>
-                                </div>
-                                <div class="start-content">
-                                    <h4>Advanced Sciences</h4>
-                                    <p>Complex concepts mastered</p>
-                                </div>
-                                <div class="start-arrow-gold">
-                                    <i class="fas fa-chevron-right"></i>
-                                </div>
-                            </div>
-
-                            <div class="luxury-start-card" data-prompt="Provide comprehensive analysis of global economic theories">
-                                <div class="start-icon-gold">
-                                    <i class="fas fa-chart-line"></i>
-                                </div>
-                                <div class="start-content">
-                                    <h4>Business & Economics</h4>
-                                    <p>Strategic intelligence</p>
-                                </div>
-                                <div class="start-arrow-gold">
-                                    <i class="fas fa-chevron-right"></i>
-                                </div>
-                            </div>
+                    <div class="example-prompts">
+                        <div class="prompt-card" data-prompt="Explain artificial intelligence and its impact on various industries">
+                            <i class="fas fa-robot"></i>
+                            <h4>AI & Technology</h4>
+                            <p>Comprehensive analysis with real-world applications</p>
                         </div>
-                    </div>
-
-                    <!-- Luxury Stats -->
-                    <div class="luxury-stats">
-                        <div class="stat-gold">
-                            <div class="stat-number-gold">24/7</div>
-                            <div class="stat-label-gold">Available</div>
+                        <div class="prompt-card" data-prompt="Discuss business strategy frameworks with case studies">
+                            <i class="fas fa-chart-line"></i>
+                            <h4>Business & Strategy</h4>
+                            <p>Detailed frameworks and practical implementations</p>
                         </div>
-                        <div class="stat-gold">
-                            <div class="stat-number-gold">∞</div>
-                            <div class="stat-label-gold">Topics</div>
+                        <div class="prompt-card" data-prompt="Explain quantum computing principles and future applications">
+                            <i class="fas fa-atom"></i>
+                            <h4>Science & Physics</h4>
+                            <p>Complex concepts broken down simply</p>
                         </div>
-                        <div class="stat-gold">
-                            <div class="stat-number-gold">AI</div>
-                            <div class="stat-label-gold">Powered</div>
+                        <div class="prompt-card" data-prompt="Analyze global economic trends and their implications">
+                            <i class="fas fa-globe"></i>
+                            <h4>Economics & Finance</h4>
+                            <p>In-depth market analysis and predictions</p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Chat Messages Luxury Container -->
-            <div class="messages-luxury-container" id="chatMessages" style="display: none;">
-                <!-- Messages will be injected here -->
-            </div>
-
-            <!-- AI Thinking Luxury -->
-            <div class="thinking-luxury" id="loadingIndicator" style="display: none;">
-                <div class="thinking-gold">
-                    <div class="thinking-crown">
-                        <i class="fas fa-crown"></i>
-                    </div>
-                    <div class="thinking-text-gold">
-                        <div class="thinking-title-gold">Savoiré AI Processing</div>
-                        <div class="thinking-subtitle-gold">Crafting premium intelligence response</div>
-                    </div>
-                    <div class="thinking-gold-animation">
-                        <div class="gold-dot"></div>
-                        <div class="gold-dot"></div>
-                        <div class="gold-dot"></div>
-                    </div>
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="chatMessages" style="display: none;">
+                    <!-- Messages will be added here dynamically -->
                 </div>
-            </div>
-        </div>
 
-        <!-- Luxury Input Section -->
-        <div class="input-luxury-section">
-            <div class="container">
-                <div class="input-luxury-container">
-                    <div class="input-gold-wrapper">
-                        <div class="input-gold-main">
-                            <textarea 
-                                id="messageInput" 
-                                placeholder="Ask absolutely anything... (e.g., Explain blockchain technology with investment strategies and future predictions)"
-                                rows="1"
-                                class="luxury-input"
-                            ></textarea>
-                            <button id="sendButton" class="send-btn-gold">
-                                <i class="fas fa-paper-plane"></i>
-                                <span class="btn-text-gold">Send</span>
-                            </button>
-                        </div>
-                        
-                        <div class="input-actions-luxury">
-                            <button class="luxury-action-btn" id="clearChat">
-                                <i class="fas fa-sparkles"></i>
-                                <span>New Session</span>
-                            </button>
-                            <button class="luxury-action-btn" id="downloadPDF">
-                                <i class="fas fa-file-pdf"></i>
-                                <span>Export Premium PDF</span>
-                            </button>
-                            <button class="luxury-action-btn" id="suggestPrompts">
-                                <i class="fas fa-lightbulb"></i>
-                                <span>Inspiration</span>
-                            </button>
-                        </div>
+                <!-- Loading Indicator -->
+                <div class="loading-indicator" id="loadingIndicator">
+                    <div class="typing-animation">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
                     </div>
-                </div>
-                
-                <div class="luxury-disclaimer">
-                    <p>Savoiré AI by Sooban Talha Productions • Premium Intelligence Platform</p>
+                    <span>Savoiré AI is thinking...</span>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Luxury Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Input Section -->
+    <div class="input-section">
+        <div class="container">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div class="input-box">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Message Savoiré AI..."
+                            rows="1"
+                        ></textarea>
+                        <button id="sendButton">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="input-actions">
+                        <button class="action-btn" id="clearChat">
+                            <i class="fas fa-trash"></i>
+                            Clear Chat
+                        </button>
+                        <button class="action-btn" id="newChat">
+                            <i class="fas fa-plus"></i>
+                            New Chat
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="scripts/app.js"></script>
+
+    <!-- JavaScript -->
 </body>
 </html>
