@@ -1,17 +1,17 @@
-// ULTRA-ADVANCED AI STUDY ASSISTANT
-class SavoireAI {
+// Modern Gemini-style AI Study Assistant
+class ModernSavoireAI {
     constructor() {
         this.initializeApp();
         this.bindEvents();
-        this.initializeParticles();
     }
 
     initializeApp() {
         this.chatMessages = document.getElementById('chatMessages');
         this.messageInput = document.getElementById('messageInput');
         this.sendButton = document.getElementById('sendButton');
-        this.welcomeScreen = document.getElementById('welcomeScreen');
-        this.loadingIndicator = document.getElementById('loadingIndicator');
+        this.welcomeArea = document.getElementById('welcomeArea');
+        this.messagesContainer = document.getElementById('messagesContainer');
+        this.thinkingIndicator = document.getElementById('thinkingIndicator');
         this.clearChatBtn = document.getElementById('clearChat');
         this.downloadPDFBtn = document.getElementById('downloadPDF');
         
@@ -34,10 +34,10 @@ class SavoireAI {
         // Auto-resize textarea
         this.messageInput.addEventListener('input', () => this.autoResize());
 
-        // Quick prompt cards
-        document.querySelectorAll('.prompt-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const prompt = card.getAttribute('data-prompt');
+        // Quick suggestion chips
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const prompt = chip.getAttribute('data-prompt');
                 this.messageInput.value = prompt;
                 this.sendMessage();
             });
@@ -45,46 +45,6 @@ class SavoireAI {
 
         // Theme toggle
         document.querySelector('.theme-toggle').addEventListener('click', () => this.toggleTheme());
-    }
-
-    initializeParticles() {
-        const particlesContainer = document.createElement('div');
-        particlesContainer.className = 'quantum-particles';
-        document.body.appendChild(particlesContainer);
-
-        for (let i = 0; i < 50; i++) {
-            this.createParticle(particlesContainer);
-        }
-    }
-
-    createParticle(container) {
-        const particle = document.createElement('div');
-        particle.className = 'quantum-particle';
-
-        const size = Math.random() * 6 + 2;
-        const posX = Math.random() * 100;
-        const posY = Math.random() * 100;
-        const duration = Math.random() * 20 + 10;
-        const delay = Math.random() * 5;
-
-        particle.style.cssText = `
-            position: fixed;
-            width: ${size}px;
-            height: ${size}px;
-            background: radial-gradient(circle, 
-                rgba(59, 130, 246, 0.8), 
-                rgba(139, 92, 246, 0.4),
-                transparent 70%);
-            border-radius: 50%;
-            left: ${posX}%;
-            top: ${posY}%;
-            animation: quantumFloat ${duration}s infinite ease-in-out ${delay}s;
-            pointer-events: none;
-            z-index: -1;
-            filter: blur(1px);
-        `;
-
-        container.appendChild(particle);
     }
 
     autoResize() {
@@ -96,9 +56,9 @@ class SavoireAI {
         const message = this.messageInput.value.trim();
         if (!message || this.isGenerating) return;
 
-        // Hide welcome screen
-        this.welcomeScreen.style.display = 'none';
-        this.chatMessages.style.display = 'block';
+        // Hide welcome area, show messages
+        this.welcomeArea.style.display = 'none';
+        this.messagesContainer.style.display = 'block';
 
         // Add user message
         this.addMessage(message, 'user');
@@ -107,18 +67,18 @@ class SavoireAI {
         this.messageInput.value = '';
         this.autoResize();
 
-        // Show loading
-        this.showLoading();
+        // Show thinking indicator
+        this.showThinking();
 
         this.isGenerating = true;
         this.sendButton.disabled = true;
 
         try {
             const studyData = await this.generateStudyMaterials(message);
-            this.hideLoading();
+            this.hideThinking();
             this.displayStudyMaterials(studyData);
         } catch (error) {
-            this.hideLoading();
+            this.hideThinking();
             this.showError(error.message);
         }
 
@@ -150,12 +110,15 @@ class SavoireAI {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${type}-message`;
         
-        const avatar = type === 'user' ? '👤' : '🤖';
-        const time = new Date().toLocaleTimeString();
+        const avatar = type === 'user' ? 
+            '<div class="message-avatar">👤</div>' : 
+            '<div class="message-avatar"><div class="logo-background small"><img src="LOGO.png" alt="AI" class="logo-img"></div></div>';
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         if (type === 'user') {
             messageDiv.innerHTML = `
-                <div class="message-avatar">${avatar}</div>
+                ${avatar}
                 <div class="message-content">
                     <div class="message-text">${this.escapeHtml(content)}</div>
                     <div class="message-time">${time}</div>
@@ -163,7 +126,7 @@ class SavoireAI {
             `;
         } else {
             messageDiv.innerHTML = `
-                <div class="message-avatar">${avatar}</div>
+                ${avatar}
                 <div class="message-content">
                     ${content}
                     <div class="message-time">${time}</div>
@@ -187,8 +150,8 @@ class SavoireAI {
         if (data.error) {
             return `
                 <div class="error-message">
-                    <h3>🚨 Unable to Generate Study Materials</h3>
-                    <p><strong>Error:</strong> ${data.error}</p>
+                    <h3>Unable to Generate Study Materials</h3>
+                    <p>${data.error}</p>
                     <p>Please try again or check your connection.</p>
                 </div>
             `;
@@ -197,115 +160,81 @@ class SavoireAI {
         return `
             <div class="study-materials" data-topic="${this.escapeHtml(data.topic)}">
                 <!-- Header -->
-                <div class="study-header">
-                    <h1 class="study-title">🎓 ${this.escapeHtml(data.topic)}</h1>
-                    <div class="study-meta">
-                        <span class="curriculum-badge">${data.curriculum_alignment || 'Comprehensive Study Guide'}</span>
-                        <span class="score-badge">⭐ ${data.study_score || 90}/100</span>
+                <div class="study-section">
+                    <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
+                    <div class="powered-by">
+                        ${data.curriculum_alignment || 'Comprehensive Study Guide'} • 
+                        Score: ${data.study_score || 90}/100
                     </div>
                 </div>
 
                 <!-- Ultra Detailed Notes -->
                 <div class="study-section">
-                    <h2 class="section-title">📖 Comprehensive Study Notes</h2>
+                    <h2 class="section-title">Comprehensive Study Notes</h2>
                     <div class="ultra-notes">
                         ${this.formatNotes(data.ultra_long_notes)}
                     </div>
                 </div>
 
                 <!-- Key Concepts -->
+                ${data.key_concepts && data.key_concepts.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">🔑 Key Concepts</h2>
-                    <div class="concepts-grid">
-                        ${data.key_concepts ? data.key_concepts.map(concept => `
-                            <div class="concept-card">
-                                <div class="concept-icon">💡</div>
-                                <div class="concept-text">${this.escapeHtml(concept)}</div>
-                            </div>
-                        `).join('') : ''}
+                    <h2 class="section-title">Key Concepts</h2>
+                    <div class="concepts-list">
+                        ${data.key_concepts.map(concept => `
+                            <div class="concept-item">${this.escapeHtml(concept)}</div>
+                        `).join('')}
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- Practice Questions -->
+                ${data.practice_questions && data.practice_questions.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">❓ Practice Questions</h2>
-                    <div class="questions-container">
-                        ${data.practice_questions ? data.practice_questions.map((q, index) => `
-                            <div class="question-block">
-                                <div class="question-header">
-                                    <span class="question-number">Q${index + 1}</span>
-                                    <span class="question-difficulty">Medium</span>
-                                </div>
-                                <div class="question-text">${this.escapeHtml(q.question)}</div>
-                                <div class="answer-section">
-                                    <strong>Answer:</strong>
-                                    <div class="answer-text">${this.escapeHtml(q.answer)}</div>
-                                </div>
-                            </div>
-                        `).join('') : ''}
-                    </div>
-                </div>
-
-                <!-- Advanced Questions -->
-                ${data.advanced_questions && data.advanced_questions.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">🚀 Advanced Questions</h2>
-                    <div class="questions-container advanced-questions">
-                        ${data.advanced_questions.map((q, index) => `
-                            <div class="question-block advanced">
-                                <div class="question-header">
-                                    <span class="question-number">Advanced Q${index + 1}</span>
-                                    <span class="question-difficulty">Hard</span>
-                                </div>
-                                <div class="question-text">${this.escapeHtml(q.question)}</div>
-                                <div class="answer-section">
-                                    <strong>Detailed Solution:</strong>
-                                    <div class="answer-text">${this.escapeHtml(q.answer)}</div>
-                                </div>
+                    <h2 class="section-title">Practice Questions</h2>
+                    <div class="questions-list">
+                        ${data.practice_questions.map((q, index) => `
+                            <div class="question-item">
+                                <div class="question-text">Q${index + 1}: ${this.escapeHtml(q.question)}</div>
+                                <div class="answer-text">${this.escapeHtml(q.answer)}</div>
                             </div>
                         `).join('')}
                     </div>
                 </div>
                 ` : ''}
 
-                <!-- Learning Tricks -->
+                <!-- Learning Techniques -->
+                ${data.key_tricks && data.key_tricks.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">🎯 Learning Techniques</h2>
-                    <div class="tricks-container">
-                        ${data.key_tricks ? data.key_tricks.map(trick => `
-                            <div class="trick-card">
-                                <div class="trick-icon">⚡</div>
-                                <div class="trick-text">${this.escapeHtml(trick)}</div>
-                            </div>
-                        `).join('') : ''}
+                    <h2 class="section-title">Learning Techniques</h2>
+                    <div class="tips-list">
+                        ${data.key_tricks.map(trick => `
+                            <div class="tip-item">${this.escapeHtml(trick)}</div>
+                        `).join('')}
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- Exam Tips -->
+                ${data.exam_tips && data.exam_tips.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">📝 Exam Preparation</h2>
-                    <div class="tips-grid">
-                        ${data.exam_tips ? data.exam_tips.map(tip => `
-                            <div class="tip-item">
-                                <span class="tip-bullet">✅</span>
-                                <span>${this.escapeHtml(tip)}</span>
-                            </div>
-                        `).join('') : ''}
+                    <h2 class="section-title">Exam Preparation</h2>
+                    <div class="tips-list">
+                        ${data.exam_tips.map(tip => `
+                            <div class="tip-item">${this.escapeHtml(tip)}</div>
+                        `).join('')}
                     </div>
                 </div>
+                ` : ''}
 
                 <!-- Footer -->
-                <div class="study-footer">
+                <div class="study-section">
                     <div class="powered-by">
                         Generated by ${data.powered_by || 'Savoiré AI'} • 
                         ${data.generated_at ? new Date(data.generated_at).toLocaleString() : new Date().toLocaleString()}
                     </div>
-                </div>
-
-                <!-- Download Button -->
-                <div class="download-section">
-                    <button class="download-pdf-btn" onclick="savoireAI.downloadStudyPDF(this)">
-                        <i class="fas fa-download"></i> Download Complete Study Guide (PDF)
+                    <button class="download-btn" onclick="modernAI.downloadStudyPDF(this)">
+                        <i class="fas fa-download"></i> Download Study Guide
                     </button>
                 </div>
             </div>
@@ -325,19 +254,19 @@ class SavoireAI {
             .replace(/# (.*?)(?=\n|$)/g, '<h1>$1</h1>');
     }
 
-    showLoading() {
-        this.loadingIndicator.style.display = 'flex';
+    showThinking() {
+        this.thinkingIndicator.style.display = 'flex';
         this.scrollToBottom();
     }
 
-    hideLoading() {
-        this.loadingIndicator.style.display = 'none';
+    hideThinking() {
+        this.thinkingIndicator.style.display = 'none';
     }
 
     showError(message) {
         const errorMessage = `
             <div class="error-message">
-                <h3>⚠️ Connection Issue</h3>
+                <h3>Connection Issue</h3>
                 <p>${this.escapeHtml(message)}</p>
                 <p>Please check your internet connection and try again.</p>
             </div>
@@ -348,8 +277,8 @@ class SavoireAI {
     clearChat() {
         this.chatMessages.innerHTML = '';
         this.conversationHistory = [];
-        this.welcomeScreen.style.display = 'block';
-        this.chatMessages.style.display = 'none';
+        this.welcomeArea.style.display = 'block';
+        this.messagesContainer.style.display = 'none';
     }
 
     async downloadPDF() {
@@ -359,7 +288,7 @@ class SavoireAI {
         }
 
         try {
-            this.downloadPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+            this.downloadPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
             this.downloadPDFBtn.disabled = true;
 
             const { jsPDF } = window.jspdf;
@@ -372,7 +301,7 @@ class SavoireAI {
 
             // Add header
             pdf.setFontSize(20);
-            pdf.setTextColor(59, 130, 246);
+            pdf.setTextColor(138, 180, 248);
             pdf.text('Savoiré AI - Study Session', margin, yPosition);
             
             yPosition += 15;
@@ -393,7 +322,7 @@ class SavoireAI {
                 }
 
                 pdf.setFont('helvetica', msg.type === 'user' ? 'bold' : 'normal');
-                pdf.setTextColor(msg.type === 'user' ? 59 : 0, msg.type === 'user' ? 130 : 0, msg.type === 'user' ? 246 : 0);
+                pdf.setTextColor(msg.type === 'user' ? 30 : 0, msg.type === 'user' ? 58 : 0, msg.type === 'user' ? 95 : 0);
                 pdf.text(`${msg.type === 'user' ? 'You' : 'Savoiré AI'}:`, margin, yPosition);
                 
                 yPosition += lineHeight;
@@ -420,7 +349,7 @@ class SavoireAI {
             console.error('PDF generation failed:', error);
             alert('PDF generation failed. Please try again.');
         } finally {
-            this.downloadPDFBtn.innerHTML = '<i class="fas fa-download"></i> PDF';
+            this.downloadPDFBtn.innerHTML = '<i class="fas fa-download"></i> Export PDF';
             this.downloadPDFBtn.disabled = false;
         }
     }
@@ -434,27 +363,47 @@ class SavoireAI {
             button.disabled = true;
 
             const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
             
-            // Capture the study materials as image
-            const canvas = await html2canvas(studyElement, {
-                scale: 2,
-                useCORS: true,
-                logging: false
+            // Create PDF from study content
+            const pdf = new jsPDF();
+            let yPosition = 20;
+            const margin = 20;
+            const lineHeight = 7;
+            const pageHeight = pdf.internal.pageSize.height;
+
+            // Add header
+            pdf.setFontSize(20);
+            pdf.setTextColor(138, 180, 248);
+            pdf.text('Savoiré AI Study Guide', margin, yPosition);
+            
+            yPosition += 10;
+            pdf.setFontSize(16);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(topic, margin, yPosition);
+            
+            yPosition += 20;
+
+            // Add content
+            pdf.setFontSize(12);
+            const content = this.stripHtml(studyElement.textContent);
+            const lines = pdf.splitTextToSize(content, 170);
+            
+            lines.forEach(line => {
+                if (yPosition > pageHeight - 20) {
+                    pdf.addPage();
+                    yPosition = margin;
+                }
+                pdf.text(line, margin, yPosition);
+                yPosition += lineHeight;
             });
 
-            const imgData = canvas.toDataURL('image/png');
-            const imgWidth = pdf.internal.pageSize.getWidth();
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
             pdf.save(`savoire-ai-${topic.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`);
             
         } catch (error) {
             console.error('Study PDF generation failed:', error);
             alert('PDF generation failed. Please try again.');
         } finally {
-            button.innerHTML = '<i class="fas fa-download"></i> Download Complete Study Guide (PDF)';
+            button.innerHTML = '<i class="fas fa-download"></i> Download Study Guide';
             button.disabled = false;
         }
     }
@@ -487,372 +436,32 @@ class SavoireAI {
         const icon = document.querySelector('.theme-toggle i');
         if (document.body.classList.contains('light-theme')) {
             icon.className = 'fas fa-sun';
+            // Update CSS variables for light theme
+            document.documentElement.style.setProperty('--primary-bg', '#ffffff');
+            document.documentElement.style.setProperty('--secondary-bg', '#f8f9fa');
+            document.documentElement.style.setProperty('--surface-bg', '#ffffff');
+            document.documentElement.style.setProperty('--text-primary', '#202124');
+            document.documentElement.style.setProperty('--text-secondary', '#5f6368');
+            document.documentElement.style.setProperty('--text-muted', '#80868b');
+            document.documentElement.style.setProperty('--border-color', '#dadce0');
+            document.documentElement.style.setProperty('--ai-message-bg', '#f8f9fa');
         } else {
             icon.className = 'fas fa-moon';
+            // Reset to dark theme
+            document.documentElement.style.setProperty('--primary-bg', '#0f0f0f');
+            document.documentElement.style.setProperty('--secondary-bg', '#1a1a1a');
+            document.documentElement.style.setProperty('--surface-bg', '#2d2d2d');
+            document.documentElement.style.setProperty('--text-primary', '#ffffff');
+            document.documentElement.style.setProperty('--text-secondary', '#e8eaed');
+            document.documentElement.style.setProperty('--text-muted', '#9aa0a6');
+            document.documentElement.style.setProperty('--border-color', '#5f6368');
+            document.documentElement.style.setProperty('--ai-message-bg', '#2d2d2d');
         }
     }
 }
 
-// Initialize the app
-const savoireAI = new SavoireAI();
+// Initialize the modern app
+const modernAI = new ModernSavoireAI();
 
 // Make available globally
-window.savoireAI = savoireAI;
-
-// Add enhanced styles
-const enhancedStyles = document.createElement('style');
-enhancedStyles.textContent = `
-    /* Quantum Particles Animation */
-    @keyframes quantumFloat {
-        0%, 100% { 
-            transform: translate(0, 0) rotate(0deg); 
-            opacity: 0.7;
-        }
-        25% { 
-            transform: translate(10px, -15px) rotate(90deg); 
-            opacity: 1;
-        }
-        50% { 
-            transform: translate(-5px, 10px) rotate(180deg); 
-            opacity: 0.5;
-        }
-        75% { 
-            transform: translate(15px, 5px) rotate(270deg); 
-            opacity: 0.8;
-        }
-    }
-
-    /* Study Materials Styling */
-    .study-materials {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 20px;
-        padding: 2rem;
-        margin: 1rem 0;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    }
-
-    .study-header {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 2px solid rgba(59, 130, 246, 0.3);
-    }
-
-    .study-title {
-        font-size: 2.2rem;
-        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 1rem;
-    }
-
-    .study-meta {
-        display: flex;
-        justify-content: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .curriculum-badge, .score-badge {
-        background: rgba(59, 130, 246, 0.2);
-        border: 1px solid #3b82f6;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-
-    .score-badge {
-        background: rgba(245, 158, 11, 0.2);
-        border-color: #f59e0b;
-        color: #f59e0b;
-    }
-
-    .study-section {
-        margin-bottom: 2.5rem;
-    }
-
-    .section-title {
-        font-size: 1.5rem;
-        color: #3b82f6;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid rgba(59, 130, 246, 0.3);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .ultra-notes {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        padding: 2rem;
-        line-height: 1.8;
-        border-left: 4px solid #3b82f6;
-    }
-
-    .concepts-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1rem;
-    }
-
-    .concept-card {
-        background: rgba(59, 130, 246, 0.1);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 12px;
-        padding: 1.2rem;
-        display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .concept-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
-    }
-
-    .concept-icon {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .concept-text {
-        font-weight: 500;
-    }
-
-    .questions-container {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .question-block {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        padding: 1.5rem;
-        border-left: 4px solid #10b981;
-    }
-
-    .question-block.advanced {
-        border-left-color: #f59e0b;
-        background: rgba(245, 158, 11, 0.05);
-    }
-
-    .question-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-
-    .question-number {
-        font-weight: 700;
-        color: #3b82f6;
-        font-size: 1.1rem;
-    }
-
-    .question-difficulty {
-        background: rgba(16, 185, 129, 0.2);
-        color: #10b981;
-        padding: 0.3rem 0.8rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-
-    .question-block.advanced .question-difficulty {
-        background: rgba(245, 158, 11, 0.2);
-        color: #f59e0b;
-    }
-
-    .question-text {
-        font-weight: 600;
-        margin-bottom: 1rem;
-        line-height: 1.6;
-    }
-
-    .answer-section {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 8px;
-        padding: 1rem;
-        border-left: 3px solid #3b82f6;
-    }
-
-    .answer-text {
-        line-height: 1.6;
-        margin-top: 0.5rem;
-    }
-
-    .tricks-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1rem;
-    }
-
-    .trick-card {
-        background: rgba(139, 92, 246, 0.1);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-        border-radius: 12px;
-        padding: 1.2rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .trick-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.2);
-    }
-
-    .trick-icon {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .tips-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1rem;
-    }
-
-    .tip-item {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.8rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 8px;
-    }
-
-    .tip-bullet {
-        color: #10b981;
-        font-size: 1.2rem;
-    }
-
-    .study-footer {
-        text-align: center;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid rgba(59, 130, 246, 0.3);
-    }
-
-    .powered-by {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-
-    .download-section {
-        text-align: center;
-        margin-top: 2rem;
-    }
-
-    .download-pdf-btn {
-        background: linear-gradient(135deg, #10b981, #059669);
-        border: none;
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.8rem;
-        font-size: 1rem;
-    }
-
-    .download-pdf-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-    }
-
-    .download-pdf-btn:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .error-message {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        border-radius: 15px;
-        padding: 1.5rem;
-        text-align: center;
-    }
-
-    .error-message h3 {
-        color: #ef4444;
-        margin-bottom: 1rem;
-    }
-
-    /* Enhanced Message Styles */
-    .ai-message .message-content {
-        max-width: 90%;
-    }
-
-    .user-message .message-content {
-        max-width: 70%;
-    }
-
-    /* Light Theme */
-    .light-theme {
-        --primary-bg: #f8fafc;
-        --secondary-bg: #ffffff;
-        --card-bg: #f1f5f9;
-        --text-primary: #1e293b;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
-        --border-color: #e2e8f0;
-        --user-message-bg: #3b82f6;
-        --ai-message-bg: #ffffff;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .study-materials {
-            padding: 1.5rem;
-            margin: 0.5rem 0;
-        }
-
-        .study-title {
-            font-size: 1.8rem;
-        }
-
-        .concepts-grid,
-        .tricks-container,
-        .tips-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .ai-message .message-content,
-        .user-message .message-content {
-            max-width: 95%;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-        }
-    }
-
-    /* Smooth animations */
-    .study-materials {
-        animation: materialAppear 0.6s ease-out;
-    }
-
-    @keyframes materialAppear {
-        from {
-            opacity: 0;
-            transform: translateY(30px) scale(0.95);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-`;
-document.head.appendChild(enhancedStyles);
+window.modernAI = modernAI;

@@ -6,7 +6,7 @@
     <title>Savoiré AI - Intelligent Study Assistant</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="AI-powered study companion with real-time chat interface for comprehensive learning">
+    <meta name="description" content="AI-powered study companion with modern chat interface">
     
     <!-- Icons -->
     <link rel="icon" type="image/png" href="LOGO.png">
@@ -18,105 +18,121 @@
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-    <!-- Background -->
-    <div class="background-gradient"></div>
-    <div class="floating-shapes"></div>
-
-    <!-- Header -->
-    <header class="main-header">
-        <div class="container">
-            <div class="header-content">
-                <div class="logo-section">
-                    <div class="logo">
+    <!-- Modern Background -->
+    <div class="modern-bg"></div>
+    
+    <!-- Minimal Header -->
+    <header class="modern-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-wrapper">
+                    <div class="logo-background">
                         <img src="LOGO.png" alt="Savoiré AI" class="logo-img">
                     </div>
-                    <div class="brand">
-                        <h1>Savoiré AI</h1>
-                        <p>by Sooban Talha Productions</p>
-                    </div>
                 </div>
-                <div class="header-actions">
-                    <button class="theme-toggle">
-                        <i class="fas fa-moon"></i>
-                    </button>
+                <div class="brand-text">
+                    <h1>Savoiré</h1>
+                    <span class="ai-badge">AI</span>
                 </div>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle">
+                    <i class="fas fa-moon"></i>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Chat Interface -->
-    <main class="chat-main">
-        <div class="container">
-            <div class="chat-container">
-                <!-- Welcome Screen -->
-                <div class="welcome-screen" id="welcomeScreen">
-                    <div class="welcome-content">
-                        <div class="welcome-icon">
-                            <i class="fas fa-graduation-cap"></i>
+    <!-- Main Chat Area -->
+    <main class="modern-chat">
+        <div class="chat-container">
+            <!-- Welcome Area -->
+            <div class="welcome-area" id="welcomeArea">
+                <div class="welcome-center">
+                    <div class="welcome-logo">
+                        <div class="logo-background large">
+                            <img src="LOGO.png" alt="Savoiré AI" class="logo-img">
                         </div>
-                        <h2>Welcome to Savoiré AI</h2>
-                        <p>Your intelligent study companion. Ask me anything about any subject, chapter, or topic!</p>
-                        
-                        <div class="quick-prompts">
-                            <div class="prompt-grid">
-                                <div class="prompt-card" data-prompt="Explain Class 9 Science Chapter 1 in detail with 10 hard questions">
-                                    <i class="fas fa-atom"></i>
-                                    <span>Science Chapter 1</span>
-                                </div>
-                                <div class="prompt-card" data-prompt="Provide detailed notes on Business Studies Chapter 1 with difficult questions">
-                                    <i class="fas fa-chart-line"></i>
-                                    <span>Business Studies</span>
-                                </div>
-                                <div class="prompt-card" data-prompt="Explain Calculus basics with advanced problems and solutions">
-                                    <i class="fas fa-calculator"></i>
-                                    <span>Calculus Basics</span>
-                                </div>
-                                <div class="prompt-card" data-prompt="Give me comprehensive notes on Physics Chapter 1 with tricky questions">
-                                    <i class="fas fa-rocket"></i>
-                                    <span>Physics Chapter 1</span>
-                                </div>
-                            </div>
+                    </div>
+                    <h1 class="welcome-title">Hello, how can I help you today?</h1>
+                    <p class="welcome-subtitle">Ask me anything about any subject, chapter, or topic</p>
+                    
+                    <!-- Quick Suggestions -->
+                    <div class="suggestions-grid">
+                        <div class="suggestion-chip" data-prompt="Explain Class 9 Science Chapter 1 in detail">
+                            <i class="fas fa-atom"></i>
+                            Science Chapter 1
+                        </div>
+                        <div class="suggestion-chip" data-prompt="Provide detailed notes on Business Studies Chapter 1">
+                            <i class="fas fa-chart-line"></i>
+                            Business Studies
+                        </div>
+                        <div class="suggestion-chip" data-prompt="Explain Calculus basics with examples">
+                            <i class="fas fa-calculator"></i>
+                            Calculus Basics
+                        </div>
+                        <div class="suggestion-chip" data-prompt="Give me comprehensive notes on Physics Chapter 1">
+                            <i class="fas fa-rocket"></i>
+                            Physics Chapter 1
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Chat Messages -->
-                <div class="chat-messages" id="chatMessages" style="display: none;">
+            <!-- Chat Messages -->
+            <div class="messages-container" id="messagesContainer" style="display: none;">
+                <div class="messages-scroll" id="chatMessages">
                     <!-- Messages will be added here dynamically -->
                 </div>
+            </div>
 
-                <!-- Loading Indicator -->
-                <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+            <!-- Loading Indicator -->
+            <div class="thinking-indicator" id="thinkingIndicator" style="display: none;">
+                <div class="thinking-avatar">
+                    <div class="logo-background small">
+                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img">
+                    </div>
+                </div>
+                <div class="thinking-content">
                     <div class="typing-animation">
                         <div class="typing-dot"></div>
                         <div class="typing-dot"></div>
                         <div class="typing-dot"></div>
                     </div>
-                    <span>Savoiré AI is thinking...</span>
+                    <span class="thinking-text">Savoiré AI is thinking...</span>
                 </div>
             </div>
+        </div>
 
-            <!-- Input Area -->
+        <!-- Input Area -->
+        <div class="input-area">
             <div class="input-container">
                 <div class="input-wrapper">
-                    <div class="input-box">
+                    <div class="text-input-container">
                         <textarea 
                             id="messageInput" 
-                            placeholder="Ask about any subject, chapter, or topic... (e.g., Explain Class 10 Science Chapter 1 with 10 hard questions)"
+                            placeholder="Message Savoiré AI..."
                             rows="1"
                         ></textarea>
-                        <button id="sendButton" class="send-button">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
+                        <div class="input-actions">
+                            <button class="icon-btn" id="attachBtn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <button class="send-button" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="input-actions">
-                        <button class="action-btn" id="clearChat">
-                            <i class="fas fa-trash"></i> Clear
-                        </button>
-                        <button class="action-btn" id="downloadPDF">
-                            <i class="fas fa-download"></i> PDF
-                        </button>
-                    </div>
+                </div>
+                <div class="footer-actions">
+                    <button class="footer-btn" id="clearChat">
+                        <i class="fas fa-trash"></i>
+                        Clear chat
+                    </button>
+                    <button class="footer-btn" id="downloadPDF">
+                        <i class="fas fa-download"></i>
+                        Export PDF
+                    </button>
                 </div>
             </div>
         </div>
