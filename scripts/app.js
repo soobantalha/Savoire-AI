@@ -164,13 +164,14 @@ class ModernSavoireAI {
                     <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
                     <div class="powered-by">
                         ${data.curriculum_alignment || 'Comprehensive Study Guide'} • 
-                        Score: ${data.study_score || 90}/100
+                        Score: ${data.study_score || 90}/100 • 
+                        by Sooban Talha Productions
                     </div>
                 </div>
 
                 <!-- Ultra Detailed Notes -->
                 <div class="study-section">
-                    <h2 class="section-title">Comprehensive Study Notes</h2>
+                    <h2 class="section-title">📚 Comprehensive Study Notes</h2>
                     <div class="ultra-notes">
                         ${this.formatNotes(data.ultra_long_notes)}
                     </div>
@@ -179,7 +180,7 @@ class ModernSavoireAI {
                 <!-- Key Concepts -->
                 ${data.key_concepts && data.key_concepts.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">Key Concepts</h2>
+                    <h2 class="section-title">🔑 Key Concepts</h2>
                     <div class="concepts-list">
                         ${data.key_concepts.map(concept => `
                             <div class="concept-item">${this.escapeHtml(concept)}</div>
@@ -191,7 +192,7 @@ class ModernSavoireAI {
                 <!-- Practice Questions -->
                 ${data.practice_questions && data.practice_questions.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">Practice Questions</h2>
+                    <h2 class="section-title">❓ Practice Questions</h2>
                     <div class="questions-list">
                         ${data.practice_questions.map((q, index) => `
                             <div class="question-item">
@@ -206,7 +207,7 @@ class ModernSavoireAI {
                 <!-- Learning Techniques -->
                 ${data.key_tricks && data.key_tricks.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">Learning Techniques</h2>
+                    <h2 class="section-title">⚡ Learning Techniques</h2>
                     <div class="tips-list">
                         ${data.key_tricks.map(trick => `
                             <div class="tip-item">${this.escapeHtml(trick)}</div>
@@ -218,7 +219,7 @@ class ModernSavoireAI {
                 <!-- Exam Tips -->
                 ${data.exam_tips && data.exam_tips.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">Exam Preparation</h2>
+                    <h2 class="section-title">📝 Exam Preparation</h2>
                     <div class="tips-list">
                         ${data.exam_tips.map(tip => `
                             <div class="tip-item">${this.escapeHtml(tip)}</div>
@@ -304,9 +305,13 @@ class ModernSavoireAI {
             pdf.setTextColor(138, 180, 248);
             pdf.text('Savoiré AI - Study Session', margin, yPosition);
             
+            yPosition += 10;
+            pdf.setFontSize(12);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text('by Sooban Talha Productions', margin, yPosition);
+            
             yPosition += 15;
             pdf.setFontSize(10);
-            pdf.setTextColor(100, 100, 100);
             pdf.text(`Generated on: ${new Date().toLocaleString()}`, margin, yPosition);
             
             yPosition += 20;
@@ -377,6 +382,11 @@ class ModernSavoireAI {
             pdf.text('Savoiré AI Study Guide', margin, yPosition);
             
             yPosition += 10;
+            pdf.setFontSize(12);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text('by Sooban Talha Productions', margin, yPosition);
+            
+            yPosition += 10;
             pdf.setFontSize(16);
             pdf.setTextColor(0, 0, 0);
             pdf.text(topic, margin, yPosition);
@@ -445,17 +455,19 @@ class ModernSavoireAI {
             document.documentElement.style.setProperty('--text-muted', '#80868b');
             document.documentElement.style.setProperty('--border-color', '#dadce0');
             document.documentElement.style.setProperty('--ai-message-bg', '#f8f9fa');
+            document.documentElement.style.setProperty('--user-message-bg', '#e8f0fe');
         } else {
             icon.className = 'fas fa-moon';
             // Reset to dark theme
-            document.documentElement.style.setProperty('--primary-bg', '#0f0f0f');
+            document.documentElement.style.setProperty('--primary-bg', '#101010');
             document.documentElement.style.setProperty('--secondary-bg', '#1a1a1a');
-            document.documentElement.style.setProperty('--surface-bg', '#2d2d2d');
-            document.documentElement.style.setProperty('--text-primary', '#ffffff');
-            document.documentElement.style.setProperty('--text-secondary', '#e8eaed');
-            document.documentElement.style.setProperty('--text-muted', '#9aa0a6');
-            document.documentElement.style.setProperty('--border-color', '#5f6368');
-            document.documentElement.style.setProperty('--ai-message-bg', '#2d2d2d');
+            document.documentElement.style.setProperty('--surface-bg', '#262626');
+            document.documentElement.style.setProperty('--text-primary', '#e8eaed');
+            document.documentElement.style.setProperty('--text-secondary', '#9aa0a6');
+            document.documentElement.style.setProperty('--text-muted', '#5f6368');
+            document.documentElement.style.setProperty('--border-color', '#3c4043');
+            document.documentElement.style.setProperty('--ai-message-bg', '#282828');
+            document.documentElement.style.setProperty('--user-message-bg', '#1e3a5f');
         }
     }
 }
