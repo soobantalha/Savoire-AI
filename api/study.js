@@ -95,8 +95,8 @@ async function generateStudyMaterials(userInput) {
 
   const models = [
     'x-ai/grok-4-fast:free',
-    'deepseek/deepseek-chat-v3.1:free',
-    'deepseek/deepseek-r1-0528:free'
+    'google/gemini-2.0-flash-exp:free',
+    'deepseek/deepseek-chat-v3.1:free'
   ];
 
   for (const model of models) {
