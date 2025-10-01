@@ -1,5 +1,5 @@
-// Ultra-Advanced Animated AI Study Assistant
-class UltraSavoireAI {
+// Ultra-Advanced Gold Theme AI Assistant
+class GoldSavoireAI {
     constructor() {
         this.initializeApp();
         this.bindEvents();
@@ -28,13 +28,6 @@ class UltraSavoireAI {
                 }
             });
         }, { threshold: 0.1 });
-
-        // Observe all study sections
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.study-section').forEach(section => {
-                this.observer.observe(section);
-            });
-        });
     }
 
     bindEvents() {
@@ -144,7 +137,7 @@ class UltraSavoireAI {
     }
 
     async generateStudyMaterials(message) {
-        console.log('Sending request to AI with 1M tokens:', message);
+        console.log('Sending request to AI:', message);
 
         const response = await fetch('/api/study', {
             method: 'POST',
@@ -159,7 +152,7 @@ class UltraSavoireAI {
         }
 
         const data = await response.json();
-        console.log('Received ultra-detailed study data:', data);
+        console.log('Received detailed study data:', data);
         return data;
     }
 
@@ -214,7 +207,7 @@ class UltraSavoireAI {
         if (data.error) {
             return `
                 <div class="error-message">
-                    <h3>Unable to Generate Study Materials</h3>
+                    <h3>Unable to Generate Response</h3>
                     <p>${data.error}</p>
                     <p>Please try again or check your connection.</p>
                 </div>
@@ -227,7 +220,7 @@ class UltraSavoireAI {
                 <div class="study-section">
                     <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
                     <div class="powered-by">
-                        ${data.curriculum_alignment || 'Advanced Comprehensive Study Guide'} • 
+                        Powered by Advanced AI Models • 
                         Score: ${data.study_score || 98}/100 • 
                         by Sooban Talha Productions
                     </div>
@@ -235,7 +228,7 @@ class UltraSavoireAI {
 
                 <!-- Ultra Detailed Notes -->
                 <div class="study-section">
-                    <h2 class="section-title">📚 ULTRA-DETAILED STUDY NOTES</h2>
+                    <h2 class="section-title">📚 COMPREHENSIVE ANALYSIS</h2>
                     <div class="ultra-notes">
                         ${this.formatNotes(data.ultra_long_notes)}
                     </div>
@@ -244,7 +237,7 @@ class UltraSavoireAI {
                 <!-- Key Concepts -->
                 ${data.key_concepts && data.key_concepts.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">🔑 ADVANCED KEY CONCEPTS</h2>
+                    <h2 class="section-title">🔑 KEY CONCEPTS</h2>
                     <div class="concepts-list">
                         ${data.key_concepts.map(concept => `
                             <div class="concept-item">${this.escapeHtml(concept)}</div>
@@ -256,7 +249,7 @@ class UltraSavoireAI {
                 <!-- Practice Questions -->
                 ${data.practice_questions && data.practice_questions.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">❓ ADVANCED PRACTICE QUESTIONS</h2>
+                    <h2 class="section-title">❓ ADVANCED QUESTIONS</h2>
                     <div class="questions-list">
                         ${data.practice_questions.map((q, index) => `
                             <div class="question-item">
@@ -268,25 +261,10 @@ class UltraSavoireAI {
                 </div>
                 ` : ''}
 
-                <!-- Advanced Questions -->
-                ${data.advanced_questions && data.advanced_questions.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">🚀 EXPERT-LEVEL ADVANCED QUESTIONS</h2>
-                    <div class="questions-list">
-                        ${data.advanced_questions.map((q, index) => `
-                            <div class="question-item">
-                                <div class="question-text">Expert Q${index + 1}: ${this.escapeHtml(q.question)}</div>
-                                <div class="answer-text">${this.escapeHtml(q.answer)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- Learning Techniques -->
+                <!-- Tips & Tricks -->
                 ${data.key_tricks && data.key_tricks.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">⚡ ADVANCED LEARNING TECHNIQUES</h2>
+                    <h2 class="section-title">⚡ TIPS & TRICKS</h2>
                     <div class="tips-list">
                         ${data.key_tricks.map(trick => `
                             <div class="tip-item">${this.escapeHtml(trick)}</div>
@@ -295,34 +273,19 @@ class UltraSavoireAI {
                 </div>
                 ` : ''}
 
-                <!-- Exam Tips -->
-                ${data.exam_tips && data.exam_tips.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">📝 EXPERT EXAM STRATEGIES</h2>
-                    <div class="tips-list">
-                        ${data.exam_tips.map(tip => `
-                            <div class="tip-item">${this.escapeHtml(tip)}</div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
                 <!-- Footer -->
                 <div class="study-section">
                     <div class="powered-by">
-                        Generated by ${data.powered_by || 'Savoiré AI'} • 
+                        Generated by Savoiré AI • 
                         ${data.generated_at ? new Date(data.generated_at).toLocaleString() : new Date().toLocaleString()}
                     </div>
-                    <button class="download-btn" onclick="ultraAI.downloadProfessionalPDF(this)">
-                        <i class="fas fa-download"></i> Download Professional Study Guide
-                    </button>
                 </div>
             </div>
         `;
     }
 
     formatNotes(notes) {
-        if (!notes) return '<p>No notes available.</p>';
+        if (!notes) return '<p>No response available.</p>';
         
         // Convert markdown-like formatting to HTML with enhanced styling
         return notes
@@ -362,108 +325,6 @@ class UltraSavoireAI {
             this.welcomeArea.style.display = 'block';
             this.messagesContainer.style.display = 'none';
         }, 300);
-    }
-
-    async downloadProfessionalPDF(button) {
-        const studyElement = button.closest('.study-materials');
-        const topic = studyElement.getAttribute('data-topic');
-
-        try {
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Professional PDF...';
-            button.disabled = true;
-
-            const { jsPDF } = window.jspdf;
-            
-            // Create professional PDF
-            const pdf = new jsPDF();
-            
-            // Add professional header
-            pdf.setFillColor(30, 58, 95);
-            pdf.rect(0, 0, 210, 40, 'F');
-            
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFontSize(20);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Savoiré AI', 20, 20);
-            pdf.setFontSize(12);
-            pdf.text('Professional Study Guide', 20, 28);
-            pdf.text('by Sooban Talha Productions', 20, 34);
-
-            // Add topic
-            pdf.setFillColor(255, 255, 255);
-            pdf.setTextColor(0, 0, 0);
-            pdf.setFontSize(16);
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(topic, 20, 55);
-
-            // Add generation date
-            pdf.setFontSize(10);
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(100, 100, 100);
-            pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 62);
-
-            let yPosition = 75;
-            const margin = 20;
-            const lineHeight = 6;
-            const pageHeight = pdf.internal.pageSize.height;
-
-            // Add content sections
-            const sections = studyElement.querySelectorAll('.study-section');
-            
-            sections.forEach((section, index) => {
-                if (yPosition > pageHeight - 50) {
-                    pdf.addPage();
-                    yPosition = margin;
-                }
-
-                const title = section.querySelector('.section-title, .study-title');
-                if (title) {
-                    pdf.setFontSize(12);
-                    pdf.setFont('helvetica', 'bold');
-                    pdf.setTextColor(30, 58, 95);
-                    const titleText = title.textContent.replace(/[📚🔑❓🚀⚡📝]/g, '').trim();
-                    pdf.text(titleText, margin, yPosition);
-                    yPosition += 10;
-                }
-
-                // Add content
-                pdf.setFontSize(10);
-                pdf.setFont('helvetica', 'normal');
-                pdf.setTextColor(0, 0, 0);
-
-                const content = this.stripHtml(section.textContent);
-                const lines = pdf.splitTextToSize(content, 170);
-                
-                lines.forEach(line => {
-                    if (yPosition > pageHeight - 20) {
-                        pdf.addPage();
-                        yPosition = margin;
-                    }
-                    pdf.text(line, margin, yPosition);
-                    yPosition += lineHeight;
-                });
-
-                yPosition += 15;
-            });
-
-            // Add professional footer
-            const pageCount = pdf.internal.getNumberOfPages();
-            for (let i = 1; i <= pageCount; i++) {
-                pdf.setPage(i);
-                pdf.setFontSize(8);
-                pdf.setTextColor(100, 100, 100);
-                pdf.text(`Page ${i} of ${pageCount} - Savoiré AI by Sooban Talha Productions`, 105, 290, { align: 'center' });
-            }
-
-            pdf.save(`savoire-ai-professional-${topic.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`);
-            
-        } catch (error) {
-            console.error('Professional PDF generation failed:', error);
-            alert('PDF generation failed. Please try again.');
-        } finally {
-            button.innerHTML = '<i class="fas fa-download"></i> Download Professional Study Guide';
-            button.disabled = false;
-        }
     }
 
     scrollToBottom() {
@@ -508,24 +369,24 @@ class UltraSavoireAI {
             document.documentElement.style.setProperty('--user-message-bg', '#e8f0fe');
         } else {
             icon.className = 'fas fa-moon';
-            document.documentElement.style.setProperty('--primary-bg', '#101010');
-            document.documentElement.style.setProperty('--secondary-bg', '#1a1a1a');
-            document.documentElement.style.setProperty('--surface-bg', '#262626');
-            document.documentElement.style.setProperty('--text-primary', '#e8eaed');
-            document.documentElement.style.setProperty('--text-secondary', '#9aa0a6');
-            document.documentElement.style.setProperty('--text-muted', '#5f6368');
-            document.documentElement.style.setProperty('--border-color', '#3c4043');
-            document.documentElement.style.setProperty('--ai-message-bg', '#282828');
-            document.documentElement.style.setProperty('--user-message-bg', '#1e3a5f');
+            document.documentElement.style.setProperty('--primary-bg', '#0a0a0a');
+            document.documentElement.style.setProperty('--secondary-bg', '#141414');
+            document.documentElement.style.setProperty('--surface-bg', '#1f1f1f');
+            document.documentElement.style.setProperty('--text-primary', '#f5f5f5');
+            document.documentElement.style.setProperty('--text-secondary', '#cccccc');
+            document.documentElement.style.setProperty('--text-muted', '#888888');
+            document.documentElement.style.setProperty('--border-color', '#333333');
+            document.documentElement.style.setProperty('--ai-message-bg', '#252525');
+            document.documentElement.style.setProperty('--user-message-bg', '#1a1a1a');
         }
     }
 }
 
-// Initialize the ultra app
-const ultraAI = new UltraSavoireAI();
+// Initialize the app
+const goldAI = new GoldSavoireAI();
 
 // Make available globally
-window.ultraAI = ultraAI;
+window.goldAI = goldAI;
 
 // Add additional CSS for scroll animations
 const scrollAnimations = document.createElement('style');
@@ -551,7 +412,7 @@ scrollAnimations.textContent = `
     
     .text-input-container.focused {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(138, 180, 248, 0.2);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
     }
 `;
 document.head.appendChild(scrollAnimations);
