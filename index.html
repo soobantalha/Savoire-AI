@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré AI - Intelligent Study Assistant</title>
+    <title>Savoiré AI - Advanced Study Assistant</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="AI-powered study companion with modern chat interface">
+    <meta name="description" content="Advanced AI-powered study companion with ultra-detailed explanations">
     
     <!-- Icons -->
     <link rel="icon" type="image/png" href="LOGO.png">
@@ -20,26 +20,27 @@
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-    <!-- Modern Background -->
-    <div class="modern-bg"></div>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+    <div class="floating-elements"></div>
     
     <!-- Minimal Header -->
     <header class="modern-header">
         <div class="header-container">
             <div class="logo-area">
                 <div class="logo-wrapper">
-                    <div class="logo-background">
+                    <div class="logo-background animated-logo">
                         <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
                     </div>
                 </div>
                 <div class="brand-text">
-                    <h1>Savoiré</h1>
-                    <span class="ai-badge">AI</span>
+                    <h1 class="animated-text">Savoiré</h1>
+                    <span class="ai-badge pulse">AI</span>
                 </div>
             </div>
             <div class="header-actions">
-                <div class="brand-tagline">by Sooban Talha Productions</div>
-                <button class="icon-btn theme-toggle">
+                <div class="brand-tagline fade-in">by Sooban Talha Productions</div>
+                <button class="icon-btn theme-toggle glow">
                     <i class="fas fa-moon"></i>
                 </button>
             </div>
@@ -53,40 +54,39 @@
             <div class="welcome-area" id="welcomeArea">
                 <div class="welcome-center">
                     <div class="welcome-logo">
-                        <div class="logo-background large">
+                        <div class="logo-background large animated-logo">
                             <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
                         </div>
                     </div>
-                    <h1 class="welcome-title">Hello, how can I help you today?</h1>
-                    <p class="welcome-subtitle">Ask me anything about any subject, chapter, or topic</p>
+                    <h1 class="welcome-title slide-in">Hello, how can I help you today?</h1>
+                    <p class="welcome-subtitle fade-in">Ask me anything about any subject, chapter, or topic for ultra-detailed explanations</p>
                     
                     <!-- Quick Suggestions -->
                     <div class="suggestions-grid">
-                        <div class="suggestion-chip" data-prompt="Explain Class 9 Science Chapter 1 in detail with examples">
-                            <i class="fas fa-atom"></i>
-                            Science Chapter 1
-                        </div>
-                        <div class="suggestion-chip" data-prompt="Provide detailed notes on Business Studies Chapter 1 with case studies">
-                            <i class="fas fa-chart-line"></i>
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain Class 9 bio Chapter 1 in extreme detail with advanced questions">
+                            <i class="fas fa-atom bounce"></i>
+                            Biology
+                        <div class="suggestion-chip animated-btn" data-prompt="Provide ultra-detailed notes on Business Studies Chapter 1 with advanced case studies">
+                            <i class="fas fa-chart-line bounce"></i>
                             Business Studies
                         </div>
-                        <div class="suggestion-chip" data-prompt="Explain Calculus basics with practical examples and problems">
-                            <i class="fas fa-calculator"></i>
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain Calculus basics with extremely detailed examples and advanced problems">
+                            <i class="fas fa-calculator bounce"></i>
                             Calculus Basics
                         </div>
-                        <div class="suggestion-chip" data-prompt="Give me comprehensive notes on Physics Chapter 1 with numerical problems">
-                            <i class="fas fa-rocket"></i>
-                            Physics Chapter 1
+                        <div class="suggestion-chip animated-btn" data-prompt="Give me comprehensive advanced notes on Physics Chapter 1 with complex numerical problems">
+                            <i class="fas fa-rocket bounce"></i>
+                            Physics 
                         </div>
                     </div>
 
                     <!-- Brand Footer -->
                     <div class="brand-footer">
-                        <div class="production-credit">by Sooban Talha Productions</div>
+                        <div class="production-credit pulse">by Sooban Talha Productions</div>
                         <div class="feature-tags">
-                            <span class="feature-tag">Advanced AI</span>
-                            <span class="feature-tag">Detailed Explanations</span>
-                            <span class="feature-tag">PDF Export</span>
+                            <span class="feature-tag glow">Ultra-Detailed AI</span>
+                            <span class="feature-tag glow">Advanced Explanations</span>
+                            <span class="feature-tag glow">Professional PDFs</span>
                         </div>
                     </div>
                 </div>
@@ -102,7 +102,7 @@
             <!-- Loading Indicator -->
             <div class="thinking-indicator" id="thinkingIndicator" style="display: none;">
                 <div class="thinking-avatar">
-                    <div class="logo-background small">
+                    <div class="logo-background small pulse">
                         <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
                     </div>
                 </div>
@@ -112,7 +112,7 @@
                         <div class="typing-dot"></div>
                         <div class="typing-dot"></div>
                     </div>
-                    <span class="thinking-text">Savoiré AI is thinking...</span>
+                    <span class="thinking-text">Good Things Take Time so Please Wait while Savoiré AI is crafting your ultra-detailed study guide...</span>
                 </div>
             </div>
         </div>
@@ -121,32 +121,28 @@
         <div class="input-area">
             <div class="input-container">
                 <div class="input-wrapper">
-                    <div class="text-input-container">
+                    <div class="text-input-container glow-border">
                         <textarea 
                             id="messageInput" 
-                            placeholder="Message Savoiré AI..."
+                            placeholder="Message Savoiré AI for ultra-detailed explanations..."
                             rows="1"
                         ></textarea>
                         <div class="input-actions">
-                            <button class="icon-btn" id="attachBtn">
+                            <button class="icon-btn animated-btn" id="attachBtn">
                                 <i class="fas fa-plus"></i>
                             </button>
-                            <button class="send-button" id="sendButton">
+                            <button class="send-button pulse animated-btn" id="sendButton">
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
                     </div>
                 </div>
                 <div class="footer-actions">
-                    <button class="footer-btn" id="clearChat">
+                    <button class="footer-btn animated-btn" id="clearChat">
                         <i class="fas fa-trash"></i>
                         Clear chat
                     </button>
-                    <button class="footer-btn" id="downloadPDF">
-                        <i class="fas fa-download"></i>
-                        Export PDF
-                    </button>
-                    <div class="production-watermark">
+                    <div class="production-watermark fade-in">
                         by Sooban Talha Productions
                     </div>
                 </div>

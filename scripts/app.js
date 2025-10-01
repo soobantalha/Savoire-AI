@@ -1,8 +1,9 @@
-// Modern Gemini-style AI Study Assistant
-class ModernSavoireAI {
+// Ultra-Advanced Animated AI Study Assistant
+class UltraSavoireAI {
     constructor() {
         this.initializeApp();
         this.bindEvents();
+        this.initializeAdvancedAnimations();
     }
 
     initializeApp() {
@@ -13,10 +14,27 @@ class ModernSavoireAI {
         this.messagesContainer = document.getElementById('messagesContainer');
         this.thinkingIndicator = document.getElementById('thinkingIndicator');
         this.clearChatBtn = document.getElementById('clearChat');
-        this.downloadPDFBtn = document.getElementById('downloadPDF');
         
         this.conversationHistory = [];
         this.isGenerating = false;
+    }
+
+    initializeAdvancedAnimations() {
+        // Add intersection observer for scroll animations
+        this.observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        // Observe all study sections
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.study-section').forEach(section => {
+                this.observer.observe(section);
+            });
+        });
     }
 
     bindEvents() {
@@ -29,22 +47,51 @@ class ModernSavoireAI {
         });
 
         this.clearChatBtn.addEventListener('click', () => this.clearChat());
-        this.downloadPDFBtn.addEventListener('click', () => this.downloadPDF());
 
-        // Auto-resize textarea
-        this.messageInput.addEventListener('input', () => this.autoResize());
+        // Auto-resize textarea with animation
+        this.messageInput.addEventListener('input', () => {
+            this.autoResize();
+            this.animateInput();
+        });
 
-        // Quick suggestion chips
+        // Quick suggestion chips with enhanced animations
         document.querySelectorAll('.suggestion-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
+            chip.addEventListener('click', (e) => {
+                this.animateButton(e.target);
                 const prompt = chip.getAttribute('data-prompt');
                 this.messageInput.value = prompt;
-                this.sendMessage();
+                setTimeout(() => this.sendMessage(), 300);
             });
         });
 
-        // Theme toggle
-        document.querySelector('.theme-toggle').addEventListener('click', () => this.toggleTheme());
+        // Theme toggle with enhanced animation
+        document.querySelector('.theme-toggle').addEventListener('click', (e) => {
+            this.animateButton(e.target);
+            setTimeout(() => this.toggleTheme(), 200);
+        });
+
+        // Input focus animations
+        this.messageInput.addEventListener('focus', () => {
+            this.messageInput.parentElement.classList.add('focused');
+        });
+
+        this.messageInput.addEventListener('blur', () => {
+            this.messageInput.parentElement.classList.remove('focused');
+        });
+    }
+
+    animateInput() {
+        this.messageInput.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            this.messageInput.style.transform = 'scale(1)';
+        }, 150);
+    }
+
+    animateButton(button) {
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1)';
+        }, 150);
     }
 
     autoResize() {
@@ -56,16 +103,15 @@ class ModernSavoireAI {
         const message = this.messageInput.value.trim();
         if (!message || this.isGenerating) return;
 
-        // Hide welcome area, show messages
+        // Hide welcome area, show messages with animation
         this.welcomeArea.style.display = 'none';
         this.messagesContainer.style.display = 'block';
 
-        // Add user message
+        // Add user message with animation
         this.addMessage(message, 'user');
 
-        // Clear input
-        this.messageInput.value = '';
-        this.autoResize();
+        // Clear input with animation
+        this.animateClearInput();
 
         // Show thinking indicator
         this.showThinking();
@@ -86,8 +132,19 @@ class ModernSavoireAI {
         this.sendButton.disabled = false;
     }
 
+    animateClearInput() {
+        this.messageInput.style.opacity = '0';
+        this.messageInput.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+            this.messageInput.value = '';
+            this.autoResize();
+            this.messageInput.style.opacity = '1';
+            this.messageInput.style.transform = 'translateX(0)';
+        }, 300);
+    }
+
     async generateStudyMaterials(message) {
-        console.log('Sending request to AI:', message);
+        console.log('Sending request to AI with 1M tokens:', message);
 
         const response = await fetch('/api/study', {
             method: 'POST',
@@ -102,7 +159,7 @@ class ModernSavoireAI {
         }
 
         const data = await response.json();
-        console.log('Received study data:', data);
+        console.log('Received ultra-detailed study data:', data);
         return data;
     }
 
@@ -144,6 +201,13 @@ class ModernSavoireAI {
     displayStudyMaterials(data) {
         const formattedContent = this.formatStudyData(data);
         this.addMessage(formattedContent, 'ai');
+        
+        // Add scroll animations to new study sections
+        setTimeout(() => {
+            document.querySelectorAll('.study-section').forEach(section => {
+                this.observer.observe(section);
+            });
+        }, 100);
     }
 
     formatStudyData(data) {
@@ -163,15 +227,15 @@ class ModernSavoireAI {
                 <div class="study-section">
                     <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
                     <div class="powered-by">
-                        ${data.curriculum_alignment || 'Comprehensive Study Guide'} • 
-                        Score: ${data.study_score || 90}/100 • 
+                        ${data.curriculum_alignment || 'Advanced Comprehensive Study Guide'} • 
+                        Score: ${data.study_score || 98}/100 • 
                         by Sooban Talha Productions
                     </div>
                 </div>
 
                 <!-- Ultra Detailed Notes -->
                 <div class="study-section">
-                    <h2 class="section-title">📚 Comprehensive Study Notes</h2>
+                    <h2 class="section-title">📚 ULTRA-DETAILED STUDY NOTES</h2>
                     <div class="ultra-notes">
                         ${this.formatNotes(data.ultra_long_notes)}
                     </div>
@@ -180,7 +244,7 @@ class ModernSavoireAI {
                 <!-- Key Concepts -->
                 ${data.key_concepts && data.key_concepts.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">🔑 Key Concepts</h2>
+                    <h2 class="section-title">🔑 ADVANCED KEY CONCEPTS</h2>
                     <div class="concepts-list">
                         ${data.key_concepts.map(concept => `
                             <div class="concept-item">${this.escapeHtml(concept)}</div>
@@ -192,7 +256,7 @@ class ModernSavoireAI {
                 <!-- Practice Questions -->
                 ${data.practice_questions && data.practice_questions.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">❓ Practice Questions</h2>
+                    <h2 class="section-title">❓ ADVANCED PRACTICE QUESTIONS</h2>
                     <div class="questions-list">
                         ${data.practice_questions.map((q, index) => `
                             <div class="question-item">
@@ -204,10 +268,25 @@ class ModernSavoireAI {
                 </div>
                 ` : ''}
 
+                <!-- Advanced Questions -->
+                ${data.advanced_questions && data.advanced_questions.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">🚀 EXPERT-LEVEL ADVANCED QUESTIONS</h2>
+                    <div class="questions-list">
+                        ${data.advanced_questions.map((q, index) => `
+                            <div class="question-item">
+                                <div class="question-text">Expert Q${index + 1}: ${this.escapeHtml(q.question)}</div>
+                                <div class="answer-text">${this.escapeHtml(q.answer)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
                 <!-- Learning Techniques -->
                 ${data.key_tricks && data.key_tricks.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">⚡ Learning Techniques</h2>
+                    <h2 class="section-title">⚡ ADVANCED LEARNING TECHNIQUES</h2>
                     <div class="tips-list">
                         ${data.key_tricks.map(trick => `
                             <div class="tip-item">${this.escapeHtml(trick)}</div>
@@ -219,7 +298,7 @@ class ModernSavoireAI {
                 <!-- Exam Tips -->
                 ${data.exam_tips && data.exam_tips.length > 0 ? `
                 <div class="study-section">
-                    <h2 class="section-title">📝 Exam Preparation</h2>
+                    <h2 class="section-title">📝 EXPERT EXAM STRATEGIES</h2>
                     <div class="tips-list">
                         ${data.exam_tips.map(tip => `
                             <div class="tip-item">${this.escapeHtml(tip)}</div>
@@ -234,8 +313,8 @@ class ModernSavoireAI {
                         Generated by ${data.powered_by || 'Savoiré AI'} • 
                         ${data.generated_at ? new Date(data.generated_at).toLocaleString() : new Date().toLocaleString()}
                     </div>
-                    <button class="download-btn" onclick="modernAI.downloadStudyPDF(this)">
-                        <i class="fas fa-download"></i> Download Study Guide
+                    <button class="download-btn" onclick="ultraAI.downloadProfessionalPDF(this)">
+                        <i class="fas fa-download"></i> Download Professional Study Guide
                     </button>
                 </div>
             </div>
@@ -245,14 +324,14 @@ class ModernSavoireAI {
     formatNotes(notes) {
         if (!notes) return '<p>No notes available.</p>';
         
-        // Convert markdown-like formatting to HTML
+        // Convert markdown-like formatting to HTML with enhanced styling
         return notes
             .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--accent-color);">$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/### (.*?)(?=\n|$)/g, '<h3>$1</h3>')
-            .replace(/## (.*?)(?=\n|$)/g, '<h2>$1</h2>')
-            .replace(/# (.*?)(?=\n|$)/g, '<h1>$1</h1>');
+            .replace(/### (.*?)(?=\n|$)/g, '<h3 style="color: var(--accent-color); margin: 1.5rem 0 1rem 0;">$1</h3>')
+            .replace(/## (.*?)(?=\n|$)/g, '<h2 style="color: var(--accent-color); margin: 2rem 0 1rem 0; border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem;">$1</h2>')
+            .replace(/# (.*?)(?=\n|$)/g, '<h1 style="color: var(--accent-color); margin: 2.5rem 0 1.5rem 0; text-align: center;">$1</h1>');
     }
 
     showThinking() {
@@ -276,66 +355,85 @@ class ModernSavoireAI {
     }
 
     clearChat() {
-        this.chatMessages.innerHTML = '';
-        this.conversationHistory = [];
-        this.welcomeArea.style.display = 'block';
-        this.messagesContainer.style.display = 'none';
+        this.animateButton(this.clearChatBtn);
+        setTimeout(() => {
+            this.chatMessages.innerHTML = '';
+            this.conversationHistory = [];
+            this.welcomeArea.style.display = 'block';
+            this.messagesContainer.style.display = 'none';
+        }, 300);
     }
 
-    async downloadPDF() {
-        if (this.conversationHistory.length === 0) {
-            alert('No conversation to download!');
-            return;
-        }
+    async downloadProfessionalPDF(button) {
+        const studyElement = button.closest('.study-materials');
+        const topic = studyElement.getAttribute('data-topic');
 
         try {
-            this.downloadPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-            this.downloadPDFBtn.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Professional PDF...';
+            button.disabled = true;
 
             const { jsPDF } = window.jspdf;
+            
+            // Create professional PDF
             const pdf = new jsPDF();
             
-            let yPosition = 20;
-            const pageHeight = pdf.internal.pageSize.height;
-            const margin = 20;
-            const lineHeight = 7;
-
-            // Add header
+            // Add professional header
+            pdf.setFillColor(30, 58, 95);
+            pdf.rect(0, 0, 210, 40, 'F');
+            
+            pdf.setTextColor(255, 255, 255);
             pdf.setFontSize(20);
-            pdf.setTextColor(138, 180, 248);
-            pdf.text('Savoiré AI - Study Session', margin, yPosition);
-            
-            yPosition += 10;
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('Savoiré AI', 20, 20);
             pdf.setFontSize(12);
-            pdf.setTextColor(100, 100, 100);
-            pdf.text('by Sooban Talha Productions', margin, yPosition);
-            
-            yPosition += 15;
-            pdf.setFontSize(10);
-            pdf.text(`Generated on: ${new Date().toLocaleString()}`, margin, yPosition);
-            
-            yPosition += 20;
+            pdf.text('Professional Study Guide', 20, 28);
+            pdf.text('by Sooban Talha Productions', 20, 34);
 
-            // Add conversation
-            pdf.setFontSize(12);
+            // Add topic
+            pdf.setFillColor(255, 255, 255);
             pdf.setTextColor(0, 0, 0);
+            pdf.setFontSize(16);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(topic, 20, 55);
 
-            this.conversationHistory.forEach((msg, index) => {
+            // Add generation date
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(`Generated on: ${new Date().toLocaleString()}`, 20, 62);
+
+            let yPosition = 75;
+            const margin = 20;
+            const lineHeight = 6;
+            const pageHeight = pdf.internal.pageSize.height;
+
+            // Add content sections
+            const sections = studyElement.querySelectorAll('.study-section');
+            
+            sections.forEach((section, index) => {
                 if (yPosition > pageHeight - 50) {
                     pdf.addPage();
                     yPosition = margin;
                 }
 
-                pdf.setFont('helvetica', msg.type === 'user' ? 'bold' : 'normal');
-                pdf.setTextColor(msg.type === 'user' ? 30 : 0, msg.type === 'user' ? 58 : 0, msg.type === 'user' ? 95 : 0);
-                pdf.text(`${msg.type === 'user' ? 'You' : 'Savoiré AI'}:`, margin, yPosition);
-                
-                yPosition += lineHeight;
-                
+                const title = section.querySelector('.section-title, .study-title');
+                if (title) {
+                    pdf.setFontSize(12);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(30, 58, 95);
+                    const titleText = title.textContent.replace(/[📚🔑❓🚀⚡📝]/g, '').trim();
+                    pdf.text(titleText, margin, yPosition);
+                    yPosition += 10;
+                }
+
+                // Add content
+                pdf.setFontSize(10);
                 pdf.setFont('helvetica', 'normal');
                 pdf.setTextColor(0, 0, 0);
+
+                const content = this.stripHtml(section.textContent);
+                const lines = pdf.splitTextToSize(content, 170);
                 
-                const lines = pdf.splitTextToSize(this.stripHtml(msg.content), 170);
                 lines.forEach(line => {
                     if (yPosition > pageHeight - 20) {
                         pdf.addPage();
@@ -344,83 +442,36 @@ class ModernSavoireAI {
                     pdf.text(line, margin, yPosition);
                     yPosition += lineHeight;
                 });
-                
-                yPosition += 10;
+
+                yPosition += 15;
             });
 
-            pdf.save(`savoire-ai-session-${Date.now()}.pdf`);
+            // Add professional footer
+            const pageCount = pdf.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(8);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text(`Page ${i} of ${pageCount} - Savoiré AI by Sooban Talha Productions`, 105, 290, { align: 'center' });
+            }
+
+            pdf.save(`savoire-ai-professional-${topic.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`);
             
         } catch (error) {
-            console.error('PDF generation failed:', error);
+            console.error('Professional PDF generation failed:', error);
             alert('PDF generation failed. Please try again.');
         } finally {
-            this.downloadPDFBtn.innerHTML = '<i class="fas fa-download"></i> Export PDF';
-            this.downloadPDFBtn.disabled = false;
-        }
-    }
-
-    async downloadStudyPDF(button) {
-        const studyElement = button.closest('.study-materials');
-        const topic = studyElement.getAttribute('data-topic');
-
-        try {
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating PDF...';
-            button.disabled = true;
-
-            const { jsPDF } = window.jspdf;
-            
-            // Create PDF from study content
-            const pdf = new jsPDF();
-            let yPosition = 20;
-            const margin = 20;
-            const lineHeight = 7;
-            const pageHeight = pdf.internal.pageSize.height;
-
-            // Add header
-            pdf.setFontSize(20);
-            pdf.setTextColor(138, 180, 248);
-            pdf.text('Savoiré AI Study Guide', margin, yPosition);
-            
-            yPosition += 10;
-            pdf.setFontSize(12);
-            pdf.setTextColor(100, 100, 100);
-            pdf.text('by Sooban Talha Productions', margin, yPosition);
-            
-            yPosition += 10;
-            pdf.setFontSize(16);
-            pdf.setTextColor(0, 0, 0);
-            pdf.text(topic, margin, yPosition);
-            
-            yPosition += 20;
-
-            // Add content
-            pdf.setFontSize(12);
-            const content = this.stripHtml(studyElement.textContent);
-            const lines = pdf.splitTextToSize(content, 170);
-            
-            lines.forEach(line => {
-                if (yPosition > pageHeight - 20) {
-                    pdf.addPage();
-                    yPosition = margin;
-                }
-                pdf.text(line, margin, yPosition);
-                yPosition += lineHeight;
-            });
-
-            pdf.save(`savoire-ai-${topic.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${Date.now()}.pdf`);
-            
-        } catch (error) {
-            console.error('Study PDF generation failed:', error);
-            alert('PDF generation failed. Please try again.');
-        } finally {
-            button.innerHTML = '<i class="fas fa-download"></i> Download Study Guide';
+            button.innerHTML = '<i class="fas fa-download"></i> Download Professional Study Guide';
             button.disabled = false;
         }
     }
 
     scrollToBottom() {
         setTimeout(() => {
-            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            this.chatMessages.scrollTo({
+                top: this.chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
         }, 100);
     }
 
@@ -446,7 +497,6 @@ class ModernSavoireAI {
         const icon = document.querySelector('.theme-toggle i');
         if (document.body.classList.contains('light-theme')) {
             icon.className = 'fas fa-sun';
-            // Update CSS variables for light theme
             document.documentElement.style.setProperty('--primary-bg', '#ffffff');
             document.documentElement.style.setProperty('--secondary-bg', '#f8f9fa');
             document.documentElement.style.setProperty('--surface-bg', '#ffffff');
@@ -458,7 +508,6 @@ class ModernSavoireAI {
             document.documentElement.style.setProperty('--user-message-bg', '#e8f0fe');
         } else {
             icon.className = 'fas fa-moon';
-            // Reset to dark theme
             document.documentElement.style.setProperty('--primary-bg', '#101010');
             document.documentElement.style.setProperty('--secondary-bg', '#1a1a1a');
             document.documentElement.style.setProperty('--surface-bg', '#262626');
@@ -472,8 +521,37 @@ class ModernSavoireAI {
     }
 }
 
-// Initialize the modern app
-const modernAI = new ModernSavoireAI();
+// Initialize the ultra app
+const ultraAI = new UltraSavoireAI();
 
 // Make available globally
-window.modernAI = modernAI;
+window.ultraAI = ultraAI;
+
+// Add additional CSS for scroll animations
+const scrollAnimations = document.createElement('style');
+scrollAnimations.textContent = `
+    .study-section {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .study-section.animate-in {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .study-section:nth-child(even) {
+        transition-delay: 0.1s;
+    }
+    
+    .study-section:nth-child(odd) {
+        transition-delay: 0.2s;
+    }
+    
+    .text-input-container.focused {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(138, 180, 248, 0.2);
+    }
+`;
+document.head.appendChild(scrollAnimations);
