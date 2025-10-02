@@ -338,138 +338,251 @@ class GoldSavoireAI {
         // Get all the content from study materials
         const studyMaterials = document.querySelector('.study-materials');
         
-        // Premium Header with gradient background
-        doc.setFillColor(255, 215, 0);
-        doc.rect(0, 0, 210, 35, 'F');
+        // Premium Gold & Black Header
+        doc.setFillColor(255, 215, 0); // Gold background
+        doc.rect(0, 0, 210, 45, 'F');
+        
+        // Main title in black
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(20);
+        doc.setFontSize(24);
         doc.setFont(undefined, 'bold');
-        doc.text('Savoiré AI', 105, 15, { align: 'center' });
+        doc.text('SAVOIRÉ AI', 105, 20, { align: 'center' });
+        
+        // Subtitle
+        doc.setFontSize(12);
+        doc.text('PREMIUM STUDY REPORT', 105, 28, { align: 'center' });
+        
+        // Production credit
         doc.setFontSize(10);
-        doc.text('Premium Study Report • by Sooban Talha Productions', 105, 22, { align: 'center' });
+        doc.text('by Sooban Talha Productions', 105, 34, { align: 'center' });
         
-        // Add topic title with border
-        doc.setDrawColor(255, 215, 0);
-        doc.setLineWidth(0.5);
-        doc.line(20, 30, 190, 30);
+        // Topic section with black background and gold text
+        doc.setFillColor(0, 0, 0);
+        doc.rect(0, 40, 210, 15, 'F');
+        doc.setTextColor(255, 215, 0);
         doc.setFontSize(18);
-        doc.setTextColor(0, 0, 0);
-        doc.text(topic, 105, 40, { align: 'center' });
+        doc.text(topic.toUpperCase(), 105, 50, { align: 'center' });
         
-        let yPosition = 50;
-        
-        // Function to add text with page break check
-        const addText = (text, fontSize = 10, isBold = false, marginLeft = 20, maxWidth = 170) => {
-            if (yPosition > 270) {
+        let yPosition = 65;
+        let pageNumber = 1;
+
+        // Function to check page break
+        const checkPageBreak = (requiredSpace = 20) => {
+            if (yPosition > (287 - requiredSpace)) {
                 doc.addPage();
                 yPosition = 20;
+                pageNumber++;
+                return true;
             }
-            
-            doc.setFontSize(fontSize);
-            doc.setFont(undefined, isBold ? 'bold' : 'normal');
-            
-            const lines = doc.splitTextToSize(text, maxWidth);
-            doc.text(lines, marginLeft, yPosition);
-            yPosition += (lines.length * (fontSize / 3)) + 5;
+            return false;
         };
 
-        // Function to add section header
-        const addSection = (title) => {
-            if (yPosition > 250) {
-                doc.addPage();
-                yPosition = 20;
-            }
+        // Function to add decorative section header
+        const addGoldSectionHeader = (title, emoji = '') => {
+            checkPageBreak(15);
             
-            doc.setFontSize(14);
-            doc.setTextColor(255, 215, 0);
+            // Gold background for header
+            doc.setFillColor(255, 215, 0);
+            doc.rect(15, yPosition - 3, 180, 10, 'F');
+            
+            // Black text
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
-            doc.text(title, 20, yPosition);
-            yPosition += 10;
+            doc.text(emoji + ' ' + title.toUpperCase(), 25, yPosition + 2);
             
-            // Add underline
-            doc.setDrawColor(255, 215, 0);
-            doc.line(20, yPosition - 2, 60, yPosition - 2);
-            yPosition += 5;
+            yPosition += 15;
         };
+
+        // Function to add formatted paragraph
+        const addFormattedParagraph = (text, options = {}) => {
+            const {
+                isBold = false,
+                marginLeft = 20,
+                fontSize = 10,
+                spacing = 8
+            } = options;
+
+            checkPageBreak(30);
+
+            doc.setFontSize(fontSize);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, isBold ? 'bold' : 'normal');
+
+            const lines = doc.splitTextToSize(text, 170);
+            doc.text(lines, marginLeft, yPosition);
+            yPosition += (lines.length * (fontSize / 2.5)) + spacing;
+        };
+
+        // Function to add gold bullet points
+        const addGoldBulletList = (items, title = '') => {
+            if (title) {
+                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
+            }
+
+            items.forEach((item, index) => {
+                checkPageBreak(15);
+
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                
+                // Gold bullet
+                doc.setTextColor(255, 215, 0);
+                doc.setFont(undefined, 'bold');
+                doc.text('➤', 22, yPosition);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+
+                const lines = doc.splitTextToSize(item, 160);
+                doc.text(lines, 30, yPosition);
+                yPosition += (lines.length * 4) + 6;
+            });
+            yPosition += 8;
+        };
+
+        // Function to add numbered list with gold numbers
+        const addGoldNumberedList = (items, title = '') => {
+            if (title) {
+                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
+            }
+
+            items.forEach((item, index) => {
+                checkPageBreak(15);
+
+                // Gold number
+                doc.setTextColor(255, 215, 0);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${index + 1}.`, 22, yPosition);
+                
+                // Black text
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+
+                const lines = doc.splitTextToSize(item, 160);
+                doc.text(lines, 30, yPosition);
+                yPosition += (lines.length * 4) + 6;
+            });
+            yPosition += 10;
+        };
+
+        // Function to add question-answer block
+        const addQuestionAnswerBlock = (question, answer, qNumber) => {
+            checkPageBreak(40);
+
+            // Question in bold black with gold Q number
+            doc.setTextColor(255, 215, 0);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Q${qNumber}`, 20, yPosition);
+            
+            doc.setTextColor(0, 0, 0);
+            const questionLines = doc.splitTextToSize(question, 160);
+            doc.text(questionLines, 30, yPosition);
+            yPosition += (questionLines.length * 4) + 8;
+
+            // Answer with indentation and different style
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            const answerLines = doc.splitTextToSize(answer, 165);
+            
+            // Add subtle background for answer
+            doc.setFillColor(245, 245, 245);
+            const answerHeight = (answerLines.length * 4) + 8;
+            doc.rect(25, yPosition - 2, 160, answerHeight, 'F');
+            
+            doc.setTextColor(0, 0, 0);
+            doc.text(answerLines, 30, yPosition);
+            yPosition += answerHeight + 15;
+        };
+
+        // Add comprehensive notes section
+        addGoldSectionHeader('COMPREHENSIVE ANALYSIS', '📚');
         
-        // Add comprehensive notes
         const notesElement = studyMaterials.querySelector('.ultra-notes');
         if (notesElement) {
-            addSection('COMPREHENSIVE ANALYSIS');
-            
             const notesText = this.stripHtml(notesElement.innerHTML)
                 .replace(/\n/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
-            
-            addText(notesText, 10, false, 20);
-            yPosition += 10;
+
+            // Split into paragraphs and add each with proper spacing
+            const paragraphs = notesText.split(/(?:\r\n|\r|\n){2,}/);
+            paragraphs.forEach((paragraph, index) => {
+                if (paragraph.trim().length > 0) {
+                    addFormattedParagraph(paragraph.trim(), {
+                        fontSize: 10,
+                        spacing: index === paragraphs.length - 1 ? 15 : 10
+                    });
+                }
+            });
         }
-        
+
         // Add key concepts
         const concepts = Array.from(studyMaterials.querySelectorAll('.concept-item'));
         if (concepts.length > 0) {
-            addSection('KEY CONCEPTS');
-            
-            concepts.forEach((concept, index) => {
-                addText(`${index + 1}. ${concept.textContent}`, 10, false, 25);
-            });
-            yPosition += 10;
+            addGoldSectionHeader('KEY CONCEPTS', '🔑');
+            const conceptTexts = concepts.map(concept => concept.textContent);
+            addGoldBulletList(conceptTexts);
         }
-        
+
         // Add questions and answers
         const questions = Array.from(studyMaterials.querySelectorAll('.question-item'));
         if (questions.length > 0) {
-            addSection('ADVANCED QUESTIONS');
+            addGoldSectionHeader('ADVANCED QUESTIONS', '❓');
             
             questions.forEach((question, index) => {
-                const questionText = question.querySelector('.question-text').textContent;
+                const questionText = question.querySelector('.question-text').textContent.replace(`Q${index + 1}: `, '');
                 const answerText = question.querySelector('.answer-text').textContent;
-                
-                addText(`Q${index + 1}: ${questionText}`, 10, true, 25);
-                addText(`Answer: ${answerText}`, 10, false, 30);
-                yPosition += 8;
+                addQuestionAnswerBlock(questionText, answerText, index + 1);
             });
         }
-        
+
         // Add tips and tricks
         const tips = Array.from(studyMaterials.querySelectorAll('.tip-item'));
         if (tips.length > 0) {
-            addSection('TIPS & TRICKS');
-            
-            tips.forEach((tip, index) => {
-                addText(`${index + 1}. ${tip.textContent}`, 10, false, 25);
-            });
-            yPosition += 10;
+            addGoldSectionHeader('TIPS & TRICKS', '⚡');
+            const tipTexts = tips.map(tip => tip.textContent);
+            addGoldNumberedList(tipTexts);
         }
-        
+
         // Add real-world applications
         const applications = Array.from(studyMaterials.querySelectorAll('.application-item'));
         if (applications.length > 0) {
-            addSection('REAL-WORLD APPLICATIONS');
-            
-            applications.forEach((app, index) => {
-                addText(`${index + 1}. ${app.textContent}`, 10, false, 25);
-            });
-            yPosition += 10;
+            addGoldSectionHeader('REAL-WORLD APPLICATIONS', '🌍');
+            const applicationTexts = applications.map(app => app.textContent);
+            addGoldBulletList(applicationTexts);
         }
-        
+
         // Add misconceptions
         const misconceptions = Array.from(studyMaterials.querySelectorAll('.misconception-item'));
         if (misconceptions.length > 0) {
-            addSection('COMMON MISCONCEPTIONS');
-            
-            misconceptions.forEach((misconception, index) => {
-                addText(`${index + 1}. ${misconception.textContent}`, 10, false, 25);
-            });
+            addGoldSectionHeader('COMMON MISCONCEPTIONS', '⚠️');
+            const misconceptionTexts = misconceptions.map(misconception => misconception.textContent);
+            addGoldNumberedList(misconceptionTexts);
         }
-        
-        // Add premium footer
-        doc.setFontSize(8);
-        doc.setTextColor(128, 128, 128);
-        doc.text(`Generated by Savoiré AI Premium - ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
-        doc.text('© Sooban Talha Productions - All Rights Reserved', 105, 290, { align: 'center' });
-        
+
+        // Add professional footer on each page
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            
+            // Gold footer line
+            doc.setDrawColor(255, 215, 0);
+            doc.setLineWidth(0.5);
+            doc.line(15, 280, 195, 280);
+            
+            // Page info
+            doc.setFontSize(8);
+            doc.setTextColor(128, 128, 128);
+            doc.text(`Page ${i} of ${totalPages}`, 105, 285, { align: 'center' });
+            
+            // Generation info
+            doc.setFontSize(7);
+            doc.text(`Generated by Savoiré AI Premium • ${new Date().toLocaleString()}`, 105, 290, { align: 'center' });
+            doc.text('© Sooban Talha Productions • All Rights Reserved', 105, 295, { align: 'center' });
+        }
+
         // Save the PDF
         doc.save(`SavoireAI_Premium_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
     }
