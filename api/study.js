@@ -1,4 +1,4 @@
-// Fast study.js with optimized response time
+// Enhanced study.js with unlimited time and optimized content
 module.exports = async (req, res) => {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Try to generate study materials with AI
+    // Try to generate study materials with AI (no time limit)
     let studyMaterials;
     try {
       studyMaterials = await generateStudyMaterials(message);
@@ -39,38 +39,41 @@ module.exports = async (req, res) => {
   }
 };
 
-// Fast AI study material generator
+// Ultra-detailed AI study material generator with unlimited time
 async function generateStudyMaterials(userInput) {
   if (!process.env.OPENROUTER_API_KEY) {
     throw new Error('API key not configured');
   }
 
-  const studyPrompt = `As Savoiré AI - provide FAST, DETAILED analysis for: "${userInput}".
+  const studyPrompt = `As Savoiré AI - provide COMPREHENSIVE, DETAILED analysis for: "${userInput}".
 
-  IMPORTANT: Provide QUICK but COMPREHENSIVE responses with:
-  - 500-800 words for ultra_long_notes (concise but detailed)
-  - 5-6 key concepts
-  - 3 practice questions with clear answers
-  - 4-5 key tricks
-  - Focus on essential information only
+  IMPORTANT: Provide HIGH-QUALITY responses with:
+  - 800-1200 words for ultra_long_notes (detailed but concise)
+  - 4-5 key concepts
+  - 2 practice questions with detailed answers
+  - 2 key tricks
+  - 2 real-world applications
+  - 2 common misconceptions
+  - Focus on quality over quantity
 
   Provide response in this EXACT JSON format:
 
   {
     "topic": "${userInput}",
-    "curriculum_alignment": "Fast AI Analysis",
-    "ultra_long_notes": "Concise but detailed explanation covering core concepts with practical examples",
-    "key_concepts": ["concept1", "concept2", "concept3", "concept4", "concept5"],
-    "key_tricks": ["trick1", "trick2", "trick3", "trick4"],
+    "curriculum_alignment": "Comprehensive AI Analysis",
+    "ultra_long_notes": "Detailed explanation covering all core concepts with practical examples and clear explanations",
+    "key_concepts": ["concept1", "concept2", "concept3", "concept4"],
+    "key_tricks": ["trick1", "trick2"],
     "practice_questions": [
-      {"question": "Clear question 1", "answer": "Direct solution with explanation"},
-      {"question": "Clear question 2", "answer": "Direct solution with explanation"},
-      {"question": "Clear question 3", "answer": "Direct solution with explanation"}
+      {"question": "Detailed question 1", "answer": "Comprehensive solution with step-by-step explanation"},
+      {"question": "Detailed question 2", "answer": "Comprehensive solution with step-by-step explanation"}
     ],
-    "study_score": 95
+    "real_world_applications": ["application1", "application2"],
+    "common_misconceptions": ["misconception1", "misconception2"],
+    "study_score": 96
   }
 
-  Make it FAST, CLEAR, and PRACTICAL. Focus on speed without sacrificing quality.`;
+  Make it COMPREHENSIVE, DETAILED, and PRACTICAL. Focus on quality explanations.`;
 
   const models = [
     'x-ai/grok-4-fast:free',
@@ -78,20 +81,17 @@ async function generateStudyMaterials(userInput) {
     'deepseek/deepseek-r1-0528:free'
   ];
 
-  // Use timeout for faster response
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('Request timeout')), 15000);
-  });
-
+  // No timeout - let models take as long as needed
   for (const model of models) {
     try {
-      const materials = await Promise.race([
-        tryStudyModel(model, studyPrompt),
-        timeoutPromise
-      ]);
-      if (materials) return materials;
+      console.log(`Trying model: ${model}`);
+      const materials = await tryStudyModel(model, studyPrompt);
+      if (materials) {
+        console.log(`Success with model: ${model}`);
+        return materials;
+      }
     } catch (error) {
-      console.log(`Model ${model} failed, trying next`);
+      console.log(`Model ${model} failed:`, error.message);
     }
   }
   throw new Error('All models failed');
@@ -109,7 +109,7 @@ async function tryStudyModel(model, prompt) {
     body: JSON.stringify({
       model: model,
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2000, // Reduced for faster response
+      max_tokens: 4000, // Increased for better quality
       temperature: 0.7
     })
   });
@@ -129,57 +129,62 @@ async function tryStudyModel(model, prompt) {
   throw new Error('No JSON found in response');
 }
 
-// Fast fallback with minimal content
+// Enhanced fallback with 2 questions
 function generateFallbackStudyMaterials(topic) {
   return {
     topic: topic,
-    curriculum_alignment: "Fast AI Analysis",
-    ultra_long_notes: `# QUICK COMPREHENSIVE ANALYSIS: ${topic.toUpperCase()}
+    curriculum_alignment: "Comprehensive AI Analysis",
+    ultra_long_notes: `# COMPREHENSIVE ANALYSIS: ${topic.toUpperCase()}
 
 ## Core Overview
-${topic} represents an important area of study with practical applications across multiple domains. This analysis provides essential insights and key understanding points.
+${topic} represents a significant area of study with broad applications and deep theoretical foundations. This analysis provides comprehensive insights into the fundamental principles, practical applications, and advanced concepts.
 
 ## Fundamental Principles
-- **Core Concepts**: Understanding the basic building blocks and theoretical foundations
-- **Practical Applications**: Real-world implementations and use cases
-- **Key Methodologies**: Essential approaches and techniques used in the field
+- **Theoretical Framework**: Understanding the core theoretical models and their implications
+- **Practical Implementation**: Real-world applications and case studies
+- **Analytical Methods**: Key approaches for problem-solving and analysis
+- **Advanced Concepts**: Complex relationships and interdependencies
 
 ## Detailed Explanation
-The subject involves systematic analysis and comprehensive understanding of interconnected concepts. Mastery requires both theoretical knowledge and practical application through structured learning and problem-solving.
+The subject matter involves sophisticated analytical thinking and systematic understanding of interconnected concepts. Mastery requires both deep theoretical knowledge and practical application through structured methodologies and problem-solving techniques.
 
-## Essential Insights
-- Focus on understanding fundamental relationships between concepts
-- Practice with real-world scenarios and case studies
-- Develop analytical thinking and problem-solving skills
-- Stay updated with current developments and trends`,
+## Key Insights
+- Focus on understanding fundamental relationships between core concepts
+- Practice with real-world scenarios and practical implementations
+- Develop critical thinking and analytical problem-solving skills
+- Stay updated with current research and emerging trends
+
+## Advanced Applications
+The practical significance spans multiple domains including technology, research, industry applications, and societal impact. Understanding these applications provides context for theoretical concepts and demonstrates real-world relevance.`,
     key_concepts: [
-      "Fundamental Theoretical Principles",
-      "Core Analytical Methodologies",
-      "Practical Application Scenarios",
-      "Key Problem-solving Approaches",
-      "Essential Framework Components"
+      "Core Theoretical Principles and Frameworks",
+      "Advanced Analytical Methodologies",
+      "Practical Implementation Scenarios",
+      "Problem-solving Strategies"
     ],
     key_tricks: [
-      "Quick Memory Techniques",
-      "Efficient Learning Strategies",
-      "Practical Application Methods",
-      "Problem-solving Shortcuts"
+      "Efficient Learning and Retention Techniques",
+      "Advanced Problem-solving Approaches"
     ],
     practice_questions: [
       {
-        "question": "Explain the core principles of " + topic + " and their practical significance.",
-        "answer": "The core principles provide the foundational understanding necessary for advanced applications. They establish the theoretical framework and practical methodologies that enable effective problem-solving and innovation in real-world scenarios."
+        "question": "Explain the fundamental principles of " + topic + " and their practical significance in real-world applications.",
+        "answer": "The fundamental principles establish the theoretical foundation necessary for understanding complex concepts and their practical applications. These principles provide the framework for analyzing problems, developing solutions, and implementing effective strategies across various domains. Their practical significance lies in enabling systematic approaches to complex challenges and facilitating innovation through structured methodologies."
       },
       {
-        "question": "Describe a practical application of " + topic + " and analyze its impact.",
-        "answer": "Practical applications demonstrate how theoretical concepts translate into real-world solutions. These implementations drive innovation, solve complex problems, and create value across various domains and industries."
-      },
-      {
-        "question": "What are the key challenges in understanding " + topic + " and how to overcome them?",
-        "answer": "Common challenges include conceptual complexity, contextual understanding, and practical application. Overcoming them requires systematic learning, practical exercises, and continuous practice with real-world examples."
+        "question": "Describe a comprehensive approach to solving complex problems in " + topic + " including methodology and implementation strategies.",
+        "answer": "A comprehensive approach involves systematic problem analysis, strategic planning, methodological implementation, and continuous evaluation. This includes: 1) Thorough understanding of problem context and constraints, 2) Application of appropriate theoretical frameworks, 3) Strategic implementation of analytical methods, 4) Continuous validation and optimization of solutions. This structured approach ensures effective problem resolution and practical applicability."
       }
     ],
-    study_score: 95,
+    real_world_applications: [
+      "Industry Implementation and Optimization",
+      "Research and Development Applications"
+    ],
+    common_misconceptions: [
+      "Oversimplification of complex theoretical relationships",
+      "Misapplication of analytical methodologies"
+    ],
+    study_score: 96,
     powered_by: "Savoiré AI by Sooban Talha Productions",
     generated_at: new Date().toISOString()
   };
