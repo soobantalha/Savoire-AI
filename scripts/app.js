@@ -214,21 +214,15 @@ class GoldSavoireAI {
             `;
         }
 
-        // Limit questions to 5 for better visibility
+        // Limit questions to 3 for faster response
         const limitedQuestions = data.practice_questions ? 
-            data.practice_questions.slice(0, 5) : [];
+            data.practice_questions.slice(0, 3) : [];
 
         return `
             <div class="study-materials" data-topic="${this.escapeHtml(data.topic)}">
-                <!-- Header with PDF Download -->
+                <!-- Header -->
                 <div class="study-section">
-                    <div class="study-header">
-                        <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
-                        <button class="download-btn" onclick="goldAI.generatePDF('${this.escapeHtml(data.topic)}')">
-                            <i class="fas fa-file-pdf"></i>
-                            Download PDF
-                        </button>
-                    </div>
+                    <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
                     <div class="powered-by">
                         Powered by Advanced AI Models • 
                         Score: ${data.study_score || 98}/100 • 
@@ -283,28 +277,15 @@ class GoldSavoireAI {
                 </div>
                 ` : ''}
 
-                <!-- Additional Sections -->
-                ${data.real_world_applications && data.real_world_applications.length > 0 ? `
+                <!-- PDF Download Button -->
                 <div class="study-section">
-                    <h2 class="section-title">🌍 REAL-WORLD APPLICATIONS</h2>
-                    <div class="applications-list">
-                        ${data.real_world_applications.map(app => `
-                            <div class="application-item">${this.escapeHtml(app)}</div>
-                        `).join('')}
+                    <div class="pdf-download-section">
+                        <button class="download-btn" onclick="goldAI.generateFullPDF('${this.escapeHtml(data.topic)}')">
+                            <i class="fas fa-file-pdf"></i>
+                            Download Full PDF Report
+                        </button>
                     </div>
                 </div>
-                ` : ''}
-
-                ${data.common_misconceptions && data.common_misconceptions.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">⚠️ COMMON MISCONCEPTIONS</h2>
-                    <div class="misconceptions-list">
-                        ${data.common_misconceptions.map(misconception => `
-                            <div class="misconception-item">${this.escapeHtml(misconception)}</div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
 
                 <!-- Footer -->
                 <div class="study-section">
@@ -330,30 +311,61 @@ class GoldSavoireAI {
             .replace(/# (.*?)(?=\n|$)/g, '<h1 style="color: var(--accent-color); margin: 2.5rem 0 1.5rem 0; text-align: center;">$1</h1>');
     }
 
-    generatePDF(topic) {
+    generateFullPDF(topic) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Get the study materials content
+        // Get all the content from study materials
         const studyMaterials = document.querySelector('.study-materials');
         
-        // Add logo and header
+        // Add header with logo and branding
         doc.setFillColor(255, 215, 0);
-        doc.rect(0, 0, 210, 40, 'F');
+        doc.rect(0, 0, 210, 30, 'F');
         doc.setTextColor(0, 0, 0);
-        doc.setFontSize(20);
+        doc.setFontSize(18);
         doc.setFont(undefined, 'bold');
-        doc.text('Savoiré AI', 105, 15, { align: 'center' });
-        doc.setFontSize(12);
-        doc.text('by Sooban Talha Productions', 105, 22, { align: 'center' });
+        doc.text('Savoiré AI', 105, 12, { align: 'center' });
+        doc.setFontSize(10);
+        doc.text('by Sooban Talha Productions', 105, 18, { align: 'center' });
         
         // Add topic title
         doc.setFontSize(16);
         doc.setTextColor(0, 0, 0);
-        doc.text(topic, 105, 35, { align: 'center' });
+        doc.text(topic, 105, 30, { align: 'center' });
         
-        // Add content sections
-        let yPosition = 50;
+        let yPosition = 45;
+        
+        // Function to add text with page break check
+        const addText = (text, fontSize = 10, isBold = false, marginLeft = 20) => {
+            if (yPosition > 270) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            doc.setFontSize(fontSize);
+            doc.setFont(undefined, isBold ? 'bold' : 'normal');
+            
+            const lines = doc.splitTextToSize(text, 170);
+            doc.text(lines, marginLeft, yPosition);
+            yPosition += (lines.length * (fontSize / 3)) + 5;
+        };
+        
+        // Add comprehensive notes
+        const notesElement = studyMaterials.querySelector('.ultra-notes');
+        if (notesElement) {
+            doc.setFontSize(14);
+            doc.setTextColor(255, 215, 0);
+            doc.text('COMPREHENSIVE ANALYSIS', 20, yPosition);
+            yPosition += 10;
+            
+            const notesText = this.stripHtml(notesElement.innerHTML)
+                .replace(/\n/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            
+            addText(notesText, 10, false, 20);
+            yPosition += 10;
+        }
         
         // Add key concepts
         const concepts = Array.from(studyMaterials.querySelectorAll('.concept-item'));
@@ -363,20 +375,13 @@ class GoldSavoireAI {
             doc.text('KEY CONCEPTS', 20, yPosition);
             yPosition += 10;
             
-            doc.setFontSize(10);
-            doc.setTextColor(0, 0, 0);
             concepts.forEach((concept, index) => {
-                if (yPosition > 270) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                doc.text(`${index + 1}. ${concept.textContent}`, 25, yPosition);
-                yPosition += 8;
+                addText(`${index + 1}. ${concept.textContent}`, 10, false, 25);
             });
             yPosition += 10;
         }
         
-        // Add questions
+        // Add questions and answers
         const questions = Array.from(studyMaterials.querySelectorAll('.question-item'));
         if (questions.length > 0) {
             doc.setFontSize(14);
@@ -384,25 +389,31 @@ class GoldSavoireAI {
             doc.text('ADVANCED QUESTIONS', 20, yPosition);
             yPosition += 10;
             
-            doc.setFontSize(10);
-            doc.setTextColor(0, 0, 0);
             questions.forEach((question, index) => {
-                if (yPosition > 250) {
-                    doc.addPage();
-                    yPosition = 20;
-                }
-                
                 const questionText = question.querySelector('.question-text').textContent;
                 const answerText = question.querySelector('.answer-text').textContent;
                 
-                doc.setFont(undefined, 'bold');
-                doc.text(questionText, 25, yPosition);
-                yPosition += 8;
-                
-                doc.setFont(undefined, 'normal');
-                const answerLines = doc.splitTextToSize(answerText, 160);
-                doc.text(answerLines, 25, yPosition);
-                yPosition += (answerLines.length * 5) + 10;
+                addText(`Q${index + 1}: ${questionText}`, 10, true, 25);
+                addText(`Answer: ${answerText}`, 10, false, 30);
+                yPosition += 5;
+            });
+        }
+        
+        // Add tips and tricks
+        const tips = Array.from(studyMaterials.querySelectorAll('.tip-item'));
+        if (tips.length > 0) {
+            if (yPosition > 250) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            doc.setFontSize(14);
+            doc.setTextColor(255, 215, 0);
+            doc.text('TIPS & TRICKS', 20, yPosition);
+            yPosition += 10;
+            
+            tips.forEach((tip, index) => {
+                addText(`${index + 1}. ${tip.textContent}`, 10, false, 25);
             });
         }
         
@@ -412,7 +423,7 @@ class GoldSavoireAI {
         doc.text(`Generated by Savoiré AI - ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
         
         // Save the PDF
-        doc.save(`SavoireAI_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+        doc.save(`SavoireAI_${topic.replace(/[^a-zA-Z0-9]/g, '_')}_Full_Report.pdf`);
     }
 
     showThinking() {
@@ -533,50 +544,61 @@ scrollAnimations.textContent = `
         box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
     }
     
-    .study-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
+    .pdf-download-section {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
     }
     
-    .applications-list,
-    .misconceptions-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
+    /* Mobile specific fixes */
+    @media (max-width: 768px) {
+        .study-materials {
+            margin: 0.5rem 0;
+            padding: 1rem;
+        }
+        
+        .message-content {
+            max-width: 95%;
+        }
+        
+        .ultra-notes {
+            padding: 1rem;
+            font-size: 14px;
+        }
+        
+        .concept-item, .tip-item, .question-item {
+            padding: 0.6rem;
+            font-size: 14px;
+        }
+        
+        .study-title {
+            font-size: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+        }
     }
     
-    .application-item,
-    .misconception-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.8rem;
-        color: var(--text-primary);
-        font-weight: 400;
-        padding: 0.8rem;
-        background: rgba(255, 215, 0, 0.1);
-        border-radius: 10px;
-        border-left: 3px solid var(--accent-color);
-        transition: all 0.3s ease;
-    }
-    
-    .application-item:hover,
-    .misconception-item:hover {
-        transform: translateX(5px);
-        background: rgba(255, 215, 0, 0.15);
-    }
-    
-    .application-item::before {
-        content: "🌍";
-        flex-shrink: 0;
-        font-size: 1.1rem;
-    }
-    
-    .misconception-item::before {
-        content: "⚠️";
-        flex-shrink: 0;
-        font-size: 1.1rem;
+    @media (max-width: 480px) {
+        .study-materials {
+            padding: 0.8rem;
+        }
+        
+        .ultra-notes {
+            padding: 0.8rem;
+        }
+        
+        .question-item {
+            padding: 0.8rem;
+        }
+        
+        .download-btn {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 14px;
+        }
     }
 `;
 document.head.appendChild(scrollAnimations);
