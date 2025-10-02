@@ -1,4 +1,4 @@
-// Enhanced study.js with specified models and 10 questions
+// Enhanced study.js with specified models and optimized questions
 module.exports = async (req, res) => {
   // Handle CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -48,10 +48,10 @@ async function generateStudyMaterials(userInput) {
   const studyPrompt = `As Savoiré AI - an advanced AI assistant, generate ULTRA-DETAILED, COMPREHENSIVE analysis for: "${userInput}".
 
   IMPORTANT: Provide EXTREMELY DETAILED responses with:
-  - 1500-2500 words for ultra_long_notes
-  - 10-12 key concepts
-  - 10 practice questions with VERY DETAILED answers
-  - 8-10 advanced tips and tricks
+  - 1000-1500 words for ultra_long_notes
+  - 8-10 key concepts
+  - 5 practice questions with VERY DETAILED answers
+  - 6-8 advanced tips and tricks
   - Advanced level difficulty for all questions
   - Real-world applications and case studies
   - Step-by-step explanations
@@ -61,33 +61,27 @@ async function generateStudyMaterials(userInput) {
   {
     "topic": "${userInput}",
     "curriculum_alignment": "Advanced AI Analysis",
-    "ultra_long_notes": "EXTREMELY DETAILED explanation (1500-2500 words) covering all aspects comprehensively with examples, case studies, and real-world applications",
-    "key_concepts": ["concept1", "concept2", "concept3", "concept4", "concept5", "concept6", "concept7", "concept8", "concept9", "concept10", "concept11", "concept12"],
-    "key_tricks": ["advanced trick1", "advanced trick2", "advanced trick3", "advanced trick4", "advanced trick5", "advanced trick6", "advanced trick7", "advanced trick8"],
+    "ultra_long_notes": "EXTREMELY DETAILED explanation (1000-1500 words) covering all aspects comprehensively with examples, case studies, and real-world applications",
+    "key_concepts": ["concept1", "concept2", "concept3", "concept4", "concept5", "concept6", "concept7", "concept8"],
+    "key_tricks": ["advanced trick1", "advanced trick2", "advanced trick3", "advanced trick4", "advanced trick5", "advanced trick6"],
     "practice_questions": [
       {"question": "Very detailed advanced question 1", "answer": "Comprehensive step-by-step solution with explanations"},
       {"question": "Very detailed advanced question 2", "answer": "Comprehensive step-by-step solution with explanations"},
       {"question": "Very detailed advanced question 3", "answer": "Comprehensive step-by-step solution with explanations"},
       {"question": "Very detailed advanced question 4", "answer": "Comprehensive step-by-step solution with explanations"},
-      {"question": "Very detailed advanced question 5", "answer": "Comprehensive step-by-step solution with explanations"},
-      {"question": "Very detailed advanced question 6", "answer": "Comprehensive step-by-step solution with explanations"},
-      {"question": "Very detailed advanced question 7", "answer": "Comprehensive step-by-step solution with explanations"},
-      {"question": "Very detailed advanced question 8", "answer": "Comprehensive step-by-step solution with explanations"},
-      {"question": "Very detailed advanced question 9", "answer": "Comprehensive step-by-step solution with explanations"},
-      {"question": "Very detailed advanced question 10", "answer": "Comprehensive step-by-step solution with explanations"}
+      {"question": "Very detailed advanced question 5", "answer": "Comprehensive step-by-step solution with explanations"}
     ],
-    "advanced_tricks": ["expert technique1", "expert technique2", "expert technique3", "expert technique4"],
+    "advanced_tricks": ["expert technique1", "expert technique2", "expert technique3"],
     "trick_notes": "Detailed summary of all advanced tricks and techniques with examples",
     "short_notes": "Comprehensive bullet points for quick revision covering all key points",
     "advanced_questions": [
       {"question": "Expert level question 1 with complex scenario", "answer": "Very detailed expert solution with multiple approaches"},
-      {"question": "Expert level question 2 with complex scenario", "answer": "Very detailed expert solution with multiple approaches"},
-      {"question": "Expert level question 3 with complex scenario", "answer": "Very detailed expert solution with multiple approaches"}
+      {"question": "Expert level question 2 with complex scenario", "answer": "Very detailed expert solution with multiple approaches"}
     ],
-    "real_world_applications": ["detailed application1", "detailed application2", "detailed application3", "detailed application4", "case study1"],
+    "real_world_applications": ["detailed application1", "detailed application2", "detailed application3", "case study1"],
     "common_misconceptions": ["misconception1 with explanation", "misconception2 with explanation", "misconception3 with explanation"],
-    "exam_tips": ["advanced tip1", "advanced tip2", "advanced tip3", "advanced tip4", "advanced tip5", "time management strategy"],
-    "recommended_resources": ["resource1 with description", "resource2 with description", "resource3 with description", "resource4 with description"],
+    "exam_tips": ["advanced tip1", "advanced tip2", "advanced tip3", "advanced tip4", "time management strategy"],
+    "recommended_resources": ["resource1 with description", "resource2 with description", "resource3 with description"],
     "study_score": 98
   }
 
@@ -142,7 +136,7 @@ async function tryStudyModel(model, prompt) {
   throw new Error('No JSON found in response');
 }
 
-// Enhanced fallback with 10 questions
+// Enhanced fallback with 5 questions
 function generateFallbackStudyMaterials(topic) {
   return {
     topic: topic,
@@ -190,11 +184,7 @@ Detailed preparation covering all aspects, advanced analytical techniques, syste
       "Advanced Application Scenarios and Implementations",
       "Interdisciplinary Connections and Integration",
       "Research Methodologies and Experimental Design",
-      "Theoretical Framework Extensions and Applications",
-      "Advanced Computational and Analytical Methods",
-      "Complex System Analysis and Optimization",
-      "Expert-level Critical Thinking and Analysis",
-      "Innovation and Future Development Strategies"
+      "Theoretical Framework Extensions and Applications"
     ],
     key_tricks: [
       "Advanced Memory Techniques for Complex Information",
@@ -202,11 +192,7 @@ Detailed preparation covering all aspects, advanced analytical techniques, syste
       "Sophisticated Learning and Retention Systems",
       "Advanced Analytical and Reasoning Methods",
       "Interleaved Practice with Complex Scenarios",
-      "Metacognitive Learning and Reflection Strategies",
-      "Expert Problem Decomposition Techniques",
-      "Advanced Pattern Recognition Methods",
-      "Systematic Knowledge Integration Approaches",
-      "Professional Critical Analysis Frameworks"
+      "Metacognitive Learning and Reflection Strategies"
     ],
     practice_questions: [
       {
@@ -228,34 +214,12 @@ Detailed preparation covering all aspects, advanced analytical techniques, syste
       {
         "question": "Critically analyze common challenges and misconceptions in understanding " + topic + " and develop comprehensive strategies to address them with detailed explanations and alternative frameworks.",
         "answer": "Common challenges often arise from incomplete understanding, contextual limitations, or methodological constraints. Addressing them requires deconstructing problematic approaches, providing comprehensive alternative explanations, and building robust conceptual frameworks that withstand critical examination and practical validation through systematic testing and professional evaluation."
-      },
-      {
-        "question": "Develop advanced analytical heuristics for " + topic + " that can be applied to novel and complex scenarios, detailing their theoretical basis and practical implementation with examples.",
-        "answer": "Advanced analytical heuristics combine theoretical knowledge with practical expertise, enabling efficient navigation of complex scenarios. These heuristics leverage sophisticated pattern recognition, analogical reasoning, and systematic decomposition to transform challenging problems into manageable components while maintaining conceptual integrity and practical applicability across diverse contexts."
-      },
-      {
-        "question": "Analyze the evolutionary development and transformation of key concepts in " + topic + ", tracing their progression and impact on contemporary understanding and future applications.",
-        "answer": "The evolutionary development reveals how concepts progressed through systematic discovery, methodological advancement, and theoretical refinement. Understanding this progression provides essential context for current applications and insights into future developments, highlighting the dynamic nature of comprehensive understanding and its practical implications across multiple domains."
-      },
-      {
-        "question": "Create a comprehensive learning and mastery pathway for advanced aspects of " + topic + ", including foundational prerequisites, progressive skill development, and expert-level competencies.",
-        "answer": "Mastering advanced aspects requires structured progression: foundational knowledge → intermediate applications → advanced synthesis → expert innovation. Each stage builds upon previous learning, incorporating increasingly complex scenarios, interdisciplinary connections, and sophisticated analytical techniques to achieve comprehensive mastery and professional-level competence."
-      },
-      {
-        "question": "Examine the ethical considerations and societal implications of advanced applications of " + topic + ", analyzing multiple perspectives and proposing frameworks for responsible implementation.",
-        "answer": "Advanced applications raise important ethical considerations and societal implications requiring careful analysis from multiple perspectives. Developing frameworks for responsible implementation involves balancing innovation with ethical standards, societal benefits with comprehensive considerations, and individual applications with collective implications through systematic evaluation and professional guidelines."
-      },
-      {
-        "question": "Synthesize current research, emerging trends, and future directions in " + topic + ", identifying key challenges, opportunities, and strategic approaches for advancement.",
-        "answer": "Comprehensive synthesis requires integration of current knowledge, critical analysis of emerging trends, and strategic projection of future directions. Identifying key challenges and opportunities involves deep domain expertise, broad interdisciplinary understanding, and forward-thinking analysis of theoretical and practical developments across multiple contexts and applications."
       }
     ],
     advanced_tricks: [
       "Expert Metacognitive Monitoring and Adjustment",
       "Advanced Conceptual Integration and Synthesis",
-      "Sophisticated Problem Analysis Frameworks",
-      "Expert Critical Evaluation Approaches",
-      "Advanced Research Methodology Applications"
+      "Sophisticated Problem Analysis Frameworks"
     ],
     trick_notes: "Combine multiple advanced learning and analytical strategies for optimal results. Use sophisticated approaches for complex systems, practice with challenging real-world scenarios, and continuously integrate new understanding with existing expertise through reflective practice and professional evaluation methodologies.",
     short_notes: `• **Advanced Theoretical Framework**: Comprehensive understanding of complex principles
@@ -274,40 +238,30 @@ Detailed preparation covering all aspects, advanced analytical techniques, syste
       {
         "question": "Critically evaluate competing theoretical frameworks within " + topic + ", analyzing their comprehensive strengths, methodological limitations, and potential for systematic integration.",
         "answer": "Critical evaluation requires deep analytical thinking, comparative methodology, and contextual understanding. Each framework offers unique perspectives and methodological constraints, and their potential integration can lead to more robust theoretical models that better explain complex phenomena and provide more effective practical solutions across diverse applications."
-      },
-      {
-        "question": "Design and implement an advanced research project exploring frontier areas of " + topic + ", detailing comprehensive methodology, expected outcomes, and professional implications.",
-        "answer": "Advanced research projects require innovative approaches, rigorous methodology, and clear articulation of objectives and expected outcomes. The project should address significant knowledge gaps, employ sophisticated techniques, and have clear potential for practical applications and theoretical advancement in frontier areas through systematic investigation and professional standards."
       }
     ],
     real_world_applications: [
       "Advanced Industrial Implementations and Systematic Optimization",
       "Cutting-edge Research and Comprehensive Development Applications",
       "Complex System Design and Professional Analysis",
-      "Innovative Technological Solutions and Strategic Implementation",
-      "Comprehensive Case Studies and Professional Application Scenarios"
+      "Innovative Technological Solutions and Strategic Implementation"
     ],
     common_misconceptions: [
       "Oversimplification of complex theoretical relationships and dependencies",
       "Misapplication of advanced analytical methodologies and frameworks",
-      "Incomplete understanding of contextual factors and methodological limitations",
-      "Confusion between correlated and causal relationships in complex systems"
+      "Incomplete understanding of contextual factors and methodological limitations"
     ],
     exam_tips: [
       "Master advanced conceptual frameworks comprehensively",
       "Practice with complex multi-concept problems systematically",
       "Develop sophisticated analytical and time management strategies",
       "Focus on deep understanding rather than superficial knowledge",
-      "Implement advanced preparation and self-assessment techniques",
-      "Analyze complex question patterns and professional approaches",
-      "Develop expert-level analytical and presentation skills"
+      "Implement advanced preparation and self-assessment techniques"
     ],
     recommended_resources: [
       "Advanced Reference Materials: 'Comprehensive Guide to " + topic + "'",
       "Research Publications and Professional Journal Articles",
-      "Advanced Educational Resources and Expert Video Content",
-      "Expert-level Practice Materials and Complex Problem Sets",
-      "Professional Development and Certification Preparation Resources"
+      "Advanced Educational Resources and Expert Video Content"
     ],
     study_score: 98,
     powered_by: "Savoiré AI by Sooban Talha Productions",

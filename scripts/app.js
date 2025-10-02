@@ -214,11 +214,21 @@ class GoldSavoireAI {
             `;
         }
 
+        // Limit questions to 5 for better visibility
+        const limitedQuestions = data.practice_questions ? 
+            data.practice_questions.slice(0, 5) : [];
+
         return `
             <div class="study-materials" data-topic="${this.escapeHtml(data.topic)}">
-                <!-- Header -->
+                <!-- Header with PDF Download -->
                 <div class="study-section">
-                    <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
+                    <div class="study-header">
+                        <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
+                        <button class="download-btn" onclick="goldAI.generatePDF('${this.escapeHtml(data.topic)}')">
+                            <i class="fas fa-file-pdf"></i>
+                            Download PDF
+                        </button>
+                    </div>
                     <div class="powered-by">
                         Powered by Advanced AI Models • 
                         Score: ${data.study_score || 98}/100 • 
@@ -247,11 +257,11 @@ class GoldSavoireAI {
                 ` : ''}
 
                 <!-- Practice Questions -->
-                ${data.practice_questions && data.practice_questions.length > 0 ? `
+                ${limitedQuestions.length > 0 ? `
                 <div class="study-section">
                     <h2 class="section-title">❓ ADVANCED QUESTIONS</h2>
                     <div class="questions-list">
-                        ${data.practice_questions.map((q, index) => `
+                        ${limitedQuestions.map((q, index) => `
                             <div class="question-item">
                                 <div class="question-text">Q${index + 1}: ${this.escapeHtml(q.question)}</div>
                                 <div class="answer-text">${this.escapeHtml(q.answer)}</div>
@@ -268,6 +278,29 @@ class GoldSavoireAI {
                     <div class="tips-list">
                         ${data.key_tricks.map(trick => `
                             <div class="tip-item">${this.escapeHtml(trick)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Additional Sections -->
+                ${data.real_world_applications && data.real_world_applications.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">🌍 REAL-WORLD APPLICATIONS</h2>
+                    <div class="applications-list">
+                        ${data.real_world_applications.map(app => `
+                            <div class="application-item">${this.escapeHtml(app)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                ${data.common_misconceptions && data.common_misconceptions.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">⚠️ COMMON MISCONCEPTIONS</h2>
+                    <div class="misconceptions-list">
+                        ${data.common_misconceptions.map(misconception => `
+                            <div class="misconception-item">${this.escapeHtml(misconception)}</div>
                         `).join('')}
                     </div>
                 </div>
@@ -295,6 +328,91 @@ class GoldSavoireAI {
             .replace(/### (.*?)(?=\n|$)/g, '<h3 style="color: var(--accent-color); margin: 1.5rem 0 1rem 0;">$1</h3>')
             .replace(/## (.*?)(?=\n|$)/g, '<h2 style="color: var(--accent-color); margin: 2rem 0 1rem 0; border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem;">$1</h2>')
             .replace(/# (.*?)(?=\n|$)/g, '<h1 style="color: var(--accent-color); margin: 2.5rem 0 1.5rem 0; text-align: center;">$1</h1>');
+    }
+
+    generatePDF(topic) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get the study materials content
+        const studyMaterials = document.querySelector('.study-materials');
+        
+        // Add logo and header
+        doc.setFillColor(255, 215, 0);
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(20);
+        doc.setFont(undefined, 'bold');
+        doc.text('Savoiré AI', 105, 15, { align: 'center' });
+        doc.setFontSize(12);
+        doc.text('by Sooban Talha Productions', 105, 22, { align: 'center' });
+        
+        // Add topic title
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 0);
+        doc.text(topic, 105, 35, { align: 'center' });
+        
+        // Add content sections
+        let yPosition = 50;
+        
+        // Add key concepts
+        const concepts = Array.from(studyMaterials.querySelectorAll('.concept-item'));
+        if (concepts.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(255, 215, 0);
+            doc.text('KEY CONCEPTS', 20, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            concepts.forEach((concept, index) => {
+                if (yPosition > 270) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                doc.text(`${index + 1}. ${concept.textContent}`, 25, yPosition);
+                yPosition += 8;
+            });
+            yPosition += 10;
+        }
+        
+        // Add questions
+        const questions = Array.from(studyMaterials.querySelectorAll('.question-item'));
+        if (questions.length > 0) {
+            doc.setFontSize(14);
+            doc.setTextColor(255, 215, 0);
+            doc.text('ADVANCED QUESTIONS', 20, yPosition);
+            yPosition += 10;
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            questions.forEach((question, index) => {
+                if (yPosition > 250) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                const questionText = question.querySelector('.question-text').textContent;
+                const answerText = question.querySelector('.answer-text').textContent;
+                
+                doc.setFont(undefined, 'bold');
+                doc.text(questionText, 25, yPosition);
+                yPosition += 8;
+                
+                doc.setFont(undefined, 'normal');
+                const answerLines = doc.splitTextToSize(answerText, 160);
+                doc.text(answerLines, 25, yPosition);
+                yPosition += (answerLines.length * 5) + 10;
+            });
+        }
+        
+        // Add footer
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Generated by Savoiré AI - ${new Date().toLocaleString()}`, 105, 285, { align: 'center' });
+        
+        // Save the PDF
+        doc.save(`SavoireAI_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
     }
 
     showThinking() {
@@ -413,6 +531,52 @@ scrollAnimations.textContent = `
     .text-input-container.focused {
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
+    }
+    
+    .study-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .applications-list,
+    .misconceptions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .application-item,
+    .misconception-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        color: var(--text-primary);
+        font-weight: 400;
+        padding: 0.8rem;
+        background: rgba(255, 215, 0, 0.1);
+        border-radius: 10px;
+        border-left: 3px solid var(--accent-color);
+        transition: all 0.3s ease;
+    }
+    
+    .application-item:hover,
+    .misconception-item:hover {
+        transform: translateX(5px);
+        background: rgba(255, 215, 0, 0.15);
+    }
+    
+    .application-item::before {
+        content: "🌍";
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+    
+    .misconception-item::before {
+        content: "⚠️";
+        flex-shrink: 0;
+        font-size: 1.1rem;
     }
 `;
 document.head.appendChild(scrollAnimations);
