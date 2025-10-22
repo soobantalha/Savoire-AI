@@ -76,7 +76,9 @@ async function generateStudyMaterials(userInput) {
   Make it COMPREHENSIVE, DETAILED, and PRACTICAL. Focus on quality explanations.`;
 
   const models = [
-    'x-ai/grok-4-fast:free',
+    'google/gemini-2.0-flash-exp:free',
+    'z-ai/glm-4.5-air:free',
+    'tngtech/deepseek-r1t2-chimera:free',
     'deepseek/deepseek-chat-v3.1:free',
     'deepseek/deepseek-r1-0528:free'
   ];
