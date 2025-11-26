@@ -124,7 +124,7 @@ async function tryStudyModel(model, prompt) {
   const jsonMatch = content.match(/\{[\s\S]*\}/);
   if (jsonMatch) {
     const studyData = JSON.parse(jsonMatch[0]);
-    studyData.powered_by = 'Savoiré AI by sooban talha technologies';
+    studyData.powered_by = 'Savoiré AI by Sooban Talha Technologies';
     studyData.generated_at = new Date().toISOString();
     return studyData;
   }
@@ -187,7 +187,7 @@ The practical significance spans multiple domains including technology, research
       "Misapplication of analytical methodologies"
     ],
     study_score: 96,
-    powered_by: "Savoiré AI by sooban talha technologies",
+    powered_by: "Savoiré AI by Sooban Talha Technologies",
     generated_at: new Date().toISOString()
   };
 }

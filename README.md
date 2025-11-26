@@ -1,6 +1,6 @@
 # 🎓 Savoiré AI - Ultra-Satisfying Study Assistant
 
-**by sooban talha technologies**
+**by Sooban Talha Technologies**
 
 AI-powered study assistant that generates ultra-comprehensive learning materials for any subject with 10+ detailed sections.
 
