@@ -1,155 +1,518 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="savoire-premium">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré AI - by Sooban Talha Technologies</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>Savoiré AI | Elite Cognitive Intelligence Platform</title>
     
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Advanced AI-powered assistant with ultra-detailed responses">
+    <!-- SEO & Branding Meta -->
+    <meta name="description" content="Elite AI-powered cognitive platform transforming education with cinematic interface, Socratic tutoring, and premium PDF generation">
+    <meta name="author" content="Sooban Talha Technologies">
+    <meta property="og:url" content="https://soobantalhatech.xyz">
     
     <!-- Icons -->
     <link rel="icon" type="image/png" href="LOGO.png">
+    <link rel="apple-touch-icon" href="LOGO.png">
+    
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Google+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
+    <!-- CSS -->
     <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Audio -->
+    <audio id="clickSound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" type="audio/mpeg">
+    </audio>
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="animated-bg"></div>
-    <div class="floating-elements"></div>
+    <!-- Neural Network Background -->
+    <div class="neural-background">
+        <canvas id="neuralCanvas"></canvas>
+        <div class="aurora-overlay"></div>
+    </div>
     
-    <!-- Minimal Header -->
-    <header class="modern-header">
-        <div class="header-container">
-            <div class="logo-area">
-                <div class="logo-wrapper">
-                    <div class="logo-background animated-logo">
-                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
-                    </div>
-                </div>
-                <div class="brand-text">
-                    <h1 class="animated-text">Savoiré AI</h1>
-                    <div class="brand-tagline">by Sooban Talha Technologies</div>
+    <!-- Premium Loading Screen -->
+    <div class="premium-loader" id="premiumLoader">
+        <div class="loader-content">
+            <div class="logo-container">
+                <div class="logo-hologram">
+                    <img src="LOGO.png" alt="Savoiré AI" class="hologram-logo">
+                    <div class="hologram-ring ring-1"></div>
+                    <div class="hologram-ring ring-2"></div>
+                    <div class="hologram-ring ring-3"></div>
                 </div>
             </div>
-            <div class="header-actions">
-                <button class="icon-btn theme-toggle glow">
-                    <i class="fas fa-moon"></i>
-                </button>
+            <h1 class="loader-title">Initializing Cognitive Matrix</h1>
+            <p class="loader-subtitle">Preparing elite tutoring environment</p>
+            <div class="loader-progress">
+                <div class="progress-bar"></div>
             </div>
-        </div>
-    </header>
-
-    <!-- Main Chat Area -->
-    <main class="modern-chat">
-        <div class="chat-container">
-            <!-- Welcome Area -->
-            <div class="welcome-area" id="welcomeArea">
-                <div class="welcome-center">
-                    <div class="welcome-logo">
-                        <div class="logo-background large animated-logo">
-                            <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
-                        </div>
-                    </div>
-                    <h1 class="welcome-title slide-in">Welcome to Savoiré AI</h1>
-                    <p class="welcome-subtitle fade-in">Experience the ultimate smart companion for students, bringing you advanced questions, tricks, detailed notes, PDF Generation and endless features designed to make learning faster, easier, and smarter – with even more powerful tools coming soon.</p>
-                    
-                    <!-- Quick Suggestions -->
-                    <div class="suggestions-grid">
-                        <div class="suggestion-chip animated-btn" data-prompt="Explain quantum computing in detail with key concepts and examples">
-                            <i class="fas fa-star bounce"></i>
-                            Quantum Computing
-                        </div>
-                        <div class="suggestion-chip animated-btn" data-prompt="Provide detailed analysis of artificial intelligence with key concepts">
-                            <i class="fas fa-brain bounce"></i>
-                            AI Analysis
-                        </div>
-                        <div class="suggestion-chip animated-btn" data-prompt="Explain machine learning algorithms with practical examples">
-                            <i class="fas fa-cogs bounce"></i>
-                            Machine Learning
-                        </div>
-                        <div class="suggestion-chip animated-btn" data-prompt="Give me comprehensive details about neural networks">
-                            <i class="fas fa-network-wired bounce"></i>
-                            Neural Networks
-                        </div>
-                    </div>
-
-                    <!-- Brand Footer -->
-                    <div class="brand-footer">
-                        <div class="production-credit pulse">by Sooban Talha Technologies</div>
-                        <div class="feature-tags">
-                            <span class="feature-tag glow">Advanced AI </span>
-                            <span class="feature-tag glow">Fast Responses</span>
-                            <span class="feature-tag glow">PDF Generation</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chat Messages -->
-            <div class="messages-container" id="messagesContainer" style="display: none;">
-                <div class="messages-scroll" id="chatMessages">
-                    <!-- Messages will be added here dynamically -->
-                </div>
-            </div>
-
-            <!-- Loading Indicator -->
-            <div class="thinking-indicator" id="thinkingIndicator" style="display: none;">
-                <div class="thinking-avatar">
-                    <div class="logo-background small pulse">
-                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
-                    </div>
-                </div>
-                <div class="thinking-content">
-                    <div class="typing-animation">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
-                    <span class="thinking-text">Toppers don’t rush, they wait for clarity — your clarity is loading 📘🚀...</span>
-                </div>
+            <p class="loader-quote">"Education is not the filling of a pail, but the lighting of a fire." - William Butler Yeats</p>
+            <div class="loader-brand">
+                Powered by <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">Sooban Talha Technologies</a>
             </div>
         </div>
+    </div>
 
-        <!-- Input Area -->
-        <div class="input-area">
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <div class="text-input-container glow-border">
-                        <textarea 
-                            id="messageInput" 
-                            placeholder="Ask anything for fast, detailed answers..."
-                            rows="1"
-                        ></textarea>
-                        <div class="input-actions">
-                            <button class="send-button pulse animated-btn" id="sendButton">
-                                <i class="fas fa-paper-plane"></i>
+    <!-- Main App Container -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Cinematic Header -->
+        <header class="cinematic-header" id="mainHeader">
+            <div class="header-glass">
+                <div class="header-container">
+                    <!-- Logo Area -->
+                    <div class="logo-premium" onclick="goldAI.playSound()">
+                        <div class="logo-orb">
+                            <div class="logo-core">
+                                <img src="LOGO.png" alt="Savoiré AI" class="logo-img">
+                            </div>
+                            <div class="logo-aura"></div>
+                        </div>
+                        <div class="brand-text">
+                            <h1 class="brand-title">Savoiré AI</h1>
+                            <div class="brand-subtitle">
+                                <span class="ai-badge">Elite Intelligence</span>
+                                <span class="brand-by">by <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">Sooban Talha Technologies</a></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Header Controls -->
+                    <div class="header-controls">
+                        <!-- Session Stats -->
+                        <div class="session-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-brain"></i>
+                                <span id="sessionMessages">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                <span id="sessionTime">00:00</span>
+                            </div>
+                        </div>
+
+                        <!-- Control Buttons -->
+                        <div class="control-buttons">
+                            <button class="control-btn magnetic" id="voiceToggle" title="Voice Input">
+                                <i class="fas fa-microphone"></i>
+                                <span class="pulse-ring"></span>
+                            </button>
+                            <button class="control-btn magnetic" id="themeToggle" title="Toggle Theme">
+                                <i class="fas fa-moon"></i>
+                            </button>
+                            <button class="control-btn magnetic" id="fullscreenToggle" title="Fullscreen">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button class="control-btn magnetic premium" id="newSession" title="New Session">
+                                <i class="fas fa-plus"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="footer-actions">
-                    <button class="footer-btn animated-btn" id="clearChat">
-                        <i class="fas fa-trash"></i>
-                        Clear chat
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="content-area">
+            <!-- Session Sidebar -->
+            <aside class="session-sidebar" id="sessionSidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-history"></i> Session History</h3>
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
-                    <div class="production-watermark fade-in">
-                      • Powered by Sooban Talha Technologies
+                </div>
+                
+                <div class="sidebar-content" id="sidebarContent">
+                    <!-- Sessions will be loaded here -->
+                    <div class="empty-sessions">
+                        <i class="fas fa-comment-dots"></i>
+                        <p>No sessions yet</p>
+                        <p>Start a conversation to see history</p>
+                    </div>
+                </div>
+                
+                <div class="sidebar-footer">
+                    <div class="storage-info">
+                        <i class="fas fa-database"></i>
+                        <span id="storageUsage">0% used</span>
+                    </div>
+                    <a href="https://soobantalhatech.xyz" target="_blank" class="sidebar-brand">
+                        Sooban Talha Technologies
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Chat Area -->
+            <div class="chat-area">
+                <!-- Welcome Screen -->
+                <div class="welcome-cinematic" id="welcomeArea">
+                    <div class="welcome-center">
+                        <!-- Animated Logo -->
+                        <div class="welcome-logo">
+                            <div class="logo-hologram large">
+                                <img src="LOGO.png" alt="Savoiré AI" class="hologram-logo">
+                                <div class="hologram-ring ring-1"></div>
+                                <div class="hologram-ring ring-2"></div>
+                                <div class="hologram-ring ring-3"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hero Text -->
+                        <div class="welcome-hero">
+                            <h1 class="welcome-title">
+                                <span class="title-line">Welcome to</span>
+                                <span class="title-main">Savoiré AI</span>
+                            </h1>
+                            <p class="welcome-subtitle">
+                                The world's first cinematic AI tutoring platform.<br>
+                                Where elite education meets futuristic design.
+                            </p>
+                        </div>
+
+                        <!-- Quick Start Cards -->
+                        <div class="quick-start-grid">
+                            <div class="start-card magnetic" data-prompt="Explain quantum computing from first principles with mental models">
+                                <div class="card-icon">
+                                    <i class="fas fa-atom"></i>
+                                </div>
+                                <h3>Quantum Computing</h3>
+                                <p>Understand qubits, superposition, and quantum algorithms</p>
+                            </div>
+                            
+                            <div class="start-card magnetic" data-prompt="Teach me machine learning with Socratic questioning and practical examples">
+                                <div class="card-icon">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <h3>Machine Learning</h3>
+                                <p>From intuition to implementation with neural networks</p>
+                            </div>
+                            
+                            <div class="start-card magnetic" data-prompt="Explain calculus conceptually with visualizations and real-world applications">
+                                <div class="card-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h3>Calculus</h3>
+                                <p>Master derivatives, integrals, and their applications</p>
+                            </div>
+                            
+                            <div class="start-card magnetic" data-prompt="Provide comprehensive analysis of blockchain technology and cryptography">
+                                <div class="card-icon">
+                                    <i class="fas fa-link"></i>
+                                </div>
+                                <h3>Blockchain</h3>
+                                <p>Deep dive into decentralization and smart contracts</p>
+                            </div>
+                        </div>
+
+                        <!-- Premium Features -->
+                        <div class="premium-features">
+                            <h3><i class="fas fa-crown"></i> Premium Features</h3>
+                            <div class="features-grid">
+                                <div class="feature-item">
+                                    <i class="fas fa-book-open"></i>
+                                    <span>Socratic Tutoring</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span>Magazine-Quality PDFs</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-voice"></i>
+                                    <span>Voice Interaction</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-history"></i>
+                                    <span>Session History</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-chart-network"></i>
+                                    <span>Concept Mapping</span>
+                                </div>
+                                <div class="feature-item">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <span>Exam Focus</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Brand Footer -->
+                        <div class="welcome-footer">
+                            <div class="production-credit">
+                                <span>Crafted with elite precision by</span>
+                                <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link-glow">
+                                    Sooban Talha Technologies
+                                </a>
+                            </div>
+                            <div class="version-tag">v2.0.0 | Cognitive Edition</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div class="messages-container" id="messagesContainer" style="display: none;">
+                    <div class="messages-scroll" id="chatMessages">
+                        <!-- Messages will be inserted here -->
+                    </div>
+                    
+                    <!-- Thinking Indicator -->
+                    <div class="thinking-cinematic" id="thinkingIndicator" style="display: none;">
+                        <div class="thinking-header">
+                            <div class="thinking-logo">
+                                <div class="logo-orb small">
+                                    <div class="logo-core">
+                                        <img src="LOGO.png" alt="Savoiré AI">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="thinking-text">
+                                <div class="typing-animation">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                                <span class="thinking-message" id="thinkingMessage">Constructing cognitive framework...</span>
+                            </div>
+                        </div>
+                        <div class="thinking-quote" id="thinkingQuote">
+                            "The mind is not a vessel to be filled, but a fire to be kindled." - Plutarch
+                        </div>
+                        <div class="thinking-progress">
+                            <div class="progress-bar thinking"></div>
+                        </div>
                     </div>
                 </div>
             </div>
+        </main>
+
+        <!-- Input Area -->
+        <footer class="input-cinematic" id="inputArea">
+            <div class="input-glass">
+                <div class="input-container">
+                    <!-- Smart Input -->
+                    <div class="smart-input-wrapper">
+                        <div class="input-controls-left">
+                            <button class="input-control-btn magnetic" id="attachBtn" title="Attach Files">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <button class="input-control-btn magnetic" id="mathBtn" title="Insert Math">
+                                <i class="fas fa-square-root-alt"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="text-input-glass" id="textInputContainer">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Ask anything... I'll provide Socratic tutoring, mental models, worked examples, and exam insights"
+                                rows="1"
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="true"
+                            ></textarea>
+                            
+                            <div class="input-hints" id="inputHints">
+                                <span class="hint-item">Press / for commands</span>
+                                <span class="hint-item">Shift+Enter for new line</span>
+                                <span class="hint-item">Click mic for voice</span>
+                            </div>
+                        </div>
+                        
+                        <div class="input-controls-right">
+                            <button class="input-control-btn magnetic voice-active" id="voiceBtn" title="Voice Input">
+                                <i class="fas fa-microphone"></i>
+                                <span class="voice-indicator"></span>
+                            </button>
+                            <button class="send-button cinematic" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                                <div class="send-aura"></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="quick-actions" id="quickActions">
+                        <button class="action-btn magnetic" data-action="explain">
+                            <i class="fas fa-search-plus"></i>
+                            Explain Deeper
+                        </button>
+                        <button class="action-btn magnetic" data-action="simplify">
+                            <i class="fas fa-language"></i>
+                            Simplify
+                        </button>
+                        <button class="action-btn magnetic" data-action="examples">
+                            <i class="fas fa-list-ol"></i>
+                            More Examples
+                        </button>
+                        <button class="action-btn magnetic" data-action="exam">
+                            <i class="fas fa-graduation-cap"></i>
+                            Exam Mode
+                        </button>
+                        <button class="action-btn magnetic premium" data-action="pdf">
+                            <i class="fas fa-file-pdf"></i>
+                            Generate PDF
+                        </button>
+                    </div>
+
+                    <!-- Footer Bar -->
+                    <div class="footer-bar">
+                        <div class="footer-left">
+                            <button class="footer-btn magnetic" id="clearChatBtn">
+                                <i class="fas fa-trash-alt"></i>
+                                Clear Chat
+                            </button>
+                            <button class="footer-btn magnetic" id="exportBtn">
+                                <i class="fas fa-download"></i>
+                                Export Session
+                            </button>
+                        </div>
+                        
+                        <div class="footer-center">
+                            <div class="connection-status">
+                                <div class="status-dot connected"></div>
+                                <span>AI Connected</span>
+                            </div>
+                        </div>
+                        
+                        <div class="footer-right">
+                            <div class="footer-brand">
+                                <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link-minimal">
+                                    Sooban Talha Technologies
+                                </a>
+                                <span class="footer-version">v2.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Voice Interface -->
+        <div class="voice-interface" id="voiceInterface" style="display: none;">
+            <div class="voice-glass">
+                <div class="voice-header">
+                    <h3><i class="fas fa-microphone"></i> Voice Input Active</h3>
+                    <button class="voice-close" id="voiceClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="voice-visualizer" id="voiceVisualizer">
+                    <!-- Visualizer bars will be added here -->
+                </div>
+                <div class="voice-status" id="voiceStatus">
+                    <i class="fas fa-circle"></i>
+                    <span>Listening...</span>
+                </div>
+                <div class="voice-transcript" id="voiceTranscript">
+                    <!-- Transcript will appear here -->
+                </div>
+            </div>
         </div>
-    </main>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- PDF Modal -->
+        <div class="pdf-modal" id="pdfModal" style="display: none;">
+            <div class="pdf-modal-glass">
+                <div class="pdf-modal-header">
+                    <h3><i class="fas fa-file-pdf"></i> Generate Premium PDF</h3>
+                    <button class="modal-close" id="pdfModalClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="pdf-modal-content">
+                    <div class="pdf-options">
+                        <div class="pdf-option selected" data-type="summary">
+                            <div class="option-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <h4>Summary PDF</h4>
+                            <p>Concise overview with key concepts</p>
+                        </div>
+                        <div class="pdf-option" data-type="full">
+                            <div class="option-icon">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <h4>Full Notes</h4>
+                            <p>Complete analysis with examples</p>
+                        </div>
+                        <div class="pdf-option" data-type="exam">
+                            <div class="option-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <h4>Exam Ready</h4>
+                            <p>Focus on questions & tricks</p>
+                        </div>
+                    </div>
+                    <div class="pdf-customization">
+                        <h4>Customization</h4>
+                        <div class="custom-options">
+                            <label class="custom-checkbox">
+                                <input type="checkbox" id="includeCover" checked>
+                                <span>Include Cover Page</span>
+                            </label>
+                            <label class="custom-checkbox">
+                                <input type="checkbox" id="includeTOC" checked>
+                                <span>Include Table of Contents</span>
+                            </label>
+                            <label class="custom-checkbox">
+                                <input type="checkbox" id="includeWatermark" checked>
+                                <span>Include Watermark</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="pdf-preview" id="pdfPreview">
+                        <!-- Preview will be generated here -->
+                    </div>
+                </div>
+                <div class="pdf-modal-footer">
+                    <button class="btn-secondary" id="pdfPreviewBtn">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <button class="btn-primary cinematic" id="pdfGenerateBtn">
+                        <i class="fas fa-download"></i> Generate PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="settings-modal" id="settingsModal" style="display: none;">
+            <!-- Settings content will be added dynamically -->
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="scripts/app.js"></script>
+    
+    <!-- Initialization -->
+    <script>
+        // Initialize after load
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                document.getElementById('premiumLoader').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('premiumLoader').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    if (window.goldAI) {
+                        window.goldAI.initializeCinematic();
+                    }
+                }, 500);
+            }, 1500);
+        });
+    </script>
 </body>
 </html>
