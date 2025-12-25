@@ -4,6 +4,143 @@
 // ============================================
 
 class SavoireOmega {
+    // Add this method to SavoireOmega class:
+
+async sendMessage() {
+    const message = this.messageInput.value.trim();
+    if (!message || this.isGenerating) return;
+    
+    // Hide welcome screen
+    if (this.welcomeScreen.style.display !== 'none') {
+        this.welcomeScreen.style.display = 'none';
+        this.chatContainer.style.display = 'block';
+    }
+    
+    // Add user message
+    this.addMessage(message, 'user');
+    
+    // Clear input
+    this.messageInput.value = '';
+    this.autoResizeTextarea();
+    this.capsule.classList.remove('expanded');
+    
+    // Show thinking indicator
+    this.showThinking();
+    
+    this.isGenerating = true;
+    this.sendButton.disabled = true;
+    
+    try {
+        // First try local free endpoint
+        const response = await fetch('/api/study', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+        });
+        
+        if (!response.ok) {
+            // If local fails, try direct free API
+            throw new Error(`API Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        this.hideThinking();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        this.displayStudyDossier(data);
+        
+    } catch (error) {
+        console.error('API Error:', error);
+        this.hideThinking();
+        
+        // Try direct free model call as last resort
+        this.showError('Trying alternative free models...');
+        
+        try {
+            const fallbackResponse = await this.tryDirectFreeAPI(message);
+            this.displayStudyDossier(fallbackResponse);
+        } catch (finalError) {
+            console.error('All methods failed:', finalError);
+            this.showError('All models failed. Using local synthesis...');
+            
+            // Ultimate fallback
+            setTimeout(() => {
+                const localData = this.generateLocalDossier(message);
+                this.displayStudyDossier(localData);
+            }, 1000);
+        }
+    }
+    
+    this.isGenerating = false;
+    this.sendButton.disabled = false;
+}
+
+// Add direct free API method:
+async tryDirectFreeAPI(message) {
+    // Try Hugging Face Inference API (free tier)
+    try {
+        const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                inputs: `Generate a comprehensive study guide about: ${message}`,
+                parameters: {
+                    max_new_tokens: 1500,
+                    temperature: 0.7
+                }
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return {
+                success: true,
+                content: data[0]?.generated_text || 'Study guide generated',
+                model_used: 'Mistral-7B (Hugging Face)',
+                is_free: true
+            };
+        }
+    } catch (error) {
+        console.log('Hugging Face failed:', error);
+    }
+
+    // Try another free endpoint
+    try {
+        const response = await fetch('https://free.chatgptapi.io/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: [
+                    { role: 'system', content: 'You are a helpful tutor.' },
+                    { role: 'user', content: `Explain: ${message}` }
+                ],
+                max_tokens: 1000
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return {
+                success: true,
+                content: data.choices[0].message.content,
+                model_used: 'GPT-3.5 (Free API)',
+                is_free: true
+            };
+        }
+    } catch (error) {
+        console.log('Free API failed:', error);
+    }
+
+    throw new Error('All direct free APIs failed');
+}
     constructor() {
         // Core State
         this.isGenerating = false;
