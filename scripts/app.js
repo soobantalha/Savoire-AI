@@ -1,29 +1,24 @@
 // ============================================
-// SAVOIRÉ AI - NEURAL LOGIC CORE
-// Ultra-High-Fidelity Cybernetic Interface
+// SAVOIRÉ OMEGA - NEURAL LOGIC CORE
+// Ultra-Reliable AI Interface
 // ============================================
 
-class CyberneticAI {
+class SavoireOmega {
     constructor() {
         // Core State
         this.isGenerating = false;
         this.currentTypewriter = null;
         this.conversationHistory = [];
         this.soundEnabled = true;
-        this.theme = 'void';
         
         // Initialize Systems
         this.initNeuralCanvas();
         this.initSoundEngine();
         this.initElements();
         this.bindEvents();
-        this.initAnimations();
         
         // Welcome
         this.playSound('hover');
-        setTimeout(() => {
-            this.playSound('click');
-        }, 300);
     }
 
     // ============================================
@@ -33,9 +28,7 @@ class CyberneticAI {
         this.canvas = document.getElementById('neuralCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.particles = [];
-        this.connections = [];
         this.mouse = { x: 0, y: 0 };
-        this.frameCount = 0;
         
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -48,6 +41,7 @@ class CyberneticAI {
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        this.createParticles();
     }
 
     onMouseMove(e) {
@@ -56,26 +50,24 @@ class CyberneticAI {
     }
 
     createParticles() {
-        const count = Math.min(80, Math.floor(window.innerWidth / 20));
+        const count = Math.min(60, Math.floor(window.innerWidth / 25));
         this.particles = [];
         
         for (let i = 0; i < count; i++) {
             this.particles.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: (Math.random() - 0.5) * 0.5,
+                vx: (Math.random() - 0.5) * 0.3,
+                vy: (Math.random() - 0.5) * 0.3,
                 radius: Math.random() * 1.5 + 0.5,
                 color: Math.random() > 0.5 ? '#00f3ff' : '#7000ff',
-                opacity: Math.random() * 0.5 + 0.3,
-                connections: []
+                opacity: Math.random() * 0.4 + 0.2
             });
         }
     }
 
     animateCanvas() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.frameCount++;
         
         // Update and draw particles
         this.particles.forEach(particle => {
@@ -93,8 +85,15 @@ class CyberneticAI {
             const distance = Math.sqrt(dx * dx + dy * dy);
             
             if (distance < 150) {
-                particle.vx += dx * 0.0001;
-                particle.vy += dy * 0.0001;
+                particle.vx += dx * 0.00005;
+                particle.vy += dy * 0.00005;
+                
+                // Limit velocity
+                const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+                if (speed > 0.5) {
+                    particle.vx = (particle.vx / speed) * 0.5;
+                    particle.vy = (particle.vy / speed) * 0.5;
+                }
             }
             
             // Draw particle
@@ -103,13 +102,10 @@ class CyberneticAI {
             this.ctx.fillStyle = particle.color;
             this.ctx.globalAlpha = particle.opacity;
             this.ctx.fill();
-            
-            // Store connections for this frame
-            particle.connections = [];
         });
         
         // Draw connections
-        this.ctx.globalAlpha = 0.15;
+        this.ctx.globalAlpha = 0.1;
         this.ctx.strokeStyle = '#00f3ff';
         this.ctx.lineWidth = 0.5;
         
@@ -122,30 +118,18 @@ class CyberneticAI {
                 const dy = p1.y - p2.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                if (distance < 100) {
-                    // Dynamic opacity based on distance and mouse
-                    const mouseDistance = Math.min(
-                        Math.sqrt((this.mouse.x - (p1.x + p2.x) / 2) ** 2 + 
-                                 (this.mouse.y - (p1.y + p2.y) / 2) ** 2),
-                        200
-                    );
-                    
-                    const opacity = (1 - distance / 100) * (1 - mouseDistance / 200) * 0.5;
-                    
+                if (distance < 80) {
                     this.ctx.beginPath();
                     this.ctx.moveTo(p1.x, p1.y);
                     this.ctx.lineTo(p2.x, p2.y);
-                    this.ctx.strokeStyle = `rgba(0, 243, 255, ${opacity})`;
+                    this.ctx.strokeStyle = `rgba(0, 243, 255, ${0.2 * (1 - distance / 80)})`;
                     this.ctx.stroke();
-                    
-                    p1.connections.push(j);
-                    p2.connections.push(i);
                 }
             }
         }
         
         // Draw mouse connections
-        this.ctx.globalAlpha = 0.2;
+        this.ctx.globalAlpha = 0.15;
         this.ctx.strokeStyle = '#7000ff';
         
         this.particles.forEach(particle => {
@@ -153,11 +137,11 @@ class CyberneticAI {
             const dy = this.mouse.y - particle.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < 120) {
+            if (distance < 100) {
                 this.ctx.beginPath();
                 this.ctx.moveTo(particle.x, particle.y);
                 this.ctx.lineTo(this.mouse.x, this.mouse.y);
-                this.ctx.strokeStyle = `rgba(112, 0, 255, ${0.3 * (1 - distance / 120)})`;
+                this.ctx.strokeStyle = `rgba(112, 0, 255, ${0.25 * (1 - distance / 100)})`;
                 this.ctx.stroke();
             }
         });
@@ -181,25 +165,31 @@ class CyberneticAI {
         
         // Preload sounds
         Object.values(this.sounds).forEach(sound => {
-            sound.volume = 0.3;
-            sound.load();
+            if (sound) {
+                sound.volume = 0.3;
+                sound.load();
+            }
         });
     }
 
     playSound(soundName) {
-        if (!this.soundEnabled) return;
+        if (!this.soundEnabled || !this.sounds[soundName]) return;
         
-        const sound = this.sounds[soundName];
-        if (sound) {
+        try {
+            const sound = this.sounds[soundName];
             sound.currentTime = 0;
             sound.play().catch(e => console.log('Sound play failed:', e));
+        } catch (error) {
+            console.log('Sound error:', error);
         }
     }
 
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
         const icon = document.querySelector('#soundToggle i');
-        icon.className = this.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        if (icon) {
+            icon.className = this.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        }
         this.playSound('click');
     }
 
@@ -220,13 +210,8 @@ class CyberneticAI {
         this.soundToggle = document.getElementById('soundToggle');
         this.capsule = document.getElementById('capsule');
         
-        // Quick query chips
-        this.queryChips = document.querySelectorAll('.query-chip');
-        
-        // Initialize MathJax
-        if (window.MathJax) {
-            window.MathJax.typesetClear();
-        }
+        // Quick prompt chips
+        this.promptChips = document.querySelectorAll('.prompt-chip');
     }
 
     // ============================================
@@ -260,11 +245,11 @@ class CyberneticAI {
             }
         });
         
-        // Quick query chips
-        this.queryChips.forEach(chip => {
+        // Quick prompt chips
+        this.promptChips.forEach(chip => {
             chip.addEventListener('click', (e) => {
-                const query = e.currentTarget.getAttribute('data-query');
-                this.messageInput.value = query;
+                const prompt = e.currentTarget.getAttribute('data-prompt');
+                this.messageInput.value = prompt;
                 this.autoResizeTextarea();
                 this.capsule.classList.add('expanded');
                 this.playSound('click');
@@ -287,12 +272,12 @@ class CyberneticAI {
         });
         
         // Input action buttons
-        document.getElementById('voiceInput').addEventListener('click', () => {
-            this.showToast('Voice input coming in next update');
+        document.getElementById('voiceInput')?.addEventListener('click', () => {
+            this.showToast('Voice input coming in v2.0');
         });
         
-        document.getElementById('attachFile').addEventListener('click', () => {
-            this.showToast('File attachment coming in next update');
+        document.getElementById('attachFile')?.addEventListener('click', () => {
+            this.showToast('File attachment coming in v2.0');
         });
     }
 
@@ -330,18 +315,25 @@ class CyberneticAI {
                 body: JSON.stringify({ message })
             });
             
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
             
-            const studyData = await response.json();
+            const data = await response.json();
             this.hideThinking();
-            this.displayStudyDossier(studyData);
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            this.displayStudyDossier(data);
             
         } catch (error) {
             console.error('API Error:', error);
             this.hideThinking();
-            this.showError('Neural synthesis disrupted. Using local knowledge base...');
+            this.showError('Network error. Using local synthesis...');
             
-            // Fallback after delay
+            // Generate local fallback
             setTimeout(() => {
                 const fallbackData = this.generateLocalDossier(message);
                 this.displayStudyDossier(fallbackData);
@@ -382,7 +374,7 @@ class CyberneticAI {
                         <div class="message-avatar">
                             <i class="fas fa-robot"></i>
                         </div>
-                        <div class="message-sender">PROFESSOR X-ALPHA</div>
+                        <div class="message-sender">PROFESSOR X</div>
                         <div class="message-time">${time}</div>
                     </div>
                     <div class="message-content" id="aiResponseContent"></div>
@@ -404,7 +396,7 @@ class CyberneticAI {
         return messageDiv;
     }
 
-    displayStudyDossier(dossier) {
+    displayStudyDossier(data) {
         // Hide PDF section initially
         this.pdfSection.style.display = 'none';
         
@@ -412,24 +404,34 @@ class CyberneticAI {
         const aiMessage = this.addMessage('', 'ai');
         const responseElement = aiMessage.querySelector('#aiResponseContent');
         
-        // Format dossier
-        const formattedContent = this.formatDossier(dossier);
+        // Get content (handle both formats)
+        let content = '';
+        if (typeof data === 'string') {
+            content = data;
+        } else if (data.content) {
+            content = data.content;
+        } else if (data.error) {
+            content = `**Error:** ${data.error}\n\nUsing fallback generation...`;
+        } else {
+            content = JSON.stringify(data, null, 2);
+        }
+        
+        // Format markdown
+        const formattedContent = this.markdownToHtml(content);
         
         // Start typewriter effect
         this.currentTypewriter = new TypeWriter(
             responseElement, 
-            formattedContent, 
-            {
-                speed: 10,
-                onChar: () => {
-                    this.playSound('type');
-                    this.scrollToBottom();
-                },
-                onComplete: () => {
-                    this.playSound('success');
-                    this.showPDFSection();
-                    this.renderMathJax();
-                }
+            formattedContent,
+            15, // Speed
+            () => {
+                this.playSound('type');
+                this.scrollToBottom();
+            },
+            () => {
+                this.playSound('success');
+                this.showPDFSection();
+                this.renderMathJax();
             }
         );
         
@@ -441,324 +443,17 @@ class CyberneticAI {
         this.currentTypewriter.start();
     }
 
-    formatDossier(dossier) {
-        if (dossier.error) {
-            return `<div class="error-message">
-                <h3><i class="fas fa-exclamation-triangle"></i> SYSTEM ALERT</h3>
-                <p>${this.escapeHtml(dossier.error)}</p>
-                <p>Fallback analysis engaged...</p>
-            </div>`;
-        }
-        
-        let html = `<div class="dossier-container">`;
-        
-        // Header
-        html += `
-            <div class="dossier-header">
-                <h1 class="dossier-title">${this.escapeHtml(dossier.topic)}</h1>
-                <div class="dossier-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-brain"></i>
-                        <span>MASTERY SCORE: ${dossier.stats?.mastery_score || 95}/100</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-clock"></i>
-                        <span>${dossier.stats?.estimated_study_hours || 30} HOURS</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-layer-group"></i>
-                        <span>${dossier.metadata?.word_count || 3000}+ WORDS</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Executive Summary
-        if (dossier.content?.executive_summary) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-scroll"></i>
-                        EXECUTIVE SUMMARY
-                    </h2>
-                    <div class="section-content">
-                        ${this.markdownToHtml(dossier.content.executive_summary)}
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Deep Dive Lecture
-        if (dossier.content?.deep_dive_lecture) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-graduation-cap"></i>
-                        COMPREHENSIVE LECTURE
-                    </h2>
-                    <div class="section-content">
-                        ${this.markdownToHtml(dossier.content.deep_dive_lecture)}
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Key Formulas & Concepts
-        if (dossier.content?.key_formulas_concepts?.length > 0) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-square-root-alt"></i>
-                        KEY FORMULAS & CONCEPTS
-                    </h2>
-                    <div class="concept-grid">
-            `;
-            
-            dossier.content.key_formulas_concepts.forEach((item, index) => {
-                html += `
-                    <div class="concept-card glass-panel-thin">
-                        <div class="concept-header">
-                            <span class="concept-number">${index + 1}</span>
-                            <h3>${this.escapeHtml(item.name)}</h3>
-                        </div>
-                        <div class="concept-formula">
-                            ${item.latex || '$$\\text{Formula}$$'}
-                        </div>
-                        <div class="concept-explanation">
-                            ${this.escapeHtml(item.explanation)}
-                        </div>
-                        ${item.example ? `
-                            <div class="concept-example">
-                                <strong>Example:</strong> ${this.escapeHtml(item.example)}
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            });
-            
-            html += `</div></div>`;
-        }
-        
-        // Memorization Tricks
-        if (dossier.content?.memorization_tricks?.length > 0) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-lightbulb"></i>
-                        TOPPER SECRETS & MNEMONICS
-                    </h2>
-                    <div class="trick-grid">
-            `;
-            
-            dossier.content.memorization_tricks.forEach((trick, index) => {
-                html += `
-                    <div class="trick-card glass-panel-thin">
-                        <div class="trick-header">
-                            <span class="trick-icon">💡</span>
-                            <h3>${this.escapeHtml(trick.name)}</h3>
-                            <span class="trick-rating">${trick.effectiveness}</span>
-                        </div>
-                        <div class="trick-description">
-                            ${this.escapeHtml(trick.description)}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `</div></div>`;
-        }
-        
-        // Real World Applications
-        if (dossier.content?.real_world_applications?.length > 0) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-globe"></i>
-                        REAL-WORLD APPLICATIONS
-                    </h2>
-                    <div class="application-grid">
-            `;
-            
-            dossier.content.real_world_applications.forEach((app, index) => {
-                html += `
-                    <div class="application-card glass-panel-thin">
-                        <div class="app-domain">
-                            <i class="fas fa-industry"></i>
-                            <span>${this.escapeHtml(app.domain)}</span>
-                        </div>
-                        <h4>${this.escapeHtml(app.application)}</h4>
-                        <div class="app-impact">
-                            ${this.escapeHtml(app.impact)}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `</div></div>`;
-        }
-        
-        // Pitfall Analysis
-        if (dossier.content?.pitfall_analysis?.length > 0) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        PITFALL ANALYSIS
-                    </h2>
-                    <div class="pitfall-grid">
-            `;
-            
-            dossier.content.pitfall_analysis.forEach((pitfall, index) => {
-                html += `
-                    <div class="pitfall-card glass-panel-thin">
-                        <div class="pitfall-header">
-                            <span class="pitfall-number">⚠️</span>
-                            <h3>${this.escapeHtml(pitfall.pitfall)}</h3>
-                        </div>
-                        <div class="pitfall-wrong">
-                            <strong>Why Wrong:</strong> ${this.escapeHtml(pitfall.why_wrong)}
-                        </div>
-                        <div class="pitfall-correct">
-                            <strong>Correct Approach:</strong> ${this.escapeHtml(pitfall.correct_approach)}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `</div></div>`;
-        }
-        
-        // Exam Questions
-        if (dossier.content?.exam_questions?.length > 0) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-file-alt"></i>
-                        EXAM SIMULATION (${dossier.content.exam_questions.length} Questions)
-                    </h2>
-                    <div class="question-grid">
-            `;
-            
-            dossier.content.exam_questions.forEach((q, index) => {
-                html += `
-                    <div class="question-card glass-panel-thin">
-                        <div class="question-header">
-                            <span class="question-number">Q${index + 1}</span>
-                            <span class="question-difficulty">
-                                Difficulty: ${'★'.repeat(q.difficulty || 5)}${'☆'.repeat(10 - (q.difficulty || 5))}
-                            </span>
-                            <span class="question-time">${q.time_estimate || '15 min'}</span>
-                        </div>
-                        <div class="question-text">
-                            ${this.markdownToHtml(q.question)}
-                        </div>
-                        <details class="question-solution">
-                            <summary>View Solution</summary>
-                            <div class="solution-content">
-                                ${this.markdownToHtml(q.answer)}
-                                ${q.common_errors?.length > 0 ? `
-                                    <div class="common-errors">
-                                        <strong>Common Errors:</strong>
-                                        <ul>
-                                            ${q.common_errors.map(err => `<li>${this.escapeHtml(err)}</li>`).join('')}
-                                        </ul>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </details>
-                    </div>
-                `;
-            });
-            
-            html += `</div></div>`;
-        }
-        
-        // Further Exploration
-        if (dossier.content?.further_exploration) {
-            html += `
-                <div class="dossier-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-rocket"></i>
-                        FURTHER EXPLORATION
-                    </h2>
-                    <div class="exploration-content">
-            `;
-            
-            const explore = dossier.content.further_exploration;
-            
-            if (explore.books?.length > 0) {
-                html += `
-                    <h4><i class="fas fa-book"></i> Recommended Books:</h4>
-                    <ul>
-                        ${explore.books.map(book => `<li>${this.escapeHtml(book)}</li>`).join('')}
-                    </ul>
-                `;
-            }
-            
-            if (explore.papers?.length > 0) {
-                html += `
-                    <h4><i class="fas fa-file-alt"></i> Research Papers:</h4>
-                    <ul>
-                        ${explore.papers.map(paper => `<li>${this.escapeHtml(paper)}</li>`).join('')}
-                    </ul>
-                `;
-            }
-            
-            if (explore.courses?.length > 0) {
-                html += `
-                    <h4><i class="fas fa-university"></i> Online Courses:</h4>
-                    <ul>
-                        ${explore.courses.map(course => `<li>${this.escapeHtml(course)}</li>`).join('')}
-                    </ul>
-                `;
-            }
-            
-            if (explore.tools?.length > 0) {
-                html += `
-                    <h4><i class="fas fa-tools"></i> Software Tools:</h4>
-                    <ul>
-                        ${explore.tools.map(tool => `<li>${this.escapeHtml(tool)}</li>`).join('')}
-                    </ul>
-                `;
-            }
-            
-            html += `</div></div>`;
-        }
-        
-        // Footer
-        html += `
-            <div class="dossier-footer">
-                <div class="footer-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-cube"></i>
-                        <span>Generated by <a href="https://soobantalhatech.xyz" target="_blank">Sooban Talha Technologies</a></span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-robot"></i>
-                        <span>Professor X-Alpha Model v2.0</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-calendar"></i>
-                        <span>${new Date(dossier.generated_at || new Date()).toLocaleString()}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        html += `</div>`;
-        return html;
-    }
-
     // ============================================
     // TYPEWRITER SYSTEM
     // ============================================
     createSkipButton() {
         const skipBtn = document.createElement('button');
-        skipBtn.className = 'cyber-button skip-button';
-        skipBtn.innerHTML = '<i class="fas fa-forward"></i> SKIP ANIMATION';
+        skipBtn.className = 'control-btn';
+        skipBtn.innerHTML = '<i class="fas fa-forward"></i> SKIP';
         skipBtn.style.marginTop = '1rem';
         skipBtn.style.fontSize = '0.9rem';
         skipBtn.style.padding = '0.5rem 1rem';
+        skipBtn.style.width = 'auto';
         
         skipBtn.addEventListener('click', () => {
             if (this.currentTypewriter) {
@@ -771,14 +466,14 @@ class CyberneticAI {
     }
 
     // ============================================
-    // PDF GENERATION ENGINE
+    // PDF GENERATION
     // ============================================
     async generatePremiumPDF() {
         this.playSound('click');
         
         // Show generating indicator
         const originalText = this.downloadPDFBtn.innerHTML;
-        this.downloadPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERATING PDF...';
+        this.downloadPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERATING...';
         this.downloadPDFBtn.disabled = true;
         
         try {
@@ -786,29 +481,16 @@ class CyberneticAI {
             const doc = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: 'a4',
-                putOnlyUsedFonts: true,
-                floatPrecision: 16
-            });
-            
-            // Set PDF metadata
-            doc.setProperties({
-                title: `Savoiré AI Dossier - ${this.getCurrentTopic()}`,
-                subject: 'Comprehensive Study Dossier',
-                author: 'Sooban Talha Technologies',
-                keywords: 'education, ai, study, learning',
-                creator: 'Savoiré AI Neural Matrix'
+                format: 'a4'
             });
             
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 15;
-            let yPos = margin;
-            let currentPage = 1;
             
             // ========== COVER PAGE ==========
             // Black background
-            doc.setFillColor(5, 5, 10);
+            doc.setFillColor(2, 2, 4);
             doc.rect(0, 0, pageWidth, pageHeight, 'F');
             
             // Gold border
@@ -818,40 +500,41 @@ class CyberneticAI {
             
             // Title
             doc.setTextColor(255, 215, 0);
-            doc.setFontSize(36);
+            doc.setFontSize(32);
             doc.setFont('helvetica', 'bold');
-            doc.text('SAVOIRÉ AI', pageWidth / 2, 60, { align: 'center' });
+            doc.text('SAVOIRÉ OMEGA', pageWidth / 2, 60, { align: 'center' });
             
             // Subtitle
             doc.setTextColor(0, 243, 255);
-            doc.setFontSize(18);
-            doc.text('NEURAL EDUCATION MATRIX', pageWidth / 2, 80, { align: 'center' });
+            doc.setFontSize(16);
+            doc.text('CLASSIFIED STUDY DOSSIER', pageWidth / 2, 75, { align: 'center' });
             
             // Divider
             doc.setDrawColor(0, 243, 255);
             doc.setLineWidth(0.5);
-            doc.line(margin + 20, 90, pageWidth - margin - 20, 90);
+            doc.line(margin + 20, 85, pageWidth - margin - 20, 85);
             
             // Topic
+            const topic = this.getCurrentTopic();
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(28);
-            doc.text(this.getCurrentTopic().toUpperCase(), pageWidth / 2, 120, { align: 'center' });
-            
-            // Logo area
-            doc.setFillColor(0, 243, 255, 0.1);
-            doc.circle(pageWidth / 2, 160, 30, 'F');
-            doc.setTextColor(0, 243, 255);
             doc.setFontSize(24);
-            doc.text('⚡', pageWidth / 2, 165, { align: 'center' });
+            doc.text(topic.toUpperCase(), pageWidth / 2, 110, { align: 'center' });
+            
+            // Logo
+            doc.setFillColor(0, 243, 255, 0.1);
+            doc.circle(pageWidth / 2, 150, 25, 'F');
+            doc.setTextColor(0, 243, 255);
+            doc.setFontSize(20);
+            doc.text('⚡', pageWidth / 2, 155, { align: 'center' });
             
             // Authorized by
             doc.setTextColor(255, 255, 255);
-            doc.setFontSize(12);
-            doc.text('AUTHORIZED EDITION', pageWidth / 2, 200, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text('AUTHORIZED BY', pageWidth / 2, 190, { align: 'center' });
             
             doc.setTextColor(255, 215, 0);
-            doc.setFontSize(10);
-            doc.textWithLink('Sooban Talha Technologies', pageWidth / 2, 210, { 
+            doc.setFontSize(12);
+            doc.textWithLink('Sooban Talha Technologies', pageWidth / 2, 200, { 
                 align: 'center',
                 url: 'https://soobantalhatech.xyz'
             });
@@ -859,74 +542,43 @@ class CyberneticAI {
             // Generation info
             doc.setTextColor(150, 150, 150);
             doc.setFontSize(8);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 250, { align: 'center' });
-            doc.text('Professor X-Alpha Model • 3000+ Word Analysis', pageWidth / 2, 255, { align: 'center' });
+            doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 230, { align: 'center' });
+            doc.text('Professor X Protocol • 3000+ Word Analysis', pageWidth / 2, 235, { align: 'center' });
             
-            // Page number
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Page ${currentPage}`, pageWidth / 2, pageHeight - margin, { align: 'center' });
+            doc.text('Page 1', pageWidth / 2, pageHeight - margin, { align: 'center' });
             
             // ========== CONTENT PAGES ==========
-            const messages = this.chatMessages.querySelectorAll('.ai-bubble .dossier-container');
-            if (messages.length > 0) {
-                const latestDossier = messages[messages.length - 1];
-                
-                // Convert to canvas for better formatting
-                const canvas = await html2canvas(latestDossier, {
+            const latestMessage = this.chatMessages.querySelector('.ai-bubble:last-child .message-content');
+            if (latestMessage) {
+                // Convert to canvas
+                const canvas = await html2canvas(latestMessage, {
                     scale: 2,
                     useCORS: true,
                     backgroundColor: '#020204'
                 });
                 
-                // Add new page for content
+                // Add new page
                 doc.addPage();
-                currentPage++;
-                yPos = margin;
                 
-                // Add content header
+                // Content header
                 doc.setTextColor(0, 243, 255);
-                doc.setFontSize(16);
+                doc.setFontSize(14);
                 doc.setFont('helvetica', 'bold');
-                doc.text('COMPREHENSIVE STUDY DOSSIER', pageWidth / 2, yPos, { align: 'center' });
-                yPos += 10;
+                doc.text('STUDY DOSSIER CONTENT', pageWidth / 2, margin, { align: 'center' });
                 
-                doc.setDrawColor(0, 243, 255);
-                doc.setLineWidth(0.3);
-                doc.line(margin, yPos, pageWidth - margin, yPos);
-                yPos += 15;
-                
-                // Add canvas image (scaled to fit)
+                // Add content image
                 const imgWidth = pageWidth - 2 * margin;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
-                // Split across multiple pages if needed
-                let imgY = yPos;
-                let remainingHeight = imgHeight;
-                const maxPageHeight = pageHeight - margin - 20; // Leave space for footer
+                doc.addImage(canvas, 'PNG', margin, margin + 10, imgWidth, imgHeight);
                 
-                while (remainingHeight > 0) {
-                    const pageImgHeight = Math.min(remainingHeight, maxPageHeight - imgY);
-                    
-                    doc.addImage(canvas, 'PNG', margin, imgY, imgWidth, imgHeight, 
-                                undefined, 'FAST', 0);
-                    
-                    remainingHeight -= pageImgHeight;
-                    
-                    if (remainingHeight > 0) {
-                        doc.addPage();
-                        currentPage++;
-                        imgY = margin;
-                        
-                        // Add continuation header
-                        doc.setTextColor(100, 100, 100);
-                        doc.setFontSize(10);
-                        doc.setFont('helvetica', 'italic');
-                        doc.text(`(Continued) ${this.getCurrentTopic()}`, margin, imgY - 5);
-                    }
-                }
+                // Page number
+                doc.setTextColor(100, 100, 100);
+                doc.setFontSize(8);
+                doc.text('Page 2', pageWidth / 2, pageHeight - margin, { align: 'center' });
             }
             
-            // ========== ADD FOOTER TO ALL PAGES ==========
+            // ========== FOOTER ON ALL PAGES ==========
             const totalPages = doc.internal.getNumberOfPages();
             
             for (let i = 1; i <= totalPages; i++) {
@@ -935,26 +587,19 @@ class CyberneticAI {
                 // Footer line
                 doc.setDrawColor(0, 243, 255, 0.3);
                 doc.setLineWidth(0.2);
-                doc.line(margin, pageHeight - margin + 5, pageWidth - margin, pageHeight - margin + 5);
+                doc.line(margin, pageHeight - margin - 5, pageWidth - margin, pageHeight - margin - 5);
                 
-                // Page number
-                doc.setTextColor(100, 100, 100);
-                doc.setFontSize(8);
-                doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - margin + 10, { align: 'center' });
-                
-                // Copyright and link
+                // Copyright
                 doc.setTextColor(150, 150, 150);
                 doc.setFontSize(7);
-                doc.textWithLink('Powered by Sooban Talha Technologies', pageWidth / 2, pageHeight - margin + 15, {
+                doc.textWithLink('Powered by Sooban Talha Technologies', pageWidth / 2, pageHeight - margin, {
                     align: 'center',
                     url: 'https://soobantalhatech.xyz'
                 });
-                
-                doc.text(`Generated by Savoiré AI • ${new Date().toLocaleDateString()}`, pageWidth / 2, pageHeight - margin + 19, { align: 'center' });
             }
             
             // Save PDF
-            const fileName = `SavoireAI_Dossier_${this.getCurrentTopic().replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
+            const fileName = `SavoireOmega_${this.getCurrentTopic().replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
             doc.save(fileName);
             
             this.showToast('PDF generated successfully!');
@@ -970,10 +615,10 @@ class CyberneticAI {
     }
     
     getCurrentTopic() {
-        const lastMessage = this.conversationHistory
+        const lastUserMessage = this.conversationHistory
             .filter(msg => msg.type === 'user')
             .pop();
-        return lastMessage?.content || 'Study Topic';
+        return lastUserMessage?.content || 'Study Topic';
     }
 
     // ============================================
@@ -1001,9 +646,9 @@ class CyberneticAI {
     showError(message) {
         const errorMessage = `
             <div class="error-message">
-                <h3><i class="fas fa-exclamation-circle"></i> SYSTEM NOTIFICATION</h3>
+                <h3><i class="fas fa-exclamation-triangle"></i> SYSTEM ALERT</h3>
                 <p>${this.escapeHtml(message)}</p>
-                <p>Engaging local knowledge synthesis...</p>
+                <p>Engaging fallback protocols...</p>
             </div>
         `;
         this.addMessage(errorMessage, 'ai');
@@ -1012,7 +657,7 @@ class CyberneticAI {
     showToast(message) {
         // Create toast element
         const toast = document.createElement('div');
-        toast.className = 'cyber-toast';
+        toast.className = 'omega-toast';
         toast.innerHTML = `
             <div class="toast-content">
                 <i class="fas fa-info-circle"></i>
@@ -1022,10 +667,10 @@ class CyberneticAI {
         
         document.body.appendChild(toast);
         
-        // Show with animation
+        // Show
         setTimeout(() => toast.classList.add('show'), 10);
         
-        // Remove after delay
+        // Remove
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
@@ -1035,7 +680,6 @@ class CyberneticAI {
     clearChat() {
         this.playSound('click');
         
-        // Animation
         this.chatMessages.style.opacity = '0';
         this.chatMessages.style.transform = 'translateY(20px)';
         
@@ -1052,12 +696,19 @@ class CyberneticAI {
     }
 
     toggleTheme() {
-        this.theme = this.theme === 'void' ? 'light' : 'void';
-        document.body.setAttribute('data-theme', this.theme);
-        
+        document.body.classList.toggle('light-mode');
         const icon = this.themeToggle.querySelector('i');
-        icon.className = this.theme === 'void' ? 'fas fa-moon' : 'fas fa-sun';
-        
+        if (document.body.classList.contains('light-mode')) {
+            icon.className = 'fas fa-sun';
+            document.documentElement.style.setProperty('--void-black', '#f5f5f5');
+            document.documentElement.style.setProperty('--text-primary', '#202124');
+            document.documentElement.style.setProperty('--text-secondary', '#5f6368');
+        } else {
+            icon.className = 'fas fa-moon';
+            document.documentElement.style.setProperty('--void-black', '#020204');
+            document.documentElement.style.setProperty('--text-primary', '#ffffff');
+            document.documentElement.style.setProperty('--text-secondary', '#a0a0a0');
+        }
         this.playSound('click');
     }
 
@@ -1073,8 +724,7 @@ class CyberneticAI {
     renderMathJax() {
         if (window.MathJax) {
             setTimeout(() => {
-                window.MathJax.typesetClear();
-                window.MathJax.typeset();
+                window.MathJax.typesetPromise().catch(err => console.log('MathJax error:', err));
             }, 500);
         }
     }
@@ -1094,157 +744,81 @@ class CyberneticAI {
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/`(.*?)`/g, '<code>$1</code>')
-            .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2">')
-            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
             .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
             .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
             .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
             .replace(/^\d+\. (.*?)$/gm, '<li>$1</li>')
             .replace(/^- (.*?)$/gm, '<li>$1</li>')
-            .replace(/\$\$(.*?)\$\$/g, '$$$1$$') // Preserve LaTeX
-            .replace(/\$(.*?)\$/g, '$$$1$$');   // Preserve inline math
+            .replace(/\$\$(.*?)\$\$/g, '$$$1$$')
+            .replace(/\$(.*?)\$/g, '$$$1$$');
     }
 
     generateLocalDossier(topic) {
-        // Simple local fallback
         return {
-            topic: topic,
-            stats: {
-                difficulty: "Advanced",
-                mastery_score: 92,
-                estimated_study_hours: 25
-            },
-            content: {
-                executive_summary: `Local analysis of ${topic} reveals complex interrelationships requiring systematic study. This dossier provides foundational understanding through rigorous examination of core principles, practical applications, and advanced theoretical frameworks.`,
-                deep_dive_lecture: `# LOCAL KNOWLEDGE SYNTHESIS: ${topic.toUpperCase()}
+            content: `# COMPREHENSIVE ANALYSIS: ${topic.toUpperCase()}
 
-## Core Analysis
-${topic} represents a domain of study with significant theoretical depth and practical applications. Mastery requires understanding of:
+## 🚀 EXECUTIVE SUMMARY
 
-1. **Fundamental Principles**
-   - Axiomatic foundations
-   - Mathematical formalisms
-   - Empirical validations
+${topic} represents a critical domain of study with applications across multiple disciplines. This local analysis provides foundational understanding.
 
-2. **Advanced Concepts**
-   - Theoretical extensions
-   - Methodological innovations
-   - Interdisciplinary connections
+## 📖 DEEP DIVE LECTURE
 
-3. **Practical Implementation**
-   - Real-world applications
-   - Problem-solving strategies
-   - Optimization techniques
+### Foundational Principles
+The study of ${topic} rests on several core axioms:
 
-## Learning Pathway
-Systematic study should proceed through sequential mastery of:
-- Foundational definitions and axioms
-- Core theorems and proofs
-- Application methodologies
-- Advanced research frontiers
+1. **Principle of Operation**: Systems evolve according to fundamental laws
+2. **Conservation Principles**: Key quantities remain invariant
+3. **Symmetry Considerations**: Physical laws exhibit invariance properties
 
-## Key Insights
-Success in ${topic} requires:
-- Strong mathematical foundation
-- Critical thinking skills
-- Systematic problem-solving approach
-- Continuous knowledge integration`,
-                key_formulas_concepts: [
-                    {
-                        name: "Fundamental Equation",
-                        latex: "$$A = \\pi r^2$$",
-                        explanation: "Basic area calculation",
-                        example: "Circle with radius 5 has area 78.54"
-                    }
-                ],
-                memorization_tricks: [
-                    {
-                        name: "Concept Mapping",
-                        description: "Create visual diagrams connecting related ideas",
-                        effectiveness: "8/10"
-                    }
-                ],
-                real_world_applications: [
-                    {
-                        domain: "General",
-                        application: "Problem solving and analysis",
-                        impact: "Improved decision making"
-                    }
-                ],
-                pitfall_analysis: [
-                    {
-                        pitfall: "Overgeneralization",
-                        why_wrong: "Applying specific cases too broadly",
-                        correct_approach: "Careful consideration of boundary conditions"
-                    }
-                ],
-                exam_questions: [
-                    {
-                        question: "Explain the core principles of " + topic,
-                        answer: "The core principles establish foundational understanding through systematic analysis of fundamental relationships and practical implementations.",
-                        difficulty: 6,
-                        time_estimate: "15 minutes",
-                        common_errors: ["Oversimplification", "Missing key connections"]
-                    }
-                ]
-            },
-            metadata: {
-                generated_at: new Date().toISOString(),
-                model: "Local Knowledge Base",
-                word_count: 1200
-            }
+### Mathematical Formalism
+Key equations include:
+
+$$
+\\frac{dx}{dt} = f(x, t)
+$$
+
+Where system evolution depends on current state and time.
+
+## 🧠 TOPPER MENTAL MODELS
+
+### Visualization Techniques
+Create mental maps connecting related concepts.
+
+### Chunking Strategy
+Group concepts into meaningful units for easier recall.
+
+## ⚠️ THE TRAP ZONE
+
+### Common Error: Oversimplification
+Complex systems often require nuanced understanding.
+
+### Solution: Systematic Analysis
+Break problems into components, analyze each part, then synthesize.
+
+## 🧪 EXAM SIMULATION
+
+### Question 1
+**Problem**: Explain core principles of ${topic}.
+
+**Solution**: Systematic analysis reveals interconnected theoretical frameworks...
+
+**Difficulty**: 7/10
+
+## 🌍 REAL WORLD APPLICATIONS
+
+- Research and development
+- Technological innovation
+- Problem-solving frameworks
+
+---
+
+*Generated by Savoiré Omega Local Synthesis • ${new Date().toLocaleString()}*`,
+            model_used: 'LOCAL_FALLBACK',
+            provider: 'Emergency Protocol',
+            generated_at: new Date().toISOString(),
+            word_count: 450,
+            is_fallback: true
         };
-    }
-
-    initAnimations() {
-        // Add CSS for toast
-        const toastStyle = document.createElement('style');
-        toastStyle.textContent = `
-            .cyber-toast {
-                position: fixed;
-                bottom: 100px;
-                left: 50%;
-                transform: translateX(-50%) translateY(100px);
-                background: rgba(0, 243, 255, 0.1);
-                backdrop-filter: blur(20px);
-                border: 1px solid rgba(0, 243, 255, 0.3);
-                border-radius: 12px;
-                padding: 12px 20px;
-                color: var(--text-primary);
-                font-family: var(--font-mono);
-                font-size: 0.9rem;
-                z-index: 10000;
-                opacity: 0;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                max-width: 90%;
-                text-align: center;
-            }
-            
-            .cyber-toast.show {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-            
-            .toast-content {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            
-            .toast-content i {
-                color: var(--cyber-blue);
-            }
-            
-            .skip-button {
-                animation: pulse 2s infinite;
-            }
-            
-            @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.7; }
-            }
-        `;
-        document.head.appendChild(toastStyle);
     }
 }
 
@@ -1252,12 +826,12 @@ Success in ${topic} requires:
 // TYPEWRITER CLASS
 // ============================================
 class TypeWriter {
-    constructor(element, text, options = {}) {
+    constructor(element, text, speed = 20, onChar = () => {}, onComplete = () => {}) {
         this.element = element;
         this.text = text;
-        this.speed = options.speed || 20;
-        this.onChar = options.onChar || (() => {});
-        this.onComplete = options.onComplete || (() => {});
+        this.speed = speed;
+        this.onChar = onChar;
+        this.onComplete = onComplete;
         
         this.index = 0;
         this.isTyping = false;
@@ -1270,22 +844,20 @@ class TypeWriter {
         this.isTyping = true;
         this.index = 0;
         this.element.innerHTML = '';
-        this.typeNextChar();
+        this.type();
     }
     
-    typeNextChar() {
+    type() {
         if (this.index >= this.text.length) {
             this.complete();
             return;
         }
         
-        // Get next character
         let char = this.text.charAt(this.index);
         this.index++;
         
         // Handle HTML tags
         if (char === '<') {
-            // Find the closing >
             const tagEnd = this.text.indexOf('>', this.index);
             if (tagEnd !== -1) {
                 char = this.text.substring(this.index - 1, tagEnd + 1);
@@ -1293,16 +865,14 @@ class TypeWriter {
             }
         }
         
-        // Handle LaTeX math
+        // Handle LaTeX
         if (char === '$' && this.text.charAt(this.index) === '$') {
-            // Find closing $$
             const mathEnd = this.text.indexOf('$$', this.index + 1);
             if (mathEnd !== -1) {
                 char = this.text.substring(this.index - 1, mathEnd + 2);
                 this.index = mathEnd + 2;
             }
         } else if (char === '$') {
-            // Find closing $
             const mathEnd = this.text.indexOf('$', this.index);
             if (mathEnd !== -1) {
                 char = this.text.substring(this.index - 1, mathEnd + 1);
@@ -1310,17 +880,14 @@ class TypeWriter {
             }
         }
         
-        // Add character to element
         this.element.innerHTML += char;
         
-        // Callback for each character
+        // Callback every few characters
         if (this.index % 3 === 0) {
             this.onChar();
         }
         
-        // Schedule next character
-        const delay = char === ' ' ? this.speed / 2 : this.speed;
-        this.timer = setTimeout(() => this.typeNextChar(), delay);
+        this.timer = setTimeout(() => this.type(), this.speed);
     }
     
     skip() {
@@ -1340,11 +907,79 @@ class TypeWriter {
 }
 
 // ============================================
-// INITIALIZE APPLICATION
+// INITIALIZATION
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    window.savoireAI = new CyberneticAI();
-    console.log('Savoiré AI Neural Matrix Online');
-    console.log('Professor X-Alpha Model Active');
-    console.log('Ready for 3000+ word dossier generation');
+    // Add toast styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .omega-toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 243, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            border-radius: 12px;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .omega-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        
+        .toast-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toast-content i {
+            color: var(--cyber-blue);
+        }
+        
+        .error-message {
+            background: rgba(255, 55, 95, 0.1);
+            border: 1px solid rgba(255, 55, 95, 0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin: var(--space-md) 0;
+        }
+        
+        .error-message h3 {
+            color: var(--alert-red);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .expanded {
+            border-color: var(--cyber-blue) !important;
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.3) !important;
+        }
+        
+        .light-mode {
+            --void-black: #f5f5f5;
+            --void-surface: #ffffff;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --glass-bg: rgba(0, 0, 0, 0.03);
+            --glass-border: rgba(0, 0, 0, 0.08);
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Initialize app
+    window.omega = new SavoireOmega();
+    console.log('Savoiré Omega Online');
+    console.log('Professor X Protocol Active');
+    console.log('Multi-Model Failover System Ready');
 });

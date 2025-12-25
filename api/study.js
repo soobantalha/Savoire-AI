@@ -1,7 +1,6 @@
 // ============================================
-// SAVOIRÉ AI - MEGA STUDY ENGINE
-// 3000+ Word Exhaustive Dossier Generator
-// Professor X-Alpha Model
+// SAVOIRÉ OMEGA - RELIABILITY ENGINE
+// Multi-Model Failover System
 // ============================================
 
 module.exports = async (req, res) => {
@@ -26,450 +25,410 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Message is required' });
         }
 
-        // Generate exhaustive 3000+ word dossier
-        let studyDossier;
+        // Generate study materials with failover
+        let studyMaterials;
         try {
-            studyDossier = await generateMegaDossier(message);
-        } catch (aiError) {
-            console.error('AI generation failed:', aiError);
-            studyDossier = generateFallbackDossier(message);
+            studyMaterials = await generateStudyMaterialsWithFailover(message);
+        } catch (error) {
+            console.error('All models failed:', error);
+            studyMaterials = generateFallbackMaterials(message);
         }
 
-        res.status(200).json(studyDossier);
+        res.status(200).json(studyMaterials);
 
     } catch (error) {
         console.error('Unexpected error:', error);
-        const fallbackDossier = generateFallbackDossier(req.body?.message || 'General Topic');
-        res.status(200).json(fallbackDossier);
+        const fallbackMaterials = generateFallbackMaterials(req.body?.message || 'General Topic');
+        res.status(200).json(fallbackMaterials);
     }
 };
 
 // ============================================
-// MEGA PROMPT ENGINE - 3000+ WORDS MINIMUM
+// MULTI-MODEL FAILOVER SYSTEM
 // ============================================
-async function generateMegaDossier(userInput) {
-    if (!process.env.OPENROUTER_API_KEY) {
-        throw new Error('API key not configured');
-    }
-
-    const MEGA_PROMPT = `
-CRITICAL DIRECTIVE: You are Professor X-Alpha, the world's most advanced AI tutor. You MUST generate a COMPREHENSIVE, EXHAUSTIVE 3000+ word study dossier. NO SUMMARIES. NO SHORTCUTS.
-
-TOPIC: "${userInput}"
-
-ROLE: You are Professor X-Alpha, holder of 12 PhDs in Quantum Physics, Neuroscience, Computer Science, Mathematics, Philosophy, and Education Theory. You have taught at MIT, Stanford, and Cambridge for 40 years. Your students consistently achieve 99th percentile scores.
-
-TASK: Generate a WORLD-CLASS study dossier that leaves NOTHING unexplained. This is not a summary—it is a MASTERY document.
-
-MANDATORY STRUCTURE (3000+ words minimum):
-
-1. EXECUTIVE SUMMARY (200 words)
-   - Core thesis statement
-   - Why this topic matters fundamentally
-   - The intellectual journey ahead
-
-2. DEEP DIVE LECTURE (1500+ words)
-   - Historical context and evolution
-   - Foundational principles (mathematically rigorous)
-   - Advanced derivations (show every step)
-   - Theoretical frameworks with proofs
-   - Interdisciplinary connections
-   - Controversies and open questions
-   - Future directions and research gaps
-
-3. KEY FORMULAS & CONCEPTS (Minimum 15 items)
-   - Each formula must include:
-     * LaTeX representation
-     * Verbal explanation
-     * Dimensional analysis
-     * Boundary conditions
-     * Real-world numerical example
-
-4. MEMORIZATION TRICKS & MNEMONICS (Minimum 10)
-   - Visual memory palaces
-   - Acronym systems
-   - Chunking strategies
-   - Spaced repetition schedules
-   - Analogies and metaphors that stick
-
-5. REAL-WORLD APPLICATIONS (Minimum 8)
-   - Industry implementations
-   - Research breakthroughs
-   - Societal impact
-   - Ethical considerations
-   - Career pathways
-
-6. PITFALL ANALYSIS (Minimum 10)
-   - Common misconceptions
-   - Typical exam mistakes
-   - Conceptual traps
-   - Calculation errors
-   - Historical errors in understanding
-
-7. EXAM SIMULATION (20+ QUESTIONS)
-   - 5 Easy (Basic recall)
-   - 10 Medium (Application)
-   - 5 Hard (Synthesis and creation)
-   - Each question MUST include:
-     * Full solution with reasoning
-     * Common wrong answers explained
-     * Difficulty rating (1-10)
-     * Estimated solving time
-
-8. FURTHER EXPLORATION
-   - Primary literature (with DOI links)
-   - Online courses and lectures
-   - Research laboratories
-   - Software tools
-   - Communities and forums
-
-STYLE GUIDELINES:
-- Write like Richard Feynman explaining to a brilliant student
-- Use analogies from multiple domains (physics, biology, economics, art)
-- Include relevant quotes from historical figures
-- Use markdown formatting for readability
-- Embed mathematical notation with $$ for all equations
-- Assume the reader is intelligent but new to the topic
-- Be passionate but precise
-- Never use "in conclusion" or "to summarize"
-
-OUTPUT FORMAT - STRICT JSON:
-{
-    "topic": "${userInput}",
-    "stats": {
-        "difficulty": "Hard",
-        "mastery_score": 98,
-        "estimated_study_hours": 40,
-        "prerequisites": ["List", "Of", "Required", "Knowledge"]
-    },
-    "content": {
-        "executive_summary": "200-word comprehensive overview...",
-        "deep_dive_lecture": "1500+ words with markdown, LaTeX $$E=mc^2$$, and exhaustive coverage...",
-        "key_formulas_concepts": [
-            {
-                "name": "Formula Name",
-                "latex": "$$\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}$$",
-                "explanation": "Detailed explanation...",
-                "example": "Worked example with numbers..."
-            }
-        ],
-        "memorization_tricks": [
-            {
-                "name": "Trick Name",
-                "description": "How to use it...",
-                "effectiveness": "9/10"
-            }
-        ],
-        "real_world_applications": [
-            {
-                "domain": "Industry/Field",
-                "application": "Specific use case...",
-                "impact": "Significance..."
-            }
-        ],
-        "pitfall_analysis": [
-            {
-                "pitfall": "Common mistake...",
-                "why_wrong": "Explanation...",
-                "correct_approach": "Right way..."
-            }
-        ],
-        "exam_questions": [
-            {
-                "question": "Full question text...",
-                "answer": "Step-by-step solution...",
-                "difficulty": 7,
-                "time_estimate": "15 minutes",
-                "common_errors": ["Error 1", "Error 2"]
-            }
-        ],
-        "further_exploration": {
-            "books": ["Title by Author (Year)"],
-            "papers": ["Paper Title, Journal (DOI)"],
-            "courses": ["Course Name, Institution"],
-            "tools": ["Software/Tool Name"]
-        }
-    },
-    "metadata": {
-        "generated_at": "${new Date().toISOString()}",
-        "model": "Professor X-Alpha",
-        "word_count": 3000,
-        "version": "2.0"
-    }
-}
-
-IMPORTANT: This is NOT a chat. This is a PROFESSIONAL STUDY DOSSIER. Write with academic rigor, pedagogical excellence, and relentless thoroughness. Every concept must be explained from first principles. Every connection must be made explicit. Every question must be answered completely.
-
-BEGIN DOSSIER GENERATION NOW:
-`;
-
+async function generateStudyMaterialsWithFailover(userInput) {
     const models = [
-        'meta-llama/llama-3-70b-instruct:free',
-        'mistralai/mistral-large:free',
-        'google/gemini-2.0-pro-exp:free',
-        'anthropic/claude-3.5-sonnet:free',
-        'cohere/command-r-plus:free'
+        {
+            name: 'google/gemini-2.0-flash-exp:free',
+            provider: 'Google',
+            priority: 1
+        },
+        {
+            name: 'meta-llama/llama-3-8b-instruct:free',
+            provider: 'Meta',
+            priority: 2
+        },
+        {
+            name: 'mistralai/mistral-7b-instruct:free',
+            provider: 'Mistral',
+            priority: 3
+        },
+        {
+            name: 'z-ai/glm-4.5-air:free',
+            provider: 'Z-AI',
+            priority: 4
+        },
+        {
+            name: 'deepseek/deepseek-chat-v3.1:free',
+            provider: 'DeepSeek',
+            priority: 5
+        }
     ];
 
-    // Try models in order of capability
+    // Sort by priority
+    models.sort((a, b) => a.priority - b.priority);
+
+    const prompt = generateProfessorXPrompt(userInput);
+
+    // Try each model in order
     for (const model of models) {
         try {
-            console.log(`Attempting generation with: ${model}`);
-            const dossier = await tryMegaModel(model, MEGA_PROMPT);
-            if (dossier) {
-                console.log(`Success with model: ${model}`);
-                return dossier;
+            console.log(`Trying model: ${model.name} (${model.provider})`);
+            const response = await tryModelWithTimeout(model.name, prompt, 60000); // 60 second timeout
+            console.log(`Success with model: ${model.name}`);
+            
+            return {
+                success: true,
+                content: response,
+                model_used: model.name,
+                provider: model.provider,
+                generated_at: new Date().toISOString(),
+                word_count: estimateWordCount(response)
+            };
+        } catch (error) {
+            console.log(`Model ${model.name} failed:`, error.message);
+            continue; // Try next model
+        }
+    }
+
+    throw new Error('All models failed to respond');
+}
+
+// ============================================
+// PROFESSOR X PROTOCOL - 3000 WORD PROMPT
+// ============================================
+function generateProfessorXPrompt(topic) {
+    return `CRITICAL DIRECTIVE: You are Professor X, the world's most advanced AI tutor. Generate a COMPREHENSIVE 3000+ word study dossier. NO SUMMARIES. NO SHORTCUTS.
+
+TOPIC: "${topic}"
+
+ROLE: You hold 12 PhDs from MIT, Stanford, and Cambridge. You've taught elite students for 40 years. Your expertise is exhaustive.
+
+MANDATORY STRUCTURE (3000+ words):
+
+🚀 EXECUTIVE SUMMARY
+- Core thesis statement
+- Why this topic matters fundamentally
+- Intellectual journey ahead
+- Key learning outcomes
+
+📖 DEEP DIVE LECTURE (2000+ words)
+- Historical evolution and context
+- Foundational principles with mathematical rigor
+- Advanced theoretical frameworks
+- Proofs and derivations (show every step)
+- Interdisciplinary connections
+- Controversies and open questions
+- Future research directions
+
+🧠 TOPPER MENTAL MODELS
+- Visualization techniques
+- Memory palaces specific to this topic
+- Mnemonics and acronyms
+- Chunking strategies
+- Analogies that stick
+- Spaced repetition schedules
+
+⚠️ THE TRAP ZONE (Common Student Mistakes)
+- Top 10 misconceptions
+- Typical exam errors
+- Conceptual pitfalls
+- Calculation traps
+- Historical misunderstandings
+- How to avoid each trap
+
+🧪 EXAM SIMULATION (5 Hard Questions)
+1. Conceptual Synthesis Question (Requires connecting multiple concepts)
+2. Mathematical Derivation Question (Show all steps)
+3. Real-World Application Question
+4. Critical Analysis Question
+5. Creative Extension Question
+
+Each question must include:
+- Full question statement
+- Step-by-step solution
+- Common wrong answers explained
+- Difficulty rating (8-10/10)
+- Estimated solving time
+
+🌍 REAL WORLD APPLICATIONS
+- Industry implementations
+- Research breakthroughs
+- Societal impact
+- Ethical considerations
+- Career pathways
+- Future technological applications
+
+ADDITIONAL REQUIREMENTS:
+1. Include relevant mathematical notation with $$ for all equations
+2. Use markdown formatting (headers, lists, code blocks)
+3. Provide historical context and quotes from relevant figures
+4. Include practical examples with numbers
+5. Connect to related fields and disciplines
+6. Assume intelligent but novice reader
+7. Write with academic rigor and passion
+
+STYLE: Write like Richard Feynman explaining to a brilliant student. Be thorough, precise, and inspiring.
+
+BEGIN DOSSIER NOW:
+
+# COMPREHENSIVE STUDY DOSSIER: ${topic.toUpperCase()}
+
+## 🚀 EXECUTIVE SUMMARY`;
+}
+
+// ============================================
+// MODEL REQUEST WITH TIMEOUT
+// ============================================
+async function tryModelWithTimeout(model, prompt, timeoutMs) {
+    return new Promise(async (resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            reject(new Error(`Model ${model} timeout after ${timeoutMs}ms`));
+        }, timeoutMs);
+
+        try {
+            if (!process.env.OPENROUTER_API_KEY) {
+                throw new Error('OPENROUTER_API_KEY not configured');
+            }
+
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    'HTTP-Referer': 'https://savoireai.vercel.app',
+                    'X-Title': 'Savoiré Omega'
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        { 
+                            role: 'system', 
+                            content: 'You are Professor X, the world\'s most thorough and brilliant educator. You generate 3000+ word exhaustive study dossiers with academic rigor and pedagogical excellence.' 
+                        },
+                        { role: 'user', content: prompt }
+                    ],
+                    max_tokens: 8000,
+                    temperature: 0.7,
+                    top_p: 0.9
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Model ${model} returned ${response.status}`);
+            }
+
+            const data = await response.json();
+            clearTimeout(timeoutId);
+            
+            if (data.choices && data.choices[0] && data.choices[0].message) {
+                resolve(data.choices[0].message.content);
+            } else {
+                reject(new Error('Invalid response format from model'));
             }
         } catch (error) {
-            console.log(`Model ${model} failed:`, error.message);
+            clearTimeout(timeoutId);
+            reject(error);
         }
-    }
-    
-    throw new Error('All advanced models failed');
-}
-
-async function tryMegaModel(model, prompt) {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer': 'https://savoireai.vercel.app',
-            'X-Title': 'Savoiré AI - Professor X-Alpha'
-        },
-        body: JSON.stringify({
-            model: model,
-            messages: [
-                { 
-                    role: 'system', 
-                    content: 'You are Professor X-Alpha, the world\'s most thorough and brilliant educator. You generate 3000+ word exhaustive study dossiers with academic rigor and pedagogical excellence.' 
-                },
-                { role: 'user', content: prompt }
-            ],
-            max_tokens: 8000, // Increased for massive output
-            temperature: 0.7,
-            top_p: 0.9,
-            frequency_penalty: 0.1,
-            presence_penalty: 0.1
-        })
     });
-
-    if (!response.ok) {
-        throw new Error(`Model ${model} failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    
-    // Extract JSON from response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-        let dossier;
-        try {
-            dossier = JSON.parse(jsonMatch[0]);
-        } catch (parseError) {
-            // Try to clean and parse
-            const cleaned = jsonMatch[0]
-                .replace(/```json\s*/g, '')
-                .replace(/```\s*/g, '')
-                .replace(/,\s*}/g, '}')
-                .replace(/,\s*]/g, ']');
-            dossier = JSON.parse(cleaned);
-        }
-        
-        // Add metadata
-        dossier.powered_by = 'Savoiré AI by Sooban Talha Technologies';
-        dossier.generated_at = new Date().toISOString();
-        dossier.neural_signature = 'PROFESSOR_X_ALPHA_V2';
-        
-        // Ensure word count
-        if (dossier.content) {
-            const totalWords = JSON.stringify(dossier.content).split(/\s+/).length;
-            dossier.metadata = dossier.metadata || {};
-            dossier.metadata.actual_word_count = totalWords;
-            dossier.metadata.meets_requirement = totalWords >= 2500;
-        }
-        
-        return dossier;
-    }
-    
-    throw new Error('No valid JSON found in response');
 }
 
 // ============================================
-// FALLBACK GENERATOR (For offline/error cases)
+// FALLBACK MATERIALS (Local Generation)
 // ============================================
-function generateFallbackDossier(topic) {
+function generateFallbackMaterials(topic) {
     const now = new Date().toISOString();
     
     return {
-        topic: topic,
-        stats: {
-            difficulty: "Advanced",
-            mastery_score: 95,
-            estimated_study_hours: 35,
-            prerequisites: ["Basic mathematics", "Fundamental concepts in field"]
-        },
-        content: {
-            executive_summary: `This dossier provides a comprehensive exploration of ${topic}, beginning with foundational principles and progressing to advanced theoretical frameworks. We examine historical context, mathematical formalism, practical applications, and future directions, ensuring complete conceptual mastery through rigorous analysis and detailed examples.`,
-            
-            deep_dive_lecture: `# COMPREHENSIVE ANALYSIS: ${topic.toUpperCase()}
+        success: true,
+        content: `# COMPREHENSIVE STUDY DOSSIER: ${topic.toUpperCase()}
 
-## 1. HISTORICAL EVOLUTION
-The study of ${topic} has evolved through several paradigmatic shifts, beginning with early empirical observations and progressing to sophisticated theoretical frameworks. Key milestones include the pioneering work of foundational researchers, critical experimental validations, and the development of unifying principles that connect disparate phenomena.
+## 🚀 EXECUTIVE SUMMARY
 
-## 2. FOUNDATIONAL PRINCIPLES
-### 2.1 Core Axioms
+${topic} represents a significant domain of study with profound implications across multiple disciplines. This dossier provides exhaustive coverage from foundational principles to advanced applications, ensuring complete conceptual mastery.
+
+**Core Thesis**: Mastery of ${topic} requires understanding of interconnected theoretical frameworks, practical implementations, and methodological approaches that span traditional disciplinary boundaries.
+
+**Why It Matters**: The principles of ${topic} underpin critical technologies, inform scientific discovery, and shape our understanding of complex systems. From quantum computing to biological networks, these concepts drive innovation.
+
+**Learning Pathway**: This dossier follows a structured progression from axiomatic foundations through advanced synthesis, providing both depth and breadth of coverage.
+
+## 📖 DEEP DIVE LECTURE
+
+### Historical Context
+
+The study of ${topic} emerged from several parallel developments in the early 20th century. Key milestones include:
+
+- **Pioneering Work** (1900-1950): Foundational discoveries by early researchers established basic principles
+- **Theoretical Unification** (1950-1980): Mathematical formalization and framework development
+- **Computational Revolution** (1980-2010): Algorithmic approaches and simulation capabilities
+- **Modern Synthesis** (2010-Present): Interdisciplinary integration and practical applications
+
+### Foundational Principles
+
+#### 1. Core Axioms
 The theoretical framework rests on several fundamental postulates:
 
-1. **Principle of Operation**: $$\\mathcal{L} = T - V$$ where $T$ represents kinetic terms and $V$ potential interactions.
+\`\`\`
+Axiom 1: Conservation of information under transformation
+Axiom 2: Linear superposition principle
+Axiom 3: Minimum action principle
+\`\`\`
 
-2. **Conservation Laws**: $$\\frac{dQ}{dt} = 0$$ under symmetry transformations.
+#### 2. Mathematical Formalism
+Key equations governing ${topic}:
 
-3. **Quantization Condition**: $$[\\hat{x}, \\hat{p}] = i\\hbar$$ establishing non-commutative algebra.
+$$
+\\mathcal{L} = \\frac{1}{2}(\\partial_\\mu\\phi)^2 - V(\\phi)
+$$
 
-### 2.2 Mathematical Formalism
-The subject requires mastery of several mathematical domains:
+Where:
+- $\\mathcal{L}$ represents the Lagrangian density
+- $\\phi$ is the field variable
+- $V(\\phi)$ is the potential function
 
-- **Linear Algebra**: Vector spaces, eigenvalues, and transformations
-- **Calculus**: Differential equations and variational principles
-- **Probability Theory**: Stochastic processes and statistical inference
-- **Group Theory**: Symmetry operations and representation theory
+#### 3. Dimensional Analysis
+Physical quantities must satisfy dimensional consistency:
 
-## 3. ADVANCED THEORETICAL FRAMEWORKS
-### 3.1 Primary Theory
-The central equation governing ${topic} can be expressed as:
+$$
+[Q] = L^a M^b T^c
+$$
 
-$$\\hat{H}\\Psi(\\mathbf{r}, t) = i\\hbar\\frac{\\partial}{\\partial t}\\Psi(\\mathbf{r}, t)$$
+### Advanced Theoretical Frameworks
 
-This wave equation describes temporal evolution under Hamiltonian $\\hat{H}$.
+#### Quantum Field Theory Approach
+The path integral formulation provides comprehensive description:
 
-### 3.2 Extensions and Modifications
-Modern developments include:
-- Non-perturbative methods
-- Renormalization group flows
-- Topological invariants
-- Emergent phenomena
+$$
+Z = \\int \\mathcal{D}\\phi e^{iS[\\phi]/\\hbar}
+$$
 
-## 4. INTERDISCIPLINARY CONNECTIONS
-${topic} interfaces with multiple scientific domains:
-- **Physics**: Quantum field theory and statistical mechanics
-- **Computer Science**: Algorithmic complexity and information theory
-- **Biology**: Systems biology and neural networks
+Where $S[\\phi]$ is the action functional.
+
+#### Statistical Mechanics Connection
+Ensemble theory connects microscopic and macroscopic descriptions:
+
+$$
+\\langle A \\rangle = \\frac{1}{Z} \\sum_{\\text{states}} A e^{-\\beta E}
+$$
+
+### Interdisciplinary Connections
+
+${topic} interfaces with:
+- **Physics**: Quantum mechanics and relativity
+- **Computer Science**: Algorithms and complexity theory
+- **Biology**: Systems biology and neuroscience
 - **Economics**: Game theory and optimization
 
-## 5. OPEN QUESTIONS AND FRONTIERS
-Current research focuses on:
-1. Resolution of theoretical inconsistencies
-2. Experimental verification of predictions
-3. Technological applications
-4. Philosophical implications
+## 🧠 TOPPER MENTAL MODELS
 
-## 6. PEDAGOGICAL APPROACH
-Mastery requires:
-- Sequential building from fundamentals
-- Regular problem-solving practice
-- Cross-referencing with related domains
-- Historical context appreciation`,
-            
-            key_formulas_concepts: [
-                {
-                    name: "Fundamental Theorem",
-                    latex: "$$\\int_a^b f'(x) dx = f(b) - f(a)$$",
-                    explanation: "Connects differentiation with integration, establishing the inverse relationship between these operations.",
-                    example: "For $f(x) = x^2$, $f'(x) = 2x$, and $\\int_0^3 2x dx = 9 = 3^2 - 0^2$"
-                },
-                {
-                    name: "Central Limit Theorem",
-                    latex: "$$\\sqrt{n}(\\bar{X}_n - \\mu) \\xrightarrow{d} N(0, \\sigma^2)$$",
-                    explanation: "Independent identically distributed random variables approach normal distribution as sample size increases.",
-                    example: "Sample means from any distribution become approximately normal for $n > 30$"
-                }
-            ],
-            
-            memorization_tricks: [
-                {
-                    name: "Memory Palace Technique",
-                    description: "Associate concepts with locations in a familiar building, creating spatial memory anchors.",
-                    effectiveness: "10/10 for sequential information"
-                },
-                {
-                    name: "Chunking Strategy",
-                    description: "Group related concepts into meaningful units (chunks) for easier recall.",
-                    effectiveness: "9/10 for categorical information"
-                }
-            ],
-            
-            real_world_applications: [
-                {
-                    domain: "Technology",
-                    application: "Algorithm optimization and system design",
-                    impact: "Enables faster computation and efficient resource utilization"
-                },
-                {
-                    domain: "Research",
-                    application: "Theoretical modeling and prediction",
-                    impact: "Advances fundamental scientific understanding"
-                }
-            ],
-            
-            pitfall_analysis: [
-                {
-                    pitfall: "Confusing correlation with causation",
-                    why_wrong: "Statistical relationship doesn't imply directional influence",
-                    correct_approach: "Establish mechanistic connection or conduct controlled experiments"
-                },
-                {
-                    pitfall: "Misapplying linear approximations",
-                    why_wrong: "Nonlinear systems require more sophisticated treatment",
-                    correct_approach: "Use perturbation theory or numerical methods"
-                }
-            ],
-            
-            exam_questions: [
-                {
-                    question: "Derive the governing equation for ${topic} from first principles, explaining each assumption and approximation.",
-                    answer: "Begin with fundamental postulates, apply conservation laws, use variational principles, and solve resulting differential equations with appropriate boundary conditions.",
-                    difficulty: 8,
-                    time_estimate: "25 minutes",
-                    common_errors: ["Missing symmetry considerations", "Incorrect boundary condition application"]
-                },
-                {
-                    question: "Compare and contrast two major theoretical frameworks in ${topic}, highlighting their respective strengths and limitations.",
-                    answer: "Framework A excels in predictive accuracy for small-scale phenomena but fails at cosmological scales. Framework B provides unified description but requires untested assumptions. The ideal approach synthesizes elements from both.",
-                    difficulty: 7,
-                    time_estimate: "20 minutes",
-                    common_errors: ["Oversimplifying differences", "Ignoring empirical constraints"]
-                }
-            ],
-            
-            further_exploration: {
-                books: [
-                    "Principles of Advanced Study by Author (2023)",
-                    "Theoretical Foundations by Researcher (2021)"
-                ],
-                papers: [
-                    "Breakthrough Results in Topic, Journal of Advanced Science (DOI: 10.xxxx/yyyy)",
-                    "Comparative Analysis of Methods, Proceedings of Conference"
-                ],
-                courses: [
-                    "Advanced Topics Course, Massachusetts Institute of Technology",
-                    "Specialized Seminar, Stanford University"
-                ],
-                tools: [
-                    "Computational Software Package",
-                    "Visualization Toolkit"
-                ]
-            }
-        },
-        metadata: {
-            generated_at: now,
-            model: "Professor X-Alpha (Fallback Mode)",
-            word_count: 2800,
-            version: "2.0",
-            meets_requirement: true
-        },
-        powered_by: "Savoiré AI by Sooban Talha Technologies",
-        neural_signature: "FALLBACK_GENERATION"
+### 1. Memory Palace Technique
+Create a mental building with rooms representing different concepts:
+
+**Room 1**: Foundational Principles  
+**Room 2**: Mathematical Tools  
+**Room 3**: Applications  
+**Room 4**: Advanced Extensions
+
+### 2. Chunking Strategy
+Group related concepts:
+
+**Chunk A**: Theoretical Foundations  
+**Chunk B**: Practical Methods  
+**Chunk C**: Advanced Applications
+
+### 3. Analogical Thinking
+"Like a [familiar system] but with [key difference]" approach builds intuition.
+
+## ⚠️ THE TRAP ZONE
+
+### Common Mistake #1: Confusing Correlation with Causation
+**Why Wrong**: Statistical association doesn't imply causal relationship  
+**Correct Approach**: Establish mechanistic connection through controlled experimentation
+
+### Common Mistake #2: Misapplying Linear Approximations
+**Why Wrong**: Nonlinear systems exhibit emergent phenomena  
+**Correct Approach**: Use perturbation theory or numerical methods
+
+### Common Mistake #3: Ignoring Boundary Conditions
+**Why Wrong**: Solutions are domain-specific  
+**Correct Approach**: Explicitly state and verify all boundary conditions
+
+## 🧪 EXAM SIMULATION
+
+### Question 1: Conceptual Synthesis
+**Problem**: Derive the governing equations for ${topic} from first principles, explaining physical interpretation of each term.
+
+**Solution**:
+1. Start with fundamental postulates
+2. Apply variational principle
+3. Derive Euler-Lagrange equations:
+   $$
+   \\frac{\\partial\\mathcal{L}}{\\partial\\phi} - \\partial_\\mu\\left(\\frac{\\partial\\mathcal{L}}{\\partial(\\partial_\\mu\\phi)}\\right) = 0
+   $$
+4. Interpret each term physically
+
+**Common Errors**: Missing symmetry constraints, incorrect boundary terms
+
+**Difficulty**: 9/10  
+**Time**: 25 minutes
+
+### Question 2: Mathematical Derivation
+**Problem**: Solve the characteristic equation for ${topic} with given boundary conditions.
+
+**Solution**: (Detailed step-by-step derivation)
+
+**Difficulty**: 8/10  
+**Time**: 20 minutes
+
+## 🌍 REAL WORLD APPLICATIONS
+
+### 1. Technology Sector
+- Algorithm optimization
+- System design principles
+- Resource allocation strategies
+
+### 2. Research & Development
+- Theoretical modeling
+- Experimental design
+- Data analysis frameworks
+
+### 3. Industrial Implementation
+- Process optimization
+- Quality control systems
+- Innovation pipelines
+
+### FUTURE DIRECTIONS
+
+Emerging applications include:
+- Quantum-enhanced computation
+- Biologically-inspired systems
+- Cross-disciplinary synthesis
+
+---
+
+*Generated by Savoiré Omega • Professor X Protocol • ${now}*`,
+        model_used: 'FALLBACK_GENERATOR',
+        provider: 'Local Synthesis',
+        generated_at: now,
+        word_count: 2100,
+        is_fallback: true
     };
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+function estimateWordCount(text) {
+    return text.split(/\s+/).length;
 }
