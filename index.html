@@ -3,275 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré Omega | AI Study Matrix</title>
+    <title>Savoiré AI - by Sooban Talha Technologies</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="World-Class AI Professor generating 3000-word exhaustive study dossiers">
-    <meta name="author" content="Sooban Talha Technologies">
+    <meta name="description" content="Advanced AI-powered assistant with ultra-detailed responses">
     
     <!-- Icons -->
     <link rel="icon" type="image/png" href="LOGO.png">
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- PDF Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-    <!-- Audio Elements -->
-    <audio id="hoverSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.m4a" preload="auto"></audio>
-    <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.m4a" preload="auto"></audio>
-    <audio id="typeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-keyboard-typing-1386.mp3" preload="auto"></audio>
-    <audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-completed-2061.mp3" preload="auto"></audio>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+    <div class="floating-elements"></div>
     
-    <!-- Neural Network Canvas -->
-    <canvas id="neuralCanvas"></canvas>
-    
-    <!-- Main Container -->
-    <div class="omega-container">
-        <!-- Header -->
-        <header class="omega-header glass-panel">
-            <div class="header-content">
-                <div class="logo-section">
-                    <div class="logo-halo">
-                        <div class="logo-core">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                    </div>
-                    <div class="brand-text">
-                        <h1 class="omega-title">SAVOIRÉ <span class="omega-text">OMEGA</span></h1>
-                        <div class="subtitle">
-                            <a href="https://soobantalhatech.xyz" target="_blank" class="tech-link">
-                                <i class="fas fa-cube"></i>
-                                POWERED BY SOOBAN TALHA TECHNOLOGIES
-                            </a>
-                        </div>
+    <!-- Minimal Header -->
+    <header class="modern-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-wrapper">
+                    <div class="logo-background animated-logo">
+                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
                     </div>
                 </div>
-                
-                <div class="header-controls">
-                    <div class="status-indicator">
-                        <div class="status-pulse active"></div>
-                        <span class="status-text">NEURAL MATRIX: ONLINE</span>
-                    </div>
-                    <button class="control-btn" id="themeToggle" title="Toggle Theme">
-                        <i class="fas fa-palette"></i>
-                    </button>
-                    <button class="control-btn" id="clearChat" title="Clear Chat">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                    <button class="control-btn" id="soundToggle" title="Toggle Sound">
-                        <i class="fas fa-volume-up"></i>
-                    </button>
+                <div class="brand-text">
+                    <h1 class="animated-text">Savoiré AI</h1>
+                    <div class="brand-tagline">by Sooban Talha Technologies</div>
                 </div>
             </div>
-        </header>
-        
-        <!-- Main Content -->
-        <main class="content-area">
-            <!-- Welcome Screen -->
-            <div class="welcome-screen" id="welcomeScreen">
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle glow">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Chat Area -->
+    <main class="modern-chat">
+        <div class="chat-container">
+            <!-- Welcome Area -->
+            <div class="welcome-area" id="welcomeArea">
                 <div class="welcome-center">
-                    <div class="omega-logo">
-                        <div class="omega-orb">
-                            <div class="orb-ring"></div>
-                            <div class="orb-ring ring-2"></div>
-                            <div class="orb-core">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
+                    <div class="welcome-logo">
+                        <div class="logo-background large animated-logo">
+                            <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
                         </div>
                     </div>
+                    <h1 class="welcome-title slide-in">Welcome to Savoiré AI</h1>
+                    <p class="welcome-subtitle fade-in">Experience the ultimate smart companion for students, bringing you advanced questions, tricks, detailed notes, PDF Generation and endless features designed to make learning faster, easier, and smarter – with even more powerful tools coming soon.</p>
                     
-                    <h1 class="welcome-title">
-                        <span class="gradient-text">SAVOIRÉ OMEGA</span><br>
-                        <span class="subtitle-text">NEURAL STUDY MATRIX</span>
-                    </h1>
-                    
-                    <p class="welcome-description">
-                        I am <strong>Professor X</strong>, your world-class AI tutor.<br>
-                        I generate <em>3000+ word exhaustive study dossiers</em> with:<br>
-                        Deep-dive lectures • Mental models • Exam simulations • PDF generation
-                    </p>
-                    
-                    <div class="quick-prompts">
-                        <div class="prompts-grid">
-                            <button class="prompt-chip" data-prompt="Explain quantum mechanics with Schrödinger equation and applications">
-                                <i class="fas fa-atom"></i>
-                                Quantum Physics
-                            </button>
-                            <button class="prompt-chip" data-prompt="Comprehensive analysis of neural networks from perceptrons to transformers">
-                                <i class="fas fa-network-wired"></i>
-                                Neural Networks
-                            </button>
-                            <button class="prompt-chip" data-prompt="Deep dive into calculus: limits, derivatives, integrals, and applications">
-                                <i class="fas fa-square-root-alt"></i>
-                                Advanced Calculus
-                            </button>
-                            <button class="prompt-chip" data-prompt="Master thermodynamics laws with real-world engineering applications">
-                                <i class="fas fa-fire"></i>
-                                Thermodynamics
-                            </button>
+                    <!-- Quick Suggestions -->
+                    <div class="suggestions-grid">
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain quantum computing in detail with key concepts and examples">
+                            <i class="fas fa-star bounce"></i>
+                            Quantum Computing
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Provide detailed analysis of artificial intelligence with key concepts">
+                            <i class="fas fa-brain bounce"></i>
+                            AI Analysis
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain machine learning algorithms with practical examples">
+                            <i class="fas fa-cogs bounce"></i>
+                            Machine Learning
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Give me comprehensive details about neural networks">
+                            <i class="fas fa-network-wired bounce"></i>
+                            Neural Networks
                         </div>
                     </div>
-                    
-                    <div class="feature-showcase">
-                        <div class="feature-grid">
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="fas fa-book-open"></i>
-                                </div>
-                                <h3>3000+ Words</h3>
-                                <p>Exhaustive explanations, no summaries</p>
-                            </div>
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="fas fa-brain"></i>
-                                </div>
-                                <h3>Mental Models</h3>
-                                <p>Mnemonics & visualization tricks</p>
-                            </div>
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="fas fa-file-pdf"></i>
-                                </div>
-                                <h3>PDF Dossier</h3>
-                                <p>Professional format with branding</p>
-                            </div>
-                            <div class="feature-card">
-                                <div class="feature-icon">
-                                    <i class="fas fa-bolt"></i>
-                                </div>
-                                <h3>Multi-Model</h3>
-                                <p>Failover reliability guaranteed</p>
-                            </div>
+
+                    <!-- Brand Footer -->
+                    <div class="brand-footer">
+                        <div class="production-credit pulse">by Sooban Talha Technologies</div>
+                        <div class="feature-tags">
+                            <span class="feature-tag glow">Advanced AI </span>
+                            <span class="feature-tag glow">Fast Responses</span>
+                            <span class="feature-tag glow">PDF Generation</span>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Chat Container -->
-            <div class="chat-container" id="chatContainer" style="display: none;">
+
+            <!-- Chat Messages -->
+            <div class="messages-container" id="messagesContainer" style="display: none;">
                 <div class="messages-scroll" id="chatMessages">
-                    <!-- Messages will be inserted here -->
-                </div>
-                
-                <!-- Thinking Indicator -->
-                <div class="thinking-indicator glass-panel" id="thinkingIndicator" style="display: none;">
-                    <div class="thinking-content">
-                        <div class="thinking-orb">
-                            <div class="dot dot1"></div>
-                            <div class="dot dot2"></div>
-                            <div class="dot dot3"></div>
-                        </div>
-                        <div class="thinking-text">
-                            <span class="typing-cursor">█</span>
-                            <span class="stream-text">PROFESSOR X SYNTHESIZING DOSSIER • MODEL: OMEGA PRIME • ESTIMATED WORDS: 3000+ • STAND BY...</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- PDF Download Section -->
-                <div class="pdf-section" id="pdfSection" style="display: none;">
-                    <div class="pdf-container glass-panel">
-                        <button class="pdf-button" id="downloadPDF">
-                            <div class="pdf-icon">
-                                <i class="fas fa-file-contract"></i>
-                                <div class="pdf-glow"></div>
-                            </div>
-                            <div class="pdf-text">
-                                <div class="pdf-title">DOWNLOAD CLASSIFIED DOSSIER</div>
-                                <div class="pdf-subtitle">Professional Edition • Multi-Page • Authorized</div>
-                            </div>
-                            <div class="pdf-badge">
-                                <i class="fas fa-shield-alt"></i>
-                                AUTHORIZED
-                            </div>
-                        </button>
-                        <div class="pdf-note">
-                            <i class="fas fa-info-circle"></i>
-                            Generated by <a href="https://soobantalhatech.xyz" target="_blank">Sooban Talha Technologies</a> • 
-                            Contains exhaustive 3000+ word analysis
-                        </div>
-                    </div>
+                    <!-- Messages will be added here dynamically -->
                 </div>
             </div>
-        </main>
-        
-        <!-- Input Capsule -->
-        <div class="input-capsule">
-            <div class="capsule-wrapper">
-                <div class="capsule-container glass-panel" id="capsule">
-                    <div class="capsule-input">
-                        <div class="input-prefix">
-                            <i class="fas fa-terminal"></i>
-                        </div>
+
+            <!-- Loading Indicator -->
+            <div class="thinking-indicator" id="thinkingIndicator" style="display: none;">
+                <div class="thinking-avatar">
+                    <div class="logo-background small pulse">
+                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
+                    </div>
+                </div>
+                <div class="thinking-content">
+                    <div class="typing-animation">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="thinking-text">Toppers don’t rush, they wait for clarity — your clarity is loading 📘🚀...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div class="text-input-container glow-border">
                         <textarea 
                             id="messageInput" 
-                            placeholder="Ask Professor X for a 3000-word dossier on any topic..."
+                            placeholder="Ask anything for fast, detailed answers..."
                             rows="1"
-                            spellcheck="true"
                         ></textarea>
                         <div class="input-actions">
-                            <button class="action-btn" id="voiceInput" title="Voice Input">
-                                <i class="fas fa-microphone"></i>
-                            </button>
-                            <button class="action-btn" id="attachFile" title="Attach File">
-                                <i class="fas fa-paperclip"></i>
-                            </button>
-                            <button class="send-button" id="sendButton">
-                                <div class="send-icon">
-                                    <i class="fas fa-paper-plane"></i>
-                                    <div class="send-glow"></div>
-                                </div>
-                                <span class="send-text">TRANSMIT</span>
+                            <button class="send-button pulse animated-btn" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
                             </button>
                         </div>
                     </div>
-                    
-                    <div class="capsule-footer">
-                        <div class="footer-left">
-                            <div class="capsule-tip">
-                                <i class="fas fa-lightbulb"></i>
-                                Press <kbd>Enter</kbd> to send • <kbd>Shift</kbd>+<kbd>Enter</kbd> for new line
-                            </div>
-                        </div>
-                        <div class="footer-right">
-                            <div class="capsule-brand">
-                                <i class="fas fa-cube"></i>
-                                <a href="https://soobantalhatech.xyz" target="_blank">SOOBAN TALHA TECHNOLOGIES</a>
-                            </div>
-                        </div>
+                </div>
+                <div class="footer-actions">
+                    <button class="footer-btn animated-btn" id="clearChat">
+                        <i class="fas fa-trash"></i>
+                        Clear chat
+                    </button>
+                    <div class="production-watermark fade-in">
+                      • Powered by Sooban Talha Technologies
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
+    </main>
+
     <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="scripts/app.js"></script>
-    <script src="api/study.js"></script>
-    
-    <!-- Initialize MathJax -->
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            },
-            options: {
-                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
-            }
-        };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 </body>
 </html>
