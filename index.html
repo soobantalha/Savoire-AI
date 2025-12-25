@@ -1,356 +1,282 @@
 <!DOCTYPE html>
-<html lang="en" class="cyber-study">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAVOIRÉ AI | Ultimate Study Platform</title>
+    <title>Savoiré AI | Neural Education Matrix</title>
     
     <!-- SEO -->
-    <meta name="description" content="AI-powered study platform generating comprehensive notes, summaries, and exam materials">
+    <meta name="description" content="World-Class AI Professor generating 3000+ word exhaustive study dossiers">
     <meta name="author" content="Sooban Talha Technologies">
+
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="LOGO.png">
+     <link rel="stylesheet" href="styles/main.css">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- MathJax -->
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true
-            }
-        };
-    </script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
-    <!-- CSS -->
-    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="study-bg">
-        <div class="bg-grid"></div>
-        <div class="bg-glow"></div>
-    </div>
+    <!-- Audio Elements -->
+    <audio id="hoverSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.m4a" preload="auto"></audio>
+    <audio id="clickSound" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.m4a" preload="auto"></audio>
+    <audio id="typeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-keyboard-typing-1386.mp3" preload="auto"></audio>
+    <audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-completed-2061.mp3" preload="auto"></audio>
+    
+    <!-- Neural Network Canvas -->
+    <canvas id="neuralCanvas"></canvas>
+    
+    <!-- Floating Particles Background -->
+    <div class="floating-particles"></div>
     
     <!-- Main Container -->
-    <div class="study-platform">
+    <div class="cyber-container">
         <!-- Header -->
-        <header class="platform-header">
+        <header class="cyber-header">
             <div class="header-content">
-                <div class="brand-section">
-                    <div class="study-logo">
-                        <div class="logo-icon">
-                            <i class="fas fa-graduation-cap"></i>
-                            <div class="logo-aura"></div>
+                <div class="logo-section">
+                    <div class="logo-orb">
+                        <div class="logo-inner">
+                            <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
                         </div>
-                        <div class="brand-text">
-                            <h1>SAVOIRÉ AI</h1>
-                            <p class="tagline">Intelligent Study Platform</p>
+                    </div>
+                    <div class="brand-text">
+                        <h1 class="cyber-title">SAVOIRÉ<span class="ai-text">AI</span></h1>
+                        <div class="subtitle">
+                            NEURAL EDUCATION MATRIX • 
+                            <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">POWERED BY SOOBAN TALHA TECHNOLOGIES</a>
                         </div>
                     </div>
                 </div>
                 
-                <div class="header-actions">
-                    <button class="header-btn" id="newSession">
-                        <i class="fas fa-plus"></i>
-                        <span>New Session</span>
+                <div class="header-controls">
+                    <button class="control-btn" id="themeToggle" title="Toggle Void Mode">
+                        <i class="fas fa-palette"></i>
                     </button>
-                    <button class="header-btn" id="themeToggle">
-                        <i class="fas fa-moon"></i>
+                    <button class="control-btn" id="clearChat" title="Purge Memory">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button class="control-btn" id="soundToggle" title="Toggle Audio">
+                        <i class="fas fa-volume-up"></i>
                     </button>
                 </div>
             </div>
             
-            <div class="header-info">
-                <span>by <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">Sooban Talha Technologies</a></span>
-                <span class="status-dot active"></span>
-                <span>AI Ready</span>
+            <div class="header-status">
+                <div class="status-indicator active">
+                    <div class="status-pulse"></div>
+                    <span class="status-text">NEURAL LINK: ACTIVE</span>
+                </div>
+                <div class="model-info">
+                    <i class="fas fa-brain"></i>
+                    <span>PROFESSOR X-ALPHA MODEL</span>
+                </div>
             </div>
         </header>
-
-        <!-- Main Content -->
-        <main class="study-container">
+        
+        <!-- Main Chat Area -->
+        <main class="chat-main">
             <!-- Welcome Screen -->
             <div class="welcome-screen" id="welcomeScreen">
-                <div class="welcome-content">
-                    <div class="welcome-hero">
-                        <div class="hero-icon">
-                            <i class="fas fa-brain"></i>
-                            <div class="hero-glow"></div>
+                <div class="welcome-center">
+                    <div class="welcome-orb">
+                        <div class="orb-animation">
+                            <div class="orb-ring"></div>
+                            <div class="orb-ring ring-2"></div>
+                            <div class="orb-core">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
                         </div>
-                        <h2>Transform Your Study Experience</h2>
-                        <p class="hero-subtitle">AI-powered notes, summaries, flashcards, and exam preparation</p>
                     </div>
                     
-                    <div class="subject-grid">
-                        <div class="subject-card" data-subject="Physics">
-                            <div class="subject-icon">
+                    <h1 class="welcome-title">
+                        <span class="gradient-text">WELCOME TO THE</span><br>
+                        <span class="cyber-text">NEURAL EDUCATION MATRIX</span>
+                    </h1>
+                    
+                    <p class="welcome-description">
+                        I am <strong>Professor X-Alpha</strong>, the world's most advanced AI tutor.<br>
+                        I will generate <em>3000+ word exhaustive study dossiers</em> for any topic,<br>
+                        complete with deep-dive lectures, memorization tricks, exam simulations,<br>
+                        and professional PDF generation. No summaries. Only mastery.
+                    </p>
+                    
+                    <div class="quick-queries">
+                        <div class="query-grid">
+                            <button class="query-chip" data-query="Explain quantum entanglement with mathematical formalism">
                                 <i class="fas fa-atom"></i>
-                            </div>
-                            <h3>Physics</h3>
-                            <p>Mechanics, Thermodynamics, Quantum</p>
-                        </div>
-                        
-                        <div class="subject-card" data-subject="Mathematics">
-                            <div class="subject-icon">
-                                <i class="fas fa-calculator"></i>
-                            </div>
-                            <h3>Mathematics</h3>
-                            <p>Calculus, Algebra, Statistics</p>
-                        </div>
-                        
-                        <div class="subject-card" data-subject="Computer Science">
-                            <div class="subject-icon">
-                                <i class="fas fa-code"></i>
-                            </div>
-                            <h3>Computer Science</h3>
-                            <p>Algorithms, Programming, AI</p>
-                        </div>
-                        
-                        <div class="subject-card" data-subject="Biology">
-                            <div class="subject-icon">
-                                <i class="fas fa-dna"></i>
-                            </div>
-                            <h3>Biology</h3>
-                            <p>Genetics, Ecology, Human Anatomy</p>
-                        </div>
-                        
-                        <div class="subject-card" data-subject="Chemistry">
-                            <div class="subject-icon">
-                                <i class="fas fa-flask"></i>
-                            </div>
-                            <h3>Chemistry</h3>
-                            <p>Organic, Inorganic, Biochemistry</p>
-                        </div>
-                        
-                        <div class="subject-card" data-subject="Economics">
-                            <div class="subject-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <h3>Economics</h3>
-                            <p>Micro, Macro, Finance</p>
+                                Quantum Physics
+                            </button>
+                            <button class="query-chip" data-query="Comprehensive analysis of deep neural networks architecture">
+                                <i class="fas fa-network-wired"></i>
+                                Neural Networks
+                            </button>
+                            <button class="query-chip" data-query="Detailed study of thermodynamics laws and applications">
+                                <i class="fas fa-fire"></i>
+                                Thermodynamics
+                            </button>
+                            <button class="query-chip" data-query="Master calculus: from limits to multivariable integration">
+                                <i class="fas fa-square-root-alt"></i>
+                                Advanced Calculus
+                            </button>
                         </div>
                     </div>
                     
-                    <div class="quick-prompts">
-                        <h3>Quick Study Requests</h3>
-                        <div class="prompt-chips">
-                            <button class="prompt-chip" data-prompt="Explain Newton's Laws of Motion with real-world examples">
-                                <i class="fas fa-rocket"></i>
-                                Newton's Laws
-                            </button>
-                            <button class="prompt-chip" data-prompt="Teach me calculus from basics to applications">
-                                <i class="fas fa-chart-line"></i>
-                                Calculus Guide
-                            </button>
-                            <button class="prompt-chip" data-prompt="Explain photosynthesis in detail with diagrams">
-                                <i class="fas fa-leaf"></i>
-                                Photosynthesis
-                            </button>
-                            <button class="prompt-chip" data-prompt="Programming fundamentals for beginners">
-                                <i class="fas fa-laptop-code"></i>
-                                Coding Basics
-                            </button>
+                    <div class="welcome-footer">
+                        <div class="specs-grid">
+                            <div class="spec-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>3000+ Words Minimum</span>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-question-circle"></i>
+                                <span>20+ Exam Questions</span>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-brain"></i>
+                                <span>Memory Tricks & Mnemonics</span>
+                            </div>
+                            <div class="spec-item">
+                                <i class="fas fa-file-pdf"></i>
+                                <span>Professional PDF Dossier</span>
+                            </div>
+                        </div>
+                        <div class="production-credit">
+                            <a href="https://soobantalhatech.xyz" target="_blank" class="tech-link">
+                                <i class="fas fa-cube"></i>
+                                SOOBAN TALHA TECHNOLOGIES
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Chat Interface -->
-            <div class="study-chat" id="studyChat" style="display: none;">
-                <div class="chat-header">
-                    <div class="chat-title">
-                        <i class="fas fa-book-open"></i>
-                        <h3>Study Session</h3>
-                    </div>
-                    <div class="chat-actions">
-                        <button class="chat-btn" id="clearChat">
-                            <i class="fas fa-trash"></i>
-                            Clear
-                        </button>
-                        <button class="chat-btn" id="exportSession">
-                            <i class="fas fa-download"></i>
-                            Export
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="messages-container" id="messagesContainer">
-                    <!-- Messages will appear here -->
+            
+            <!-- Chat Container -->
+            <div class="chat-container" id="chatContainer" style="display: none;">
+                <div class="messages-scroll" id="chatMessages">
+                    <!-- Messages appear here -->
                 </div>
                 
                 <!-- Thinking Indicator -->
                 <div class="thinking-indicator" id="thinkingIndicator" style="display: none;">
                     <div class="thinking-content">
-                        <div class="thinking-dots">
-                            <div class="dot"></div>
-                            <div class="dot"></div>
-                            <div class="dot"></div>
+                        <div class="thinking-orb">
+                            <div class="thinking-dot"></div>
+                            <div class="thinking-dot"></div>
+                            <div class="thinking-dot"></div>
                         </div>
-                        <span class="thinking-text">Generating comprehensive study materials...</span>
+                        <div class="thinking-text">
+                            <span class="typing-cursor">█</span>
+                            <span class="text-stream">PROFESSOR X-ALPHA SYNTHESIZING DOSSIER • NEURAL PATTERNS DETECTED • PREPARING 3000+ WORD ANALYSIS • STAND BY...</span>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Study Actions -->
-                <div class="study-actions" id="studyActions" style="display: none;">
-                    <div class="actions-header">
-                        <i class="fas fa-file-alt"></i>
-                        <h4>Study Materials Ready</h4>
-                    </div>
-                    <div class="actions-grid">
-                        <button class="action-btn" data-action="summary">
-                            <i class="fas fa-file-pdf"></i>
-                            <span>Summary PDF</span>
-                            <small>Key concepts</small>
+                <!-- PDF Download Section -->
+                <div class="pdf-section" id="pdfSection" style="display: none;">
+                    <div class="pdf-container">
+                        <button class="pdf-button" id="downloadPDF">
+                            <div class="pdf-icon">
+                                <i class="fas fa-file-contract"></i>
+                                <div class="pdf-glow"></div>
+                            </div>
+                            <div class="pdf-text">
+                                <div class="pdf-title">DOWNLOAD OFFICIAL DOSSIER</div>
+                                <div class="pdf-subtitle">20+ Pages • Professional Format • Authorized Edition</div>
+                            </div>
+                            <div class="pdf-badge">
+                                <i class="fas fa-shield-alt"></i>
+                                AUTHORIZED
+                            </div>
                         </button>
-                        <button class="action-btn" data-action="notes">
-                            <i class="fas fa-book"></i>
-                            <span>Full Notes</span>
-                            <small>Complete guide</small>
-                        </button>
-                        <button class="action-btn" data-action="flashcards">
-                            <i class="fas fa-layer-group"></i>
-                            <span>Flashcards</span>
-                            <small>Quick review</small>
-                        </button>
-                        <button class="action-btn premium" data-action="exam">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span>Exam Pack</span>
-                            <small>Practice questions</small>
-                        </button>
+                        <div class="pdf-note">
+                            <i class="fas fa-info-circle"></i>
+                            Generated by <a href="https://soobantalhatech.xyz" target="_blank">Sooban Talha Technologies</a> • 
+                            Contains exhaustive 3000+ word analysis
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
-
-        <!-- Input Area -->
-        <footer class="study-input">
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <div class="input-glass">
+        
+        <!-- Input Capsule -->
+        <div class="input-capsule">
+            <div class="capsule-wrapper">
+                <div class="capsule-container" id="capsule">
+                    <div class="input-wrapper">
+                        <div class="input-prefix">
+                            <i class="fas fa-terminal"></i>
+                        </div>
                         <textarea 
                             id="messageInput" 
-                            placeholder="Ask for study notes, explanations, summaries..."
+                            placeholder="Query Professor X-Alpha: Request a 3000+ word dossier on any topic..."
                             rows="1"
-                            autocomplete="off"
                             spellcheck="true"
                         ></textarea>
                         <div class="input-actions">
-                            <button class="input-btn" id="voiceBtn" title="Voice Input">
+                            <button class="action-btn" id="voiceInput" title="Voice Input">
                                 <i class="fas fa-microphone"></i>
                             </button>
-                            <button class="send-btn" id="sendBtn">
-                                <i class="fas fa-paper-plane"></i>
+                            <button class="action-btn" id="attachFile" title="Attach File">
+                                <i class="fas fa-paperclip"></i>
+                            </button>
+                            <button class="send-button" id="sendButton">
+                                <div class="send-icon">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <div class="send-sparkle"></div>
+                                </div>
+                                <span class="send-text">TRANSMIT</span>
                             </button>
                         </div>
                     </div>
-                    <div class="input-hints">
-                        <span>Press Enter to send • Shift+Enter for new line</span>
-                    </div>
-                </div>
-                
-                <div class="footer-info">
-                    <span>Powered by advanced AI • </span>
-                    <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">Sooban Talha Technologies</a>
-                </div>
-            </div>
-        </footer>
-    </div>
-
-    <!-- PDF Modal -->
-    <div class="modal-overlay" id="pdfModal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-file-pdf"></i> Generate Study Materials</h3>
-                <button class="modal-close" id="closeModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="pdf-options">
-                    <div class="pdf-option" data-type="summary">
-                        <div class="option-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <h4>Study Summary</h4>
-                        <p>Concise notes with key points</p>
-                    </div>
                     
-                    <div class="pdf-option" data-type="detailed">
-                        <div class="option-icon">
-                            <i class="fas fa-book"></i>
+                    <div class="capsule-footer">
+                        <div class="footer-left">
+                            <div class="capsule-tip">
+                                <i class="fas fa-lightbulb"></i>
+                                Press <kbd>Enter</kbd> to send • <kbd>Shift</kbd>+<kbd>Enter</kbd> for new line
+                            </div>
                         </div>
-                        <h4>Detailed Notes</h4>
-                        <p>Comprehensive guide with examples</p>
-                    </div>
-                    
-                    <div class="pdf-option" data-type="exam">
-                        <div class="option-icon">
-                            <i class="fas fa-graduation-cap"></i>
+                        <div class="footer-right">
+                            <div class="capsule-brand">
+                                <i class="fas fa-cube"></i>
+                                <a href="https://soobantalhatech.xyz" target="_blank">SOOBAN TALHA TECHNOLOGIES</a>
+                            </div>
                         </div>
-                        <h4>Exam Preparation</h4>
-                        <p>Practice questions and solutions</p>
                     </div>
-                    
-                    <div class="pdf-option" data-type="cheatsheet">
-                        <div class="option-icon">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <h4>Cheat Sheet</h4>
-                        <p>Quick review formulas</p>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button class="btn secondary" id="cancelPdf">Cancel</button>
-                    <button class="btn primary" id="generatePdf">
-                        <i class="fas fa-download"></i>
-                        Generate PDF
-                    </button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="scripts/app.js"></script>
     
+    <!-- Scripts -->
+    <script src="app.js"></script>
+    <script src="study.js"></script>
+    
+    <!-- Initialize MathJax -->
     <script>
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                document.getElementById('welcomeScreen').style.opacity = 1;
-            }, 300);
-            
-            // Subject cards
-            document.querySelectorAll('.subject-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    const subject = this.dataset.subject;
-                    const input = document.getElementById('messageInput');
-                    input.value = `Provide comprehensive study materials for ${subject} including key concepts, formulas, examples, and practice questions`;
-                    input.focus();
-                });
-            });
-            
-            // Prompt chips
-            document.querySelectorAll('.prompt-chip').forEach(chip => {
-                chip.addEventListener('click', function() {
-                    const prompt = this.dataset.prompt;
-                    const input = document.getElementById('messageInput');
-                    input.value = prompt;
-                    input.focus();
-                });
-            });
-        });
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 </body>
 </html>

@@ -1,81 +1,241 @@
-// SAVOIRÉ AI - ULTIMATE STUDY PLATFORM
-// Advanced AI Study Assistant with PDF Generation
+// ============================================
+// SAVOIRÉ AI - NEURAL LOGIC CORE
+// Ultra-High-Fidelity Cybernetic Interface
+// ============================================
 
-class SavoireStudyAI {
+class CyberneticAI {
     constructor() {
-        // State Management
-        this.state = {
-            isGenerating: false,
-            isTyping: false,
-            currentSubject: null,
-            conversation: [],
-            sessions: [],
-            selectedPDFType: 'summary',
-            thinkingMessages: [
-                "Analyzing your study request...",
-                "Structuring comprehensive notes...",
-                "Generating key concepts...",
-                "Preparing examples...",
-                "Compiling practice questions..."
-            ]
-        };
-
-        // DOM Elements
-        this.elements = {};
+        // Core State
+        this.isGenerating = false;
+        this.currentTypewriter = null;
+        this.conversationHistory = [];
+        this.soundEnabled = true;
+        this.theme = 'void';
         
-        // Typing Effect
-        this.typingSpeed = 20; // ms per character
-        this.typingQueue = [];
-        
-        // Initialize
-        this.init();
-    }
-
-    init() {
-        this.cacheElements();
+        // Initialize Systems
+        this.initNeuralCanvas();
+        this.initSoundEngine();
+        this.initElements();
         this.bindEvents();
-        this.loadSessions();
-        this.setupInput();
-        this.setupMathJax();
+        this.initAnimations();
         
-        console.log('📚 Savoiré Study AI Initialized');
+        // Welcome
+        this.playSound('hover');
+        setTimeout(() => {
+            this.playSound('click');
+        }, 300);
     }
 
-    cacheElements() {
-        // Core UI
-        this.elements.welcomeScreen = document.getElementById('welcomeScreen');
-        this.elements.studyChat = document.getElementById('studyChat');
-        this.elements.messagesContainer = document.getElementById('messagesContainer');
-        this.elements.thinkingIndicator = document.getElementById('thinkingIndicator');
-        this.elements.studyActions = document.getElementById('studyActions');
+    // ============================================
+    // NEURAL CANVAS - Particle Network
+    // ============================================
+    initNeuralCanvas() {
+        this.canvas = document.getElementById('neuralCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.connections = [];
+        this.mouse = { x: 0, y: 0 };
+        this.frameCount = 0;
         
-        // Input
-        this.elements.messageInput = document.getElementById('messageInput');
-        this.elements.sendBtn = document.getElementById('sendBtn');
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        window.addEventListener('mousemove', (e) => this.onMouseMove(e));
         
-        // Buttons
-        this.elements.newSession = document.getElementById('newSession');
-        this.elements.themeToggle = document.getElementById('themeToggle');
-        this.elements.clearChat = document.getElementById('clearChat');
-        this.elements.exportSession = document.getElementById('exportSession');
-        
-        // PDF Modal
-        this.elements.pdfModal = document.getElementById('pdfModal');
-        this.elements.closeModal = document.getElementById('closeModal');
-        this.elements.cancelPdf = document.getElementById('cancelPdf');
-        this.elements.generatePdf = document.getElementById('generatePdf');
-        this.elements.pdfOptions = document.querySelectorAll('.pdf-option');
-        
-        // Study Actions
-        this.elements.actionButtons = document.querySelectorAll('.action-btn');
+        this.createParticles();
+        this.animateCanvas();
     }
 
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    onMouseMove(e) {
+        this.mouse.x = e.clientX;
+        this.mouse.y = e.clientY;
+    }
+
+    createParticles() {
+        const count = Math.min(80, Math.floor(window.innerWidth / 20));
+        this.particles = [];
+        
+        for (let i = 0; i < count; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                radius: Math.random() * 1.5 + 0.5,
+                color: Math.random() > 0.5 ? '#00f3ff' : '#7000ff',
+                opacity: Math.random() * 0.5 + 0.3,
+                connections: []
+            });
+        }
+    }
+
+    animateCanvas() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.frameCount++;
+        
+        // Update and draw particles
+        this.particles.forEach(particle => {
+            // Update position
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            
+            // Bounce off walls
+            if (particle.x < 0 || particle.x > this.canvas.width) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > this.canvas.height) particle.vy *= -1;
+            
+            // Attract to mouse
+            const dx = this.mouse.x - particle.x;
+            const dy = this.mouse.y - particle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 150) {
+                particle.vx += dx * 0.0001;
+                particle.vy += dy * 0.0001;
+            }
+            
+            // Draw particle
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = particle.color;
+            this.ctx.globalAlpha = particle.opacity;
+            this.ctx.fill();
+            
+            // Store connections for this frame
+            particle.connections = [];
+        });
+        
+        // Draw connections
+        this.ctx.globalAlpha = 0.15;
+        this.ctx.strokeStyle = '#00f3ff';
+        this.ctx.lineWidth = 0.5;
+        
+        for (let i = 0; i < this.particles.length; i++) {
+            for (let j = i + 1; j < this.particles.length; j++) {
+                const p1 = this.particles[i];
+                const p2 = this.particles[j];
+                
+                const dx = p1.x - p2.x;
+                const dy = p1.y - p2.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 100) {
+                    // Dynamic opacity based on distance and mouse
+                    const mouseDistance = Math.min(
+                        Math.sqrt((this.mouse.x - (p1.x + p2.x) / 2) ** 2 + 
+                                 (this.mouse.y - (p1.y + p2.y) / 2) ** 2),
+                        200
+                    );
+                    
+                    const opacity = (1 - distance / 100) * (1 - mouseDistance / 200) * 0.5;
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(p1.x, p1.y);
+                    this.ctx.lineTo(p2.x, p2.y);
+                    this.ctx.strokeStyle = `rgba(0, 243, 255, ${opacity})`;
+                    this.ctx.stroke();
+                    
+                    p1.connections.push(j);
+                    p2.connections.push(i);
+                }
+            }
+        }
+        
+        // Draw mouse connections
+        this.ctx.globalAlpha = 0.2;
+        this.ctx.strokeStyle = '#7000ff';
+        
+        this.particles.forEach(particle => {
+            const dx = this.mouse.x - particle.x;
+            const dy = this.mouse.y - particle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 120) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(particle.x, particle.y);
+                this.ctx.lineTo(this.mouse.x, this.mouse.y);
+                this.ctx.strokeStyle = `rgba(112, 0, 255, ${0.3 * (1 - distance / 120)})`;
+                this.ctx.stroke();
+            }
+        });
+        
+        // Reset alpha
+        this.ctx.globalAlpha = 1;
+        
+        requestAnimationFrame(() => this.animateCanvas());
+    }
+
+    // ============================================
+    // SOUND ENGINE
+    // ============================================
+    initSoundEngine() {
+        this.sounds = {
+            hover: document.getElementById('hoverSound'),
+            click: document.getElementById('clickSound'),
+            type: document.getElementById('typeSound'),
+            success: document.getElementById('successSound')
+        };
+        
+        // Preload sounds
+        Object.values(this.sounds).forEach(sound => {
+            sound.volume = 0.3;
+            sound.load();
+        });
+    }
+
+    playSound(soundName) {
+        if (!this.soundEnabled) return;
+        
+        const sound = this.sounds[soundName];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => console.log('Sound play failed:', e));
+        }
+    }
+
+    toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        const icon = document.querySelector('#soundToggle i');
+        icon.className = this.soundEnabled ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+        this.playSound('click');
+    }
+
+    // ============================================
+    // ELEMENT INITIALIZATION
+    // ============================================
+    initElements() {
+        this.chatMessages = document.getElementById('chatMessages');
+        this.messageInput = document.getElementById('messageInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.welcomeScreen = document.getElementById('welcomeScreen');
+        this.chatContainer = document.getElementById('chatContainer');
+        this.thinkingIndicator = document.getElementById('thinkingIndicator');
+        this.pdfSection = document.getElementById('pdfSection');
+        this.downloadPDFBtn = document.getElementById('downloadPDF');
+        this.clearChatBtn = document.getElementById('clearChat');
+        this.themeToggle = document.getElementById('themeToggle');
+        this.soundToggle = document.getElementById('soundToggle');
+        this.capsule = document.getElementById('capsule');
+        
+        // Quick query chips
+        this.queryChips = document.querySelectorAll('.query-chip');
+        
+        // Initialize MathJax
+        if (window.MathJax) {
+            window.MathJax.typesetClear();
+        }
+    }
+
+    // ============================================
+    // EVENT BINDING
+    // ============================================
     bindEvents() {
         // Send message
-        this.elements.sendBtn.addEventListener('click', () => this.sendMessage());
-        
-        // Enter to send
-        this.elements.messageInput.addEventListener('keydown', (e) => {
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 this.sendMessage();
@@ -83,1436 +243,1108 @@ class SavoireStudyAI {
         });
         
         // Auto-resize textarea
-        this.elements.messageInput.addEventListener('input', () => {
-            this.autoResize();
-            this.updateSendButton();
+        this.messageInput.addEventListener('input', () => {
+            this.autoResizeTextarea();
+            this.playSound('type');
         });
         
-        // New session
-        this.elements.newSession.addEventListener('click', () => this.newSession());
+        // Input focus effects
+        this.messageInput.addEventListener('focus', () => {
+            this.capsule.classList.add('expanded');
+            this.playSound('hover');
+        });
         
-        // Clear chat
-        this.elements.clearChat.addEventListener('click', () => this.clearChat());
+        this.messageInput.addEventListener('blur', () => {
+            if (!this.messageInput.value.trim()) {
+                this.capsule.classList.remove('expanded');
+            }
+        });
         
-        // Export session
-        this.elements.exportSession.addEventListener('click', () => this.exportSession());
-        
-        // Theme toggle
-        this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
-        
-        // PDF Modal
-        this.elements.closeModal.addEventListener('click', () => this.hideModal());
-        this.elements.cancelPdf.addEventListener('click', () => this.hideModal());
-        this.elements.generatePdf.addEventListener('click', () => this.generatePDF());
-        
-        // PDF options selection
-        this.elements.pdfOptions.forEach(option => {
-            option.addEventListener('click', (e) => {
-                this.elements.pdfOptions.forEach(opt => opt.classList.remove('selected'));
-                e.currentTarget.classList.add('selected');
-                this.state.selectedPDFType = e.currentTarget.dataset.type;
+        // Quick query chips
+        this.queryChips.forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                const query = e.currentTarget.getAttribute('data-query');
+                this.messageInput.value = query;
+                this.autoResizeTextarea();
+                this.capsule.classList.add('expanded');
+                this.playSound('click');
+                setTimeout(() => this.sendMessage(), 300);
             });
+            
+            chip.addEventListener('mouseenter', () => this.playSound('hover'));
         });
         
-        // Study action buttons
-        this.elements.actionButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const action = e.currentTarget.dataset.action;
-                this.handleStudyAction(action);
-            });
+        // Control buttons
+        this.clearChatBtn.addEventListener('click', () => this.clearChat());
+        this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        this.soundToggle.addEventListener('click', () => this.toggleSound());
+        this.downloadPDFBtn.addEventListener('click', () => this.generatePremiumPDF());
+        
+        // Apply sound to all buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mouseenter', () => this.playSound('hover'));
+            btn.addEventListener('click', () => this.playSound('click'));
         });
         
-        // Voice button
-        document.getElementById('voiceBtn')?.addEventListener('click', () => this.startVoiceInput());
+        // Input action buttons
+        document.getElementById('voiceInput').addEventListener('click', () => {
+            this.showToast('Voice input coming in next update');
+        });
+        
+        document.getElementById('attachFile').addEventListener('click', () => {
+            this.showToast('File attachment coming in next update');
+        });
     }
 
-    setupInput() {
-        this.elements.messageInput.focus();
-        this.updateSendButton();
-    }
-
-    setupMathJax() {
-        // MathJax is loaded via CDN, ensure it processes dynamic content
-        if (window.MathJax) {
-            MathJax.typesetPromise();
-        }
-    }
-
+    // ============================================
+    // CHAT FUNCTIONS
+    // ============================================
     async sendMessage() {
-        const message = this.elements.messageInput.value.trim();
-        if (!message || this.state.isGenerating) return;
+        const message = this.messageInput.value.trim();
+        if (!message || this.isGenerating) return;
         
-        // Switch to chat view
-        this.showChatView();
+        // Hide welcome screen
+        if (this.welcomeScreen.style.display !== 'none') {
+            this.welcomeScreen.style.display = 'none';
+            this.chatContainer.style.display = 'block';
+        }
         
         // Add user message
         this.addMessage(message, 'user');
         
         // Clear input
-        this.clearInput();
+        this.messageInput.value = '';
+        this.autoResizeTextarea();
+        this.capsule.classList.remove('expanded');
         
         // Show thinking indicator
         this.showThinking();
         
-        // Disable input
-        this.state.isGenerating = true;
-        this.updateUIState();
+        this.isGenerating = true;
+        this.sendButton.disabled = true;
         
         try {
-            // Get AI response
-            const response = await this.getStudyMaterials(message);
+            const response = await fetch('/api/study', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
             
-            // Hide thinking indicator
+            if (!response.ok) throw new Error(`API Error: ${response.status}`);
+            
+            const studyData = await response.json();
             this.hideThinking();
-            
-            // Show AI response with typing effect
-            await this.showTypingResponse(response);
-            
-            // Show study actions
-            this.showStudyActions();
-            
-            // Save session
-            this.saveSession();
+            this.displayStudyDossier(studyData);
             
         } catch (error) {
-            console.error('Error:', error);
+            console.error('API Error:', error);
             this.hideThinking();
-            this.showError(error.message);
+            this.showError('Neural synthesis disrupted. Using local knowledge base...');
+            
+            // Fallback after delay
+            setTimeout(() => {
+                const fallbackData = this.generateLocalDossier(message);
+                this.displayStudyDossier(fallbackData);
+            }, 1000);
         }
         
-        // Re-enable input
-        this.state.isGenerating = false;
-        this.updateUIState();
-        this.elements.messageInput.focus();
-    }
-
-    showChatView() {
-        if (this.elements.welcomeScreen.style.display !== 'none') {
-            this.elements.welcomeScreen.style.display = 'none';
-            this.elements.studyChat.style.display = 'flex';
-        }
+        this.isGenerating = false;
+        this.sendButton.disabled = false;
     }
 
     addMessage(content, type) {
-        const messageId = `msg_${Date.now()}`;
         const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}`;
-        messageDiv.id = messageId;
+        messageDiv.className = `message ${type}-message`;
         
-        const avatar = type === 'user' 
-            ? '<div class="user-avatar"><i class="fas fa-user"></i></div>'
-            : '<div class="ai-avatar"><i class="fas fa-graduation-cap"></i></div>';
+        const time = new Date().toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+        });
         
-        messageDiv.innerHTML = `
-            <div class="message-avatar">
-                ${avatar}
-            </div>
-            <div class="message-content">
-                <div class="message-bubble">
-                    <div class="message-text">${this.escapeHtml(content)}</div>
+        if (type === 'user') {
+            messageDiv.innerHTML = `
+                <div class="user-bubble glass-panel">
+                    <div class="message-header">
+                        <div class="message-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="message-sender">YOU</div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                    <div class="message-content">${this.escapeHtml(content)}</div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="ai-bubble glass-panel">
+                    <div class="message-header">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-sender">PROFESSOR X-ALPHA</div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                    <div class="message-content" id="aiResponseContent"></div>
+                </div>
+            `;
+        }
         
-        this.elements.messagesContainer.appendChild(messageDiv);
+        this.chatMessages.appendChild(messageDiv);
         this.scrollToBottom();
         
-        // Add to conversation
-        this.state.conversation.push({
-            id: messageId,
-            type: type,
-            content: content,
+        // Add to history
+        this.conversationHistory.push({
+            type,
+            content,
+            time,
             timestamp: new Date().toISOString()
         });
         
         return messageDiv;
     }
 
-    async getStudyMaterials(query) {
-        console.log('📖 Fetching study materials for:', query);
+    displayStudyDossier(dossier) {
+        // Hide PDF section initially
+        this.pdfSection.style.display = 'none';
         
-        const response = await fetch('/api/study', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-                message: query,
-                type: 'comprehensive',
-                include_math: true,
-                include_examples: true,
-                include_questions: true
-            })
-        });
+        // Create AI message
+        const aiMessage = this.addMessage('', 'ai');
+        const responseElement = aiMessage.querySelector('#aiResponseContent');
         
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
-        }
+        // Format dossier
+        const formattedContent = this.formatDossier(dossier);
         
-        const data = await response.json();
-        console.log('📚 Received study data:', data);
+        // Start typewriter effect
+        this.currentTypewriter = new TypeWriter(
+            responseElement, 
+            formattedContent, 
+            {
+                speed: 10,
+                onChar: () => {
+                    this.playSound('type');
+                    this.scrollToBottom();
+                },
+                onComplete: () => {
+                    this.playSound('success');
+                    this.showPDFSection();
+                    this.renderMathJax();
+                }
+            }
+        );
         
-        // Format for display
-        return this.formatStudyResponse(data);
+        // Add skip button
+        const skipBtn = this.createSkipButton();
+        aiMessage.querySelector('.ai-bubble').appendChild(skipBtn);
+        
+        // Start typing
+        this.currentTypewriter.start();
     }
 
-    formatStudyResponse(data) {
-        if (data.error) {
-            return `<p><strong>Error:</strong> ${this.escapeHtml(data.error)}</p>`;
+    formatDossier(dossier) {
+        if (dossier.error) {
+            return `<div class="error-message">
+                <h3><i class="fas fa-exclamation-triangle"></i> SYSTEM ALERT</h3>
+                <p>${this.escapeHtml(dossier.error)}</p>
+                <p>Fallback analysis engaged...</p>
+            </div>`;
         }
         
-        let html = '';
+        let html = `<div class="dossier-container">`;
         
         // Header
-        html += `<h1>${this.escapeHtml(data.topic || 'Study Materials')}</h1>`;
-        
-        // Executive Summary
-        if (data.executive_summary) {
-            html += `<div class="summary-section">
-                <h2><i class="fas fa-bolt"></i> Executive Summary</h2>
-                <p>${this.formatText(data.executive_summary)}</p>
-            </div>`;
-        }
-        
-        // Key Concepts
-        if (data.key_concepts && data.key_concepts.length > 0) {
-            html += `<div class="concepts-section">
-                <h2><i class="fas fa-star"></i> Key Concepts</h2>
-                <ul>`;
-            data.key_concepts.forEach(concept => {
-                html += `<li>${this.formatText(concept)}</li>`;
-            });
-            html += `</ul></div>`;
-        }
-        
-        // Detailed Explanation
-        if (data.detailed_explanation) {
-            html += `<div class="explanation-section">
-                <h2><i class="fas fa-book-open"></i> Detailed Explanation</h2>
-                ${this.formatText(data.detailed_explanation)}
-            </div>`;
-        }
-        
-        // Formulas and Equations
-        if (data.formulas && data.formulas.length > 0) {
-            html += `<div class="formulas-section">
-                <h2><i class="fas fa-square-root-alt"></i> Key Formulas</h2>
-                <div class="formula-grid">`;
-            data.formulas.forEach(formula => {
-                html += `<div class="formula-item">${this.formatText(formula)}</div>`;
-            });
-            html += `</div></div>`;
-        }
-        
-        // Examples
-        if (data.examples && data.examples.length > 0) {
-            html += `<div class="examples-section">
-                <h2><i class="fas fa-lightbulb"></i> Examples</h2>`;
-            data.examples.forEach((example, index) => {
-                html += `<div class="example-item">
-                    <h3>Example ${index + 1}</h3>
-                    <p><strong>Problem:</strong> ${this.formatText(example.problem)}</p>
-                    <p><strong>Solution:</strong> ${this.formatText(example.solution)}</p>
-                </div>`;
-            });
-            html += `</div>`;
-        }
-        
-        // Practice Questions
-        if (data.practice_questions && data.practice_questions.length > 0) {
-            html += `<div class="questions-section">
-                <h2><i class="fas fa-question-circle"></i> Practice Questions</h2>`;
-            data.practice_questions.forEach((question, index) => {
-                html += `<div class="question-item">
-                    <h3>Q${index + 1}: ${this.formatText(question.question)}</h3>
-                    ${question.hint ? `<p><em>Hint:</em> ${this.formatText(question.hint)}</p>` : ''}
-                    <details>
-                        <summary>Show Answer</summary>
-                        <div class="answer">${this.formatText(question.answer)}</div>
-                    </details>
-                </div>`;
-            });
-            html += `</div>`;
-        }
-        
-        // Common Mistakes
-        if (data.common_mistakes && data.common_mistakes.length > 0) {
-            html += `<div class="mistakes-section">
-                <h2><i class="fas fa-exclamation-triangle"></i> Common Mistakes</h2>
-                <ul>`;
-            data.common_mistakes.forEach(mistake => {
-                html += `<li>${this.formatText(mistake)}</li>`;
-            });
-            html += `</ul></div>`;
-        }
-        
-        // Study Tips
-        if (data.study_tips && data.study_tips.length > 0) {
-            html += `<div class="tips-section">
-                <h2><i class="fas fa-trophy"></i> Study Tips</h2>
-                <ul>`;
-            data.study_tips.forEach(tip => {
-                html += `<li>${this.formatText(tip)}</li>`;
-            });
-            html += `</ul></div>`;
-        }
-        
-        // Footer
-        html += `<div class="study-footer">
-            <p><em>Generated by Savoiré AI • Confidence: ${data.confidence_score || 95}/100</em></p>
-        </div>`;
-        
-        return html;
-    }
-
-    formatText(text) {
-        if (!text) return '';
-        
-        // Handle math expressions
-        let formatted = this.escapeHtml(text);
-        
-        // Convert LaTeX inline math: $...$
-        formatted = formatted.replace(/\$(.*?)\$/g, '\\($1\\)');
-        
-        // Convert LaTeX display math: $$...$$
-        formatted = formatted.replace(/\$\$(.*?)\$\$/g, '\\[$1\\]');
-        
-        // Convert markdown-like formatting
-        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>');
-        
-        // Convert newlines to breaks
-        formatted = formatted.replace(/\n/g, '<br>');
-        
-        return formatted;
-    }
-
-    async showTypingResponse(content) {
-        // Create AI message container
-        const messageDiv = this.addMessage('', 'ai');
-        const textContainer = messageDiv.querySelector('.message-text');
-        
-        // Store full content
-        messageDiv.dataset.fullContent = content;
-        
-        // Type out the response
-        this.state.isTyping = true;
-        
-        let i = 0;
-        const speed = this.typingSpeed;
-        
-        // Show typing cursor
-        textContainer.innerHTML = '<span class="typing-cursor"></span>';
-        
-        while (i < content.length && this.state.isTyping) {
-            // Add next character
-            textContainer.innerHTML = content.substring(0, i + 1) + '<span class="typing-cursor"></span>';
-            
-            // Scroll to bottom
-            this.scrollToBottom();
-            
-            i++;
-            await this.sleep(speed);
-            
-            // Speed up for long content after first 500 chars
-            if (i > 500) {
-                await this.sleep(speed / 2);
-            }
-        }
-        
-        // Remove typing cursor
-        textContainer.innerHTML = content;
-        this.state.isTyping = false;
-        
-        // Render MathJax
-        if (window.MathJax) {
-            setTimeout(() => {
-                MathJax.typesetPromise([textContainer]).catch(console.error);
-            }, 100);
-        }
-        
-        return messageDiv;
-    }
-
-    showThinking() {
-        const messages = this.state.thinkingMessages;
-        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
-        
-        const thinkingText = this.elements.thinkingIndicator.querySelector('.thinking-text');
-        if (thinkingText) {
-            thinkingText.textContent = randomMsg;
-        }
-        
-        this.elements.thinkingIndicator.style.display = 'block';
-        this.scrollToBottom();
-    }
-
-    hideThinking() {
-        this.elements.thinkingIndicator.style.display = 'none';
-    }
-
-    showStudyActions() {
-        this.elements.studyActions.style.display = 'block';
-        this.scrollToBottom();
-    }
-
-    showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'message ai';
-        errorDiv.innerHTML = `
-            <div class="message-avatar">
-                <div class="ai-avatar"><i class="fas fa-exclamation-triangle"></i></div>
-            </div>
-            <div class="message-content">
-                <div class="message-bubble">
-                    <div class="message-text">
-                        <p><strong>Error:</strong> ${this.escapeHtml(message)}</p>
-                        <p>Please try again or check your connection.</p>
-                        <button class="action-btn" onclick="savoireStudy.retryLastMessage()">
-                            <i class="fas fa-redo"></i> Retry
-                        </button>
+        html += `
+            <div class="dossier-header">
+                <h1 class="dossier-title">${this.escapeHtml(dossier.topic)}</h1>
+                <div class="dossier-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-brain"></i>
+                        <span>MASTERY SCORE: ${dossier.stats?.mastery_score || 95}/100</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>${dossier.stats?.estimated_study_hours || 30} HOURS</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-layer-group"></i>
+                        <span>${dossier.metadata?.word_count || 3000}+ WORDS</span>
                     </div>
                 </div>
             </div>
         `;
         
-        this.elements.messagesContainer.appendChild(errorDiv);
+        // Executive Summary
+        if (dossier.content?.executive_summary) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-scroll"></i>
+                        EXECUTIVE SUMMARY
+                    </h2>
+                    <div class="section-content">
+                        ${this.markdownToHtml(dossier.content.executive_summary)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Deep Dive Lecture
+        if (dossier.content?.deep_dive_lecture) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-graduation-cap"></i>
+                        COMPREHENSIVE LECTURE
+                    </h2>
+                    <div class="section-content">
+                        ${this.markdownToHtml(dossier.content.deep_dive_lecture)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Key Formulas & Concepts
+        if (dossier.content?.key_formulas_concepts?.length > 0) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-square-root-alt"></i>
+                        KEY FORMULAS & CONCEPTS
+                    </h2>
+                    <div class="concept-grid">
+            `;
+            
+            dossier.content.key_formulas_concepts.forEach((item, index) => {
+                html += `
+                    <div class="concept-card glass-panel-thin">
+                        <div class="concept-header">
+                            <span class="concept-number">${index + 1}</span>
+                            <h3>${this.escapeHtml(item.name)}</h3>
+                        </div>
+                        <div class="concept-formula">
+                            ${item.latex || '$$\\text{Formula}$$'}
+                        </div>
+                        <div class="concept-explanation">
+                            ${this.escapeHtml(item.explanation)}
+                        </div>
+                        ${item.example ? `
+                            <div class="concept-example">
+                                <strong>Example:</strong> ${this.escapeHtml(item.example)}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+        }
+        
+        // Memorization Tricks
+        if (dossier.content?.memorization_tricks?.length > 0) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-lightbulb"></i>
+                        TOPPER SECRETS & MNEMONICS
+                    </h2>
+                    <div class="trick-grid">
+            `;
+            
+            dossier.content.memorization_tricks.forEach((trick, index) => {
+                html += `
+                    <div class="trick-card glass-panel-thin">
+                        <div class="trick-header">
+                            <span class="trick-icon">💡</span>
+                            <h3>${this.escapeHtml(trick.name)}</h3>
+                            <span class="trick-rating">${trick.effectiveness}</span>
+                        </div>
+                        <div class="trick-description">
+                            ${this.escapeHtml(trick.description)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+        }
+        
+        // Real World Applications
+        if (dossier.content?.real_world_applications?.length > 0) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-globe"></i>
+                        REAL-WORLD APPLICATIONS
+                    </h2>
+                    <div class="application-grid">
+            `;
+            
+            dossier.content.real_world_applications.forEach((app, index) => {
+                html += `
+                    <div class="application-card glass-panel-thin">
+                        <div class="app-domain">
+                            <i class="fas fa-industry"></i>
+                            <span>${this.escapeHtml(app.domain)}</span>
+                        </div>
+                        <h4>${this.escapeHtml(app.application)}</h4>
+                        <div class="app-impact">
+                            ${this.escapeHtml(app.impact)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+        }
+        
+        // Pitfall Analysis
+        if (dossier.content?.pitfall_analysis?.length > 0) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        PITFALL ANALYSIS
+                    </h2>
+                    <div class="pitfall-grid">
+            `;
+            
+            dossier.content.pitfall_analysis.forEach((pitfall, index) => {
+                html += `
+                    <div class="pitfall-card glass-panel-thin">
+                        <div class="pitfall-header">
+                            <span class="pitfall-number">⚠️</span>
+                            <h3>${this.escapeHtml(pitfall.pitfall)}</h3>
+                        </div>
+                        <div class="pitfall-wrong">
+                            <strong>Why Wrong:</strong> ${this.escapeHtml(pitfall.why_wrong)}
+                        </div>
+                        <div class="pitfall-correct">
+                            <strong>Correct Approach:</strong> ${this.escapeHtml(pitfall.correct_approach)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+        }
+        
+        // Exam Questions
+        if (dossier.content?.exam_questions?.length > 0) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-file-alt"></i>
+                        EXAM SIMULATION (${dossier.content.exam_questions.length} Questions)
+                    </h2>
+                    <div class="question-grid">
+            `;
+            
+            dossier.content.exam_questions.forEach((q, index) => {
+                html += `
+                    <div class="question-card glass-panel-thin">
+                        <div class="question-header">
+                            <span class="question-number">Q${index + 1}</span>
+                            <span class="question-difficulty">
+                                Difficulty: ${'★'.repeat(q.difficulty || 5)}${'☆'.repeat(10 - (q.difficulty || 5))}
+                            </span>
+                            <span class="question-time">${q.time_estimate || '15 min'}</span>
+                        </div>
+                        <div class="question-text">
+                            ${this.markdownToHtml(q.question)}
+                        </div>
+                        <details class="question-solution">
+                            <summary>View Solution</summary>
+                            <div class="solution-content">
+                                ${this.markdownToHtml(q.answer)}
+                                ${q.common_errors?.length > 0 ? `
+                                    <div class="common-errors">
+                                        <strong>Common Errors:</strong>
+                                        <ul>
+                                            ${q.common_errors.map(err => `<li>${this.escapeHtml(err)}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </details>
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+        }
+        
+        // Further Exploration
+        if (dossier.content?.further_exploration) {
+            html += `
+                <div class="dossier-section">
+                    <h2 class="section-title">
+                        <i class="fas fa-rocket"></i>
+                        FURTHER EXPLORATION
+                    </h2>
+                    <div class="exploration-content">
+            `;
+            
+            const explore = dossier.content.further_exploration;
+            
+            if (explore.books?.length > 0) {
+                html += `
+                    <h4><i class="fas fa-book"></i> Recommended Books:</h4>
+                    <ul>
+                        ${explore.books.map(book => `<li>${this.escapeHtml(book)}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            if (explore.papers?.length > 0) {
+                html += `
+                    <h4><i class="fas fa-file-alt"></i> Research Papers:</h4>
+                    <ul>
+                        ${explore.papers.map(paper => `<li>${this.escapeHtml(paper)}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            if (explore.courses?.length > 0) {
+                html += `
+                    <h4><i class="fas fa-university"></i> Online Courses:</h4>
+                    <ul>
+                        ${explore.courses.map(course => `<li>${this.escapeHtml(course)}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            if (explore.tools?.length > 0) {
+                html += `
+                    <h4><i class="fas fa-tools"></i> Software Tools:</h4>
+                    <ul>
+                        ${explore.tools.map(tool => `<li>${this.escapeHtml(tool)}</li>`).join('')}
+                    </ul>
+                `;
+            }
+            
+            html += `</div></div>`;
+        }
+        
+        // Footer
+        html += `
+            <div class="dossier-footer">
+                <div class="footer-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-cube"></i>
+                        <span>Generated by <a href="https://soobantalhatech.xyz" target="_blank">Sooban Talha Technologies</a></span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-robot"></i>
+                        <span>Professor X-Alpha Model v2.0</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>${new Date(dossier.generated_at || new Date()).toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        html += `</div>`;
+        return html;
+    }
+
+    // ============================================
+    // TYPEWRITER SYSTEM
+    // ============================================
+    createSkipButton() {
+        const skipBtn = document.createElement('button');
+        skipBtn.className = 'cyber-button skip-button';
+        skipBtn.innerHTML = '<i class="fas fa-forward"></i> SKIP ANIMATION';
+        skipBtn.style.marginTop = '1rem';
+        skipBtn.style.fontSize = '0.9rem';
+        skipBtn.style.padding = '0.5rem 1rem';
+        
+        skipBtn.addEventListener('click', () => {
+            if (this.currentTypewriter) {
+                this.currentTypewriter.skip();
+                skipBtn.remove();
+            }
+        });
+        
+        return skipBtn;
+    }
+
+    // ============================================
+    // PDF GENERATION ENGINE
+    // ============================================
+    async generatePremiumPDF() {
+        this.playSound('click');
+        
+        // Show generating indicator
+        const originalText = this.downloadPDFBtn.innerHTML;
+        this.downloadPDFBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> GENERATING PDF...';
+        this.downloadPDFBtn.disabled = true;
+        
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+                putOnlyUsedFonts: true,
+                floatPrecision: 16
+            });
+            
+            // Set PDF metadata
+            doc.setProperties({
+                title: `Savoiré AI Dossier - ${this.getCurrentTopic()}`,
+                subject: 'Comprehensive Study Dossier',
+                author: 'Sooban Talha Technologies',
+                keywords: 'education, ai, study, learning',
+                creator: 'Savoiré AI Neural Matrix'
+            });
+            
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 15;
+            let yPos = margin;
+            let currentPage = 1;
+            
+            // ========== COVER PAGE ==========
+            // Black background
+            doc.setFillColor(5, 5, 10);
+            doc.rect(0, 0, pageWidth, pageHeight, 'F');
+            
+            // Gold border
+            doc.setDrawColor(255, 215, 0);
+            doc.setLineWidth(1);
+            doc.rect(margin, margin, pageWidth - 2 * margin, pageHeight - 2 * margin);
+            
+            // Title
+            doc.setTextColor(255, 215, 0);
+            doc.setFontSize(36);
+            doc.setFont('helvetica', 'bold');
+            doc.text('SAVOIRÉ AI', pageWidth / 2, 60, { align: 'center' });
+            
+            // Subtitle
+            doc.setTextColor(0, 243, 255);
+            doc.setFontSize(18);
+            doc.text('NEURAL EDUCATION MATRIX', pageWidth / 2, 80, { align: 'center' });
+            
+            // Divider
+            doc.setDrawColor(0, 243, 255);
+            doc.setLineWidth(0.5);
+            doc.line(margin + 20, 90, pageWidth - margin - 20, 90);
+            
+            // Topic
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(28);
+            doc.text(this.getCurrentTopic().toUpperCase(), pageWidth / 2, 120, { align: 'center' });
+            
+            // Logo area
+            doc.setFillColor(0, 243, 255, 0.1);
+            doc.circle(pageWidth / 2, 160, 30, 'F');
+            doc.setTextColor(0, 243, 255);
+            doc.setFontSize(24);
+            doc.text('⚡', pageWidth / 2, 165, { align: 'center' });
+            
+            // Authorized by
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(12);
+            doc.text('AUTHORIZED EDITION', pageWidth / 2, 200, { align: 'center' });
+            
+            doc.setTextColor(255, 215, 0);
+            doc.setFontSize(10);
+            doc.textWithLink('Sooban Talha Technologies', pageWidth / 2, 210, { 
+                align: 'center',
+                url: 'https://soobantalhatech.xyz'
+            });
+            
+            // Generation info
+            doc.setTextColor(150, 150, 150);
+            doc.setFontSize(8);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, pageWidth / 2, 250, { align: 'center' });
+            doc.text('Professor X-Alpha Model • 3000+ Word Analysis', pageWidth / 2, 255, { align: 'center' });
+            
+            // Page number
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Page ${currentPage}`, pageWidth / 2, pageHeight - margin, { align: 'center' });
+            
+            // ========== CONTENT PAGES ==========
+            const messages = this.chatMessages.querySelectorAll('.ai-bubble .dossier-container');
+            if (messages.length > 0) {
+                const latestDossier = messages[messages.length - 1];
+                
+                // Convert to canvas for better formatting
+                const canvas = await html2canvas(latestDossier, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#020204'
+                });
+                
+                // Add new page for content
+                doc.addPage();
+                currentPage++;
+                yPos = margin;
+                
+                // Add content header
+                doc.setTextColor(0, 243, 255);
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('COMPREHENSIVE STUDY DOSSIER', pageWidth / 2, yPos, { align: 'center' });
+                yPos += 10;
+                
+                doc.setDrawColor(0, 243, 255);
+                doc.setLineWidth(0.3);
+                doc.line(margin, yPos, pageWidth - margin, yPos);
+                yPos += 15;
+                
+                // Add canvas image (scaled to fit)
+                const imgWidth = pageWidth - 2 * margin;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                // Split across multiple pages if needed
+                let imgY = yPos;
+                let remainingHeight = imgHeight;
+                const maxPageHeight = pageHeight - margin - 20; // Leave space for footer
+                
+                while (remainingHeight > 0) {
+                    const pageImgHeight = Math.min(remainingHeight, maxPageHeight - imgY);
+                    
+                    doc.addImage(canvas, 'PNG', margin, imgY, imgWidth, imgHeight, 
+                                undefined, 'FAST', 0);
+                    
+                    remainingHeight -= pageImgHeight;
+                    
+                    if (remainingHeight > 0) {
+                        doc.addPage();
+                        currentPage++;
+                        imgY = margin;
+                        
+                        // Add continuation header
+                        doc.setTextColor(100, 100, 100);
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'italic');
+                        doc.text(`(Continued) ${this.getCurrentTopic()}`, margin, imgY - 5);
+                    }
+                }
+            }
+            
+            // ========== ADD FOOTER TO ALL PAGES ==========
+            const totalPages = doc.internal.getNumberOfPages();
+            
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                
+                // Footer line
+                doc.setDrawColor(0, 243, 255, 0.3);
+                doc.setLineWidth(0.2);
+                doc.line(margin, pageHeight - margin + 5, pageWidth - margin, pageHeight - margin + 5);
+                
+                // Page number
+                doc.setTextColor(100, 100, 100);
+                doc.setFontSize(8);
+                doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - margin + 10, { align: 'center' });
+                
+                // Copyright and link
+                doc.setTextColor(150, 150, 150);
+                doc.setFontSize(7);
+                doc.textWithLink('Powered by Sooban Talha Technologies', pageWidth / 2, pageHeight - margin + 15, {
+                    align: 'center',
+                    url: 'https://soobantalhatech.xyz'
+                });
+                
+                doc.text(`Generated by Savoiré AI • ${new Date().toLocaleDateString()}`, pageWidth / 2, pageHeight - margin + 19, { align: 'center' });
+            }
+            
+            // Save PDF
+            const fileName = `SavoireAI_Dossier_${this.getCurrentTopic().replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
+            doc.save(fileName);
+            
+            this.showToast('PDF generated successfully!');
+            
+        } catch (error) {
+            console.error('PDF Generation Error:', error);
+            this.showToast('PDF generation failed. Please try again.');
+        } finally {
+            // Restore button
+            this.downloadPDFBtn.innerHTML = originalText;
+            this.downloadPDFBtn.disabled = false;
+        }
+    }
+    
+    getCurrentTopic() {
+        const lastMessage = this.conversationHistory
+            .filter(msg => msg.type === 'user')
+            .pop();
+        return lastMessage?.content || 'Study Topic';
+    }
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+    autoResizeTextarea() {
+        this.messageInput.style.height = 'auto';
+        this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 200) + 'px';
+    }
+
+    showThinking() {
+        this.thinkingIndicator.style.display = 'block';
         this.scrollToBottom();
     }
 
-    retryLastMessage() {
-        const lastUserMessage = this.state.conversation
-            .filter(msg => msg.type === 'user')
-            .pop();
-        
-        if (lastUserMessage) {
-            this.elements.messageInput.value = lastUserMessage.content;
-            this.sendMessage();
-        }
+    hideThinking() {
+        this.thinkingIndicator.style.display = 'none';
     }
 
-    handleStudyAction(action) {
-        // Find last AI message
-        const aiMessages = this.elements.messagesContainer.querySelectorAll('.message.ai');
-        const lastAIMessage = aiMessages[aiMessages.length - 1];
-        
-        if (!lastAIMessage) return;
-        
-        this.state.selectedPDFType = action;
-        this.showModal();
+    showPDFSection() {
+        this.pdfSection.style.display = 'block';
+        this.scrollToBottom();
     }
 
-    showModal() {
-        this.elements.pdfModal.style.display = 'flex';
-        
-        // Select current PDF type
-        this.elements.pdfOptions.forEach(opt => {
-            opt.classList.toggle('selected', opt.dataset.type === this.state.selectedPDFType);
-        });
+    showError(message) {
+        const errorMessage = `
+            <div class="error-message">
+                <h3><i class="fas fa-exclamation-circle"></i> SYSTEM NOTIFICATION</h3>
+                <p>${this.escapeHtml(message)}</p>
+                <p>Engaging local knowledge synthesis...</p>
+            </div>
+        `;
+        this.addMessage(errorMessage, 'ai');
     }
 
-    hideModal() {
-        this.elements.pdfModal.style.display = 'none';
-    }
-
-    async generatePDF() {
-        // Find last AI message
-        const aiMessages = this.elements.messagesContainer.querySelectorAll('.message.ai');
-        const lastAIMessage = aiMessages[aiMessages.length - 1];
+    showToast(message) {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = 'cyber-toast';
+        toast.innerHTML = `
+            <div class="toast-content">
+                <i class="fas fa-info-circle"></i>
+                <span>${this.escapeHtml(message)}</span>
+            </div>
+        `;
         
-        if (!lastAIMessage) {
-            this.showToast('No study materials to export', 'error');
-            return;
-        }
+        document.body.appendChild(toast);
         
-        const content = lastAIMessage.dataset.fullContent || lastAIMessage.querySelector('.message-text').innerHTML;
-        const topic = this.extractTopic(content) || 'Study Materials';
-        const type = this.state.selectedPDFType;
+        // Show with animation
+        setTimeout(() => toast.classList.add('show'), 10);
         
-        // Show loading
-        this.showToast('Generating PDF...', 'info');
-        
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Generate cover
-        this.generatePDFCover(doc, topic, type);
-        
-        // Add content based on type
-        switch(type) {
-            case 'summary':
-                this.generateSummaryPDF(doc, content);
-                break;
-            case 'detailed':
-                this.generateDetailedPDF(doc, content);
-                break;
-            case 'exam':
-                this.generateExamPDF(doc, content);
-                break;
-            case 'cheatsheet':
-                this.generateCheatsheetPDF(doc, content);
-                break;
-        }
-        
-        // Save PDF
-        const filename = `Savoire_${type}_${this.sanitizeFilename(topic)}_${Date.now()}.pdf`;
-        doc.save(filename);
-        
-        this.showToast('PDF downloaded successfully!', 'success');
-        this.hideModal();
-    }
-
-    generatePDFCover(doc, topic, type) {
-        // Black background
-        doc.setFillColor(0, 0, 0);
-        doc.rect(0, 0, 210, 297, 'F');
-        
-        // Title
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(28);
-        doc.setFont(undefined, 'bold');
-        doc.text('SAVOIRÉ AI', 105, 80, { align: 'center' });
-        
-        // Subtitle
-        doc.setFontSize(16);
-        doc.text('Study Platform', 105, 100, { align: 'center' });
-        
-        // Topic
-        doc.setFontSize(22);
-        doc.setTextColor(59, 130, 246);
-        doc.text(topic.toUpperCase(), 105, 140, { align: 'center' });
-        
-        // Type
-        doc.setFontSize(14);
-        doc.setTextColor(200, 200, 200);
-        doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Edition`, 105, 160, { align: 'center' });
-        
-        // Line
-        doc.setDrawColor(59, 130, 246);
-        doc.setLineWidth(1);
-        doc.line(50, 170, 160, 170);
-        
-        // Branding
-        doc.setFontSize(10);
-        doc.setTextColor(150, 150, 150);
-        doc.text('Generated by', 105, 220, { align: 'center' });
-        
-        doc.setFontSize(12);
-        doc.setTextColor(59, 130, 246);
-        doc.text('Sooban Talha Technologies', 105, 230, { align: 'center' });
-        
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text('https://soobantalhatech.xyz', 105, 240, { align: 'center' });
-        
-        // Date
-        doc.text(new Date().toLocaleDateString(), 105, 250, { align: 'center' });
-    }
-
-    generateSummaryPDF(doc, content) {
-        doc.addPage();
-        doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-        
-        // Extract summary sections
-        const summary = this.extractSummary(content);
-        const lines = doc.splitTextToSize(summary, 180);
-        doc.text(lines, 15, 20);
-        
-        this.addPDFFooter(doc, 1);
-    }
-
-    generateDetailedPDF(doc, content) {
-        let yPos = 20;
-        let page = 1;
-        
-        // Split content into sections
-        const sections = this.extractSections(content);
-        
-        sections.forEach((section, index) => {
-            if (yPos > 270) {
-                doc.addPage();
-                page++;
-                yPos = 20;
-                this.addPDFFooter(doc, page);
-            }
-            
-            // Section title
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text(section.title, 15, yPos);
-            yPos += 8;
-            
-            // Section content
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            const lines = doc.splitTextToSize(section.content, 180);
-            doc.text(lines, 15, yPos);
-            yPos += (lines.length * 5) + 15;
-        });
-    }
-
-    generateExamPDF(doc, content) {
-        doc.addPage();
-        
-        // Extract questions and answers
-        const examContent = this.extractExamContent(content);
-        
-        doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-        
-        const lines = doc.splitTextToSize(examContent, 180);
-        doc.text(lines, 15, 20);
-        
-        this.addPDFFooter(doc, 1);
-    }
-
-    generateCheatsheetPDF(doc, content) {
-        doc.addPage();
-        
-        // Extract key points
-        const cheatsheet = this.extractCheatsheet(content);
-        
-        // Two-column layout
-        doc.setFontSize(9);
-        doc.setTextColor(0, 0, 0);
-        
-        const columnWidth = 85;
-        const leftMargin = 15;
-        const rightMargin = 110;
-        
-        // Left column
-        const leftLines = doc.splitTextToSize(cheatsheet.left, columnWidth);
-        doc.text(leftLines, leftMargin, 20);
-        
-        // Right column
-        const rightLines = doc.splitTextToSize(cheatsheet.right, columnWidth);
-        doc.text(rightLines, rightMargin, 20);
-        
-        this.addPDFFooter(doc, 1);
-    }
-
-    addPDFFooter(doc, page) {
-        doc.setFontSize(8);
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Page ${page}`, 105, 290, { align: 'center' });
-        doc.text('Savoiré AI • https://soobantalhatech.xyz', 105, 295, { align: 'center' });
-    }
-
-    extractTopic(content) {
-        const match = content.match(/<h1>(.*?)<\/h1>/);
-        return match ? this.stripHTML(match[1]) : 'Study Materials';
-    }
-
-    extractSummary(content) {
-        // Extract first few sections for summary
-        const div = document.createElement('div');
-        div.innerHTML = content;
-        
-        const sections = [];
-        let count = 0;
-        
-        div.childNodes.forEach(node => {
-            if (count >= 3) return;
-            if (node.textContent && node.textContent.trim().length > 50) {
-                sections.push(this.stripHTML(node.textContent));
-                count++;
-            }
-        });
-        
-        return sections.join('\n\n');
-    }
-
-    extractSections(content) {
-        const sections = [];
-        const div = document.createElement('div');
-        div.innerHTML = content;
-        
-        let currentSection = null;
-        
-        div.childNodes.forEach(node => {
-            if (node.tagName && node.tagName.match(/^H[1-3]$/)) {
-                if (currentSection) {
-                    sections.push(currentSection);
-                }
-                currentSection = {
-                    title: this.stripHTML(node.textContent),
-                    content: ''
-                };
-            } else if (currentSection && node.textContent) {
-                currentSection.content += this.stripHTML(node.textContent) + '\n';
-            }
-        });
-        
-        if (currentSection) {
-            sections.push(currentSection);
-        }
-        
-        return sections;
-    }
-
-    extractExamContent(content) {
-        const examParts = [];
-        const div = document.createElement('div');
-        div.innerHTML = content;
-        
-        // Look for questions and answers
-        div.querySelectorAll('h3, strong').forEach(el => {
-            const text = el.textContent.toLowerCase();
-            if (text.includes('question') || text.includes('q:') || text.includes('problem')) {
-                let question = el.textContent;
-                let answer = '';
-                
-                // Try to find answer
-                let next = el.nextElementSibling;
-                while (next && !next.textContent.toLowerCase().includes('answer')) {
-                    next = next.nextElementSibling;
-                }
-                if (next) {
-                    answer = next.textContent;
-                }
-                
-                examParts.push(`${question}\n${answer}\n\n`);
-            }
-        });
-        
-        return examParts.join('\n');
-    }
-
-    extractCheatsheet(content) {
-        const div = document.createElement('div');
-        div.innerHTML = content;
-        
-        const allText = this.stripHTML(content);
-        const mid = Math.floor(allText.length / 2);
-        
-        return {
-            left: allText.substring(0, mid),
-            right: allText.substring(mid)
-        };
-    }
-
-    newSession() {
-        if (this.state.conversation.length === 0) return;
-        
-        // Save current session
-        this.saveSession();
-        
-        // Clear UI
-        this.elements.messagesContainer.innerHTML = '';
-        this.elements.studyActions.style.display = 'none';
-        this.state.conversation = [];
-        
-        // Show welcome screen
-        this.elements.welcomeScreen.style.display = 'block';
-        this.elements.studyChat.style.display = 'none';
-        
-        this.showToast('New session started', 'info');
+        // Remove after delay
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     clearChat() {
-        if (this.state.conversation.length === 0) return;
+        this.playSound('click');
         
-        this.elements.messagesContainer.innerHTML = '';
-        this.elements.studyActions.style.display = 'none';
-        this.state.conversation = [];
+        // Animation
+        this.chatMessages.style.opacity = '0';
+        this.chatMessages.style.transform = 'translateY(20px)';
         
-        this.showToast('Chat cleared', 'info');
-    }
-
-    exportSession() {
-        const sessionData = {
-            platform: 'Savoiré AI',
-            version: '2.0',
-            exported: new Date().toISOString(),
-            conversation: this.state.conversation,
-            stats: {
-                total_messages: this.state.conversation.length,
-                ai_messages: this.state.conversation.filter(m => m.type === 'ai').length,
-                user_messages: this.state.conversation.filter(m => m.type === 'user').length
-            },
-            brand: 'Sooban Talha Technologies',
-            website: 'https://soobantalhatech.xyz'
-        };
-        
-        const dataStr = JSON.stringify(sessionData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        
-        const link = document.createElement('a');
-        link.setAttribute('href', dataUri);
-        link.setAttribute('download', `savoire_session_${Date.now()}.json`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        this.showToast('Session exported', 'success');
+        setTimeout(() => {
+            this.chatMessages.innerHTML = '';
+            this.conversationHistory = [];
+            this.chatContainer.style.display = 'none';
+            this.welcomeScreen.style.display = 'block';
+            this.pdfSection.style.display = 'none';
+            
+            this.chatMessages.style.opacity = '1';
+            this.chatMessages.style.transform = 'translateY(0)';
+        }, 300);
     }
 
     toggleTheme() {
-        const isDark = document.documentElement.classList.contains('cyber-study');
+        this.theme = this.theme === 'void' ? 'light' : 'void';
+        document.body.setAttribute('data-theme', this.theme);
         
-        if (isDark) {
-            document.documentElement.classList.remove('cyber-study');
-            document-study');
-            document.documentElement.classList.add('light-study');
-            this.elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            
-           .documentElement.classList.add('light-study');
-            this.elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            
-            // Light theme variables
-            // Light theme variables
-            document.documentElement.style.set document.documentElement.style.setProperty('Property('--bg-primary', '#ffffff--bg-primary', '#ffffff');
-            document.documentElement');
-            document.documentElement.style.set.style.setProperty('--bgProperty('--bg-secondary', '#f-secondary', '#f8f9fa8f9fa');
-            document.d');
-            document.documentElement.style.setProperty('--bgocumentElement.style.setProperty('--bg-surface',-surface', 'rgba( 'rgba(255, 255, 255, 255, 255, 0.8)');
-255, 0.8)');
-            document            document.documentElement.style.documentElement.style.setProperty('--text-primary.setProperty('--text-primary', '#1a1a1a', '#1a1a1a');
-           ');
-            document.documentElement document.documentElement.style.setProperty('--text.style.setProperty('--text-secondary', '#666666');
-       -secondary', '#666666');
-        } else {
- } else {
-            document.document            document.documentElement.classList.remove('light-studyElement.classList.remove('light-study');
-            document.documentElement');
-            document.documentElement.classList.add.classList.add('cyber-study');
-           ('cyber-study');
-            this.e this.elements.themeToggle.innerHTML = '<i class="lements.themeToggle.innerHTML = '<i class="fas fafas fa-moon"></i>';
--moon"></i>';
-            
-            // Reset to            
-            // Reset to dark theme dark theme
-
-            document.documentElement.style.setProperty('--bg-primary', '#0a0a            document.documentElement.style.setProperty('--bg-primary', '#0a0a0a');
-            document.document0a');
-            document.documentElement.style.setProperty('--bg-secondary', '#Element.style.setProperty('--bg-secondary', '#111111');
-            document.document111111');
-            document.documentElement.style.setProperty('--bg-surface',Element.style.setProperty('--bg-surface', 'rgba(30 'rgba(30, 30, 30,, 30, 30, 0. 0.8)');
-            document.documentElement.style.set8)');
-            document.documentElement.style.setProperty('--text-primary', '#Property('--text-primary', '#ffffff');
-            document.documentElement.style.setProperty('--textffffff');
-            document.documentElement.style.setProperty('--text-secondary', '#d4d4-secondary', '#d4d4d8d8');
-        }
-   ');
-        }
+        const icon = this.themeToggle.querySelector('i');
+        icon.className = this.theme === 'void' ? 'fas fa-moon' : 'fas fa-sun';
+        
+        this.playSound('click');
     }
 
-    startVoiceInput() }
-
-    startVoiceInput() {
-        if (!('webkitSpeech {
-        if (!('webkitSpeechRecognitionRecognition' in' in window)) {
-            this.showToast(' window)) {
-            this.showToast('Voice input not supported', 'error');
-            return;
-        }
-        
-        const recognition = new webkitSpeechRecognition();
-       Voice input not supported', 'error');
-            return;
-        }
-        
-        const recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
- recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.interimResults = false;
-        
-               
-        recognition.onstart = recognition.onstart = () => () => {
-            this.show {
-            this.showToast('Listening...', 'Toast('Listening...', 'info');
-info');
-        };
-        };
-        
-        recognition.onresult = (event) =>        
-        recognition.onresult = (event) => {
-            const {
-            const transcript = event.res transcript = event.results[0][0].ults[0][0].transcript;
-            this.elementstranscript;
-            this.elements.messageInput.value.messageInput.value = transcript;
- = transcript;
-            this.autoResize            this.autoResize();
-            this.updateSendButton();
-       ();
-            this.updateSendButton();
-        };
-        
- };
-        
-        recognition.onerror        recognition.onerror = (event) => {
-            this.showToast('Voice recognition = (event) => {
-            this.showToast('Voice recognition error', 'error');
-        error', 'error');
-        };
-        
-        recognition.start();
-    }
-
-    loadSessions };
-        
-        recognition.start();
-    }
-
-    loadSessions() {
-        try {
-            const saved() {
-        try {
-            const saved = localStorage.getItem('sav = localStorage.getItem('savoire_sessions');
-oire_sessions');
-            if (saved) {
-                           if (saved) {
-                this.state.sessions = JSON this.state.sessions = JSON.parse(saved);
-            }
-        } catch.parse(saved);
-            }
-        } catch (error (error) {
-            console) {
-            console.error('Error loading sessions:',.error('Error loading sessions:', error);
-        }
-    }
-
-    error);
-        }
-    }
-
-    saveSession() {
-        saveSession() {
-        if (this.state if (this.state.conversation.length.conversation.length === 0) return;
-        
- === 0) return;
-        
-        const session = {
-            id: Date        const session = {
-            id: Date.now().toString(),
-            title: this.state.con.now().toString(),
-            title: this.state.conversversation[0]?.ation[0]?.content?.substring(0,content?.substring(0, 50) || 'Study Session',
-            50) || 'Study Session',
-            conversation: this.state.conversation conversation: this.state.conversation,
-            createdAt,
-            createdAt: new Date().toISO: new Date().toISOString(),
-            updatedAt: new DateString(),
-            updatedAt: new Date().to().toISOString()
-        };
-        
-        this.state.sISOString()
-        };
-        
-        this.state.sessions.unshift(session);
-        this.state.sessions = this.stateessions.unshift(session);
-        this.state.sessions = this.state.sessions.slice(.sessions.slice(0, 0, 20); // Keep20); // Keep last 20
-        
-        try last 20
-        
-        try {
-            localStorage.setItem('savoire_sessions', JSON.stringify(this.state.sessions));
-        } catch (error) {
-            console.error('Error saving session:', error);
-        }
-    }
-
- {
-            localStorage.setItem('savoire_sessions', JSON.stringify(this.state.sessions));
-        } catch (error) {
-            console.error('Error saving session:', error);
-        }
-    }
-
-    auto    autoResize() {
-        constResize() {
-        const textarea = this.elements textarea = this.elements.messageInput;
-        textarea.messageInput;
-        textarea.style.height.style.height = 'auto';
-        textarea.style.height = = 'auto';
-        textarea.style.height = Math.min Math.min(textarea.scrollHeight,(textarea.scrollHeight, 120) + 120) + 'px 'px';
-    }
-
-    clearInput';
-    }
-
-    clearInput() {
-        this.elements.messageInput() {
-        this.elements.messageInput.value =.value = '';
-        this.autoResize();
-        this '';
-        this.autoResize();
-        this.updateSend.updateSendButton();
-    }
-
-Button();
-    }
-
-    updateSendButton() {
-        const hasText = this.elements    updateSendButton() {
-        const hasText = this.elements.messageInput.value.trim().length.messageInput.value.trim().length > 0;
-        this > 0;
-        this.elements.sendBtn.disabled = !.elements.sendBtn.disabled = !hasTexthasText || this || this.state.isGenerating;
-    }
-
-   .state.isGenerating;
-    }
-
-    updateUIState() {
-        this updateUIState() {
-        this.elements.message.elements.messageInput.disabledInput.disabled = this.state.isGenerating;
- = this.state.isGenerating;
-        this.elements.sendBtn        this.elements.sendBtn.disabled.disabled = this.state.is = this.state.isGenerating || !Generating || !this.elements.messagethis.elements.messageInput.value.trim();
-    }
-
-Input.value.trim();
-    }
-
-    scroll    scrollToBottom() {
-       ToBottom() {
+    scrollToBottom() {
         setTimeout(() => {
-            this.elements setTimeout(() => {
-            this.elements.messagesContainer.scrollTop =.messagesContainer.scrollTop = this.elements.messagesContainer.scroll this.elements.messagesContainer.scrollHeight;
+            this.chatMessages.scrollTo({
+                top: this.chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
         }, 100);
     }
 
-    showToast(message, type = 'info') {
-        //Height;
-        }, 100);
-    }
-
-    showToast(message, type = 'info') {
-        // Create toast element
-        const Create toast element
-        const toast = document.createElement toast = document.createElement('div('div');
-        toast.className');
-        toast.className = `toast toast-${type}` = `toast toast-${type}`;
-        toast.textContent = message;
-        
-        // Add;
-        toast.textContent = message;
-        
-        // Add to page
-        document.body.appendChild to page
-        document.body.appendChild(toast);
-(toast);
-        
-        //        
-        // Remove after delay Remove after delay
-        setTimeout(() => {
-            toast.classList
-        setTimeout(() => {
-            toast.classList.add.add('fade-out');
-('fade-out');
-            setTimeout(() => toast.remove(), 300);
-        }, 300            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-        
-        // Add0);
-        
-        // Add CSS if needed
-        if (!document.querySelector('#to CSS if needed
-        if (!document.querySelector('#toast-styles')) {
-            const styleast-styles')) {
-            const style = document.createElement('style = document.createElement('style');
-            style.id = 'toast');
-            style.id = 'toast-styles';
-            style.textContent = `
-                .toast-styles';
-            style.textContent = `
-                .toast {
-                    position: fixed;
-                    bottom: 100px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: var(-- {
-                    position: fixed;
-                    bottom: 100px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: var(--bg-card);
-bg-card);
-                    backdrop-filter: var(--glass-blur);
-                    backdrop-filter: var(--glass-blur);
-                    border: 1px                    border: 1px solid var(--glass-border);
-                    border-radius: var(--border-radius solid var(--glass-border);
-                    border-radius: var(--border-radius);
-                    padding: 12);
-                    padding: 12px 20px 20px;
-                   px;
-                    color: var(-- color: var(--text-primary);
-                    font-size: 14pxtext-primary);
-                    font-size: 14px;
-                   ;
-                    font-weight:  font-weight: 500;
-                    z-index:500;
-                    z-index: 1000;
-                    box-shadow 1000;
-                    box-shadow: var(--: var(--shadow-lg);
-                    animation: toastSlideshadow-lg);
-                    animation: toastSlide 0.3s ease;
- 0.3s ease;
-                               }
-                
-                .toast }
-                
-                .toast-success {
-                    border-left: 4-success {
-                    border-left: 4px solidpx solid var(--accent-success);
-                }
-                
-                . var(--accent-success);
-                }
-                
-                .toasttoast-error-error {
-                    border-left: 4px {
-                    border-left: 4px solid var(--error);
-                }
-                
- solid var(--error);
-                }
-                
-                .toast-info {
-                    border-left: 4px solid var(--accent-info);
-                .toast-info {
-                    border-left: 4px solid var(--accent-info);
-                }
-                
-                .toast.fade-out {
-                }
-                
-                .toast.fade-out {
-                    opacity: 0;
-                    transform: translateX(-50%) translate                    opacity: 0;
-                    transform: translateX(-50%) translateY(10px);
-                    transition: all 0.3s ease;
-                }
-                
-Y(10px);
-                    transition: all 0.3s ease;
-                }
-                
-                @keyframes                @keyframes toastSlide {
-                    from {
-                        opacity: toastSlide {
-                    from {
-                        opacity: 0;
-                        transform 0;
-                        transform: translateX(-50%) translateY(: translateX(-50%) translateY(20px);
-                    }
-                    to {
-                        opacity: 20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translate1;
-                        transform: translateX(-50%) translateY(0);
-                    }
-                }
-           X(-50%) translateY(0);
-                    }
-                }
-            `;
-            document.head.appendChild( `;
-            document.head.appendChild(stylestyle);
-        }
-   );
+    renderMathJax() {
+        if (window.MathJax) {
+            setTimeout(() => {
+                window.MathJax.typesetClear();
+                window.MathJax.typeset();
+            }, 500);
         }
     }
-
-    escapeHtml(text) {
-        }
 
     escapeHtml(text) {
         if (!text) return '';
- if (!text) return '';
-        const div =        const div = document.createElement(' document.createElement('div');
-        div.textContent =div');
+        const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML text;
         return div.innerHTML;
     }
 
-;
+    markdownToHtml(text) {
+        if (!text) return '';
+        
+        return text
+            .replace(/\\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/!\[(.*?)\]\((.*?)\)/g, '<img alt="$1" src="$2">')
+            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
+            .replace(/^### (.*?)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.*?)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.*?)$/gm, '<h1>$1</h1>')
+            .replace(/^\d+\. (.*?)$/gm, '<li>$1</li>')
+            .replace(/^- (.*?)$/gm, '<li>$1</li>')
+            .replace(/\$\$(.*?)\$\$/g, '$$$1$$') // Preserve LaTeX
+            .replace(/\$(.*?)\$/g, '$$$1$$');   // Preserve inline math
     }
 
-    stripHTML    stripHTML(html) {
-        if(html) {
-        if (!html) return '';
-        const div (!html) return '';
-        const div = document.createElement('div');
-        div.innerHTML = html;
- = document.createElement('div');
-        div.innerHTML = html;
-        return div.textContent || div        return div.textContent || div.innerText || '';
+    generateLocalDossier(topic) {
+        // Simple local fallback
+        return {
+            topic: topic,
+            stats: {
+                difficulty: "Advanced",
+                mastery_score: 92,
+                estimated_study_hours: 25
+            },
+            content: {
+                executive_summary: `Local analysis of ${topic} reveals complex interrelationships requiring systematic study. This dossier provides foundational understanding through rigorous examination of core principles, practical applications, and advanced theoretical frameworks.`,
+                deep_dive_lecture: `# LOCAL KNOWLEDGE SYNTHESIS: ${topic.toUpperCase()}
+
+## Core Analysis
+${topic} represents a domain of study with significant theoretical depth and practical applications. Mastery requires understanding of:
+
+1. **Fundamental Principles**
+   - Axiomatic foundations
+   - Mathematical formalisms
+   - Empirical validations
+
+2. **Advanced Concepts**
+   - Theoretical extensions
+   - Methodological innovations
+   - Interdisciplinary connections
+
+3. **Practical Implementation**
+   - Real-world applications
+   - Problem-solving strategies
+   - Optimization techniques
+
+## Learning Pathway
+Systematic study should proceed through sequential mastery of:
+- Foundational definitions and axioms
+- Core theorems and proofs
+- Application methodologies
+- Advanced research frontiers
+
+## Key Insights
+Success in ${topic} requires:
+- Strong mathematical foundation
+- Critical thinking skills
+- Systematic problem-solving approach
+- Continuous knowledge integration`,
+                key_formulas_concepts: [
+                    {
+                        name: "Fundamental Equation",
+                        latex: "$$A = \\pi r^2$$",
+                        explanation: "Basic area calculation",
+                        example: "Circle with radius 5 has area 78.54"
+                    }
+                ],
+                memorization_tricks: [
+                    {
+                        name: "Concept Mapping",
+                        description: "Create visual diagrams connecting related ideas",
+                        effectiveness: "8/10"
+                    }
+                ],
+                real_world_applications: [
+                    {
+                        domain: "General",
+                        application: "Problem solving and analysis",
+                        impact: "Improved decision making"
+                    }
+                ],
+                pitfall_analysis: [
+                    {
+                        pitfall: "Overgeneralization",
+                        why_wrong: "Applying specific cases too broadly",
+                        correct_approach: "Careful consideration of boundary conditions"
+                    }
+                ],
+                exam_questions: [
+                    {
+                        question: "Explain the core principles of " + topic,
+                        answer: "The core principles establish foundational understanding through systematic analysis of fundamental relationships and practical implementations.",
+                        difficulty: 6,
+                        time_estimate: "15 minutes",
+                        common_errors: ["Oversimplification", "Missing key connections"]
+                    }
+                ]
+            },
+            metadata: {
+                generated_at: new Date().toISOString(),
+                model: "Local Knowledge Base",
+                word_count: 1200
+            }
+        };
     }
 
-    sanitizeFilename(filename) {
-.innerText || '';
-    }
-
-    sanitizeFilename(filename) {
-        return filename.replace(/        return filename.replace(/[^a-z0[^a-z0-9]/-9]/gi, '_').toLowerCasegi, '_').toLowerCase();
-    }
-
-    sleep(ms();
-    }
-
-    sleep(ms) {
-) {
-        return new Promise(resolve => setTimeout(resolve,        return new Promise(resolve => setTimeout(resolve, ms));
+    initAnimations() {
+        // Add CSS for toast
+        const toastStyle = document.createElement('style');
+        toastStyle.textContent = `
+            .cyber-toast {
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%) translateY(100px);
+                background: rgba(0, 243, 255, 0.1);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(0, 243, 255, 0.3);
+                border-radius: 12px;
+                padding: 12px 20px;
+                color: var(--text-primary);
+                font-family: var(--font-mono);
+                font-size: 0.9rem;
+                z-index: 10000;
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                max-width: 90%;
+                text-align: center;
+            }
+            
+            .cyber-toast.show {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            
+            .toast-content {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .toast-content i {
+                color: var(--cyber-blue);
+            }
+            
+            .skip-button {
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+        `;
+        document.head.appendChild(toastStyle);
     }
 }
 
-// Initialize ms));
+// ============================================
+// TYPEWRITER CLASS
+// ============================================
+class TypeWriter {
+    constructor(element, text, options = {}) {
+        this.element = element;
+        this.text = text;
+        this.speed = options.speed || 20;
+        this.onChar = options.onChar || (() => {});
+        this.onComplete = options.onComplete || (() => {});
+        
+        this.index = 0;
+        this.isTyping = false;
+        this.timer = null;
+    }
+    
+    start() {
+        if (this.isTyping) return;
+        
+        this.isTyping = true;
+        this.index = 0;
+        this.element.innerHTML = '';
+        this.typeNextChar();
+    }
+    
+    typeNextChar() {
+        if (this.index >= this.text.length) {
+            this.complete();
+            return;
+        }
+        
+        // Get next character
+        let char = this.text.charAt(this.index);
+        this.index++;
+        
+        // Handle HTML tags
+        if (char === '<') {
+            // Find the closing >
+            const tagEnd = this.text.indexOf('>', this.index);
+            if (tagEnd !== -1) {
+                char = this.text.substring(this.index - 1, tagEnd + 1);
+                this.index = tagEnd + 1;
+            }
+        }
+        
+        // Handle LaTeX math
+        if (char === '$' && this.text.charAt(this.index) === '$') {
+            // Find closing $$
+            const mathEnd = this.text.indexOf('$$', this.index + 1);
+            if (mathEnd !== -1) {
+                char = this.text.substring(this.index - 1, mathEnd + 2);
+                this.index = mathEnd + 2;
+            }
+        } else if (char === '$') {
+            // Find closing $
+            const mathEnd = this.text.indexOf('$', this.index);
+            if (mathEnd !== -1) {
+                char = this.text.substring(this.index - 1, mathEnd + 1);
+                this.index = mathEnd + 1;
+            }
+        }
+        
+        // Add character to element
+        this.element.innerHTML += char;
+        
+        // Callback for each character
+        if (this.index % 3 === 0) {
+            this.onChar();
+        }
+        
+        // Schedule next character
+        const delay = char === ' ' ? this.speed / 2 : this.speed;
+        this.timer = setTimeout(() => this.typeNextChar(), delay);
+    }
+    
+    skip() {
+        if (this.timer) {
+            clearTimeout(this.timer);
+        }
+        
+        this.element.innerHTML = this.text;
+        this.isTyping = false;
+        this.complete();
+    }
+    
+    complete() {
+        this.isTyping = false;
+        this.onComplete();
     }
 }
 
-// Initialize the platform
-const the platform
-const savoire savoireStudy = new SavoireStudyStudy = new SavoireStudyAI();
-window.savoireStudyAI();
-window.savoireStudy = savoire = savoireStudy;
-
-// Additional CSS for study features
-const studyStyles = document.createElement('style');
-studyStyles.textContent = `
-    .summary-section,
-    .concepts-section,
-Study;
-
-// Additional CSS for study features
-const studyStyles = document.createElement('style');
-studyStyles.textContent = `
-    .summary-section,
-    .concepts-section,
-    .expl    .explanation-section,
-    .formanation-section,
-    .formulas-section,
-    .ulas-section,
-    .examples-section,
-    .questions-sectionexamples-section,
-    .questions-section,
-    .mistakes-section,
-    .,
-    .mistakes-section,
-    .tips-section {
-        margin: 2rem 0;
-        padding:tips-section {
-        margin: 2rem 0;
-        padding:  1.5rem;
-        background:1.5rem;
-        background: var(--bg-glass);
-        var(--bg-glass);
-        border: 1px solid var(--glass-border border: 1px solid var(--glass-border);
-);
-        border-radius: var        border-radius: var(--border-radius);
-   (--border-radius);
-    }
-    
- }
-    
-    .summary-section    .summary-section h2,
-    .concepts-section h2,
-    .concepts-section h2,
-    h2,
-    .explanation-section h2,
-    .form .explanation-section h2,
-    .formulas-sectionulas-section h2,
-    h2,
-    .examples-section .examples-section h2,
-    .questions-section h2,
- h2,
-    .questions-section h2,
-       .mistakes-section h2 .mistakes-section h2,
-   ,
-    .tips-section h .tips-section h2 {
-2 {
-        color: var(--accent-primary);
-        margin        color: var(--accent-primary);
-        margin-bottom-bottom: 1rem;
-       : 1rem;
-        display: flex;
- display: flex;
-        align-items: center;
-        gap:        align-items: center;
-        gap:  0.75rem;
-   0.75rem;
-    }
-    
- }
-    
-    .formula-grid {
-        display: grid    .formula-grid {
-        display: grid;
-       ;
-        grid-template-columns grid-template-columns: repeat(auto-fit, min: repeat(auto-fit, minmax(200px, 1frmax(200px, 1fr));
-        gap:));
-        gap: 1rem;
-        margin-top: 1rem;
-        margin-top:  1rem;
-    }
-    
-   1rem;
-    }
-    
-    .form .formula-item {
-        padding: 1rem;
-ula-item {
-        padding: 1rem;
-        background        background: rgba(0: rgba(0, 0, 0, 0.2);
-        border, 0, 0, 0.2);
-        border-radius: 8px;
--radius: 8px;
-        border-left:        border-left: 4px 4px solid var(--accent solid var(--accent-primary);
-        font-family: 'Mon-primary);
-        font-family: 'Monaco', 'Menaco', 'Menlo', monospace;
-        font-size:lo', monospace;
-        font-size:  0.9rem;
-   0.9rem;
-    }
-    
-    }
-    
-    .example-item .example-item {
-        margin {
-        margin: 1.5rem 0;
-: 1.5rem 0;
-        padding: 1.5        padding: 1.5rem;
-        background: rgba(59, rem;
-        background: rgba(59, 130,130, 246,  246, 0.1);
-        border-radius0.1);
-        border-radius: : 8px;
-        border: 1px solid rgba(8px;
-        border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-    
-    .example59, 130, 246, 0.3);
-    }
-    
-    .example-item-item h3 {
-        color: var(--accent-primary);
-        margin-bottom h3 {
-        color: var(--accent-primary);
-        margin-bottom: 1rem: 1rem;
-    }
-    
-;
-    }
-    
-    .question-item    .question-item {
-        margin: {
-        margin: 1.5rem 0;
-        1.5rem 0;
-        padding padding: 1.5rem: 1.5rem;
-        background: var(--bg-glass;
-        background: var(--bg-glass);
-        border: 1px solid var(--glass);
-        border: 1px solid var(--glass-border);
-        border-border);
-        border-radius: -radius: 8px;
-    }
-    
-8px;
-    }
-    
-    .question-item h3 {
-    .question-item h3 {
-        color: var(--text-primary);
-        margin-bottom: 1rem;
-    }
-    
-    details {
-        margin-top: 1rem;
-        background: rgba(0, 0        color: var(--text-primary);
-        margin-bottom: 1rem;
-    }
-    
-    details {
-        margin-top: 1rem;
-        background: rgba(0, 0, 0, 0, 0, 0.2);
-        border-radius: 8px;
-        padding:.2);
-        border-radius: 8px;
-        padding: 1rem;
-    }
- 1rem;
-    }
-    
-    summary {
-    
-    summary {
-        cursor: pointer;
-        color: var(--        cursor: pointer;
-        color: var(--accent-primary);
-        fontaccent-primary);
-        font-weight: 500-weight: 500;
-       ;
-        padding: 0. padding: 0.5rem;
-    }
-    
-   5rem;
-    }
-    
-    .answer {
-        margin .answer {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--glass-border);
--top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--glass-border);
-               color: var(--text-secondary);
-    }
- color: var(--text-secondary);
-    }
-    
-    .study-footer {
-        margin-top: 2rem;
-        padding    
-    .study-footer {
-        margin-top: 2rem;
-        padding-top: 1.5-top: 1.5rem;
-        border-top: 1px solid var(--glass-borderrem;
-        border-top: 1px solid var(--glass-border);
-        color: var(--);
-        color: var(--text-muted);
-text-muted);
-        font        font-size: 0.-size: 0.9rem9rem;
-        text-align: center;
-        text-align: center;
-   ;
-    }
-    
-    .typing-cursor {
-        display: inline-block;
-        width: 2px;
-        height: 1.2em;
-        background }
-    
-    .typing-cursor {
-        display: inline-block;
-        width: 2px;
-        height: 1.2em;
-        background: var(--ac: var(--accent-primary);
-        margin-left: 2px;
-        animationcent-primary);
-        margin-left: 2px;
-        animation:: blink 1s infinite blink 1s infinite;
-        vertical-align: middle;
-    }
-    
-    @;
-        vertical-align: middle;
-    }
-    
-    @keyframes blink {
-        0%,keyframes blink {
-        0%, 100% { opacity 100% { opacity: 1; }
-        50% { opacity: 0; }
-    }
-`;
-
-document.head.appendChild: 1; }
-        50% { opacity: 0; }
-    }
-`;
-
-document.head.appendChild(studyStyles);
+// ============================================
+// INITIALIZE APPLICATION
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    window.savoireAI = new CyberneticAI();
+    console.log('Savoiré AI Neural Matrix Online');
+    console.log('Professor X-Alpha Model Active');
+    console.log('Ready for 3000+ word dossier generation');
+});
