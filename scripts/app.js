@@ -1,27 +1,31 @@
-// Savoiré AI - Premium Chat Experience
-// Clean, cinematic, professional
+// SAVOIRÉ AI - ULTIMATE STUDY PLATFORM
+// Advanced AI Study Assistant with PDF Generation
 
-class SavoirePremiumAI {
+class SavoireStudyAI {
     constructor() {
-        // Core state
+        // State Management
         this.state = {
             isGenerating: false,
-            isThinking: false,
-            currentSession: null,
+            isTyping: false,
+            currentSubject: null,
             conversation: [],
             sessions: [],
             selectedPDFType: 'summary',
             thinkingMessages: [
-                "Processing your query...",
-                "Analyzing deeply...",
-                "Structuring response...",
-                "Preparing insights...",
-                "Crafting explanation..."
+                "Analyzing your study request...",
+                "Structuring comprehensive notes...",
+                "Generating key concepts...",
+                "Preparing examples...",
+                "Compiling practice questions..."
             ]
         };
 
-        // DOM elements
+        // DOM Elements
         this.elements = {};
+        
+        // Typing Effect
+        this.typingSpeed = 20; // ms per character
+        this.typingQueue = [];
         
         // Initialize
         this.init();
@@ -30,45 +34,47 @@ class SavoirePremiumAI {
     init() {
         this.cacheElements();
         this.bindEvents();
-        this.initParticles();
         this.loadSessions();
         this.setupInput();
+        this.setupMathJax();
         
-        console.log('🎯 Savoiré AI Premium initialized');
+        console.log('📚 Savoiré Study AI Initialized');
     }
 
     cacheElements() {
         // Core UI
-        this.elements.app = document.querySelector('.app-container');
         this.elements.welcomeScreen = document.getElementById('welcomeScreen');
-        this.elements.messagesArea = document.getElementById('messagesArea');
-        this.elements.messagesScroll = document.getElementById('messagesScroll');
+        this.elements.studyChat = document.getElementById('studyChat');
+        this.elements.messagesContainer = document.getElementById('messagesContainer');
         this.elements.thinkingIndicator = document.getElementById('thinkingIndicator');
+        this.elements.studyActions = document.getElementById('studyActions');
         
         // Input
         this.elements.messageInput = document.getElementById('messageInput');
-        this.elements.sendButton = document.getElementById('sendButton');
-        
-        // Modals
-        this.elements.pdfModal = document.getElementById('pdfModal');
-        this.elements.pdfModalClose = document.getElementById('pdfModalClose');
-        this.elements.pdfCancel = document.getElementById('pdfCancel');
-        this.elements.pdfGenerate = document.getElementById('pdfGenerate');
+        this.elements.sendBtn = document.getElementById('sendBtn');
         
         // Buttons
+        this.elements.newSession = document.getElementById('newSession');
         this.elements.themeToggle = document.getElementById('themeToggle');
-        this.elements.newChatBtn = document.getElementById('newChatBtn');
+        this.elements.clearChat = document.getElementById('clearChat');
+        this.elements.exportSession = document.getElementById('exportSession');
         
-        // Audio
-        this.elements.sendSound = document.getElementById('sendSound');
-        this.elements.typeSound = document.getElementById('typeSound');
+        // PDF Modal
+        this.elements.pdfModal = document.getElementById('pdfModal');
+        this.elements.closeModal = document.getElementById('closeModal');
+        this.elements.cancelPdf = document.getElementById('cancelPdf');
+        this.elements.generatePdf = document.getElementById('generatePdf');
+        this.elements.pdfOptions = document.querySelectorAll('.pdf-option');
+        
+        // Study Actions
+        this.elements.actionButtons = document.querySelectorAll('.action-btn');
     }
 
     bindEvents() {
         // Send message
-        this.elements.sendButton.addEventListener('click', () => this.sendMessage());
+        this.elements.sendBtn.addEventListener('click', () => this.sendMessage());
         
-        // Enter to send, Shift+Enter for new line
+        // Enter to send
         this.elements.messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -79,124 +85,65 @@ class SavoirePremiumAI {
         // Auto-resize textarea
         this.elements.messageInput.addEventListener('input', () => {
             this.autoResize();
+            this.updateSendButton();
         });
         
-        // Quick prompts
-        document.querySelectorAll('.prompt-chip').forEach(chip => {
-            chip.addEventListener('click', (e) => {
-                const prompt = e.currentTarget.getAttribute('data-prompt');
-                this.elements.messageInput.value = prompt;
-                this.autoResize();
-                this.focusInput();
-            });
-        });
+        // New session
+        this.elements.newSession.addEventListener('click', () => this.newSession());
+        
+        // Clear chat
+        this.elements.clearChat.addEventListener('click', () => this.clearChat());
+        
+        // Export session
+        this.elements.exportSession.addEventListener('click', () => this.exportSession());
         
         // Theme toggle
         this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
         
-        // New chat
-        this.elements.newChatBtn.addEventListener('click', () => this.newChat());
+        // PDF Modal
+        this.elements.closeModal.addEventListener('click', () => this.hideModal());
+        this.elements.cancelPdf.addEventListener('click', () => this.hideModal());
+        this.elements.generatePdf.addEventListener('click', () => this.generatePDF());
         
-        // PDF modal
-        this.elements.pdfModalClose.addEventListener('click', () => this.hidePDFModal());
-        this.elements.pdfCancel.addEventListener('click', () => this.hidePDFModal());
-        this.elements.pdfGenerate.addEventListener('click', () => this.generatePDF());
-        
-        // PDF options
-        document.querySelectorAll('.pdf-option').forEach(option => {
+        // PDF options selection
+        this.elements.pdfOptions.forEach(option => {
             option.addEventListener('click', (e) => {
-                document.querySelectorAll('.pdf-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
+                this.elements.pdfOptions.forEach(opt => opt.classList.remove('selected'));
                 e.currentTarget.classList.add('selected');
-                this.state.selectedPDFType = e.currentTarget.getAttribute('data-type');
+                this.state.selectedPDFType = e.currentTarget.dataset.type;
             });
         });
-    }
-
-    initParticles() {
-        const container = document.getElementById('particles');
-        if (!container) return;
         
-        const particles = [];
-        const particleCount = 30;
+        // Study action buttons
+        this.elements.actionButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.currentTarget.dataset.action;
+                this.handleStudyAction(action);
+            });
+        });
         
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            
-            // Random position and size
-            const size = Math.random() * 3 + 1;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            particle.style.left = `${Math.random() * 100}%`;
-            particle.style.top = `${Math.random() * 100}%`;
-            
-            // Random color (blue/purple spectrum)
-            const hue = Math.floor(Math.random() * 60) + 220; // 220-280 (blue to purple)
-            particle.style.backgroundColor = `hsla(${hue}, 70%, 70%, ${Math.random() * 0.2 + 0.1})`;
-            
-            // Animation
-            particle.style.animation = `float ${Math.random() * 20 + 10}s linear infinite`;
-            particle.style.animationDelay = `${Math.random() * 5}s`;
-            
-            container.appendChild(particle);
-            particles.push(particle);
-        }
-        
-        // Add CSS for particles
-        const style = document.createElement('style');
-        style.textContent = `
-            .particle {
-                position: absolute;
-                border-radius: 50%;
-                pointer-events: none;
-                z-index: -1;
-            }
-            
-            @keyframes float {
-                0%, 100% {
-                    transform: translate(0, 0) rotate(0deg);
-                    opacity: 0.1;
-                }
-                25% {
-                    transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 50 - 25}px) rotate(90deg);
-                    opacity: 0.3;
-                }
-                50% {
-                    transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(180deg);
-                    opacity: 0.1;
-                }
-                75% {
-                    transform: translate(${Math.random() * 50 - 25}px, ${Math.random() * 100 - 50}px) rotate(270deg);
-                    opacity: 0.3;
-                }
-            }
-        `;
-        document.head.appendChild(style);
+        // Voice button
+        document.getElementById('voiceBtn')?.addEventListener('click', () => this.startVoiceInput());
     }
 
     setupInput() {
-        // Focus input on load
-        setTimeout(() => {
-            this.focusInput();
-        }, 100);
-        
-        // Enable/disable send button based on input
-        this.elements.messageInput.addEventListener('input', () => {
-            this.elements.sendButton.disabled = !this.elements.messageInput.value.trim();
-        });
+        this.elements.messageInput.focus();
+        this.updateSendButton();
+    }
+
+    setupMathJax() {
+        // MathJax is loaded via CDN, ensure it processes dynamic content
+        if (window.MathJax) {
+            MathJax.typesetPromise();
+        }
     }
 
     async sendMessage() {
         const message = this.elements.messageInput.value.trim();
         if (!message || this.state.isGenerating) return;
         
-        // Hide welcome screen if shown
-        if (this.elements.welcomeScreen.style.display !== 'none') {
-            this.elements.welcomeScreen.style.display = 'none';
-            this.elements.messagesArea.style.display = 'block';
-        }
+        // Switch to chat view
+        this.showChatView();
         
         // Add user message
         this.addMessage(message, 'user');
@@ -209,33 +156,41 @@ class SavoirePremiumAI {
         
         // Disable input
         this.state.isGenerating = true;
-        this.elements.sendButton.disabled = true;
-        
-        // Play sound
-        this.playSound('send');
+        this.updateUIState();
         
         try {
             // Get AI response
-            const response = await this.getAIResponse(message);
+            const response = await this.getStudyMaterials(message);
             
             // Hide thinking indicator
             this.hideThinking();
             
             // Show AI response with typing effect
-            await this.showAIResponse(response);
+            await this.showTypingResponse(response);
             
-            // Show PDF actions after completion
-            this.showPDFActions();
+            // Show study actions
+            this.showStudyActions();
+            
+            // Save session
+            this.saveSession();
             
         } catch (error) {
+            console.error('Error:', error);
             this.hideThinking();
             this.showError(error.message);
         }
         
         // Re-enable input
         this.state.isGenerating = false;
-        this.elements.sendButton.disabled = false;
-        this.focusInput();
+        this.updateUIState();
+        this.elements.messageInput.focus();
+    }
+
+    showChatView() {
+        if (this.elements.welcomeScreen.style.display !== 'none') {
+            this.elements.welcomeScreen.style.display = 'none';
+            this.elements.studyChat.style.display = 'flex';
+        }
     }
 
     addMessage(content, type) {
@@ -245,26 +200,24 @@ class SavoirePremiumAI {
         messageDiv.id = messageId;
         
         const avatar = type === 'user' 
-            ? '<div class="user-avatar">👤</div>'
-            : '<div class="ai-avatar"><i class="fas fa-brain"></i></div>';
-        
-        const bubbleClass = type === 'user' ? 'user' : 'ai';
+            ? '<div class="user-avatar"><i class="fas fa-user"></i></div>'
+            : '<div class="ai-avatar"><i class="fas fa-graduation-cap"></i></div>';
         
         messageDiv.innerHTML = `
             <div class="message-avatar">
                 ${avatar}
             </div>
             <div class="message-content">
-                <div class="message-bubble ${bubbleClass}">
+                <div class="message-bubble">
                     <div class="message-text">${this.escapeHtml(content)}</div>
                 </div>
             </div>
         `;
         
-        this.elements.messagesScroll.appendChild(messageDiv);
+        this.elements.messagesContainer.appendChild(messageDiv);
         this.scrollToBottom();
         
-        // Add to conversation history
+        // Add to conversation
         this.state.conversation.push({
             id: messageId,
             type: type,
@@ -275,135 +228,153 @@ class SavoirePremiumAI {
         return messageDiv;
     }
 
-    async getAIResponse(message) {
+    async getStudyMaterials(query) {
+        console.log('📖 Fetching study materials for:', query);
+        
         const response = await fetch('/api/study', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ 
-                message: message,
-                mode: 'premium',
-                depth: 'deep'
+                message: query,
+                type: 'comprehensive',
+                include_math: true,
+                include_examples: true,
+                include_questions: true
             })
         });
         
         if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
+            throw new Error(`API Error: ${response.status}`);
         }
         
         const data = await response.json();
+        console.log('📚 Received study data:', data);
         
-        // Format the response for display
-        return this.formatAIResponse(data);
+        // Format for display
+        return this.formatStudyResponse(data);
     }
 
-    formatAIResponse(data) {
+    formatStudyResponse(data) {
         if (data.error) {
             return `<p><strong>Error:</strong> ${this.escapeHtml(data.error)}</p>`;
         }
         
         let html = '';
         
-        // Topic header
-        html += `<h2>${this.escapeHtml(data.topic)}</h2>`;
+        // Header
+        html += `<h1>${this.escapeHtml(data.topic || 'Study Materials')}</h1>`;
         
-        // One-line intuition
-        if (data.one_line_intuition) {
-            html += `<div class="insight-box">
-                <strong>🎯 Core Insight:</strong> ${this.escapeHtml(data.one_line_intuition)}
+        // Executive Summary
+        if (data.executive_summary) {
+            html += `<div class="summary-section">
+                <h2><i class="fas fa-bolt"></i> Executive Summary</h2>
+                <p>${this.formatText(data.executive_summary)}</p>
             </div>`;
         }
         
-        // Mental model
-        if (data.mental_model) {
-            html += `<h3>🧠 Mental Model</h3>`;
-            html += `<p><strong>Visualization:</strong> ${this.escapeHtml(data.mental_model.visualization)}</p>`;
-            if (data.mental_model.analogy) {
-                html += `<p><strong>Analogy:</strong> ${this.escapeHtml(data.mental_model.analogy)}</p>`;
-            }
-        }
-        
-        // Conceptual breakdown
-        if (data.conceptual_breakdown && data.conceptual_breakdown.length > 0) {
-            html += `<h3>📚 Key Concepts</h3>`;
-            data.conceptual_breakdown.forEach((concept, i) => {
-                html += `<div class="concept-block">
-                    <h4>${i + 1}. ${this.escapeHtml(concept.concept)}</h4>
-                    <p><strong>Intuition:</strong> ${this.escapeHtml(concept.intuition)}</p>
-                    ${concept.common_confusion ? `<p><em>Common confusion:</em> ${this.escapeHtml(concept.common_confusion)}</p>` : ''}
-                </div>`;
+        // Key Concepts
+        if (data.key_concepts && data.key_concepts.length > 0) {
+            html += `<div class="concepts-section">
+                <h2><i class="fas fa-star"></i> Key Concepts</h2>
+                <ul>`;
+            data.key_concepts.forEach(concept => {
+                html += `<li>${this.formatText(concept)}</li>`;
             });
+            html += `</ul></div>`;
         }
         
-        // Detailed notes
-        if (data.ultra_long_notes) {
-            html += `<h3>📖 Detailed Analysis</h3>`;
-            if (data.ultra_long_notes.core_explanation) {
-                html += `<p>${this.formatTextWithMath(data.ultra_long_notes.core_explanation)}</p>`;
-            }
-            if (data.ultra_long_notes.step_by_step_reasoning) {
-                html += `<div class="reasoning-box">
-                    <strong>Step-by-step reasoning:</strong>
-                    <p>${this.formatTextWithMath(data.ultra_long_notes.step_by_step_reasoning)}</p>
-                </div>`;
-            }
+        // Detailed Explanation
+        if (data.detailed_explanation) {
+            html += `<div class="explanation-section">
+                <h2><i class="fas fa-book-open"></i> Detailed Explanation</h2>
+                ${this.formatText(data.detailed_explanation)}
+            </div>`;
+        }
+        
+        // Formulas and Equations
+        if (data.formulas && data.formulas.length > 0) {
+            html += `<div class="formulas-section">
+                <h2><i class="fas fa-square-root-alt"></i> Key Formulas</h2>
+                <div class="formula-grid">`;
+            data.formulas.forEach(formula => {
+                html += `<div class="formula-item">${this.formatText(formula)}</div>`;
+            });
+            html += `</div></div>`;
         }
         
         // Examples
-        if (data.worked_examples && data.worked_examples.length > 0) {
-            html += `<h3>🔍 Worked Examples</h3>`;
-            data.worked_examples.forEach((example, i) => {
-                html += `<div class="example-block">
-                    <h4>Example ${i + 1}</h4>
-                    <p><strong>Problem:</strong> ${this.escapeHtml(example.problem)}</p>
-                    <p><strong>Solution:</strong> ${this.formatTextWithMath(example.solution_steps)}</p>
-                    ${example.final_answer ? `<p><strong>Answer:</strong> ${this.escapeHtml(example.final_answer)}</p>` : ''}
+        if (data.examples && data.examples.length > 0) {
+            html += `<div class="examples-section">
+                <h2><i class="fas fa-lightbulb"></i> Examples</h2>`;
+            data.examples.forEach((example, index) => {
+                html += `<div class="example-item">
+                    <h3>Example ${index + 1}</h3>
+                    <p><strong>Problem:</strong> ${this.formatText(example.problem)}</p>
+                    <p><strong>Solution:</strong> ${this.formatText(example.solution)}</p>
                 </div>`;
             });
+            html += `</div>`;
         }
         
-        // Key tricks
-        if (data.key_tricks && data.key_tricks.length > 0) {
-            html += `<h3>⚡ Key Tricks</h3>`;
-            html += `<ul>`;
-            data.key_tricks.forEach(trick => {
-                html += `<li><strong>${this.escapeHtml(trick.trick)}</strong> - ${this.escapeHtml(trick.when_to_use)}</li>`;
-            });
-            html += `</ul>`;
-        }
-        
-        // Exam focus
-        if (data.exam_focus) {
-            html += `<h3>🎯 Exam Focus</h3>`;
-            if (data.exam_focus.how_examiners_trick_students) {
-                html += `<div class="warning-box">
-                    <strong>Common exam traps:</strong>
-                    <ul>${data.exam_focus.how_examiners_trick_students.map(trick => 
-                        `<li>${this.escapeHtml(trick)}</li>`
-                    ).join('')}</ul>
+        // Practice Questions
+        if (data.practice_questions && data.practice_questions.length > 0) {
+            html += `<div class="questions-section">
+                <h2><i class="fas fa-question-circle"></i> Practice Questions</h2>`;
+            data.practice_questions.forEach((question, index) => {
+                html += `<div class="question-item">
+                    <h3>Q${index + 1}: ${this.formatText(question.question)}</h3>
+                    ${question.hint ? `<p><em>Hint:</em> ${this.formatText(question.hint)}</p>` : ''}
+                    <details>
+                        <summary>Show Answer</summary>
+                        <div class="answer">${this.formatText(question.answer)}</div>
+                    </details>
                 </div>`;
-            }
+            });
+            html += `</div>`;
+        }
+        
+        // Common Mistakes
+        if (data.common_mistakes && data.common_mistakes.length > 0) {
+            html += `<div class="mistakes-section">
+                <h2><i class="fas fa-exclamation-triangle"></i> Common Mistakes</h2>
+                <ul>`;
+            data.common_mistakes.forEach(mistake => {
+                html += `<li>${this.formatText(mistake)}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+        
+        // Study Tips
+        if (data.study_tips && data.study_tips.length > 0) {
+            html += `<div class="tips-section">
+                <h2><i class="fas fa-trophy"></i> Study Tips</h2>
+                <ul>`;
+            data.study_tips.forEach(tip => {
+                html += `<li>${this.formatText(tip)}</li>`;
+            });
+            html += `</ul></div>`;
         }
         
         // Footer
-        html += `<div class="response-footer">
-            <p><em>Generated by Savoiré AI • Confidence: ${data.confidence_score || 96}/100</em></p>
+        html += `<div class="study-footer">
+            <p><em>Generated by Savoiré AI • Confidence: ${data.confidence_score || 95}/100</em></p>
         </div>`;
         
         return html;
     }
 
-    formatTextWithMath(text) {
+    formatText(text) {
         if (!text) return '';
         
-        // Convert LaTeX math to MathJax format
+        // Handle math expressions
         let formatted = this.escapeHtml(text);
         
-        // Handle inline math: $...$
+        // Convert LaTeX inline math: $...$
         formatted = formatted.replace(/\$(.*?)\$/g, '\\($1\\)');
         
-        // Handle display math: $$...$$
+        // Convert LaTeX display math: $$...$$
         formatted = formatted.replace(/\$\$(.*?)\$\$/g, '\\[$1\\]');
         
         // Convert markdown-like formatting
@@ -417,171 +388,246 @@ class SavoirePremiumAI {
         return formatted;
     }
 
-    async showAIResponse(content) {
+    async showTypingResponse(content) {
         // Create AI message container
         const messageDiv = this.addMessage('', 'ai');
         const textContainer = messageDiv.querySelector('.message-text');
         
-        // Type out the response character by character
-        const typingSpeed = 20; // ms per character
+        // Store full content
+        messageDiv.dataset.fullContent = content;
+        
+        // Type out the response
+        this.state.isTyping = true;
+        
         let i = 0;
+        const speed = this.typingSpeed;
         
         // Show typing cursor
         textContainer.innerHTML = '<span class="typing-cursor"></span>';
         
-        while (i < content.length) {
+        while (i < content.length && this.state.isTyping) {
             // Add next character
             textContainer.innerHTML = content.substring(0, i + 1) + '<span class="typing-cursor"></span>';
             
             // Scroll to bottom
             this.scrollToBottom();
             
-            // Play typing sound occasionally
-            if (i % 30 === 0 && this.elements.typeSound) {
-                this.elements.typeSound.currentTime = 0;
-                this.elements.typeSound.play().catch(() => {});
-            }
-            
             i++;
-            await this.sleep(typingSpeed);
+            await this.sleep(speed);
+            
+            // Speed up for long content after first 500 chars
+            if (i > 500) {
+                await this.sleep(speed / 2);
+            }
         }
         
         // Remove typing cursor
         textContainer.innerHTML = content;
+        this.state.isTyping = false;
         
-        // Render MathJax if available
+        // Render MathJax
         if (window.MathJax) {
             setTimeout(() => {
                 MathJax.typesetPromise([textContainer]).catch(console.error);
             }, 100);
         }
         
-        // Store formatted content for PDF generation
-        messageDiv.dataset.formattedContent = content;
-        
         return messageDiv;
     }
 
-    showPDFActions() {
-        // Find the last AI message
-        const aiMessages = this.elements.messagesScroll.querySelectorAll('.message.ai');
+    showThinking() {
+        const messages = this.state.thinkingMessages;
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        
+        const thinkingText = this.elements.thinkingIndicator.querySelector('.thinking-text');
+        if (thinkingText) {
+            thinkingText.textContent = randomMsg;
+        }
+        
+        this.elements.thinkingIndicator.style.display = 'block';
+        this.scrollToBottom();
+    }
+
+    hideThinking() {
+        this.elements.thinkingIndicator.style.display = 'none';
+    }
+
+    showStudyActions() {
+        this.elements.studyActions.style.display = 'block';
+        this.scrollToBottom();
+    }
+
+    showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message ai';
+        errorDiv.innerHTML = `
+            <div class="message-avatar">
+                <div class="ai-avatar"><i class="fas fa-exclamation-triangle"></i></div>
+            </div>
+            <div class="message-content">
+                <div class="message-bubble">
+                    <div class="message-text">
+                        <p><strong>Error:</strong> ${this.escapeHtml(message)}</p>
+                        <p>Please try again or check your connection.</p>
+                        <button class="action-btn" onclick="savoireStudy.retryLastMessage()">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.elements.messagesContainer.appendChild(errorDiv);
+        this.scrollToBottom();
+    }
+
+    retryLastMessage() {
+        const lastUserMessage = this.state.conversation
+            .filter(msg => msg.type === 'user')
+            .pop();
+        
+        if (lastUserMessage) {
+            this.elements.messageInput.value = lastUserMessage.content;
+            this.sendMessage();
+        }
+    }
+
+    handleStudyAction(action) {
+        // Find last AI message
+        const aiMessages = this.elements.messagesContainer.querySelectorAll('.message.ai');
         const lastAIMessage = aiMessages[aiMessages.length - 1];
         
         if (!lastAIMessage) return;
         
-        // Create PDF actions container
-        let actionsContainer = lastAIMessage.querySelector('.pdf-actions-container');
-        
-        if (!actionsContainer) {
-            actionsContainer = document.createElement('div');
-            actionsContainer.className = 'pdf-actions-container';
-            
-            actionsContainer.innerHTML = `
-                <div class="pdf-action-buttons">
-                    <button class="pdf-action-btn" data-type="summary">
-                        <i class="fas fa-file-alt"></i>
-                        Summary PDF
-                    </button>
-                    <button class="pdf-action-btn" data-type="full">
-                        <i class="fas fa-book"></i>
-                        Full Notes
-                    </button>
-                    <button class="pdf-action-btn" data-type="exam">
-                        <i class="fas fa-graduation-cap"></i>
-                        Exam Ready
-                    </button>
-                </div>
-            `;
-            
-            lastAIMessage.querySelector('.message-content').appendChild(actionsContainer);
-            
-            // Bind PDF action buttons
-            actionsContainer.querySelectorAll('.pdf-action-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const type = e.currentTarget.getAttribute('data-type');
-                    this.state.selectedPDFType = type;
-                    this.showPDFModal(lastAIMessage);
-                });
-            });
-        }
-        
-        // Show with animation
-        setTimeout(() => {
-            actionsContainer.classList.add('show');
-        }, 100);
+        this.state.selectedPDFType = action;
+        this.showModal();
     }
 
-    showPDFModal(messageElement) {
-        this.elements.pdfModal.classList.add('show');
-        this.currentPDFMessage = messageElement;
+    showModal() {
+        this.elements.pdfModal.style.display = 'flex';
         
-        // Select the corresponding PDF option
-        document.querySelectorAll('.pdf-option').forEach(opt => {
-            opt.classList.toggle('selected', 
-                opt.getAttribute('data-type') === this.state.selectedPDFType);
+        // Select current PDF type
+        this.elements.pdfOptions.forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.type === this.state.selectedPDFType);
         });
     }
 
-    hidePDFModal() {
-        this.elements.pdfModal.classList.remove('show');
-        this.currentPDFMessage = null;
+    hideModal() {
+        this.elements.pdfModal.style.display = 'none';
     }
 
-    generatePDF() {
-        if (!this.currentPDFMessage) return;
+    async generatePDF() {
+        // Find last AI message
+        const aiMessages = this.elements.messagesContainer.querySelectorAll('.message.ai');
+        const lastAIMessage = aiMessages[aiMessages.length - 1];
         
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        if (!lastAIMessage) {
+            this.showToast('No study materials to export', 'error');
+            return;
+        }
         
-        const content = this.currentPDFMessage.dataset.formattedContent || '';
+        const content = lastAIMessage.dataset.fullContent || lastAIMessage.querySelector('.message-text').innerHTML;
         const topic = this.extractTopic(content) || 'Study Materials';
         const type = this.state.selectedPDFType;
         
         // Show loading
         this.showToast('Generating PDF...', 'info');
         
-        // Generate based on type
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Generate cover
+        this.generatePDFCover(doc, topic, type);
+        
+        // Add content based on type
         switch(type) {
             case 'summary':
-                this.generateSummaryPDF(doc, topic, content);
+                this.generateSummaryPDF(doc, content);
+                break;
+            case 'detailed':
+                this.generateDetailedPDF(doc, content);
                 break;
             case 'exam':
-                this.generateExamPDF(doc, topic, content);
+                this.generateExamPDF(doc, content);
                 break;
-            default:
-                this.generateFullPDF(doc, topic, content);
+            case 'cheatsheet':
+                this.generateCheatsheetPDF(doc, content);
+                break;
         }
         
         // Save PDF
-        const fileName = `SavoireAI_${type}_${this.sanitizeFilename(topic)}_${Date.now()}.pdf`;
-        doc.save(fileName);
+        const filename = `Savoire_${type}_${this.sanitizeFilename(topic)}_${Date.now()}.pdf`;
+        doc.save(filename);
         
-        this.showToast('PDF downloaded!', 'success');
-        this.hidePDFModal();
+        this.showToast('PDF downloaded successfully!', 'success');
+        this.hideModal();
     }
 
-    generateSummaryPDF(doc, topic, content) {
-        // Cover
-        this.addPDFCover(doc, topic, 'Summary');
+    generatePDFCover(doc, topic, type) {
+        // Black background
+        doc.setFillColor(0, 0, 0);
+        doc.rect(0, 0, 210, 297, 'F');
         
-        // Content
+        // Title
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(28);
+        doc.setFont(undefined, 'bold');
+        doc.text('SAVOIRÉ AI', 105, 80, { align: 'center' });
+        
+        // Subtitle
+        doc.setFontSize(16);
+        doc.text('Study Platform', 105, 100, { align: 'center' });
+        
+        // Topic
+        doc.setFontSize(22);
+        doc.setTextColor(59, 130, 246);
+        doc.text(topic.toUpperCase(), 105, 140, { align: 'center' });
+        
+        // Type
+        doc.setFontSize(14);
+        doc.setTextColor(200, 200, 200);
+        doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Edition`, 105, 160, { align: 'center' });
+        
+        // Line
+        doc.setDrawColor(59, 130, 246);
+        doc.setLineWidth(1);
+        doc.line(50, 170, 160, 170);
+        
+        // Branding
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Generated by', 105, 220, { align: 'center' });
+        
+        doc.setFontSize(12);
+        doc.setTextColor(59, 130, 246);
+        doc.text('Sooban Talha Technologies', 105, 230, { align: 'center' });
+        
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text('https://soobantalhatech.xyz', 105, 240, { align: 'center' });
+        
+        // Date
+        doc.text(new Date().toLocaleDateString(), 105, 250, { align: 'center' });
+    }
+
+    generateSummaryPDF(doc, content) {
         doc.addPage();
         doc.setFontSize(11);
         doc.setTextColor(0, 0, 0);
         
-        const lines = doc.splitTextToSize(this.stripHTML(content), 180);
+        // Extract summary sections
+        const summary = this.extractSummary(content);
+        const lines = doc.splitTextToSize(summary, 180);
         doc.text(lines, 15, 20);
         
-        // Footer
         this.addPDFFooter(doc, 1);
     }
 
-    generateFullPDF(doc, topic, content) {
-        this.addPDFCover(doc, topic, 'Complete Notes');
-        
-        let yPos = 40;
+    generateDetailedPDF(doc, content) {
+        let yPos = 20;
         let page = 1;
         
+        // Split content into sections
         const sections = this.extractSections(content);
         
         sections.forEach((section, index) => {
@@ -592,27 +638,25 @@ class SavoirePremiumAI {
                 this.addPDFFooter(doc, page);
             }
             
-            // Section header
+            // Section title
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
             doc.text(section.title, 15, yPos);
-            yPos += 10;
+            yPos += 8;
             
             // Section content
             doc.setFontSize(10);
             doc.setFont(undefined, 'normal');
             const lines = doc.splitTextToSize(section.content, 180);
             doc.text(lines, 15, yPos);
-            yPos += (lines.length * 6) + 15;
+            yPos += (lines.length * 5) + 15;
         });
     }
 
-    generateExamPDF(doc, topic, content) {
-        this.addPDFCover(doc, topic, 'Exam Preparation');
-        
+    generateExamPDF(doc, content) {
         doc.addPage();
         
-        // Extract key points for exam
+        // Extract questions and answers
         const examContent = this.extractExamContent(content);
         
         doc.setFontSize(11);
@@ -624,74 +668,71 @@ class SavoirePremiumAI {
         this.addPDFFooter(doc, 1);
     }
 
-    addPDFCover(doc, topic, subtitle) {
-        // Background
-        doc.setFillColor(10, 10, 20);
-        doc.rect(0, 0, 210, 297, 'F');
+    generateCheatsheetPDF(doc, content) {
+        doc.addPage();
         
-        // Title
-        doc.setFontSize(24);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(99, 102, 241);
-        doc.text('SAVOIRÉ AI', 105, 100, { align: 'center' });
+        // Extract key points
+        const cheatsheet = this.extractCheatsheet(content);
         
-        // Subtitle
-        doc.setFontSize(14);
-        doc.setTextColor(200, 200, 220);
-        doc.text(subtitle, 105, 120, { align: 'center' });
+        // Two-column layout
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
         
-        // Topic
-        doc.setFontSize(20);
-        doc.setTextColor(255, 255, 255);
-        doc.text(topic, 105, 160, { align: 'center' });
+        const columnWidth = 85;
+        const leftMargin = 15;
+        const rightMargin = 110;
         
-        // Line
-        doc.setDrawColor(99, 102, 241);
-        doc.setLineWidth(1);
-        doc.line(50, 170, 160, 170);
+        // Left column
+        const leftLines = doc.splitTextToSize(cheatsheet.left, columnWidth);
+        doc.text(leftLines, leftMargin, 20);
         
-        // Branding
-        doc.setFontSize(10);
-        doc.setTextColor(150, 150, 170);
-        doc.text('Generated by', 105, 250, { align: 'center' });
+        // Right column
+        const rightLines = doc.splitTextToSize(cheatsheet.right, columnWidth);
+        doc.text(rightLines, rightMargin, 20);
         
-        doc.setFontSize(12);
-        doc.setTextColor(99, 102, 241);
-        doc.text('Sooban Talha Technologies', 105, 260, { align: 'center' });
-        
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 170);
-        doc.text('https://soobantalhatech.xyz', 105, 270, { align: 'center' });
-        
-        doc.text(new Date().toLocaleDateString(), 105, 280, { align: 'center' });
+        this.addPDFFooter(doc, 1);
     }
 
-    addPDFFooter(doc, pageNumber) {
+    addPDFFooter(doc, page) {
         doc.setFontSize(8);
         doc.setTextColor(100, 100, 100);
-        
-        // Page number
-        doc.text(`Page ${pageNumber}`, 105, 290, { align: 'center' });
-        
-        // Branding
+        doc.text(`Page ${page}`, 105, 290, { align: 'center' });
         doc.text('Savoiré AI • https://soobantalhatech.xyz', 105, 295, { align: 'center' });
     }
 
     extractTopic(content) {
-        const match = content.match(/<h2>(.*?)<\/h2>/);
+        const match = content.match(/<h1>(.*?)<\/h1>/);
         return match ? this.stripHTML(match[1]) : 'Study Materials';
+    }
+
+    extractSummary(content) {
+        // Extract first few sections for summary
+        const div = document.createElement('div');
+        div.innerHTML = content;
+        
+        const sections = [];
+        let count = 0;
+        
+        div.childNodes.forEach(node => {
+            if (count >= 3) return;
+            if (node.textContent && node.textContent.trim().length > 50) {
+                sections.push(this.stripHTML(node.textContent));
+                count++;
+            }
+        });
+        
+        return sections.join('\n\n');
     }
 
     extractSections(content) {
         const sections = [];
-        const html = document.createElement('div');
-        html.innerHTML = content;
+        const div = document.createElement('div');
+        div.innerHTML = content;
         
-        // Extract headers and their content
         let currentSection = null;
         
-        html.childNodes.forEach(node => {
-            if (node.tagName && node.tagName.match(/^H[2-4]$/)) {
+        div.childNodes.forEach(node => {
+            if (node.tagName && node.tagName.match(/^H[1-3]$/)) {
                 if (currentSection) {
                     sections.push(currentSection);
                 }
@@ -712,263 +753,259 @@ class SavoirePremiumAI {
     }
 
     extractExamContent(content) {
-        // Extract exam-relevant parts
         const examParts = [];
-        const html = document.createElement('div');
-        html.innerHTML = content;
+        const div = document.createElement('div');
+        div.innerHTML = content;
         
-        // Look for key sections
-        const keywords = ['trick', 'exam', 'trap', 'pattern', 'common', 'mistake'];
-        
-        html.querySelectorAll('h3, h4, strong, em').forEach(el => {
+        // Look for questions and answers
+        div.querySelectorAll('h3, strong').forEach(el => {
             const text = el.textContent.toLowerCase();
-            if (keywords.some(keyword => text.includes(keyword))) {
-                examParts.push(el.textContent + ': ' + 
-                    (el.nextSibling?.textContent || ''));
+            if (text.includes('question') || text.includes('q:') || text.includes('problem')) {
+                let question = el.textContent;
+                let answer = '';
+                
+                // Try to find answer
+                let next = el.nextElementSibling;
+                while (next && !next.textContent.toLowerCase().includes('answer')) {
+                    next = next.nextElementSibling;
+                }
+                if (next) {
+                    answer = next.textContent;
+                }
+                
+                examParts.push(`${question}\n${answer}\n\n`);
             }
         });
         
-        return examParts.join('\n\n');
+        return examParts.join('\n');
     }
 
-    showThinking() {
-        // Random thinking message
-        const messages = this.state.thinkingMessages;
-        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    extractCheatsheet(content) {
+        const div = document.createElement('div');
+        div.innerHTML = content;
         
-        this.elements.thinkingIndicator.querySelector('.thinking-text').textContent = randomMsg;
-        this.elements.thinkingIndicator.style.display = 'flex';
-        this.state.isThinking = true;
+        const allText = this.stripHTML(content);
+        const mid = Math.floor(allText.length / 2);
         
-        this.scrollToBottom();
+        return {
+            left: allText.substring(0, mid),
+            right: allText.substring(mid)
+        };
     }
 
-    hideThinking() {
-        this.elements.thinkingIndicator.style.display = 'none';
-        this.state.isThinking = false;
-    }
-
-    showError(message) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'message ai';
-        errorDiv.innerHTML = `
-            <div class="message-avatar">
-                <div class="ai-avatar"><i class="fas fa-exclamation-triangle"></i></div>
-            </div>
-            <div class="message-content">
-                <div class="message-bubble ai">
-                    <div class="message-text">
-                        <p><strong>Error:</strong> ${this.escapeHtml(message)}</p>
-                        <p>Please try again or check your connection.</p>
-                        <button class="action-btn retry-btn">
-                            <i class="fas fa-redo"></i> Retry
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        this.elements.messagesScroll.appendChild(errorDiv);
-        this.scrollToBottom();
-        
-        // Bind retry button
-        const retryBtn = errorDiv.querySelector('.retry-btn');
-        retryBtn.addEventListener('click', () => {
-            const lastUserMessage = this.state.conversation
-                .filter(msg => msg.type === 'user')
-                .pop();
-            if (lastUserMessage) {
-                this.elements.messageInput.value = lastUserMessage.content;
-                this.sendMessage();
-            }
-        });
-    }
-
-    showToast(message, type = 'info') {
-        // Create toast
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        
-        // Add to body
-        document.body.appendChild(toast);
-        
-        // Remove after delay
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-        
-        // Add CSS if not exists
-        if (!document.querySelector('#toast-styles')) {
-            const style = document.createElement('style');
-            style.id = 'toast-styles';
-            style.textContent = `
-                .toast {
-                    position: fixed;
-                    bottom: 100px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: var(--bg-card);
-                    backdrop-filter: var(--glass-blur);
-                    border: 1px solid var(--glass-border);
-                    border-radius: var(--border-radius);
-                    padding: 12px 20px;
-                    color: var(--text-primary);
-                    font-size: 14px;
-                    font-weight: 500;
-                    z-index: 1000;
-                    animation: toastSlide 300ms ease;
-                    box-shadow: var(--shadow-lg);
-                }
-                
-                .toast-success {
-                    border-left: 4px solid var(--success);
-                }
-                
-                .toast-error {
-                    border-left: 4px solid var(--error);
-                }
-                
-                .toast-info {
-                    border-left: 4px solid var(--info);
-                }
-                
-                .toast.fade-out {
-                    opacity: 0;
-                    transform: translateX(-50%) translateY(10px);
-                    transition: all 300ms ease;
-                }
-                
-                @keyframes toastSlide {
-                    from {
-                        opacity: 0;
-                        transform: translateX(-50%) translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(-50%) translateY(0);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-    }
-
-    autoResize() {
-        const textarea = this.elements.messageInput;
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-    }
-
-    clearInput() {
-        this.elements.messageInput.value = '';
-        this.autoResize();
-        this.elements.sendButton.disabled = true;
-    }
-
-    focusInput() {
-        this.elements.messageInput.focus();
-    }
-
-    scrollToBottom() {
-        setTimeout(() => {
-            this.elements.messagesScroll.scrollTo({
-                top: this.elements.messagesScroll.scrollHeight,
-                behavior: 'smooth'
-            });
-        }, 100);
-    }
-
-    playSound(type) {
-        try {
-            const audio = this.elements[`${type}Sound`];
-            if (audio) {
-                audio.currentTime = 0;
-                audio.volume = 0.3;
-                audio.play().catch(() => {});
-            }
-        } catch (error) {
-            // Silent fail
-        }
-    }
-
-    toggleTheme() {
-        const isDark = document.documentElement.classList.contains('dark-theme');
-        
-        if (isDark) {
-            document.documentElement.classList.remove('dark-theme');
-            document.documentElement.classList.add('light-theme');
-            this.elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            
-            // Update CSS variables for light theme
-            document.documentElement.style.setProperty('--bg-primary', '#ffffff');
-            document.documentElement.style.setProperty('--bg-secondary', '#f8f9fa');
-            document.documentElement.style.setProperty('--bg-surface', 'rgba(255, 255, 255, 0.7)');
-            document.documentElement.style.setProperty('--bg-card', 'rgba(255, 255, 255, 0.9)');
-            document.documentElement.style.setProperty('--text-primary', '#1a1a1a');
-            document.documentElement.style.setProperty('--text-secondary', '#666666');
-        } else {
-            document.documentElement.classList.remove('light-theme');
-            document.documentElement.classList.add('dark-theme');
-            this.elements.themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-            
-            // Reset to dark theme variables
-            document.documentElement.style.setProperty('--bg-primary', '#0a0a0f');
-            document.documentElement.style.setProperty('--bg-secondary', '#0f0f1a');
-            document.documentElement.style.setProperty('--bg-surface', 'rgba(20, 20, 35, 0.7)');
-            document.documentElement.style.setProperty('--bg-card', 'rgba(25, 25, 40, 0.9)');
-            document.documentElement.style.setProperty('--text-primary', '#ffffff');
-            document.documentElement.style.setProperty('--text-secondary', '#a1a1aa');
-        }
-        
-        this.playSound('send');
-    }
-
-    newChat() {
+    newSession() {
         if (this.state.conversation.length === 0) return;
         
-        // Save current conversation
+        // Save current session
         this.saveSession();
         
-        // Clear chat
-        this.elements.messagesScroll.innerHTML = '';
+        // Clear UI
+        this.elements.messagesContainer.innerHTML = '';
+        this.elements.studyActions.style.display = 'none';
         this.state.conversation = [];
         
         // Show welcome screen
         this.elements.welcomeScreen.style.display = 'block';
-        this.elements.messagesArea.style.display = 'none';
+        this.elements.studyChat.style.display = 'none';
         
-        this.showToast('New chat started', 'info');
-        this.playSound('send');
+        this.showToast('New session started', 'info');
+    }
+
+    clearChat() {
+        if (this.state.conversation.length === 0) return;
+        
+        this.elements.messagesContainer.innerHTML = '';
+        this.elements.studyActions.style.display = 'none';
+        this.state.conversation = [];
+        
+        this.showToast('Chat cleared', 'info');
+    }
+
+    exportSession() {
+        const sessionData = {
+            platform: 'Savoiré AI',
+            version: '2.0',
+            exported: new Date().toISOString(),
+            conversation: this.state.conversation,
+            stats: {
+                total_messages: this.state.conversation.length,
+                ai_messages: this.state.conversation.filter(m => m.type === 'ai').length,
+                user_messages: this.state.conversation.filter(m => m.type === 'user').length
+            },
+            brand: 'Sooban Talha Technologies',
+            website: 'https://soobantalhatech.xyz'
+        };
+        
+        const dataStr = JSON.stringify(sessionData, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        
+        const link = document.createElement('a');
+        link.setAttribute('href', dataUri);
+        link.setAttribute('download', `savoire_session_${Date.now()}.json`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        this.showToast('Session exported', 'success');
+    }
+
+    toggleTheme() {
+        const isDark = document.documentElement.classList.contains('cyber-study');
+        
+        if (isDark) {
+            document.documentElement.classList.remove('cyber-study');
+            document-study');
+            document.documentElement.classList.add('light-study');
+            this.elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            
+           .documentElement.classList.add('light-study');
+            this.elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            
+            // Light theme variables
+            // Light theme variables
+            document.documentElement.style.set document.documentElement.style.setProperty('Property('--bg-primary', '#ffffff--bg-primary', '#ffffff');
+            document.documentElement');
+            document.documentElement.style.set.style.setProperty('--bgProperty('--bg-secondary', '#f-secondary', '#f8f9fa8f9fa');
+            document.d');
+            document.documentElement.style.setProperty('--bgocumentElement.style.setProperty('--bg-surface',-surface', 'rgba( 'rgba(255, 255, 255, 255, 255, 0.8)');
+255, 0.8)');
+            document            document.documentElement.style.documentElement.style.setProperty('--text-primary.setProperty('--text-primary', '#1a1a1a', '#1a1a1a');
+           ');
+            document.documentElement document.documentElement.style.setProperty('--text.style.setProperty('--text-secondary', '#666666');
+       -secondary', '#666666');
+        } else {
+ } else {
+            document.document            document.documentElement.classList.remove('light-studyElement.classList.remove('light-study');
+            document.documentElement');
+            document.documentElement.classList.add.classList.add('cyber-study');
+           ('cyber-study');
+            this.e this.elements.themeToggle.innerHTML = '<i class="lements.themeToggle.innerHTML = '<i class="fas fafas fa-moon"></i>';
+-moon"></i>';
+            
+            // Reset to            
+            // Reset to dark theme dark theme
+
+            document.documentElement.style.setProperty('--bg-primary', '#0a0a            document.documentElement.style.setProperty('--bg-primary', '#0a0a0a');
+            document.document0a');
+            document.documentElement.style.setProperty('--bg-secondary', '#Element.style.setProperty('--bg-secondary', '#111111');
+            document.document111111');
+            document.documentElement.style.setProperty('--bg-surface',Element.style.setProperty('--bg-surface', 'rgba(30 'rgba(30, 30, 30,, 30, 30, 0. 0.8)');
+            document.documentElement.style.set8)');
+            document.documentElement.style.setProperty('--text-primary', '#Property('--text-primary', '#ffffff');
+            document.documentElement.style.setProperty('--textffffff');
+            document.documentElement.style.setProperty('--text-secondary', '#d4d4-secondary', '#d4d4d8d8');
+        }
+   ');
+        }
+    }
+
+    startVoiceInput() }
+
+    startVoiceInput() {
+        if (!('webkitSpeech {
+        if (!('webkitSpeechRecognitionRecognition' in' in window)) {
+            this.showToast(' window)) {
+            this.showToast('Voice input not supported', 'error');
+            return;
+        }
+        
+        const recognition = new webkitSpeechRecognition();
+       Voice input not supported', 'error');
+            return;
+        }
+        
+        const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+ recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.interimResults = false;
+        
+               
+        recognition.onstart = recognition.onstart = () => () => {
+            this.show {
+            this.showToast('Listening...', 'Toast('Listening...', 'info');
+info');
+        };
+        };
+        
+        recognition.onresult = (event) =>        
+        recognition.onresult = (event) => {
+            const {
+            const transcript = event.res transcript = event.results[0][0].ults[0][0].transcript;
+            this.elementstranscript;
+            this.elements.messageInput.value.messageInput.value = transcript;
+ = transcript;
+            this.autoResize            this.autoResize();
+            this.updateSendButton();
+       ();
+            this.updateSendButton();
+        };
+        
+ };
+        
+        recognition.onerror        recognition.onerror = (event) => {
+            this.showToast('Voice recognition = (event) => {
+            this.showToast('Voice recognition error', 'error');
+        error', 'error');
+        };
+        
+        recognition.start();
+    }
+
+    loadSessions };
+        
+        recognition.start();
     }
 
     loadSessions() {
         try {
-            const saved = localStorage.getItem('savoire_sessions');
+            const saved() {
+        try {
+            const saved = localStorage.getItem('sav = localStorage.getItem('savoire_sessions');
+oire_sessions');
             if (saved) {
-                this.state.sessions = JSON.parse(saved);
+                           if (saved) {
+                this.state.sessions = JSON this.state.sessions = JSON.parse(saved);
             }
-        } catch (error) {
-            console.error('Error loading sessions:', error);
+        } catch.parse(saved);
+            }
+        } catch (error (error) {
+            console) {
+            console.error('Error loading sessions:',.error('Error loading sessions:', error);
+        }
+    }
+
+    error);
         }
     }
 
     saveSession() {
-        if (this.state.conversation.length === 0) return;
+        saveSession() {
+        if (this.state if (this.state.conversation.length.conversation.length === 0) return;
+        
+ === 0) return;
         
         const session = {
+            id: Date        const session = {
             id: Date.now().toString(),
-            title: this.state.conversation[0]?.content?.substring(0, 50) || 'New Session',
-            conversation: this.state.conversation,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            title: this.state.con.now().toString(),
+            title: this.state.conversversation[0]?.ation[0]?.content?.substring(0,content?.substring(0, 50) || 'Study Session',
+            50) || 'Study Session',
+            conversation: this.state.conversation conversation: this.state.conversation,
+            createdAt,
+            createdAt: new Date().toISO: new Date().toISOString(),
+            updatedAt: new DateString(),
+            updatedAt: new Date().to().toISOString()
+        };
+        
+        this.state.sISOString()
         };
         
         this.state.sessions.unshift(session);
+        this.state.sessions = this.stateessions.unshift(session);
+        this.state.sessions = this.state.sessions.slice(.sessions.slice(0, 0, 20); // Keep20); // Keep last 20
         
-        // Keep only last 20 sessions
-        this.state.sessions = this.state.sessions.slice(0, 20);
+        try last 20
         
         try {
             localStorage.setItem('savoire_sessions', JSON.stringify(this.state.sessions));
@@ -977,121 +1014,505 @@ class SavoirePremiumAI {
         }
     }
 
+ {
+            localStorage.setItem('savoire_sessions', JSON.stringify(this.state.sessions));
+        } catch (error) {
+            console.error('Error saving session:', error);
+        }
+    }
+
+    auto    autoResize() {
+        constResize() {
+        const textarea = this.elements textarea = this.elements.messageInput;
+        textarea.messageInput;
+        textarea.style.height.style.height = 'auto';
+        textarea.style.height = = 'auto';
+        textarea.style.height = Math.min Math.min(textarea.scrollHeight,(textarea.scrollHeight, 120) + 120) + 'px 'px';
+    }
+
+    clearInput';
+    }
+
+    clearInput() {
+        this.elements.messageInput() {
+        this.elements.messageInput.value =.value = '';
+        this.autoResize();
+        this '';
+        this.autoResize();
+        this.updateSend.updateSendButton();
+    }
+
+Button();
+    }
+
+    updateSendButton() {
+        const hasText = this.elements    updateSendButton() {
+        const hasText = this.elements.messageInput.value.trim().length.messageInput.value.trim().length > 0;
+        this > 0;
+        this.elements.sendBtn.disabled = !.elements.sendBtn.disabled = !hasTexthasText || this || this.state.isGenerating;
+    }
+
+   .state.isGenerating;
+    }
+
+    updateUIState() {
+        this updateUIState() {
+        this.elements.message.elements.messageInput.disabledInput.disabled = this.state.isGenerating;
+ = this.state.isGenerating;
+        this.elements.sendBtn        this.elements.sendBtn.disabled.disabled = this.state.is = this.state.isGenerating || !Generating || !this.elements.messagethis.elements.messageInput.value.trim();
+    }
+
+Input.value.trim();
+    }
+
+    scroll    scrollToBottom() {
+       ToBottom() {
+        setTimeout(() => {
+            this.elements setTimeout(() => {
+            this.elements.messagesContainer.scrollTop =.messagesContainer.scrollTop = this.elements.messagesContainer.scroll this.elements.messagesContainer.scrollHeight;
+        }, 100);
+    }
+
+    showToast(message, type = 'info') {
+        //Height;
+        }, 100);
+    }
+
+    showToast(message, type = 'info') {
+        // Create toast element
+        const Create toast element
+        const toast = document.createElement toast = document.createElement('div('div');
+        toast.className');
+        toast.className = `toast toast-${type}` = `toast toast-${type}`;
+        toast.textContent = message;
+        
+        // Add;
+        toast.textContent = message;
+        
+        // Add to page
+        document.body.appendChild to page
+        document.body.appendChild(toast);
+(toast);
+        
+        //        
+        // Remove after delay Remove after delay
+        setTimeout(() => {
+            toast.classList
+        setTimeout(() => {
+            toast.classList.add.add('fade-out');
+('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 300            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+        
+        // Add0);
+        
+        // Add CSS if needed
+        if (!document.querySelector('#to CSS if needed
+        if (!document.querySelector('#toast-styles')) {
+            const styleast-styles')) {
+            const style = document.createElement('style = document.createElement('style');
+            style.id = 'toast');
+            style.id = 'toast-styles';
+            style.textContent = `
+                .toast-styles';
+            style.textContent = `
+                .toast {
+                    position: fixed;
+                    bottom: 100px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: var(-- {
+                    position: fixed;
+                    bottom: 100px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: var(--bg-card);
+bg-card);
+                    backdrop-filter: var(--glass-blur);
+                    backdrop-filter: var(--glass-blur);
+                    border: 1px                    border: 1px solid var(--glass-border);
+                    border-radius: var(--border-radius solid var(--glass-border);
+                    border-radius: var(--border-radius);
+                    padding: 12);
+                    padding: 12px 20px 20px;
+                   px;
+                    color: var(-- color: var(--text-primary);
+                    font-size: 14pxtext-primary);
+                    font-size: 14px;
+                   ;
+                    font-weight:  font-weight: 500;
+                    z-index:500;
+                    z-index: 1000;
+                    box-shadow 1000;
+                    box-shadow: var(--: var(--shadow-lg);
+                    animation: toastSlideshadow-lg);
+                    animation: toastSlide 0.3s ease;
+ 0.3s ease;
+                               }
+                
+                .toast }
+                
+                .toast-success {
+                    border-left: 4-success {
+                    border-left: 4px solidpx solid var(--accent-success);
+                }
+                
+                . var(--accent-success);
+                }
+                
+                .toasttoast-error-error {
+                    border-left: 4px {
+                    border-left: 4px solid var(--error);
+                }
+                
+ solid var(--error);
+                }
+                
+                .toast-info {
+                    border-left: 4px solid var(--accent-info);
+                .toast-info {
+                    border-left: 4px solid var(--accent-info);
+                }
+                
+                .toast.fade-out {
+                }
+                
+                .toast.fade-out {
+                    opacity: 0;
+                    transform: translateX(-50%) translate                    opacity: 0;
+                    transform: translateX(-50%) translateY(10px);
+                    transition: all 0.3s ease;
+                }
+                
+Y(10px);
+                    transition: all 0.3s ease;
+                }
+                
+                @keyframes                @keyframes toastSlide {
+                    from {
+                        opacity: toastSlide {
+                    from {
+                        opacity: 0;
+                        transform 0;
+                        transform: translateX(-50%) translateY(: translateX(-50%) translateY(20px);
+                    }
+                    to {
+                        opacity: 20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translate1;
+                        transform: translateX(-50%) translateY(0);
+                    }
+                }
+           X(-50%) translateY(0);
+                    }
+                }
+            `;
+            document.head.appendChild( `;
+            document.head.appendChild(stylestyle);
+        }
+   );
+        }
+    }
+
+    escapeHtml(text) {
+        }
+
     escapeHtml(text) {
         if (!text) return '';
-        const div = document.createElement('div');
+ if (!text) return '';
+        const div =        const div = document.createElement(' document.createElement('div');
+        div.textContent =div');
         div.textContent = text;
+        return div.innerHTML text;
         return div.innerHTML;
     }
 
-    stripHTML(html) {
+;
+    }
+
+    stripHTML    stripHTML(html) {
+        if(html) {
         if (!html) return '';
+        const div (!html) return '';
         const div = document.createElement('div');
         div.innerHTML = html;
-        return div.textContent || div.innerText || '';
+ = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent || div        return div.textContent || div.innerText || '';
     }
 
     sanitizeFilename(filename) {
-        return filename.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+.innerText || '';
+    }
+
+    sanitizeFilename(filename) {
+        return filename.replace(/        return filename.replace(/[^a-z0[^a-z0-9]/-9]/gi, '_').toLowerCasegi, '_').toLowerCase();
+    }
+
+    sleep(ms();
     }
 
     sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+) {
+        return new Promise(resolve => setTimeout(resolve,        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 
-// Initialize the app
-const savoireAI = new SavoirePremiumAI();
-
-// Make available globally
-window.savoireAI = savoireAI;
-
-// Additional CSS for dynamic elements
-const additionalStyles = document.createElement('style');
-additionalStyles.textContent = `
-    .insight-box {
-        background: rgba(99, 102, 241, 0.1);
-        border: 1px solid rgba(99, 102, 241, 0.3);
-        border-radius: 10px;
-        padding: 16px;
-        margin: 16px 0;
-        color: var(--text-primary);
+// Initialize ms));
     }
-    
-    .concept-block {
+}
+
+// Initialize the platform
+const the platform
+const savoire savoireStudy = new SavoireStudyStudy = new SavoireStudyAI();
+window.savoireStudyAI();
+window.savoireStudy = savoire = savoireStudy;
+
+// Additional CSS for study features
+const studyStyles = document.createElement('style');
+studyStyles.textContent = `
+    .summary-section,
+    .concepts-section,
+Study;
+
+// Additional CSS for study features
+const studyStyles = document.createElement('style');
+studyStyles.textContent = `
+    .summary-section,
+    .concepts-section,
+    .expl    .explanation-section,
+    .formanation-section,
+    .formulas-section,
+    .ulas-section,
+    .examples-section,
+    .questions-sectionexamples-section,
+    .questions-section,
+    .mistakes-section,
+    .,
+    .mistakes-section,
+    .tips-section {
+        margin: 2rem 0;
+        padding:tips-section {
+        margin: 2rem 0;
+        padding:  1.5rem;
+        background:1.5rem;
         background: var(--bg-glass);
-        border: 1px solid var(--glass-border);
-        border-radius: 10px;
-        padding: 16px;
-        margin: 12px 0;
+        var(--bg-glass);
+        border: 1px solid var(--glass-border border: 1px solid var(--glass-border);
+);
+        border-radius: var        border-radius: var(--border-radius);
+   (--border-radius);
     }
     
-    .concept-block h4 {
+ }
+    
+    .summary-section    .summary-section h2,
+    .concepts-section h2,
+    .concepts-section h2,
+    h2,
+    .explanation-section h2,
+    .form .explanation-section h2,
+    .formulas-sectionulas-section h2,
+    h2,
+    .examples-section .examples-section h2,
+    .questions-section h2,
+ h2,
+    .questions-section h2,
+       .mistakes-section h2 .mistakes-section h2,
+   ,
+    .tips-section h .tips-section h2 {
+2 {
         color: var(--accent-primary);
-        margin-bottom: 8px;
-        font-size: 15px;
+        margin        color: var(--accent-primary);
+        margin-bottom-bottom: 1rem;
+       : 1rem;
+        display: flex;
+ display: flex;
+        align-items: center;
+        gap:        align-items: center;
+        gap:  0.75rem;
+   0.75rem;
     }
     
-    .reasoning-box {
-        background: rgba(59, 130, 246, 0.1);
+ }
+    
+    .formula-grid {
+        display: grid    .formula-grid {
+        display: grid;
+       ;
+        grid-template-columns grid-template-columns: repeat(auto-fit, min: repeat(auto-fit, minmax(200px, 1frmax(200px, 1fr));
+        gap:));
+        gap: 1rem;
+        margin-top: 1rem;
+        margin-top:  1rem;
+    }
+    
+   1rem;
+    }
+    
+    .form .formula-item {
+        padding: 1rem;
+ula-item {
+        padding: 1rem;
+        background        background: rgba(0: rgba(0, 0, 0, 0.2);
+        border, 0, 0, 0.2);
+        border-radius: 8px;
+-radius: 8px;
+        border-left:        border-left: 4px 4px solid var(--accent solid var(--accent-primary);
+        font-family: 'Mon-primary);
+        font-family: 'Monaco', 'Menaco', 'Menlo', monospace;
+        font-size:lo', monospace;
+        font-size:  0.9rem;
+   0.9rem;
+    }
+    
+    }
+    
+    .example-item .example-item {
+        margin {
+        margin: 1.5rem 0;
+: 1.5rem 0;
+        padding: 1.5        padding: 1.5rem;
+        background: rgba(59, rem;
+        background: rgba(59, 130,130, 246,  246, 0.1);
+        border-radius0.1);
+        border-radius: : 8px;
+        border: 1px solid rgba(8px;
         border: 1px solid rgba(59, 130, 246, 0.3);
-        border-radius: 10px;
-        padding: 16px;
-        margin: 16px 0;
     }
     
-    .example-block {
+    .example59, 130, 246, 0.3);
+    }
+    
+    .example-item-item h3 {
+        color: var(--accent-primary);
+        margin-bottom h3 {
+        color: var(--accent-primary);
+        margin-bottom: 1rem: 1rem;
+    }
+    
+;
+    }
+    
+    .question-item    .question-item {
+        margin: {
+        margin: 1.5rem 0;
+        1.5rem 0;
+        padding padding: 1.5rem: 1.5rem;
+        background: var(--bg-glass;
         background: var(--bg-glass);
+        border: 1px solid var(--glass);
         border: 1px solid var(--glass-border);
-        border-radius: 10px;
-        padding: 16px;
-        margin: 16px 0;
+        border-border);
+        border-radius: -radius: 8px;
     }
     
-    .example-block h4 {
-        color: var(--accent-secondary);
-        margin-bottom: 12px;
-        font-size: 15px;
+8px;
     }
     
-    .warning-box {
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        border-radius: 10px;
-        padding: 16px;
-        margin: 16px 0;
+    .question-item h3 {
+    .question-item h3 {
+        color: var(--text-primary);
+        margin-bottom: 1rem;
     }
     
-    .warning-box ul {
-        margin: 8px 0 0 20px;
+    details {
+        margin-top: 1rem;
+        background: rgba(0, 0        color: var(--text-primary);
+        margin-bottom: 1rem;
     }
     
-    .response-footer {
-        margin-top: 24px;
-        padding-top: 16px;
+    details {
+        margin-top: 1rem;
+        background: rgba(0, 0, 0, 0, 0, 0.2);
+        border-radius: 8px;
+        padding:.2);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+ 1rem;
+    }
+    
+    summary {
+    
+    summary {
+        cursor: pointer;
+        color: var(--        cursor: pointer;
+        color: var(--accent-primary);
+        fontaccent-primary);
+        font-weight: 500-weight: 500;
+       ;
+        padding: 0. padding: 0.5rem;
+    }
+    
+   5rem;
+    }
+    
+    .answer {
+        margin .answer {
+        margin-top: 1rem;
+        padding-top: 1rem;
         border-top: 1px solid var(--glass-border);
-        color: var(--text-muted);
-        font-size: 14px;
+-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--glass-border);
+               color: var(--text-secondary);
+    }
+ color: var(--text-secondary);
     }
     
-    .retry-btn {
-        margin-top: 12px;
+    .study-footer {
+        margin-top: 2rem;
+        padding    
+    .study-footer {
+        margin-top: 2rem;
+        padding-top: 1.5-top: 1.5rem;
+        border-top: 1px solid var(--glass-borderrem;
+        border-top: 1px solid var(--glass-border);
+        color: var(--);
+        color: var(--text-muted);
+text-muted);
+        font        font-size: 0.-size: 0.9rem9rem;
+        text-align: center;
+        text-align: center;
+   ;
+    }
+    
+    .typing-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1.2em;
+        background }
+    
+    .typing-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1.2em;
+        background: var(--ac: var(--accent-primary);
+        margin-left: 2px;
+        animationcent-primary);
+        margin-left: 2px;
+        animation:: blink 1s infinite blink 1s infinite;
+        vertical-align: middle;
+    }
+    
+    @;
+        vertical-align: middle;
+    }
+    
+    @keyframes blink {
+        0%,keyframes blink {
+        0%, 100% { opacity 100% { opacity: 1; }
+        50% { opacity: 0; }
     }
 `;
 
-document.head.appendChild(additionalStyles);
-
-// Initialize MathJax configuration
-window.MathJax = {
-    tex: {
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['\\[', '\\]']],
-        processEscapes: true,
-        processEnvironments: true
-    },
-    options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-        ignoreHtmlClass: 'tex2jax_ignore',
-        processHtmlClass: 'tex2jax_process'
+document.head.appendChild: 1; }
+        50% { opacity: 0; }
     }
-};
+`;
+
+document.head.appendChild(studyStyles);
