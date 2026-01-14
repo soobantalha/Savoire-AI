@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré AI v2.0 - The Ultimate Study Station | Sooban Talha Technologies</title>
+    <title>Savoiré AI v2.0 - The Ultimate Study Station</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Cyber-Gold Luxury AI Study Assistant with 33+ Advanced Features">
-    <meta name="keywords" content="AI Study Assistant, PDF Generator, Math Solver, Image Analysis, Voice Notes">
+    <meta name="description" content="Advanced AI-powered study assistant with real-time notes, PDF export, and multi-model intelligence">
     <meta name="author" content="Sooban Talha Technologies">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://api.dicebear.com/7.x/avataaars/svg?seed=Savoire">
-    
-    <!-- CDN Libraries -->
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="LOGO.png">
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <!-- KaTeX for Math -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -26,584 +26,394 @@
     <!-- Prism.js for Syntax Highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     
-    <!-- Toast Notifications -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles/main.css">
-    
-    <!-- Theme Color -->
-    <meta name="theme-color" content="#050505">
-    
-    <!-- iOS PWA Support -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
-    <!-- Wormhole Particle Background -->
-    <canvas id="wormholeCanvas"></canvas>
+    <!-- Custom Cursor -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-trail"></div>
     
-    <!-- Notification Container -->
-    <div id="notificationContainer"></div>
+    <!-- Cinematic Intro -->
+    <div class="intro-screen" id="introScreen">
+        <div class="intro-logo">
+            <div class="logo-pulse">
+                <img src="LOGO.png" alt="Savoiré AI" class="intro-logo-img">
+            </div>
+        </div>
+        <div class="intro-text">
+            <h1 class="intro-title heartbeat">Savoiré AI</h1>
+            <p class="intro-subtitle fade-in-delay">The Ultimate Study Station</p>
+            <p class="intro-powered-by fade-in-long">
+                Powered by <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">Sooban Talha Technologies</a>
+            </p>
+        </div>
+    </div>
     
-    <!-- Audio Player (Hidden) -->
-    <audio id="lofiPlayer" loop style="display: none;">
-        <source src="https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1&loop=1" type="video/mpeg">
-    </audio>
-    
-    <!-- App Container -->
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="branding">
-                    <div class="logo-container">
-                        <div class="logo-glow"></div>
-                        <i class="fas fa-brain logo-icon"></i>
+    <!-- Main App Container -->
+    <div class="app-container" id="appContainer" style="display: none;">
+        <!-- Top Header -->
+        <header class="main-header">
+            <div class="header-left">
+                <div class="logo-container">
+                    <div class="logo-glass">
+                        <img src="LOGO.png" alt="Savoiré AI" class="header-logo">
                     </div>
-                    <div class="brand-text">
-                        <h1 class="brand-title">Savoiré AI</h1>
-                        <p class="brand-subtitle">v2.0 Study Station</p>
+                    <div class="brand-info">
+                        <h1 class="brand-name">Savoiré AI</h1>
+                        <p class="brand-tagline">
+                            by <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">Sooban Talha Technologies</a>
+                        </p>
                     </div>
                 </div>
-                <button class="sidebar-close" id="sidebarClose">
-                    <i class="fas fa-times"></i>
-                </button>
             </div>
             
-            <!-- Search Bar -->
-            <div class="search-container">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" id="historySearch" placeholder="Search history...">
-                <button class="search-clear" id="clearSearch">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <!-- History Groups -->
-            <div class="history-groups" id="historyGroups">
-                <!-- Filled dynamically -->
-            </div>
-            
-            <!-- New Chat Button -->
-            <button class="new-chat-btn" id="newChat">
-                <i class="fas fa-plus"></i>
-                New Chat
-            </button>
-            
-            <!-- Profile Section -->
-            <div class="profile-section">
-                <div class="profile-info">
-                    <div class="profile-avatar" id="userAvatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="profile-details">
-                        <span class="profile-name" id="userName">Student</span>
-                        <span class="profile-status">Online</span>
+            <div class="header-center">
+                <!-- Model Selector -->
+                <div class="model-selector glass-panel">
+                    <select id="modelSelect" class="model-dropdown">
+                        <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash</option>
+                        <option value="deepseek/deepseek-chat-v3.1:free">DeepSeek Chat</option>
+                        <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2</option>
+                        <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air</option>
+                    </select>
+                    <div class="model-status" id="modelStatus">
+                        <div class="status-dot active"></div>
+                        <span>Online</span>
                     </div>
                 </div>
-                <button class="settings-btn" id="openSettings">
+                
+                <!-- Pomodoro Timer -->
+                <div class="pomodoro-timer glass-panel">
+                    <button id="timerToggle" class="timer-btn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <span id="timerDisplay">25:00</span>
+                    <button id="timerReset" class="timer-reset">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="icon-btn focus-toggle" id="focusToggle" title="Focus Mode">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button class="icon-btn settings-toggle" id="settingsToggle" title="Settings">
                     <i class="fas fa-cog"></i>
                 </button>
+                <button class="icon-btn history-toggle" id="historyToggle" title="Chat History">
+                    <i class="fas fa-history"></i>
+                </button>
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
             </div>
-        </aside>
+        </header>
         
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="main-header">
-                <div class="header-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
+        <!-- Main Content Grid -->
+        <main class="main-grid" id="mainGrid">
+            <!-- Left Pane: Chat Interface -->
+            <div class="chat-pane glass-panel">
+                <div class="chat-header">
+                    <h2><i class="fas fa-comments"></i> Chat Interface</h2>
+                    <button class="clear-chat-btn" id="clearChatBtn">
+                        <i class="fas fa-trash"></i> Clear All
                     </button>
-                    <div class="header-title">
-                        <h2 id="currentChatTitle">New Chat</h2>
-                        <div class="header-subtitle">
-                            <span class="model-badge" id="currentModel">Gemini 2.0</span>
-                            <span class="status-dot active"></span>
-                        </div>
-                    </div>
                 </div>
                 
-                <div class="header-center">
-                    <!-- Pomodoro Timer -->
-                    <div class="pomodoro-timer" id="pomodoroTimer">
-                        <button class="timer-btn" id="timerToggle">
-                            <i class="fas fa-play"></i>
-                        </button>
-                        <span class="timer-display" id="timerDisplay">25:00</span>
-                        <div class="timer-progress">
-                            <div class="timer-fill" id="timerFill"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Token Usage -->
-                    <div class="token-meter">
-                        <div class="token-label">Credits</div>
-                        <div class="token-bar">
-                            <div class="token-fill" id="tokenFill" style="width: 65%"></div>
-                        </div>
-                        <div class="token-count" id="tokenCount">6,543/10,000</div>
-                    </div>
+                <!-- Chat History -->
+                <div class="chat-history" id="chatHistory">
+                    <!-- Messages will be inserted here -->
                 </div>
                 
-                <div class="header-right">
-                    <!-- Focus Mode -->
-                    <button class="header-btn" id="focusMode" title="Focus Mode">
-                        <i class="fas fa-expand"></i>
-                    </button>
-                    
-                    <!-- Lofi Player -->
-                    <button class="header-btn" id="lofiToggle" title="Lofi Music">
-                        <i class="fas fa-music"></i>
-                    </button>
-                    
-                    <!-- Voice Input -->
-                    <button class="header-btn voice-input" id="voiceInput" title="Voice Input">
-                        <i class="fas fa-microphone"></i>
-                        <div class="voice-pulse"></div>
-                    </button>
-                    
-                    <!-- Quick Actions Menu -->
-                    <div class="quick-actions">
-                        <button class="header-btn" id="quickActions">
-                            <i class="fas fa-ellipsis-h"></i>
+                <!-- Chat Input -->
+                <div class="chat-input-container">
+                    <div class="input-actions">
+                        <button class="input-action-btn" id="voiceInputBtn" title="Voice Input">
+                            <i class="fas fa-microphone"></i>
                         </button>
-                        <div class="actions-dropdown">
-                            <button class="action-item" id="exportMarkdown">
-                                <i class="fas fa-file-code"></i> Export MD
-                            </button>
-                            <button class="action-item" id="clearChat">
-                                <i class="fas fa-trash"></i> Clear Chat
-                            </button>
-                            <button class="action-item" id="showConsole">
-                                <i class="fas fa-terminal"></i> Dev Console
-                            </button>
+                        <button class="input-action-btn" id="imageUploadBtn" title="Upload Image">
+                            <i class="fas fa-image"></i>
+                            <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                        </button>
+                    </div>
+                    
+                    <div class="text-input-wrapper">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Ask anything... (Ctrl+Enter to send)"
+                            rows="1"
+                            autocomplete="off"
+                        ></textarea>
+                        <div class="input-hints">
+                            <span class="hint">Shift+Enter for new line</span>
                         </div>
                     </div>
+                    
+                    <button class="send-btn" id="sendButton">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
                 </div>
-            </header>
+                
+                <!-- Drag & Drop Zone -->
+                <div class="drop-zone" id="dropZone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drop image for analysis</p>
+                </div>
+            </div>
             
-            <!-- Split Workspace -->
-            <div class="workspace" id="workspace">
-                <!-- Left Panel: Chat -->
-                <div class="chat-panel">
-                    <div class="messages-container" id="messagesContainer">
-                        <!-- Messages appear here -->
-                    </div>
-                    
-                    <!-- Quick Prompts -->
-                    <div class="quick-prompts" id="quickPrompts">
-                        <div class="prompts-header">
-                            <h3>Quick Study Prompts</h3>
-                            <button class="prompts-toggle" id="togglePrompts">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                        </div>
-                        <div class="prompts-grid">
-                            <div class="prompt-chip" data-prompt="Explain quantum physics like I'm 5">
-                                <i class="fas fa-atom"></i>
-                                Quantum Physics
-                            </div>
-                            <div class="prompt-chip" data-prompt="Create a study guide for macroeconomics with key concepts">
-                                <i class="fas fa-chart-line"></i>
-                                Macroeconomics
-                            </div>
-                            <div class="prompt-chip" data-prompt="Explain calculus derivatives with practical examples">
-                                <i class="fas fa-calculator"></i>
-                                Calculus
-                            </div>
-                            <div class="prompt-chip" data-prompt="Analyze this image and explain what you see">
-                                <i class="fas fa-image"></i>
-                                Image Analysis
-                            </div>
-                            <div class="prompt-chip" data-prompt="Create a table comparing different programming paradigms">
-                                <i class="fas fa-table"></i>
-                                Programming Table
-                            </div>
-                            <div class="prompt-chip" data-prompt="Explain neural networks with math formulas">
-                                <i class="fas fa-network-wired"></i>
-                                Neural Networks
-                            </div>
-                            <div class="prompt-chip" data-prompt="Help me solve this physics problem step by step">
-                                <i class="fas fa-rocket"></i>
-                                Physics Problem
-                            </div>
-                            <div class="prompt-chip" data-prompt="Explain blockchain technology simply">
-                                <i class="fas fa-link"></i>
-                                Blockchain
-                            </div>
-                            <div class="prompt-chip" data-prompt="Create a study schedule for final exams">
-                                <i class="fas fa-calendar-alt"></i>
-                                Study Schedule
-                            </div>
-                            <div class="prompt-chip" data-prompt="Explain the water cycle with diagrams">
-                                <i class="fas fa-water"></i>
-                                Water Cycle
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Input Area -->
-                    <div class="input-area">
-                        <div class="input-tools">
-                            <button class="input-tool" id="uploadImage" title="Upload Image">
-                                <i class="fas fa-image"></i>
-                                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                            </button>
-                            <button class="input-tool" id="voiceToggle" title="Voice Input">
-                                <i class="fas fa-microphone"></i>
-                            </button>
-                            <button class="input-tool" id="simplifyToggle" title="Explain Like I'm 5">
-                                <i class="fas fa-child"></i>
-                            </button>
-                            <div class="temperature-slider">
-                                <span class="temp-label">Temp:</span>
-                                <input type="range" min="0" max="100" value="70" class="temp-slider" id="temperature">
-                                <span class="temp-value" id="tempValue">0.7</span>
-                            </div>
-                        </div>
-                        
-                        <div class="text-input-container">
-                            <textarea 
-                                id="messageInput" 
-                                placeholder="Ask anything... (Ctrl+Enter to send, Shift+Enter for new line)"
-                                rows="1"
-                            ></textarea>
-                            <div class="input-actions">
-                                <button class="send-button" id="sendButton">
-                                    <i class="fas fa-paper-plane"></i>
-                                    <span class="send-text">Send</span>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="input-footer">
-                            <div class="model-selector">
-                                <select id="modelSelect">
-                                    <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash</option>
-                                    <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air</option>
-                                    <option value="deepseek/deepseek-chat-v3.1:free">DeepSeek Chat</option>
-                                    <option value="tngtech/deepseek-r1t2-chimera:free">DeepSeek R1</option>
-                                    <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2</option>
-                                </select>
-                            </div>
-                            <div class="watermark">
-                                <i class="fas fa-code"></i> by Sooban Talha Technologies
-                            </div>
-                        </div>
+            <!-- Right Pane: Live Study Notes -->
+            <div class="notes-pane glass-panel">
+                <div class="notes-header">
+                    <h2><i class="fas fa-file-alt"></i> Live Study Notes</h2>
+                    <div class="notes-actions">
+                        <button class="notes-action-btn" id="readAloudBtn" title="Read Aloud">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button class="notes-action-btn" id="exportPdfBtn" title="Export PDF">
+                            <i class="fas fa-file-pdf"></i>
+                        </button>
+                        <button class="notes-action-btn" id="fullscreenNotesBtn" title="Fullscreen">
+                            <i class="fas fa-expand"></i>
+                        </button>
                     </div>
                 </div>
                 
-                <!-- Right Panel: Live Notes -->
-                <div class="notes-panel">
-                    <div class="notes-header">
-                        <h3><i class="fas fa-file-alt"></i> Live Study Notes</h3>
-                        <div class="notes-actions">
-                            <button class="notes-action" id="ttsButton" title="Text-to-Speech">
-                                <i class="fas fa-volume-up"></i>
-                            </button>
-                            <button class="notes-action" id="copyNotes" title="Copy All">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                            <button class="notes-action" id="downloadPDF" title="Download PDF">
-                                <i class="fas fa-file-pdf"></i>
-                            </button>
-                            <button class="notes-action" id="fullscreenNotes" title="Fullscreen">
-                                <i class="fas fa-expand"></i>
-                            </button>
+                <div class="notes-content" id="notesContent">
+                    <div class="notes-placeholder">
+                        <div class="placeholder-icon">
+                            <i class="fas fa-lightbulb"></i>
                         </div>
-                    </div>
-                    
-                    <div class="notes-content" id="notesContent">
-                        <!-- Notes rendered here -->
-                        <div class="notes-empty">
-                            <div class="empty-state">
-                                <i class="fas fa-lightbulb"></i>
-                                <h3>Your Study Notes Appear Here</h3>
-                                <p>Start chatting with Savoiré AI to generate beautiful, formatted notes in real-time.</p>
-                                <div class="empty-features">
-                                    <div class="feature">
-                                        <i class="fas fa-square-root-alt"></i>
-                                        <span>LaTeX Math Support</span>
-                                    </div>
-                                    <div class="feature">
-                                        <i class="fas fa-code"></i>
-                                        <span>Syntax Highlighting</span>
-                                    </div>
-                                    <div class="feature">
-                                        <i class="fas fa-table"></i>
-                                        <span>Advanced Tables</span>
-                                    </div>
-                                    <div class="feature">
-                                        <i class="fas fa-image"></i>
-                                        <span>Image Analysis</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <h3>Your Notes Will Appear Here</h3>
+                        <p>Ask a question or upload an image to generate comprehensive study notes.</p>
+                        <p class="placeholder-tip">
+                            <i class="fas fa-star"></i>
+                            Pro Tip: Use images for diagrams, equations, or handwritten notes analysis.
+                        </p>
                     </div>
                 </div>
             </div>
         </main>
+        
+        <!-- Bottom Panel -->
+        <div class="bottom-panel">
+            <!-- Lofi Player -->
+            <div class="music-player glass-panel" id="musicPlayer">
+                <div class="player-controls">
+                    <button class="player-btn" id="playPauseBtn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="player-btn" id="volumeToggleBtn">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                    <div class="player-info">
+                        <span class="player-title">NCS Lofi Study Mix</span>
+                        <span class="player-status" id="playerStatus">Paused</span>
+                    </div>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="50" class="volume-slider">
+                </div>
+                <audio id="lofiAudio" loop>
+                    <source src="https://www.youtube.com/watch?v=jfKfPfyJRdk" type="audio/mpeg">
+                    <!-- Fallback stream URL -->
+                    <source src="https://stream.nightride.fm/lofi.mp3" type="audio/mpeg">
+                </audio>
+            </div>
+            
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-item">
+                    <i class="fas fa-bolt"></i>
+                    <span>AI Ready</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-database"></i>
+                    <span id="tokenCount">0 tokens</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-clock"></i>
+                    <span id="responseTime">0ms</span>
+                </div>
+                <div class="status-item">
+                    <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">
+                        <i class="fas fa-code"></i>
+                        <span>Sooban Talha Technologies</span>
+                    </a>
+                </div>
+                <!-- Hidden Developer Console Trigger -->
+                <button class="dev-console-btn" id="devConsoleBtn" title="Developer Console">
+                    <i class="fas fa-terminal"></i>
+                </button>
+            </div>
+        </div>
     </div>
     
+    <!-- Modals & Sidebars -->
+    
     <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content glass-panel large">
             <div class="modal-header">
                 <h2><i class="fas fa-cog"></i> Settings</h2>
-                <button class="modal-close" id="closeSettings">
+                <button class="modal-close" id="settingsClose">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="settings-tabs">
-                    <div class="tab active" data-tab="general">General</div>
-                    <div class="tab" data-tab="ai">AI Settings</div>
-                    <div class="tab" data-tab="appearance">Appearance</div>
-                    <div class="tab" data-tab="about">About</div>
-                </div>
-                
-                <div class="tab-content active" id="generalTab">
-                    <div class="setting-group">
-                        <h3>Profile</h3>
-                        <div class="setting-item">
-                            <label>Your Name</label>
-                            <input type="text" id="userNameInput" value="Student" maxlength="20">
-                        </div>
-                        <div class="setting-item">
-                            <label>Avatar</label>
-                            <div class="avatar-options">
-                                <div class="avatar-option selected" data-avatar="user">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="avatar-option" data-avatar="robot">
-                                    <i class="fas fa-robot"></i>
-                                </div>
-                                <div class="avatar-option" data-avatar="graduation">
-                                    <i class="fas fa-graduation-cap"></i>
-                                </div>
-                                <div class="avatar-option" data-avatar="brain">
-                                    <i class="fas fa-brain"></i>
-                                </div>
-                            </div>
-                        </div>
+                <div class="settings-section">
+                    <h3><i class="fas fa-user"></i> User Profile</h3>
+                    <div class="setting-item">
+                        <label>Your Name</label>
+                        <input type="text" id="userNameInput" placeholder="Enter your name" class="setting-input">
                     </div>
-                    
-                    <div class="setting-group">
-                        <h3>Study Preferences</h3>
-                        <div class="setting-item">
-                            <label>Default Pomodoro Duration</label>
-                            <select id="pomodoroDuration">
-                                <option value="25">25 minutes</option>
-                                <option value="30">30 minutes</option>
-                                <option value="45">45 minutes</option>
-                                <option value="50">50 minutes</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label>Auto-save History</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="autoSave" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
+                    <div class="setting-item">
+                        <label>Avatar Color</label>
+                        <input type="color" id="avatarColorPicker" value="#FFD700" class="color-picker">
                     </div>
                 </div>
                 
-                <div class="tab-content" id="aiTab">
-                    <div class="setting-group">
-                        <h3>AI Behavior</h3>
-                        <div class="setting-item">
-                            <label>System Prompt</label>
-                            <textarea id="systemPrompt" rows="4">
-You are Savoiré AI, an advanced study assistant created by Sooban Talha Technologies. You help students learn complex topics by providing detailed, accurate, and engaging explanations. Always format responses with proper markdown, include examples when relevant, and break down complex concepts into digestible parts.</textarea>
-                        </div>
-                        <div class="setting-item">
-                            <label>Default Model</label>
-                            <select id="defaultModel">
-                                <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (Fast)</option>
-                                <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air (Balanced)</option>
-                                <option value="deepseek/deepseek-chat-v3.1:free">DeepSeek Chat (Detailed)</option>
-                            </select>
-                        </div>
+                <div class="settings-section">
+                    <h3><i class="fas fa-sliders-h"></i> Preferences</h3>
+                    <div class="setting-item toggle">
+                        <label>Animations</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="animationsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
                     </div>
-                    
-                    <div class="setting-group">
-                        <h3>Response Style</h3>
-                        <div class="setting-item">
-                            <label>Always Include Examples</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="includeExamples" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>Auto-generate Questions</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="autoQuestions">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
+                    <div class="setting-item toggle">
+                        <label>Music Player</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="musicToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>Default AI Model</label>
+                        <select id="defaultModelSelect" class="setting-select">
+                            <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash</option>
+                            <option value="deepseek/deepseek-chat-v3.1:free">DeepSeek Chat</option>
+                            <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2</option>
+                        </select>
                     </div>
                 </div>
                 
-                <div class="tab-content" id="appearanceTab">
-                    <div class="setting-group">
-                        <h3>Theme</h3>
-                        <div class="theme-options">
-                            <div class="theme-option active" data-theme="dark">
-                                <div class="theme-preview dark-theme"></div>
-                                <span>Cyber Gold</span>
-                            </div>
-                            <div class="theme-option" data-theme="light">
-                                <div class="theme-preview light-theme"></div>
-                                <span>Light Gold</span>
-                            </div>
-                            <div class="theme-option" data-theme="blue">
-                                <div class="theme-preview blue-theme"></div>
-                                <span>Neon Blue</span>
-                            </div>
-                            <div class="theme-option" data-theme="purple">
-                                <div class="theme-preview purple-theme"></div>
-                                <span>Deep Purple</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h3>Animations</h3>
-                        <div class="setting-item">
-                            <label>Enable Animations</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="enableAnimations" checked>
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>Particle Density</label>
-                            <input type="range" min="10" max="100" value="50" id="particleDensity">
-                            <span class="range-value" id="densityValue">Medium</span>
-                        </div>
+                <div class="settings-section">
+                    <h3><i class="fas fa-robot"></i> AI Personality</h3>
+                    <div class="setting-item">
+                        <label>System Prompt</label>
+                        <textarea id="systemPromptInput" class="setting-textarea" rows="4">
+You are Savoiré AI, an advanced study assistant created by Sooban Talha Technologies. Provide comprehensive, detailed explanations with examples. Use markdown formatting, include code blocks when relevant, and explain concepts step-by-step.
+                        </textarea>
                     </div>
                 </div>
                 
-                <div class="tab-content" id="aboutTab">
-                    <div class="about-content">
-                        <div class="about-logo">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                        <h2>Savoiré AI v2.0</h2>
-                        <p class="about-version">The Ultimate Study Station</p>
-                        
-                        <div class="about-info">
-                            <p>An advanced AI-powered study assistant with 33+ cutting-edge features designed to revolutionize learning.</p>
-                            
-                            <div class="tech-stack">
-                                <h3>Technology Stack</h3>
-                                <div class="tech-icons">
-                                    <div class="tech-icon">
-                                        <i class="fab fa-js"></i>
-                                        <span>Vanilla JS</span>
-                                    </div>
-                                    <div class="tech-icon">
-                                        <i class="fab fa-css3-alt"></i>
-                                        <span>CSS3</span>
-                                    </div>
-                                    <div class="tech-icon">
-                                        <i class="fas fa-server"></i>
-                                        <span>OpenRouter API</span>
-                                    </div>
-                                    <div class="tech-icon">
-                                        <i class="fas fa-paint-brush"></i>
-                                        <span>Glassmorphism</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="credits">
-                                <h3>Created by</h3>
-                                <p><i class="fas fa-code"></i> Sooban Talha Technologies</p>
-                                <p><i class="fas fa-globe"></i> soobantalhatech.xyz</p>
-                                <p class="copyright">© 2024 All Rights Reserved</p>
-                            </div>
-                        </div>
-                    </div>
+                <div class="settings-footer">
+                    <button class="btn-primary" id="saveSettings">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button class="btn-secondary" id="resetSettings">
+                        <i class="fas fa-undo"></i> Reset to Defaults
+                    </button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" id="resetSettings">Reset to Defaults</button>
-                <button class="btn-primary" id="saveSettings">Save Changes</button>
+        </div>
+    </div>
+    
+    <!-- Chat History Sidebar -->
+    <div class="sidebar-overlay" id="historySidebar">
+        <div class="sidebar-content glass-panel">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-history"></i> Chat History</h2>
+                <button class="sidebar-close" id="historyClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="sidebar-body">
+                <div class="history-list" id="historyList">
+                    <!-- History items will be added here -->
+                </div>
             </div>
         </div>
     </div>
     
     <!-- Developer Console -->
-    <div class="console" id="developerConsole">
-        <div class="console-header">
-            <h3><i class="fas fa-terminal"></i> Developer Console</h3>
-            <button class="console-close" id="closeConsole">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="console-content" id="consoleOutput">
-            <!-- Console logs appear here -->
-        </div>
-        <div class="console-input">
-            <input type="text" id="consoleCommand" placeholder="Type command...">
-            <button id="consoleSend">Execute</button>
-        </div>
-    </div>
-    
-    <!-- Image Preview Modal -->
-    <div class="image-modal" id="imageModal">
-        <div class="image-modal-content">
-            <div class="image-modal-header">
-                <h3>Image Preview</h3>
-                <button class="image-modal-close" id="closeImageModal">
+    <div class="console-overlay" id="devConsole">
+        <div class="console-content glass-panel">
+            <div class="console-header">
+                <h2><i class="fas fa-terminal"></i> Developer Console</h2>
+                <button class="console-close" id="consoleClose">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="image-modal-body">
-                <img id="previewImage" src="" alt="Preview">
-                <div class="image-actions">
-                    <button class="btn-secondary" id="analyzeImage">
-                        <i class="fas fa-search"></i> Analyze with AI
-                    </button>
-                    <button class="btn-secondary" id="removeImage">
-                        <i class="fas fa-trash"></i> Remove
-                    </button>
+            <div class="console-body">
+                <div class="console-logs" id="consoleLogs">
+                    <div class="log-entry">
+                        <span class="log-time">[12:00:00]</span>
+                        <span class="log-level">INFO</span>
+                        <span class="log-message">Savoiré AI v2.0 initialized</span>
+                    </div>
+                </div>
+                <div class="console-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">API Calls:</span>
+                        <span class="stat-value" id="apiCallCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg Latency:</span>
+                        <span class="stat-value" id="avgLatency">0ms</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Tokens:</span>
+                        <span class="stat-value" id="totalTokens">0</span>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- CDN Scripts -->
-    <!-- Marked for Markdown parsing -->
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Welcome Modal (First Visit) -->
+    <div class="modal-overlay" id="welcomeModal">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2><i class="fas fa-graduation-cap"></i> Welcome to Savoiré AI!</h2>
+            </div>
+            <div class="modal-body">
+                <div class="welcome-content">
+                    <div class="welcome-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3>Ready to Transform Your Learning?</h3>
+                    <p>Enter your name to personalize your experience:</p>
+                    <input type="text" id="welcomeNameInput" placeholder="Your Name" class="welcome-input" autofocus>
+                    <p class="welcome-tip">
+                        <i class="fas fa-lightbulb"></i>
+                        You can change this anytime in Settings.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="welcomeSubmit">
+                    <i class="fas fa-check"></i> Let's Begin!
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Wormhole Canvas -->
+    <canvas id="wormholeCanvas" class="wormhole-canvas"></canvas>
+    
+    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
-    <!-- DOMPurify for security -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
-    
-    <!-- KaTeX for Math -->
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-    
-    <!-- Prism.js for Syntax Highlighting -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
-    
-    <!-- html2pdf.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <!-- Toast Notifications -->
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    
-    <!-- Custom Script -->
+    <!-- Main Application -->
     <script src="scripts/app.js"></script>
 </body>
 </html>

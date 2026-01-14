@@ -1,1520 +1,405 @@
-// Savoiré AI v2.0 - The Ultimate Study Station
-// by Sooban Talha Technologies
+/**
+ * Savoiré AI v2.0 - The Ultimate Study Station
+ * Main Application Class
+ * by Sooban Talha Technologies
+ */
 
-class SavoireAI {
+class SavoireApp {
     constructor() {
         // State Management
         this.state = {
-            currentChat: null,
-            chats: [],
-            history: [],
-            isGenerating: false,
-            isListening: false,
-            isSpeaking: false,
-            isFocusMode: false,
-            isLofiPlaying: false,
-            isConsoleOpen: false,
+            conversation: [],
             currentModel: 'google/gemini-2.0-flash-exp:free',
-            temperature: 0.7,
-            simplifyMode: false,
-            systemPrompt: "You are Savoiré AI, an advanced study assistant created by Sooban Talha Technologies. You help students learn complex topics by providing detailed, accurate, and engaging explanations. Always format responses with proper markdown, include examples when relevant, and break down complex concepts into digestible parts.",
-            settings: {
-                userName: 'Student',
-                userAvatar: 'user',
-                autoSave: true,
-                enableAnimations: true,
-                includeExamples: true,
-                pomodoroDuration: 25,
-                defaultModel: 'google/gemini-2.0-flash-exp:free'
-            },
-            tokensUsed: 6543,
-            maxTokens: 10000,
-            pomodoro: {
-                isRunning: false,
-                timeLeft: 25 * 60,
-                duration: 25 * 60,
-                mode: 'work' // 'work' or 'break'
+            isGenerating: false,
+            isFocusMode: false,
+            isMusicPlaying: false,
+            userName: 'Learner',
+            userAvatarColor: '#FFD700',
+            systemPrompt: `You are Savoiré AI, an advanced study assistant created by Sooban Talha Technologies. Provide comprehensive, detailed explanations with examples. Use markdown formatting, include code blocks when relevant, and explain concepts step-by-step.`,
+            animationsEnabled: true,
+            musicEnabled: true,
+            history: [],
+            pomodoroTime: 25 * 60, // 25 minutes in seconds
+            isTimerRunning: false,
+            apiStats: {
+                calls: 0,
+                totalTokens: 0,
+                totalLatency: 0,
+                errors: 0
             }
         };
-
+        
         // DOM Elements
         this.elements = {};
-        this.initializeElements();
         
-        // Initialize App
-        this.initializeApp();
-        this.bindEvents();
+        // Wormhole Particle System
+        this.wormhole = null;
+        
+        // Speech Synthesis
+        this.speech = window.speechSynthesis;
+        this.currentSpeech = null;
+        
+        // Initialize
+        this.init();
+    }
+    
+    /**
+     * Initialize the application
+     */
+    async init() {
+        this.cacheElements();
         this.loadState();
-        this.initializeWormhole();
-        this.initializeSwipe();
-        this.initializeKeyboardShortcuts();
+        this.bindEvents();
+        this.initWormhole();
+        this.initSpeech();
+        this.setupKeyboardShortcuts();
         
-        // Log initialization
-        this.log('Savoiré AI v2.0 initialized', 'success');
-    }
-
-    initializeElements() {
-        // Main Containers
-        this.elements.sidebar = document.getElementById('sidebar');
-        this.elements.mainContent = document.querySelector('.main-content');
-        this.elements.messagesContainer = document.getElementById('messagesContainer');
-        this.elements.notesContent = document.getElementById('notesContent');
-        this.elements.workspace = document.getElementById('workspace');
+        // Show cinematic intro
+        this.showCinematicIntro();
         
-        // Buttons & Toggles
-        this.elements.sidebarToggle = document.getElementById('sidebarToggle');
-        this.elements.sidebarClose = document.getElementById('sidebarClose');
-        this.elements.focusMode = document.getElementById('focusMode');
-        this.elements.lofiToggle = document.getElementById('lofiToggle');
-        this.elements.voiceInput = document.getElementById('voiceInput');
-        this.elements.voiceToggle = document.getElementById('voiceToggle');
-        this.elements.simplifyToggle = document.getElementById('simplifyToggle');
-        this.elements.newChat = document.getElementById('newChat');
-        this.elements.clearChat = document.getElementById('clearChat');
-        this.elements.sendButton = document.getElementById('sendButton');
-        this.elements.uploadImage = document.getElementById('uploadImage');
-        this.elements.imageUpload = document.getElementById('imageUpload');
-        
-        // Inputs & Forms
-        this.elements.messageInput = document.getElementById('messageInput');
-        this.elements.modelSelect = document.getElementById('modelSelect');
-        this.elements.temperature = document.getElementById('temperature');
-        this.elements.tempValue = document.getElementById('tempValue');
-        this.elements.historySearch = document.getElementById('historySearch');
-        this.elements.clearSearch = document.getElementById('clearSearch');
-        
-        // Settings
-        this.elements.openSettings = document.getElementById('openSettings');
-        this.elements.settingsModal = document.getElementById('settingsModal');
-        this.elements.closeSettings = document.getElementById('closeSettings');
-        this.elements.saveSettings = document.getElementById('saveSettings');
-        this.elements.resetSettings = document.getElementById('resetSettings');
-        
-        // User Profile
-        this.elements.userName = document.getElementById('userName');
-        this.elements.userAvatar = document.getElementById('userAvatar');
-        this.elements.userNameInput = document.getElementById('userNameInput');
-        
-        // Notes Actions
-        this.elements.copyNotes = document.getElementById('copyNotes');
-        this.elements.downloadPDF = document.getElementById('downloadPDF');
-        this.elements.ttsButton = document.getElementById('ttsButton');
-        this.elements.fullscreenNotes = document.getElementById('fullscreenNotes');
-        this.elements.exportMarkdown = document.getElementById('exportMarkdown');
-        
-        // Pomodoro
-        this.elements.pomodoroTimer = document.getElementById('pomodoroTimer');
-        this.elements.timerToggle = document.getElementById('timerToggle');
-        this.elements.timerDisplay = document.getElementById('timerDisplay');
-        this.elements.timerFill = document.getElementById('timerFill');
-        
-        // Token Meter
-        this.elements.tokenFill = document.getElementById('tokenFill');
-        this.elements.tokenCount = document.getElementById('tokenCount');
-        
-        // Console
-        this.elements.showConsole = document.getElementById('showConsole');
-        this.elements.developerConsole = document.getElementById('developerConsole');
-        this.elements.closeConsole = document.getElementById('closeConsole');
-        this.elements.consoleOutput = document.getElementById('consoleOutput');
-        this.elements.consoleCommand = document.getElementById('consoleCommand');
-        this.elements.consoleSend = document.getElementById('consoleSend');
-        
-        // Image Modal
-        this.elements.imageModal = document.getElementById('imageModal');
-        this.elements.closeImageModal = document.getElementById('closeImageModal');
-        this.elements.previewImage = document.getElementById('previewImage');
-        this.elements.analyzeImage = document.getElementById('analyzeImage');
-        this.elements.removeImage = document.getElementById('removeImage');
-        
-        // Quick Prompts
-        this.elements.quickPrompts = document.getElementById('quickPrompts');
-        this.elements.togglePrompts = document.getElementById('togglePrompts');
-        this.elements.promptChips = document.querySelectorAll('.prompt-chip');
-        
-        // History Groups
-        this.elements.historyGroups = document.getElementById('historyGroups');
-        
-        // Current Chat Title
-        this.elements.currentChatTitle = document.getElementById('currentChatTitle');
-        this.elements.currentModel = document.getElementById('currentModel');
-        
-        // Tabs
-        this.elements.tabs = document.querySelectorAll('.tab');
-        this.elements.tabContents = document.querySelectorAll('.tab-content');
-        
-        // Theme Options
-        this.elements.themeOptions = document.querySelectorAll('.theme-option');
-        
-        // Quick Actions
-        this.elements.quickActions = document.getElementById('quickActions');
-        
-        // Wormhole Canvas
-        this.elements.wormholeCanvas = document.getElementById('wormholeCanvas');
-        
-        // Lofi Player
-        this.elements.lofiPlayer = document.getElementById('lofiPlayer');
-    }
-
-    initializeApp() {
-        // Auto-resize textarea
-        this.elements.messageInput.addEventListener('input', () => {
-            this.autoResizeTextarea();
-        });
-
-        // Initialize model select
-        this.elements.modelSelect.value = this.state.currentModel;
-        
-        // Initialize temperature slider
-        this.elements.temperature.value = this.state.temperature * 100;
-        this.elements.tempValue.textContent = this.state.temperature.toFixed(1);
-        
-        // Update token meter
-        this.updateTokenMeter();
-        
-        // Update pomodoro display
-        this.updatePomodoroDisplay();
-        
-        // Load history
-        this.loadHistory();
-        
-        // Create new chat
-        this.createNewChat();
-    }
-
-    bindEvents() {
-        // Sidebar Controls
-        this.elements.sidebarToggle.addEventListener('click', () => this.toggleSidebar());
-        this.elements.sidebarClose.addEventListener('click', () => this.toggleSidebar());
-        
-        // Chat Controls
-        this.elements.sendButton.addEventListener('click', () => this.sendMessage());
-        this.elements.messageInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
-        this.elements.newChat.addEventListener('click', () => this.createNewChat());
-        this.elements.clearChat.addEventListener('click', () => this.clearCurrentChat());
-        
-        // Voice Controls
-        this.elements.voiceInput.addEventListener('click', () => this.toggleVoiceInput());
-        this.elements.voiceToggle.addEventListener('click', () => this.toggleVoiceInput());
-        
-        // Image Upload
-        this.elements.uploadImage.addEventListener('click', () => this.elements.imageUpload.click());
-        this.elements.imageUpload.addEventListener('change', (e) => this.handleImageUpload(e));
-        
-        // Settings
-        this.elements.openSettings.addEventListener('click', () => this.openSettings());
-        this.elements.closeSettings.addEventListener('click', () => this.closeSettings());
-        this.elements.saveSettings.addEventListener('click', () => this.saveSettings());
-        this.elements.resetSettings.addEventListener('click', () => this.resetSettings());
-        
-        // Notes Actions
-        this.elements.copyNotes.addEventListener('click', () => this.copyNotes());
-        this.elements.downloadPDF.addEventListener('click', () => this.downloadPDF());
-        this.elements.ttsButton.addEventListener('click', () => this.toggleTextToSpeech());
-        this.elements.fullscreenNotes.addEventListener('click', () => this.toggleFullscreenNotes());
-        this.elements.exportMarkdown.addEventListener('click', () => this.exportMarkdown());
-        
-        // Pomodoro Timer
-        this.elements.timerToggle.addEventListener('click', () => this.togglePomodoro());
-        
-        // Console
-        this.elements.showConsole.addEventListener('click', () => this.toggleConsole());
-        this.elements.closeConsole.addEventListener('click', () => this.toggleConsole());
-        this.elements.consoleSend.addEventListener('click', () => this.executeConsoleCommand());
-        this.elements.consoleCommand.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') this.executeConsoleCommand();
-        });
-        
-        // Image Modal
-        this.elements.closeImageModal.addEventListener('click', () => this.closeImageModal());
-        this.elements.analyzeImage.addEventListener('click', () => this.analyzeImage());
-        this.elements.removeImage.addEventListener('click', () => this.removeImage());
-        
-        // Quick Prompts
-        this.elements.togglePrompts.addEventListener('click', () => this.toggleQuickPrompts());
-        this.elements.promptChips.forEach(chip => {
-            chip.addEventListener('click', (e) => this.handleQuickPrompt(e));
-        });
-        
-        // Settings Tabs
-        this.elements.tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => this.switchTab(e));
-        });
-        
-        // Theme Options
-        this.elements.themeOptions.forEach(option => {
-            option.addEventListener('click', (e) => this.changeTheme(e));
-        });
-        
-        // Temperature Slider
-        this.elements.temperature.addEventListener('input', (e) => {
-            this.state.temperature = e.target.value / 100;
-            this.elements.tempValue.textContent = this.state.temperature.toFixed(1);
-        });
-        
-        // Model Select
-        this.elements.modelSelect.addEventListener('change', (e) => {
-            this.state.currentModel = e.target.value;
-            this.elements.currentModel.textContent = this.getModelName(e.target.value);
-        });
-        
-        // Search
-        this.elements.historySearch.addEventListener('input', () => this.searchHistory());
-        this.elements.clearSearch.addEventListener('click', () => {
-            this.elements.historySearch.value = '';
-            this.searchHistory();
-        });
-        
-        // Focus Mode
-        this.elements.focusMode.addEventListener('click', () => this.toggleFocusMode());
-        
-        // Lofi Player
-        this.elements.lofiToggle.addEventListener('click', () => this.toggleLofi());
-        
-        // Simplify Mode
-        this.elements.simplifyToggle.addEventListener('click', () => this.toggleSimplifyMode());
-        
-        // Quick Actions
-        this.elements.quickActions.addEventListener('click', () => {
-            this.elements.quickActions.parentElement.classList.toggle('open');
-        });
-        
-        // Click outside to close dropdowns
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.quick-actions')) {
-                this.elements.quickActions.parentElement.classList.remove('open');
+        // Initialize markdown renderer
+        marked.setOptions({
+            gfm: true,
+            breaks: true,
+            highlight: function(code, lang) {
+                if (Prism.languages[lang]) {
+                    return Prism.highlight(code, Prism.languages[lang], lang);
+                }
+                return code;
             }
         });
-    }
-
-    // ============================================
-    // FEATURE 1-3: Chat & Streaming
-    // ============================================
-
-    async sendMessage() {
-        const message = this.elements.messageInput.value.trim();
-        if (!message || this.state.isGenerating) return;
-
-        // Add user message
-        this.addMessage(message, 'user');
         
-        // Clear input
-        this.elements.messageInput.value = '';
-        this.autoResizeTextarea();
-        
-        // Show typing indicator
-        this.showTypingIndicator();
-        
-        // Set generating state
-        this.state.isGenerating = true;
-        this.elements.sendButton.disabled = true;
-        
-        try {
-            // Generate AI response with streaming
-            const response = await this.generateAIResponse(message);
-            
-            // Remove typing indicator
-            this.hideTypingIndicator();
-            
-            // Stream the response
-            await this.streamResponse(response);
-            
-        } catch (error) {
-            this.hideTypingIndicator();
-            this.showError('Failed to get response. Please try again.');
-            this.log(`API Error: ${error.message}`, 'error');
-        }
-        
-        this.state.isGenerating = false;
-        this.elements.sendButton.disabled = false;
-        
-        // Save to history
-        this.saveToHistory();
-    }
-
-    async generateAIResponse(message) {
-        const startTime = Date.now();
-        
-        const payload = {
-            message,
-            model: this.state.currentModel,
-            temperature: this.state.temperature,
-            systemPrompt: this.state.systemPrompt,
-            simplify: this.state.simplifyMode
-        };
-
-        // Check for image analysis
-        if (this.state.currentImage) {
-            payload.image = this.state.currentImage;
-            payload.visionModel = 'google/gemini-2.0-flash-exp:free';
-        }
-
-        try {
-            const response = await fetch('/api/study', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-            }
-
-            const data = await response.json();
-            const latency = Date.now() - startTime;
-            
-            this.log(`Response received in ${latency}ms from ${this.state.currentModel}`, 'success');
-            this.updateTokenUsage(data.estimatedTokens || 100);
-            
-            return data.response || data;
-        } catch (error) {
-            // Fallback to local generation
-            this.log('Using fallback response generator', 'warning');
-            return this.generateFallbackResponse(message);
-        }
-    }
-
-    async streamResponse(response) {
-        const messageId = `msg-${Date.now()}`;
-        const messageDiv = this.createAIMessageContainer(messageId);
-        
-        // Simulate streaming for free models
-        const words = response.split(' ');
-        let currentText = '';
-        
-        for (let i = 0; i < words.length; i++) {
-            currentText += words[i] + ' ';
-            this.updateMessageContent(messageId, currentText);
-            
-            // Random delay for natural typing effect
-            await this.sleep(Math.random() * 50 + 20);
-            
-            // Scroll to bottom
-            this.scrollToBottom();
-        }
-        
-        // Update notes panel
-        this.updateNotesPanel(currentText);
-        
-        // Add copy button
-        this.addCopyButton(messageDiv);
-        
-        // Add regenerate button
-        this.addRegenerateButton(messageDiv, response);
-    }
-
-    addMessage(content, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}`;
-        messageDiv.id = `msg-${Date.now()}`;
-        
-        const avatar = type === 'user' ? 
-            `<div class="message-avatar">
-                <i class="fas fa-user"></i>
-            </div>` :
-            `<div class="message-avatar">
-                <i class="fas fa-brain"></i>
-            </div>`;
-        
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        messageDiv.innerHTML = `
-            ${avatar}
-            <div class="message-content">
-                <div class="message-text">${this.escapeHtml(content)}</div>
-                <div class="message-actions">
-                    <button class="message-action" onclick="app.copyMessage('${messageDiv.id}')" title="Copy">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                    ${type === 'user' ? `
-                    <button class="message-action" onclick="app.editMessage('${messageDiv.id}')" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    ` : ''}
-                </div>
-                <div class="message-time">${time}</div>
-            </div>
-        `;
-        
-        this.elements.messagesContainer.appendChild(messageDiv);
-        this.scrollToBottom();
-        
-        // Add to current chat
-        if (this.state.currentChat) {
-            this.state.currentChat.messages.push({
-                type,
-                content,
-                time,
-                id: messageDiv.id
-            });
-        }
-    }
-
-    createAIMessageContainer(id) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message ai';
-        messageDiv.id = id;
-        
-        messageDiv.innerHTML = `
-            <div class="message-avatar">
-                <i class="fas fa-brain"></i>
-            </div>
-            <div class="message-content">
-                <div class="message-text" id="${id}-text"></div>
-                <div class="message-actions" style="display: none;">
-                    <button class="message-action" onclick="app.copyMessage('${id}')" title="Copy">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                    <button class="message-action" onclick="app.regenerateMessage('${id}')" title="Regenerate">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                </div>
-                <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-            </div>
-        `;
-        
-        this.elements.messagesContainer.appendChild(messageDiv);
-        return messageDiv;
-    }
-
-    updateMessageContent(id, content) {
-        const textElement = document.getElementById(`${id}-text`);
-        if (textElement) {
-            // Parse markdown and render
-            const html = marked.parse(content);
-            const cleanHTML = DOMPurify.sanitize(html);
-            textElement.innerHTML = cleanHTML;
-            
-            // Render math and code
-            this.renderMath();
-            this.renderCodeBlocks();
-        }
-    }
-
-    showTypingIndicator() {
-        const indicator = document.createElement('div');
-        indicator.className = 'typing-indicator';
-        indicator.id = 'typing-indicator';
-        
-        indicator.innerHTML = `
-            <div class="message-avatar">
-                <i class="fas fa-brain"></i>
-            </div>
-            <div class="typing-dots">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-            <div class="typing-text">Savoiré AI is thinking...</div>
-        `;
-        
-        this.elements.messagesContainer.appendChild(indicator);
-        this.scrollToBottom();
-    }
-
-    hideTypingIndicator() {
-        const indicator = document.getElementById('typing-indicator');
-        if (indicator) {
-            indicator.remove();
-        }
-    }
-
-    // ============================================
-    // FEATURE 4-8: Markdown, Tables, LaTeX, Code
-    // ============================================
-
-    updateNotesPanel(content) {
-        // Parse markdown
-        const html = marked.parse(content);
-        const cleanHTML = DOMPurify.sanitize(html);
-        
-        // Create notes container
-        const notesDiv = document.createElement('div');
-        notesDiv.className = 'rendered-notes';
-        notesDiv.innerHTML = cleanHTML;
-        
-        // Clear existing notes
-        this.elements.notesContent.innerHTML = '';
-        this.elements.notesContent.appendChild(notesDiv);
-        
-        // Add copy buttons to code blocks
-        this.addCopyButtonsToCodeBlocks();
-        
-        // Render math
-        this.renderMath();
-        
-        // Render syntax highlighting
-        this.renderCodeBlocks();
-    }
-
-    renderMath() {
-        // Render KaTeX math
-        renderMathInElement(this.elements.notesContent, {
+        // Auto-render KaTeX
+        renderMathInElement(document.body, {
             delimiters: [
                 {left: '$$', right: '$$', display: true},
                 {left: '$', right: '$', display: false},
                 {left: '\\(', right: '\\)', display: false},
                 {left: '\\[', right: '\\]', display: true}
-            ],
-            throwOnError: false
-        });
-    }
-
-    renderCodeBlocks() {
-        // Apply Prism.js highlighting
-        Prism.highlightAllUnder(this.elements.notesContent);
-    }
-
-    addCopyButtonsToCodeBlocks() {
-        const codeBlocks = this.elements.notesContent.querySelectorAll('pre');
-        codeBlocks.forEach((block, index) => {
-            if (!block.querySelector('.copy-code-btn')) {
-                const button = document.createElement('button');
-                button.className = 'copy-code-btn';
-                button.innerHTML = '<i class="fas fa-copy"></i> Copy';
-                button.onclick = () => this.copyCodeBlock(block);
-                block.style.position = 'relative';
-                block.appendChild(button);
-            }
-        });
-    }
-
-    copyCodeBlock(block) {
-        const code = block.querySelector('code')?.textContent || block.textContent;
-        navigator.clipboard.writeText(code).then(() => {
-            this.showNotification('Code copied to clipboard!', 'success');
-        });
-    }
-
-    // ============================================
-    // FEATURE 9-12: History, Search, Voice
-    // ============================================
-
-    loadHistory() {
-        const savedHistory = localStorage.getItem('savoire_history');
-        if (savedHistory) {
-            this.state.history = JSON.parse(savedHistory);
-            this.renderHistory();
-        }
-    }
-
-    saveToHistory() {
-        if (!this.state.settings.autoSave) return;
-        
-        const chatData = {
-            id: Date.now(),
-            title: this.state.currentChat?.title || 'New Chat',
-            messages: this.state.currentChat?.messages || [],
-            timestamp: new Date().toISOString(),
-            model: this.state.currentModel
-        };
-        
-        // Add to history
-        this.state.history.unshift(chatData);
-        
-        // Keep only last 100 chats
-        if (this.state.history.length > 100) {
-            this.state.history = this.state.history.slice(0, 100);
-        }
-        
-        // Save to localStorage
-        localStorage.setItem('savoire_history', JSON.stringify(this.state.history));
-        
-        // Update history display
-        this.renderHistory();
-    }
-
-    renderHistory() {
-        this.elements.historyGroups.innerHTML = '';
-        
-        // Group by date
-        const groups = {
-            today: [],
-            yesterday: [],
-            older: []
-        };
-        
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        
-        this.state.history.forEach(chat => {
-            const chatDate = new Date(chat.timestamp);
-            chatDate.setHours(0, 0, 0, 0);
-            
-            if (chatDate.getTime() === today.getTime()) {
-                groups.today.push(chat);
-            } else if (chatDate.getTime() === yesterday.getTime()) {
-                groups.yesterday.push(chat);
-            } else {
-                groups.older.push(chat);
-            }
+            ]
         });
         
-        // Render groups
-        ['today', 'yesterday', 'older'].forEach(groupName => {
-            if (groups[groupName].length > 0) {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'history-group';
+        // Load history
+        this.loadHistory();
+        
+        // Check first visit
+        if (!localStorage.getItem('savoire-first-visit')) {
+            setTimeout(() => {
+                this.showWelcomeModal();
+            }, 4000);
+        }
+        
+        // Initialize custom cursor
+        this.initCustomCursor();
+        
+        // Log initialization
+        this.log('INFO', 'Savoiré AI v2.0 initialized');
+    }
+    
+    /**
+     * Cache DOM elements
+     */
+    cacheElements() {
+        // Intro Screen
+        this.elements.introScreen = document.getElementById('introScreen');
+        this.elements.appContainer = document.getElementById('appContainer');
+        
+        // Header
+        this.elements.modelSelect = document.getElementById('modelSelect');
+        this.elements.modelStatus = document.getElementById('modelStatus');
+        this.elements.timerToggle = document.getElementById('timerToggle');
+        this.elements.timerDisplay = document.getElementById('timerDisplay');
+        this.elements.timerReset = document.getElementById('timerReset');
+        this.elements.focusToggle = document.getElementById('focusToggle');
+        this.elements.settingsToggle = document.getElementById('settingsToggle');
+        this.elements.historyToggle = document.getElementById('historyToggle');
+        this.elements.userAvatar = document.getElementById('userAvatar');
+        
+        // Main Grid
+        this.elements.mainGrid = document.getElementById('mainGrid');
+        
+        // Chat Pane
+        this.elements.clearChatBtn = document.getElementById('clearChatBtn');
+        this.elements.chatHistory = document.getElementById('chatHistory');
+        this.elements.messageInput = document.getElementById('messageInput');
+        this.elements.voiceInputBtn = document.getElementById('voiceInputBtn');
+        this.elements.imageUploadBtn = document.getElementById('imageUploadBtn');
+        this.elements.imageUpload = document.getElementById('imageUpload');
+        this.elements.sendButton = document.getElementById('sendButton');
+        this.elements.dropZone = document.getElementById('dropZone');
+        
+        // Notes Pane
+        this.elements.notesContent = document.getElementById('notesContent');
+        this.elements.readAloudBtn = document.getElementById('readAloudBtn');
+        this.elements.exportPdfBtn = document.getElementById('exportPdfBtn');
+        this.elements.fullscreenNotesBtn = document.getElementById('fullscreenNotesBtn');
+        
+        // Music Player
+        this.elements.musicPlayer = document.getElementById('musicPlayer');
+        this.elements.playPauseBtn = document.getElementById('playPauseBtn');
+        this.elements.volumeToggleBtn = document.getElementById('volumeToggleBtn');
+        this.elements.volumeSlider = document.getElementById('volumeSlider');
+        this.elements.lofiAudio = document.getElementById('lofiAudio');
+        this.elements.playerStatus = document.getElementById('playerStatus');
+        
+        // Status Bar
+        this.elements.tokenCount = document.getElementById('tokenCount');
+        this.elements.responseTime = document.getElementById('responseTime');
+        
+        // Modals & Sidebars
+        this.elements.settingsModal = document.getElementById('settingsModal');
+        this.elements.settingsClose = document.getElementById('settingsClose');
+        this.elements.historySidebar = document.getElementById('historySidebar');
+        this.elements.historyClose = document.getElementById('historyClose');
+        this.elements.historyList = document.getElementById('historyList');
+        this.elements.devConsole = document.getElementById('devConsole');
+        this.elements.consoleClose = document.getElementById('consoleClose');
+        this.elements.consoleLogs = document.getElementById('consoleLogs');
+        this.elements.welcomeModal = document.getElementById('welcomeModal');
+        this.elements.welcomeSubmit = document.getElementById('welcomeSubmit');
+        this.elements.welcomeNameInput = document.getElementById('welcomeNameInput');
+        
+        // Settings
+        this.elements.userNameInput = document.getElementById('userNameInput');
+        this.elements.avatarColorPicker = document.getElementById('avatarColorPicker');
+        this.elements.animationsToggle = document.getElementById('animationsToggle');
+        this.elements.musicToggle = document.getElementById('musicToggle');
+        this.elements.defaultModelSelect = document.getElementById('defaultModelSelect');
+        this.elements.systemPromptInput = document.getElementById('systemPromptInput');
+        this.elements.saveSettings = document.getElementById('saveSettings');
+        this.elements.resetSettings = document.getElementById('resetSettings');
+        
+        // Developer Console
+        this.elements.devConsoleBtn = document.getElementById('devConsoleBtn');
+        this.elements.apiCallCount = document.getElementById('apiCallCount');
+        this.elements.avgLatency = document.getElementById('avgLatency');
+        this.elements.totalTokens = document.getElementById('totalTokens');
+        
+        // Toast Container
+        this.elements.toastContainer = document.getElementById('toastContainer');
+    }
+    
+    /**
+     * Bind event listeners
+     */
+    bindEvents() {
+        // Chat Input
+        this.elements.messageInput.addEventListener('input', () => this.autoResizeInput());
+        this.elements.messageInput.addEventListener('keydown', (e) => this.handleInputKeydown(e));
+        this.elements.sendButton.addEventListener('click', () => this.sendMessage());
+        
+        // Voice Input
+        this.elements.voiceInputBtn.addEventListener('click', () => this.toggleVoiceInput());
+        
+        // Image Upload
+        this.elements.imageUploadBtn.addEventListener('click', () => this.elements.imageUpload.click());
+        this.elements.imageUpload.addEventListener('change', (e) => this.handleImageUpload(e));
+        
+        // Drag & Drop
+        this.elements.dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            this.elements.dropZone.classList.add('active');
+        });
+        
+        this.elements.dropZone.addEventListener('dragleave', () => {
+            this.elements.dropZone.classList.remove('active');
+        });
+        
+        this.elements.dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.elements.dropZone.classList.remove('active');
+            this.handleImageDrop(e);
+        });
+        
+        // Clear Chat
+        this.elements.clearChatBtn.addEventListener('click', () => this.clearChat());
+        
+        // Model Selection
+        this.elements.modelSelect.addEventListener('change', (e) => {
+            this.state.currentModel = e.target.value;
+            this.showToast('Model Changed', `Switched to ${e.target.selectedOptions[0].text}`, 'info');
+            this.log('INFO', `Model changed to: ${this.state.currentModel}`);
+        });
+        
+        // Pomodoro Timer
+        this.elements.timerToggle.addEventListener('click', () => this.toggleTimer());
+        this.elements.timerReset.addEventListener('click', () => this.resetTimer());
+        
+        // Focus Mode
+        this.elements.focusToggle.addEventListener('click', () => this.toggleFocusMode());
+        
+        // Settings
+        this.elements.settingsToggle.addEventListener('click', () => this.showSettings());
+        this.elements.settingsClose.addEventListener('click', () => this.hideSettings());
+        
+        // Chat History
+        this.elements.historyToggle.addEventListener('click', () => this.toggleHistorySidebar());
+        this.elements.historyClose.addEventListener('click', () => this.hideHistorySidebar());
+        
+        // Notes Actions
+        this.elements.readAloudBtn.addEventListener('click', () => this.toggleReadAloud());
+        this.elements.exportPdfBtn.addEventListener('click', () => this.exportToPDF());
+        this.elements.fullscreenNotesBtn.addEventListener('click', () => this.toggleFullscreenNotes());
+        
+        // Music Player
+        this.elements.playPauseBtn.addEventListener('click', () => this.toggleMusic());
+        this.elements.volumeToggleBtn.addEventListener('click', () => this.toggleMute());
+        this.elements.volumeSlider.addEventListener('input', (e) => {
+            this.elements.lofiAudio.volume = e.target.value / 100;
+        });
+        
+        // Welcome Modal
+        this.elements.welcomeSubmit.addEventListener('click', () => this.handleWelcomeSubmit());
+        this.elements.welcomeNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.handleWelcomeSubmit();
+        });
+        
+        // Settings Form
+        this.elements.saveSettings.addEventListener('click', () => this.saveSettings());
+        this.elements.resetSettings.addEventListener('click', () => this.resetSettings());
+        
+        // Developer Console
+        this.elements.devConsoleBtn.addEventListener('click', () => this.showDevConsole());
+        this.elements.consoleClose.addEventListener('click', () => this.hideDevConsole());
+        
+        // User Avatar
+        this.elements.userAvatar.addEventListener('click', () => this.showSettings());
+        
+        // Window Events
+        window.addEventListener('beforeunload', () => this.saveState());
+        window.addEventListener('resize', () => this.handleResize());
+        
+        // Speech Events
+        this.speech.addEventListener('voiceschanged', () => this.initSpeech());
+        
+        // Audio Events
+        this.elements.lofiAudio.addEventListener('play', () => {
+            this.state.isMusicPlaying = true;
+            this.updateMusicUI();
+        });
+        
+        this.elements.lofiAudio.addEventListener('pause', () => {
+            this.state.isMusicPlaying = false;
+            this.updateMusicUI();
+        });
+        
+        // Auto-save settings
+        setInterval(() => this.saveState(), 30000);
+    }
+    
+    /**
+     * Initialize custom cursor
+     */
+    initCustomCursor() {
+        const cursorDot = document.querySelector('.cursor-dot');
+        const cursorTrail = document.querySelector('.cursor-trail');
+        
+        let mouseX = 0, mouseY = 0;
+        let trailX = 0, trailY = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            if (this.state.animationsEnabled) {
+                cursorDot.style.left = `${mouseX}px`;
+                cursorDot.style.top = `${mouseY}px`;
                 
-                const header = document.createElement('div');
-                header.className = 'group-header';
+                // Smooth trail effect
+                trailX += (mouseX - trailX) * 0.1;
+                trailY += (mouseY - trailY) * 0.1;
                 
-                const title = document.createElement('div');
-                title.className = 'group-title';
-                title.textContent = this.capitalizeFirstLetter(groupName);
-                
-                const count = document.createElement('div');
-                count.className = 'group-count';
-                count.textContent = groups[groupName].length;
-                
-                header.appendChild(title);
-                header.appendChild(count);
-                
-                const itemsDiv = document.createElement('div');
-                itemsDiv.className = 'history-items';
-                
-                groups[groupName].forEach(chat => {
-                    const item = document.createElement('button');
-                    item.className = 'history-item';
-                    item.innerHTML = `
-                        <i class="fas fa-comment history-item-icon"></i>
-                        <div class="history-item-content">${this.escapeHtml(chat.title)}</div>
-                        <div class="history-item-time">${new Date(chat.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                    `;
-                    
-                    item.addEventListener('click', () => this.loadChat(chat));
-                    itemsDiv.appendChild(item);
-                });
-                
-                groupDiv.appendChild(header);
-                groupDiv.appendChild(itemsDiv);
-                this.elements.historyGroups.appendChild(groupDiv);
+                cursorTrail.style.left = `${trailX}px`;
+                cursorTrail.style.top = `${trailY}px`;
             }
         });
-    }
-
-    searchHistory() {
-        const query = this.elements.historySearch.value.toLowerCase();
-        const items = this.elements.historyGroups.querySelectorAll('.history-item');
         
-        items.forEach(item => {
-            const text = item.querySelector('.history-item-content').textContent.toLowerCase();
-            if (text.includes(query)) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
+        // Hide cursor on leaving window
+        document.addEventListener('mouseleave', () => {
+            cursorDot.style.opacity = '0';
+            cursorTrail.style.opacity = '0';
         });
-    }
-
-    toggleVoiceInput() {
-        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            this.showNotification('Speech recognition not supported in your browser', 'error');
-            return;
-        }
         
-        if (this.state.isListening) {
-            this.stopVoiceInput();
-        } else {
-            this.startVoiceInput();
-        }
-    }
-
-    startVoiceInput() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.recognition = new SpeechRecognition();
-        this.recognition.continuous = false;
-        this.recognition.interimResults = true;
-        this.recognition.lang = 'en-US';
+        document.addEventListener('mouseenter', () => {
+            cursorDot.style.opacity = '1';
+            cursorTrail.style.opacity = '0.3';
+        });
         
-        this.recognition.onstart = () => {
-            this.state.isListening = true;
-            this.elements.voiceInput.classList.add('listening');
-            this.elements.voiceToggle.classList.add('active');
-            this.showNotification('Listening... Speak now', 'info');
-        };
-        
-        this.recognition.onresult = (event) => {
-            let transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                transcript += event.results[i][0].transcript;
-            }
-            this.elements.messageInput.value = transcript;
-            this.autoResizeTextarea();
-        };
-        
-        this.recognition.onerror = (event) => {
-            this.showNotification(`Speech recognition error: ${event.error}`, 'error');
-            this.stopVoiceInput();
-        };
-        
-        this.recognition.onend = () => {
-            this.stopVoiceInput();
-        };
-        
-        this.recognition.start();
-    }
-
-    stopVoiceInput() {
-        if (this.recognition) {
-            this.recognition.stop();
-        }
-        this.state.isListening = false;
-        this.elements.voiceInput.classList.remove('listening');
-        this.elements.voiceToggle.classList.remove('active');
-    }
-
-    // ============================================
-    // FEATURE 13-16: TTS, Focus Mode, Pomodoro
-    // ============================================
-
-    toggleTextToSpeech() {
-        if (this.state.isSpeaking) {
-            this.stopTextToSpeech();
-        } else {
-            this.startTextToSpeech();
-        }
-    }
-
-    startTextToSpeech() {
-        const notesText = this.elements.notesContent.textContent;
-        if (!notesText.trim()) {
-            this.showNotification('No notes to read', 'warning');
-            return;
-        }
-        
-        if ('speechSynthesis' in window) {
-            this.speech = new SpeechSynthesisUtterance(notesText);
-            this.speech.rate = 1.0;
-            this.speech.pitch = 1.0;
-            this.speech.volume = 1.0;
-            this.speech.lang = 'en-US';
-            
-            this.speech.onstart = () => {
-                this.state.isSpeaking = true;
-                this.elements.ttsButton.classList.add('active');
-                this.showNotification('Reading notes...', 'info');
-            };
-            
-            this.speech.onend = () => {
-                this.stopTextToSpeech();
-            };
-            
-            this.speech.onerror = () => {
-                this.showNotification('Failed to read notes', 'error');
-                this.stopTextToSpeech();
-            };
-            
-            speechSynthesis.speak(this.speech);
-        } else {
-            this.showNotification('Text-to-speech not supported in your browser', 'error');
-        }
-    }
-
-    stopTextToSpeech() {
-        if (speechSynthesis.speaking) {
-            speechSynthesis.cancel();
-        }
-        this.state.isSpeaking = false;
-        this.elements.ttsButton.classList.remove('active');
-    }
-
-    toggleFocusMode() {
-        this.state.isFocusMode = !this.state.isFocusMode;
-        
-        if (this.state.isFocusMode) {
-            this.elements.sidebar.classList.add('collapsed');
-            this.elements.mainContent.classList.add('full-width');
-            this.elements.focusMode.classList.add('active');
-            this.showNotification('Focus mode enabled', 'success');
-        } else {
-            this.elements.sidebar.classList.remove('collapsed');
-            this.elements.mainContent.classList.remove('full-width');
-            this.elements.focusMode.classList.remove('active');
-        }
-    }
-
-    togglePomodoro() {
-        this.state.pomodoro.isRunning = !this.state.pomodoro.isRunning;
-        
-        if (this.state.pomodoro.isRunning) {
-            this.elements.timerToggle.innerHTML = '<i class="fas fa-pause"></i>';
-            this.startPomodoroTimer();
-            this.showNotification('Pomodoro timer started', 'success');
-        } else {
-            this.elements.timerToggle.innerHTML = '<i class="fas fa-play"></i>';
-            this.showNotification('Timer paused', 'info');
-        }
-    }
-
-    startPomodoroTimer() {
-        if (!this.state.pomodoro.isRunning) return;
-        
-        const timer = setInterval(() => {
-            if (!this.state.pomodoro.isRunning) {
-                clearInterval(timer);
-                return;
-            }
-            
-            this.state.pomodoro.timeLeft--;
-            this.updatePomodoroDisplay();
-            
-            if (this.state.pomodoro.timeLeft <= 0) {
-                clearInterval(timer);
-                this.pomodoroComplete();
-            }
-        }, 1000);
-    }
-
-    updatePomodoroDisplay() {
-        const minutes = Math.floor(this.state.pomodoro.timeLeft / 60);
-        const seconds = this.state.pomodoro.timeLeft % 60;
-        this.elements.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        
-        const percentage = (this.state.pomodoro.timeLeft / this.state.pomodoro.duration) * 100;
-        this.elements.timerFill.style.width = `${percentage}%`;
-    }
-
-    pomodoroComplete() {
-        this.state.pomodoro.isRunning = false;
-        this.elements.timerToggle.innerHTML = '<i class="fas fa-play"></i>';
-        
-        if (this.state.pomodoro.mode === 'work') {
-            this.showNotification('Work session complete! Take a break.', 'success');
-            this.state.pomodoro.mode = 'break';
-            this.state.pomodoro.timeLeft = 5 * 60; // 5 minute break
-        } else {
-            this.showNotification('Break complete! Back to work.', 'info');
-            this.state.pomodoro.mode = 'work';
-            this.state.pomodoro.timeLeft = this.state.pomodoro.duration;
-        }
-        
-        this.updatePomodoroDisplay();
-    }
-
-    // ============================================
-    // FEATURE 17-20: Quick Prompts, Temperature, System Prompt, Copy
-    // ============================================
-
-    handleQuickPrompt(event) {
-        const prompt = event.currentTarget.getAttribute('data-prompt');
-        this.elements.messageInput.value = prompt;
-        this.autoResizeTextarea();
-        this.showNotification('Prompt loaded. Press Enter to send.', 'info');
-    }
-
-    toggleQuickPrompts() {
-        const grid = this.elements.quickPrompts.querySelector('.prompts-grid');
-        const icon = this.elements.togglePrompts.querySelector('i');
-        
-        grid.classList.toggle('collapsed');
-        if (grid.classList.contains('collapsed')) {
-            icon.className = 'fas fa-chevron-down';
-        } else {
-            icon.className = 'fas fa-chevron-up';
-        }
-    }
-
-    toggleSimplifyMode() {
-        this.state.simplifyMode = !this.state.simplifyMode;
-        this.elements.simplifyToggle.classList.toggle('active', this.state.simplifyMode);
-        
-        const message = this.state.simplifyMode ? 
-            'Simple explanations enabled' : 
-            'Detailed explanations enabled';
-        this.showNotification(message, 'info');
-    }
-
-    copyMessage(messageId) {
-        const message = document.getElementById(messageId);
-        if (message) {
-            const text = message.querySelector('.message-text').textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                this.showNotification('Message copied to clipboard!', 'success');
+        // Interactive elements
+        const interactiveElements = document.querySelectorAll('button, input, textarea, select, a');
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => {
+                cursorDot.style.transform = 'translate(-50%, -50%) scale(1.5)';
+                cursorTrail.style.transform = 'translate(-50%, -50%) scale(1.2)';
             });
-        }
-    }
-
-    copyNotes() {
-        const notesText = this.elements.notesContent.textContent;
-        if (!notesText.trim()) {
-            this.showNotification('No notes to copy', 'warning');
-            return;
-        }
-        
-        navigator.clipboard.writeText(notesText).then(() => {
-            this.showNotification('All notes copied to clipboard!', 'success');
+            
+            el.addEventListener('mouseleave', () => {
+                cursorDot.style.transform = 'translate(-50%, -50%) scale(1)';
+                cursorTrail.style.transform = 'translate(-50%, -50%) scale(1)';
+            });
         });
     }
-
-    // ============================================
-    // FEATURE 21-24: Export MD, Notifications, Skeleton, Retry
-    // ============================================
-
-    exportMarkdown() {
-        const notesText = this.elements.notesContent.textContent;
-        if (!notesText.trim()) {
-            this.showNotification('No notes to export', 'warning');
-            return;
-        }
-        
-        const blob = new Blob([notesText], { type: 'text/markdown' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `savoire-notes-${new Date().toISOString().slice(0, 10)}.md`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        this.showNotification('Notes exported as Markdown', 'success');
-    }
-
-    showNotification(message, type = 'info') {
-        const container = document.getElementById('notificationContainer');
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        
-        const icons = {
-            success: 'fas fa-check-circle',
-            error: 'fas fa-exclamation-circle',
-            info: 'fas fa-info-circle',
-            warning: 'fas fa-exclamation-triangle'
-        };
-        
-        notification.innerHTML = `
-            <div class="notification-icon">
-                <i class="${icons[type]}"></i>
-            </div>
-            <div class="notification-content">
-                <div class="notification-title">${this.capitalizeFirstLetter(type)}</div>
-                <div class="notification-message">${message}</div>
-            </div>
-            <button class="notification-close">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        container.appendChild(notification);
-        
-        // Auto-remove after 5 seconds
+    
+    /**
+     * Show cinematic intro
+     */
+    showCinematicIntro() {
         setTimeout(() => {
-            notification.classList.add('hiding');
-            setTimeout(() => notification.remove(), 300);
-        }, 5000);
-        
-        // Close button
-        notification.querySelector('.notification-close').addEventListener('click', () => {
-            notification.classList.add('hiding');
-            setTimeout(() => notification.remove(), 300);
-        });
-    }
-
-    regenerateMessage(messageId) {
-        const message = document.getElementById(messageId);
-        if (message) {
-            const originalText = message.querySelector('.message-text').textContent;
-            this.elements.messageInput.value = originalText;
-            this.autoResizeTextarea();
-            this.sendMessage();
-            
-            // Remove old message
-            message.remove();
-        }
-    }
-
-    // ============================================
-    // FEATURE 25-28: Edit Messages, Swipe, Shortcuts, Lofi
-    // ============================================
-
-    editMessage(messageId) {
-        const message = document.getElementById(messageId);
-        if (message) {
-            const textElement = message.querySelector('.message-text');
-            const originalText = textElement.textContent;
-            
-            // Create edit input
-            const input = document.createElement('textarea');
-            input.value = originalText;
-            input.className = 'edit-input';
-            input.rows = 3;
-            
-            // Replace text with input
-            textElement.style.display = 'none';
-            textElement.parentElement.insertBefore(input, textElement);
-            
-            // Focus and select
-            input.focus();
-            input.select();
-            
-            // Handle save
-            const saveEdit = () => {
-                const newText = input.value.trim();
-                if (newText && newText !== originalText) {
-                    textElement.textContent = newText;
-                    this.showNotification('Message edited', 'success');
-                    
-                    // Update in state
-                    if (this.state.currentChat) {
-                        const msg = this.state.currentChat.messages.find(m => m.id === messageId);
-                        if (msg) {
-                            msg.content = newText;
-                            this.saveToHistory();
-                        }
-                    }
+            this.elements.introScreen.style.opacity = '0';
+            setTimeout(() => {
+                this.elements.introScreen.style.display = 'none';
+                this.elements.appContainer.style.display = 'grid';
+                
+                // Animate in app container
+                setTimeout(() => {
+                    this.elements.appContainer.style.opacity = '1';
+                }, 100);
+                
+                // Start background music if enabled
+                if (this.state.musicEnabled) {
+                    setTimeout(() => {
+                        this.elements.lofiAudio.play().catch(e => {
+                            console.log('Auto-play prevented:', e);
+                            this.showToast('Music', 'Click play to start background music', 'info');
+                        });
+                    }, 1000);
                 }
-                
-                // Cleanup
-                input.remove();
-                textElement.style.display = 'block';
-            };
-            
-            // Handle Enter and Escape
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    saveEdit();
-                } else if (e.key === 'Escape') {
-                    input.remove();
-                    textElement.style.display = 'block';
-                }
-            });
-            
-            // Save on blur
-            input.addEventListener('blur', saveEdit);
+            }, 1000);
+        }, 4000); // 4 seconds for intro animation
+    }
+    
+    /**
+     * Show welcome modal for first-time users
+     */
+    showWelcomeModal() {
+        this.elements.welcomeModal.classList.add('active');
+        this.elements.welcomeNameInput.focus();
+    }
+    
+    /**
+     * Handle welcome modal submission
+     */
+    handleWelcomeSubmit() {
+        const name = this.elements.welcomeNameInput.value.trim();
+        if (name) {
+            this.state.userName = name;
+            this.updateUserAvatar();
+            localStorage.setItem('savoire-first-visit', 'true');
+            this.showToast(`Welcome, ${name}!`, 'Your learning journey begins now.', 'success');
         }
+        this.elements.welcomeModal.classList.remove('active');
     }
-
-    initializeSwipe() {
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            this.handleSwipe(touchStartX, touchEndX);
-        });
-    }
-
-    handleSwipe(startX, endX) {
-        const threshold = 50;
-        const diff = startX - endX;
-        
-        if (Math.abs(diff) > threshold) {
-            if (diff > 0 && startX < 100) {
-                // Swipe right to left near left edge - open sidebar
-                this.toggleSidebar();
-            } else if (diff < 0 && endX > window.innerWidth - 100) {
-                // Swipe left to right near right edge - close sidebar
-                if (!this.elements.sidebar.classList.contains('collapsed')) {
-                    this.toggleSidebar();
-                }
-            }
-        }
-    }
-
-    initializeKeyboardShortcuts() {
-        document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + Enter to send
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                this.sendMessage();
-            }
-            
-            // Esc to close modals
-            if (e.key === 'Escape') {
-                this.closeModals();
-            }
-            
-            // Ctrl/Cmd + K to focus input
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                this.elements.messageInput.focus();
-            }
-            
-            // Ctrl/Cmd + / for help
-            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-                e.preventDefault();
-                this.showNotification('Keyboard shortcuts: Ctrl+Enter to send, Esc to close, Ctrl+K to focus input', 'info');
-            }
-        });
-    }
-
-    toggleLofi() {
-        this.state.isLofiPlaying = !this.state.isLofiPlaying;
-        
-        if (this.state.isLofiPlaying) {
-            this.elements.lofiPlayer.play().catch(e => {
-                this.showNotification('Failed to play music. Please interact with the page first.', 'error');
-                this.state.isLofiPlaying = false;
-            });
-            this.elements.lofiToggle.classList.add('active');
-            this.showNotification('Lofi music started', 'success');
-        } else {
-            this.elements.lofiPlayer.pause();
-            this.elements.lofiToggle.classList.remove('active');
-        }
-    }
-
-    // ============================================
-    // FEATURE 29-33: Token Mock, Profile, ELI5, Image, Console
-    // ============================================
-
-    updateTokenUsage(tokens) {
-        this.state.tokensUsed += tokens;
-        if (this.state.tokensUsed > this.state.maxTokens) {
-            this.state.tokensUsed = this.state.maxTokens;
-        }
-        this.updateTokenMeter();
-    }
-
-    updateTokenMeter() {
-        const percentage = (this.state.tokensUsed / this.state.maxTokens) * 100;
-        this.elements.tokenFill.style.width = `${percentage}%`;
-        this.elements.tokenCount.textContent = `${this.state.tokensUsed.toLocaleString()}/${this.state.maxTokens.toLocaleString()}`;
-    }
-
-    changeProfile() {
-        this.state.settings.userName = this.elements.userNameInput.value;
-        this.elements.userName.textContent = this.state.settings.userName;
-        this.showNotification('Profile updated', 'success');
-    }
-
-    changeAvatar(avatar) {
-        this.state.settings.userAvatar = avatar;
-        const icon = {
-            user: 'fas fa-user',
-            robot: 'fas fa-robot',
-            graduation: 'fas fa-graduation-cap',
-            brain: 'fas fa-brain'
-        }[avatar];
-        
-        this.elements.userAvatar.innerHTML = `<i class="${icon}"></i>`;
-        this.showNotification('Avatar updated', 'success');
-    }
-
-    handleImageUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        if (!file.type.startsWith('image/')) {
-            this.showNotification('Please upload an image file', 'error');
-            return;
-        }
-        
-        if (file.size > 5 * 1024 * 1024) {
-            this.showNotification('Image must be less than 5MB', 'error');
-            return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            this.state.currentImage = e.target.result;
-            this.showImagePreview(this.state.currentImage);
-        };
-        reader.readAsDataURL(file);
-    }
-
-    showImagePreview(imageData) {
-        this.elements.previewImage.src = imageData;
-        this.elements.imageModal.classList.add('active');
-    }
-
-    closeImageModal() {
-        this.elements.imageModal.classList.remove('active');
-    }
-
-    analyzeImage() {
-        if (!this.state.currentImage) return;
-        
-        this.closeImageModal();
-        this.elements.messageInput.value = 'Analyze this image and describe what you see in detail.';
-        this.autoResizeTextarea();
-        this.sendMessage();
-    }
-
-    removeImage() {
-        this.state.currentImage = null;
-        this.closeImageModal();
-        this.showNotification('Image removed', 'info');
-    }
-
-    toggleConsole() {
-        this.state.isConsoleOpen = !this.state.isConsoleOpen;
-        this.elements.developerConsole.classList.toggle('active', this.state.isConsoleOpen);
-    }
-
-    executeConsoleCommand() {
-        const command = this.elements.consoleCommand.value.trim();
-        if (!command) return;
-        
-        this.log(`> ${command}`, 'info');
-        this.elements.consoleCommand.value = '';
-        
-        // Simple command parser
-        const parts = command.toLowerCase().split(' ');
-        const cmd = parts[0];
-        const args = parts.slice(1);
-        
-        switch (cmd) {
-            case 'help':
-                this.log('Available commands:', 'info');
-                this.log('  help - Show this help', 'info');
-                this.log('  clear - Clear console', 'info');
-                this.log('  status - Show app status', 'info');
-                this.log('  history - Show chat history', 'info');
-                this.log('  tokens - Show token usage', 'info');
-                this.log('  theme [name] - Change theme', 'info');
-                break;
-                
-            case 'clear':
-                this.elements.consoleOutput.innerHTML = '';
-                break;
-                
-            case 'status':
-                this.log('App Status:', 'success');
-                this.log(`  Current Model: ${this.state.currentModel}`, 'info');
-                this.log(`  Temperature: ${this.state.temperature}`, 'info');
-                this.log(`  Simplify Mode: ${this.state.simplifyMode}`, 'info');
-                this.log(`  Focus Mode: ${this.state.isFocusMode}`, 'info');
-                this.log(`  Pomodoro: ${this.state.pomodoro.isRunning ? 'Running' : 'Paused'}`, 'info');
-                break;
-                
-            case 'history':
-                this.log(`Total chats: ${this.state.history.length}`, 'info');
-                this.state.history.slice(0, 5).forEach(chat => {
-                    this.log(`  ${new Date(chat.timestamp).toLocaleDateString()}: ${chat.title}`, 'info');
-                });
-                break;
-                
-            case 'tokens':
-                this.log(`Tokens used: ${this.state.tokensUsed}/${this.state.maxTokens}`, 'info');
-                this.log(`Percentage: ${(this.state.tokensUsed / this.state.maxTokens * 100).toFixed(1)}%`, 'info');
-                break;
-                
-            case 'theme':
-                if (args[0]) {
-                    this.changeTheme({ currentTarget: { dataset: { theme: args[0] } } });
-                    this.log(`Theme changed to ${args[0]}`, 'success');
-                } else {
-                    this.log('Please specify a theme: dark, light, blue, purple', 'error');
-                }
-                break;
-                
-            default:
-                this.log(`Unknown command: ${cmd}. Type 'help' for available commands.`, 'error');
-        }
-    }
-
-    log(message, type = 'info') {
-        const logEntry = document.createElement('div');
-        logEntry.className = `console-log ${type}`;
-        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-        
-        this.elements.consoleOutput.appendChild(logEntry);
-        this.elements.consoleOutput.scrollTop = this.elements.consoleOutput.scrollHeight;
-    }
-
-    // ============================================
-    // PDF Generation (Feature 8)
-    // ============================================
-
-    async downloadPDF() {
-        const notesElement = this.elements.notesContent;
-        if (!notesElement.innerHTML.trim()) {
-            this.showNotification('No notes to export as PDF', 'warning');
-            return;
-        }
-        
-        this.showNotification('Generating PDF...', 'info');
-        
-        const opt = {
-            margin: [10, 10],
-            filename: `savoire-notes-${new Date().toISOString().slice(0, 10)}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#050505'
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait' 
-            }
-        };
-        
-        try {
-            // Create a temporary element with gold theme for PDF
-            const tempElement = document.createElement('div');
-            tempElement.style.cssText = `
-                background: #050505;
-                color: #FFD700;
-                padding: 20px;
-                font-family: 'Inter', sans-serif;
-            `;
-            tempElement.innerHTML = notesElement.innerHTML;
-            
-            // Add header
-            const header = document.createElement('div');
-            header.style.cssText = `
-                text-align: center;
-                margin-bottom: 30px;
-                border-bottom: 2px solid #FFD700;
-                padding-bottom: 10px;
-            `;
-            header.innerHTML = `
-                <h1 style="color: #FFD700; margin: 0;">Savoiré AI Study Notes</h1>
-                <p style="color: #cccccc; margin: 5px 0;">Generated on ${new Date().toLocaleDateString()}</p>
-                <p style="color: #888888; margin: 0;">by Sooban Talha Technologies</p>
-            `;
-            
-            tempElement.insertBefore(header, tempElement.firstChild);
-            
-            await html2pdf().set(opt).from(tempElement).save();
-            this.showNotification('PDF downloaded successfully!', 'success');
-        } catch (error) {
-            this.showNotification('Failed to generate PDF', 'error');
-            this.log(`PDF Error: ${error.message}`, 'error');
-        }
-    }
-
-    // ============================================
-    // Settings Management
-    // ============================================
-
-    openSettings() {
-        this.elements.settingsModal.classList.add('active');
-        
-        // Load current settings into form
-        this.elements.userNameInput.value = this.state.settings.userName;
-        document.getElementById('systemPrompt').value = this.state.systemPrompt;
-        document.getElementById('autoSave').checked = this.state.settings.autoSave;
-        document.getElementById('enableAnimations').checked = this.state.settings.enableAnimations;
-        document.getElementById('includeExamples').checked = this.state.settings.includeExamples;
-        document.getElementById('pomodoroDuration').value = this.state.settings.pomodoroDuration;
-        document.getElementById('defaultModel').value = this.state.settings.defaultModel;
-        
-        // Set active avatar
-        document.querySelectorAll('.avatar-option').forEach(option => {
-            option.classList.remove('selected');
-            if (option.dataset.avatar === this.state.settings.userAvatar) {
-                option.classList.add('selected');
-            }
-        });
-    }
-
-    closeSettings() {
-        this.elements.settingsModal.classList.remove('active');
-    }
-
-    saveSettings() {
-        // Save settings
-        this.state.settings.userName = this.elements.userNameInput.value;
-        this.state.systemPrompt = document.getElementById('systemPrompt').value;
-        this.state.settings.autoSave = document.getElementById('autoSave').checked;
-        this.state.settings.enableAnimations = document.getElementById('enableAnimations').checked;
-        this.state.settings.includeExamples = document.getElementById('includeExamples').checked;
-        this.state.settings.pomodoroDuration = parseInt(document.getElementById('pomodoroDuration').value);
-        this.state.settings.defaultModel = document.getElementById('defaultModel').value;
-        
-        // Update UI
-        this.elements.userName.textContent = this.state.settings.userName;
-        this.state.currentModel = this.state.settings.defaultModel;
-        this.elements.modelSelect.value = this.state.currentModel;
-        this.elements.currentModel.textContent = this.getModelName(this.state.currentModel);
-        
-        // Update pomodoro
-        this.state.pomodoro.duration = this.state.settings.pomodoroDuration * 60;
-        this.state.pomodoro.timeLeft = this.state.pomodoro.duration;
-        this.updatePomodoroDisplay();
-        
-        // Save to localStorage
-        this.saveState();
-        
-        this.closeSettings();
-        this.showNotification('Settings saved successfully!', 'success');
-    }
-
-    resetSettings() {
-        if (confirm('Are you sure you want to reset all settings to defaults?')) {
-            // Reset to defaults
-            this.state.settings = {
-                userName: 'Student',
-                userAvatar: 'user',
-                autoSave: true,
-                enableAnimations: true,
-                includeExamples: true,
-                pomodoroDuration: 25,
-                defaultModel: 'google/gemini-2.0-flash-exp:free'
-            };
-            
-            this.state.systemPrompt = "You are Savoiré AI, an advanced study assistant created by Sooban Talha Technologies. You help students learn complex topics by providing detailed, accurate, and engaging explanations. Always format responses with proper markdown, include examples when relevant, and break down complex concepts into digestible parts.";
-            this.state.temperature = 0.7;
-            this.state.simplifyMode = false;
-            
-            // Update UI
-            this.openSettings(); // Reload form with defaults
-            this.showNotification('Settings reset to defaults', 'info');
-        }
-    }
-
-    switchTab(event) {
-        const tabName = event.currentTarget.dataset.tab;
-        
-        // Update tabs
-        this.elements.tabs.forEach(tab => tab.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        
-        // Update content
-        this.elements.tabContents.forEach(content => {
-            content.classList.remove('active');
-            if (content.id === `${tabName}Tab`) {
-                content.classList.add('active');
-            }
-        });
-    }
-
-    changeTheme(event) {
-        const theme = event.currentTarget.dataset.theme;
-        
-        // Update theme options
-        this.elements.themeOptions.forEach(option => {
-            option.classList.remove('selected');
-        });
-        event.currentTarget.classList.add('selected');
-        
-        // Apply theme
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('savoire_theme', theme);
-        
-        this.showNotification(`Theme changed to ${theme}`, 'success');
-    }
-
-    // ============================================
-    // Wormhole Background (Advanced Animation)
-    // ============================================
-
-    initializeWormhole() {
-        const canvas = this.elements.wormholeCanvas;
+    
+    /**
+     * Initialize wormhole particle system
+     */
+    initWormhole() {
+        const canvas = document.getElementById('wormholeCanvas');
         const ctx = canvas.getContext('2d');
         
         // Set canvas size
-        const resizeCanvas = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        };
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         
         // Particle system
         const particles = [];
@@ -1528,46 +413,51 @@ class SavoireAI {
                 size: Math.random() * 2 + 1,
                 speedX: Math.random() * 2 - 1,
                 speedY: Math.random() * 2 - 1,
-                color: `rgba(255, 215, 0, ${Math.random() * 0.5 + 0.1})`
+                color: `rgba(255, 215, 0, ${Math.random() * 0.3 + 0.1})`
             });
         }
         
+        // Mouse position
+        let mouseX = canvas.width / 2;
+        let mouseY = canvas.height / 2;
+        
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
         // Animation loop
         const animate = () => {
-            if (!this.state.settings.enableAnimations) {
+            if (!this.state.animationsEnabled) {
                 requestAnimationFrame(animate);
                 return;
             }
             
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Create wormhole gradient
-            const gradient = ctx.createRadialGradient(
-                canvas.width / 2,
-                canvas.height / 2,
-                0,
-                canvas.width / 2,
-                canvas.height / 2,
-                Math.min(canvas.width, canvas.height) / 2
-            );
-            gradient.addColorStop(0, 'rgba(255, 215, 0, 0.1)');
-            gradient.addColorStop(0.5, 'rgba(255, 215, 0, 0.05)');
-            gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
-            
-            ctx.fillStyle = gradient;
+            // Clear with fade effect
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // Update and draw particles
             particles.forEach(particle => {
-                // Update position
-                particle.x += particle.speedX;
-                particle.y += particle.speedY;
+                // Move towards mouse (wormhole effect)
+                const dx = mouseX - particle.x;
+                const dy = mouseY - particle.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                // Wrap around edges
-                if (particle.x < 0) particle.x = canvas.width;
-                if (particle.x > canvas.width) particle.x = 0;
-                if (particle.y < 0) particle.y = canvas.height;
-                if (particle.y > canvas.height) particle.y = 0;
+                if (distance < 150) {
+                    // Suck into wormhole
+                    const force = (150 - distance) / 150;
+                    particle.x += dx * 0.01 * force;
+                    particle.y += dy * 0.01 * force;
+                } else {
+                    // Normal movement
+                    particle.x += particle.speedX;
+                    particle.y += particle.speedY;
+                }
+                
+                // Bounce off edges
+                if (particle.x < 0 || particle.x > canvas.width) particle.speedX *= -1;
+                if (particle.y < 0 || particle.y > canvas.height) particle.speedY *= -1;
                 
                 // Draw particle
                 ctx.beginPath();
@@ -1575,7 +465,7 @@ class SavoireAI {
                 ctx.fillStyle = particle.color;
                 ctx.fill();
                 
-                // Draw connections
+                // Draw connection lines
                 particles.forEach(otherParticle => {
                     const dx = particle.x - otherParticle.x;
                     const dy = particle.y - otherParticle.y;
@@ -1596,237 +486,1272 @@ class SavoireAI {
         };
         
         animate();
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        this.wormhole = { canvas, ctx, particles };
     }
-
-    // ============================================
-    // Utility Methods
-    // ============================================
-
-    autoResizeTextarea() {
-        const textarea = this.elements.messageInput;
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    
+    /**
+     * Initialize speech synthesis
+     */
+    initSpeech() {
+        if ('speechSynthesis' in window) {
+            // Get available voices
+            const voices = this.speech.getVoices();
+            if (voices.length > 0) {
+                // Prefer English voices
+                const englishVoice = voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+                this.speechVoice = englishVoice;
+            }
+        }
     }
-
-    handleKeyDown(event) {
-        // Enter to send (without Shift)
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
+    
+    /**
+     * Setup keyboard shortcuts
+     */
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+K for history search
+            if (e.ctrlKey && e.key === 'k') {
+                e.preventDefault();
+                this.toggleHistorySidebar();
+                return;
+            }
+            
+            // Ctrl+Enter to send message
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                this.sendMessage();
+                return;
+            }
+            
+            // Shift+Enter for new line
+            if (e.shiftKey && e.key === 'Enter') {
+                // Allow default behavior (new line)
+                return;
+            }
+            
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                this.hideSettings();
+                this.hideHistorySidebar();
+                this.hideDevConsole();
+                return;
+            }
+            
+            // Ctrl+/ for dev console
+            if (e.ctrlKey && e.key === '/') {
+                e.preventDefault();
+                this.toggleDevConsole();
+                return;
+            }
+        });
+    }
+    
+    /**
+     * Handle image upload
+     */
+    handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        if (!file.type.startsWith('image/')) {
+            this.showToast('Invalid File', 'Please upload an image file', 'error');
+            return;
+        }
+        
+        this.processImage(file);
+    }
+    
+    /**
+     * Handle image drop
+     */
+    handleImageDrop(event) {
+        event.preventDefault();
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            this.processImage(file);
+        }
+    }
+    
+    /**
+     * Process image for AI analysis
+     */
+    async processImage(file) {
+        this.showToast('Processing Image', 'Converting image for AI analysis...', 'info');
+        
+        try {
+            const base64 = await this.fileToBase64(file);
+            const message = `Analyze this image: ${base64}`;
+            this.elements.messageInput.value = message;
+            this.autoResizeInput();
+            
+            this.showToast('Image Ready', 'Image uploaded successfully. Press send to analyze.', 'success');
+            
+            // Scroll to input
+            this.elements.messageInput.focus();
+        } catch (error) {
+            this.showToast('Image Error', 'Failed to process image', 'error');
+            this.log('ERROR', `Image processing failed: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Convert file to base64
+     */
+    fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+    
+    /**
+     * Send message to AI
+     */
+    async sendMessage() {
+        const message = this.elements.messageInput.value.trim();
+        if (!message || this.state.isGenerating) return;
+        
+        // Add user message to chat
+        this.addMessage(message, 'user');
+        
+        // Clear input
+        this.elements.messageInput.value = '';
+        this.autoResizeInput();
+        
+        // Show generating indicator
+        this.showGeneratingIndicator();
+        
+        // Save to history
+        this.saveToHistory(message);
+        
+        try {
+            // Generate AI response
+            const startTime = Date.now();
+            const response = await this.generateAIResponse(message);
+            const latency = Date.now() - startTime;
+            
+            // Update stats
+            this.state.apiStats.calls++;
+            this.state.apiStats.totalLatency += latency;
+            this.updateStatsUI();
+            
+            // Hide generating indicator
+            this.hideGeneratingIndicator();
+            
+            // Add AI response with typewriter effect
+            this.addMessage(response, 'ai', true);
+            
+            // Update notes panel
+            this.updateNotesPanel(response);
+            
+            // Log success
+            this.log('INFO', `AI response generated in ${latency}ms`);
+            
+        } catch (error) {
+            this.hideGeneratingIndicator();
+            this.showToast('AI Error', error.message, 'error');
+            this.log('ERROR', `AI generation failed: ${error.message}`);
+            
+            // Add error message
+            this.addMessage(`
+                <div class="error-message">
+                    <h3>Unable to Generate Response</h3>
+                    <p>${this.escapeHtml(error.message)}</p>
+                    <button class="regenerate-btn" onclick="savoireApp.regenerateLast()">
+                        <i class="fas fa-redo"></i> Try Again
+                    </button>
+                </div>
+            `, 'ai');
+            
+            this.state.apiStats.errors++;
+        }
+    }
+    
+    /**
+     * Generate AI response using multiple models (race condition)
+     */
+    async generateAIResponse(message) {
+        const models = [
+            this.state.currentModel,
+            'google/gemini-2.0-flash-exp:free',
+            'deepseek/deepseek-chat-v3.1:free',
+            'meta-llama/llama-3.2-3b-instruct:free'
+        ].filter((model, index, self) => self.indexOf(model) === index); // Remove duplicates
+        
+        const prompt = `${this.state.systemPrompt}\n\nUser: ${message}`;
+        
+        // Try models in sequence
+        for (const model of models) {
+            try {
+                this.log('INFO', `Trying model: ${model}`);
+                
+                const response = await fetch('/api/study', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: prompt,
+                        model: model,
+                        includeImage: message.includes('data:image')
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update token count
+                if (data.tokens) {
+                    this.state.apiStats.totalTokens += data.tokens;
+                }
+                
+                return data.response || data.text || 'No response generated';
+                
+            } catch (error) {
+                this.log('WARN', `Model ${model} failed: ${error.message}`);
+                continue; // Try next model
+            }
+        }
+        
+        throw new Error('All AI models failed. Please try again.');
+    }
+    
+    /**
+     * Add message to chat
+     */
+    addMessage(content, type, withTypewriter = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // Create avatar
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        
+        if (type === 'user') {
+            avatar.innerHTML = this.state.userName.charAt(0).toUpperCase();
+            avatar.style.background = this.state.userAvatarColor;
+            avatar.style.color = this.getContrastColor(this.state.userAvatarColor);
+        } else {
+            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+        }
+        
+        // Create content
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        if (type === 'user') {
+            contentDiv.innerHTML = `
+                <div class="message-text">${this.escapeHtml(content)}</div>
+                <div class="message-time">${time}</div>
+            `;
+        } else if (withTypewriter) {
+            contentDiv.innerHTML = `
+                <div class="message-text typewriter" id="typewriter-${Date.now()}">${this.escapeHtml(content)}</div>
+                <div class="message-time">${time}</div>
+            `;
+            
+            // Trigger typewriter effect after a delay
+            setTimeout(() => {
+                const textElement = contentDiv.querySelector('.typewriter');
+                if (textElement) {
+                    this.typewriterEffect(textElement, content);
+                }
+            }, 100);
+        } else {
+            contentDiv.innerHTML = content + `<div class="message-time">${time}</div>`;
+        }
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(contentDiv);
+        
+        this.elements.chatHistory.appendChild(messageDiv);
+        this.scrollToBottom();
+        
+        // Add to conversation state
+        this.state.conversation.push({ type, content, time });
+    }
+    
+    /**
+     * Typewriter effect for AI responses
+     */
+    typewriterEffect(element, text) {
+        element.style.borderRight = '2px solid var(--color-cyber-gold)';
+        element.style.width = '0';
+        element.style.whiteSpace = 'nowrap';
+        element.style.overflow = 'hidden';
+        
+        let i = 0;
+        const speed = 20; // ms per character
+        
+        const type = () => {
+            if (i < text.length) {
+                element.innerHTML = this.escapeHtml(text.substring(0, i + 1));
+                element.style.width = `${((i + 1) / text.length) * 100}%`;
+                i++;
+                setTimeout(type, speed);
+            } else {
+                element.style.borderRight = 'none';
+                element.style.width = 'auto';
+                element.style.whiteSpace = 'normal';
+                
+                // Render markdown and math after typing
+                setTimeout(() => {
+                    this.renderMarkdown(element);
+                    this.renderMath(element);
+                }, 100);
+            }
+        };
+        
+        type();
+    }
+    
+    /**
+     * Show generating indicator
+     */
+    showGeneratingIndicator() {
+        this.state.isGenerating = true;
+        this.elements.sendButton.disabled = true;
+        
+        // Add thinking message
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'message ai';
+        thinkingDiv.id = 'thinking-message';
+        thinkingDiv.innerHTML = `
+            <div class="message-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+                <div class="thinking-indicator">
+                    <div class="spinner"></div>
+                    <span>Toppers don't rush, they wait for clarity — your clarity is loading 📘🚀...</span>
+                </div>
+            </div>
+        `;
+        
+        this.elements.chatHistory.appendChild(thinkingDiv);
+        this.scrollToBottom();
+    }
+    
+    /**
+     * Hide generating indicator
+     */
+    hideGeneratingIndicator() {
+        this.state.isGenerating = false;
+        this.elements.sendButton.disabled = false;
+        
+        const thinkingMessage = document.getElementById('thinking-message');
+        if (thinkingMessage) {
+            thinkingMessage.remove();
+        }
+    }
+    
+    /**
+     * Regenerate last response
+     */
+    async regenerateLast() {
+        const lastUserMessage = this.state.conversation
+            .filter(msg => msg.type === 'user')
+            .pop();
+            
+        if (lastUserMessage) {
+            this.elements.messageInput.value = lastUserMessage.content;
             this.sendMessage();
         }
     }
-
-    createNewChat() {
-        this.state.currentChat = {
-            id: Date.now(),
-            title: 'New Chat',
-            messages: [],
-            timestamp: new Date().toISOString()
-        };
+    
+    /**
+     * Update notes panel with AI response
+     */
+    updateNotesPanel(content) {
+        // Parse and format the content
+        let formattedContent = marked.parse(content);
         
-        this.elements.messagesContainer.innerHTML = '';
-        this.elements.notesContent.innerHTML = document.querySelector('.notes-empty').outerHTML;
-        this.elements.currentChatTitle.textContent = 'New Chat';
-        
-        this.showNotification('New chat created', 'success');
-    }
-
-    loadChat(chat) {
-        this.state.currentChat = chat;
-        
-        // Clear messages
-        this.elements.messagesContainer.innerHTML = '';
-        
-        // Load messages
-        chat.messages.forEach(msg => {
-            this.addMessage(msg.content, msg.type);
+        // Add syntax highlighting
+        formattedContent = formattedContent.replace(/<pre><code class="language-(\w+)">/g, (match, lang) => {
+            return `
+                <div class="code-header">
+                    <span>${lang.toUpperCase()}</span>
+                    <button class="copy-code-btn" onclick="savoireApp.copyCode(this)">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <pre><code class="language-${lang}">
+            `;
         });
         
-        // Update title
-        this.elements.currentChatTitle.textContent = chat.title;
+        // Update notes content
+        this.elements.notesContent.innerHTML = formattedContent;
         
-        // Update notes with last AI message
-        const lastAIMessage = chat.messages.filter(m => m.type === 'ai').pop();
-        if (lastAIMessage) {
-            this.updateNotesPanel(lastAIMessage.content);
+        // Apply Prism highlighting
+        Prism.highlightAllUnder(this.elements.notesContent);
+        
+        // Render math equations
+        this.renderMath(this.elements.notesContent);
+        
+        // Add copy functionality to code blocks
+        this.setupCodeCopyButtons();
+    }
+    
+    /**
+     * Render math equations using KaTeX
+     */
+    renderMath(element) {
+        try {
+            renderMathInElement(element, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        } catch (error) {
+            console.warn('KaTeX rendering error:', error);
+        }
+    }
+    
+    /**
+     * Render markdown
+     */
+    renderMarkdown(element) {
+        const html = marked.parse(element.innerHTML);
+        element.innerHTML = html;
+    }
+    
+    /**
+     * Setup copy buttons for code blocks
+     */
+    setupCodeCopyButtons() {
+        const codeBlocks = this.elements.notesContent.querySelectorAll('pre code');
+        codeBlocks.forEach((codeBlock, index) => {
+            // Check if already has copy button
+            if (!codeBlock.closest('div').querySelector('.copy-code-btn')) {
+                const container = codeBlock.closest('pre');
+                const lang = codeBlock.className.replace('language-', '') || 'code';
+                
+                const header = document.createElement('div');
+                header.className = 'code-header';
+                header.innerHTML = `
+                    <span>${lang.toUpperCase()}</span>
+                    <button class="copy-code-btn" onclick="savoireApp.copyCode(this)">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                `;
+                
+                container.parentNode.insertBefore(header, container);
+            }
+        });
+    }
+    
+    /**
+     * Copy code to clipboard
+     */
+    copyCode(button) {
+        const codeBlock = button.closest('.code-header').nextElementSibling.querySelector('code');
+        const code = codeBlock.textContent;
+        
+        navigator.clipboard.writeText(code).then(() => {
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            button.style.background = 'var(--color-success)';
+            button.style.borderColor = 'var(--color-success)';
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.style.background = '';
+                button.style.borderColor = '';
+            }, 2000);
+        }).catch(err => {
+            this.showToast('Copy Failed', 'Could not copy code to clipboard', 'error');
+        });
+    }
+    
+    /**
+     * Export notes to PDF
+     */
+    async exportToPDF() {
+        this.showToast('Exporting', 'Generating PDF document...', 'info');
+        
+        try {
+            const element = this.elements.notesContent;
+            const opt = {
+                margin: [10, 10, 10, 10],
+                filename: `SavoireAI_Notes_${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { 
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#0a0a0a'
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait' 
+                }
+            };
+            
+            // Create PDF
+            await html2pdf().set(opt).from(element).save();
+            
+            this.showToast('PDF Exported', 'Document downloaded successfully', 'success');
+            this.log('INFO', 'PDF exported successfully');
+            
+        } catch (error) {
+            this.showToast('Export Failed', 'Could not generate PDF', 'error');
+            this.log('ERROR', `PDF export failed: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Toggle read aloud for notes
+     */
+    toggleReadAloud() {
+        if (this.currentSpeech && this.speech.speaking) {
+            this.speech.cancel();
+            this.elements.readAloudBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            this.showToast('Read Aloud', 'Stopped reading', 'info');
+        } else {
+            const text = this.elements.notesContent.textContent;
+            if (text.trim().length < 50) {
+                this.showToast('Read Aloud', 'Not enough content to read', 'warning');
+                return;
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text.substring(0, 5000)); // Limit length
+            utterance.voice = this.speechVoice;
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            utterance.onstart = () => {
+                this.elements.readAloudBtn.innerHTML = '<i class="fas fa-stop"></i>';
+                this.showToast('Read Aloud', 'Started reading notes', 'info');
+            };
+            
+            utterance.onend = () => {
+                this.elements.readAloudBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            };
+            
+            utterance.onerror = (event) => {
+                console.error('Speech synthesis error:', event);
+                this.elements.readAloudBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                this.showToast('Read Aloud', 'Speech synthesis failed', 'error');
+            };
+            
+            this.speech.speak(utterance);
+            this.currentSpeech = utterance;
+        }
+    }
+    
+    /**
+     * Toggle voice input
+     */
+    toggleVoiceInput() {
+        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            this.showToast('Voice Input', 'Not supported in your browser', 'warning');
+            return;
         }
         
-        // Close sidebar on mobile
-        if (window.innerWidth < 768) {
-            this.toggleSidebar();
+        if (this.voiceRecognition && this.voiceRecognition.recording) {
+            this.stopVoiceInput();
+        } else {
+            this.startVoiceInput();
+        }
+    }
+    
+    /**
+     * Start voice input
+     */
+    startVoiceInput() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        this.voiceRecognition = new SpeechRecognition();
+        
+        this.voiceRecognition.continuous = false;
+        this.voiceRecognition.interimResults = false;
+        this.voiceRecognition.lang = 'en-US';
+        
+        this.voiceRecognition.onstart = () => {
+            this.elements.voiceInputBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+            this.elements.voiceInputBtn.style.background = 'rgba(239, 68, 68, 0.2)';
+            this.showToast('Voice Input', 'Listening... Speak now', 'info');
+        };
+        
+        this.voiceRecognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            this.elements.messageInput.value += transcript + ' ';
+            this.autoResizeInput();
+        };
+        
+        this.voiceRecognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            this.showToast('Voice Input', `Error: ${event.error}`, 'error');
+            this.stopVoiceInput();
+        };
+        
+        this.voiceRecognition.onend = () => {
+            this.stopVoiceInput();
+        };
+        
+        this.voiceRecognition.recording = true;
+        this.voiceRecognition.start();
+    }
+    
+    /**
+     * Stop voice input
+     */
+    stopVoiceInput() {
+        if (this.voiceRecognition) {
+            this.voiceRecognition.stop();
+            this.voiceRecognition.recording = false;
+            this.elements.voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            this.elements.voiceInputBtn.style.background = '';
+        }
+    }
+    
+    /**
+     * Toggle focus mode
+     */
+    toggleFocusMode() {
+        this.state.isFocusMode = !this.state.isFocusMode;
+        this.elements.mainGrid.classList.toggle('focus-mode', this.state.isFocusMode);
+        
+        const icon = this.elements.focusToggle.querySelector('i');
+        if (this.state.isFocusMode) {
+            icon.className = 'fas fa-compress';
+            this.showToast('Focus Mode', 'Entered focus mode', 'success');
+        } else {
+            icon.className = 'fas fa-expand';
+            this.showToast('Focus Mode', 'Exited focus mode', 'info');
+        }
+    }
+    
+    /**
+     * Toggle fullscreen notes
+     */
+    toggleFullscreenNotes() {
+        const notesPane = this.elements.notesContent.closest('.notes-pane');
+        
+        if (!document.fullscreenElement) {
+            if (notesPane.requestFullscreen) {
+                notesPane.requestFullscreen();
+            } else if (notesPane.webkitRequestFullscreen) {
+                notesPane.webkitRequestFullscreen();
+            }
+            this.elements.fullscreenNotesBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            this.elements.fullscreenNotesBtn.innerHTML = '<i class="fas fa-expand"></i>';
+        }
+    }
+    
+    /**
+     * Toggle pomodoro timer
+     */
+    toggleTimer() {
+        this.state.isTimerRunning = !this.state.isTimerRunning;
+        
+        const icon = this.elements.timerToggle.querySelector('i');
+        if (this.state.isTimerRunning) {
+            icon.className = 'fas fa-pause';
+            this.startTimer();
+            this.showToast('Pomodoro Timer', 'Timer started - 25 minutes', 'info');
+        } else {
+            icon.className = 'fas fa-play';
+            this.showToast('Pomodoro Timer', 'Timer paused', 'info');
+        }
+    }
+    
+    /**
+     * Start pomodoro timer
+     */
+    startTimer() {
+        if (!this.state.isTimerRunning) return;
+        
+        const timer = () => {
+            if (!this.state.isTimerRunning) return;
+            
+            if (this.state.pomodoroTime > 0) {
+                this.state.pomodoroTime--;
+                this.updateTimerDisplay();
+                
+                // Check for break time
+                if (this.state.pomodoroTime === 0) {
+                    this.showToast('Time\'s Up!', 'Take a 5-minute break', 'success');
+                    new Notification('Savoiré AI', {
+                        body: 'Pomodoro session complete! Take a 5-minute break.',
+                        icon: 'LOGO.png'
+                    });
+                    
+                    // Reset for break
+                    this.state.pomodoroTime = 5 * 60; // 5 minute break
+                }
+                
+                setTimeout(timer, 1000);
+            }
+        };
+        
+        timer();
+    }
+    
+    /**
+     * Update timer display
+     */
+    updateTimerDisplay() {
+        const minutes = Math.floor(this.state.pomodoroTime / 60);
+        const seconds = this.state.pomodoroTime % 60;
+        this.elements.timerDisplay.textContent = 
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    /**
+     * Reset timer
+     */
+    resetTimer() {
+        this.state.isTimerRunning = false;
+        this.state.pomodoroTime = 25 * 60;
+        this.updateTimerDisplay();
+        
+        this.elements.timerToggle.querySelector('i').className = 'fas fa-play';
+        this.showToast('Pomodoro Timer', 'Timer reset to 25 minutes', 'info');
+    }
+    
+    /**
+     * Toggle background music
+     */
+    toggleMusic() {
+        if (this.state.isMusicPlaying) {
+            this.elements.lofiAudio.pause();
+        } else {
+            this.elements.lofiAudio.play().catch(e => {
+                this.showToast('Music', 'Could not play music. Click to enable.', 'warning');
+            });
+        }
+    }
+    
+    /**
+     * Toggle mute
+     */
+    toggleMute() {
+        this.elements.lofiAudio.muted = !this.elements.lofiAudio.muted;
+        const icon = this.elements.volumeToggleBtn.querySelector('i');
+        icon.className = this.elements.lofiAudio.muted ? 'fas fa-volume-mute' : 'fas fa-volume-up';
+    }
+    
+    /**
+     * Update music UI
+     */
+    updateMusicUI() {
+        const playIcon = this.elements.playPauseBtn.querySelector('i');
+        const status = this.elements.playerStatus;
+        
+        if (this.state.isMusicPlaying) {
+            playIcon.className = 'fas fa-pause';
+            status.textContent = 'Playing';
+            status.style.color = 'var(--color-success)';
+        } else {
+            playIcon.className = 'fas fa-play';
+            status.textContent = 'Paused';
+            status.style.color = 'var(--color-text-muted)';
+        }
+    }
+    
+    /**
+     * Show settings modal
+     */
+    showSettings() {
+        // Load current settings
+        this.elements.userNameInput.value = this.state.userName;
+        this.elements.avatarColorPicker.value = this.state.userAvatarColor;
+        this.elements.animationsToggle.checked = this.state.animationsEnabled;
+        this.elements.musicToggle.checked = this.state.musicEnabled;
+        this.elements.defaultModelSelect.value = this.state.currentModel;
+        this.elements.systemPromptInput.value = this.state.systemPrompt;
+        
+        this.elements.settingsModal.classList.add('active');
+    }
+    
+    /**
+     * Hide settings modal
+     */
+    hideSettings() {
+        this.elements.settingsModal.classList.remove('active');
+    }
+    
+    /**
+     * Save settings
+     */
+    saveSettings() {
+        this.state.userName = this.elements.userNameInput.value || 'Learner';
+        this.state.userAvatarColor = this.elements.avatarColorPicker.value;
+        this.state.animationsEnabled = this.elements.animationsToggle.checked;
+        this.state.musicEnabled = this.elements.musicToggle.checked;
+        this.state.currentModel = this.elements.defaultModelSelect.value;
+        this.state.systemPrompt = this.elements.systemPromptInput.value;
+        
+        // Update model select
+        this.elements.modelSelect.value = this.state.currentModel;
+        
+        // Update UI
+        this.updateUserAvatar();
+        
+        // Toggle music
+        if (!this.state.musicEnabled && this.state.isMusicPlaying) {
+            this.elements.lofiAudio.pause();
         }
         
-        this.showNotification('Chat loaded', 'success');
+        // Toggle animations
+        document.body.style.animation = this.state.animationsEnabled ? '' : 'none';
+        
+        this.showToast('Settings', 'Settings saved successfully', 'success');
+        this.saveState();
+        this.hideSettings();
     }
-
-    clearCurrentChat() {
-        if (confirm('Are you sure you want to clear this chat?')) {
-            this.createNewChat();
-            this.showNotification('Chat cleared', 'info');
+    
+    /**
+     * Reset settings to defaults
+     */
+    resetSettings() {
+        if (confirm('Reset all settings to default values?')) {
+            this.state = {
+                ...this.state,
+                userName: 'Learner',
+                userAvatarColor: '#FFD700',
+                animationsEnabled: true,
+                musicEnabled: true,
+                currentModel: 'google/gemini-2.0-flash-exp:free',
+                systemPrompt: `You are Savoiré AI, an advanced study assistant created by Sooban Talha Technologies. Provide comprehensive, detailed explanations with examples. Use markdown formatting, include code blocks when relevant, and explain concepts step-by-step.`
+            };
+            
+            this.saveSettings();
+            this.showToast('Settings', 'Settings reset to defaults', 'info');
         }
     }
-
-    toggleSidebar() {
-        this.elements.sidebar.classList.toggle('active');
+    
+    /**
+     * Update user avatar
+     */
+    updateUserAvatar() {
+        const avatar = this.elements.userAvatar;
+        avatar.innerHTML = this.state.userName.charAt(0).toUpperCase();
+        avatar.style.background = this.state.userAvatarColor;
+        avatar.style.color = this.getContrastColor(this.state.userAvatarColor);
+        avatar.title = this.state.userName;
     }
-
-    closeModals() {
-        this.closeSettings();
-        this.closeImageModal();
-        if (this.state.isConsoleOpen) this.toggleConsole();
+    
+    /**
+     * Get contrast color for background
+     */
+    getContrastColor(hexColor) {
+        // Convert hex to RGB
+        const r = parseInt(hexColor.slice(1, 3), 16);
+        const g = parseInt(hexColor.slice(3, 5), 16);
+        const b = parseInt(hexColor.slice(5, 7), 16);
+        
+        // Calculate luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return black or white based on luminance
+        return luminance > 0.5 ? '#000000' : '#FFFFFF';
     }
-
+    
+    /**
+     * Toggle history sidebar
+     */
+    toggleHistorySidebar() {
+        this.elements.historySidebar.classList.toggle('active');
+        if (this.elements.historySidebar.classList.contains('active')) {
+            this.loadHistoryUI();
+        }
+    }
+    
+    /**
+     * Hide history sidebar
+     */
+    hideHistorySidebar() {
+        this.elements.historySidebar.classList.remove('active');
+    }
+    
+    /**
+     * Load chat history
+     */
+    loadHistory() {
+        try {
+            const saved = localStorage.getItem('savoire-history');
+            if (saved) {
+                this.state.history = JSON.parse(saved);
+            }
+        } catch (error) {
+            console.error('Failed to load history:', error);
+            this.state.history = [];
+        }
+    }
+    
+    /**
+     * Save to history
+     */
+    saveToHistory(query) {
+        const historyItem = {
+            id: Date.now(),
+            query,
+            timestamp: new Date().toISOString(),
+            model: this.state.currentModel
+        };
+        
+        this.state.history.unshift(historyItem);
+        
+        // Keep only last 100 items
+        if (this.state.history.length > 100) {
+            this.state.history = this.state.history.slice(0, 100);
+        }
+        
+        this.saveHistory();
+        this.loadHistoryUI();
+    }
+    
+    /**
+     * Save history to localStorage
+     */
+    saveHistory() {
+        try {
+            localStorage.setItem('savoire-history', JSON.stringify(this.state.history));
+        } catch (error) {
+            console.error('Failed to save history:', error);
+        }
+    }
+    
+    /**
+     * Load history UI
+     */
+    loadHistoryUI() {
+        const historyList = this.elements.historyList;
+        historyList.innerHTML = '';
+        
+        if (this.state.history.length === 0) {
+            historyList.innerHTML = `
+                <div class="history-empty">
+                    <i class="fas fa-history"></i>
+                    <p>No chat history yet</p>
+                </div>
+            `;
+            return;
+        }
+        
+        this.state.history.forEach(item => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.dataset.id = item.id;
+            
+            const date = new Date(item.timestamp);
+            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateString = date.toLocaleDateString();
+            
+            historyItem.innerHTML = `
+                <div class="history-query">${this.escapeHtml(item.query.substring(0, 100))}${item.query.length > 100 ? '...' : ''}</div>
+                <div class="history-meta">
+                    <span>${timeString}</span>
+                    <span>${dateString}</span>
+                </div>
+                <button class="history-delete" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            historyItem.addEventListener('click', () => {
+                this.loadFromHistory(item);
+            });
+            
+            const deleteBtn = historyItem.querySelector('.history-delete');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteHistoryItem(item.id);
+            });
+            
+            historyList.appendChild(historyItem);
+        });
+    }
+    
+    /**
+     * Load conversation from history
+     */
+    loadFromHistory(item) {
+        // Clear current chat
+        this.clearChat();
+        
+        // Add the historical query
+        this.addMessage(item.query, 'user');
+        
+        // Show loading indicator
+        this.showGeneratingIndicator();
+        
+        // Simulate AI response (in real app, this would fetch from API)
+        setTimeout(() => {
+            this.hideGeneratingIndicator();
+            this.addMessage(`This is a historical response for: "${item.query}"\n\nTo get a fresh response, please ask again.`, 'ai');
+            this.showToast('History', 'Loaded from history', 'info');
+        }, 1000);
+        
+        this.hideHistorySidebar();
+    }
+    
+    /**
+     * Delete history item
+     */
+    deleteHistoryItem(id) {
+        this.state.history = this.state.history.filter(item => item.id !== id);
+        this.saveHistory();
+        this.loadHistoryUI();
+        this.showToast('History', 'Item deleted', 'info');
+    }
+    
+    /**
+     * Clear chat
+     */
+    clearChat() {
+        if (this.state.conversation.length === 0) return;
+        
+        if (confirm('Clear all messages?')) {
+            this.elements.chatHistory.innerHTML = '';
+            this.state.conversation = [];
+            this.elements.notesContent.innerHTML = `
+                <div class="notes-placeholder">
+                    <div class="placeholder-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Your Notes Will Appear Here</h3>
+                    <p>Ask a question or upload an image to generate comprehensive study notes.</p>
+                </div>
+            `;
+            
+            this.showToast('Chat', 'All messages cleared', 'info');
+        }
+    }
+    
+    /**
+     * Show developer console
+     */
+    showDevConsole() {
+        this.elements.devConsole.classList.add('active');
+        this.updateStatsUI();
+    }
+    
+    /**
+     * Hide developer console
+     */
+    hideDevConsole() {
+        this.elements.devConsole.classList.remove('active');
+    }
+    
+    /**
+     * Toggle developer console
+     */
+    toggleDevConsole() {
+        if (this.elements.devConsole.classList.contains('active')) {
+            this.hideDevConsole();
+        } else {
+            this.showDevConsole();
+        }
+    }
+    
+    /**
+     * Update developer console stats
+     */
+    updateStatsUI() {
+        this.elements.apiCallCount.textContent = this.state.apiStats.calls;
+        this.elements.totalTokens.textContent = this.state.apiStats.totalTokens.toLocaleString();
+        
+        const avgLatency = this.state.apiStats.calls > 0 
+            ? Math.round(this.state.apiStats.totalLatency / this.state.apiStats.calls)
+            : 0;
+        this.elements.avgLatency.textContent = `${avgLatency}ms`;
+        
+        // Update status bar
+        this.elements.tokenCount.textContent = `${this.state.apiStats.totalTokens.toLocaleString()} tokens`;
+        this.elements.responseTime.textContent = `${avgLatency}ms avg`;
+    }
+    
+    /**
+     * Log to developer console
+     */
+    log(level, message) {
+        const time = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        logEntry.innerHTML = `
+            <span class="log-time">[${time}]</span>
+            <span class="log-level" data-level="${level}">${level}</span>
+            <span class="log-message">${this.escapeHtml(message)}</span>
+        `;
+        
+        this.elements.consoleLogs.appendChild(logEntry);
+        
+        // Keep only last 50 logs
+        const logs = this.elements.consoleLogs.querySelectorAll('.log-entry');
+        if (logs.length > 50) {
+            logs[0].remove();
+        }
+        
+        // Auto-scroll to bottom
+        this.elements.consoleLogs.scrollTop = this.elements.consoleLogs.scrollHeight;
+        
+        // Also log to browser console
+        switch(level) {
+            case 'ERROR': console.error(message); break;
+            case 'WARN': console.warn(message); break;
+            default: console.log(message);
+        }
+    }
+    
+    /**
+     * Show toast notification
+     */
+    showToast(title, message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <div class="toast-icon">
+                <i class="fas fa-${this.getToastIcon(type)}"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        this.elements.toastContainer.appendChild(toast);
+        
+        // Close button
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => {
+            toast.remove();
+        });
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 5000);
+    }
+    
+    /**
+     * Get icon for toast type
+     */
+    getToastIcon(type) {
+        switch(type) {
+            case 'success': return 'check-circle';
+            case 'error': return 'exclamation-circle';
+            case 'warning': return 'exclamation-triangle';
+            default: return 'info-circle';
+        }
+    }
+    
+    /**
+     * Auto-resize textarea
+     */
+    autoResizeInput() {
+        const textarea = this.elements.messageInput;
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    }
+    
+    /**
+     * Handle input keydown
+     */
+    handleInputKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.sendMessage();
+        }
+    }
+    
+    /**
+     * Handle window resize
+     */
+    handleResize() {
+        this.autoResizeInput();
+        
+        // Update wormhole canvas
+        if (this.wormhole) {
+            this.wormhole.canvas.width = window.innerWidth;
+            this.wormhole.canvas.height = window.innerHeight;
+        }
+    }
+    
+    /**
+     * Scroll chat to bottom
+     */
     scrollToBottom() {
-        this.elements.messagesContainer.scrollTop = this.elements.messagesContainer.scrollHeight;
+        this.elements.chatHistory.scrollTop = this.elements.chatHistory.scrollHeight;
     }
-
-    sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
+    
+    /**
+     * Escape HTML to prevent XSS
+     */
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
-
-    capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
-
-    getModelName(modelId) {
-        const names = {
-            'google/gemini-2.0-flash-exp:free': 'Gemini 2.0',
-            'z-ai/glm-4.5-air:free': 'GLM 4.5',
-            'deepseek/deepseek-chat-v3.1:free': 'DeepSeek',
-            'tngtech/deepseek-r1t2-chimera:free': 'DeepSeek R1',
-            'meta-llama/llama-3.2-3b-instruct:free': 'Llama 3.2'
-        };
-        return names[modelId] || modelId.split('/').pop();
-    }
-
-    generateFallbackResponse(prompt) {
-        // Simple fallback response generator
-        const responses = [
-            `I understand you're asking about "${prompt}". Here's a comprehensive explanation:\n\n**Core Concept:** This topic involves fundamental principles that form the basis for deeper understanding.\n\n**Key Points:**\n1. Start with the basics\n2. Build up complexity gradually\n3. Practice with examples\n4. Apply to real-world scenarios\n\n**Example:** Consider a practical application to solidify your understanding.`,
-            
-            `Let me break down "${prompt}" for you:\n\n### Overview\nThis is an important concept with applications across multiple domains.\n\n### Detailed Explanation\n1. **Fundamental Principle:** The core idea behind this concept\n2. **Key Components:** Essential elements that make it work\n3. **Practical Applications:** How it's used in real life\n\n### Study Tips\n- Create mind maps\n- Practice with problems\n- Teach someone else\n- Review regularly`,
-            
-            `Regarding "${prompt}", here's what you need to know:\n\n## Comprehensive Analysis\nThis topic requires systematic study and practice.\n\n### Key Concepts\n- Concept 1: Essential foundation\n- Concept 2: Building blocks\n- Concept 3: Advanced applications\n\n### Common Challenges\nStudents often struggle with:\n1. Overcomplicating simple aspects\n2. Missing foundational knowledge\n3. Lack of practical application\n\n### Solution Approach\nBreak it down step by step and practice consistently.`
-        ];
-        
-        return responses[Math.floor(Math.random() * responses.length)];
-    }
-
-    saveState() {
-        const state = {
-            settings: this.state.settings,
-            systemPrompt: this.state.systemPrompt,
-            temperature: this.state.temperature,
-            simplifyMode: this.state.simplifyMode,
-            tokensUsed: this.state.tokensUsed,
-            theme: document.documentElement.getAttribute('data-theme') || 'dark'
-        };
-        
-        localStorage.setItem('savoire_state', JSON.stringify(state));
-    }
-
+    
+    /**
+     * Load state from localStorage
+     */
     loadState() {
-        const savedState = localStorage.getItem('savoire_state');
-        if (savedState) {
-            const state = JSON.parse(savedState);
-            
-            // Merge with current state
-            this.state.settings = { ...this.state.settings, ...state.settings };
-            this.state.systemPrompt = state.systemPrompt || this.state.systemPrompt;
-            this.state.temperature = state.temperature || this.state.temperature;
-            this.state.simplifyMode = state.simplifyMode || false;
-            this.state.tokensUsed = state.tokensUsed || 6543;
-            
-            // Apply theme
-            if (state.theme) {
-                document.documentElement.setAttribute('data-theme', state.theme);
-                document.querySelectorAll('.theme-option').forEach(option => {
-                    option.classList.remove('selected');
-                    if (option.dataset.theme === state.theme) {
-                        option.classList.add('selected');
-                    }
-                });
+        try {
+            const saved = localStorage.getItem('savoire-state');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                this.state = { ...this.state, ...parsed };
+                
+                // Update UI from loaded state
+                this.elements.modelSelect.value = this.state.currentModel;
+                this.updateUserAvatar();
+                this.updateTimerDisplay();
+                this.updateMusicUI();
             }
+        } catch (error) {
+            console.error('Failed to load state:', error);
+        }
+    }
+    
+    /**
+     * Save state to localStorage
+     */
+    saveState() {
+        try {
+            // Don't save conversation (too large)
+            const stateToSave = { ...this.state };
+            delete stateToSave.conversation;
             
-            // Update UI
-            this.elements.userName.textContent = this.state.settings.userName;
-            this.changeAvatar(this.state.settings.userAvatar);
-        }
-    }
-
-    showError(message) {
-        this.showNotification(message, 'error');
-        this.log(message, 'error');
-    }
-
-    toggleFullscreenNotes() {
-        const notesPanel = document.querySelector('.notes-panel');
-        notesPanel.classList.toggle('fullscreen');
-        
-        if (notesPanel.classList.contains('fullscreen')) {
-            notesPanel.style.width = '100%';
-            notesPanel.style.height = '100vh';
-            notesPanel.style.position = 'fixed';
-            notesPanel.style.top = '0';
-            notesPanel.style.left = '0';
-            notesPanel.style.zIndex = '1000';
-            this.showNotification('Notes fullscreen mode enabled', 'info');
-        } else {
-            notesPanel.style.width = '';
-            notesPanel.style.height = '';
-            notesPanel.style.position = '';
-            notesPanel.style.top = '';
-            notesPanel.style.left = '';
-            notesPanel.style.zIndex = '';
-        }
-    }
-
-    addCopyButton(messageDiv) {
-        const actions = messageDiv.querySelector('.message-actions');
-        if (actions) {
-            actions.style.display = 'flex';
-        }
-    }
-
-    addRegenerateButton(messageDiv, originalResponse) {
-        const actions = messageDiv.querySelector('.message-actions');
-        if (actions) {
-            const regenerateBtn = document.createElement('button');
-            regenerateBtn.className = 'message-action';
-            regenerateBtn.title = 'Regenerate';
-            regenerateBtn.innerHTML = '<i class="fas fa-redo"></i>';
-            regenerateBtn.onclick = () => {
-                this.elements.messageInput.value = originalResponse;
-                this.autoResizeTextarea();
-                this.sendMessage();
-                messageDiv.remove();
-            };
-            actions.appendChild(regenerateBtn);
+            localStorage.setItem('savoire-state', JSON.stringify(stateToSave));
+            this.saveHistory();
+        } catch (error) {
+            console.error('Failed to save state:', error);
         }
     }
 }
 
-// Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.app = new SavoireAI();
-    
-    // Make app available globally for HTML onclick handlers
-    window.app = window.app;
-    
-    // Initialize KaTeX auto-render
-    renderMathInElement(document.body, {
-        delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false},
-            {left: '\\(', right: '\\)', display: false},
-            {left: '\\[', right: '\\]', display: true}
-        ],
-        throwOnError: false
-    });
-});
+// Initialize the application
+window.savoireApp = new SavoireApp();
