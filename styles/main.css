@@ -1935,3 +1935,30 @@ input:checked + .toggle-slider:before {
         display: none;
     }
 }
+/* Fix for typewriter layout */
+.message-text {
+    min-height: 1.2em; /* Prevent height collapse */
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    position: relative;
+}
+
+/* Typewriter container */
+.typewriter-container {
+    display: inline-block;
+    min-height: 1.2em;
+    vertical-align: top;
+}
+
+/* Smooth height transitions */
+.message-content {
+    transition: min-height 0.3s ease;
+}
+
+/* Keep message bubbles consistent */
+.message.ai .message-content,
+.message.user .message-content {
+    min-width: 200px;
+    max-width: 80%;
+}

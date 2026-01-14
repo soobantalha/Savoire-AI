@@ -749,7 +749,7 @@ class SavoireApp {
             avatar.innerHTML = '<i class="fas fa-robot"></i>';
         }
         
-        // Create content
+        // Create content container
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         
@@ -759,20 +759,21 @@ class SavoireApp {
                 <div class="message-time">${time}</div>
             `;
         } else if (withTypewriter) {
+            // Create a container for typewriter effect that won't break layout
             contentDiv.innerHTML = `
-                <div class="message-text typewriter" id="typewriter-${Date.now()}">${this.escapeHtml(content)}</div>
+                <div class="message-text" id="message-${Date.now()}"></div>
                 <div class="message-time">${time}</div>
             `;
             
-            // Trigger typewriter effect after a delay
+            // Get the message text container
+            const textContainer = contentDiv.querySelector('.message-text');
+            
+            // Start typewriter effect after adding to DOM
             setTimeout(() => {
-                const textElement = contentDiv.querySelector('.typewriter');
-                if (textElement) {
-                    this.typewriterEffect(textElement, content);
-                }
+                this.typewriterEffect(textContainer, content);
             }, 100);
         } else {
-            contentDiv.innerHTML = content + `<div class="message-time">${time}</div>`;
+            contentDiv.innerHTML = this.escapeHtml(content) + `<div class="message-time">${time}</div>`;
         }
         
         messageDiv.appendChild(avatar);
@@ -788,37 +789,87 @@ class SavoireApp {
     /**
      * Typewriter effect for AI responses
      */
+    /**
+ * Typewriter effect for AI responses (FIXED VERSION)
+ */
     typewriterEffect(element, text) {
-        element.style.borderRight = '2px solid var(--color-cyber-gold)';
-        element.style.width = '0';
-        element.style.whiteSpace = 'nowrap';
+        // Save original content and styles
+        const originalContent = element.innerHTML;
+        const originalDisplay = element.style.display;
+        
+        // Clear element and set up for typewriter
+        element.innerHTML = '';
         element.style.overflow = 'hidden';
+        element.style.position = 'relative';
+        element.style.minHeight = '20px'; // Prevent layout shift
+        
+        // Create a temporary span for typing
+        const typewriterSpan = document.createElement('span');
+        typewriterSpan.style.cssText = `
+            display: inline-block;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: 2px solid var(--color-cyber-gold);
+            animation: blink-caret 0.75s step-end infinite;
+            vertical-align: bottom;
+            min-height: 1.2em;
+        `;
+        
+        // Add blink animation to CSS if not present
+        if (!document.querySelector('#blink-animation')) {
+            const style = document.createElement('style');
+            style.id = 'blink-animation';
+            style.textContent = `
+                @keyframes blink-caret {
+                    from, to { border-color: transparent; }
+                    50% { border-color: var(--color-cyber-gold); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        element.appendChild(typewriterSpan);
         
         let i = 0;
         const speed = 20; // ms per character
+        const chunkSize = 5; // Characters per chunk for better performance
         
         const type = () => {
             if (i < text.length) {
-                element.innerHTML = this.escapeHtml(text.substring(0, i + 1));
-                element.style.width = `${((i + 1) / text.length) * 100}%`;
-                i++;
+                // Add characters in chunks
+                const end = Math.min(i + chunkSize, text.length);
+                typewriterSpan.textContent = text.substring(0, end);
+                i = end;
+                
+                // Scroll to keep visible
+                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
                 setTimeout(type, speed);
             } else {
-                element.style.borderRight = 'none';
-                element.style.width = 'auto';
-                element.style.whiteSpace = 'normal';
+                // Typing complete
+                typewriterSpan.style.borderRight = 'none';
+                typewriterSpan.style.animation = 'none';
                 
-                // Render markdown and math after typing
+                // Replace with final content (with proper formatting)
                 setTimeout(() => {
+                    element.innerHTML = this.escapeHtml(text);
+                    element.style.overflow = '';
+                    element.style.position = '';
+                    element.style.minHeight = '';
+                    
+                    // Render markdown and math
                     this.renderMarkdown(element);
                     this.renderMath(element);
-                }, 100);
+                    
+                    // Add copy buttons to code blocks
+                    this.setupCodeCopyButtons();
+                }, 300);
             }
         };
         
-        type();
+        // Start typing after a small delay
+        setTimeout(type, 100);
     }
-    
     /**
      * Show generating indicator
      */
