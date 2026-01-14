@@ -510,29 +510,9 @@ body {
     color: var(--color-neon-purple);
 }
 
-.message-content {
-    max-width: 80%;
-    padding: var(--spacing-md);
-    border-radius: var(--radius-lg);
-    position: relative;
-}
 
-.message.user .message-content {
-    background: rgba(255, 215, 0, 0.1);
-    border: 1px solid rgba(255, 215, 0, 0.2);
-    border-top-right-radius: var(--radius-xs);
-}
 
-.message.ai .message-content {
-    background: rgba(26, 26, 26, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-top-left-radius: var(--radius-xs);
-}
 
-.message-text {
-    line-height: 1.6;
-    color: var(--color-text-primary);
-}
 
 .message-time {
     font-size: var(--font-size-xs);
@@ -1945,7 +1925,7 @@ input:checked + .toggle-slider:before {
 }
 
 /* Typewriter container */
-.typewriter-container {
+ {
     display: inline-block;
     min-height: 1.2em;
     vertical-align: top;
