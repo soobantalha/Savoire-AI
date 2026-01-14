@@ -478,6 +478,62 @@ body {
     flex-direction: column;
     gap: var(--spacing-lg);
 }
+/* Fix for chat message boundaries */
+.message-content {
+    position: relative;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-lg);
+    max-width: 85%;
+    min-width: 60px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.message.user .message-content {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.message.ai .message-content {
+    background: rgba(26, 26, 26, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.message-text {
+    line-height: 1.6;
+    font-size: var(--font-size-base);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+}
+
+/* Typewriter specific styles */
+.typewriter-wrapper {
+    display: inline-block;
+    max-width: 100%;
+    width: 100%;
+}
+
+.typewriter-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background-color: var(--color-cyber-gold);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 0.75s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
 
 .message {
     display: flex;
