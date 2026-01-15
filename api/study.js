@@ -1,155 +1,156 @@
-/**
- * Savoiré AI v2.0 - AI Backend API
- * Free Models Only - Multi-Fallback System
- * by Sooban Talha Productions
- */
-
+// study.js - Backend API
 module.exports = async (req, res) => {
-    // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Handle preflight
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
     
-    // Only accept POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
     
     try {
-        const { message, model = 'auto' } = req.body;
+        const { message, mode = 'explain' } = req.body;
         
         if (!message || message.trim().length === 0) {
-            return res.status(400).json({ error: 'Message is required' });
+            return res.status(400).json({ error: 'Processing request required' });
         }
         
-        // Log request
-        console.log(`AI Request: ${message.substring(0, 100)}...`);
+        console.log(`Processing request (${mode}): ${message.substring(0, 100)}...`);
         
-        // Try multiple free models
-        const aiResponse = await tryFreeModels(message, model);
+        const freeModels = [
+            'google/gemini-2.0-flash-exp:free',
+            'deepseek/deepseek-chat-v3.1:free',
+            'meta-llama/llama-3.2-3b-instruct:free',
+            'z-ai/glm-4.5-air:free'
+        ];
         
-        // Return response
-        res.status(200).json({
-            success: true,
-            response: aiResponse.content,
-            model: aiResponse.model,
-            tokens: aiResponse.tokens || 0,
-            timestamp: new Date().toISOString(),
-            powered_by: 'Savoiré AI Model Ultra v1.2',
-            credits: 'https://soobantalhatech.xyz'
-        });
+        let lastError = null;
+        
+        for (const model of freeModels) {
+            try {
+                const response = await callProcessingAPI(message, mode, model);
+                return res.status(200).json({
+                    success: true,
+                    content: response.content,
+                    notes: response.notes,
+                    mode: mode,
+                    model: 'Savoiré AI Model Ultra v1.2',
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.log(`Model ${model} failed: ${error.message}`);
+                lastError = error;
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+        
+        throw lastError || new Error('All processing models failed');
         
     } catch (error) {
-        console.error('API Error:', error);
-        
-        // Fallback response
+        console.error('Processing error:', error);
         res.status(200).json({
             success: false,
-            response: generateFallbackResponse(req.body?.message),
-            model: 'fallback',
-            tokens: 0,
-            timestamp: new Date().toISOString(),
-            powered_by: 'Savoiré AI Model Ultra v1.2',
-            credits: 'https://soobantalhatech.xyz',
-            error: error.message
+            content: generateFallbackOutput(req.body?.message, req.body?.mode),
+            notes: ['System processing temporarily limited. Full functionality will restore shortly.'],
+            mode: req.body?.mode || 'explain',
+            model: 'Savoiré AI Model Ultra v1.2',
+            timestamp: new Date().toISOString()
         });
     }
 };
 
-/**
- * Try multiple free models with fallback
- */
-async function tryFreeModels(message, preferredModel) {
-    // List of free models in priority order
-    const freeModels = [
-        'google/gemini-2.0-flash-exp:free',
-        'deepseek/deepseek-chat-v3.1:free',
-        'meta-llama/llama-3.2-3b-instruct:free',
-        'z-ai/glm-4.5-air:free',
-        'qwen/qwen-2.5-32b-instruct:free'
-    ];
-    
-    // Use preferred model if specified and available
-    const modelsToTry = preferredModel && preferredModel !== 'auto' 
-        ? [preferredModel, ...freeModels.filter(m => m !== preferredModel)]
-        : freeModels;
-    
-    let lastError = null;
-    
-    for (const model of modelsToTry) {
-        try {
-            console.log(`Trying model: ${model}`);
-            const response = await callOpenRouter(message, model);
-            console.log(`Success with model: ${model}`);
-            return {
-                content: response.content,
-                model: model,
-                tokens: response.tokens
-            };
-        } catch (error) {
-            console.log(`Model ${model} failed: ${error.message}`);
-            lastError = error;
-            
-            // Wait before trying next model
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-    }
-    
-    throw lastError || new Error('All AI models failed');
-}
-
-/**
- * Call OpenRouter API
- */
-async function callOpenRouter(message, model) {
+async function callProcessingAPI(message, mode, model) {
     const apiKey = process.env.OPENROUTER_API_KEY;
     
     if (!apiKey) {
-        throw new Error('OpenRouter API key not configured');
+        throw new Error('API configuration required');
     }
     
-    // Enhanced system prompt for study assistance
-    const systemPrompt = `You are Savoiré AI Model Ultra v1.2, an advanced study assistant created by Sooban Talha Productions.
+    const systemPrompts = {
+        explain: `You are Savoiré AI Model Ultra v1.2. Provide comprehensive explanations with:
+1. Clear overview and context
+2. Key concepts with definitions
+3. Detailed breakdown
+4. Practical examples
+5. Common applications
+6. Limitations and considerations
+7. Summary and next steps
 
-CRITICAL GUIDELINES:
-1. Provide EXTREMELY DETAILED explanations (500-800 words for complex topics)
-2. Use professional markdown formatting with proper structure
-3. ALWAYS include practical examples and real-world applications
-4. Break down complex concepts into digestible parts
-5. Add key takeaways and study tips at the end
-6. For code: use syntax highlighting with language labels
-7. For math: use LaTeX notation within $$ for equations
-8. For data: use clean, readable tables
-9. End with a summary and suggested next learning steps
+Format with proper markdown, headings, and structure.`,
+        
+        analyze: `You are Savoiré AI Model Ultra v1.2. Provide analytical breakdown with:
+1. Problem statement
+2. Data/input analysis
+3. Methodology explanation
+4. Step-by-step process
+5. Results interpretation
+6. Insights and patterns
+7. Conclusions
+8. Recommendations
 
-RESPONSE STRUCTURE:
-1. Comprehensive Overview
-2. Key Concepts Explained Simply
-3. Detailed Technical Explanation
-4. Practical Examples & Applications
-5. Common Pitfalls & Solutions
-6. Study Tips & Best Practices
-7. Practice Questions (2-3 with answers)
-8. Summary & Next Steps
+Use tables, bullet points, and structured formatting.`,
+        
+        generate: `You are Savoiré AI Model Ultra v1.2. Generate structured content with:
+1. Clear objective
+2. Requirements listing
+3. Content generation
+4. Quality checks
+5. Optimization suggestions
+6. Implementation steps
+7. Testing procedures
+8. Final output
 
-FORMAT: Return ONLY educational content in beautiful markdown.`;
+Provide complete, production-ready content.`,
+        
+        code: `You are Savoiré AI Model Ultra v1.2. Generate code with:
+1. Problem analysis
+2. Algorithm design
+3. Code implementation
+4. Comments and documentation
+5. Testing examples
+6. Performance considerations
+7. Alternative approaches
+8. Usage instructions
 
+Use proper syntax highlighting and formatting.`,
+        
+        math: `You are Savoiré AI Model Ultra v1.2. Solve mathematical problems with:
+1. Problem restatement
+2. Given information
+3. Solution approach
+4. Step-by-step working
+5. Formulas and derivations
+6. Numerical computation
+7. Verification
+8. Applications
+
+Use LaTeX for all mathematical notation.`,
+        
+        summarize: `You are Savoiré AI Model Ultra v1.2. Create summaries with:
+1. Source identification
+2. Key point extraction
+3. Main idea synthesis
+4. Supporting details
+5. Conclusion
+6. Implications
+7. Related concepts
+8. Further reading
+
+Be concise yet comprehensive.`
+    };
+    
     const requestBody = {
         model: model,
         messages: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: systemPrompts[mode] || systemPrompts.explain },
             { role: 'user', content: message }
         ],
         max_tokens: 4000,
-        temperature: 0.7,
-        top_p: 0.9,
-        frequency_penalty: 0.1,
-        presence_penalty: 0.1
+        temperature: 0.7
     };
     
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -164,104 +165,110 @@ FORMAT: Return ONLY educational content in beautiful markdown.`;
     });
     
     if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`OpenRouter API error: ${response.status}`);
+        throw new Error(`API error: ${response.status}`);
     }
     
     const data = await response.json();
     
     if (!data.choices || data.choices.length === 0) {
-        throw new Error('No response from AI model');
+        throw new Error('No response from processing engine');
     }
     
     const content = data.choices[0].message.content;
-    const tokens = data.usage?.total_tokens || Math.ceil(content.length / 4);
+    
+    const notes = extractNotesFromContent(content);
     
     return {
         content: content,
-        tokens: tokens
+        notes: notes
     };
 }
 
-/**
- * Generate fallback response when all models fail
- */
-function generateFallbackResponse(userMessage) {
-    const query = userMessage ? userMessage.substring(0, 200) : "your question";
+function extractNotesFromContent(content) {
+    const lines = content.split('\n');
+    const notes = [];
+    let currentSection = '';
     
-    return `# Comprehensive Study Guide
+    lines.forEach(line => {
+        if (line.startsWith('# ') || line.startsWith('## ') || line.startsWith('### ')) {
+            currentSection = line.replace(/^#+\s*/, '').trim();
+        }
+        
+        if (line.includes('**') || line.match(/^\d+\./) || line.match(/^[-*]\s/)) {
+            const cleanLine = line.replace(/[*_`]/g, '').trim();
+            if (cleanLine.length > 20 && cleanLine.length < 200) {
+                if (currentSection) {
+                    notes.push(`${currentSection}: ${cleanLine}`);
+                } else {
+                    notes.push(cleanLine);
+                }
+            }
+        }
+    });
+    
+    return notes.slice(0, 10);
+}
 
-## 📚 Overview
-I'm currently experiencing high demand, but here's a structured approach to learning about **${query}**:
+function generateFallbackOutput(message, mode) {
+    const query = message ? message.substring(0, 150) : "the requested information";
+    
+    return `# Structured Knowledge Output
 
-## 🎯 Key Learning Objectives
-1. Understand the fundamental principles
-2. Master core concepts and terminology
-3. Apply knowledge to practical scenarios
-4. Develop problem-solving skills
+## Processing Mode: ${mode.charAt(0).toUpperCase() + mode.slice(1)}
 
-## 🔍 Study Framework
+## Request Analysis
+The system received a request to process: "${query}"
 
-### Step 1: Foundation Building
-- Start with basic definitions and terminology
-- Understand the historical context and evolution
-- Identify key contributors and milestones
+## Current System Status
+- Processing engine: Savoiré AI Model Ultra v1.2
+- Mode: ${mode}
+- Time: ${new Date().toLocaleTimeString()}
+- Status: Processing queued
 
-### Step 2: Core Concepts
-- Break down complex ideas into simpler components
-- Create mental models and analogies
-- Practice with basic examples
+## Standard Output Structure
 
-### Step 3: Practical Application
-- Work through real-world scenarios
-- Solve practice problems
-- Build small projects or experiments
+### 1. Core Concept Explanation
+A comprehensive breakdown of the topic would normally appear here with:
+- Fundamental principles
+- Key terminology definitions
+- Conceptual frameworks
+- Real-world applications
 
-### Step 4: Advanced Understanding
-- Explore edge cases and exceptions
-- Connect with related fields
-- Stay updated with current developments
+### 2. Detailed Analysis
+This section would include:
+- Methodological approach
+- Step-by-step breakdown
+- Data interpretation
+- Pattern recognition
 
-## 💡 Learning Strategies
+### 3. Practical Implementation
+Typically contains:
+- Actionable steps
+- Best practices
+- Common pitfalls
+- Optimization techniques
 
-### Effective Techniques
-1. **Active Recall**: Test yourself without looking at materials
-2. **Spaced Repetition**: Review at increasing intervals
-3. **Interleaving**: Mix different types of problems
-4. **Elaboration**: Explain concepts in your own words
+### 4. Examples & Applications
+Real-world scenarios including:
+- Use cases
+- Implementation examples
+- Performance metrics
+- Success criteria
 
-### Time Management
-- Use Pomodoro technique (25 min focus, 5 min break)
-- Set specific, measurable goals
-- Regular review sessions
+### 5. Summary & Next Steps
+Concluding with:
+- Key takeaways
+- Recommended actions
+- Further learning paths
+- Resource references
 
-## 📝 Practice Questions
-
-1. **Basic**: What are the three most important aspects of ${query}?
-2. **Intermediate**: How would you explain ${query} to someone without technical background?
-3. **Advanced**: What real-world problem could be solved using principles of ${query}?
-
-## 🔮 Next Steps
-
-### Immediate Actions
-1. Search for introductory materials on ${query}
-2. Find 2-3 reliable sources (academic papers, textbooks, reputable websites)
-3. Start with the simplest concepts and build upward
-
-### Long-term Strategy
-1. Create a study schedule
-2. Join relevant communities or forums
-3. Practice regularly with varied materials
-
-## ⚠️ Common Mistakes to Avoid
-- Trying to learn everything at once
-- Skipping fundamentals
-- Not practicing application
-- Isolating concepts from real-world use
+## Notes
+1. This is a standard output template
+2. Full processing will resume shortly
+3. All formatting features remain available
+4. Export and save functions are operational
 
 ---
 
-*Generated by Savoiré AI Model Ultra v1.2 · Sooban Talha Productions · https://soobantalhatech.xyz*
-
-**Tip**: Try rephrasing your question or asking about specific aspects for more detailed guidance.`;
+*Generated by Savoiré AI v2.0 · Sooban Talha Technologies · ${new Date().toLocaleDateString()}*`;
 }
