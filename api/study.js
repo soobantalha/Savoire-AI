@@ -1,115 +1,101 @@
 /**
- * Savoiré AI v2.0 - Enhanced AI Study Assistant API
- * Vercel Serverless Function for OpenRouter AI Integration
- * by Sooban Talha Technologies
+ * Savoiré AI v2.0 - AI Backend API
+ * Free Models Only - Multi-Fallback System
+ * by Sooban Talha Productions
  */
 
 module.exports = async (req, res) => {
-    // Handle CORS
+    // Enable CORS
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Handle preflight request
+    // Handle preflight
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
     
-    // Only accept POST requests
+    // Only accept POST
     if (req.method !== 'POST') {
-        return res.status(405).json({ 
-            error: 'Method not allowed',
-            message: 'Only POST requests are supported'
-        });
+        return res.status(405).json({ error: 'Method not allowed' });
     }
     
     try {
-        // Parse request body
-        const { message, model, includeImage } = req.body;
+        const { message, model = 'auto' } = req.body;
         
-        if (!message) {
-            return res.status(400).json({ 
-                error: 'Message is required',
-                message: 'Please provide a message or question'
-            });
+        if (!message || message.trim().length === 0) {
+            return res.status(400).json({ error: 'Message is required' });
         }
         
-        // Log the request
+        // Log request
         console.log(`AI Request: ${message.substring(0, 100)}...`);
-        console.log(`Model: ${model || 'default'}`);
-        console.log(`Include Image: ${!!includeImage}`);
         
-        // Generate AI response with multiple model fallback
-        const startTime = Date.now();
-        const aiResponse = await generateAIResponseWithFallback(message, model, includeImage);
-        const latency = Date.now() - startTime;
+        // Try multiple free models
+        const aiResponse = await tryFreeModels(message, model);
         
-        // Format response
-        const response = {
+        // Return response
+        res.status(200).json({
             success: true,
             response: aiResponse.content,
-            tokens: aiResponse.tokens,
             model: aiResponse.model,
-            latency: latency,
+            tokens: aiResponse.tokens || 0,
             timestamp: new Date().toISOString(),
-            powered_by: 'Savoiré AI by Sooban Talha Technologies',
+            powered_by: 'Savoiré AI Model Ultra v1.2',
             credits: 'https://soobantalhatech.xyz'
-        };
-        
-        // Send response
-        res.status(200).json(response);
+        });
         
     } catch (error) {
         console.error('API Error:', error);
         
-        // Provide fallback response
-        const fallbackResponse = {
+        // Fallback response
+        res.status(200).json({
             success: false,
-            response: `I apologize, but I'm having trouble connecting to the AI service right now. Here's what I can tell you about your query:\n\n${req.body?.message ? `You asked about: "${req.body.message.substring(0, 100)}..."\n\nPlease try again in a moment, or rephrase your question.` : 'Please try again with a specific question.'}`,
-            tokens: 0,
+            response: generateFallbackResponse(req.body?.message),
             model: 'fallback',
-            latency: 0,
+            tokens: 0,
             timestamp: new Date().toISOString(),
-            powered_by: 'Savoiré AI by Sooban Talha Technologies',
+            powered_by: 'Savoiré AI Model Ultra v1.2',
             credits: 'https://soobantalhatech.xyz',
             error: error.message
-        };
-        
-        res.status(200).json(fallbackResponse);
+        });
     }
 };
 
 /**
- * Generate AI response with model fallback strategy
+ * Try multiple free models with fallback
  */
-async function generateAIResponseWithFallback(message, preferredModel = null, includeImage = false) {
-    // Available models in priority order
-    const modelPriority = [
+async function tryFreeModels(message, preferredModel) {
+    // List of free models in priority order
+    const freeModels = [
         'google/gemini-2.0-flash-exp:free',
         'deepseek/deepseek-chat-v3.1:free',
         'meta-llama/llama-3.2-3b-instruct:free',
         'z-ai/glm-4.5-air:free',
-        'tngtech/deepseek-r1t2-chimera:free'
+        'qwen/qwen-2.5-32b-instruct:free'
     ];
     
-    // Use preferred model if specified, otherwise use priority list
-    const modelsToTry = preferredModel 
-        ? [preferredModel, ...modelPriority.filter(m => m !== preferredModel)]
-        : modelPriority;
+    // Use preferred model if specified and available
+    const modelsToTry = preferredModel && preferredModel !== 'auto' 
+        ? [preferredModel, ...freeModels.filter(m => m !== preferredModel)]
+        : freeModels;
     
     let lastError = null;
     
     for (const model of modelsToTry) {
         try {
             console.log(`Trying model: ${model}`);
-            const response = await callOpenRouterAPI(message, model, includeImage);
+            const response = await callOpenRouter(message, model);
             console.log(`Success with model: ${model}`);
-            return response;
+            return {
+                content: response.content,
+                model: model,
+                tokens: response.tokens
+            };
         } catch (error) {
-            console.log(`Model ${model} failed:`, error.message);
+            console.log(`Model ${model} failed: ${error.message}`);
             lastError = error;
             
-            // Wait a bit before trying next model
+            // Wait before trying next model
             await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
@@ -120,66 +106,44 @@ async function generateAIResponseWithFallback(message, preferredModel = null, in
 /**
  * Call OpenRouter API
  */
-async function callOpenRouterAPI(message, model, includeImage = false) {
-    if (!process.env.OPENROUTER_API_KEY) {
+async function callOpenRouter(message, model) {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    
+    if (!apiKey) {
         throw new Error('OpenRouter API key not configured');
     }
     
-    // Check if message contains image
-    let messages = [];
-    
-    if (includeImage && message.includes('data:image')) {
-        // Extract text and image
-        const textMatch = message.match(/Analyze this image: (data:image\/[^;]+;base64,[^"]+)/);
-        if (textMatch) {
-            const imageData = textMatch[1];
-            const text = message.replace(textMatch[0], '').trim() || 'Please analyze this image and provide detailed insights.';
-            
-            messages = [
-                {
-                    role: 'user',
-                    content: [
-                        { type: 'text', text: text },
-                        { type: 'image_url', image_url: { url: imageData } }
-                    ]
-                }
-            ];
-        }
-    } else {
-        messages = [{ role: 'user', content: message }];
-    }
-    
-    // System prompt for study assistance
-    const systemPrompt = `You are Savoiré AI, an advanced study assistant created by Sooban Talha Technologies. Your goal is to provide comprehensive, detailed educational responses.
+    // Enhanced system prompt for study assistance
+    const systemPrompt = `You are Savoiré AI Model Ultra v1.2, an advanced study assistant created by Sooban Talha Productions.
 
-IMPORTANT GUIDELINES:
-1. Provide ULTRA-DETAILED explanations (800-1200 words for complex topics)
-2. Use markdown formatting with proper headers, lists, and code blocks
-3. Include practical examples and real-world applications
+CRITICAL GUIDELINES:
+1. Provide EXTREMELY DETAILED explanations (500-800 words for complex topics)
+2. Use professional markdown formatting with proper structure
+3. ALWAYS include practical examples and real-world applications
 4. Break down complex concepts into digestible parts
-5. Add key takeaways and study tips
-6. For code: use syntax highlighting with language specification
+5. Add key takeaways and study tips at the end
+6. For code: use syntax highlighting with language labels
 7. For math: use LaTeX notation within $$ for equations
-8. For data: use tables with proper formatting
-9. End with a summary and suggested next steps
+8. For data: use clean, readable tables
+9. End with a summary and suggested next learning steps
 
 RESPONSE STRUCTURE:
-- Comprehensive Overview
-- Key Concepts (4-5 bullet points)
-- Detailed Explanation with Examples
-- Practical Applications
-- Common Pitfalls & Solutions
-- Study Tips & Tricks
-- Practice Questions (2-3 with answers)
-- Summary & Next Steps
+1. Comprehensive Overview
+2. Key Concepts Explained Simply
+3. Detailed Technical Explanation
+4. Practical Examples & Applications
+5. Common Pitfalls & Solutions
+6. Study Tips & Best Practices
+7. Practice Questions (2-3 with answers)
+8. Summary & Next Steps
 
-FORMAT: Return ONLY the educational content in markdown format.`;
+FORMAT: Return ONLY educational content in beautiful markdown.`;
 
     const requestBody = {
         model: model,
         messages: [
             { role: 'system', content: systemPrompt },
-            ...messages
+            { role: 'user', content: message }
         ],
         max_tokens: 4000,
         temperature: 0.7,
@@ -192,7 +156,7 @@ FORMAT: Return ONLY the educational content in markdown format.`;
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
             'HTTP-Referer': 'https://savoireai.vercel.app',
             'X-Title': 'Savoiré AI'
         },
@@ -201,8 +165,7 @@ FORMAT: Return ONLY the educational content in markdown format.`;
     
     if (!response.ok) {
         const errorText = await response.text();
-        console.error(`OpenRouter API Error ${response.status}:`, errorText);
-        throw new Error(`API request failed with status ${response.status}`);
+        throw new Error(`OpenRouter API error: ${response.status}`);
     }
     
     const data = await response.json();
@@ -216,124 +179,89 @@ FORMAT: Return ONLY the educational content in markdown format.`;
     
     return {
         content: content,
-        tokens: tokens,
-        model: model,
-        raw: data
+        tokens: tokens
     };
 }
 
 /**
- * Generate fallback study materials (when API fails)
+ * Generate fallback response when all models fail
  */
-function generateFallbackStudyMaterials(topic) {
-    return {
-        content: `# COMPREHENSIVE STUDY GUIDE: ${topic.toUpperCase()}
+function generateFallbackResponse(userMessage) {
+    const query = userMessage ? userMessage.substring(0, 200) : "your question";
+    
+    return `# Comprehensive Study Guide
 
 ## 📚 Overview
-${topic} represents a fundamental area of study with significant theoretical and practical implications. This guide provides a structured approach to understanding the core concepts and applications.
+I'm currently experiencing high demand, but here's a structured approach to learning about **${query}**:
 
 ## 🎯 Key Learning Objectives
-- Master the fundamental principles and theoretical foundations
-- Understand practical applications and real-world implementations
-- Develop problem-solving skills and analytical thinking
-- Apply knowledge to complex scenarios and case studies
+1. Understand the fundamental principles
+2. Master core concepts and terminology
+3. Apply knowledge to practical scenarios
+4. Develop problem-solving skills
 
-## 🔍 Detailed Analysis
+## 🔍 Study Framework
 
-### Core Principles
-The study of ${topic} involves understanding interconnected systems and relationships. Key aspects include:
+### Step 1: Foundation Building
+- Start with basic definitions and terminology
+- Understand the historical context and evolution
+- Identify key contributors and milestones
 
-1. **Theoretical Framework**: The underlying models and assumptions
-2. **Methodological Approaches**: Systematic ways to analyze and solve problems
-3. **Practical Implementation**: Real-world application of theoretical concepts
-4. **Advanced Applications**: Complex scenarios and edge cases
+### Step 2: Core Concepts
+- Break down complex ideas into simpler components
+- Create mental models and analogies
+- Practice with basic examples
 
-### Step-by-Step Learning Path
-1. **Foundation Building**: Start with basic concepts and terminology
-2. **Concept Integration**: Connect related ideas and theories
-3. **Application Practice**: Work through examples and exercises
-4. **Advanced Exploration**: Dive deeper into specialized areas
+### Step 3: Practical Application
+- Work through real-world scenarios
+- Solve practice problems
+- Build small projects or experiments
 
-## 💡 Practical Examples
+### Step 4: Advanced Understanding
+- Explore edge cases and exceptions
+- Connect with related fields
+- Stay updated with current developments
 
-### Example 1: Basic Application
-\`\`\`python
-# Simple demonstration of ${topic} concept
-def demonstrate_concept(input_data):
-    """
-    Illustrate the core principle through code
-    """
-    processed = analyze(input_data)
-    result = apply_theory(processed)
-    return validate(result)
-\`\`\`
+## 💡 Learning Strategies
 
-### Example 2: Real-World Scenario
-Consider how ${topic} applies in industry settings, addressing specific challenges and providing measurable solutions.
-
-## ⚠️ Common Challenges & Solutions
-
-### Challenge 1: Conceptual Complexity
-**Solution**: Break down into smaller components, use analogies, and practice with varied examples.
-
-### Challenge 2: Application Difficulty
-**Solution**: Start with simplified scenarios, gradually increase complexity, and seek peer feedback.
-
-## 🎓 Study Strategies
-
-### Effective Learning Techniques
+### Effective Techniques
 1. **Active Recall**: Test yourself without looking at materials
-2. **Spaced Repetition**: Review concepts at increasing intervals
+2. **Spaced Repetition**: Review at increasing intervals
 3. **Interleaving**: Mix different types of problems
 4. **Elaboration**: Explain concepts in your own words
 
 ### Time Management
-- Pomodoro Technique: 25-minute focused sessions
-- Weekly review sessions
-- Regular practice and application
+- Use Pomodoro technique (25 min focus, 5 min break)
+- Set specific, measurable goals
+- Regular review sessions
 
-## 📈 Assessment & Progress Tracking
+## 📝 Practice Questions
 
-### Self-Evaluation Questions
-1. What are the three most important principles of ${topic}?
-2. How would you explain ${topic} to someone without background knowledge?
-3. What real-world problem could be solved using ${topic}?
+1. **Basic**: What are the three most important aspects of ${query}?
+2. **Intermediate**: How would you explain ${query} to someone without technical background?
+3. **Advanced**: What real-world problem could be solved using principles of ${query}?
 
-### Progress Metrics
-- Conceptual understanding (0-10)
-- Application skill (0-10)
-- Problem-solving speed (0-10)
+## 🔮 Next Steps
 
-## 🔮 Future Directions
+### Immediate Actions
+1. Search for introductory materials on ${query}
+2. Find 2-3 reliable sources (academic papers, textbooks, reputable websites)
+3. Start with the simplest concepts and build upward
 
-### Advanced Topics to Explore
-- Emerging research in ${topic}
-- Cross-disciplinary applications
-- Industry-specific implementations
+### Long-term Strategy
+1. Create a study schedule
+2. Join relevant communities or forums
+3. Practice regularly with varied materials
 
-### Career Applications
-- Research and development
-- Technical consulting
-- Innovation and entrepreneurship
-
-## 📝 Summary & Next Steps
-
-### Key Takeaways
-1. Master fundamentals before advancing
-2. Practice consistently with varied materials
-3. Seek feedback and collaborate with peers
-4. Apply knowledge to real-world problems
-
-### Recommended Actions
-1. Complete 3 practice problems daily
-2. Review one case study per week
-3. Teach the concept to someone else
-4. Build a small project applying ${topic}
+## ⚠️ Common Mistakes to Avoid
+- Trying to learn everything at once
+- Skipping fundamentals
+- Not practicing application
+- Isolating concepts from real-world use
 
 ---
 
-*Generated by Savoiré AI • Comprehensive Study Assistant • by [Sooban Talha Technologies](https://soobantalhatech.xyz)*`,
-        tokens: 850,
-        model: 'fallback'
-    };
+*Generated by Savoiré AI Model Ultra v1.2 · Sooban Talha Productions · https://soobantalhatech.xyz*
+
+**Tip**: Try rephrasing your question or asking about specific aspects for more detailed guidance.`;
 }
