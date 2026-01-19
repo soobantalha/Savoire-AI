@@ -3,448 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré AI Model Ultra v1.2 | Knowledge Processing Engine</title>
-    <meta name="description" content="Professional knowledge processing and structured output generation tool by Sooban Talha Technologies">
-    <meta name="author" content="Sooban Talha Technologies">
-    <link rel="icon" type="image/x-icon" href="LOGO.png">
+    <title>Savoiré AI - by Sooban Talha Technologies</title>
     
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Advanced AI-powered assistant with ultra-detailed responses">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="LOGO.png">
+    
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-    <canvas id="bgCanvas" class="bg-canvas"></canvas>
-
-    <div class="intro-layer" id="introLayer">
-        <div class="intro-container">
-            <div class="logo-heartbeat">
-                <div class="logo-pulse"></div>
-                <img src="LOGO.png" alt="Savoiré AI" class="intro-logo">
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+    <div class="floating-elements"></div>
+    
+    <!-- Minimal Header -->
+    <header class="modern-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-wrapper">
+                    <div class="logo-background animated-logo">
+                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
+                    </div>
+                </div>
+                <div class="brand-text">
+                    <h1 class="animated-text">Savoiré AI</h1>
+                    <div class="brand-tagline">by Sooban Talha Technologies</div>
+                </div>
             </div>
-            <div class="intro-content">
-                <h1 class="typewriter-text" id="typewriterText"></h1>
-                <div class="name-input-container" id="nameInputContainer">
-                    <input type="text" id="userNameInput" placeholder="Enter your name to initialize the system..." maxlength="30" autocomplete="off">
-                    <button id="startJourneyBtn">
-                        <i class="fas fa-rocket"></i> Initialize System
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle glow">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Chat Area -->
+    <main class="modern-chat">
+        <div class="chat-container">
+            <!-- Welcome Area -->
+            <div class="welcome-area" id="welcomeArea">
+                <div class="welcome-center">
+                    <div class="welcome-logo">
+                        <div class="logo-background large animated-logo">
+                            <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    <h1 class="welcome-title slide-in">Welcome to Savoiré AI</h1>
+                    <p class="welcome-subtitle fade-in">Experience the ultimate smart companion for students, bringing you advanced questions, tricks, detailed notes, PDF Generation and endless features designed to make learning faster, easier, and smarter – with even more powerful tools coming soon.</p>
+                    
+                    <!-- Quick Suggestions -->
+                    <div class="suggestions-grid">
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain quantum computing in detail with key concepts and examples">
+                            <i class="fas fa-star bounce"></i>
+                            Quantum Computing
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Provide detailed analysis of artificial intelligence with key concepts">
+                            <i class="fas fa-brain bounce"></i>
+                            AI Analysis
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain machine learning algorithms with practical examples">
+                            <i class="fas fa-cogs bounce"></i>
+                            Machine Learning
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Give me comprehensive details about neural networks">
+                            <i class="fas fa-network-wired bounce"></i>
+                            Neural Networks
+                        </div>
+                    </div>
+
+                    <!-- Brand Footer -->
+                    <div class="brand-footer">
+                        <div class="production-credit pulse">by Sooban Talha Technologies</div>
+                        <div class="feature-tags">
+                            <span class="feature-tag glow">Advanced AI </span>
+                            <span class="feature-tag glow">Fast Responses</span>
+                            <span class="feature-tag glow">PDF Generation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="messages-container" id="messagesContainer" style="display: none;">
+                <div class="messages-scroll" id="chatMessages">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div class="thinking-indicator" id="thinkingIndicator" style="display: none;">
+                <div class="thinking-avatar">
+                    <div class="logo-background small pulse">
+                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
+                    </div>
+                </div>
+                <div class="thinking-content">
+                    <div class="typing-animation">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="thinking-text">Toppers don’t rush, they wait for clarity — your clarity is loading 📘🚀...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div class="text-input-container glow-border">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Ask anything for fast, detailed answers..."
+                            rows="1"
+                        ></textarea>
+                        <div class="input-actions">
+                            <button class="send-button pulse animated-btn" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-actions">
+                    <button class="footer-btn animated-btn" id="clearChat">
+                        <i class="fas fa-trash"></i>
+                        Clear chat
                     </button>
-                </div>
-                <p class="brand-footer">
-                    Engineered by <a href="https://soobantalhatech.xyz" target="_blank" class="brand-link">Sooban Talha Technologies</a>
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="tutorial-overlay" id="tutorialOverlay">
-        <div class="tutorial-step" id="tutorialStep1">
-            <div class="tutorial-content">
-                <h3><i class="fas fa-file-alt"></i> Result Canvas</h3>
-                <p>All generated knowledge appears here in structured, professional format</p>
-            </div>
-            <button class="tutorial-next">Next <i class="fas fa-arrow-right"></i></button>
-        </div>
-        
-        <div class="tutorial-step" id="tutorialStep2">
-            <div class="tutorial-content">
-                <h3><i class="fas fa-sliders-h"></i> Tool Station</h3>
-                <p>Control processing modes, formatting, and output generation</p>
-            </div>
-            <button class="tutorial-next">Next <i class="fas fa-arrow-right"></i></button>
-        </div>
-        
-        <div class="tutorial-step" id="tutorialStep3">
-            <div class="tutorial-content">
-                <h3><i class="fas fa-download"></i> Export System</h3>
-                <p>Save structured outputs and generate professional PDF documents</p>
-            </div>
-            <button class="tutorial-complete">Enter Workspace <i class="fas fa-arrow-right"></i></button>
-        </div>
-    </div>
-
-    <div class="app-container" id="appContainer">
-        <nav class="main-nav">
-            <div class="nav-left">
-                <div class="brand">
-                    <div class="logo-small">
-                        <img src="LOGO.png" alt="Savoiré AI">
-                    </div>
-                    <div class="brand-text">
-                        <h1>Savoiré AI</h1>
-                        <p class="model-tag">Model Ultra v1.2</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="nav-center">
-                <div class="system-status">
-                    <div class="status-dot active"></div>
-                    <span class="status-text">Ready</span>
-                    <span class="output-count" id="outputCount">0 outputs</span>
-                </div>
-            </div>
-            
-            <div class="nav-right">
-                <button class="nav-btn" id="workspaceBtn" title="Workspace Tools">
-                    <i class="fas fa-tools"></i>
-                </button>
-                <button class="nav-btn" id="exportBtn" title="Export System">
-                    <i class="fas fa-download"></i>
-                </button>
-                <button class="nav-btn" id="sessionsBtn" title="Session Manager">
-                    <i class="fas fa-history"></i>
-                </button>
-                <div class="user-avatar" id="userAvatar">
-                    <span>P</span>
-                </div>
-            </div>
-        </nav>
-
-        <div class="main-workspace">
-            <div class="result-canvas" id="resultCanvas">
-                <div class="canvas-header">
-                    <div class="canvas-tools">
-                        <button class="canvas-tool-btn" id="clearCanvasBtn" title="Clear Workspace">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                        <button class="canvas-tool-btn" id="focusModeBtn" title="Focus Mode">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="canvas-tool-btn" id="fullscreenBtn" title="Fullscreen">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                    </div>
-                    <div class="canvas-title">
-                        <h2>Current Output</h2>
-                        <div class="canvas-meta" id="outputMeta">
-                            <span class="timestamp">New session</span>
-                            <span class="length">0 items</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="output-container" id="outputContainer">
-                    <div class="empty-output">
-                        <div class="empty-icon">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                        <h3>Knowledge Processing Workspace</h3>
-                        <p>Your structured outputs will appear here</p>
-                        <div class="empty-hints">
-                            <div class="hint-item">
-                                <i class="fas fa-cube"></i>
-                                <span>Structured breakdowns</span>
-                            </div>
-                            <div class="hint-item">
-                                <i class="fas fa-code"></i>
-                                <span>Executable code</span>
-                            </div>
-                            <div class="hint-item">
-                                <i class="fas fa-calculator"></i>
-                                <span>Mathematical analysis</span>
-                            </div>
-                            <div class="hint-item">
-                                <i class="fas fa-table"></i>
-                                <span>Data visualization</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tool-station" id="toolStation">
-                <div class="tool-header">
-                    <h3><i class="fas fa-sliders-h"></i> Processing Controls</h3>
-                    <div class="tool-indicator" id="processingIndicator">
-                        <div class="indicator-dot idle"></div>
-                        <span>Idle</span>
-                    </div>
-                </div>
-
-                <div class="mode-selector">
-                    <div class="mode-grid">
-                        <button class="mode-btn active" data-mode="explain">
-                            <i class="fas fa-book-open"></i>
-                            <span>Explain</span>
-                        </button>
-                        <button class="mode-btn" data-mode="analyze">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Analyze</span>
-                        </button>
-                        <button class="mode-btn" data-mode="generate">
-                            <i class="fas fa-cogs"></i>
-                            <span>Generate</span>
-                        </button>
-                        <button class="mode-btn" data-mode="code">
-                            <i class="fas fa-code"></i>
-                            <span>Code</span>
-                        </button>
-                        <button class="mode-btn" data-mode="math">
-                            <i class="fas fa-square-root-alt"></i>
-                            <span>Math</span>
-                        </button>
-                        <button class="mode-btn" data-mode="summarize">
-                            <i class="fas fa-file-contract"></i>
-                            <span>Summarize</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="input-section">
-                    <div class="input-header">
-                        <span class="input-label">Processing Request</span>
-                        <span class="mode-label" id="currentModeLabel">Explain Mode</span>
-                    </div>
-                    <textarea 
-                        id="processingInput" 
-                        placeholder="Describe the knowledge you need processed..."
-                        rows="4"
-                        autocomplete="off"
-                        spellcheck="true"
-                    ></textarea>
-                    <div class="input-options">
-                        <div class="option-group">
-                            <label>
-                                <input type="checkbox" id="autoNotesToggle" checked>
-                                <span>Auto-extract notes</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="stepByStepToggle" checked>
-                                <span>Step-by-step</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="examplesToggle" checked>
-                                <span>Include examples</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="action-buttons">
-                    <button class="action-btn primary-btn" id="processBtn">
-                        <i class="fas fa-play"></i>
-                        <span>Process Request</span>
-                    </button>
-                    <button class="action-btn secondary-btn" id="regenerateBtn">
-                        <i class="fas fa-redo"></i>
-                        <span>Regenerate</span>
-                    </button>
-                </div>
-
-                <div class="formatting-controls">
-                    <h4>Formatting</h4>
-                    <div class="format-grid">
-                        <button class="format-btn" data-format="heading">
-                            <i class="fas fa-heading"></i>
-                        </button>
-                        <button class="format-btn" data-format="code">
-                            <i class="fas fa-code"></i>
-                        </button>
-                        <button class="format-btn" data-format="table">
-                            <i class="fas fa-table"></i>
-                        </button>
-                        <button class="format-btn" data-format="list">
-                            <i class="fas fa-list"></i>
-                        </button>
-                        <button class="format-btn" data-format="quote">
-                            <i class="fas fa-quote-right"></i>
-                        </button>
-                        <button class="format-btn" data-format="formula">
-                            <i class="fas fa-square-root-alt"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="notes-panel">
-                    <div class="notes-header">
-                        <h4><i class="fas fa-sticky-note"></i> Live Notes</h4>
-                        <button class="icon-btn" id="exportNotesBtn" title="Export Notes">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    </div>
-                    <div class="notes-content" id="notesContent">
-                        <div class="empty-notes">
-                            <i class="fas fa-lightbulb"></i>
-                            <p>Key points will appear here automatically</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="workspace-footer">
-                    <div class="system-info">
-                        <span class="version">Savoiré AI v2.0</span>
-                        <a href="https://soobantalhatech.xyz" target="_blank" class="company-link">
-                            Sooban Talha Technologies
-                        </a>
+                    <div class="production-watermark fade-in">
+                      • Powered by Sooban Talha Technologies
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="workspace-modal" id="workspaceModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-tools"></i> Workspace Tools</h2>
-                <button class="close-btn" id="closeWorkspaceBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="tools-grid">
-                    <div class="tool-card" data-action="saveOutput">
-                        <div class="tool-icon">
-                            <i class="fas fa-save"></i>
-                        </div>
-                        <div class="tool-info">
-                            <h3>Save Output</h3>
-                            <p>Store current result</p>
-                        </div>
-                    </div>
-                    
-                    <div class="tool-card" data-action="loadTemplate">
-                        <div class="tool-icon">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <div class="tool-info">
-                            <h3>Templates</h3>
-                            <p>Load formats</p>
-                        </div>
-                    </div>
-                    
-                    <div class="tool-card" data-action="clearAll">
-                        <div class="tool-icon">
-                            <i class="fas fa-broom"></i>
-                        </div>
-                        <div class="tool-info">
-                            <h3>Clear All</h3>
-                            <p>Reset workspace</p>
-                        </div>
-                    </div>
-                    
-                    <div class="tool-card" data-action="settings">
-                        <div class="tool-icon">
-                            <i class="fas fa-cog"></i>
-                        </div>
-                        <div class="tool-info">
-                            <h3>Settings</h3>
-                            <p>Preferences</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="export-modal" id="exportModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-download"></i> Export System</h2>
-                <button class="close-btn" id="closeExportBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="export-options">
-                    <div class="export-option active" data-format="pdf">
-                        <div class="option-icon">
-                            <i class="fas fa-file-pdf"></i>
-                        </div>
-                        <div class="option-info">
-                            <h3>PDF Document</h3>
-                            <p>Professional formatting</p>
-                        </div>
-                    </div>
-                    
-                    <div class="export-option" data-format="markdown">
-                        <div class="option-icon">
-                            <i class="fas fa-file-code"></i>
-                        </div>
-                        <div class="option-info">
-                            <h3>Markdown</h3>
-                            <p>Structured text</p>
-                        </div>
-                    </div>
-                    
-                    <div class="export-option" data-format="html">
-                        <div class="option-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <div class="option-info">
-                            <h3>HTML</h3>
-                            <p>Web format</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="export-settings">
-                    <div class="setting-group">
-                        <h4>Content Options</h4>
-                        <label>
-                            <input type="checkbox" id="includeNotesExport" checked>
-                            <span>Include live notes</span>
-                        </label>
-                        <label>
-                            <input type="checkbox" id="includeMetadata" checked>
-                            <span>Include metadata</span>
-                        </label>
-                        <label>
-                            <input type="checkbox" id="includeBranding" checked>
-                            <span>Include branding</span>
-                        </label>
-                    </div>
-                    
-                    <div class="export-action">
-                        <button class="export-btn" id="generateExportBtn">
-                            <i class="fas fa-download"></i>
-                            <span>Generate Export</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="sessions-modal" id="sessionsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-history"></i> Session Manager</h2>
-                <button class="close-btn" id="closeSessionsBtn">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div class="modal-body">
-                <div class="sessions-list" id="sessionsList">
-                    <div class="empty-sessions">
-                        <i class="fas fa-history"></i>
-                        <p>No saved sessions</p>
-                        <p class="subtext">Save outputs to create sessions</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast-container" id="toastContainer"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="scripts/app.js"></script>
 </body>
 </html>

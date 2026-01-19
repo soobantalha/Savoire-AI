@@ -1,810 +1,808 @@
-// app.js - Main Application
-class SavoireAI {
+// Ultra-Advanced Gold Theme AI Assistant
+class GoldSavoireAI {
     constructor() {
-        this.state = {
-            user: null,
-            outputs: [],
-            notes: [],
-            sessions: [],
-            currentMode: 'explain',
-            isProcessing: false,
-            workspaceActive: false,
-            exportActive: false,
-            sessionsActive: false,
-            settings: {
-                autoNotes: true,
-                stepByStep: true,
-                examples: true,
-                darkTheme: true,
-                fontSize: 'medium'
-            }
-        };
-
-        this.init();
-    }
-
-    async init() {
-        this.loadState();
-        this.initCanvas();
+        this.initializeApp();
         this.bindEvents();
-        this.updateUI();
-        
-        marked.setOptions({
-            gfm: true,
-            breaks: true,
-            smartLists: true,
-            highlight: function(code, lang) {
-                if (Prism.languages[lang]) {
-                    return Prism.highlight(code, Prism.languages[lang], lang);
-                }
-                return code;
-            }
-        });
-
-        setInterval(() => this.saveState(), 30000);
+        this.initializeAdvancedAnimations();
     }
 
-    initCanvas() {
-        const canvas = document.getElementById('bgCanvas');
-        const ctx = canvas.getContext('2d');
+    initializeApp() {
+        this.chatMessages = document.getElementById('chatMessages');
+        this.messageInput = document.getElementById('messageInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.welcomeArea = document.getElementById('welcomeArea');
+        this.messagesContainer = document.getElementById('messagesContainer');
+        this.thinkingIndicator = document.getElementById('thinkingIndicator');
+        this.clearChatBtn = document.getElementById('clearChat');
         
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        const particles = [];
-        const particleCount = 80;
-        
-        for (let i = 0; i < particleCount; i++) {
-            particles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
-                size: Math.random() * 2 + 0.5,
-                speedX: (Math.random() - 0.5) * 0.3,
-                speedY: (Math.random() - 0.5) * 0.3,
-                color: `hsla(${Math.random() * 60 + 200}, 70%, 60%, ${Math.random() * 0.2 + 0.05})`
-            });
-        }
-        
-        const animate = () => {
-            ctx.fillStyle = 'rgba(5, 5, 5, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            particles.forEach(particle => {
-                particle.x += particle.speedX;
-                particle.y += particle.speedY;
-                
-                if (particle.x < 0) particle.x = canvas.width;
-                if (particle.x > canvas.width) particle.x = 0;
-                if (particle.y < 0) particle.y = canvas.height;
-                if (particle.y > canvas.height) particle.y = 0;
-                
-                ctx.beginPath();
-                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-                ctx.fillStyle = particle.color;
-                ctx.fill();
-                
-                particles.forEach(otherParticle => {
-                    const dx = particle.x - otherParticle.x;
-                    const dy = particle.y - otherParticle.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < 80) {
-                        ctx.beginPath();
-                        ctx.moveTo(particle.x, particle.y);
-                        ctx.lineTo(otherParticle.x, otherParticle.y);
-                        ctx.strokeStyle = `rgba(255, 215, 0, ${0.05 * (1 - distance / 80)})`;
-                        ctx.lineWidth = 0.3;
-                        ctx.stroke();
-                    }
-                });
-            });
-            
-            requestAnimationFrame(animate);
-        };
-        
-        animate();
-        
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
+        this.conversationHistory = [];
+        this.isGenerating = false;
     }
 
-    showIntroIfNeeded() {
-        if (!this.state.user) {
-            this.showIntro();
-        } else if (!localStorage.getItem('savoire-tutorial-completed')) {
-            setTimeout(() => this.showTutorial(), 1000);
-        }
-    }
-
-    showIntro() {
-        const introLayer = document.getElementById('introLayer');
-        const typewriterText = document.getElementById('typewriterText');
-        
-        introLayer.classList.remove('hidden');
-        
-        const text = "Welcome to the Future of Intelligence";
-        let i = 0;
-        
-        const typeWriter = () => {
-            if (i < text.length) {
-                typewriterText.textContent += text.charAt(i);
-                i++;
-                setTimeout(typeWriter, 50);
-            } else {
-                document.getElementById('nameInputContainer').style.opacity = '1';
-                document.getElementById('userNameInput').focus();
-            }
-        };
-        
-        setTimeout(() => {
-            typewriterText.textContent = '';
-            typeWriter();
-        }, 500);
-    }
-
-    handleStartJourney() {
-        const userName = document.getElementById('userNameInput').value.trim();
-        if (userName) {
-            this.state.user = {
-                name: userName,
-                avatarColor: '#FFD700',
-                createdAt: new Date().toISOString()
-            };
-            
-            this.saveState();
-            this.hideIntro();
-            this.showTutorial();
-            this.updateUserAvatar();
-        } else {
-            this.showToast('Name Required', 'Please enter your name to initialize the system');
-        }
-    }
-
-    hideIntro() {
-        const introLayer = document.getElementById('introLayer');
-        introLayer.style.opacity = '0';
-        setTimeout(() => {
-            introLayer.classList.add('hidden');
-        }, 500);
-    }
-
-    showTutorial() {
-        const tutorialOverlay = document.getElementById('tutorialOverlay');
-        const steps = document.querySelectorAll('.tutorial-step');
-        let currentStep = 0;
-        
-        tutorialOverlay.classList.add('active');
-        steps[currentStep].style.display = 'block';
-        
-        const nextStep = () => {
-            steps[currentStep].style.display = 'none';
-            currentStep++;
-            
-            if (currentStep < steps.length) {
-                steps[currentStep].style.display = 'block';
-            } else {
-                this.completeTutorial();
-            }
-        };
-        
-        document.querySelectorAll('.tutorial-next').forEach(btn => {
-            btn.addEventListener('click', nextStep);
-        });
-        
-        document.querySelector('.tutorial-complete').addEventListener('click', () => {
-            this.completeTutorial();
-        });
-    }
-
-    completeTutorial() {
-        const tutorialOverlay = document.getElementById('tutorialOverlay');
-        tutorialOverlay.classList.remove('active');
-        localStorage.setItem('savoire-tutorial-completed', 'true');
-        this.showToast('Workspace Ready', 'Knowledge processing system initialized');
-    }
-
-    async processRequest() {
-        const input = document.getElementById('processingInput');
-        const request = input.value.trim();
-        
-        if (!request || this.state.isProcessing) return;
-        
-        this.state.isProcessing = true;
-        this.updateProcessingIndicator(true);
-        
-        try {
-            const response = await fetch('/api/study', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    message: request,
-                    mode: this.state.currentMode
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                this.addOutput(request, data.content, data.notes);
-                this.showToast('Processing Complete', 'Knowledge output generated');
-            } else {
-                this.addOutput(request, data.content, data.notes || []);
-                this.showToast('System Note', 'Processing completed with system notes');
-            }
-            
-        } catch (error) {
-            console.error('Processing error:', error);
-            this.showToast('Processing Error', 'System encountered an issue');
-        } finally {
-            this.state.isProcessing = false;
-            this.updateProcessingIndicator(false);
-            input.value = '';
-        }
-    }
-
-    addOutput(request, content, notes) {
-        const output = {
-            id: Date.now(),
-            request: request,
-            content: content,
-            notes: notes,
-            mode: this.state.currentMode,
-            timestamp: new Date().toISOString(),
-            html: this.formatOutput(content)
-        };
-        
-        this.state.outputs.unshift(output);
-        
-        if (this.state.settings.autoNotes && notes.length > 0) {
-            notes.forEach(note => {
-                if (!this.state.notes.some(n => n.content === note)) {
-                    this.state.notes.unshift({
-                        id: Date.now(),
-                        content: note,
-                        source: request.substring(0, 50) + '...',
-                        timestamp: new Date().toISOString()
-                    });
+    initializeAdvancedAnimations() {
+        // Add intersection observer for scroll animations
+        this.observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
                 }
             });
-            
-            if (this.state.notes.length > 50) {
-                this.state.notes = this.state.notes.slice(0, 50);
-            }
-        }
-        
-        if (this.state.outputs.length > 20) {
-            this.state.outputs = this.state.outputs.slice(0, 20);
-        }
-        
-        this.renderOutputs();
-        this.renderNotes();
-        this.saveState();
-    }
-
-    formatOutput(content) {
-        let html = marked.parse(content);
-        
-        html = html.replace(/<pre><code class="language-([^"]+)">/g, (match, lang) => {
-            return `<div class="code-header">
-                <span>${lang || 'code'}</span>
-                <button class="copy-code-btn" onclick="savoireAI.copyCode(this)">
-                    <i class="fas fa-copy"></i> Copy
-                </button>
-            </div><pre><code class="language-${lang}">`;
-        });
-        
-        return html;
-    }
-
-    renderOutputs() {
-        const container = document.getElementById('outputContainer');
-        const countElement = document.getElementById('outputCount');
-        const metaElement = document.getElementById('outputMeta');
-        
-        countElement.textContent = `${this.state.outputs.length} outputs`;
-        
-        if (this.state.outputs.length === 0) {
-            container.innerHTML = `
-                <div class="empty-output">
-                    <div class="empty-icon">
-                        <i class="fas fa-brain"></i>
-                    </div>
-                    <h3>Knowledge Processing Workspace</h3>
-                    <p>Your structured outputs will appear here</p>
-                    <div class="empty-hints">
-                        <div class="hint-item">
-                            <i class="fas fa-cube"></i>
-                            <span>Structured breakdowns</span>
-                        </div>
-                        <div class="hint-item">
-                            <i class="fas fa-code"></i>
-                            <span>Executable code</span>
-                        </div>
-                        <div class="hint-item">
-                            <i class="fas fa-calculator"></i>
-                            <span>Mathematical analysis</span>
-                        </div>
-                        <div class="hint-item">
-                            <i class="fas fa-table"></i>
-                            <span>Data visualization</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            metaElement.innerHTML = `
-                <span class="timestamp">New session</span>
-                <span class="length">0 items</span>
-            `;
-            return;
-        }
-        
-        const latest = this.state.outputs[0];
-        metaElement.innerHTML = `
-            <span class="timestamp">${new Date(latest.timestamp).toLocaleTimeString()}</span>
-            <span class="length">${latest.mode} mode</span>
-        `;
-        
-        container.innerHTML = '';
-        
-        this.state.outputs.forEach(output => {
-            const outputDiv = document.createElement('div');
-            outputDiv.className = 'output-item';
-            outputDiv.innerHTML = `
-                <div class="output-header">
-                    <div class="output-meta">
-                        <span class="output-mode">${output.mode}</span>
-                        <span class="output-time">${new Date(output.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                    <div class="output-request">
-                        <strong>Request:</strong> ${output.request.substring(0, 100)}${output.request.length > 100 ? '...' : ''}
-                    </div>
-                </div>
-                <div class="output-content">
-                    ${output.html}
-                </div>
-                <div class="output-actions">
-                    <button class="output-action" onclick="savoireAI.saveOutput('${output.id}')" title="Save">
-                        <i class="fas fa-save"></i>
-                    </button>
-                    <button class="output-action" onclick="savoireAI.copyOutput('${output.id}')" title="Copy">
-                        <i class="fas fa-copy"></i>
-                    </button>
-                </div>
-            `;
-            container.appendChild(outputDiv);
-        });
-        
-        setTimeout(() => {
-            renderMathInElement(container, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false}
-                ],
-                throwOnError: false
-            });
-            
-            Prism.highlightAllUnder(container);
-        }, 100);
-    }
-
-    renderNotes() {
-        const container = document.getElementById('notesContent');
-        
-        if (this.state.notes.length === 0) {
-            container.innerHTML = `
-                <div class="empty-notes">
-                    <i class="fas fa-lightbulb"></i>
-                    <p>Key points will appear here automatically</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = '';
-        this.state.notes.forEach(note => {
-            const noteDiv = document.createElement('div');
-            noteDiv.className = 'note-item';
-            noteDiv.innerHTML = `
-                <div class="note-content">
-                    ${note.content}
-                </div>
-                <div class="note-meta">
-                    <small>${new Date(note.timestamp).toLocaleTimeString()}</small>
-                </div>
-            `;
-            container.appendChild(noteDiv);
-        });
-    }
-
-    updateProcessingIndicator(processing) {
-        const indicator = document.getElementById('processingIndicator');
-        const dot = indicator.querySelector('.indicator-dot');
-        const text = indicator.querySelector('span');
-        
-        if (processing) {
-            dot.className = 'indicator-dot processing';
-            text.textContent = 'Processing';
-        } else {
-            dot.className = 'indicator-dot idle';
-            text.textContent = 'Idle';
-        }
-    }
-
-    updateUserAvatar() {
-        const avatar = document.getElementById('userAvatar');
-        if (avatar && this.state.user) {
-            avatar.innerHTML = `<span>${this.state.user.name.charAt(0).toUpperCase()}</span>`;
-            avatar.style.background = this.state.user.avatarColor;
-            avatar.style.color = this.getContrastColor(this.state.user.avatarColor);
-        }
-    }
-
-    getContrastColor(hexColor) {
-        const r = parseInt(hexColor.substr(1, 2), 16);
-        const g = parseInt(hexColor.substr(3, 2), 16);
-        const b = parseInt(hexColor.substr(5, 2), 16);
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance > 0.5 ? '#000000' : '#FFFFFF';
-    }
-
-    copyCode(button) {
-        const codeElement = button.closest('.code-header').nextElementSibling.querySelector('code');
-        const code = codeElement.textContent;
-        
-        navigator.clipboard.writeText(code).then(() => {
-            const originalHTML = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-check"></i> Copied';
-            button.style.background = '#10B981';
-            
-            setTimeout(() => {
-                button.innerHTML = originalHTML;
-                button.style.background = '';
-            }, 2000);
-        });
-    }
-
-    saveOutput(outputId) {
-        const output = this.state.outputs.find(o => o.id === outputId);
-        if (output) {
-            this.state.sessions.unshift({
-                ...output,
-                savedAt: new Date().toISOString()
-            });
-            
-            if (this.state.sessions.length > 50) {
-                this.state.sessions = this.state.sessions.slice(0, 50);
-            }
-            
-            this.saveState();
-            this.showToast('Output Saved', 'Added to session history');
-        }
-    }
-
-    copyOutput(outputId) {
-        const output = this.state.outputs.find(o => o.id === outputId);
-        if (output) {
-            const text = `${output.request}\n\n${output.content}`;
-            navigator.clipboard.writeText(text).then(() => {
-                this.showToast('Copied', 'Output copied to clipboard');
-            });
-        }
-    }
-
-    showToast(title, message) {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerHTML = `
-            <div class="toast-icon">
-                <i class="fas fa-info-circle"></i>
-            </div>
-            <div class="toast-content">
-                <div class="toast-title">${title}</div>
-                <div class="toast-message">${message}</div>
-            </div>
-        `;
-        
-        container.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
-        
-        const toasts = container.querySelectorAll('.toast');
-        if (toasts.length > 3) {
-            toasts[0].remove();
-        }
+        }, { threshold: 0.1 });
     }
 
     bindEvents() {
-        document.getElementById('startJourneyBtn').addEventListener('click', () => this.handleStartJourney());
-        document.getElementById('userNameInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.handleStartJourney();
-        });
-        
-        document.getElementById('workspaceBtn').addEventListener('click', () => {
-            this.state.workspaceActive = true;
-            document.getElementById('workspaceModal').classList.add('active');
-        });
-        
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            this.state.exportActive = true;
-            document.getElementById('exportModal').classList.add('active');
-        });
-        
-        document.getElementById('sessionsBtn').addEventListener('click', () => {
-            this.state.sessionsActive = true;
-            document.getElementById('sessionsModal').classList.add('active');
-            this.renderSessions();
-        });
-        
-        document.getElementById('closeWorkspaceBtn').addEventListener('click', () => {
-            this.state.workspaceActive = false;
-            document.getElementById('workspaceModal').classList.remove('active');
-        });
-        
-        document.getElementById('closeExportBtn').addEventListener('click', () => {
-            this.state.exportActive = false;
-            document.getElementById('exportModal').classList.remove('active');
-        });
-        
-        document.getElementById('closeSessionsBtn').addEventListener('click', () => {
-            this.state.sessionsActive = false;
-            document.getElementById('sessionsModal').classList.remove('active');
-        });
-        
-        document.getElementById('processBtn').addEventListener('click', () => this.processRequest());
-        document.getElementById('regenerateBtn').addEventListener('click', () => {
-            const input = document.getElementById('processingInput');
-            if (input.value.trim()) {
-                this.processRequest();
-            }
-        });
-        
-        document.getElementById('processingInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                this.processRequest();
+                this.sendMessage();
             }
         });
-        
-        document.querySelectorAll('.mode-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const mode = btn.dataset.mode;
-                this.state.currentMode = mode;
-                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById('currentModeLabel').textContent = `${mode.charAt(0).toUpperCase() + mode.slice(1)} Mode`;
+
+        this.clearChatBtn.addEventListener('click', () => this.clearChat());
+
+        // Auto-resize textarea with animation
+        this.messageInput.addEventListener('input', () => {
+            this.autoResize();
+            this.animateInput();
+        });
+
+        // Quick suggestion chips with enhanced animations
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                this.animateButton(e.target);
+                const prompt = chip.getAttribute('data-prompt');
+                this.messageInput.value = prompt;
+                setTimeout(() => this.sendMessage(), 300);
             });
         });
-        
-        document.getElementById('clearCanvasBtn').addEventListener('click', () => {
-            if (confirm('Clear all outputs from workspace?')) {
-                this.state.outputs = [];
-                this.renderOutputs();
-                this.showToast('Workspace Cleared', 'All outputs removed');
-            }
+
+        // Theme toggle with enhanced animation
+        document.querySelector('.theme-toggle').addEventListener('click', (e) => {
+            this.animateButton(e.target);
+            setTimeout(() => this.toggleTheme(), 200);
         });
-        
-        document.getElementById('exportNotesBtn').addEventListener('click', () => {
-            if (this.state.notes.length === 0) {
-                this.showToast('No Notes', 'No notes available to export');
-                return;
-            }
-            
-            const notesText = this.state.notes.map(n => `• ${n.content}`).join('\n');
-            navigator.clipboard.writeText(notesText).then(() => {
-                this.showToast('Notes Exported', 'All notes copied to clipboard');
-            });
+
+        // Input focus animations
+        this.messageInput.addEventListener('focus', () => {
+            this.messageInput.parentElement.classList.add('focused');
         });
-        
-        document.getElementById('generateExportBtn').addEventListener('click', () => {
-            this.exportToPDF();
-        });
-        
-        document.querySelectorAll('.modal-content').forEach(modal => {
-            modal.addEventListener('click', (e) => e.stopPropagation());
-        });
-        
-        document.querySelectorAll('.settings-modal, .tutorial-overlay, .workspace-modal, .export-modal, .sessions-modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
+
+        this.messageInput.addEventListener('blur', () => {
+            this.messageInput.parentElement.classList.remove('focused');
         });
     }
 
-    renderSessions() {
-        const container = document.getElementById('sessionsList');
-        
-        if (this.state.sessions.length === 0) {
-            container.innerHTML = `
-                <div class="empty-sessions">
-                    <i class="fas fa-history"></i>
-                    <p>No saved sessions</p>
-                    <p class="subtext">Save outputs to create sessions</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = '';
-        this.state.sessions.forEach(session => {
-            const sessionDiv = document.createElement('div');
-            sessionDiv.className = 'session-item';
-            sessionDiv.onclick = () => this.loadSession(session.id);
-            sessionDiv.innerHTML = `
-                <div class="session-preview">
-                    <div class="session-mode">${session.mode}</div>
-                    <div class="session-request">${session.request.substring(0, 80)}${session.request.length > 80 ? '...' : ''}</div>
-                </div>
-                <div class="session-meta">
-                    <span>${new Date(session.savedAt).toLocaleDateString()}</span>
-                    <span>${session.notes.length} notes</span>
-                </div>
-            `;
-            container.appendChild(sessionDiv);
-        });
+    animateInput() {
+        this.messageInput.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            this.messageInput.style.transform = 'scale(1)';
+        }, 150);
     }
 
-    loadSession(sessionId) {
-        const session = this.state.sessions.find(s => s.id === sessionId);
-        if (session) {
-            this.state.outputs.unshift(session);
-            this.renderOutputs();
-            document.getElementById('sessionsModal').classList.remove('active');
-            this.showToast('Session Loaded', 'Output restored to workspace');
-        }
+    animateButton(button) {
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1)';
+        }, 150);
     }
 
-    async exportToPDF() {
-        if (this.state.outputs.length === 0) {
-            this.showToast('No Content', 'No outputs available to export');
-            return;
-        }
-        
+    autoResize() {
+        this.messageInput.style.height = 'auto';
+        this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+    }
+
+    async sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message || this.isGenerating) return;
+
+        // Hide welcome area, show messages with animation
+        this.welcomeArea.style.display = 'none';
+        this.messagesContainer.style.display = 'block';
+
+        // Add user message with animation
+        this.addMessage(message, 'user');
+
+        // Clear input with animation
+        this.animateClearInput();
+
+        // Show thinking indicator
+        this.showThinking();
+
+        this.isGenerating = true;
+        this.sendButton.disabled = true;
+
         try {
-            this.showToast('Generating PDF', 'Creating professional document...');
-            
-            const element = document.createElement('div');
-            element.className = 'pdf-export';
-            
-            element.innerHTML = `
-                <div class="pdf-header">
-                    <h1>Savoiré AI Knowledge Export</h1>
-                    <div class="pdf-meta">
-                        <p>Generated on ${new Date().toLocaleString()}</p>
-                        <p>User: ${this.state.user?.name || 'Professional User'}</p>
-                        <p>System: Savoiré AI Model Ultra v1.2</p>
-                    </div>
-                    <hr>
-                </div>
-            `;
-            
-            this.state.outputs.forEach(output => {
-                const outputDiv = document.createElement('div');
-                outputDiv.className = 'pdf-output';
-                outputDiv.innerHTML = `
-                    <div class="pdf-output-header">
-                        <h2>${output.mode.charAt(0).toUpperCase() + output.mode.slice(1)} Output</h2>
-                        <div class="pdf-output-meta">
-                            <span>Request: ${output.request}</span>
-                            <span>Generated: ${new Date(output.timestamp).toLocaleString()}</span>
-                        </div>
-                    </div>
-                    <div class="pdf-output-content">
-                        ${output.html}
-                    </div>
-                `;
-                element.appendChild(outputDiv);
-            });
-            
-            if (document.getElementById('includeNotesExport').checked && this.state.notes.length > 0) {
-                const notesDiv = document.createElement('div');
-                notesDiv.className = 'pdf-notes';
-                notesDiv.innerHTML = `
-                    <h2>Knowledge Notes</h2>
-                    ${this.state.notes.map(note => `
-                        <div class="pdf-note">
-                            <p>${note.content}</p>
-                            <small>${new Date(note.timestamp).toLocaleString()}</small>
-                        </div>
-                    `).join('')}
-                `;
-                element.appendChild(notesDiv);
-            }
-            
-            if (document.getElementById('includeBranding').checked) {
-                const footer = document.createElement('div');
-                footer.className = 'pdf-footer';
-                footer.innerHTML = `
-                    <hr>
-                    <div class="pdf-branding">
-                        <p>Generated by Savoiré AI v2.0</p>
-                        <p>Sooban Talha Technologies</p>
-                        <p>https://soobantalhatech.xyz</p>
-                    </div>
-                `;
-                element.appendChild(footer);
-            }
-            
-            const opt = {
-                margin: [10, 10, 10, 10],
-                filename: `SavoireAI_Export_${Date.now()}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff'
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait' 
-                }
-            };
-            
-            await html2pdf().set(opt).from(element).save();
-            
-            this.showToast('Export Complete', 'PDF document downloaded');
-            
+            const studyData = await this.generateStudyMaterials(message);
+            this.hideThinking();
+            this.displayStudyMaterials(studyData);
         } catch (error) {
-            console.error('Export error:', error);
-            this.showToast('Export Failed', 'Could not generate document');
+            this.hideThinking();
+            this.showError(error.message);
         }
+
+        this.isGenerating = false;
+        this.sendButton.disabled = false;
     }
 
-    updateUI() {
-        document.getElementById('autoNotesToggle').checked = this.state.settings.autoNotes;
-        document.getElementById('stepByStepToggle').checked = this.state.settings.stepByStep;
-        document.getElementById('examplesToggle').checked = this.state.settings.examples;
+    animateClearInput() {
+        this.messageInput.style.opacity = '0';
+        this.messageInput.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+            this.messageInput.value = '';
+            this.autoResize();
+            this.messageInput.style.opacity = '1';
+            this.messageInput.style.transform = 'translateX(0)';
+        }, 300);
+    }
+
+    async generateStudyMaterials(message) {
+        console.log('Sending request to AI:', message);
+
+        const response = await fetch('/api/study', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Received detailed study data:', data);
+        return data;
+    }
+
+    addMessage(content, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
         
-        this.updateUserAvatar();
-        this.renderOutputs();
-        this.renderNotes();
-    }
+        const avatar = type === 'user' ? 
+            '<div class="message-avatar">👤</div>' : 
+            '<div class="message-avatar"><div class="logo-background small"><img src="LOGO.png" alt="AI" class="logo-img"></div></div>';
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    saveState() {
-        try {
-            localStorage.setItem('savoire-state', JSON.stringify({
-                user: this.state.user,
-                outputs: this.state.outputs,
-                notes: this.state.notes,
-                sessions: this.state.sessions,
-                settings: this.state.settings,
-                currentMode: this.state.currentMode
-            }));
-        } catch (error) {
-            console.error('Save error:', error);
+        if (type === 'user') {
+            messageDiv.innerHTML = `
+                ${avatar}
+                <div class="message-content">
+                    <div class="message-text">${this.escapeHtml(content)}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                ${avatar}
+                <div class="message-content">
+                    ${content}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
         }
+
+        this.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
+        
+        // Add to conversation history
+        this.conversationHistory.push({ type, content, time });
     }
 
-    loadState() {
-        try {
-            const saved = localStorage.getItem('savoire-state');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                this.state.user = parsed.user || null;
-                this.state.outputs = parsed.outputs || [];
-                this.state.notes = parsed.notes || [];
-                this.state.sessions = parsed.sessions || [];
-                this.state.settings = parsed.settings || this.state.settings;
-                this.state.currentMode = parsed.currentMode || 'explain';
+    displayStudyMaterials(data) {
+        const formattedContent = this.formatStudyData(data);
+        this.addMessage(formattedContent, 'ai');
+        
+        // Add scroll animations to new study sections
+        setTimeout(() => {
+            document.querySelectorAll('.study-section').forEach(section => {
+                this.observer.observe(section);
+            });
+        }, 100);
+    }
+
+    formatStudyData(data) {
+        if (data.error) {
+            return `
+                <div class="error-message">
+                    <h3>Unable to Generate Response</h3>
+                    <p>${data.error}</p>
+                    <p>Please try again or check your connection.</p>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="study-materials" data-topic="${this.escapeHtml(data.topic)}">
+                <!-- Header -->
+                <div class="study-section">
+                    <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
+                    <div class="powered-by">
+                        Powered by Advanced AI Models • 
+                        Score: ${data.study_score || 96}/100 • 
+                        by Sooban Talha Technologies
+                    </div>
+                </div>
+
+                <!-- Ultra Detailed Notes -->
+                <div class="study-section">
+                    <h2 class="section-title">📚 COMPREHENSIVE ANALYSIS</h2>
+                    <div class="ultra-notes">
+                        ${this.formatNotes(data.ultra_long_notes)}
+                    </div>
+                </div>
+
+                <!-- Key Concepts -->
+                ${data.key_concepts && data.key_concepts.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">🔑 KEY CONCEPTS</h2>
+                    <div class="concepts-list">
+                        ${data.key_concepts.map(concept => `
+                            <div class="concept-item">${this.escapeHtml(concept)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Practice Questions -->
+                ${data.practice_questions && data.practice_questions.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">❓ ADVANCED QUESTIONS</h2>
+                    <div class="questions-list">
+                        ${data.practice_questions.map((q, index) => `
+                            <div class="question-item">
+                                <div class="question-text">Q${index + 1}: ${this.escapeHtml(q.question)}</div>
+                                <div class="answer-text">${this.escapeHtml(q.answer)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Tips & Tricks -->
+                ${data.key_tricks && data.key_tricks.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">⚡ TIPS & TRICKS</h2>
+                    <div class="tips-list">
+                        ${data.key_tricks.map(trick => `
+                            <div class="tip-item">${this.escapeHtml(trick)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Real World Applications -->
+                ${data.real_world_applications && data.real_world_applications.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">🌍 REAL-WORLD APPLICATIONS</h2>
+                    <div class="applications-list">
+                        ${data.real_world_applications.map(app => `
+                            <div class="application-item">${this.escapeHtml(app)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Common Misconceptions -->
+                ${data.common_misconceptions && data.common_misconceptions.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">⚠️ COMMON MISCONCEPTIONS</h2>
+                    <div class="misconceptions-list">
+                        ${data.common_misconceptions.map(misconception => `
+                            <div class="misconception-item">${this.escapeHtml(misconception)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- PDF Download Button -->
+                <div class="study-section">
+                    <div class="pdf-download-section">
+                        <button class="download-btn" onclick="goldAI.generatePremiumPDF('${this.escapeHtml(data.topic)}')">
+                            <i class="fas fa-file-pdf"></i>
+                            Download Premium PDF 
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="study-section">
+                    <div class="powered-by">
+                        Generated by Savoiré AI • by Sooban Talha Technologies •
+                        ${data.generated_at ? new Date(data.generated_at).toLocaleString() : new Date().toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    formatNotes(notes) {
+        if (!notes) return '<p>No response available.</p>';
+        
+        // Convert markdown-like formatting to HTML with enhanced styling
+        return notes
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--accent-color);">$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/### (.*?)(?=\n|$)/g, '<h3 style="color: var(--accent-color); margin: 1.5rem 0 1rem 0;">$1</h3>')
+            .replace(/## (.*?)(?=\n|$)/g, '<h2 style="color: var(--accent-color); margin: 2rem 0 1rem 0; border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem;">$1</h2>')
+            .replace(/# (.*?)(?=\n|$)/g, '<h1 style="color: var(--accent-color); margin: 2.5rem 0 1.5rem 0; text-align: center;">$1</h1>');
+    }
+
+    generatePremiumPDF(topic) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get all the content from study materials
+        const studyMaterials = document.querySelector('.study-materials');
+        
+        // Premium Gold & Black Header
+        doc.setFillColor(255, 215, 0); // Gold background
+        doc.rect(0, 0, 210, 45, 'F');
+        
+        // Main title in black
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(24);
+        doc.setFont(undefined, 'bold');
+        doc.text('SAVOIRÉ AI', 105, 20, { align: 'center' });
+        
+        // Subtitle
+        doc.setFontSize(12);
+        doc.text('PREMIUM STUDY PACKAGE', 105, 28, { align: 'center' });
+        
+        // Production credit
+        doc.setFontSize(10);
+        doc.text('by Sooban Talha Technologies', 105, 34, { align: 'center' });
+        
+        // Topic section with black background and gold text
+        doc.setFillColor(0, 0, 0);
+        doc.rect(0, 40, 210, 15, 'F');
+        doc.setTextColor(255, 215, 0);
+        doc.setFontSize(18);
+        doc.text(topic.toUpperCase(), 105, 50, { align: 'center' });
+        
+        let yPosition = 65;
+        let pageNumber = 1;
+
+        // Function to check page break
+        const checkPageBreak = (requiredSpace = 20) => {
+            if (yPosition > (287 - requiredSpace)) {
+                doc.addPage();
+                yPosition = 20;
+                pageNumber++;
+                return true;
+            }
+            return false;
+        };
+
+        // Function to add decorative section header
+        const addGoldSectionHeader = (title, emoji = '') => {
+            checkPageBreak(15);
+            
+            // Gold background for header
+            doc.setFillColor(255, 215, 0);
+            doc.rect(15, yPosition - 3, 180, 10, 'F');
+            
+            // Black text
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(emoji + ' ' + title.toUpperCase(), 25, yPosition + 2);
+            
+            yPosition += 15;
+        };
+
+        // Function to add formatted paragraph
+        const addFormattedParagraph = (text, options = {}) => {
+            const {
+                isBold = false,
+                marginLeft = 20,
+                fontSize = 10,
+                spacing = 8
+            } = options;
+
+            checkPageBreak(30);
+
+            doc.setFontSize(fontSize);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, isBold ? 'bold' : 'normal');
+
+            const lines = doc.splitTextToSize(text, 170);
+            doc.text(lines, marginLeft, yPosition);
+            yPosition += (lines.length * (fontSize / 2.5)) + spacing;
+        };
+
+        // Function to add gold bullet points
+        const addGoldBulletList = (items, title = '') => {
+            if (title) {
+                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
+            }
+
+            items.forEach((item, index) => {
+                checkPageBreak(15);
+
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
                 
-                if (this.state.user) {
-                    this.showIntroIfNeeded();
-                }
+                // Gold bullet
+                doc.setTextColor(255, 215, 0);
+                doc.setFont(undefined, 'bold');
+                doc.text('➤', 22, yPosition);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+
+                const lines = doc.splitTextToSize(item, 160);
+                doc.text(lines, 30, yPosition);
+                yPosition += (lines.length * 4) + 6;
+            });
+            yPosition += 8;
+        };
+
+        // Function to add numbered list with gold numbers
+        const addGoldNumberedList = (items, title = '') => {
+            if (title) {
+                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
             }
-        } catch (error) {
-            console.error('Load error:', error);
+
+            items.forEach((item, index) => {
+                checkPageBreak(15);
+
+                // Gold number
+                doc.setTextColor(255, 215, 0);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${index + 1}.`, 22, yPosition);
+                
+                // Black text
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+
+                const lines = doc.splitTextToSize(item, 160);
+                doc.text(lines, 30, yPosition);
+                yPosition += (lines.length * 4) + 6;
+            });
+            yPosition += 10;
+        };
+
+        // Function to add question-answer block
+        const addQuestionAnswerBlock = (question, answer, qNumber) => {
+            checkPageBreak(40);
+
+            // Question in bold black with gold Q number
+            doc.setTextColor(255, 215, 0);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Q${qNumber}`, 20, yPosition);
+            
+            doc.setTextColor(0, 0, 0);
+            const questionLines = doc.splitTextToSize(question, 160);
+            doc.text(questionLines, 30, yPosition);
+            yPosition += (questionLines.length * 4) + 8;
+
+            // Answer with indentation and different style
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            const answerLines = doc.splitTextToSize(answer, 165);
+            
+            // Add subtle background for answer
+            doc.setFillColor(245, 245, 245);
+            const answerHeight = (answerLines.length * 4) + 8;
+            doc.rect(25, yPosition - 2, 160, answerHeight, 'F');
+            
+            doc.setTextColor(0, 0, 0);
+            doc.text(answerLines, 30, yPosition);
+            yPosition += answerHeight + 15;
+        };
+
+        // Add comprehensive notes section
+        addGoldSectionHeader('COMPREHENSIVE ANALYSIS', '📚');
+        
+        const notesElement = studyMaterials.querySelector('.ultra-notes');
+        if (notesElement) {
+            const notesText = this.stripHtml(notesElement.innerHTML)
+                .replace(/\n/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            // Split into paragraphs and add each with proper spacing
+            const paragraphs = notesText.split(/(?:\r\n|\r|\n){2,}/);
+            paragraphs.forEach((paragraph, index) => {
+                if (paragraph.trim().length > 0) {
+                    addFormattedParagraph(paragraph.trim(), {
+                        fontSize: 10,
+                        spacing: index === paragraphs.length - 1 ? 15 : 10
+                    });
+                }
+            });
+        }
+
+        // Add key concepts
+        const concepts = Array.from(studyMaterials.querySelectorAll('.concept-item'));
+        if (concepts.length > 0) {
+            addGoldSectionHeader('KEY CONCEPTS', '🔑');
+            const conceptTexts = concepts.map(concept => concept.textContent);
+            addGoldBulletList(conceptTexts);
+        }
+
+        // Add questions and answers
+        const questions = Array.from(studyMaterials.querySelectorAll('.question-item'));
+        if (questions.length > 0) {
+            addGoldSectionHeader('ADVANCED QUESTIONS', '❓');
+            
+            questions.forEach((question, index) => {
+                const questionText = question.querySelector('.question-text').textContent.replace(`Q${index + 1}: `, '');
+                const answerText = question.querySelector('.answer-text').textContent;
+                addQuestionAnswerBlock(questionText, answerText, index + 1);
+            });
+        }
+
+        // Add tips and tricks
+        const tips = Array.from(studyMaterials.querySelectorAll('.tip-item'));
+        if (tips.length > 0) {
+            addGoldSectionHeader('TIPS & TRICKS', '⚡');
+            const tipTexts = tips.map(tip => tip.textContent);
+            addGoldNumberedList(tipTexts);
+        }
+
+        // Add real-world applications
+        const applications = Array.from(studyMaterials.querySelectorAll('.application-item'));
+        if (applications.length > 0) {
+            addGoldSectionHeader('REAL-WORLD APPLICATIONS', '🌍');
+            const applicationTexts = applications.map(app => app.textContent);
+            addGoldBulletList(applicationTexts);
+        }
+
+        // Add misconceptions
+        const misconceptions = Array.from(studyMaterials.querySelectorAll('.misconception-item'));
+        if (misconceptions.length > 0) {
+            addGoldSectionHeader('COMMON MISCONCEPTIONS', '⚠️');
+            const misconceptionTexts = misconceptions.map(misconception => misconception.textContent);
+            addGoldNumberedList(misconceptionTexts);
+        }
+
+        // Add professional footer on each page
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            
+            // Gold footer line
+            doc.setDrawColor(255, 215, 0);
+            doc.setLineWidth(0.5);
+            doc.line(15, 280, 195, 280);
+            
+            // Page info
+            doc.setFontSize(8);
+            doc.setTextColor(128, 128, 128);
+            doc.text(`Page ${i} of ${totalPages}`, 105, 285, { align: 'center' });
+            
+            // Generation info
+            doc.setFontSize(7);
+            doc.text(`Generated by Savoiré AI Premium • ${new Date().toLocaleString()}`, 105, 290, { align: 'center' });
+            doc.text(' •  Sooban Talha Technologies • ', 105, 295, { align: 'center' });
+        }
+
+        // Save the PDF
+        doc.save(`SavoireAI_Premium_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+    }
+
+    showThinking() {
+        this.thinkingIndicator.style.display = 'flex';
+        this.scrollToBottom();
+    }
+
+    hideThinking() {
+        this.thinkingIndicator.style.display = 'none';
+    }
+
+    showError(message) {
+        const errorMessage = `
+            <div class="error-message">
+                <h3>Connection Issue</h3>
+                <p>${this.escapeHtml(message)}</p>
+                <p>Please check your internet connection and try again.</p>
+            </div>
+        `;
+        this.addMessage(errorMessage, 'ai');
+    }
+
+    clearChat() {
+        this.animateButton(this.clearChatBtn);
+        setTimeout(() => {
+            this.chatMessages.innerHTML = '';
+            this.conversationHistory = [];
+            this.welcomeArea.style.display = 'block';
+            this.messagesContainer.style.display = 'none';
+        }, 300);
+    }
+
+    scrollToBottom() {
+        setTimeout(() => {
+            this.chatMessages.scrollTo({
+                top: this.chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 100);
+    }
+
+    escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    stripHtml(html) {
+        if (!html) return '';
+        const tmp = document.createElement('DIV');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+    }
+
+    toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const icon = document.querySelector('.theme-toggle i');
+        if (document.body.classList.contains('light-theme')) {
+            icon.className = 'fas fa-sun';
+            document.documentElement.style.setProperty('--primary-bg', '#ffffff');
+            document.documentElement.style.setProperty('--secondary-bg', '#f8f9fa');
+            document.documentElement.style.setProperty('--surface-bg', '#ffffff');
+            document.documentElement.style.setProperty('--text-primary', '#202124');
+            document.documentElement.style.setProperty('--text-secondary', '#5f6368');
+            document.documentElement.style.setProperty('--text-muted', '#80868b');
+            document.documentElement.style.setProperty('--border-color', '#dadce0');
+            document.documentElement.style.setProperty('--ai-message-bg', '#f8f9fa');
+            document.documentElement.style.setProperty('--user-message-bg', '#e8f0fe');
+        } else {
+            icon.className = 'fas fa-moon';
+            document.documentElement.style.setProperty('--primary-bg', '#0a0a0a');
+            document.documentElement.style.setProperty('--secondary-bg', '#141414');
+            document.documentElement.style.setProperty('--surface-bg', '#1f1f1f');
+            document.documentElement.style.setProperty('--text-primary', '#f5f5f5');
+            document.documentElement.style.setProperty('--text-secondary', '#cccccc');
+            document.documentElement.style.setProperty('--text-muted', '#888888');
+            document.documentElement.style.setProperty('--border-color', '#333333');
+            document.documentElement.style.setProperty('--ai-message-bg', '#252525');
+            document.documentElement.style.setProperty('--user-message-bg', '#1a1a1a');
         }
     }
 }
 
-window.savoireAI = new SavoireAI();
+// Initialize the app
+const goldAI = new GoldSavoireAI();
+
+// Make available globally
+window.goldAI = goldAI;
+
+// Add additional CSS for scroll animations
+const scrollAnimations = document.createElement('style');
+scrollAnimations.textContent = `
+    .study-section {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .study-section.animate-in {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .study-section:nth-child(even) {
+        transition-delay: 0.1s;
+    }
+    
+    .study-section:nth-child(odd) {
+        transition-delay: 0.2s;
+    }
+    
+    .text-input-container.focused {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
+    }
+    
+    .pdf-download-section {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .applications-list,
+    .misconceptions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .application-item,
+    .misconception-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        color: var(--text-primary);
+        font-weight: 400;
+        padding: 0.8rem;
+        background: rgba(255, 215, 0, 0.1);
+        border-radius: 10px;
+        border-left: 3px solid var(--accent-color);
+        transition: all 0.3s ease;
+    }
+    
+    .application-item:hover,
+    .misconception-item:hover {
+        transform: translateX(5px);
+        background: rgba(255, 215, 0, 0.15);
+    }
+    
+    .application-item::before {
+        content: "🌍";
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+    
+    .misconception-item::before {
+        content: "⚠️";
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+    
+    /* Mobile specific fixes */
+    @media (max-width: 768px) {
+        .study-materials {
+            margin: 0.5rem 0;
+            padding: 1rem;
+        }
+        
+        .message-content {
+            max-width: 95%;
+        }
+        
+        .ultra-notes {
+            padding: 1rem;
+            font-size: 14px;
+        }
+        
+        .concept-item, .tip-item, .question-item, .application-item, .misconception-item {
+            padding: 0.6rem;
+            font-size: 14px;
+        }
+        
+        .study-title {
+            font-size: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+        }
+        
+        .download-btn {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 14px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .study-materials {
+            padding: 0.8rem;
+        }
+        
+        .ultra-notes {
+            padding: 0.8rem;
+        }
+        
+        .question-item, .application-item, .misconception-item {
+            padding: 0.8rem;
+        }
+        
+        .concept-item, .tip-item {
+            padding: 0.5rem;
+        }
+    }
+`;
+document.head.appendChild(scrollAnimations);
