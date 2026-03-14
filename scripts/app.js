@@ -1,447 +1,808 @@
-/**
- * Savoiré AI v3.0 — Backend API
- * app.js (Express server — deploy to Vercel or Node host)
- *
- * Developer: Sooban Talha Technologies (soobantalhatech.xyz)
- * Domain:    savoireai.vercel.app
- *
- * Stack:
- *   - Express for routing
- *   - Multer for file uploads
- *   - pdf-parse for PDF text extraction
- *   - mammoth for .docx text extraction
- *   - OpenRouter (free tier) for AI: Gemini 2.0 Flash → DeepSeek v3.1 → GLM-4.5 → Llama 3.2
- *
- * Install:
- *   npm install express cors multer pdf-parse mammoth node-fetch rate-limiter-flexible dotenv
- *
- * Env variables (.env):
- *   OPENROUTER_API_KEY=your_openrouter_key
- *   PORT=3000                  (optional, defaults to 3000)
- */
-
-'use strict';
-
-require('dotenv').config();
-const express     = require('express');
-const cors        = require('cors');
-const multer      = require('multer');
-const path        = require('path');
-const fs          = require('fs');
-const { RateLimiterMemory } = require('rate-limiter-flexible');
-
-// ── Lazy-loaded parsers (avoids crashing if optional packages aren't installed)
-let pdfParse, mammoth;
-try { pdfParse = require('pdf-parse'); } catch (_) { pdfParse = null; }
-try { mammoth   = require('mammoth');   } catch (_) { mammoth  = null; }
-
-// ─────────────────────────────────────────────
-// Config
-// ─────────────────────────────────────────────
-const PORT              = process.env.PORT || 3000;
-const OPENROUTER_KEY    = process.env.OPENROUTER_API_KEY || '';
-const OPENROUTER_BASE   = 'https://openrouter.ai/api/v1/chat/completions';
-const APP_SITE_URL      = process.env.SITE_URL || 'https://savoireai.vercel.app';
-const APP_NAME          = 'Savoiré AI';
-
-/** Free models in priority order. All end with :free on OpenRouter. */
-const FREE_MODELS = [
-  'google/gemini-2.0-flash-exp:free',
-  'deepseek/deepseek-chat-v3-0324:free',
-  'z-ai/glm-4.5-air:free',
-  'meta-llama/llama-3.2-3b-instruct:free',
-];
-
-// In-memory "credits" store (reset on server restart — swap for Redis/DB in production)
-const creditsStore = new Map(); // ip → { notes: number, changes: number }
-const FREE_NOTE_LIMIT   = 3;
-const FREE_CHANGE_LIMIT = 5;
-
-// ─────────────────────────────────────────────
-// Express setup
-// ─────────────────────────────────────────────
-const app = express();
-
-app.use(cors({
-  origin: [APP_SITE_URL, 'http://localhost:3000', /\.vercel\.app$/],
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Serve static files from the project root in development
-app.use(express.static(path.join(__dirname, '..')));
-
-// ─────────────────────────────────────────────
-// File upload (Multer)
-// ─────────────────────────────────────────────
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-  fileFilter(req, file, cb) {
-    const ALLOWED = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'text/plain',
-      'image/png', 'image/jpeg', 'image/jpg', 'image/webp',
-    ];
-    if (ALLOWED.includes(file.mimetype)) { cb(null, true); }
-    else { cb(new Error(`Unsupported file type: ${file.mimetype}`), false); }
-  },
-});
-
-// ─────────────────────────────────────────────
-// Rate limiting
-// ─────────────────────────────────────────────
-const rateLimiter = new RateLimiterMemory({ points: 10, duration: 60 }); // 10 req / min / IP
-
-async function rateLimit(req, res, next) {
-  try {
-    await rateLimiter.consume(req.ip);
-    next();
-  } catch {
-    res.status(429).json({ success: false, error: 'Too many requests. Please wait a moment.' });
-  }
-}
-
-// ─────────────────────────────────────────────
-// Credit helpers
-// ─────────────────────────────────────────────
-function getCredits(ip) {
-  if (!creditsStore.has(ip)) creditsStore.set(ip, { notes: 0, changes: 0 });
-  return creditsStore.get(ip);
-}
-
-function getRemainingCredits(ip) {
-  const c = getCredits(ip);
-  return {
-    notes:   Math.max(0, FREE_NOTE_LIMIT   - c.notes),
-    changes: Math.max(0, FREE_CHANGE_LIMIT - c.changes),
-  };
-}
-
-// ─────────────────────────────────────────────
-// File → text extractor
-// ─────────────────────────────────────────────
-async function extractTextFromFile(file) {
-  const mime = file.mimetype;
-
-  if (mime === 'text/plain') {
-    return file.buffer.toString('utf-8');
-  }
-
-  if (mime === 'application/pdf') {
-    if (!pdfParse) throw new Error('pdf-parse not installed. Run: npm install pdf-parse');
-    const data = await pdfParse(file.buffer);
-    return data.text;
-  }
-
-  if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-    if (!mammoth) throw new Error('mammoth not installed. Run: npm install mammoth');
-    const result = await mammoth.extractRawText({ buffer: file.buffer });
-    return result.value;
-  }
-
-  if (mime.startsWith('image/')) {
-    // Return a placeholder — full OCR requires tesseract.js (optional heavy dep)
-    // If you want OCR: npm install tesseract.js  and replace this block
-    return '[Image uploaded — OCR processing. Install tesseract.js for full OCR support.]';
-  }
-
-  throw new Error(`Cannot extract text from file type: ${mime}`);
-}
-
-// ─────────────────────────────────────────────
-// AI prompt builder
-// ─────────────────────────────────────────────
-/**
- * @param {string} action  - extend | shorten | rephrase | grammar | thesaurus | translate | tone | style | combine | generate
- * @param {string} text    - user text / topic
- * @param {object} opts    - { language, tone, style, format, length, targetLanguage, combinedActions }
- */
-function buildPrompt(action, text, opts = {}) {
-  const lang     = opts.language     || 'English';
-  const tone     = opts.tone         || 'professional';
-  const style    = opts.style        || 'academic';
-  const format   = opts.format       || 'notes';
-  const length   = opts.length       || 'medium';
-  const targetLang = opts.targetLanguage || 'French';
-
-  const lengthMap = { short: '~150 words', medium: '~300 words', long: '~600 words', 'ultra-detailed': '~1200 words' };
-  const wordGuide = lengthMap[length] || lengthMap.medium;
-
-  const instructions = {
-    extend: `You are an expert writing assistant. Extend the following text to be longer and more detailed (${wordGuide}), preserving the original meaning, tone, and style. Do not add unrelated information. Respond only with the extended text, no preamble.\n\nText:\n${text}`,
-
-    shorten: `You are an expert writing assistant. Shorten the following text to be more concise (${wordGuide}), keeping all key information and the author's intended meaning. Remove redundancy and filler. Respond only with the shortened text, no preamble.\n\nText:\n${text}`,
-
-    rephrase: `You are an expert writing assistant. Rephrase the following text to improve clarity, flow, and readability while preserving the original meaning. Respond only with the rephrased text, no preamble.\n\nText:\n${text}`,
-
-    grammar: `You are an expert proofreader. Correct all spelling, grammar, and punctuation errors in the following text. Do not change the meaning or style. Respond only with the corrected text, no preamble.\n\nText:\n${text}`,
-
-    thesaurus: `You are an expert writing assistant. Improve the vocabulary of the following text by replacing overused or weak words with more precise, appropriate alternatives that suit the context. Do not change the overall meaning. Respond only with the improved text, no preamble.\n\nText:\n${text}`,
-
-    translate: `You are a professional translator with expertise in literary, academic, and technical translation. Translate the following text into ${targetLang} with natural, idiomatic phrasing — not a word-for-word translation. Preserve the tone and style of the original. Respond only with the translated text.\n\nText:\n${text}`,
-
-    tone: `You are an expert writing assistant. Rewrite the following text in a ${tone} tone. Adjust the delivery and word choice accordingly while keeping the core content. Respond only with the rewritten text, no preamble.\n\nText:\n${text}`,
-
-    style: `You are an expert writing assistant. Rewrite the following text in a ${style} writing style suitable for the target audience. Respond only with the rewritten text, no preamble.\n\nText:\n${text}`,
-
-    combine: `You are an expert writing assistant. Apply the following transformations to the text in sequence: ${(opts.combinedActions || ['rephrase', 'shorten']).join(', ')}. Produce a final result that incorporates all transformations. Respond only with the final text, no preamble.\n\nText:\n${text}`,
-
-    generate: `You are an expert educator and note-taker. Create comprehensive, well-structured ${format} on the following topic in ${lang}. Use clear headings, bullet points, and concise explanations. Target length: ${wordGuide}. Tone: ${tone}. Style: ${style}.\n\nTopic:\n${text}`,
-  };
-
-  return instructions[action] || instructions.generate;
-}
-
-// ─────────────────────────────────────────────
-// OpenRouter AI caller with model fallback
-// ─────────────────────────────────────────────
-async function callAI(prompt, preferredModel = null) {
-  if (!OPENROUTER_KEY) throw new Error('OPENROUTER_API_KEY is not set in environment variables.');
-
-  const modelsToTry = preferredModel
-    ? [preferredModel, ...FREE_MODELS.filter(m => m !== preferredModel)]
-    : FREE_MODELS;
-
-  let lastError;
-  for (const model of modelsToTry) {
-    try {
-      const start = Date.now();
-      const response = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENROUTER_KEY}`,
-          'HTTP-Referer': APP_SITE_URL,
-          'X-Title': APP_NAME,
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 2048,
-          temperature: 0.7,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: AbortSignal.timeout(30_000), // 30s timeout
-      });
-
-      if (!response.ok) {
-        const errBody = await response.text();
-        throw new Error(`OpenRouter ${response.status}: ${errBody.slice(0, 200)}`);
-      }
-
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
-      if (!content) throw new Error('Empty response from model');
-
-      return {
-        text:           content.trim(),
-        model_used:     model,
-        tokens_used:    data.usage?.total_tokens || 0,
-        processing_ms:  Date.now() - start,
-      };
-    } catch (err) {
-      console.warn(`[AI] Model ${model} failed:`, err.message);
-      lastError = err;
-    }
-  }
-
-  // All models failed — return offline fallback
-  console.error('[AI] All models failed. Using offline fallback.');
-  return offlineFallback(prompt);
-}
-
-/** Offline fallback when all AI models are unavailable */
-function offlineFallback(prompt) {
-  return {
-    text: '[AI temporarily unavailable] All AI models are currently unreachable. Please check your OPENROUTER_API_KEY and try again shortly.',
-    model_used: 'offline-fallback',
-    tokens_used: 0,
-    processing_ms: 0,
-    fallback: true,
-  };
-}
-
-// ─────────────────────────────────────────────
-// Routes
-// ─────────────────────────────────────────────
-
-/** GET /api/health — uptime check */
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    version: '3.0.0',
-    timestamp: new Date().toISOString(),
-    models: FREE_MODELS,
-    key_configured: !!OPENROUTER_KEY,
-  });
-});
-
-/** GET /api/credits — check remaining free credits for this IP */
-app.get('/api/credits', (req, res) => {
-  res.json({ success: true, remaining: getRemainingCredits(req.ip) });
-});
-
-/**
- * POST /api/process
- * Main AI processing endpoint.
- *
- * Body (multipart/form-data or JSON):
- *   action         : string  (generate | extend | shorten | rephrase | grammar | thesaurus | translate | tone | style | combine)
- *   text           : string  (input text or topic)
- *   language       : string  (output language, default "English")
- *   targetLanguage : string  (for translate action)
- *   tone           : string  (professional | casual | academic | persuasive | friendly | formal)
- *   style          : string  (academic | simple | detailed | bullet_points | essay | blog | report)
- *   format         : string  (notes | summary | flashcards | outline)
- *   length         : string  (short | medium | long | ultra-detailed)
- *   combinedActions: string  (JSON array, for "combine" action)
- *   file           : file    (optional upload)
- */
-app.post('/api/process', rateLimit, upload.single('file'), async (req, res) => {
-  const start = Date.now();
-
-  try {
-    // ── Parse body
-    const {
-      action         = 'generate',
-      language       = 'English',
-      targetLanguage = 'French',
-      tone           = 'professional',
-      style          = 'academic',
-      format         = 'notes',
-      length         = 'medium',
-    } = req.body;
-
-    let combinedActions;
-    try { combinedActions = JSON.parse(req.body.combinedActions || '["rephrase","shorten"]'); }
-    catch { combinedActions = ['rephrase', 'shorten']; }
-
-    // ── Get text (from body or uploaded file)
-    let text = (req.body.text || '').trim();
-
-    if (req.file) {
-      try {
-        const extracted = await extractTextFromFile(req.file);
-        text = extracted.trim() || text;
-      } catch (err) {
-        return res.status(400).json({ success: false, error: `File processing failed: ${err.message}` });
-      }
+// Ultra-Advanced Gold Theme AI Assistant
+class GoldSavoireAI {
+    constructor() {
+        this.initializeApp();
+        this.bindEvents();
+        this.initializeAdvancedAnimations();
     }
 
-    if (!text) {
-      return res.status(400).json({ success: false, error: 'No text or file provided.' });
-    }
-    if (text.length > 20_000) {
-      return res.status(400).json({ success: false, error: 'Input text exceeds 20,000 character limit.' });
-    }
-
-    // ── Validate action
-    const VALID_ACTIONS = ['generate','extend','shorten','rephrase','grammar','thesaurus','translate','tone','style','combine'];
-    const safeAction = VALID_ACTIONS.includes(action) ? action : 'generate';
-
-    // ── Credit check
-    const ip = req.ip;
-    const credits = getCredits(ip);
-    const isGenerateAction = safeAction === 'generate';
-
-    if (isGenerateAction && credits.notes >= FREE_NOTE_LIMIT) {
-      return res.status(402).json({
-        success: false,
-        error: 'Free generation limit reached.',
-        upgrade_required: true,
-        remaining: getRemainingCredits(ip),
-      });
-    }
-    if (!isGenerateAction && credits.changes >= FREE_CHANGE_LIMIT) {
-      return res.status(402).json({
-        success: false,
-        error: 'Free changes limit reached.',
-        upgrade_required: true,
-        remaining: getRemainingCredits(ip),
-      });
+    initializeApp() {
+        this.chatMessages = document.getElementById('chatMessages');
+        this.messageInput = document.getElementById('messageInput');
+        this.sendButton = document.getElementById('sendButton');
+        this.welcomeArea = document.getElementById('welcomeArea');
+        this.messagesContainer = document.getElementById('messagesContainer');
+        this.thinkingIndicator = document.getElementById('thinkingIndicator');
+        this.clearChatBtn = document.getElementById('clearChat');
+        
+        this.conversationHistory = [];
+        this.isGenerating = false;
     }
 
-    // ── Build prompt & call AI
-    const prompt = buildPrompt(safeAction, text, { language, targetLanguage, tone, style, format, length, combinedActions });
-    const aiResult = await callAI(prompt);
+    initializeAdvancedAnimations() {
+        // Add intersection observer for scroll animations
+        this.observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                }
+            });
+        }, { threshold: 0.1 });
+    }
 
-    // ── Deduct credits
-    if (isGenerateAction) { credits.notes++; }
-    else                   { credits.changes++; }
+    bindEvents() {
+        this.sendButton.addEventListener('click', () => this.sendMessage());
+        this.messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
 
-    // ── Respond
-    const remaining = getRemainingCredits(ip);
-    res.json({
-      success: true,
-      data: {
-        original:  text,
-        processed: aiResult.text,
-        action:    safeAction,
-        metadata: {
-          model_used:      aiResult.model_used,
-          tokens_used:     aiResult.tokens_used,
-          processing_time: ((Date.now() - start) / 1000).toFixed(2),
-          language,
-          fallback:        aiResult.fallback || false,
-        },
-      },
-      remaining_free_credits: remaining,
-    });
+        this.clearChatBtn.addEventListener('click', () => this.clearChat());
 
-  } catch (err) {
-    console.error('[/api/process] Unhandled error:', err);
-    res.status(500).json({ success: false, error: 'An internal server error occurred. Please try again.' });
-  }
-});
+        // Auto-resize textarea with animation
+        this.messageInput.addEventListener('input', () => {
+            this.autoResize();
+            this.animateInput();
+        });
 
-/**
- * POST /api/extract
- * Extract text from an uploaded file only (no AI).
- */
-app.post('/api/extract', rateLimit, upload.single('file'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, error: 'No file uploaded.' });
-  try {
-    const text = await extractTextFromFile(req.file);
-    res.json({ success: true, text: text.trim(), filename: req.file.originalname, size: req.file.size });
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
-  }
-});
+        // Quick suggestion chips with enhanced animations
+        document.querySelectorAll('.suggestion-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                this.animateButton(e.target);
+                const prompt = chip.getAttribute('data-prompt');
+                this.messageInput.value = prompt;
+                setTimeout(() => this.sendMessage(), 300);
+            });
+        });
 
-/**
- * GET /api/models
- * List available free models.
- */
-app.get('/api/models', (req, res) => {
-  res.json({ success: true, models: FREE_MODELS, primary: FREE_MODELS[0] });
-});
+        // Theme toggle with enhanced animation
+        document.querySelector('.theme-toggle').addEventListener('click', (e) => {
+            this.animateButton(e.target);
+            setTimeout(() => this.toggleTheme(), 200);
+        });
 
-// ─────────────────────────────────────────────
-// Global error handler
-// ─────────────────────────────────────────────
-app.use((err, req, res, _next) => {
-  console.error('[Global error]', err.message);
-  const status = err.status || (err.message.includes('Unsupported') ? 415 : 500);
-  res.status(status).json({ success: false, error: err.message || 'Server error' });
-});
+        // Input focus animations
+        this.messageInput.addEventListener('focus', () => {
+            this.messageInput.parentElement.classList.add('focused');
+        });
 
-// 404
-app.use((req, res) => {
-  res.status(404).json({ success: false, error: `Route not found: ${req.method} ${req.path}` });
-});
+        this.messageInput.addEventListener('blur', () => {
+            this.messageInput.parentElement.classList.remove('focused');
+        });
+    }
 
-// ─────────────────────────────────────────────
-// Start
-// ─────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`\n🎓 Savoiré AI v3.0 — API running on http://localhost:${PORT}`);
-  console.log(`   OpenRouter key: ${OPENROUTER_KEY ? '✓ configured' : '✗ MISSING — set OPENROUTER_API_KEY'}`);
-  console.log(`   Primary model : ${FREE_MODELS[0]}`);
-  console.log(`   Fallback chain: ${FREE_MODELS.slice(1).join(' → ')}\n`);
-});
+    animateInput() {
+        this.messageInput.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            this.messageInput.style.transform = 'scale(1)';
+        }, 150);
+    }
 
-module.exports = app; // for Vercel serverless export
+    animateButton(button) {
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1)';
+        }, 150);
+    }
+
+    autoResize() {
+        this.messageInput.style.height = 'auto';
+        this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+    }
+
+    async sendMessage() {
+        const message = this.messageInput.value.trim();
+        if (!message || this.isGenerating) return;
+
+        // Hide welcome area, show messages with animation
+        this.welcomeArea.style.display = 'none';
+        this.messagesContainer.style.display = 'block';
+
+        // Add user message with animation
+        this.addMessage(message, 'user');
+
+        // Clear input with animation
+        this.animateClearInput();
+
+        // Show thinking indicator
+        this.showThinking();
+
+        this.isGenerating = true;
+        this.sendButton.disabled = true;
+
+        try {
+            const studyData = await this.generateStudyMaterials(message);
+            this.hideThinking();
+            this.displayStudyMaterials(studyData);
+        } catch (error) {
+            this.hideThinking();
+            this.showError(error.message);
+        }
+
+        this.isGenerating = false;
+        this.sendButton.disabled = false;
+    }
+
+    animateClearInput() {
+        this.messageInput.style.opacity = '0';
+        this.messageInput.style.transform = 'translateX(-20px)';
+        setTimeout(() => {
+            this.messageInput.value = '';
+            this.autoResize();
+            this.messageInput.style.opacity = '1';
+            this.messageInput.style.transform = 'translateX(0)';
+        }, 300);
+    }
+
+    async generateStudyMaterials(message) {
+        console.log('Sending request to AI:', message);
+
+        const response = await fetch('/api/study', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Received detailed study data:', data);
+        return data;
+    }
+
+    addMessage(content, type) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
+        
+        const avatar = type === 'user' ? 
+            '<div class="message-avatar">👤</div>' : 
+            '<div class="message-avatar"><div class="logo-background small"><img src="LOGO.png" alt="AI" class="logo-img"></div></div>';
+        
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (type === 'user') {
+            messageDiv.innerHTML = `
+                ${avatar}
+                <div class="message-content">
+                    <div class="message-text">${this.escapeHtml(content)}</div>
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                ${avatar}
+                <div class="message-content">
+                    ${content}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+        }
+
+        this.chatMessages.appendChild(messageDiv);
+        this.scrollToBottom();
+        
+        // Add to conversation history
+        this.conversationHistory.push({ type, content, time });
+    }
+
+    displayStudyMaterials(data) {
+        const formattedContent = this.formatStudyData(data);
+        this.addMessage(formattedContent, 'ai');
+        
+        // Add scroll animations to new study sections
+        setTimeout(() => {
+            document.querySelectorAll('.study-section').forEach(section => {
+                this.observer.observe(section);
+            });
+        }, 100);
+    }
+
+    formatStudyData(data) {
+        if (data.error) {
+            return `
+                <div class="error-message">
+                    <h3>Unable to Generate Response</h3>
+                    <p>${data.error}</p>
+                    <p>Please try again or check your connection.</p>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="study-materials" data-topic="${this.escapeHtml(data.topic)}">
+                <!-- Header -->
+                <div class="study-section">
+                    <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
+                    <div class="powered-by">
+                        Powered by Advanced AI Models • 
+                        Score: ${data.study_score || 96}/100 • 
+                        by Sooban Talha Technologies
+                    </div>
+                </div>
+
+                <!-- Ultra Detailed Notes -->
+                <div class="study-section">
+                    <h2 class="section-title">📚 COMPREHENSIVE ANALYSIS</h2>
+                    <div class="ultra-notes">
+                        ${this.formatNotes(data.ultra_long_notes)}
+                    </div>
+                </div>
+
+                <!-- Key Concepts -->
+                ${data.key_concepts && data.key_concepts.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">🔑 KEY CONCEPTS</h2>
+                    <div class="concepts-list">
+                        ${data.key_concepts.map(concept => `
+                            <div class="concept-item">${this.escapeHtml(concept)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Practice Questions -->
+                ${data.practice_questions && data.practice_questions.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">❓ ADVANCED QUESTIONS</h2>
+                    <div class="questions-list">
+                        ${data.practice_questions.map((q, index) => `
+                            <div class="question-item">
+                                <div class="question-text">Q${index + 1}: ${this.escapeHtml(q.question)}</div>
+                                <div class="answer-text">${this.escapeHtml(q.answer)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Tips & Tricks -->
+                ${data.key_tricks && data.key_tricks.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">⚡ TIPS & TRICKS</h2>
+                    <div class="tips-list">
+                        ${data.key_tricks.map(trick => `
+                            <div class="tip-item">${this.escapeHtml(trick)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Real World Applications -->
+                ${data.real_world_applications && data.real_world_applications.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">🌍 REAL-WORLD APPLICATIONS</h2>
+                    <div class="applications-list">
+                        ${data.real_world_applications.map(app => `
+                            <div class="application-item">${this.escapeHtml(app)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Common Misconceptions -->
+                ${data.common_misconceptions && data.common_misconceptions.length > 0 ? `
+                <div class="study-section">
+                    <h2 class="section-title">⚠️ COMMON MISCONCEPTIONS</h2>
+                    <div class="misconceptions-list">
+                        ${data.common_misconceptions.map(misconception => `
+                            <div class="misconception-item">${this.escapeHtml(misconception)}</div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- PDF Download Button -->
+                <div class="study-section">
+                    <div class="pdf-download-section">
+                        <button class="download-btn" onclick="goldAI.generatePremiumPDF('${this.escapeHtml(data.topic)}')">
+                            <i class="fas fa-file-pdf"></i>
+                            Download Premium PDF 
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="study-section">
+                    <div class="powered-by">
+                        Generated by Savoiré AI • by Sooban Talha Technologies •
+                        ${data.generated_at ? new Date(data.generated_at).toLocaleString() : new Date().toLocaleString()}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    formatNotes(notes) {
+        if (!notes) return '<p>No response available.</p>';
+        
+        // Convert markdown-like formatting to HTML with enhanced styling
+        return notes
+            .replace(/\n/g, '<br>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--accent-color);">$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/### (.*?)(?=\n|$)/g, '<h3 style="color: var(--accent-color); margin: 1.5rem 0 1rem 0;">$1</h3>')
+            .replace(/## (.*?)(?=\n|$)/g, '<h2 style="color: var(--accent-color); margin: 2rem 0 1rem 0; border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem;">$1</h2>')
+            .replace(/# (.*?)(?=\n|$)/g, '<h1 style="color: var(--accent-color); margin: 2.5rem 0 1.5rem 0; text-align: center;">$1</h1>');
+    }
+
+    generatePremiumPDF(topic) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Get all the content from study materials
+        const studyMaterials = document.querySelector('.study-materials');
+        
+        // Premium Gold & Black Header
+        doc.setFillColor(255, 215, 0); // Gold background
+        doc.rect(0, 0, 210, 45, 'F');
+        
+        // Main title in black
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(24);
+        doc.setFont(undefined, 'bold');
+        doc.text('SAVOIRÉ AI', 105, 20, { align: 'center' });
+        
+        // Subtitle
+        doc.setFontSize(12);
+        doc.text('PREMIUM STUDY PACKAGE', 105, 28, { align: 'center' });
+        
+        // Production credit
+        doc.setFontSize(10);
+        doc.text('by Sooban Talha Technologies', 105, 34, { align: 'center' });
+        
+        // Topic section with black background and gold text
+        doc.setFillColor(0, 0, 0);
+        doc.rect(0, 40, 210, 15, 'F');
+        doc.setTextColor(255, 215, 0);
+        doc.setFontSize(18);
+        doc.text(topic.toUpperCase(), 105, 50, { align: 'center' });
+        
+        let yPosition = 65;
+        let pageNumber = 1;
+
+        // Function to check page break
+        const checkPageBreak = (requiredSpace = 20) => {
+            if (yPosition > (287 - requiredSpace)) {
+                doc.addPage();
+                yPosition = 20;
+                pageNumber++;
+                return true;
+            }
+            return false;
+        };
+
+        // Function to add decorative section header
+        const addGoldSectionHeader = (title, emoji = '') => {
+            checkPageBreak(15);
+            
+            // Gold background for header
+            doc.setFillColor(255, 215, 0);
+            doc.rect(15, yPosition - 3, 180, 10, 'F');
+            
+            // Black text
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(emoji + ' ' + title.toUpperCase(), 25, yPosition + 2);
+            
+            yPosition += 15;
+        };
+
+        // Function to add formatted paragraph
+        const addFormattedParagraph = (text, options = {}) => {
+            const {
+                isBold = false,
+                marginLeft = 20,
+                fontSize = 10,
+                spacing = 8
+            } = options;
+
+            checkPageBreak(30);
+
+            doc.setFontSize(fontSize);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, isBold ? 'bold' : 'normal');
+
+            const lines = doc.splitTextToSize(text, 170);
+            doc.text(lines, marginLeft, yPosition);
+            yPosition += (lines.length * (fontSize / 2.5)) + spacing;
+        };
+
+        // Function to add gold bullet points
+        const addGoldBulletList = (items, title = '') => {
+            if (title) {
+                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
+            }
+
+            items.forEach((item, index) => {
+                checkPageBreak(15);
+
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                
+                // Gold bullet
+                doc.setTextColor(255, 215, 0);
+                doc.setFont(undefined, 'bold');
+                doc.text('➤', 22, yPosition);
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+
+                const lines = doc.splitTextToSize(item, 160);
+                doc.text(lines, 30, yPosition);
+                yPosition += (lines.length * 4) + 6;
+            });
+            yPosition += 8;
+        };
+
+        // Function to add numbered list with gold numbers
+        const addGoldNumberedList = (items, title = '') => {
+            if (title) {
+                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
+            }
+
+            items.forEach((item, index) => {
+                checkPageBreak(15);
+
+                // Gold number
+                doc.setTextColor(255, 215, 0);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${index + 1}.`, 22, yPosition);
+                
+                // Black text
+                doc.setTextColor(0, 0, 0);
+                doc.setFont(undefined, 'normal');
+
+                const lines = doc.splitTextToSize(item, 160);
+                doc.text(lines, 30, yPosition);
+                yPosition += (lines.length * 4) + 6;
+            });
+            yPosition += 10;
+        };
+
+        // Function to add question-answer block
+        const addQuestionAnswerBlock = (question, answer, qNumber) => {
+            checkPageBreak(40);
+
+            // Question in bold black with gold Q number
+            doc.setTextColor(255, 215, 0);
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Q${qNumber}`, 20, yPosition);
+            
+            doc.setTextColor(0, 0, 0);
+            const questionLines = doc.splitTextToSize(question, 160);
+            doc.text(questionLines, 30, yPosition);
+            yPosition += (questionLines.length * 4) + 8;
+
+            // Answer with indentation and different style
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            const answerLines = doc.splitTextToSize(answer, 165);
+            
+            // Add subtle background for answer
+            doc.setFillColor(245, 245, 245);
+            const answerHeight = (answerLines.length * 4) + 8;
+            doc.rect(25, yPosition - 2, 160, answerHeight, 'F');
+            
+            doc.setTextColor(0, 0, 0);
+            doc.text(answerLines, 30, yPosition);
+            yPosition += answerHeight + 15;
+        };
+
+        // Add comprehensive notes section
+        addGoldSectionHeader('COMPREHENSIVE ANALYSIS', '📚');
+        
+        const notesElement = studyMaterials.querySelector('.ultra-notes');
+        if (notesElement) {
+            const notesText = this.stripHtml(notesElement.innerHTML)
+                .replace(/\n/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            // Split into paragraphs and add each with proper spacing
+            const paragraphs = notesText.split(/(?:\r\n|\r|\n){2,}/);
+            paragraphs.forEach((paragraph, index) => {
+                if (paragraph.trim().length > 0) {
+                    addFormattedParagraph(paragraph.trim(), {
+                        fontSize: 10,
+                        spacing: index === paragraphs.length - 1 ? 15 : 10
+                    });
+                }
+            });
+        }
+
+        // Add key concepts
+        const concepts = Array.from(studyMaterials.querySelectorAll('.concept-item'));
+        if (concepts.length > 0) {
+            addGoldSectionHeader('KEY CONCEPTS', '🔑');
+            const conceptTexts = concepts.map(concept => concept.textContent);
+            addGoldBulletList(conceptTexts);
+        }
+
+        // Add questions and answers
+        const questions = Array.from(studyMaterials.querySelectorAll('.question-item'));
+        if (questions.length > 0) {
+            addGoldSectionHeader('ADVANCED QUESTIONS', '❓');
+            
+            questions.forEach((question, index) => {
+                const questionText = question.querySelector('.question-text').textContent.replace(`Q${index + 1}: `, '');
+                const answerText = question.querySelector('.answer-text').textContent;
+                addQuestionAnswerBlock(questionText, answerText, index + 1);
+            });
+        }
+
+        // Add tips and tricks
+        const tips = Array.from(studyMaterials.querySelectorAll('.tip-item'));
+        if (tips.length > 0) {
+            addGoldSectionHeader('TIPS & TRICKS', '⚡');
+            const tipTexts = tips.map(tip => tip.textContent);
+            addGoldNumberedList(tipTexts);
+        }
+
+        // Add real-world applications
+        const applications = Array.from(studyMaterials.querySelectorAll('.application-item'));
+        if (applications.length > 0) {
+            addGoldSectionHeader('REAL-WORLD APPLICATIONS', '🌍');
+            const applicationTexts = applications.map(app => app.textContent);
+            addGoldBulletList(applicationTexts);
+        }
+
+        // Add misconceptions
+        const misconceptions = Array.from(studyMaterials.querySelectorAll('.misconception-item'));
+        if (misconceptions.length > 0) {
+            addGoldSectionHeader('COMMON MISCONCEPTIONS', '⚠️');
+            const misconceptionTexts = misconceptions.map(misconception => misconception.textContent);
+            addGoldNumberedList(misconceptionTexts);
+        }
+
+        // Add professional footer on each page
+        const totalPages = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            
+            // Gold footer line
+            doc.setDrawColor(255, 215, 0);
+            doc.setLineWidth(0.5);
+            doc.line(15, 280, 195, 280);
+            
+            // Page info
+            doc.setFontSize(8);
+            doc.setTextColor(128, 128, 128);
+            doc.text(`Page ${i} of ${totalPages}`, 105, 285, { align: 'center' });
+            
+            // Generation info
+            doc.setFontSize(7);
+            doc.text(`Generated by Savoiré AI Premium • ${new Date().toLocaleString()}`, 105, 290, { align: 'center' });
+            doc.text(' •  Sooban Talha Technologies • ', 105, 295, { align: 'center' });
+        }
+
+        // Save the PDF
+        doc.save(`SavoireAI_Premium_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+    }
+
+    showThinking() {
+        this.thinkingIndicator.style.display = 'flex';
+        this.scrollToBottom();
+    }
+
+    hideThinking() {
+        this.thinkingIndicator.style.display = 'none';
+    }
+
+    showError(message) {
+        const errorMessage = `
+            <div class="error-message">
+                <h3>Connection Issue</h3>
+                <p>${this.escapeHtml(message)}</p>
+                <p>Please check your internet connection and try again.</p>
+            </div>
+        `;
+        this.addMessage(errorMessage, 'ai');
+    }
+
+    clearChat() {
+        this.animateButton(this.clearChatBtn);
+        setTimeout(() => {
+            this.chatMessages.innerHTML = '';
+            this.conversationHistory = [];
+            this.welcomeArea.style.display = 'block';
+            this.messagesContainer.style.display = 'none';
+        }, 300);
+    }
+
+    scrollToBottom() {
+        setTimeout(() => {
+            this.chatMessages.scrollTo({
+                top: this.chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 100);
+    }
+
+    escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    stripHtml(html) {
+        if (!html) return '';
+        const tmp = document.createElement('DIV');
+        tmp.innerHTML = html;
+        return tmp.textContent || tmp.innerText || '';
+    }
+
+    toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const icon = document.querySelector('.theme-toggle i');
+        if (document.body.classList.contains('light-theme')) {
+            icon.className = 'fas fa-sun';
+            document.documentElement.style.setProperty('--primary-bg', '#ffffff');
+            document.documentElement.style.setProperty('--secondary-bg', '#f8f9fa');
+            document.documentElement.style.setProperty('--surface-bg', '#ffffff');
+            document.documentElement.style.setProperty('--text-primary', '#202124');
+            document.documentElement.style.setProperty('--text-secondary', '#5f6368');
+            document.documentElement.style.setProperty('--text-muted', '#80868b');
+            document.documentElement.style.setProperty('--border-color', '#dadce0');
+            document.documentElement.style.setProperty('--ai-message-bg', '#f8f9fa');
+            document.documentElement.style.setProperty('--user-message-bg', '#e8f0fe');
+        } else {
+            icon.className = 'fas fa-moon';
+            document.documentElement.style.setProperty('--primary-bg', '#0a0a0a');
+            document.documentElement.style.setProperty('--secondary-bg', '#141414');
+            document.documentElement.style.setProperty('--surface-bg', '#1f1f1f');
+            document.documentElement.style.setProperty('--text-primary', '#f5f5f5');
+            document.documentElement.style.setProperty('--text-secondary', '#cccccc');
+            document.documentElement.style.setProperty('--text-muted', '#888888');
+            document.documentElement.style.setProperty('--border-color', '#333333');
+            document.documentElement.style.setProperty('--ai-message-bg', '#252525');
+            document.documentElement.style.setProperty('--user-message-bg', '#1a1a1a');
+        }
+    }
+}
+
+// Initialize the app
+const goldAI = new GoldSavoireAI();
+
+// Make available globally
+window.goldAI = goldAI;
+
+// Add additional CSS for scroll animations
+const scrollAnimations = document.createElement('style');
+scrollAnimations.textContent = `
+    .study-section {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .study-section.animate-in {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .study-section:nth-child(even) {
+        transition-delay: 0.1s;
+    }
+    
+    .study-section:nth-child(odd) {
+        transition-delay: 0.2s;
+    }
+    
+    .text-input-container.focused {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
+    }
+    
+    .pdf-download-section {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .applications-list,
+    .misconceptions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .application-item,
+    .misconception-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        color: var(--text-primary);
+        font-weight: 400;
+        padding: 0.8rem;
+        background: rgba(255, 215, 0, 0.1);
+        border-radius: 10px;
+        border-left: 3px solid var(--accent-color);
+        transition: all 0.3s ease;
+    }
+    
+    .application-item:hover,
+    .misconception-item:hover {
+        transform: translateX(5px);
+        background: rgba(255, 215, 0, 0.15);
+    }
+    
+    .application-item::before {
+        content: "🌍";
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+    
+    .misconception-item::before {
+        content: "⚠️";
+        flex-shrink: 0;
+        font-size: 1.1rem;
+    }
+    
+    /* Mobile specific fixes */
+    @media (max-width: 768px) {
+        .study-materials {
+            margin: 0.5rem 0;
+            padding: 1rem;
+        }
+        
+        .message-content {
+            max-width: 95%;
+        }
+        
+        .ultra-notes {
+            padding: 1rem;
+            font-size: 14px;
+        }
+        
+        .concept-item, .tip-item, .question-item, .application-item, .misconception-item {
+            padding: 0.6rem;
+            font-size: 14px;
+        }
+        
+        .study-title {
+            font-size: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+        }
+        
+        .download-btn {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            font-size: 14px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .study-materials {
+            padding: 0.8rem;
+        }
+        
+        .ultra-notes {
+            padding: 0.8rem;
+        }
+        
+        .question-item, .application-item, .misconception-item {
+            padding: 0.8rem;
+        }
+        
+        .concept-item, .tip-item {
+            padding: 0.5rem;
+        }
+    }
+`;
+document.head.appendChild(scrollAnimations);

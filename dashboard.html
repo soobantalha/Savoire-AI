@@ -1,931 +1,1366 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Savoiré AI — Dashboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:          #07070a;
-      --surface:     #0f0f14;
-      --surface2:    #161620;
-      --surface3:    #1d1d28;
-      --border:      rgba(255,255,255,0.07);
-      --border2:     rgba(255,255,255,0.12);
-      --accent:      #c9a96e;
-      --accent2:     #e8cfa0;
-      --accent-dim:  rgba(201,169,110,0.15);
-      --accent-glow: rgba(201,169,110,0.25);
-      --text:        #e8e6e0;
-      --text2:       #a8a49c;
-      --muted:       #5a5850;
-      --success:     #3ecf8e;
-      --error:       #f87171;
-      --warning:     #fbbf24;
-      --font-display:'Cormorant Garamond', serif;
-      --font-body:   'DM Sans', sans-serif;
-      --radius:      14px;
-      --radius-sm:   8px;
-      --sidebar-w:   258px;
-      --header-h:    58px;
-      --shadow:      0 24px 64px rgba(0,0,0,0.5);
-      --tr:          0.2s ease;
-    }
-
-    [data-theme="light"] {
-      --bg:          #f0ede8;
-      --surface:     #faf8f5;
-      --surface2:    #f0ede8;
-      --surface3:    #e8e4de;
-      --border:      rgba(0,0,0,0.08);
-      --border2:     rgba(0,0,0,0.14);
-      --accent:      #9a6e35;
-      --accent2:     #7a5220;
-      --accent-dim:  rgba(154,110,53,0.1);
-      --accent-glow: rgba(154,110,53,0.2);
-      --text:        #1a1814;
-      --text2:       #6a6560;
-      --muted:       #aaa59e;
-      --shadow:      0 24px 64px rgba(0,0,0,0.1);
-    }
-
-    html, body { height: 100%; overflow: hidden; }
-    body {
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--text);
-      display: flex; flex-direction: column;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    /* ─── HEADER ─── */
-    header {
-      height: var(--header-h); flex-shrink: 0;
-      display: flex; align-items: center; gap: 12px;
-      padding: 0 16px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      z-index: 50;
-    }
-    .logo {
-      font-family: var(--font-display); font-size: 1.45rem; font-weight: 300;
-      letter-spacing: 0.04em; color: var(--accent); text-decoration: none; flex-shrink: 0;
-    }
-    .logo em { font-style: italic; }
-    .hdr-sep  { width: 1px; height: 22px; background: var(--border); }
-    .hdr-spacer { flex: 1; }
-
-    .credits-badge {
-      display: flex; align-items: center; gap: 7px;
-      padding: 5px 13px; border-radius: 100px;
-      background: var(--surface2); border: 1px solid var(--border);
-      font-size: 0.78rem; color: var(--text2); white-space: nowrap;
-    }
-    .credits-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
-    .credits-dot.low  { background: var(--warning); }
-    .credits-dot.none { background: var(--error); }
-
-    .model-chip {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 100px;
-      background: var(--surface2); border: 1px solid var(--border);
-      font-size: 0.75rem; color: var(--text2);
-    }
-    .model-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pg 2s infinite; }
-    @keyframes pg { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-    /* Buttons */
-    .btn {
-      display: inline-flex; align-items: center; gap: 7px;
-      padding: 7px 16px; border-radius: 100px;
-      font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
-      cursor: pointer; border: none; transition: all var(--tr);
-      text-decoration: none; white-space: nowrap;
-    }
-    .btn-primary { background: var(--accent); color: #07070a; }
-    .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
-    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-    .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
-    .btn-icon {
-      width: 34px; height: 34px; padding: 0;
-      border-radius: var(--radius-sm); justify-content: center;
-      background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text2); font-size: 1rem;
-    }
-    .btn-icon:hover { border-color: var(--border2); color: var(--text); }
-
-    /* ─── UPGRADE BANNER ─── */
-    .up-banner {
-      display: none; flex-shrink: 0;
-      align-items: center; gap: 10px;
-      padding: 9px 18px;
-      background: linear-gradient(90deg, rgba(201,169,110,0.1), transparent);
-      border-bottom: 1px solid rgba(201,169,110,0.2);
-      font-size: 0.82rem; color: var(--text2);
-    }
-    .up-banner.show { display: flex; }
-    .up-banner strong { color: var(--accent); }
-    .up-spacer { flex: 1; }
-    .up-close { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1rem; line-height: 1; }
-
-    /* ─── LAYOUT ─── */
-    .layout { flex: 1; display: flex; overflow: hidden; }
-
-    /* ─── SIDEBAR ─── */
-    aside {
-      width: var(--sidebar-w); flex-shrink: 0;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      overflow-y: auto; overflow-x: hidden;
-      transition: width .3s ease;
-    }
-    aside.collapsed { width: 0; }
-
-    .ss { padding: 12px 12px 4px; }
-    .sl {
-      font-size: 0.67rem; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--muted); padding: 0 6px; margin-bottom: 5px;
-    }
-    .si {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 10px; border-radius: var(--radius-sm);
-      font-size: 0.82rem; color: var(--text2); cursor: pointer;
-      transition: all var(--tr); border: 1px solid transparent;
-      white-space: nowrap;
-    }
-    .si:hover { background: var(--surface2); color: var(--text); }
-    .si.active { background: var(--accent-dim); border-color: rgba(201,169,110,0.2); color: var(--accent); }
-    .si-ico { width: 20px; text-align: center; flex-shrink: 0; }
-    .si-txt { flex: 1; }
-
-    .sd { height: 1px; background: var(--border); margin: 8px 12px; }
-
-    .hi {
-      padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer;
-      transition: background var(--tr); border: 1px solid transparent;
-    }
-    .hi:hover { background: var(--surface2); }
-    .hi-title { font-size: 0.81rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .hi-meta  { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
-
-    /* ─── WORKSPACE ─── */
-    .ws { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
-    /* Toolbar */
-    .toolbar {
-      flex-shrink: 0;
-      display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
-      padding: 9px 16px;
-      background: var(--surface); border-bottom: 1px solid var(--border);
-    }
-    .tsep { width: 1px; height: 20px; background: var(--border); margin: 0 3px; }
-    .kbd {
-      display: inline-block; padding: 1px 5px; border-radius: 4px;
-      background: var(--surface3); border: 1px solid var(--border2);
-      font-size: 0.68rem; color: var(--muted); font-family: monospace;
-    }
-
-    /* Panels */
-    .panels { flex: 1; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
-    .panel  { display: flex; flex-direction: column; overflow: hidden; }
-    .panel + .panel { border-left: 1px solid var(--border); }
-
-    .ph {
-      flex-shrink: 0; display: flex; align-items: center; gap: 10px;
-      padding: 9px 14px;
-      background: var(--surface2); border-bottom: 1px solid var(--border);
-    }
-    .ph-title { font-size: 0.75rem; font-weight: 500; color: var(--text2); letter-spacing: 0.04em; text-transform: uppercase; }
-    .ph-spacer { flex: 1; }
-    .ph-counter { font-size: 0.7rem; color: var(--muted); }
-
-    /* ─── INPUT PANEL ─── */
-    #inputPanel { background: var(--surface); }
-
-    .opts {
-      flex-shrink: 0;
-      display: flex; gap: 7px; flex-wrap: wrap;
-      padding: 9px 12px; border-bottom: 1px solid var(--border);
-    }
-    .sw { position: relative; }
-    .sw select {
-      appearance: none;
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--text2);
-      font-family: var(--font-body); font-size: 0.77rem;
-      padding: 5px 24px 5px 9px; cursor: pointer; transition: border-color var(--tr);
-    }
-    .sw select:hover, .sw select:focus { border-color: var(--border2); outline: none; color: var(--text); }
-    .sw::after {
-      content:'▾'; position:absolute; right:8px; top:50%; transform:translateY(-50%);
-      font-size:0.62rem; color:var(--muted); pointer-events:none;
-    }
-
-    .tw { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    #inputText {
-      flex: 1; width: 100%; background: transparent; border: none; outline: none; resize: none;
-      color: var(--text); font-family: var(--font-body); font-size: 0.91rem; line-height: 1.76;
-      padding: 16px 16px 8px; caret-color: var(--accent);
-    }
-    #inputText::placeholder { color: var(--muted); }
-
-    .drop {
-      flex-shrink: 0; margin: 0 12px 10px;
-      border: 1.5px dashed var(--border2); border-radius: var(--radius);
-      padding: 12px; text-align: center; cursor: pointer;
-      transition: all var(--tr); font-size: 0.81rem; color: var(--muted);
-      background: var(--surface2);
-    }
-    .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
-    .drop input { display: none; }
-
-    .fp {
-      display: none; flex-shrink: 0;
-      align-items: center; gap: 9px;
-      margin: 0 12px 10px; padding: 8px 12px;
-      border-radius: var(--radius-sm); background: var(--surface3); border: 1px solid var(--border);
-      font-size: 0.81rem;
-    }
-    .fp.show { display: flex; }
-    .fp-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-    .fp-size { font-size: 0.73rem; color: var(--muted); }
-    .fp-rm   { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.95rem; }
-    .fp-rm:hover { color: var(--error); }
-
-    /* Action strip */
-    .actions {
-      flex-shrink: 0; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
-      padding: 9px 12px; border-top: 1px solid var(--border); background: var(--surface2);
-    }
-    .ab {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 6px 11px; border-radius: var(--radius-sm);
-      font-size: 0.77rem; font-weight: 500; cursor: pointer;
-      background: var(--surface3); border: 1px solid var(--border);
-      color: var(--text2); transition: all var(--tr); white-space: nowrap;
-    }
-    .ab:hover { border-color: var(--border2); color: var(--text); }
-    .ab.active { background: var(--accent-dim); border-color: rgba(201,169,110,.35); color: var(--accent); }
-
-    .run {
-      margin-left: auto;
-      padding: 8px 20px; border-radius: var(--radius-sm);
-      background: var(--accent); color: #07070a;
-      font-family: var(--font-body); font-size: 0.84rem; font-weight: 500;
-      border: none; cursor: pointer; transition: all var(--tr);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .run:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
-    .run:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    /* ─── OUTPUT PANEL ─── */
-    #outputPanel { background: var(--surface); }
-
-    .shimmer { display: none; flex-direction: column; gap: 9px; padding: 16px; }
-    .shimmer.show { display: flex; }
-    .sl-line {
-      height: 13px; border-radius: 4px;
-      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
-      background-size: 200%; animation: shim 1.4s infinite;
-    }
-    @keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-    .sl-line:nth-child(2){width:82%} .sl-line:nth-child(3){width:90%}
-    .sl-line:nth-child(4){width:68%} .sl-line:nth-child(5){width:87%} .sl-line:nth-child(6){width:58%}
-
-    .out-body {
-      flex: 1; overflow-y: auto; padding: 16px;
-      font-size: 0.91rem; line-height: 1.8; color: var(--text);
-    }
-    .out-body.empty {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 12px; color: var(--muted);
-    }
-    .empty-ico  { font-size: 2.4rem; opacity: .25; }
-    .empty-txt  { font-size: 0.85rem; text-align: center; max-width: 200px; }
-
-    /* Rendered output typography */
-    .oc h1 { font-family:var(--font-display); font-size:1.6rem; font-weight:400; margin:1.1em 0 .45em; line-height:1.15; }
-    .oc h2 { font-family:var(--font-display); font-size:1.22rem; font-weight:400; margin:1em 0 .4em; border-bottom:1px solid var(--border); padding-bottom:5px; }
-    .oc h3 { font-size:1rem; font-weight:500; color:var(--accent); margin:.9em 0 .35em; }
-    .oc p  { margin-bottom:.85em; }
-    .oc ul,.oc ol { margin:.4em 0 .85em 1.3em; }
-    .oc li { margin-bottom:.28em; }
-    .oc strong { color:var(--text); font-weight:500; }
-    .oc em     { color:var(--accent2); font-style:italic; }
-    .oc code   { background:var(--surface3); padding:2px 5px; border-radius:4px; font-size:.84em; color:var(--accent); }
-    .oc blockquote { border-left:3px solid var(--accent); padding-left:13px; margin:1em 0; color:var(--text2); font-style:italic; }
-
-    .out-footer {
-      display: none; flex-shrink: 0;
-      align-items: center; gap: 8px;
-      padding: 9px 14px;
-      background: var(--surface2); border-top: 1px solid var(--border);
-    }
-    .out-footer.show { display: flex; }
-    .mc {
-      display: flex; align-items: center; gap: 4px;
-      padding: 2px 9px; border-radius: 100px;
-      background: var(--surface3); border: 1px solid var(--border);
-      font-size: 0.7rem; color: var(--muted);
-    }
-    .mc span { color: var(--text2); font-weight: 500; }
-    .of-acts { margin-left: auto; display: flex; gap: 5px; }
-
-    /* ─── SCROLLBAR ─── */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
-
-    /* ─── TOAST ─── */
-    #tc {
-      position: fixed; bottom: 22px; right: 22px;
-      display: flex; flex-direction: column; gap: 8px; z-index: 999;
-    }
-    .toast {
-      display: flex; align-items: center; gap: 9px;
-      padding: 11px 16px; border-radius: var(--radius);
-      background: var(--surface); border: 1px solid var(--border);
-      box-shadow: var(--shadow); font-size: 0.84rem; color: var(--text);
-      animation: tIn .3s ease, tOut .3s ease forwards;
-      animation-delay: 0s, 3.5s; max-width: 340px;
-    }
-    .toast.success { border-color: rgba(62,207,142,.35); }
-    .toast.error   { border-color: rgba(248,113,113,.35); }
-    .toast.info    { border-color: rgba(201,169,110,.35); }
-    @keyframes tIn  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes tOut { from{opacity:1} to{opacity:0;transform:translateY(10px)} }
-
-    /* ─── MODAL ─── */
-    .mbk {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
-      z-index: 200; align-items: center; justify-content: center;
-    }
-    .mbk.open { display: flex; }
-    .modal {
-      background: var(--surface); border: 1px solid var(--border2);
-      border-radius: 20px; padding: 30px; max-width: 460px; width: 90%;
-      box-shadow: var(--shadow); animation: mUp .25s ease;
-    }
-    @keyframes mUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
-    .modal h3 { font-family:var(--font-display); font-size:1.45rem; font-weight:300; margin-bottom:9px; }
-    .modal p  { font-size:.88rem; color:var(--text2); line-height:1.7; margin-bottom:22px; }
-    .modal-btns { display: flex; gap: 9px; justify-content: flex-end; }
-
-    /* ─── RESPONSIVE ─── */
-    @media (max-width:860px) {
-      .panels { grid-template-columns:1fr; grid-template-rows:1fr 1fr; }
-      .panel + .panel { border-left:none; border-top:1px solid var(--border); }
-      :root { --sidebar-w: 0px; }
-    }
-    @media (max-width:580px) {
-      .model-chip, .hdr-sep { display:none; }
-      header { gap:8px; }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Savoiré AI — The Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/main.css">
+  <link rel="stylesheet" href="/styles/dashboard.css">
 </head>
 <body>
-
-<!-- HEADER -->
-<header>
-  <a href="index.html" class="logo">Savoir<em>é</em></a>
-  <div class="hdr-sep"></div>
-  <div class="credits-badge">
-    <div class="credits-dot" id="credDot"></div>
-    <span id="credLabel" style="font-weight:500;color:var(--text);">…</span>
-    <span style="color:var(--muted);">free left</span>
+  <!-- Keyboard shortcuts modal -->
+  <div class="modal" id="shortcutsModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Keyboard Shortcuts</h3>
+        <button class="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="shortcut-grid">
+          <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> <span>Run current action</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>K</kbd> <span>Open search</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>S</kbd> <span>Save document</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>C</kbd> <span>Copy output</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>C</kbd> <span>Clear all</span></div>
+          <div class="shortcut-item"><kbd>Ctrl</kbd> + <kbd>/</kbd> <span>Show shortcuts</span></div>
+          <div class="shortcut-item"><kbd>Tab</kbd> <span>Move between panels</span></div>
+          <div class="shortcut-item"><kbd>Esc</kbd> <span>Close modals</span></div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="hdr-spacer"></div>
-  <div class="model-chip">
-    <div class="model-dot"></div>
-    <span id="mdlName">Gemini 2.0 Flash</span>
+
+  <!-- Save document drawer -->
+  <div class="drawer" id="saveDrawer">
+    <div class="drawer-overlay"></div>
+    <div class="drawer-content">
+      <div class="drawer-header">
+        <h3>Save to Library</h3>
+        <button class="drawer-close">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="form-group">
+          <label for="docTitle">Title</label>
+          <input type="text" id="docTitle" class="form-input" placeholder="Document title...">
+        </div>
+        <div class="form-group">
+          <label for="docTags">Tags (comma separated)</label>
+          <input type="text" id="docTags" class="form-input" placeholder="essay, research, draft">
+        </div>
+        <div class="form-group checkbox">
+          <input type="checkbox" id="docStarred">
+          <label for="docStarred">Star this document</label>
+        </div>
+        <button class="btn btn-primary" id="confirmSave">Save Document</button>
+      </div>
+    </div>
   </div>
-  <button class="btn btn-icon" id="themeBtn" title="Toggle theme" style="font-size:1rem;">🌙</button>
-  <button class="btn btn-icon" id="sbBtn" title="Toggle sidebar" style="font-size:0.9rem;">☰</button>
-  <a href="index.html#pricing" class="btn btn-primary" style="padding:7px 14px;font-size:0.79rem;">⚡ Upgrade</a>
-</header>
 
-<!-- UPGRADE BANNER -->
-<div class="up-banner" id="upBanner">
-  ⚡ <strong>Running low on free credits.</strong> Upgrade for unlimited access.
-  <div class="up-spacer"></div>
-  <a href="index.html#pricing" class="btn btn-primary" style="padding:5px 12px;font-size:0.77rem;">View plans</a>
-  <button class="up-close" onclick="this.parentElement.classList.remove('show')">✕</button>
-</div>
-
-<!-- LAYOUT -->
-<div class="layout">
-
-  <!-- SIDEBAR -->
-  <aside id="sb">
-
-    <div class="ss" style="padding-bottom:10px;">
-      <button class="btn btn-ghost" style="width:100%;justify-content:center;border-radius:var(--radius-sm);" onclick="clearAll()">
-        + New document
-      </button>
+  <!-- Search modal -->
+  <div class="modal" id="searchModal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content search-modal">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Search documents... (Ctrl+K)" autofocus>
+      </div>
+      <div class="search-results">
+        <!-- Results will appear here -->
+      </div>
     </div>
-    <div class="sd"></div>
+  </div>
 
-    <div class="ss">
-      <div class="sl">Tools</div>
-      <div class="si active" onclick="setAction('generate',this)"><span class="si-ico">🎯</span><span class="si-txt">Generate notes</span></div>
-      <div class="si" onclick="setAction('extend',this)"><span class="si-ico">✨</span><span class="si-txt">Extend</span></div>
-      <div class="si" onclick="setAction('shorten',this)"><span class="si-ico">🔬</span><span class="si-txt">Shorten</span></div>
-      <div class="si" onclick="setAction('rephrase',this)"><span class="si-ico">🤖</span><span class="si-txt">Rephrase</span></div>
-      <div class="si" onclick="setAction('grammar',this)"><span class="si-ico">📖</span><span class="si-txt">Spelling &amp; Grammar</span></div>
-      <div class="si" onclick="setAction('thesaurus',this)"><span class="si-ico">📕</span><span class="si-txt">Thesaurus</span></div>
-      <div class="si" onclick="setAction('translate',this)"><span class="si-ico">🌍</span><span class="si-txt">Translate</span></div>
-      <div class="si" onclick="setAction('tone',this)"><span class="si-ico">📢</span><span class="si-txt">Tone of voice</span></div>
-      <div class="si" onclick="setAction('style',this)"><span class="si-ico">📝</span><span class="si-txt">Writing style</span></div>
-      <div class="si" onclick="setAction('combine',this)"><span class="si-ico">👏</span><span class="si-txt">Combine</span></div>
-    </div>
+  <!-- Main dashboard layout -->
+  <div class="dashboard">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-monogram">Ś</span>
+          <span class="logo-text">Savoiré AI</span>
+        </div>
+        
+        <button class="sidebar-toggle" aria-label="Toggle sidebar">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      
+      <div class="header-center">
+        <div class="credits-display">
+          <span class="credits-label">Credits</span>
+          <div class="credits-bars">
+            <div class="credit-bar notes">
+              <div class="credit-fill" style="width: 40%" data-type="notes"></div>
+            </div>
+            <div class="credit-bar changes">
+              <div class="credit-fill" style="width: 30%" data-type="changes"></div>
+            </div>
+          </div>
+          <span class="credits-count">2/5 notes · 7/10 changes</span>
+        </div>
+        
+        <div class="model-indicator">
+          <span class="pulse-dot"></span>
+          <span class="model-name">Gemini 2.0 Flash</span>
+        </div>
+      </div>
+      
+      <div class="header-right">
+        <button class="icon-btn search-trigger" aria-label="Search">
+          <span class="icon">🔍</span>
+        </button>
+        
+        <button class="icon-btn notification-btn" aria-label="Notifications">
+          <span class="icon">🔔</span>
+          <span class="badge"></span>
+        </button>
+        
+        <div class="user-menu">
+          <button class="user-avatar">
+            <span class="avatar-initials">ST</span>
+          </button>
+          
+          <div class="user-dropdown">
+            <div class="dropdown-header">
+              <div class="user-name">Sooban Talha</div>
+              <div class="user-email">sooban@savoireai.com</div>
+              <div class="user-plan">Free Plan</div>
+            </div>
+            
+            <div class="dropdown-menu">
+              <a href="#" class="dropdown-item">Profile</a>
+              <a href="#" class="dropdown-item">Saved Documents</a>
+              <a href="#" class="dropdown-item">Usage Statistics</a>
+              <div class="dropdown-divider"></div>
+              <a href="#" class="dropdown-item">Settings</a>
+              <a href="#" class="dropdown-item">Sign Out</a>
+            </div>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary upgrade-btn">Upgrade</button>
+      </div>
+    </header>
 
-    <div class="sd"></div>
+    <div class="dashboard-main">
+      <!-- Sidebar -->
+      <aside class="dashboard-sidebar">
+        <button class="new-doc-btn btn btn-primary">
+          <span class="icon">📄</span>
+          New Document
+        </button>
+        
+        <div class="sidebar-section">
+          <h3 class="sidebar-heading">AI Tools</h3>
+          <nav class="tools-nav">
+            <a href="#" class="tool-link active" data-action="generate">
+              <span class="tool-icon">🎯</span>
+              <span class="tool-name">Generate Notes</span>
+            </a>
+            <a href="#" class="tool-link" data-action="extend">
+              <span class="tool-icon">✨</span>
+              <span class="tool-name">Extend</span>
+            </a>
+            <a href="#" class="tool-link" data-action="shorten">
+              <span class="tool-icon">🔬</span>
+              <span class="tool-name">Shorten</span>
+            </a>
+            <a href="#" class="tool-link" data-action="rephrase">
+              <span class="tool-icon">🤖</span>
+              <span class="tool-name">Rephrase</span>
+            </a>
+            <a href="#" class="tool-link" data-action="grammar">
+              <span class="tool-icon">📖</span>
+              <span class="tool-name">Grammar</span>
+            </a>
+            <a href="#" class="tool-link" data-action="thesaurus">
+              <span class="tool-icon">📕</span>
+              <span class="tool-name">Thesaurus</span>
+            </a>
+            <a href="#" class="tool-link" data-action="translate">
+              <span class="tool-icon">🌍</span>
+              <span class="tool-name">Translate</span>
+            </a>
+            <a href="#" class="tool-link" data-action="tone">
+              <span class="tool-icon">📢</span>
+              <span class="tool-name">Tone</span>
+            </a>
+            <a href="#" class="tool-link" data-action="style">
+              <span class="tool-icon">📝</span>
+              <span class="tool-name">Style</span>
+            </a>
+            <a href="#" class="tool-link" data-action="combine">
+              <span class="tool-icon">👏</span>
+              <span class="tool-name">Combine</span>
+            </a>
+            <a href="#" class="tool-link" data-action="summarize">
+              <span class="tool-icon">📋</span>
+              <span class="tool-name">Summarize</span>
+            </a>
+            <a href="#" class="tool-link" data-action="explain">
+              <span class="tool-icon">💡</span>
+              <span class="tool-name">Explain</span>
+            </a>
+            <a href="#" class="tool-link" data-action="critique">
+              <span class="tool-icon">🔍</span>
+              <span class="tool-name">Critique</span>
+            </a>
+            <a href="#" class="tool-link" data-action="flashcards">
+              <span class="tool-icon">🃏</span>
+              <span class="tool-name">Flashcards</span>
+            </a>
+            <a href="#" class="tool-link" data-action="quiz">
+              <span class="tool-icon">❓</span>
+              <span class="tool-name">Quiz</span>
+            </a>
+          </nav>
+        </div>
+        
+        <div class="sidebar-section">
+          <div class="sidebar-heading-wrapper">
+            <h3 class="sidebar-heading">Saved Documents</h3>
+            <a href="#" class="view-all">View all</a>
+          </div>
+          
+          <div class="documents-list">
+            <!-- Saved documents will appear here -->
+            <div class="empty-state small">
+              <div class="empty-icon">📚</div>
+              <p>Your saved documents will appear here</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-section">
+          <h3 class="sidebar-heading">Recent History</h3>
+          
+          <div class="history-list">
+            <!-- History items will appear here -->
+            <div class="empty-state small">
+              <div class="empty-icon">🕰️</div>
+              <p>No history yet</p>
+            </div>
+          </div>
+          
+          <button class="clear-history-btn btn btn-outline btn-small">Clear History</button>
+        </div>
+        
+        <div class="sidebar-section">
+          <h3 class="sidebar-heading">Templates</h3>
+          
+          <div class="templates-list">
+            <button class="template-item" data-template="study-notes">📚 Study Notes</button>
+            <button class="template-item" data-template="article-summary">📰 Article Summary</button>
+            <button class="template-item" data-template="essay-outline">✍️ Essay Outline</button>
+            <button class="template-item" data-template="flashcards">🃏 Flashcard Deck</button>
+            <button class="template-item" data-template="meeting-notes">📋 Meeting Notes</button>
+            <button class="template-item" data-template="research-brief">🔬 Research Brief</button>
+            <button class="template-item" data-template="book-report">📖 Book Report</button>
+            <button class="template-item" data-template="lecture-notes">🎓 Lecture Notes</button>
+          </div>
+        </div>
+      </aside>
 
-    <div class="ss" style="flex:1;overflow-y:auto;">
-      <div class="sl">Recent</div>
-      <div id="histList"><div style="font-size:.79rem;color:var(--muted);padding:5px 8px;">No history yet.</div></div>
-    </div>
-
-    <div class="sd"></div>
-
-    <div class="ss" style="padding-bottom:14px;">
-      <div class="sl">Templates</div>
-      <div class="si" onclick="loadTpl('study')"><span class="si-ico">📚</span><span class="si-txt">Study notes</span></div>
-      <div class="si" onclick="loadTpl('summary')"><span class="si-ico">📋</span><span class="si-txt">Summarise article</span></div>
-      <div class="si" onclick="loadTpl('flashcards')"><span class="si-ico">🃏</span><span class="si-txt">Flashcards</span></div>
-      <div class="si" onclick="loadTpl('essay')"><span class="si-ico">✍️</span><span class="si-txt">Essay outline</span></div>
-    </div>
-
-  </aside>
-
-  <!-- WORKSPACE -->
-  <div class="ws">
-
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <button class="btn btn-icon" title="Copy output" onclick="copyOut()">📋</button>
-      <button class="btn btn-icon" title="Download TXT" onclick="dlOut('txt')">💾</button>
-      <button class="btn btn-icon" title="Download Markdown" onclick="dlOut('md')">📄</button>
-      <button class="btn btn-icon" title="Print" onclick="window.print()">🖨️</button>
-      <div class="tsep"></div>
-      <button class="btn btn-icon" title="Clear" onclick="clearAll()">🗑️</button>
-      <button class="btn btn-icon" title="Use output as input" onclick="useAsInput()">↩</button>
-      <div class="tsep"></div>
-      <span style="font-size:.73rem;color:var(--muted);">Run: <span class="kbd">Ctrl</span> <span class="kbd">↵</span></span>
-    </div>
-
-    <!-- PANELS -->
-    <div class="panels">
-
-      <!-- INPUT -->
-      <div class="panel" id="inputPanel">
-        <div class="ph">
-          <span class="ph-title">✏️ Input</span>
-          <div class="ph-spacer"></div>
-          <span class="ph-counter" id="cc">0 chars</span>
+      <!-- Main content area -->
+      <main class="dashboard-content">
+        <!-- Toolbar -->
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <button class="toolbar-btn" id="copyOutput">
+              <span class="icon">📋</span>
+              Copy
+            </button>
+            
+            <div class="toolbar-dropdown">
+              <button class="toolbar-btn dropdown-toggle">
+                <span class="icon">⬇️</span>
+                Download
+              </button>
+              <div class="dropdown-menu">
+                <a href="#" class="dropdown-item" data-format="txt">Plain Text (.txt)</a>
+                <a href="#" class="dropdown-item" data-format="md">Markdown (.md)</a>
+                <a href="#" class="dropdown-item" data-format="pdf">PDF (.pdf)</a>
+                <a href="#" class="dropdown-item" data-format="docx">Word (.docx)</a>
+              </div>
+            </div>
+            
+            <button class="toolbar-btn" id="printOutput">
+              <span class="icon">🖨️</span>
+              Print
+            </button>
+            
+            <button class="toolbar-btn" id="shareOutput">
+              <span class="icon">🔗</span>
+              Share
+            </button>
+          </div>
+          
+          <div class="toolbar-center">
+            <button class="toolbar-btn" id="clearAll">
+              <span class="icon">🗑️</span>
+              Clear
+            </button>
+            
+            <button class="toolbar-btn" id="swapPanels">
+              <span class="icon">↔️</span>
+              Swap
+            </button>
+            
+            <button class="toolbar-btn" id="fullscreen">
+              <span class="icon">⛶</span>
+              Fullscreen
+            </button>
+          </div>
+          
+          <div class="toolbar-right">
+            <span class="shortcut-hint">⌘+Enter to run</span>
+          </div>
         </div>
 
-        <!-- Options -->
-        <div class="opts">
-          <div class="sw">
-            <select id="selFmt" title="Format">
-              <option value="notes">📝 Notes</option>
-              <option value="summary">📋 Summary</option>
-              <option value="flashcards">🃏 Flashcards</option>
-              <option value="outline">📐 Outline</option>
+        <!-- Input panel -->
+        <div class="input-panel">
+          <div class="options-row">
+            <select class="option-select" id="formatSelect">
+              <option value="notes">Format: Notes</option>
+              <option value="summary">Summary</option>
+              <option value="flashcards">Flashcards</option>
+              <option value="outline">Outline</option>
+              <option value="essay">Essay</option>
+              <option value="report">Report</option>
+              <option value="mindmap">Mindmap</option>
             </select>
-          </div>
-          <div class="sw">
-            <select id="selStyle" title="Style">
-              <option value="academic">Academic</option>
+            
+            <select class="option-select" id="styleSelect">
+              <option value="academic">Style: Academic</option>
               <option value="simple">Simple</option>
               <option value="detailed">Detailed</option>
-              <option value="bullet_points">Bullet points</option>
-              <option value="essay">Essay</option>
-              <option value="blog">Blog</option>
+              <option value="bullet_points">Bullet Points</option>
+              <option value="narrative">Narrative</option>
+              <option value="technical">Technical</option>
+              <option value="creative">Creative</option>
             </select>
-          </div>
-          <div class="sw">
-            <select id="selTone" title="Tone">
-              <option value="professional">Professional</option>
+            
+            <select class="option-select" id="toneSelect">
+              <option value="professional">Tone: Professional</option>
               <option value="casual">Casual</option>
               <option value="academic">Academic</option>
               <option value="persuasive">Persuasive</option>
               <option value="friendly">Friendly</option>
               <option value="formal">Formal</option>
+              <option value="satirical">Satirical</option>
+              <option value="poetic">Poetic</option>
             </select>
-          </div>
-          <div class="sw">
-            <select id="selLen" title="Length">
+            
+            <select class="option-select" id="lengthSelect">
+              <option value="brief">Length: Brief</option>
               <option value="short">Short</option>
-              <option value="medium" selected>Medium</option>
+              <option value="medium">Medium</option>
               <option value="long">Long</option>
-              <option value="ultra-detailed">Ultra detailed</option>
+              <option value="comprehensive">Comprehensive</option>
+              <option value="exhaustive">Exhaustive</option>
             </select>
-          </div>
-          <div class="sw">
-            <select id="selLang" title="Language">
-              <option value="English">🇬🇧 English</option>
-              <option value="French">🇫🇷 French</option>
-              <option value="German">🇩🇪 German</option>
-              <option value="Spanish">🇪🇸 Spanish</option>
-              <option value="Italian">🇮🇹 Italian</option>
-              <option value="Portuguese">🇵🇹 Portuguese</option>
-              <option value="Russian">🇷🇺 Russian</option>
-              <option value="Japanese">🇯🇵 Japanese</option>
-              <option value="Chinese">🇨🇳 Chinese</option>
-              <option value="Korean">🇰🇷 Korean</option>
-              <option value="Arabic">🇸🇦 Arabic</option>
-              <option value="Hindi">🇮🇳 Hindi</option>
-              <option value="Dutch">🇳🇱 Dutch</option>
-              <option value="Polish">🇵🇱 Polish</option>
-              <option value="Turkish">🇹🇷 Turkish</option>
+            
+            <select class="option-select" id="languageSelect">
+              <option value="english">Language: English</option>
+              <option value="spanish">Spanish</option>
+              <option value="french">French</option>
+              <option value="german">German</option>
+              <option value="italian">Italian</option>
+              <option value="portuguese">Portuguese</option>
+              <option value="russian">Russian</option>
+              <option value="chinese">Chinese</option>
+              <option value="japanese">Japanese</option>
+              <option value="korean">Korean</option>
             </select>
-          </div>
-          <div class="sw" id="tlWrap" style="display:none;">
-            <select id="selTL" title="Translate to">
-              <option value="French">→ French</option>
-              <option value="German">→ German</option>
-              <option value="Spanish">→ Spanish</option>
-              <option value="Japanese">→ Japanese</option>
-              <option value="Chinese">→ Chinese</option>
-              <option value="Arabic">→ Arabic</option>
-              <option value="Hindi">→ Hindi</option>
-              <option value="Russian">→ Russian</option>
+            
+            <select class="option-select conditional" id="targetLanguage" style="display: none;">
+              <option value="spanish">Target: Spanish</option>
+              <option value="french">French</option>
+              <option value="german">German</option>
+              <option value="italian">Italian</option>
             </select>
+            
+            <select class="option-select conditional" id="audienceSelect" style="display: none;">
+              <option value="general">Audience: General</option>
+              <option value="student">Student</option>
+              <option value="expert">Expert</option>
+              <option value="child">Child</option>
+              <option value="executive">Executive</option>
+              <option value="researcher">Researcher</option>
+            </select>
+            
+            <input type="number" class="option-input conditional" id="countInput" min="1" max="30" value="5" style="display: none;" placeholder="Count">
+          </div>
+          
+          <div class="input-area">
+            <textarea class="input-textarea" placeholder="Begin your manuscript... The quill awaits your words." id="inputText"></textarea>
+            
+            <div class="textarea-footer">
+              <div class="char-counter">
+                <span id="charCount">0</span>/20,000
+              </div>
+              <div class="word-counter">
+                <span id="wordCount">0</span> words
+              </div>
+              <div class="reading-time">
+                <span id="readingTime">0</span> min read
+              </div>
+            </div>
+          </div>
+          
+          <div class="file-upload-zone" id="fileUploadZone">
+            <div class="upload-icon">📂</div>
+            <div class="upload-text">Drag & drop or click to upload</div>
+            <div class="upload-formats">PDF, DOCX, PPTX, TXT, PNG, JPG, WEBP</div>
+            <input type="file" id="fileInput" style="display: none;" multiple>
+          </div>
+          
+          <div class="file-preview" id="filePreview" style="display: none;">
+            <!-- File preview will appear here -->
+          </div>
+          
+          <div class="action-buttons">
+            <button class="action-btn" data-action="generate">
+              <span class="icon">🎯</span>
+              Generate
+            </button>
+            <button class="action-btn" data-action="extend">
+              <span class="icon">✨</span>
+              Extend
+            </button>
+            <button class="action-btn" data-action="shorten">
+              <span class="icon">🔬</span>
+              Shorten
+            </button>
+            <button class="action-btn" data-action="rephrase">
+              <span class="icon">🤖</span>
+              Rephrase
+            </button>
+            <button class="action-btn" data-action="grammar">
+              <span class="icon">📖</span>
+              Grammar
+            </button>
+            <button class="action-btn" data-action="translate">
+              <span class="icon">🌍</span>
+              Translate
+            </button>
+            <button class="action-btn btn-primary" id="runButton">
+              <span class="icon">▶</span>
+              RUN
+            </button>
           </div>
         </div>
 
-        <!-- Textarea -->
-        <div class="tw">
-          <textarea id="inputText"
-            placeholder="Type a topic, paste your text, or upload a file below…&#10;&#10;Examples:&#10;• &quot;The French Revolution — key causes and effects&quot;&#10;• Paste an essay paragraph to rephrase&#10;• Upload a PDF lecture note"></textarea>
-        </div>
-
-        <!-- Drop zone -->
-        <div class="drop" id="dz" onclick="document.getElementById('fi').click()">
-          <input type="file" id="fi" accept=".txt,.pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp" />
-          📎 Drop a file or click — PDF, Word, TXT, Image
-        </div>
-        <div class="fp" id="fp">
-          <span>📎</span>
-          <span class="fp-name" id="fn"></span>
-          <span class="fp-size" id="fs"></span>
-          <button class="fp-rm" onclick="rmFile()">✕</button>
-        </div>
-
-        <!-- Action strip -->
-        <div class="actions">
-          <button class="ab active" data-a="generate" onclick="pickAction('generate',this)"><span>🎯</span>Generate</button>
-          <button class="ab" data-a="extend"   onclick="pickAction('extend',this)"><span>✨</span>Extend</button>
-          <button class="ab" data-a="shorten"  onclick="pickAction('shorten',this)"><span>🔬</span>Shorten</button>
-          <button class="ab" data-a="rephrase" onclick="pickAction('rephrase',this)"><span>🤖</span>Rephrase</button>
-          <button class="ab" data-a="grammar"  onclick="pickAction('grammar',this)"><span>📖</span>Grammar</button>
-          <button class="ab" data-a="translate" onclick="pickAction('translate',this)"><span>🌍</span>Translate</button>
-          <button class="run" id="runBtn" onclick="go()">
-            <span id="runIco">▶</span><span id="runTxt">Generate</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- OUTPUT -->
-      <div class="panel" id="outputPanel">
-        <div class="ph">
-          <span class="ph-title">✦ Output</span>
-          <div class="ph-spacer"></div>
-          <span class="ph-counter" id="occ" style="display:none;"></span>
-        </div>
-
-        <div class="shimmer" id="shimmer">
-          <div class="sl-line" style="width:78%"></div>
-          <div class="sl-line"></div><div class="sl-line"></div>
-          <div class="sl-line"></div><div class="sl-line"></div>
-          <div class="sl-line"></div>
-        </div>
-
-        <div class="out-body empty" id="outBody">
-          <div class="empty-ico">✦</div>
-          <div class="empty-txt">Your AI output will appear here</div>
-        </div>
-
-        <div class="out-footer" id="outFooter">
-          <div class="mc">Model: <span id="mModel">—</span></div>
-          <div class="mc">Tokens: <span id="mTok">—</span></div>
-          <div class="mc">Time: <span id="mTime">—</span></div>
-          <div class="of-acts">
-            <button class="btn btn-icon" title="Copy" onclick="copyOut()">📋</button>
-            <button class="btn btn-icon" title="Download" onclick="dlOut('txt')">💾</button>
-            <button class="btn btn-icon" title="Use as input" onclick="useAsInput()">↩</button>
+        <!-- Output panel -->
+        <div class="output-panel">
+          <div class="output-header">
+            <h3 class="output-title">Masterpiece</h3>
+            <div class="output-meta">
+              <span class="output-word-count" id="outputWordCount">0 words</span>
+              <span class="output-reading-time" id="outputReadingTime">0 min read</span>
+            </div>
+          </div>
+          
+          <div class="output-content" id="outputContent">
+            <!-- Output will appear here -->
+            <div class="empty-state">
+              <div class="empty-ornament">✦</div>
+              <p class="empty-text">Your masterpiece awaits</p>
+              <p class="empty-subtext">Choose a tool and begin crafting</p>
+            </div>
+          </div>
+          
+          <div class="output-footer">
+            <div class="output-metadata">
+              <span class="metadata-item" id="outputModel">Model: —</span>
+              <span class="metadata-item" id="outputTokens">Tokens: —</span>
+              <span class="metadata-item" id="outputTime">Time: —</span>
+              <span class="metadata-item" id="outputCache">Cached: No</span>
+            </div>
+            
+            <div class="output-actions">
+              <button class="output-action" id="copyOutputFooter">
+                <span class="icon">📋</span>
+                Copy
+              </button>
+              <button class="output-action" id="downloadOutputFooter">
+                <span class="icon">⬇️</span>
+                Download
+              </button>
+              <button class="output-action" id="useAsInput">
+                <span class="icon">↩️</span>
+                Use as Input
+              </button>
+              <button class="output-action" id="saveDocument">
+                <span class="icon">💾</span>
+                Save
+              </button>
+              <button class="output-action" id="shareOutputFooter">
+                <span class="icon">🔗</span>
+                Share
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-
-    </div><!-- /panels -->
-  </div><!-- /ws -->
-</div><!-- /layout -->
-
-<div id="tc"></div>
-
-<!-- Upgrade modal -->
-<div class="mbk" id="upModal">
-  <div class="modal">
-    <h3>Free credits used up</h3>
-    <p>Upgrade to Savoiré Pro for unlimited generations, all 10 AI tools, 50+ languages, and document uploads — starting at $3.99/month.</p>
-    <div class="modal-btns">
-      <button class="btn btn-ghost" onclick="closeModal()">Not now</button>
-      <a href="index.html#pricing" class="btn btn-primary">View plans →</a>
+      </main>
     </div>
   </div>
-</div>
 
-<script>
-'use strict';
+  <!-- Toast notification container -->
+  <div class="toast-container" id="toastContainer"></div>
 
-const API = ''; // '' = same origin. For local dev: 'http://localhost:3000'
-let action  = 'generate';
-let file    = null;
-let rawOut  = '';
-let hist    = JSON.parse(localStorage.getItem('sv_hist') || '[]');
-
-// ── Credits
-async function loadCredits() {
-  try {
-    const r = await fetch(`${API}/api/credits`);
-    const d = await r.json();
-    if (d.success) setCreditsUI(d.remaining);
-  } catch { setCreditsUI({ notes:3, changes:5 }); }
-}
-function setCreditsUI(rem) {
-  const total = rem.notes + rem.changes;
-  document.getElementById('credLabel').textContent = `${rem.notes} notes · ${rem.changes} edits`;
-  const dot = document.getElementById('credDot');
-  dot.className = 'credits-dot' + (total <= 2 ? ' low':'') + (total === 0 ? ' none':'');
-  if (total <= 2) document.getElementById('upBanner').classList.add('show');
-}
-
-// ── Theme
-let dark = localStorage.getItem('sv_theme') !== 'light';
-const html = document.documentElement;
-if (!dark) { html.dataset.theme='light'; document.getElementById('themeBtn').textContent='☀️'; }
-document.getElementById('themeBtn').addEventListener('click', () => {
-  dark = !dark; html.dataset.theme = dark?'dark':'light';
-  document.getElementById('themeBtn').textContent = dark?'🌙':'☀️';
-  localStorage.setItem('sv_theme', dark?'dark':'light');
-});
-
-// ── Sidebar
-document.getElementById('sbBtn').addEventListener('click', () => document.getElementById('sb').classList.toggle('collapsed'));
-
-// ── Action select
-function pickAction(a, btn) {
-  action = a;
-  document.querySelectorAll('.ab').forEach(b=>b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  document.getElementById('tlWrap').style.display = a==='translate'?'':'none';
-  const lbl = {generate:'Generate',extend:'Extend',shorten:'Shorten',rephrase:'Rephrase',
-    grammar:'Fix grammar',thesaurus:'Improve vocab',translate:'Translate',
-    tone:'Change tone',style:'Restyle',combine:'Combine'};
-  document.getElementById('runTxt').textContent = lbl[a]||'Run';
-}
-function setAction(a, el) {
-  document.querySelectorAll('.si').forEach(i=>i.classList.remove('active'));
-  if (el) el.classList.add('active');
-  pickAction(a, document.querySelector(`.ab[data-a="${a}"]`));
-}
-
-// ── Char counter
-document.getElementById('inputText').addEventListener('input', function() {
-  document.getElementById('cc').textContent = this.value.length.toLocaleString()+' chars';
-});
-
-// ── File upload
-const dz = document.getElementById('dz');
-const fi = document.getElementById('fi');
-fi.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
-dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); });
-dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
-dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
-
-function handleFile(f) {
-  file = f;
-  document.getElementById('fn').textContent = f.name;
-  document.getElementById('fs').textContent = fmtBytes(f.size);
-  document.getElementById('fp').classList.add('show');
-  dz.style.display = 'none';
-  toast('info','📎',`File ready: ${f.name}`);
-}
-function rmFile() {
-  file = null; fi.value='';
-  document.getElementById('fp').classList.remove('show');
-  dz.style.display='';
-}
-function fmtBytes(b) {
-  if(b<1024) return b+' B';
-  if(b<1048576) return (b/1024).toFixed(1)+' KB';
-  return (b/1048576).toFixed(1)+' MB';
-}
-
-// ── Run
-async function go() {
-  const txt = document.getElementById('inputText').value.trim();
-  if (!txt && !file) { toast('error','⚠️','Enter text or upload a file first.'); return; }
-  setLoading(true);
-  try {
-    const fd = new FormData();
-    fd.append('action', action);
-    fd.append('text',   txt);
-    fd.append('format', document.getElementById('selFmt').value);
-    fd.append('style',  document.getElementById('selStyle').value);
-    fd.append('tone',   document.getElementById('selTone').value);
-    fd.append('length', document.getElementById('selLen').value);
-    fd.append('language', document.getElementById('selLang').value);
-    fd.append('targetLanguage', document.getElementById('selTL').value);
-    if (file) fd.append('file', file);
-
-    const res  = await fetch(`${API}/api/process`, { method:'POST', body:fd });
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      if (data.upgrade_required) openModal();
-      else toast('error','✕', data.error||'Something went wrong.');
-      return;
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.min.js"></script>
+  
+  <script>
+    // Dashboard JavaScript
+    class Dashboard {
+      constructor() {
+        this.currentAction = 'generate';
+        this.isStreaming = false;
+        this.eventSource = null;
+        this.documents = [];
+        this.history = [];
+        
+        this.initElements();
+        this.initEventListeners();
+        this.initKeyboardShortcuts();
+        this.loadUserData();
+      }
+      
+      initElements() {
+        this.inputText = document.getElementById('inputText');
+        this.outputContent = document.getElementById('outputContent');
+        this.runButton = document.getElementById('runButton');
+        this.fileUploadZone = document.getElementById('fileUploadZone');
+        this.fileInput = document.getElementById('fileInput');
+        this.filePreview = document.getElementById('filePreview');
+        this.charCount = document.getElementById('charCount');
+        this.wordCount = document.getElementById('wordCount');
+        this.readingTime = document.getElementById('readingTime');
+        this.formatSelect = document.getElementById('formatSelect');
+        this.styleSelect = document.getElementById('styleSelect');
+        this.toneSelect = document.getElementById('toneSelect');
+        this.lengthSelect = document.getElementById('lengthSelect');
+        this.languageSelect = document.getElementById('languageSelect');
+        this.targetLanguage = document.getElementById('targetLanguage');
+        this.audienceSelect = document.getElementById('audienceSelect');
+        this.countInput = document.getElementById('countInput');
+        this.toolLinks = document.querySelectorAll('.tool-link');
+        this.sidebarToggle = document.querySelector('.sidebar-toggle');
+        this.sidebar = document.querySelector('.dashboard-sidebar');
+        this.searchTrigger = document.querySelector('.search-trigger');
+        this.searchModal = document.getElementById('searchModal');
+        this.shortcutsModal = document.getElementById('shortcutsModal');
+        this.saveDrawer = document.getElementById('saveDrawer');
+        this.toastContainer = document.getElementById('toastContainer');
+      }
+      
+      initEventListeners() {
+        // Input text monitoring
+        this.inputText.addEventListener('input', () => this.updateCounts());
+        
+        // File upload
+        this.fileUploadZone.addEventListener('click', () => this.fileInput.click());
+        this.fileUploadZone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          this.fileUploadZone.classList.add('dragover');
+        });
+        this.fileUploadZone.addEventListener('dragleave', () => {
+          this.fileUploadZone.classList.remove('dragover');
+        });
+        this.fileUploadZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          this.fileUploadZone.classList.remove('dragover');
+          this.handleFiles(e.dataTransfer.files);
+        });
+        this.fileInput.addEventListener('change', () => {
+          this.handleFiles(this.fileInput.files);
+        });
+        
+        // Action buttons
+        document.querySelectorAll('.action-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const action = btn.dataset.action;
+            if (action) {
+              this.currentAction = action;
+              this.updateConditionalFields();
+            }
+          });
+        });
+        
+        // Run button
+        this.runButton.addEventListener('click', () => this.processText());
+        
+        // Tool links
+        this.toolLinks.forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.toolLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            this.currentAction = link.dataset.action;
+            this.updateConditionalFields();
+          });
+        });
+        
+        // Sidebar toggle
+        this.sidebarToggle.addEventListener('click', () => {
+          this.sidebar.classList.toggle('collapsed');
+        });
+        
+        // Search trigger
+        this.searchTrigger.addEventListener('click', () => {
+          this.openModal(this.searchModal);
+        });
+        
+        // Modal close buttons
+        document.querySelectorAll('.modal-close, .drawer-close, .modal-overlay, .drawer-overlay').forEach(el => {
+          el.addEventListener('click', () => {
+            this.closeAllModals();
+          });
+        });
+        
+        // Copy button
+        document.getElementById('copyOutput').addEventListener('click', () => this.copyOutput());
+        document.getElementById('copyOutputFooter').addEventListener('click', () => this.copyOutput());
+        
+        // Download
+        document.querySelectorAll('[data-format]').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.downloadOutput(btn.dataset.format);
+          });
+        });
+        
+        // Swap panels
+        document.getElementById('swapPanels').addEventListener('click', () => this.swapPanels());
+        
+        // Clear all
+        document.getElementById('clearAll').addEventListener('click', () => this.clearAll());
+        
+        // Fullscreen
+        document.getElementById('fullscreen').addEventListener('click', () => this.toggleFullscreen());
+        
+        // Use as input
+        document.getElementById('useAsInput').addEventListener('click', () => this.useOutputAsInput());
+        
+        // Save document
+        document.getElementById('saveDocument').addEventListener('click', () => this.openSaveDrawer());
+        document.getElementById('confirmSave').addEventListener('click', () => this.saveDocument());
+        
+        // Share
+        document.getElementById('shareOutput').addEventListener('click', () => this.shareOutput());
+        document.getElementById('shareOutputFooter').addEventListener('click', () => this.shareOutput());
+        
+        // Templates
+        document.querySelectorAll('.template-item').forEach(item => {
+          item.addEventListener('click', () => this.loadTemplate(item.dataset.template));
+        });
+        
+        // Clear history
+        document.querySelector('.clear-history-btn').addEventListener('click', () => this.clearHistory());
+      }
+      
+      initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+          // Ctrl+Enter
+          if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            this.processText();
+          }
+          
+          // Ctrl+K
+          if (e.ctrlKey && e.key === 'k') {
+            e.preventDefault();
+            this.openModal(this.searchModal);
+          }
+          
+          // Ctrl+S
+          if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            this.openSaveDrawer();
+          }
+          
+          // Ctrl+/
+          if (e.ctrlKey && e.key === '/') {
+            e.preventDefault();
+            this.openModal(this.shortcutsModal);
+          }
+          
+          // Esc
+          if (e.key === 'Escape') {
+            this.closeAllModals();
+          }
+        });
+      }
+      
+      updateConditionalFields() {
+        // Hide all conditional fields
+        this.targetLanguage.style.display = 'none';
+        this.audienceSelect.style.display = 'none';
+        this.countInput.style.display = 'none';
+        
+        // Show relevant fields based on action
+        if (this.currentAction === 'translate') {
+          this.targetLanguage.style.display = 'block';
+        } else if (this.currentAction === 'explain' || this.currentAction === 'style') {
+          this.audienceSelect.style.display = 'block';
+        } else if (this.currentAction === 'flashcards' || this.currentAction === 'quiz') {
+          this.countInput.style.display = 'block';
+        }
+      }
+      
+      updateCounts() {
+        const text = this.inputText.value;
+        const chars = text.length;
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const minutes = Math.ceil(words / 200); // 200 words per minute reading speed
+        
+        this.charCount.textContent = chars;
+        this.wordCount.textContent = words;
+        this.readingTime.textContent = minutes;
+        
+        // Color coding at thresholds
+        if (chars > 15000) {
+          this.charCount.style.color = 'var(--warning)';
+        } else if (chars > 18000) {
+          this.charCount.style.color = 'var(--error)';
+        } else {
+          this.charCount.style.color = 'var(--cream)';
+        }
+      }
+      
+      async handleFiles(files) {
+        if (!files.length) return;
+        
+        const file = files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Show preview
+        this.filePreview.style.display = 'block';
+        this.filePreview.innerHTML = `
+          <div class="file-preview-item">
+            <span class="file-icon">📄</span>
+            <div class="file-info">
+              <div class="file-name">${file.name}</div>
+              <div class="file-size">${(file.size / 1024).toFixed(2)} KB</div>
+              <div class="file-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <span class="progress-text">Extracting...</span>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        try {
+          const response = await fetch('/api/extract', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            this.inputText.value = data.text;
+            this.updateCounts();
+            
+            // Update progress
+            const progressFill = this.filePreview.querySelector('.progress-fill');
+            const progressText = this.filePreview.querySelector('.progress-text');
+            progressFill.style.width = '100%';
+            progressText.textContent = `Extracted ${data.charCount} characters`;
+            
+            setTimeout(() => {
+              this.filePreview.style.display = 'none';
+            }, 2000);
+          }
+        } catch (error) {
+          this.showToast('Error extracting file', 'error');
+        }
+      }
+      
+      async processText() {
+        if (!this.inputText.value.trim()) {
+          this.showToast('Please enter some text', 'warning');
+          return;
+        }
+        
+        // Show loading state
+        this.runButton.classList.add('loading');
+        this.outputContent.innerHTML = this.getSkeletonLoader();
+        
+        const formData = new FormData();
+        formData.append('action', this.currentAction);
+        formData.append('text', this.inputText.value);
+        formData.append('format', this.formatSelect.value);
+        formData.append('style', this.styleSelect.value);
+        formData.append('tone', this.toneSelect.value);
+        formData.append('length', this.lengthSelect.value);
+        formData.append('language', this.languageSelect.value);
+        
+        // Add conditional fields
+        if (this.currentAction === 'translate') {
+          formData.append('targetLanguage', this.targetLanguage.value);
+        }
+        if (this.currentAction === 'explain' || this.currentAction === 'style') {
+          formData.append('audience', this.audienceSelect.value);
+        }
+        if (this.currentAction === 'flashcards' || this.currentAction === 'quiz') {
+          formData.append('count', this.countInput.value);
+        }
+        
+        // Try streaming first
+        try {
+          const response = await fetch('/api/process', {
+            method: 'POST',
+            headers: {
+              'Accept': 'text/event-stream'
+            },
+            body: formData
+          });
+          
+          if (response.ok && response.headers.get('content-type')?.includes('text/event-stream')) {
+            this.handleStreaming(response);
+          } else {
+            // Fallback to sync
+            const data = await response.json();
+            this.handleSyncResponse(data);
+          }
+        } catch (error) {
+          this.showToast('Error processing text', 'error');
+          this.runButton.classList.remove('loading');
+        }
+      }
+      
+      handleStreaming(response) {
+        this.isStreaming = true;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        this.outputContent.innerHTML = '<div class="streaming-output"></div>';
+        const outputDiv = this.outputContent.querySelector('.streaming-output');
+        
+        function read() {
+          reader.read().then(({ done, value }) => {
+            if (done) {
+              this.isStreaming = false;
+              this.runButton.classList.remove('loading');
+              return;
+            }
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop();
+            
+            lines.forEach(line => {
+              if (line.startsWith('data: ')) {
+                const data = JSON.parse(line.slice(6));
+                if (data.token) {
+                  outputDiv.innerHTML += data.token;
+                  // Auto-scroll
+                  outputDiv.scrollTop = outputDiv.scrollHeight;
+                } else if (data.done) {
+                  this.updateOutputMetadata(data.metadata);
+                }
+              }
+            });
+            
+            read();
+          });
+        }
+        
+        read.call(this);
+      }
+      
+      handleSyncResponse(data) {
+        if (data.success) {
+          this.outputContent.innerHTML = marked.parse(data.data.processed);
+          this.updateOutputMetadata(data.data.metadata);
+          
+          // Add to history
+          this.addToHistory(data);
+        } else {
+          this.showToast(data.error || 'Processing failed', 'error');
+          this.outputContent.innerHTML = '<div class="error-state">Processing failed. Please try again.</div>';
+        }
+        
+        this.runButton.classList.remove('loading');
+      }
+      
+      updateOutputMetadata(metadata) {
+        document.getElementById('outputModel').textContent = `Model: ${metadata.model_used || '—'}`;
+        document.getElementById('outputTokens').textContent = `Tokens: ${metadata.tokens_used || '—'}`;
+        document.getElementById('outputTime').textContent = `Time: ${metadata.processing_time || '—'}`;
+        document.getElementById('outputCache').textContent = `Cached: ${metadata.cached ? 'Yes' : 'No'}`;
+        
+        // Update word count
+        const outputText = this.outputContent.textContent;
+        const words = outputText.trim() ? outputText.trim().split(/\s+/).length : 0;
+        document.getElementById('outputWordCount').textContent = `${words} words`;
+        document.getElementById('outputReadingTime').textContent = `${Math.ceil(words / 200)} min read`;
+      }
+      
+      getSkeletonLoader() {
+        return `
+          <div class="skeleton-loader">
+            <div class="skeleton-line" style="width: 100%"></div>
+            <div class="skeleton-line" style="width: 90%"></div>
+            <div class="skeleton-line" style="width: 95%"></div>
+            <div class="skeleton-line" style="width: 80%"></div>
+            <div class="skeleton-line" style="width: 85%"></div>
+            <div class="skeleton-line" style="width: 70%"></div>
+          </div>
+        `;
+      }
+      
+      copyOutput() {
+        const text = this.outputContent.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          this.showToast('Copied to clipboard', 'success');
+        });
+      }
+      
+      downloadOutput(format) {
+        const text = this.outputContent.textContent;
+        const title = this.inputText.value.slice(0, 30) || 'document';
+        
+        switch(format) {
+          case 'txt':
+            this.downloadTxt(text, title);
+            break;
+          case 'md':
+            this.downloadMd(text, title);
+            break;
+          case 'pdf':
+            this.downloadPdf(text, title);
+            break;
+          case 'docx':
+            this.downloadDocx(text, title);
+            break;
+        }
+      }
+      
+      downloadTxt(text, title) {
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      
+      downloadMd(text, title) {
+        const blob = new Blob([text], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title}.md`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      
+      downloadPdf(text, title) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const lines = doc.splitTextToSize(text, 180);
+        doc.setFont('times', 'normal');
+        doc.text(lines, 15, 20);
+        doc.save(`${title}.pdf`);
+      }
+      
+      async downloadDocx(text, title) {
+        const doc = new docx.Document({
+          sections: [{
+            properties: {},
+            children: [
+              new docx.Paragraph({
+                children: [new docx.TextRun(text)]
+              })
+            ]
+          }]
+        });
+        
+        const blob = await docx.Packer.toBlob(doc);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title}.docx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      
+      swapPanels() {
+        const outputText = this.outputContent.textContent;
+        if (outputText && outputText !== 'Your masterpiece awaits') {
+          this.inputText.value = outputText;
+          this.updateCounts();
+        }
+      }
+      
+      clearAll() {
+        this.inputText.value = '';
+        this.outputContent.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-ornament">✦</div>
+            <p class="empty-text">Your masterpiece awaits</p>
+            <p class="empty-subtext">Choose a tool and begin crafting</p>
+          </div>
+        `;
+        this.updateCounts();
+      }
+      
+      toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+      
+      useOutputAsInput() {
+        const outputText = this.outputContent.textContent;
+        if (outputText && outputText !== 'Your masterpiece awaits') {
+          this.inputText.value = outputText;
+          this.updateCounts();
+          this.showToast('Output copied to input', 'success');
+        }
+      }
+      
+      openSaveDrawer() {
+        this.saveDrawer.classList.add('active');
+        
+        // Auto-populate title from first line of output
+        const outputText = this.outputContent.textContent;
+        if (outputText && outputText !== 'Your masterpiece awaits') {
+          const firstLine = outputText.split('\n')[0].slice(0, 50);
+          document.getElementById('docTitle').value = firstLine;
+        }
+      }
+      
+      async saveDocument() {
+        const title = document.getElementById('docTitle').value;
+        const tags = document.getElementById('docTags').value.split(',').map(t => t.trim());
+        const starred = document.getElementById('docStarred').checked;
+        
+        if (!title) {
+          this.showToast('Please enter a title', 'warning');
+          return;
+        }
+        
+        try {
+          const response = await fetch('/api/documents', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+              title,
+              content: this.outputContent.innerHTML,
+              plainText: this.outputContent.textContent,
+              action: this.currentAction,
+              tags,
+              starred
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            this.showToast('Document saved', 'success');
+            this.saveDrawer.classList.remove('active');
+            this.loadDocuments();
+          }
+        } catch (error) {
+          this.showToast('Error saving document', 'error');
+        }
+      }
+      
+      async shareOutput() {
+        try {
+          const response = await fetch('/api/share', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              content: this.outputContent.innerHTML,
+              plainText: this.outputContent.textContent
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            const url = `${window.location.origin}/share/${data.id}`;
+            await navigator.clipboard.writeText(url);
+            this.showToast('Share link copied to clipboard', 'success');
+          }
+        } catch (error) {
+          this.showToast('Error creating share link', 'error');
+        }
+      }
+      
+      loadTemplate(template) {
+        const templates = {
+          'study-notes': 'Create comprehensive study notes on [topic]. Include key concepts, definitions, examples, and a summary.',
+          'article-summary': 'Summarize the following article, extracting the main arguments, evidence, and conclusions.',
+          'essay-outline': 'Create a detailed essay outline on [topic] with introduction, thesis, body paragraphs with topic sentences, and conclusion.',
+          'flashcards': 'Generate flashcards from the following content. Each card should have a question on one side and answer on the other.',
+          'meeting-notes': 'Format the following meeting discussion into clear notes with: attendees, agenda items, decisions made, action items with owners.',
+          'research-brief': 'Create a research brief on [topic] including: research question, methodology overview, key findings, limitations, and implications.',
+          'book-report': 'Write a book report covering: title/author, summary, main themes, character analysis, personal reflection, and recommendation.',
+          'lecture-notes': 'Transform these lecture notes into well-organized study notes with headings, bullet points, and key term definitions.'
+        };
+        
+        this.inputText.value = templates[template] || '';
+        this.updateCounts();
+      }
+      
+      addToHistory(data) {
+        const historyItem = {
+          action: data.data.action,
+          preview: data.data.processed.slice(0, 50) + '...',
+          time: new Date().toLocaleTimeString(),
+          metadata: data.data.metadata
+        };
+        
+        this.history.unshift(historyItem);
+        this.renderHistory();
+      }
+      
+      renderHistory() {
+        const historyList = document.querySelector('.history-list');
+        if (!historyList) return;
+        
+        if (this.history.length === 0) {
+          historyList.innerHTML = `
+            <div class="empty-state small">
+              <div class="empty-icon">🕰️</div>
+              <p>No history yet</p>
+            </div>
+          `;
+          return;
+        }
+        
+        historyList.innerHTML = this.history.slice(0, 10).map(item => `
+          <div class="history-item" onclick="dashboard.loadHistoryItem(this)">
+            <div class="history-icon">${this.getActionIcon(item.action)}</div>
+            <div class="history-content">
+              <div class="history-preview">${item.preview}</div>
+              <div class="history-time">${item.time}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      getActionIcon(action) {
+        const icons = {
+          'generate': '🎯',
+          'extend': '✨',
+          'shorten': '🔬',
+          'rephrase': '🤖',
+          'grammar': '📖',
+          'thesaurus': '📕',
+          'translate': '🌍',
+          'tone': '📢',
+          'style': '📝',
+          'combine': '👏',
+          'summarize': '📋',
+          'explain': '💡',
+          'critique': '🔍',
+          'flashcards': '🃏',
+          'quiz': '❓'
+        };
+        return icons[action] || '📄';
+      }
+      
+      loadHistoryItem(element) {
+        // Implement loading history item
+      }
+      
+      async loadDocuments() {
+        try {
+          const response = await fetch('/api/documents', {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            this.documents = data.documents;
+            this.renderDocuments();
+          }
+        } catch (error) {
+          console.error('Error loading documents:', error);
+        }
+      }
+      
+      renderDocuments() {
+        const docsList = document.querySelector('.documents-list');
+        if (!docsList) return;
+        
+        if (this.documents.length === 0) {
+          docsList.innerHTML = `
+            <div class="empty-state small">
+              <div class="empty-icon">📚</div>
+              <p>Your saved documents will appear here</p>
+            </div>
+          `;
+          return;
+        }
+        
+        docsList.innerHTML = this.documents.slice(0, 5).map(doc => `
+          <div class="document-item">
+            <div class="doc-icon">${doc.starred ? '⭐' : '📄'}</div>
+            <div class="doc-info">
+              <div class="doc-title">${doc.title}</div>
+              <div class="doc-date">${new Date(doc.created_at).toLocaleDateString()}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      clearHistory() {
+        this.history = [];
+        this.renderHistory();
+        this.showToast('History cleared', 'success');
+      }
+      
+      async loadUserData() {
+        // Load user profile, documents, history
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const response = await fetch('/auth/me', {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              this.updateUserInfo(data.user);
+              this.loadDocuments();
+            }
+          } catch (error) {
+            console.error('Error loading user data:', error);
+          }
+        }
+      }
+      
+      updateUserInfo(user) {
+        document.querySelector('.user-name').textContent = user.name;
+        document.querySelector('.user-email').textContent = user.email;
+        document.querySelector('.user-plan').textContent = `${user.plan} Plan`;
+        document.querySelector('.avatar-initials').textContent = user.name.split(' ').map(n => n[0]).join('').slice(0, 2);
+      }
+      
+      openModal(modal) {
+        this.closeAllModals();
+        modal.classList.add('active');
+      }
+      
+      closeAllModals() {
+        document.querySelectorAll('.modal.active, .drawer.active').forEach(el => {
+          el.classList.remove('active');
+        });
+      }
+      
+      showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        
+        this.toastContainer.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => {
+            toast.remove();
+          }, 300);
+        }, 3000);
+      }
     }
-    rawOut = data.data.processed;
-    showOut(rawOut);
-    setMeta(data.data.metadata);
-    if (data.remaining_free_credits) setCreditsUI(data.remaining_free_credits);
-    addHist(txt, rawOut, action);
-    toast('success','✓','Done! Content ready.');
 
-  } catch(err) {
-    // Demo mode when server isn't running
-    if (err instanceof TypeError) {
-      const demo = demoOut(action, txt);
-      rawOut = demo; showOut(demo);
-      setMeta({ model_used:'demo-mode', tokens_used:0, processing_time:'0.0' });
-      addHist(txt, demo, action);
-      toast('info','💡','Demo mode — start app.js for real AI.');
-    } else {
-      toast('error','✕','Network error. Is app.js running?');
-    }
-  } finally { setLoading(false); }
-}
+    // Initialize dashboard
+    const dashboard = new Dashboard();
+    window.dashboard = dashboard;
 
-document.getElementById('inputText').addEventListener('keydown', e=>{
-  if((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); go(); }
-});
-
-function setLoading(on) {
-  const btn = document.getElementById('runBtn');
-  btn.disabled = on;
-  document.getElementById('runIco').textContent = on?'⏳':'▶';
-  document.getElementById('shimmer').classList.toggle('show', on);
-  document.getElementById('outBody').style.display = on?'none':'';
-  if (on) document.getElementById('outFooter').classList.remove('show');
-}
-
-function showOut(txt) {
-  const ob = document.getElementById('outBody');
-  ob.classList.remove('empty');
-  ob.style.display = '';
-  ob.innerHTML = `<div class="oc">${md2html(txt)}</div>`;
-  document.getElementById('occ').textContent = txt.length.toLocaleString()+' chars';
-  document.getElementById('occ').style.display = '';
-  document.getElementById('outFooter').classList.add('show');
-}
-
-function setMeta(m) {
-  document.getElementById('mModel').textContent = m.model_used||'—';
-  document.getElementById('mTok').textContent   = m.tokens_used||'—';
-  document.getElementById('mTime').textContent  = m.processing_time?(m.processing_time+'s'):'—';
-  const n = (m.model_used||'').split('/').pop().replace(':free','').replace(/-/g,' ');
-  document.getElementById('mdlName').textContent = n||'AI Model';
-}
-
-// ── Markdown → HTML (lightweight)
-function md2html(t) {
-  return t
-    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
-    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
-    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,'<em>$1</em>')
-    .replace(/`(.+?)`/g,'<code>$1</code>')
-    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
-    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>')
-    .replace(/\n\n/g,'</p><p>')
-    || `<p>${t}</p>`;
-}
-
-// ── Actions
-function copyOut() {
-  if (!rawOut) return toast('info','💡','Nothing to copy yet.');
-  navigator.clipboard.writeText(rawOut).then(()=>toast('success','✓','Copied!'));
-}
-function dlOut(ext) {
-  if (!rawOut) return toast('info','💡','Nothing to download yet.');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([rawOut],{type:'text/plain'}));
-  a.download = `savoiré-${action}-${Date.now()}.${ext}`;
-  a.click(); URL.revokeObjectURL(a.href);
-  toast('success','✓',`Downloaded .${ext}`);
-}
-function useAsInput() {
-  if (!rawOut) return;
-  document.getElementById('inputText').value = rawOut;
-  document.getElementById('cc').textContent = rawOut.length.toLocaleString()+' chars';
-  toast('info','↩','Output loaded as input.');
-}
-function clearAll() {
-  document.getElementById('inputText').value = '';
-  document.getElementById('cc').textContent = '0 chars';
-  rawOut = '';
-  const ob = document.getElementById('outBody');
-  ob.classList.add('empty'); ob.style.display='';
-  ob.innerHTML = '<div class="empty-ico">✦</div><div class="empty-txt">Your AI output will appear here</div>';
-  document.getElementById('outFooter').classList.remove('show');
-  document.getElementById('occ').style.display='none';
-  rmFile();
-}
-
-// ── History
-function addHist(inp, out, act) {
-  hist.unshift({ id:Date.now(), act, preview:inp.slice(0,58)+(inp.length>58?'…':''), out, date:new Date().toLocaleTimeString() });
-  hist = hist.slice(0,20);
-  localStorage.setItem('sv_hist', JSON.stringify(hist));
-  renderHist();
-}
-function renderHist() {
-  const el = document.getElementById('histList');
-  if (!hist.length) { el.innerHTML='<div style="font-size:.79rem;color:var(--muted);padding:5px 8px;">No history yet.</div>'; return; }
-  el.innerHTML = hist.map(h=>`
-    <div class="hi" onclick="loadHist(${h.id})">
-      <div class="hi-title">${esc(h.preview)}</div>
-      <div class="hi-meta">${h.act} · ${h.date}</div>
-    </div>`).join('');
-}
-function loadHist(id) {
-  const h = hist.find(x=>x.id===id); if(!h) return;
-  rawOut = h.out; showOut(rawOut); toast('info','🕑','Loaded from history.');
-}
-function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ── Templates
-const TPLS = {
-  study:      { a:'generate', t:'[Enter your topic here]\n\nGenerate comprehensive study notes with key concepts, definitions, and examples.', fmt:'notes', style:'academic' },
-  summary:    { a:'shorten',  t:'[Paste your article or text here to summarise it]', fmt:'summary', style:'simple' },
-  flashcards: { a:'generate', t:'[Enter your topic here]\n\nCreate concise flashcards with a question on one side and answer on the other.', fmt:'flashcards', style:'simple' },
-  essay:      { a:'generate', t:'[Enter your essay topic here]\n\nCreate a detailed essay outline with introduction, arguments, and conclusion.', fmt:'outline', style:'essay' },
-};
-function loadTpl(n) {
-  const t = TPLS[n]; if(!t) return;
-  document.getElementById('inputText').value = t.t;
-  document.getElementById('selFmt').value    = t.fmt;
-  document.getElementById('selStyle').value  = t.style;
-  document.getElementById('cc').textContent  = t.t.length+' chars';
-  pickAction(t.a, document.querySelector(`.ab[data-a="${t.a}"]`));
-  toast('info','📋',`Template: ${n}`);
-}
-
-// ── Modal
-function openModal()  { document.getElementById('upModal').classList.add('open'); }
-function closeModal() { document.getElementById('upModal').classList.remove('open'); }
-document.getElementById('upModal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
-
-// ── Toast
-function toast(type, ico, msg) {
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<span>${ico}</span>${esc(msg)}`;
-  document.getElementById('tc').appendChild(t);
-  setTimeout(()=>{ if(t.parentNode) t.parentNode.removeChild(t); }, 4200);
-}
-
-// ── Demo output (no server)
-function demoOut(a, txt) {
-  const tp = esc(txt.slice(0,55));
-  const m = {
-    generate:`# Notes: ${tp}\n\n## Overview\nThis is a demo output. Start **app.js** and set your OpenRouter API key for real AI generation.\n\n## Key Concepts\n- Concept one: the foundational idea\n- Concept two: the practical application\n- Concept three: the broader implications\n\n## Summary\nReal notes will be generated here once the backend is running.\n\n> Add OPENROUTER_API_KEY to your .env file and run \`node app.js\``,
-    extend:`${txt}\n\nFurthermore, this concept extends into several related areas. When examined in depth, the underlying patterns reveal consistent structures that have been documented widely in the literature.\n\n*(Demo mode — start app.js for real AI)*`,
-    shorten:`${txt.split(' ').slice(0, Math.ceil(txt.split(' ').length*0.5)).join(' ')}...\n\n*(Demo mode)*`,
-    rephrase:`Upon reflection, ${txt.toLowerCase().slice(0,120)}. This reformulation preserves the original intent while improving readability.\n\n*(Demo mode)*`,
-    grammar:`${txt}\n\n✓ Grammar reviewed in demo mode. Start app.js for real corrections.`,
-    translate:`[Real translation will appear here once app.js is running with a valid OPENROUTER_API_KEY]\n\n*Demo mode*`,
-  };
-  return m[a] || m.generate;
-}
-
-// ── Init
-loadCredits();
-renderHist();
-</script>
+    // Razorpay integration
+    document.querySelectorAll('.razorpay-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const plan = btn.dataset.plan;
+        
+        try {
+          const response = await fetch('/api/payment/create-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ plan })
+          });
+          
+          const data = await response.json();
+          
+          const options = {
+            key: data.key,
+            amount: data.amount,
+            currency: data.currency,
+            name: 'Savoiré AI',
+            description: `${plan} Plan Subscription`,
+            order_id: data.orderId,
+            handler: async function(response) {
+              const verifyResponse = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  orderId: response.razorpay_order_id,
+                  paymentId: response.razorpay_payment_id,
+                  signature: response.razorpay_signature
+                })
+              });
+              
+              const verifyData = await verifyResponse.json();
+              
+              if (verifyData.success) {
+                dashboard.showToast('Payment successful! Welcome to Savoiré Pro.', 'success');
+                setTimeout(() => window.location.reload(), 2000);
+              }
+            }
+          };
+          
+          const rzp = new Razorpay(options);
+          rzp.open();
+        } catch (error) {
+          dashboard.showToast('Error initiating payment', 'error');
+        }
+      });
+    });
+  </script>
 </body>
 </html>
