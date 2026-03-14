@@ -1,808 +1,537 @@
-// Ultra-Advanced Gold Theme AI Assistant
-class GoldSavoireAI {
+// Savoiré AI v2.0 - Frontend Application
+// Developed by Sooban Talha Technologies (soobantalhatech.xyz)
+// Version: 2.0.0
+
+class SavoireAI {
     constructor() {
-        this.initializeApp();
+        this.API_URL = '/api/study';
+        this.currentData = null;
+        this.loadingTips = [
+            'Analyzing your topic for maximum educational value...',
+            'Consulting multiple AI models for comprehensive coverage...',
+            'Structuring content for optimal learning retention...',
+            'Adding real-world examples and applications...',
+            'Generating practice questions with detailed solutions...',
+            'Creating memory techniques tailored to your topic...',
+            'Verifying accuracy across multiple sources...',
+            'Optimizing content for your education level...',
+            'Adding cross-disciplinary connections...',
+            'Preparing study guides and learning objectives...'
+        ];
+        
+        this.init();
+    }
+    
+    init() {
+        this.cacheElements();
         this.bindEvents();
-        this.initializeAdvancedAnimations();
+        this.checkTheme();
+        this.startLoadingTips();
     }
-
-    initializeApp() {
-        this.chatMessages = document.getElementById('chatMessages');
-        this.messageInput = document.getElementById('messageInput');
-        this.sendButton = document.getElementById('sendButton');
-        this.welcomeArea = document.getElementById('welcomeArea');
-        this.messagesContainer = document.getElementById('messagesContainer');
-        this.thinkingIndicator = document.getElementById('thinkingIndicator');
-        this.clearChatBtn = document.getElementById('clearChat');
-        
-        this.conversationHistory = [];
-        this.isGenerating = false;
+    
+    cacheElements() {
+        this.form = document.getElementById('studyForm');
+        this.topicInput = document.getElementById('topicInput');
+        this.generateBtn = document.getElementById('generateBtn');
+        this.resultsSection = document.getElementById('resultsSection');
+        this.loadingOverlay = document.getElementById('loadingOverlay');
+        this.loadingTip = document.getElementById('loadingTip');
+        this.progressFill = document.getElementById('progressFill');
+        this.progressText = document.getElementById('progressText');
+        this.errorToast = document.getElementById('errorToast');
+        this.errorMessage = document.getElementById('errorMessage');
+        this.themeToggle = document.getElementById('themeToggle');
+        this.educationLevel = document.getElementById('educationLevel');
+        this.language = document.getElementById('language');
+        this.downloadBtn = document.getElementById('downloadBtn');
+        this.shareBtn = document.getElementById('shareBtn');
+        this.printBtn = document.getElementById('printBtn');
+        this.tabButtons = document.querySelectorAll('.tab-btn');
     }
-
-    initializeAdvancedAnimations() {
-        // Add intersection observer for scroll animations
-        this.observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('animate-in');
-                }
-            });
-        }, { threshold: 0.1 });
-    }
-
+    
     bindEvents() {
-        this.sendButton.addEventListener('click', () => this.sendMessage());
-        this.messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
-
-        this.clearChatBtn.addEventListener('click', () => this.clearChat());
-
-        // Auto-resize textarea with animation
-        this.messageInput.addEventListener('input', () => {
-            this.autoResize();
-            this.animateInput();
-        });
-
-        // Quick suggestion chips with enhanced animations
-        document.querySelectorAll('.suggestion-chip').forEach(chip => {
-            chip.addEventListener('click', (e) => {
-                this.animateButton(e.target);
-                const prompt = chip.getAttribute('data-prompt');
-                this.messageInput.value = prompt;
-                setTimeout(() => this.sendMessage(), 300);
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        this.downloadBtn?.addEventListener('click', () => this.downloadPDF());
+        this.shareBtn?.addEventListener('click', () => this.shareContent());
+        this.printBtn?.addEventListener('click', () => window.print());
+        
+        document.querySelectorAll('.example-topic').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.topicInput.value = btn.textContent;
+                this.form.dispatchEvent(new Event('submit'));
             });
         });
-
-        // Theme toggle with enhanced animation
-        document.querySelector('.theme-toggle').addEventListener('click', (e) => {
-            this.animateButton(e.target);
-            setTimeout(() => this.toggleTheme(), 200);
-        });
-
-        // Input focus animations
-        this.messageInput.addEventListener('focus', () => {
-            this.messageInput.parentElement.classList.add('focused');
-        });
-
-        this.messageInput.addEventListener('blur', () => {
-            this.messageInput.parentElement.classList.remove('focused');
+        
+        this.tabButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
         });
     }
-
-    animateInput() {
-        this.messageInput.style.transform = 'scale(1.02)';
-        setTimeout(() => {
-            this.messageInput.style.transform = 'scale(1)';
-        }, 150);
-    }
-
-    animateButton(button) {
-        button.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            button.style.transform = 'scale(1)';
-        }, 150);
-    }
-
-    autoResize() {
-        this.messageInput.style.height = 'auto';
-        this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
-    }
-
-    async sendMessage() {
-        const message = this.messageInput.value.trim();
-        if (!message || this.isGenerating) return;
-
-        // Hide welcome area, show messages with animation
-        this.welcomeArea.style.display = 'none';
-        this.messagesContainer.style.display = 'block';
-
-        // Add user message with animation
-        this.addMessage(message, 'user');
-
-        // Clear input with animation
-        this.animateClearInput();
-
-        // Show thinking indicator
-        this.showThinking();
-
-        this.isGenerating = true;
-        this.sendButton.disabled = true;
-
+    
+    async handleSubmit(e) {
+        e.preventDefault();
+        
+        const topic = this.topicInput.value.trim();
+        if (!topic) {
+            this.showError('Please enter a topic to study');
+            return;
+        }
+        
+        this.startLoading();
+        
         try {
-            const studyData = await this.generateStudyMaterials(message);
-            this.hideThinking();
-            this.displayStudyMaterials(studyData);
+            const response = await fetch(this.API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: topic,
+                    education_level: this.educationLevel.value,
+                    language: this.language.value
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server responded with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            this.currentData = data;
+            this.displayResults(data);
+            this.stopLoading();
+            
         } catch (error) {
-            this.hideThinking();
-            this.showError(error.message);
+            console.error('Generation error:', error);
+            this.stopLoading();
+            this.showError('Failed to generate study materials. Please try again.');
+            
+            // Fallback to offline generator
+            this.currentData = this.generateOfflineFallback(topic);
+            this.displayResults(this.currentData);
         }
-
-        this.isGenerating = false;
-        this.sendButton.disabled = false;
     }
-
-    animateClearInput() {
-        this.messageInput.style.opacity = '0';
-        this.messageInput.style.transform = 'translateX(-20px)';
-        setTimeout(() => {
-            this.messageInput.value = '';
-            this.autoResize();
-            this.messageInput.style.opacity = '1';
-            this.messageInput.style.transform = 'translateX(0)';
-        }, 300);
+    
+    displayResults(data) {
+        // Display study score
+        if (data.study_score) {
+            document.getElementById('studyScore').classList.remove('hidden');
+            document.getElementById('scoreValue').textContent = data.study_score;
+        }
+        
+        // Display executive summary
+        if (data.executive_summary) {
+            document.getElementById('executiveSummary').innerHTML = this.formatMarkdown(data.executive_summary);
+        }
+        
+        // Display comprehensive notes
+        if (data.comprehensive_notes) {
+            document.getElementById('comprehensiveNotes').innerHTML = this.formatMarkdown(data.comprehensive_notes);
+        }
+        
+        // Display key concepts
+        if (data.key_concepts) {
+            this.displayKeyConcepts(data.key_concepts);
+        }
+        
+        // Display memory techniques
+        if (data.memory_techniques) {
+            this.displayMemoryTechniques(data.memory_techniques);
+        }
+        
+        // Display practice questions
+        if (data.practice_questions) {
+            this.displayPracticeQuestions(data.practice_questions);
+        }
+        
+        // Display real-world applications
+        if (data.real_world_applications) {
+            this.displayApplications(data.real_world_applications);
+        }
+        
+        // Display study guide
+        if (data.study_guide) {
+            this.displayStudyGuide(data.study_guide);
+        }
+        
+        // Display metadata
+        if (data.generated_at) {
+            document.getElementById('generatedAt').textContent = `Generated: ${new Date(data.generated_at).toLocaleString()}`;
+        }
+        
+        if (data.model_used) {
+            document.getElementById('modelUsed').textContent = `Model: ${data.model_used}`;
+        }
+        
+        // Show results section
+        this.resultsSection.classList.remove('hidden');
+        
+        // Scroll to results
+        this.resultsSection.scrollIntoView({ behavior: 'smooth' });
+        
+        // Process math expressions
+        if (window.MathJax) {
+            MathJax.Hub.Queue(['Typeset', MathJax.Hub]);
+        }
     }
-
-    async generateStudyMaterials(message) {
-        console.log('Sending request to AI:', message);
-
-        const response = await fetch('/api/study', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message })
+    
+    displayKeyConcepts(concepts) {
+        const container = document.getElementById('keyConcepts');
+        if (!container) return;
+        
+        container.innerHTML = concepts.map(concept => `
+            <div class="concept-card">
+                <h4 class="concept-name">${concept.name}</h4>
+                <p class="concept-definition">${concept.definition}</p>
+                <div class="concept-details">
+                    <p><strong>Explanation:</strong> ${concept.explanation}</p>
+                    <p><strong>Example:</strong> ${concept.example}</p>
+                    <p><strong>Why it matters:</strong> ${concept.importance}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    displayMemoryTechniques(techniques) {
+        const container = document.getElementById('memoryTechniques');
+        if (!container) return;
+        
+        container.innerHTML = techniques.map(technique => `
+            <div class="memory-card">
+                <i class="fas fa-lightbulb"></i>
+                <p>${technique}</p>
+            </div>
+        `).join('');
+    }
+    
+    displayPracticeQuestions(questions) {
+        const container = document.getElementById('practiceQuestions');
+        if (!container) return;
+        
+        container.innerHTML = questions.map((q, index) => `
+            <div class="practice-card">
+                <div class="question-header">
+                    <span class="question-number">Question ${index + 1}</span>
+                    <button class="toggle-answer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                        <i class="fas fa-eye"></i> Show Answer
+                    </button>
+                </div>
+                <div class="question-content">
+                    <p class="question-text"><strong>Q:</strong> ${q.question}</p>
+                    ${q.context ? `<p class="question-context"><em>Context: ${q.context}</em></p>` : ''}
+                </div>
+                <div class="answer-content hidden">
+                    ${q.solution_steps ? `
+                        <div class="solution-steps">
+                            <strong>Solution:</strong>
+                            <ol>
+                                ${q.solution_steps.map(step => `<li>${step}</li>`).join('')}
+                            </ol>
+                        </div>
+                    ` : ''}
+                    ${q.final_answer ? `
+                        <div class="final-answer">
+                            <strong>Answer:</strong>
+                            <p>${q.final_answer}</p>
+                        </div>
+                    ` : ''}
+                    ${q.common_pitfalls ? `
+                        <div class="common-pitfalls">
+                            <strong>Common Pitfalls:</strong>
+                            <ul>
+                                ${q.common_pitfalls.map(pitfall => `<li>${pitfall}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    displayApplications(applications) {
+        const container = document.getElementById('applications');
+        if (!container) return;
+        
+        container.innerHTML = applications.map(app => `
+            <div class="application-card">
+                <h4><i class="fas fa-industry"></i> ${app.industry}</h4>
+                <p><strong>Use Case:</strong> ${app.use_case}</p>
+                <p><strong>Implementation:</strong> ${app.implementation}</p>
+                <p><strong>Impact:</strong> ${app.impact}</p>
+                ${app.future_potential ? `<p><strong>Future Potential:</strong> ${app.future_potential}</p>` : ''}
+            </div>
+        `).join('');
+    }
+    
+    displayStudyGuide(guide) {
+        const container = document.getElementById('studyGuide');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="guide-section">
+                <h4>Learning Objectives</h4>
+                <ul>
+                    ${guide.learning_objectives?.map(obj => `<li>${obj}</li>`).join('') || ''}
+                </ul>
+            </div>
+            
+            <div class="guide-section">
+                <h4>Prerequisites</h4>
+                <ul>
+                    ${guide.prerequisites?.map(req => `<li>${req}</li>`).join('') || ''}
+                </ul>
+            </div>
+            
+            <div class="guide-section">
+                <h4>Recommended Study Order</h4>
+                <ol>
+                    ${guide.study_order?.map(step => `<li>${step}</li>`).join('') || ''}
+                </ol>
+            </div>
+            
+            ${guide.glossary ? `
+                <div class="guide-section">
+                    <h4>Key Terms Glossary</h4>
+                    <dl>
+                        ${guide.glossary.map(item => `
+                            <dt>${item.term}</dt>
+                            <dd>${item.definition}</dd>
+                        `).join('')}
+                    </dl>
+                </div>
+            ` : ''}
+            
+            ${guide.resources ? `
+                <div class="guide-section">
+                    <h4>Additional Resources</h4>
+                    <ul>
+                        ${guide.resources.map(resource => `
+                            <li><strong>${resource.type}:</strong> ${resource.title} - ${resource.description}</li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+            
+            <div class="guide-section">
+                <h4>Self-Assessment Questions</h4>
+                <ul>
+                    ${guide.self_assessment?.map(q => `<li>${q}</li>`).join('') || ''}
+                </ul>
+            </div>
+        `;
+    }
+    
+    formatMarkdown(text) {
+        if (!text) return '';
+        
+        // Convert headers
+        text = text.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+        text = text.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+        text = text.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+        text = text.replace(/^#### (.*$)/gm, '<h4>$1</h4>');
+        
+        // Convert bold and italic
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        // Convert lists
+        text = text.replace(/^- (.*$)/gm, '<li>$1</li>');
+        text = text.replace(/<\/li>\n<li>/g, '</li><li>');
+        text = text.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+        
+        // Convert numbered lists
+        text = text.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+        text = text.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
+        
+        // Convert code blocks
+        text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        
+        // Convert inline code
+        text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+        
+        // Convert blockquotes
+        text = text.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
+        
+        // Convert paragraphs
+        text = text.replace(/^(?!<[a-z])(.*$)/gm, '<p>$1</p>');
+        
+        return text;
+    }
+    
+    switchTab(tabId) {
+        // Update tab buttons
+        this.tabButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabId);
         });
-
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Received detailed study data:', data);
-        return data;
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.toggle('active', content.id === `${tabId}Tab`);
+        });
     }
-
-    addMessage(content, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${type}-message`;
+    
+    startLoading() {
+        this.loadingOverlay.classList.remove('hidden');
+        this.generateBtn.disabled = true;
+        this.generateBtn.classList.add('loading');
         
-        const avatar = type === 'user' ? 
-            '<div class="message-avatar">👤</div>' : 
-            '<div class="message-avatar"><div class="logo-background small"><img src="LOGO.png" alt="AI" class="logo-img"></div></div>';
-        
-        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-        if (type === 'user') {
-            messageDiv.innerHTML = `
-                ${avatar}
-                <div class="message-content">
-                    <div class="message-text">${this.escapeHtml(content)}</div>
-                    <div class="message-time">${time}</div>
-                </div>
-            `;
-        } else {
-            messageDiv.innerHTML = `
-                ${avatar}
-                <div class="message-content">
-                    ${content}
-                    <div class="message-time">${time}</div>
-                </div>
-            `;
-        }
-
-        this.chatMessages.appendChild(messageDiv);
-        this.scrollToBottom();
-        
-        // Add to conversation history
-        this.conversationHistory.push({ type, content, time });
-    }
-
-    displayStudyMaterials(data) {
-        const formattedContent = this.formatStudyData(data);
-        this.addMessage(formattedContent, 'ai');
-        
-        // Add scroll animations to new study sections
-        setTimeout(() => {
-            document.querySelectorAll('.study-section').forEach(section => {
-                this.observer.observe(section);
-            });
-        }, 100);
-    }
-
-    formatStudyData(data) {
-        if (data.error) {
-            return `
-                <div class="error-message">
-                    <h3>Unable to Generate Response</h3>
-                    <p>${data.error}</p>
-                    <p>Please try again or check your connection.</p>
-                </div>
-            `;
-        }
-
-        return `
-            <div class="study-materials" data-topic="${this.escapeHtml(data.topic)}">
-                <!-- Header -->
-                <div class="study-section">
-                    <h1 class="study-title">${this.escapeHtml(data.topic)}</h1>
-                    <div class="powered-by">
-                        Powered by Advanced AI Models • 
-                        Score: ${data.study_score || 96}/100 • 
-                        by Sooban Talha Technologies
-                    </div>
-                </div>
-
-                <!-- Ultra Detailed Notes -->
-                <div class="study-section">
-                    <h2 class="section-title">📚 COMPREHENSIVE ANALYSIS</h2>
-                    <div class="ultra-notes">
-                        ${this.formatNotes(data.ultra_long_notes)}
-                    </div>
-                </div>
-
-                <!-- Key Concepts -->
-                ${data.key_concepts && data.key_concepts.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">🔑 KEY CONCEPTS</h2>
-                    <div class="concepts-list">
-                        ${data.key_concepts.map(concept => `
-                            <div class="concept-item">${this.escapeHtml(concept)}</div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- Practice Questions -->
-                ${data.practice_questions && data.practice_questions.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">❓ ADVANCED QUESTIONS</h2>
-                    <div class="questions-list">
-                        ${data.practice_questions.map((q, index) => `
-                            <div class="question-item">
-                                <div class="question-text">Q${index + 1}: ${this.escapeHtml(q.question)}</div>
-                                <div class="answer-text">${this.escapeHtml(q.answer)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- Tips & Tricks -->
-                ${data.key_tricks && data.key_tricks.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">⚡ TIPS & TRICKS</h2>
-                    <div class="tips-list">
-                        ${data.key_tricks.map(trick => `
-                            <div class="tip-item">${this.escapeHtml(trick)}</div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- Real World Applications -->
-                ${data.real_world_applications && data.real_world_applications.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">🌍 REAL-WORLD APPLICATIONS</h2>
-                    <div class="applications-list">
-                        ${data.real_world_applications.map(app => `
-                            <div class="application-item">${this.escapeHtml(app)}</div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- Common Misconceptions -->
-                ${data.common_misconceptions && data.common_misconceptions.length > 0 ? `
-                <div class="study-section">
-                    <h2 class="section-title">⚠️ COMMON MISCONCEPTIONS</h2>
-                    <div class="misconceptions-list">
-                        ${data.common_misconceptions.map(misconception => `
-                            <div class="misconception-item">${this.escapeHtml(misconception)}</div>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : ''}
-
-                <!-- PDF Download Button -->
-                <div class="study-section">
-                    <div class="pdf-download-section">
-                        <button class="download-btn" onclick="goldAI.generatePremiumPDF('${this.escapeHtml(data.topic)}')">
-                            <i class="fas fa-file-pdf"></i>
-                            Download Premium PDF 
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="study-section">
-                    <div class="powered-by">
-                        Generated by Savoiré AI • by Sooban Talha Technologies •
-                        ${data.generated_at ? new Date(data.generated_at).toLocaleString() : new Date().toLocaleString()}
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    formatNotes(notes) {
-        if (!notes) return '<p>No response available.</p>';
-        
-        // Convert markdown-like formatting to HTML with enhanced styling
-        return notes
-            .replace(/\n/g, '<br>')
-            .replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--accent-color);">$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/### (.*?)(?=\n|$)/g, '<h3 style="color: var(--accent-color); margin: 1.5rem 0 1rem 0;">$1</h3>')
-            .replace(/## (.*?)(?=\n|$)/g, '<h2 style="color: var(--accent-color); margin: 2rem 0 1rem 0; border-bottom: 2px solid var(--accent-color); padding-bottom: 0.5rem;">$1</h2>')
-            .replace(/# (.*?)(?=\n|$)/g, '<h1 style="color: var(--accent-color); margin: 2.5rem 0 1.5rem 0; text-align: center;">$1</h1>');
-    }
-
-    generatePremiumPDF(topic) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Get all the content from study materials
-        const studyMaterials = document.querySelector('.study-materials');
-        
-        // Premium Gold & Black Header
-        doc.setFillColor(255, 215, 0); // Gold background
-        doc.rect(0, 0, 210, 45, 'F');
-        
-        // Main title in black
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(24);
-        doc.setFont(undefined, 'bold');
-        doc.text('SAVOIRÉ AI', 105, 20, { align: 'center' });
-        
-        // Subtitle
-        doc.setFontSize(12);
-        doc.text('PREMIUM STUDY PACKAGE', 105, 28, { align: 'center' });
-        
-        // Production credit
-        doc.setFontSize(10);
-        doc.text('by Sooban Talha Technologies', 105, 34, { align: 'center' });
-        
-        // Topic section with black background and gold text
-        doc.setFillColor(0, 0, 0);
-        doc.rect(0, 40, 210, 15, 'F');
-        doc.setTextColor(255, 215, 0);
-        doc.setFontSize(18);
-        doc.text(topic.toUpperCase(), 105, 50, { align: 'center' });
-        
-        let yPosition = 65;
-        let pageNumber = 1;
-
-        // Function to check page break
-        const checkPageBreak = (requiredSpace = 20) => {
-            if (yPosition > (287 - requiredSpace)) {
-                doc.addPage();
-                yPosition = 20;
-                pageNumber++;
-                return true;
+        let progress = 0;
+        this.loadingInterval = setInterval(() => {
+            progress += 2;
+            if (progress <= 100) {
+                this.progressFill.style.width = `${progress}%`;
+                this.progressText.textContent = `${progress}%`;
             }
-            return false;
-        };
-
-        // Function to add decorative section header
-        const addGoldSectionHeader = (title, emoji = '') => {
-            checkPageBreak(15);
-            
-            // Gold background for header
-            doc.setFillColor(255, 215, 0);
-            doc.rect(15, yPosition - 3, 180, 10, 'F');
-            
-            // Black text
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'bold');
-            doc.text(emoji + ' ' + title.toUpperCase(), 25, yPosition + 2);
-            
-            yPosition += 15;
-        };
-
-        // Function to add formatted paragraph
-        const addFormattedParagraph = (text, options = {}) => {
-            const {
-                isBold = false,
-                marginLeft = 20,
-                fontSize = 10,
-                spacing = 8
-            } = options;
-
-            checkPageBreak(30);
-
-            doc.setFontSize(fontSize);
-            doc.setTextColor(0, 0, 0);
-            doc.setFont(undefined, isBold ? 'bold' : 'normal');
-
-            const lines = doc.splitTextToSize(text, 170);
-            doc.text(lines, marginLeft, yPosition);
-            yPosition += (lines.length * (fontSize / 2.5)) + spacing;
-        };
-
-        // Function to add gold bullet points
-        const addGoldBulletList = (items, title = '') => {
-            if (title) {
-                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
+        }, 600); // 30 seconds for full progress
+    }
+    
+    stopLoading() {
+        this.loadingOverlay.classList.add('hidden');
+        this.generateBtn.disabled = false;
+        this.generateBtn.classList.remove('loading');
+        if (this.loadingInterval) {
+            clearInterval(this.loadingInterval);
+        }
+    }
+    
+    startLoadingTips() {
+        setInterval(() => {
+            if (!this.loadingOverlay.classList.contains('hidden')) {
+                const randomTip = this.loadingTips[Math.floor(Math.random() * this.loadingTips.length)];
+                this.loadingTip.textContent = randomTip;
             }
-
-            items.forEach((item, index) => {
-                checkPageBreak(15);
-
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                
-                // Gold bullet
-                doc.setTextColor(255, 215, 0);
-                doc.setFont(undefined, 'bold');
-                doc.text('➤', 22, yPosition);
-                doc.setTextColor(0, 0, 0);
-                doc.setFont(undefined, 'normal');
-
-                const lines = doc.splitTextToSize(item, 160);
-                doc.text(lines, 30, yPosition);
-                yPosition += (lines.length * 4) + 6;
-            });
-            yPosition += 8;
-        };
-
-        // Function to add numbered list with gold numbers
-        const addGoldNumberedList = (items, title = '') => {
-            if (title) {
-                addFormattedParagraph(title, { isBold: true, fontSize: 11, spacing: 4 });
-            }
-
-            items.forEach((item, index) => {
-                checkPageBreak(15);
-
-                // Gold number
-                doc.setTextColor(255, 215, 0);
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'bold');
-                doc.text(`${index + 1}.`, 22, yPosition);
-                
-                // Black text
-                doc.setTextColor(0, 0, 0);
-                doc.setFont(undefined, 'normal');
-
-                const lines = doc.splitTextToSize(item, 160);
-                doc.text(lines, 30, yPosition);
-                yPosition += (lines.length * 4) + 6;
-            });
-            yPosition += 10;
-        };
-
-        // Function to add question-answer block
-        const addQuestionAnswerBlock = (question, answer, qNumber) => {
-            checkPageBreak(40);
-
-            // Question in bold black with gold Q number
-            doc.setTextColor(255, 215, 0);
-            doc.setFontSize(11);
-            doc.setFont(undefined, 'bold');
-            doc.text(`Q${qNumber}`, 20, yPosition);
-            
-            doc.setTextColor(0, 0, 0);
-            const questionLines = doc.splitTextToSize(question, 160);
-            doc.text(questionLines, 30, yPosition);
-            yPosition += (questionLines.length * 4) + 8;
-
-            // Answer with indentation and different style
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            const answerLines = doc.splitTextToSize(answer, 165);
-            
-            // Add subtle background for answer
-            doc.setFillColor(245, 245, 245);
-            const answerHeight = (answerLines.length * 4) + 8;
-            doc.rect(25, yPosition - 2, 160, answerHeight, 'F');
-            
-            doc.setTextColor(0, 0, 0);
-            doc.text(answerLines, 30, yPosition);
-            yPosition += answerHeight + 15;
-        };
-
-        // Add comprehensive notes section
-        addGoldSectionHeader('COMPREHENSIVE ANALYSIS', '📚');
-        
-        const notesElement = studyMaterials.querySelector('.ultra-notes');
-        if (notesElement) {
-            const notesText = this.stripHtml(notesElement.innerHTML)
-                .replace(/\n/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-
-            // Split into paragraphs and add each with proper spacing
-            const paragraphs = notesText.split(/(?:\r\n|\r|\n){2,}/);
-            paragraphs.forEach((paragraph, index) => {
-                if (paragraph.trim().length > 0) {
-                    addFormattedParagraph(paragraph.trim(), {
-                        fontSize: 10,
-                        spacing: index === paragraphs.length - 1 ? 15 : 10
-                    });
-                }
-            });
-        }
-
-        // Add key concepts
-        const concepts = Array.from(studyMaterials.querySelectorAll('.concept-item'));
-        if (concepts.length > 0) {
-            addGoldSectionHeader('KEY CONCEPTS', '🔑');
-            const conceptTexts = concepts.map(concept => concept.textContent);
-            addGoldBulletList(conceptTexts);
-        }
-
-        // Add questions and answers
-        const questions = Array.from(studyMaterials.querySelectorAll('.question-item'));
-        if (questions.length > 0) {
-            addGoldSectionHeader('ADVANCED QUESTIONS', '❓');
-            
-            questions.forEach((question, index) => {
-                const questionText = question.querySelector('.question-text').textContent.replace(`Q${index + 1}: `, '');
-                const answerText = question.querySelector('.answer-text').textContent;
-                addQuestionAnswerBlock(questionText, answerText, index + 1);
-            });
-        }
-
-        // Add tips and tricks
-        const tips = Array.from(studyMaterials.querySelectorAll('.tip-item'));
-        if (tips.length > 0) {
-            addGoldSectionHeader('TIPS & TRICKS', '⚡');
-            const tipTexts = tips.map(tip => tip.textContent);
-            addGoldNumberedList(tipTexts);
-        }
-
-        // Add real-world applications
-        const applications = Array.from(studyMaterials.querySelectorAll('.application-item'));
-        if (applications.length > 0) {
-            addGoldSectionHeader('REAL-WORLD APPLICATIONS', '🌍');
-            const applicationTexts = applications.map(app => app.textContent);
-            addGoldBulletList(applicationTexts);
-        }
-
-        // Add misconceptions
-        const misconceptions = Array.from(studyMaterials.querySelectorAll('.misconception-item'));
-        if (misconceptions.length > 0) {
-            addGoldSectionHeader('COMMON MISCONCEPTIONS', '⚠️');
-            const misconceptionTexts = misconceptions.map(misconception => misconception.textContent);
-            addGoldNumberedList(misconceptionTexts);
-        }
-
-        // Add professional footer on each page
-        const totalPages = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= totalPages; i++) {
-            doc.setPage(i);
-            
-            // Gold footer line
-            doc.setDrawColor(255, 215, 0);
-            doc.setLineWidth(0.5);
-            doc.line(15, 280, 195, 280);
-            
-            // Page info
-            doc.setFontSize(8);
-            doc.setTextColor(128, 128, 128);
-            doc.text(`Page ${i} of ${totalPages}`, 105, 285, { align: 'center' });
-            
-            // Generation info
-            doc.setFontSize(7);
-            doc.text(`Generated by Savoiré AI Premium • ${new Date().toLocaleString()}`, 105, 290, { align: 'center' });
-            doc.text(' •  Sooban Talha Technologies • ', 105, 295, { align: 'center' });
-        }
-
-        // Save the PDF
-        doc.save(`SavoireAI_Premium_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+        }, 3000);
     }
-
-    showThinking() {
-        this.thinkingIndicator.style.display = 'flex';
-        this.scrollToBottom();
-    }
-
-    hideThinking() {
-        this.thinkingIndicator.style.display = 'none';
-    }
-
+    
     showError(message) {
-        const errorMessage = `
-            <div class="error-message">
-                <h3>Connection Issue</h3>
-                <p>${this.escapeHtml(message)}</p>
-                <p>Please check your internet connection and try again.</p>
-            </div>
-        `;
-        this.addMessage(errorMessage, 'ai');
-    }
-
-    clearChat() {
-        this.animateButton(this.clearChatBtn);
+        this.errorMessage.textContent = message;
+        this.errorToast.classList.remove('hidden');
+        
         setTimeout(() => {
-            this.chatMessages.innerHTML = '';
-            this.conversationHistory = [];
-            this.welcomeArea.style.display = 'block';
-            this.messagesContainer.style.display = 'none';
-        }, 300);
+            this.errorToast.classList.add('hidden');
+        }, 5000);
     }
-
-    scrollToBottom() {
-        setTimeout(() => {
-            this.chatMessages.scrollTo({
-                top: this.chatMessages.scrollHeight,
-                behavior: 'smooth'
-            });
-        }, 100);
-    }
-
-    escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    stripHtml(html) {
-        if (!html) return '';
-        const tmp = document.createElement('DIV');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
-    }
-
+    
     toggleTheme() {
         document.body.classList.toggle('light-theme');
-        const icon = document.querySelector('.theme-toggle i');
-        if (document.body.classList.contains('light-theme')) {
-            icon.className = 'fas fa-sun';
-            document.documentElement.style.setProperty('--primary-bg', '#ffffff');
-            document.documentElement.style.setProperty('--secondary-bg', '#f8f9fa');
-            document.documentElement.style.setProperty('--surface-bg', '#ffffff');
-            document.documentElement.style.setProperty('--text-primary', '#202124');
-            document.documentElement.style.setProperty('--text-secondary', '#5f6368');
-            document.documentElement.style.setProperty('--text-muted', '#80868b');
-            document.documentElement.style.setProperty('--border-color', '#dadce0');
-            document.documentElement.style.setProperty('--ai-message-bg', '#f8f9fa');
-            document.documentElement.style.setProperty('--user-message-bg', '#e8f0fe');
-        } else {
-            icon.className = 'fas fa-moon';
-            document.documentElement.style.setProperty('--primary-bg', '#0a0a0a');
-            document.documentElement.style.setProperty('--secondary-bg', '#141414');
-            document.documentElement.style.setProperty('--surface-bg', '#1f1f1f');
-            document.documentElement.style.setProperty('--text-primary', '#f5f5f5');
-            document.documentElement.style.setProperty('--text-secondary', '#cccccc');
-            document.documentElement.style.setProperty('--text-muted', '#888888');
-            document.documentElement.style.setProperty('--border-color', '#333333');
-            document.documentElement.style.setProperty('--ai-message-bg', '#252525');
-            document.documentElement.style.setProperty('--user-message-bg', '#1a1a1a');
+        const icon = this.themeToggle.querySelector('i');
+        icon.classList.toggle('fa-moon');
+        icon.classList.toggle('fa-sun');
+        localStorage.setItem('theme', document.body.classList.contains('light-theme') ? 'light' : 'dark');
+    }
+    
+    checkTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            this.themeToggle.querySelector('i').classList.replace('fa-moon', 'fa-sun');
         }
+    }
+    
+    async downloadPDF() {
+        if (!this.currentData) return;
+        
+        // Simple download as text file
+        const content = JSON.stringify(this.currentData, null, 2);
+        const blob = new Blob([content], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `savoire-${this.currentData.topic.toLowerCase().replace(/\s+/g, '-')}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        this.showSuccess('Download started!');
+    }
+    
+    async shareContent() {
+        if (!this.currentData) return;
+        
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Study Materials: ${this.currentData.topic}`,
+                    text: `Check out these AI-generated study materials for ${this.currentData.topic}`,
+                    url: window.location.href
+                });
+            } catch (error) {
+                console.log('Share cancelled');
+            }
+        } else {
+            // Fallback: copy link to clipboard
+            navigator.clipboard.writeText(window.location.href);
+            this.showSuccess('Link copied to clipboard!');
+        }
+    }
+    
+    showSuccess(message) {
+        // Create and show success toast
+        const toast = document.createElement('div');
+        toast.className = 'success-toast';
+        toast.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+    
+    generateOfflineFallback(topic) {
+        return {
+            topic: topic,
+            education_level: this.educationLevel.value,
+            executive_summary: `This is an offline-generated summary for ${topic}. For full AI-powered content, please check your internet connection and try again.`,
+            comprehensive_notes: `# ${topic}\n\n## Overview\nThis topic covers fundamental concepts and applications in ${topic}.`,
+            key_concepts: [
+                {
+                    name: 'Core Concept',
+                    definition: 'Fundamental principle',
+                    explanation: 'This concept forms the basis of understanding',
+                    example: 'Real-world example',
+                    importance: 'Essential for mastery'
+                }
+            ],
+            memory_techniques: [
+                'Create mind maps',
+                'Use flashcards',
+                'Practice spaced repetition'
+            ],
+            practice_questions: [
+                {
+                    question: `What are the key principles of ${topic}?`,
+                    context: 'This tests fundamental understanding',
+                    solution_steps: ['Review core concepts', 'Apply to examples'],
+                    final_answer: 'The key principles include...'
+                }
+            ],
+            real_world_applications: [
+                {
+                    industry: 'Various',
+                    use_case: `Applications of ${topic}`,
+                    implementation: 'Practical implementation methods',
+                    impact: 'Positive outcomes and benefits'
+                }
+            ],
+            study_guide: {
+                learning_objectives: [`Understand ${topic}`],
+                prerequisites: ['Basic knowledge'],
+                study_order: ['Start with basics', 'Move to advanced'],
+                glossary: [],
+                resources: [],
+                self_assessment: ['Can you explain the concept?']
+            },
+            study_score: 85,
+            generated_at: new Date().toISOString(),
+            model_used: 'offline-fallback'
+        };
     }
 }
 
-// Initialize the app
-const goldAI = new GoldSavoireAI();
-
-// Make available globally
-window.goldAI = goldAI;
-
-// Add additional CSS for scroll animations
-const scrollAnimations = document.createElement('style');
-scrollAnimations.textContent = `
-    .study-section {
-        opacity: 0;
-        transform: translateY(30px);
-        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .study-section.animate-in {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    
-    .study-section:nth-child(even) {
-        transition-delay: 0.1s;
-    }
-    
-    .study-section:nth-child(odd) {
-        transition-delay: 0.2s;
-    }
-    
-    .text-input-container.focused {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.2);
-    }
-    
-    .pdf-download-section {
-        text-align: center;
-        margin-top: 2rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid var(--border-color);
-    }
-    
-    .applications-list,
-    .misconceptions-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.8rem;
-    }
-    
-    .application-item,
-    .misconception-item {
-        display: flex;
-        align-items: flex-start;
-        gap: 0.8rem;
-        color: var(--text-primary);
-        font-weight: 400;
-        padding: 0.8rem;
-        background: rgba(255, 215, 0, 0.1);
-        border-radius: 10px;
-        border-left: 3px solid var(--accent-color);
-        transition: all 0.3s ease;
-    }
-    
-    .application-item:hover,
-    .misconception-item:hover {
-        transform: translateX(5px);
-        background: rgba(255, 215, 0, 0.15);
-    }
-    
-    .application-item::before {
-        content: "🌍";
-        flex-shrink: 0;
-        font-size: 1.1rem;
-    }
-    
-    .misconception-item::before {
-        content: "⚠️";
-        flex-shrink: 0;
-        font-size: 1.1rem;
-    }
-    
-    /* Mobile specific fixes */
-    @media (max-width: 768px) {
-        .study-materials {
-            margin: 0.5rem 0;
-            padding: 1rem;
-        }
-        
-        .message-content {
-            max-width: 95%;
-        }
-        
-        .ultra-notes {
-            padding: 1rem;
-            font-size: 14px;
-        }
-        
-        .concept-item, .tip-item, .question-item, .application-item, .misconception-item {
-            padding: 0.6rem;
-            font-size: 14px;
-        }
-        
-        .study-title {
-            font-size: 1.5rem;
-        }
-        
-        .section-title {
-            font-size: 1.1rem;
-        }
-        
-        .download-btn {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            font-size: 14px;
-        }
-    }
-    
-    @media (max-width: 480px) {
-        .study-materials {
-            padding: 0.8rem;
-        }
-        
-        .ultra-notes {
-            padding: 0.8rem;
-        }
-        
-        .question-item, .application-item, .misconception-item {
-            padding: 0.8rem;
-        }
-        
-        .concept-item, .tip-item {
-            padding: 0.5rem;
-        }
-    }
-`;
-document.head.appendChild(scrollAnimations);
+// Initialize application
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new SavoireAI();
+});
