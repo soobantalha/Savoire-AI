@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Savoiré AI — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #07070a;
+      --surface:     #0f0f14;
+      --surface2:    #161620;
+      --surface3:    #1d1d28;
+      --border:      rgba(255,255,255,0.07);
+      --border2:     rgba(255,255,255,0.12);
+      --accent:      #c9a96e;
+      --accent2:     #e8cfa0;
+      --accent-dim:  rgba(201,169,110,0.15);
+      --accent-glow: rgba(201,169,110,0.25);
+      --text:        #e8e6e0;
+      --text2:       #a8a49c;
+      --muted:       #5a5850;
+      --success:     #3ecf8e;
+      --error:       #f87171;
+      --warning:     #fbbf24;
+      --font-display:'Cormorant Garamond', serif;
+      --font-body:   'DM Sans', sans-serif;
+      --radius:      14px;
+      --radius-sm:   8px;
+      --sidebar-w:   258px;
+      --header-h:    58px;
+      --shadow:      0 24px 64px rgba(0,0,0,0.5);
+      --tr:          0.2s ease;
+    }
+
+    [data-theme="light"] {
+      --bg:          #f0ede8;
+      --surface:     #faf8f5;
+      --surface2:    #f0ede8;
+      --surface3:    #e8e4de;
+      --border:      rgba(0,0,0,0.08);
+      --border2:     rgba(0,0,0,0.14);
+      --accent:      #9a6e35;
+      --accent2:     #7a5220;
+      --accent-dim:  rgba(154,110,53,0.1);
+      --accent-glow: rgba(154,110,53,0.2);
+      --text:        #1a1814;
+      --text2:       #6a6560;
+      --muted:       #aaa59e;
+      --shadow:      0 24px 64px rgba(0,0,0,0.1);
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      display: flex; flex-direction: column;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      height: var(--header-h); flex-shrink: 0;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      z-index: 50;
+    }
+    .logo {
+      font-family: var(--font-display); font-size: 1.45rem; font-weight: 300;
+      letter-spacing: 0.04em; color: var(--accent); text-decoration: none; flex-shrink: 0;
+    }
+    .logo em { font-style: italic; }
+    .hdr-sep  { width: 1px; height: 22px; background: var(--border); }
+    .hdr-spacer { flex: 1; }
+
+    .credits-badge {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 13px; border-radius: 100px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-size: 0.78rem; color: var(--text2); white-space: nowrap;
+    }
+    .credits-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+    .credits-dot.low  { background: var(--warning); }
+    .credits-dot.none { background: var(--error); }
+
+    .model-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 100px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-size: 0.75rem; color: var(--text2);
+    }
+    .model-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pg 2s infinite; }
+    @keyframes pg { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 16px; border-radius: 100px;
+      font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; border: none; transition: all var(--tr);
+      text-decoration: none; white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #07070a; }
+    .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+    .btn-icon {
+      width: 34px; height: 34px; padding: 0;
+      border-radius: var(--radius-sm); justify-content: center;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2); font-size: 1rem;
+    }
+    .btn-icon:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ─── UPGRADE BANNER ─── */
+    .up-banner {
+      display: none; flex-shrink: 0;
+      align-items: center; gap: 10px;
+      padding: 9px 18px;
+      background: linear-gradient(90deg, rgba(201,169,110,0.1), transparent);
+      border-bottom: 1px solid rgba(201,169,110,0.2);
+      font-size: 0.82rem; color: var(--text2);
+    }
+    .up-banner.show { display: flex; }
+    .up-banner strong { color: var(--accent); }
+    .up-spacer { flex: 1; }
+    .up-close { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1rem; line-height: 1; }
+
+    /* ─── LAYOUT ─── */
+    .layout { flex: 1; display: flex; overflow: hidden; }
+
+    /* ─── SIDEBAR ─── */
+    aside {
+      width: var(--sidebar-w); flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow-y: auto; overflow-x: hidden;
+      transition: width .3s ease;
+    }
+    aside.collapsed { width: 0; }
+
+    .ss { padding: 12px 12px 4px; }
+    .sl {
+      font-size: 0.67rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); padding: 0 6px; margin-bottom: 5px;
+    }
+    .si {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: var(--radius-sm);
+      font-size: 0.82rem; color: var(--text2); cursor: pointer;
+      transition: all var(--tr); border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .si:hover { background: var(--surface2); color: var(--text); }
+    .si.active { background: var(--accent-dim); border-color: rgba(201,169,110,0.2); color: var(--accent); }
+    .si-ico { width: 20px; text-align: center; flex-shrink: 0; }
+    .si-txt { flex: 1; }
+
+    .sd { height: 1px; background: var(--border); margin: 8px 12px; }
+
+    .hi {
+      padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer;
+      transition: background var(--tr); border: 1px solid transparent;
+    }
+    .hi:hover { background: var(--surface2); }
+    .hi-title { font-size: 0.81rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hi-meta  { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+    /* ─── WORKSPACE ─── */
+    .ws { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Toolbar */
+    .toolbar {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+      padding: 9px 16px;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+    }
+    .tsep { width: 1px; height: 20px; background: var(--border); margin: 0 3px; }
+    .kbd {
+      display: inline-block; padding: 1px 5px; border-radius: 4px;
+      background: var(--surface3); border: 1px solid var(--border2);
+      font-size: 0.68rem; color: var(--muted); font-family: monospace;
+    }
+
+    /* Panels */
+    .panels { flex: 1; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+    .panel  { display: flex; flex-direction: column; overflow: hidden; }
+    .panel + .panel { border-left: 1px solid var(--border); }
+
+    .ph {
+      flex-shrink: 0; display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px;
+      background: var(--surface2); border-bottom: 1px solid var(--border);
+    }
+    .ph-title { font-size: 0.75rem; font-weight: 500; color: var(--text2); letter-spacing: 0.04em; text-transform: uppercase; }
+    .ph-spacer { flex: 1; }
+    .ph-counter { font-size: 0.7rem; color: var(--muted); }
+
+    /* ─── INPUT PANEL ─── */
+    #inputPanel { background: var(--surface); }
+
+    .opts {
+      flex-shrink: 0;
+      display: flex; gap: 7px; flex-wrap: wrap;
+      padding: 9px 12px; border-bottom: 1px solid var(--border);
+    }
+    .sw { position: relative; }
+    .sw select {
+      appearance: none;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text2);
+      font-family: var(--font-body); font-size: 0.77rem;
+      padding: 5px 24px 5px 9px; cursor: pointer; transition: border-color var(--tr);
+    }
+    .sw select:hover, .sw select:focus { border-color: var(--border2); outline: none; color: var(--text); }
+    .sw::after {
+      content:'▾'; position:absolute; right:8px; top:50%; transform:translateY(-50%);
+      font-size:0.62rem; color:var(--muted); pointer-events:none;
+    }
+
+    .tw { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #inputText {
+      flex: 1; width: 100%; background: transparent; border: none; outline: none; resize: none;
+      color: var(--text); font-family: var(--font-body); font-size: 0.91rem; line-height: 1.76;
+      padding: 16px 16px 8px; caret-color: var(--accent);
+    }
+    #inputText::placeholder { color: var(--muted); }
+
+    .drop {
+      flex-shrink: 0; margin: 0 12px 10px;
+      border: 1.5px dashed var(--border2); border-radius: var(--radius);
+      padding: 12px; text-align: center; cursor: pointer;
+      transition: all var(--tr); font-size: 0.81rem; color: var(--muted);
+      background: var(--surface2);
+    }
+    .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+    .drop input { display: none; }
+
+    .fp {
+      display: none; flex-shrink: 0;
+      align-items: center; gap: 9px;
+      margin: 0 12px 10px; padding: 8px 12px;
+      border-radius: var(--radius-sm); background: var(--surface3); border: 1px solid var(--border);
+      font-size: 0.81rem;
+    }
+    .fp.show { display: flex; }
+    .fp-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    .fp-size { font-size: 0.73rem; color: var(--muted); }
+    .fp-rm   { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.95rem; }
+    .fp-rm:hover { color: var(--error); }
+
+    /* Action strip */
+    .actions {
+      flex-shrink: 0; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+      padding: 9px 12px; border-top: 1px solid var(--border); background: var(--surface2);
+    }
+    .ab {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 6px 11px; border-radius: var(--radius-sm);
+      font-size: 0.77rem; font-weight: 500; cursor: pointer;
+      background: var(--surface3); border: 1px solid var(--border);
+      color: var(--text2); transition: all var(--tr); white-space: nowrap;
+    }
+    .ab:hover { border-color: var(--border2); color: var(--text); }
+    .ab.active { background: var(--accent-dim); border-color: rgba(201,169,110,.35); color: var(--accent); }
+
+    .run {
+      margin-left: auto;
+      padding: 8px 20px; border-radius: var(--radius-sm);
+      background: var(--accent); color: #07070a;
+      font-family: var(--font-body); font-size: 0.84rem; font-weight: 500;
+      border: none; cursor: pointer; transition: all var(--tr);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .run:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+    .run:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ─── OUTPUT PANEL ─── */
+    #outputPanel { background: var(--surface); }
+
+    .shimmer { display: none; flex-direction: column; gap: 9px; padding: 16px; }
+    .shimmer.show { display: flex; }
+    .sl-line {
+      height: 13px; border-radius: 4px;
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%);
+      background-size: 200%; animation: shim 1.4s infinite;
+    }
+    @keyframes shim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .sl-line:nth-child(2){width:82%} .sl-line:nth-child(3){width:90%}
+    .sl-line:nth-child(4){width:68%} .sl-line:nth-child(5){width:87%} .sl-line:nth-child(6){width:58%}
+
+    .out-body {
+      flex: 1; overflow-y: auto; padding: 16px;
+      font-size: 0.91rem; line-height: 1.8; color: var(--text);
+    }
+    .out-body.empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; color: var(--muted);
+    }
+    .empty-ico  { font-size: 2.4rem; opacity: .25; }
+    .empty-txt  { font-size: 0.85rem; text-align: center; max-width: 200px; }
+
+    /* Rendered output typography */
+    .oc h1 { font-family:var(--font-display); font-size:1.6rem; font-weight:400; margin:1.1em 0 .45em; line-height:1.15; }
+    .oc h2 { font-family:var(--font-display); font-size:1.22rem; font-weight:400; margin:1em 0 .4em; border-bottom:1px solid var(--border); padding-bottom:5px; }
+    .oc h3 { font-size:1rem; font-weight:500; color:var(--accent); margin:.9em 0 .35em; }
+    .oc p  { margin-bottom:.85em; }
+    .oc ul,.oc ol { margin:.4em 0 .85em 1.3em; }
+    .oc li { margin-bottom:.28em; }
+    .oc strong { color:var(--text); font-weight:500; }
+    .oc em     { color:var(--accent2); font-style:italic; }
+    .oc code   { background:var(--surface3); padding:2px 5px; border-radius:4px; font-size:.84em; color:var(--accent); }
+    .oc blockquote { border-left:3px solid var(--accent); padding-left:13px; margin:1em 0; color:var(--text2); font-style:italic; }
+
+    .out-footer {
+      display: none; flex-shrink: 0;
+      align-items: center; gap: 8px;
+      padding: 9px 14px;
+      background: var(--surface2); border-top: 1px solid var(--border);
+    }
+    .out-footer.show { display: flex; }
+    .mc {
+      display: flex; align-items: center; gap: 4px;
+      padding: 2px 9px; border-radius: 100px;
+      background: var(--surface3); border: 1px solid var(--border);
+      font-size: 0.7rem; color: var(--muted);
+    }
+    .mc span { color: var(--text2); font-weight: 500; }
+    .of-acts { margin-left: auto; display: flex; gap: 5px; }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
+
+    /* ─── TOAST ─── */
+    #tc {
+      position: fixed; bottom: 22px; right: 22px;
+      display: flex; flex-direction: column; gap: 8px; z-index: 999;
+    }
+    .toast {
+      display: flex; align-items: center; gap: 9px;
+      padding: 11px 16px; border-radius: var(--radius);
+      background: var(--surface); border: 1px solid var(--border);
+      box-shadow: var(--shadow); font-size: 0.84rem; color: var(--text);
+      animation: tIn .3s ease, tOut .3s ease forwards;
+      animation-delay: 0s, 3.5s; max-width: 340px;
+    }
+    .toast.success { border-color: rgba(62,207,142,.35); }
+    .toast.error   { border-color: rgba(248,113,113,.35); }
+    .toast.info    { border-color: rgba(201,169,110,.35); }
+    @keyframes tIn  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes tOut { from{opacity:1} to{opacity:0;transform:translateY(10px)} }
+
+    /* ─── MODAL ─── */
+    .mbk {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.72); backdrop-filter: blur(6px);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .mbk.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 20px; padding: 30px; max-width: 460px; width: 90%;
+      box-shadow: var(--shadow); animation: mUp .25s ease;
+    }
+    @keyframes mUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+    .modal h3 { font-family:var(--font-display); font-size:1.45rem; font-weight:300; margin-bottom:9px; }
+    .modal p  { font-size:.88rem; color:var(--text2); line-height:1.7; margin-bottom:22px; }
+    .modal-btns { display: flex; gap: 9px; justify-content: flex-end; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width:860px) {
+      .panels { grid-template-columns:1fr; grid-template-rows:1fr 1fr; }
+      .panel + .panel { border-left:none; border-top:1px solid var(--border); }
+      :root { --sidebar-w: 0px; }
+    }
+    @media (max-width:580px) {
+      .model-chip, .hdr-sep { display:none; }
+      header { gap:8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="index.html" class="logo">Savoir<em>é</em></a>
+  <div class="hdr-sep"></div>
+  <div class="credits-badge">
+    <div class="credits-dot" id="credDot"></div>
+    <span id="credLabel" style="font-weight:500;color:var(--text);">…</span>
+    <span style="color:var(--muted);">free left</span>
+  </div>
+  <div class="hdr-spacer"></div>
+  <div class="model-chip">
+    <div class="model-dot"></div>
+    <span id="mdlName">Gemini 2.0 Flash</span>
+  </div>
+  <button class="btn btn-icon" id="themeBtn" title="Toggle theme" style="font-size:1rem;">🌙</button>
+  <button class="btn btn-icon" id="sbBtn" title="Toggle sidebar" style="font-size:0.9rem;">☰</button>
+  <a href="index.html#pricing" class="btn btn-primary" style="padding:7px 14px;font-size:0.79rem;">⚡ Upgrade</a>
+</header>
+
+<!-- UPGRADE BANNER -->
+<div class="up-banner" id="upBanner">
+  ⚡ <strong>Running low on free credits.</strong> Upgrade for unlimited access.
+  <div class="up-spacer"></div>
+  <a href="index.html#pricing" class="btn btn-primary" style="padding:5px 12px;font-size:0.77rem;">View plans</a>
+  <button class="up-close" onclick="this.parentElement.classList.remove('show')">✕</button>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside id="sb">
+
+    <div class="ss" style="padding-bottom:10px;">
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;border-radius:var(--radius-sm);" onclick="clearAll()">
+        + New document
+      </button>
+    </div>
+    <div class="sd"></div>
+
+    <div class="ss">
+      <div class="sl">Tools</div>
+      <div class="si active" onclick="setAction('generate',this)"><span class="si-ico">🎯</span><span class="si-txt">Generate notes</span></div>
+      <div class="si" onclick="setAction('extend',this)"><span class="si-ico">✨</span><span class="si-txt">Extend</span></div>
+      <div class="si" onclick="setAction('shorten',this)"><span class="si-ico">🔬</span><span class="si-txt">Shorten</span></div>
+      <div class="si" onclick="setAction('rephrase',this)"><span class="si-ico">🤖</span><span class="si-txt">Rephrase</span></div>
+      <div class="si" onclick="setAction('grammar',this)"><span class="si-ico">📖</span><span class="si-txt">Spelling &amp; Grammar</span></div>
+      <div class="si" onclick="setAction('thesaurus',this)"><span class="si-ico">📕</span><span class="si-txt">Thesaurus</span></div>
+      <div class="si" onclick="setAction('translate',this)"><span class="si-ico">🌍</span><span class="si-txt">Translate</span></div>
+      <div class="si" onclick="setAction('tone',this)"><span class="si-ico">📢</span><span class="si-txt">Tone of voice</span></div>
+      <div class="si" onclick="setAction('style',this)"><span class="si-ico">📝</span><span class="si-txt">Writing style</span></div>
+      <div class="si" onclick="setAction('combine',this)"><span class="si-ico">👏</span><span class="si-txt">Combine</span></div>
+    </div>
+
+    <div class="sd"></div>
+
+    <div class="ss" style="flex:1;overflow-y:auto;">
+      <div class="sl">Recent</div>
+      <div id="histList"><div style="font-size:.79rem;color:var(--muted);padding:5px 8px;">No history yet.</div></div>
+    </div>
+
+    <div class="sd"></div>
+
+    <div class="ss" style="padding-bottom:14px;">
+      <div class="sl">Templates</div>
+      <div class="si" onclick="loadTpl('study')"><span class="si-ico">📚</span><span class="si-txt">Study notes</span></div>
+      <div class="si" onclick="loadTpl('summary')"><span class="si-ico">📋</span><span class="si-txt">Summarise article</span></div>
+      <div class="si" onclick="loadTpl('flashcards')"><span class="si-ico">🃏</span><span class="si-txt">Flashcards</span></div>
+      <div class="si" onclick="loadTpl('essay')"><span class="si-ico">✍️</span><span class="si-txt">Essay outline</span></div>
+    </div>
+
+  </aside>
+
+  <!-- WORKSPACE -->
+  <div class="ws">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <button class="btn btn-icon" title="Copy output" onclick="copyOut()">📋</button>
+      <button class="btn btn-icon" title="Download TXT" onclick="dlOut('txt')">💾</button>
+      <button class="btn btn-icon" title="Download Markdown" onclick="dlOut('md')">📄</button>
+      <button class="btn btn-icon" title="Print" onclick="window.print()">🖨️</button>
+      <div class="tsep"></div>
+      <button class="btn btn-icon" title="Clear" onclick="clearAll()">🗑️</button>
+      <button class="btn btn-icon" title="Use output as input" onclick="useAsInput()">↩</button>
+      <div class="tsep"></div>
+      <span style="font-size:.73rem;color:var(--muted);">Run: <span class="kbd">Ctrl</span> <span class="kbd">↵</span></span>
+    </div>
+
+    <!-- PANELS -->
+    <div class="panels">
+
+      <!-- INPUT -->
+      <div class="panel" id="inputPanel">
+        <div class="ph">
+          <span class="ph-title">✏️ Input</span>
+          <div class="ph-spacer"></div>
+          <span class="ph-counter" id="cc">0 chars</span>
+        </div>
+
+        <!-- Options -->
+        <div class="opts">
+          <div class="sw">
+            <select id="selFmt" title="Format">
+              <option value="notes">📝 Notes</option>
+              <option value="summary">📋 Summary</option>
+              <option value="flashcards">🃏 Flashcards</option>
+              <option value="outline">📐 Outline</option>
+            </select>
+          </div>
+          <div class="sw">
+            <select id="selStyle" title="Style">
+              <option value="academic">Academic</option>
+              <option value="simple">Simple</option>
+              <option value="detailed">Detailed</option>
+              <option value="bullet_points">Bullet points</option>
+              <option value="essay">Essay</option>
+              <option value="blog">Blog</option>
+            </select>
+          </div>
+          <div class="sw">
+            <select id="selTone" title="Tone">
+              <option value="professional">Professional</option>
+              <option value="casual">Casual</option>
+              <option value="academic">Academic</option>
+              <option value="persuasive">Persuasive</option>
+              <option value="friendly">Friendly</option>
+              <option value="formal">Formal</option>
+            </select>
+          </div>
+          <div class="sw">
+            <select id="selLen" title="Length">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="long">Long</option>
+              <option value="ultra-detailed">Ultra detailed</option>
+            </select>
+          </div>
+          <div class="sw">
+            <select id="selLang" title="Language">
+              <option value="English">🇬🇧 English</option>
+              <option value="French">🇫🇷 French</option>
+              <option value="German">🇩🇪 German</option>
+              <option value="Spanish">🇪🇸 Spanish</option>
+              <option value="Italian">🇮🇹 Italian</option>
+              <option value="Portuguese">🇵🇹 Portuguese</option>
+              <option value="Russian">🇷🇺 Russian</option>
+              <option value="Japanese">🇯🇵 Japanese</option>
+              <option value="Chinese">🇨🇳 Chinese</option>
+              <option value="Korean">🇰🇷 Korean</option>
+              <option value="Arabic">🇸🇦 Arabic</option>
+              <option value="Hindi">🇮🇳 Hindi</option>
+              <option value="Dutch">🇳🇱 Dutch</option>
+              <option value="Polish">🇵🇱 Polish</option>
+              <option value="Turkish">🇹🇷 Turkish</option>
+            </select>
+          </div>
+          <div class="sw" id="tlWrap" style="display:none;">
+            <select id="selTL" title="Translate to">
+              <option value="French">→ French</option>
+              <option value="German">→ German</option>
+              <option value="Spanish">→ Spanish</option>
+              <option value="Japanese">→ Japanese</option>
+              <option value="Chinese">→ Chinese</option>
+              <option value="Arabic">→ Arabic</option>
+              <option value="Hindi">→ Hindi</option>
+              <option value="Russian">→ Russian</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Textarea -->
+        <div class="tw">
+          <textarea id="inputText"
+            placeholder="Type a topic, paste your text, or upload a file below…&#10;&#10;Examples:&#10;• &quot;The French Revolution — key causes and effects&quot;&#10;• Paste an essay paragraph to rephrase&#10;• Upload a PDF lecture note"></textarea>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop" id="dz" onclick="document.getElementById('fi').click()">
+          <input type="file" id="fi" accept=".txt,.pdf,.docx,.pptx,.png,.jpg,.jpeg,.webp" />
+          📎 Drop a file or click — PDF, Word, TXT, Image
+        </div>
+        <div class="fp" id="fp">
+          <span>📎</span>
+          <span class="fp-name" id="fn"></span>
+          <span class="fp-size" id="fs"></span>
+          <button class="fp-rm" onclick="rmFile()">✕</button>
+        </div>
+
+        <!-- Action strip -->
+        <div class="actions">
+          <button class="ab active" data-a="generate" onclick="pickAction('generate',this)"><span>🎯</span>Generate</button>
+          <button class="ab" data-a="extend"   onclick="pickAction('extend',this)"><span>✨</span>Extend</button>
+          <button class="ab" data-a="shorten"  onclick="pickAction('shorten',this)"><span>🔬</span>Shorten</button>
+          <button class="ab" data-a="rephrase" onclick="pickAction('rephrase',this)"><span>🤖</span>Rephrase</button>
+          <button class="ab" data-a="grammar"  onclick="pickAction('grammar',this)"><span>📖</span>Grammar</button>
+          <button class="ab" data-a="translate" onclick="pickAction('translate',this)"><span>🌍</span>Translate</button>
+          <button class="run" id="runBtn" onclick="go()">
+            <span id="runIco">▶</span><span id="runTxt">Generate</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="panel" id="outputPanel">
+        <div class="ph">
+          <span class="ph-title">✦ Output</span>
+          <div class="ph-spacer"></div>
+          <span class="ph-counter" id="occ" style="display:none;"></span>
+        </div>
+
+        <div class="shimmer" id="shimmer">
+          <div class="sl-line" style="width:78%"></div>
+          <div class="sl-line"></div><div class="sl-line"></div>
+          <div class="sl-line"></div><div class="sl-line"></div>
+          <div class="sl-line"></div>
+        </div>
+
+        <div class="out-body empty" id="outBody">
+          <div class="empty-ico">✦</div>
+          <div class="empty-txt">Your AI output will appear here</div>
+        </div>
+
+        <div class="out-footer" id="outFooter">
+          <div class="mc">Model: <span id="mModel">—</span></div>
+          <div class="mc">Tokens: <span id="mTok">—</span></div>
+          <div class="mc">Time: <span id="mTime">—</span></div>
+          <div class="of-acts">
+            <button class="btn btn-icon" title="Copy" onclick="copyOut()">📋</button>
+            <button class="btn btn-icon" title="Download" onclick="dlOut('txt')">💾</button>
+            <button class="btn btn-icon" title="Use as input" onclick="useAsInput()">↩</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panels -->
+  </div><!-- /ws -->
+</div><!-- /layout -->
+
+<div id="tc"></div>
+
+<!-- Upgrade modal -->
+<div class="mbk" id="upModal">
+  <div class="modal">
+    <h3>Free credits used up</h3>
+    <p>Upgrade to Savoiré Pro for unlimited generations, all 10 AI tools, 50+ languages, and document uploads — starting at $3.99/month.</p>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Not now</button>
+      <a href="index.html#pricing" class="btn btn-primary">View plans →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const API = ''; // '' = same origin. For local dev: 'http://localhost:3000'
+let action  = 'generate';
+let file    = null;
+let rawOut  = '';
+let hist    = JSON.parse(localStorage.getItem('sv_hist') || '[]');
+
+// ── Credits
+async function loadCredits() {
+  try {
+    const r = await fetch(`${API}/api/credits`);
+    const d = await r.json();
+    if (d.success) setCreditsUI(d.remaining);
+  } catch { setCreditsUI({ notes:3, changes:5 }); }
+}
+function setCreditsUI(rem) {
+  const total = rem.notes + rem.changes;
+  document.getElementById('credLabel').textContent = `${rem.notes} notes · ${rem.changes} edits`;
+  const dot = document.getElementById('credDot');
+  dot.className = 'credits-dot' + (total <= 2 ? ' low':'') + (total === 0 ? ' none':'');
+  if (total <= 2) document.getElementById('upBanner').classList.add('show');
+}
+
+// ── Theme
+let dark = localStorage.getItem('sv_theme') !== 'light';
+const html = document.documentElement;
+if (!dark) { html.dataset.theme='light'; document.getElementById('themeBtn').textContent='☀️'; }
+document.getElementById('themeBtn').addEventListener('click', () => {
+  dark = !dark; html.dataset.theme = dark?'dark':'light';
+  document.getElementById('themeBtn').textContent = dark?'🌙':'☀️';
+  localStorage.setItem('sv_theme', dark?'dark':'light');
+});
+
+// ── Sidebar
+document.getElementById('sbBtn').addEventListener('click', () => document.getElementById('sb').classList.toggle('collapsed'));
+
+// ── Action select
+function pickAction(a, btn) {
+  action = a;
+  document.querySelectorAll('.ab').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.getElementById('tlWrap').style.display = a==='translate'?'':'none';
+  const lbl = {generate:'Generate',extend:'Extend',shorten:'Shorten',rephrase:'Rephrase',
+    grammar:'Fix grammar',thesaurus:'Improve vocab',translate:'Translate',
+    tone:'Change tone',style:'Restyle',combine:'Combine'};
+  document.getElementById('runTxt').textContent = lbl[a]||'Run';
+}
+function setAction(a, el) {
+  document.querySelectorAll('.si').forEach(i=>i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  pickAction(a, document.querySelector(`.ab[data-a="${a}"]`));
+}
+
+// ── Char counter
+document.getElementById('inputText').addEventListener('input', function() {
+  document.getElementById('cc').textContent = this.value.length.toLocaleString()+' chars';
+});
+
+// ── File upload
+const dz = document.getElementById('dz');
+const fi = document.getElementById('fi');
+fi.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+function handleFile(f) {
+  file = f;
+  document.getElementById('fn').textContent = f.name;
+  document.getElementById('fs').textContent = fmtBytes(f.size);
+  document.getElementById('fp').classList.add('show');
+  dz.style.display = 'none';
+  toast('info','📎',`File ready: ${f.name}`);
+}
+function rmFile() {
+  file = null; fi.value='';
+  document.getElementById('fp').classList.remove('show');
+  dz.style.display='';
+}
+function fmtBytes(b) {
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  return (b/1048576).toFixed(1)+' MB';
+}
+
+// ── Run
+async function go() {
+  const txt = document.getElementById('inputText').value.trim();
+  if (!txt && !file) { toast('error','⚠️','Enter text or upload a file first.'); return; }
+  setLoading(true);
+  try {
+    const fd = new FormData();
+    fd.append('action', action);
+    fd.append('text',   txt);
+    fd.append('format', document.getElementById('selFmt').value);
+    fd.append('style',  document.getElementById('selStyle').value);
+    fd.append('tone',   document.getElementById('selTone').value);
+    fd.append('length', document.getElementById('selLen').value);
+    fd.append('language', document.getElementById('selLang').value);
+    fd.append('targetLanguage', document.getElementById('selTL').value);
+    if (file) fd.append('file', file);
+
+    const res  = await fetch(`${API}/api/process`, { method:'POST', body:fd });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      if (data.upgrade_required) openModal();
+      else toast('error','✕', data.error||'Something went wrong.');
+      return;
+    }
+    rawOut = data.data.processed;
+    showOut(rawOut);
+    setMeta(data.data.metadata);
+    if (data.remaining_free_credits) setCreditsUI(data.remaining_free_credits);
+    addHist(txt, rawOut, action);
+    toast('success','✓','Done! Content ready.');
+
+  } catch(err) {
+    // Demo mode when server isn't running
+    if (err instanceof TypeError) {
+      const demo = demoOut(action, txt);
+      rawOut = demo; showOut(demo);
+      setMeta({ model_used:'demo-mode', tokens_used:0, processing_time:'0.0' });
+      addHist(txt, demo, action);
+      toast('info','💡','Demo mode — start app.js for real AI.');
+    } else {
+      toast('error','✕','Network error. Is app.js running?');
+    }
+  } finally { setLoading(false); }
+}
+
+document.getElementById('inputText').addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); go(); }
+});
+
+function setLoading(on) {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = on;
+  document.getElementById('runIco').textContent = on?'⏳':'▶';
+  document.getElementById('shimmer').classList.toggle('show', on);
+  document.getElementById('outBody').style.display = on?'none':'';
+  if (on) document.getElementById('outFooter').classList.remove('show');
+}
+
+function showOut(txt) {
+  const ob = document.getElementById('outBody');
+  ob.classList.remove('empty');
+  ob.style.display = '';
+  ob.innerHTML = `<div class="oc">${md2html(txt)}</div>`;
+  document.getElementById('occ').textContent = txt.length.toLocaleString()+' chars';
+  document.getElementById('occ').style.display = '';
+  document.getElementById('outFooter').classList.add('show');
+}
+
+function setMeta(m) {
+  document.getElementById('mModel').textContent = m.model_used||'—';
+  document.getElementById('mTok').textContent   = m.tokens_used||'—';
+  document.getElementById('mTime').textContent  = m.processing_time?(m.processing_time+'s'):'—';
+  const n = (m.model_used||'').split('/').pop().replace(':free','').replace(/-/g,' ');
+  document.getElementById('mdlName').textContent = n||'AI Model';
+}
+
+// ── Markdown → HTML (lightweight)
+function md2html(t) {
+  return t
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^[-*] (.+)$/gm,'<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>')
+    .replace(/\n\n/g,'</p><p>')
+    || `<p>${t}</p>`;
+}
+
+// ── Actions
+function copyOut() {
+  if (!rawOut) return toast('info','💡','Nothing to copy yet.');
+  navigator.clipboard.writeText(rawOut).then(()=>toast('success','✓','Copied!'));
+}
+function dlOut(ext) {
+  if (!rawOut) return toast('info','💡','Nothing to download yet.');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([rawOut],{type:'text/plain'}));
+  a.download = `savoiré-${action}-${Date.now()}.${ext}`;
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('success','✓',`Downloaded .${ext}`);
+}
+function useAsInput() {
+  if (!rawOut) return;
+  document.getElementById('inputText').value = rawOut;
+  document.getElementById('cc').textContent = rawOut.length.toLocaleString()+' chars';
+  toast('info','↩','Output loaded as input.');
+}
+function clearAll() {
+  document.getElementById('inputText').value = '';
+  document.getElementById('cc').textContent = '0 chars';
+  rawOut = '';
+  const ob = document.getElementById('outBody');
+  ob.classList.add('empty'); ob.style.display='';
+  ob.innerHTML = '<div class="empty-ico">✦</div><div class="empty-txt">Your AI output will appear here</div>';
+  document.getElementById('outFooter').classList.remove('show');
+  document.getElementById('occ').style.display='none';
+  rmFile();
+}
+
+// ── History
+function addHist(inp, out, act) {
+  hist.unshift({ id:Date.now(), act, preview:inp.slice(0,58)+(inp.length>58?'…':''), out, date:new Date().toLocaleTimeString() });
+  hist = hist.slice(0,20);
+  localStorage.setItem('sv_hist', JSON.stringify(hist));
+  renderHist();
+}
+function renderHist() {
+  const el = document.getElementById('histList');
+  if (!hist.length) { el.innerHTML='<div style="font-size:.79rem;color:var(--muted);padding:5px 8px;">No history yet.</div>'; return; }
+  el.innerHTML = hist.map(h=>`
+    <div class="hi" onclick="loadHist(${h.id})">
+      <div class="hi-title">${esc(h.preview)}</div>
+      <div class="hi-meta">${h.act} · ${h.date}</div>
+    </div>`).join('');
+}
+function loadHist(id) {
+  const h = hist.find(x=>x.id===id); if(!h) return;
+  rawOut = h.out; showOut(rawOut); toast('info','🕑','Loaded from history.');
+}
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Templates
+const TPLS = {
+  study:      { a:'generate', t:'[Enter your topic here]\n\nGenerate comprehensive study notes with key concepts, definitions, and examples.', fmt:'notes', style:'academic' },
+  summary:    { a:'shorten',  t:'[Paste your article or text here to summarise it]', fmt:'summary', style:'simple' },
+  flashcards: { a:'generate', t:'[Enter your topic here]\n\nCreate concise flashcards with a question on one side and answer on the other.', fmt:'flashcards', style:'simple' },
+  essay:      { a:'generate', t:'[Enter your essay topic here]\n\nCreate a detailed essay outline with introduction, arguments, and conclusion.', fmt:'outline', style:'essay' },
+};
+function loadTpl(n) {
+  const t = TPLS[n]; if(!t) return;
+  document.getElementById('inputText').value = t.t;
+  document.getElementById('selFmt').value    = t.fmt;
+  document.getElementById('selStyle').value  = t.style;
+  document.getElementById('cc').textContent  = t.t.length+' chars';
+  pickAction(t.a, document.querySelector(`.ab[data-a="${t.a}"]`));
+  toast('info','📋',`Template: ${n}`);
+}
+
+// ── Modal
+function openModal()  { document.getElementById('upModal').classList.add('open'); }
+function closeModal() { document.getElementById('upModal').classList.remove('open'); }
+document.getElementById('upModal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+// ── Toast
+function toast(type, ico, msg) {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${ico}</span>${esc(msg)}`;
+  document.getElementById('tc').appendChild(t);
+  setTimeout(()=>{ if(t.parentNode) t.parentNode.removeChild(t); }, 4200);
+}
+
+// ── Demo output (no server)
+function demoOut(a, txt) {
+  const tp = esc(txt.slice(0,55));
+  const m = {
+    generate:`# Notes: ${tp}\n\n## Overview\nThis is a demo output. Start **app.js** and set your OpenRouter API key for real AI generation.\n\n## Key Concepts\n- Concept one: the foundational idea\n- Concept two: the practical application\n- Concept three: the broader implications\n\n## Summary\nReal notes will be generated here once the backend is running.\n\n> Add OPENROUTER_API_KEY to your .env file and run \`node app.js\``,
+    extend:`${txt}\n\nFurthermore, this concept extends into several related areas. When examined in depth, the underlying patterns reveal consistent structures that have been documented widely in the literature.\n\n*(Demo mode — start app.js for real AI)*`,
+    shorten:`${txt.split(' ').slice(0, Math.ceil(txt.split(' ').length*0.5)).join(' ')}...\n\n*(Demo mode)*`,
+    rephrase:`Upon reflection, ${txt.toLowerCase().slice(0,120)}. This reformulation preserves the original intent while improving readability.\n\n*(Demo mode)*`,
+    grammar:`${txt}\n\n✓ Grammar reviewed in demo mode. Start app.js for real corrections.`,
+    translate:`[Real translation will appear here once app.js is running with a valid OPENROUTER_API_KEY]\n\n*Demo mode*`,
+  };
+  return m[a] || m.generate;
+}
+
+// ── Init
+loadCredits();
+renderHist();
+</script>
+</body>
+</html>

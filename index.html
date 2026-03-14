@@ -1,266 +1,524 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoiré AI v2.0 - Educational Excellence by Sooban Talha Technologies</title>
-    
-    <!-- SEO Meta Tags -->
-    <meta name="description" content="Savoiré AI v2.0 - Advanced AI-powered study material generator. Create comprehensive, university-quality study notes instantly. Powered by Sooban Talha Technologies.">
-    <meta name="keywords" content="AI study generator, educational AI, study notes, learning platform, Sooban Talha Technologies, Savoiré AI">
-    <meta name="author" content="Sooban Talha Technologies">
-    <meta name="robots" content="index, follow">
-    
-    <!-- Open Graph Tags -->
-    <meta property="og:title" content="Savoiré AI v2.0 - Advanced Study Material Generator">
-    <meta property="og:description" content="Generate comprehensive, AI-powered study materials instantly. Perfect for students, educators, and lifelong learners.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://soobantalhatech.xyz">
-    <meta property="og:image" content="https://soobantalhatech.xyz/og-image.jpg">
-    
-    <!-- Twitter Cards -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Savoiré AI v2.0 - Study Smarter">
-    <meta name="twitter:description" content="AI-powered study materials at your fingertips">
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://soobantalhatech.xyz">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/favicon.png">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="styles/main.css">
-    
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- MathJax for Mathematical Notation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Savoiré AI — Elevate Your Notes with Artificial Intelligence</title>
+  <meta name="description" content="Transform your notes and documents with AI. Extend, shorten, rephrase, translate, and generate comprehensive study notes in seconds." />
+  <meta name="author" content="Sooban Talha Technologies" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23c9a84c'/><text y='24' x='6' font-size='20'>✦</text></svg>" />
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay hidden">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <h2>Generating Your Study Materials</h2>
-            <p>Savoiré AI is creating comprehensive, high-quality content...</p>
-            <div class="loading-tips">
-                <p id="loadingTip"></p>
-            </div>
-            <div class="loading-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <span id="progressText">0%</span>
-            </div>
-        </div>
+  <div class="bg-mesh" aria-hidden="true"></div>
+
+  <!-- ─── HEADER ─── -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="logo" aria-label="Savoiré AI Home">
+        <div class="logo-mark" aria-hidden="true">✦</div>
+        Savoiré AI
+      </a>
+
+      <nav aria-label="Main navigation">
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+          <li><a href="#languages">Languages</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle dark/light theme">🌙</button>
+        <a href="dashboard.html" class="btn btn-ghost btn-sm">Sign In</a>
+        <a href="dashboard.html" class="btn btn-primary btn-sm">Get Started Free</a>
+      </div>
     </div>
+  </header>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo-container">
-                <img src="LOGO.png" alt="Savoiré AI Logo" class="logo">
-                <div class="logo-text">
-                    <h1>Savoiré AI <span class="version">v2.0</span></h1>
-                    <p class="tagline">by Sooban Talha Technologies</p>
-                </div>
-            </div>
-            
-            <div class="header-controls">
-                <div class="education-level-selector">
-                    <label for="educationLevel">Level:</label>
-                    <select id="educationLevel" class="level-select">
-                        <option value="highschool">🏫 High School</option>
-                        <option value="university" selected>🎓 University</option>
-                        <option value="graduate">📚 Graduate</option>
-                        <option value="professional">💼 Professional</option>
-                        <option value="expert">🔬 Expert</option>
-                    </select>
-                </div>
-                
-                <div class="language-selector">
-                    <label for="language">Language:</label>
-                    <select id="language" class="language-select">
-                        <option value="en">🇺🇸 English</option>
-                        <option value="es">🇪🇸 Español</option>
-                        <option value="fr">🇫🇷 Français</option>
-                        <option value="de">🇩🇪 Deutsch</option>
-                        <option value="zh">🇨🇳 中文</option>
-                        <option value="hi">🇮🇳 हिन्दी</option>
-                    </select>
-                </div>
-                
-                <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme">
-                    <i class="fas fa-moon"></i>
-                </button>
-            </div>
-        </header>
+  <main>
+    <!-- ─── HERO ─── -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-badge" role="note">
+        <span aria-hidden="true">✦</span> v3.0 — Now with 50+ languages &amp; file support
+      </div>
 
-        <!-- Hero Section -->
-        <section class="hero">
-            <h2 class="hero-title">Transform Your Learning with AI-Powered Study Materials</h2>
-            <p class="hero-subtitle">Enter any topic and get comprehensive, university-quality study notes instantly</p>
-            
-            <!-- Search Form -->
-            <div class="search-container">
-                <form id="studyForm" class="study-form">
-                    <div class="input-wrapper">
-                        <i class="fas fa-search search-icon"></i>
-                        <input 
-                            type="text" 
-                            id="topicInput" 
-                            class="topic-input" 
-                            placeholder="e.g., Quantum Mechanics, Organic Chemistry, Machine Learning..."
-                            autocomplete="off"
-                            required
-                        >
-                        <button type="submit" id="generateBtn" class="generate-btn">
-                            <span class="btn-text">Generate Study Materials</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </form>
-                
-                <div class="search-examples">
-                    <span>Popular: </span>
-                    <button class="example-topic">Photosynthesis</button>
-                    <button class="example-topic">World War II</button>
-                    <button class="example-topic">Calculus</button>
-                    <button class="example-topic">Python Programming</button>
-                    <button class="example-topic">Economics</button>
-                </div>
-            </div>
-        </section>
+      <h1 id="hero-heading">
+        Enhance your notes with the<br />
+        <em>power of intelligence</em>
+      </h1>
 
-        <!-- Features Section -->
-        <section class="features">
-            <div class="feature-card">
-                <i class="fas fa-brain feature-icon"></i>
-                <h3>AI-Powered</h3>
-                <p>Advanced AI algorithms generate comprehensive, accurate study materials tailored to your level</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-clock feature-icon"></i>
-                <h3>Instant Generation</h3>
-                <p>Get detailed notes, practice questions, and study guides in seconds, not hours</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-graduation-cap feature-icon"></i>
-                <h3>Multiple Levels</h3>
-                <p>Content adapted for high school through expert level with appropriate depth and terminology</p>
-            </div>
-            <div class="feature-card">
-                <i class="fas fa-globe feature-icon"></i>
-                <h3>Multi-Language</h3>
-                <p>Generate study materials in multiple languages for global accessibility</p>
-            </div>
-        </section>
+      <p class="hero-subtitle">
+        Generate, extend, rephrase, translate and perfect your notes using state-of-the-art AI. Free to start, no account required.
+      </p>
 
-        <!-- Results Section -->
-        <section id="resultsSection" class="results-section hidden">
-            <div class="results-header">
-                <h2 class="results-title">Your Study Materials</h2>
-                <div class="results-actions">
-                    <button id="downloadBtn" class="action-btn">
-                        <i class="fas fa-download"></i> Download PDF
-                    </button>
-                    <button id="shareBtn" class="action-btn">
-                        <i class="fas fa-share-alt"></i> Share
-                    </button>
-                    <button id="printBtn" class="action-btn">
-                        <i class="fas fa-print"></i> Print
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Study Score -->
-            <div id="studyScore" class="study-score hidden">
-                <div class="score-circle">
-                    <span id="scoreValue">0</span>
-                </div>
-                <div class="score-details">
-                    <h4>Study Quality Score</h4>
-                    <p>Based on comprehensiveness, accuracy, and educational value</p>
-                </div>
-            </div>
-            
-            <!-- Tabs Navigation -->
-            <div class="tabs-container">
-                <button class="tab-btn active" data-tab="notes">📝 Notes</button>
-                <button class="tab-btn" data-tab="concepts">🎯 Concepts</button>
-                <button class="tab-btn" data-tab="practice">✍️ Practice</button>
-                <button class="tab-btn" data-tab="memory">🧠 Memory</button>
-                <button class="tab-btn" data-tab="applications">💡 Applications</button>
-                <button class="tab-btn" data-tab="guide">📚 Study Guide</button>
-            </div>
-            
-            <!-- Tab Content -->
-            <div class="tab-content-container">
-                <!-- Notes Tab -->
-                <div id="notesTab" class="tab-content active">
-                    <div class="content-card">
-                        <h3 class="content-title">Executive Summary</h3>
-                        <div id="executiveSummary" class="markdown-content"></div>
-                    </div>
-                    <div class="content-card">
-                        <h3 class="content-title">Comprehensive Notes</h3>
-                        <div id="comprehensiveNotes" class="markdown-content"></div>
-                    </div>
-                </div>
-                
-                <!-- Concepts Tab -->
-                <div id="conceptsTab" class="tab-content">
-                    <div id="keyConcepts" class="concepts-grid"></div>
-                </div>
-                
-                <!-- Practice Tab -->
-                <div id="practiceTab" class="tab-content">
-                    <div id="practiceQuestions" class="practice-container"></div>
-                </div>
-                
-                <!-- Memory Tab -->
-                <div id="memoryTab" class="tab-content">
-                    <div id="memoryTechniques" class="memory-grid"></div>
-                </div>
-                
-                <!-- Applications Tab -->
-                <div id="applicationsTab" class="tab-content">
-                    <div id="applications" class="applications-grid"></div>
-                </div>
-                
-                <!-- Study Guide Tab -->
-                <div id="guideTab" class="tab-content">
-                    <div id="studyGuide" class="study-guide"></div>
-                </div>
-            </div>
-            
-            <!-- Footer -->
-            <footer class="results-footer">
-                <div class="metadata">
-                    <span id="generatedAt"></span>
-                    <span id="modelUsed"></span>
-                </div>
-                <div class="powered-by">
-                    Powered by <a href="https://soobantalhatech.xyz" target="_blank">Sooban Talha Technologies</a>
-                </div>
-            </footer>
-        </section>
+      <div class="hero-cta">
+        <a href="dashboard.html" class="btn btn-primary btn-lg pulse">
+          Start Creating Notes
+        </a>
+        <a href="#features" class="btn btn-ghost btn-lg">
+          See All Features
+        </a>
+      </div>
 
-        <!-- Error Toast -->
-        <div id="errorToast" class="error-toast hidden">
-            <i class="fas fa-exclamation-circle"></i>
-            <span id="errorMessage"></span>
-            <button class="close-toast" onclick="this.parentElement.classList.add('hidden')">×</button>
+      <p class="hero-note">No credit card needed &nbsp;·&nbsp; 3 free generations &nbsp;·&nbsp; No sign-up required</p>
+
+      <!-- Mock UI Preview -->
+      <div class="hero-preview" role="img" aria-label="Dashboard preview showing note generation">
+        <div class="hero-preview-bar" aria-hidden="true">
+          <div class="preview-dot"></div>
+          <div class="preview-dot"></div>
+          <div class="preview-dot"></div>
+          <span style="margin-left:10px;font-size:12px;color:var(--text-muted)">dashboard.html — Savoiré AI v3.0</span>
         </div>
-    </div>
+        <div class="hero-preview-content" aria-hidden="true">
+          <div class="preview-pane">
+            <div class="preview-pane-label">✏️ Input</div>
+            <div class="preview-text">Photosynthesis is the process by which plants use sunlight, water, and carbon dioxide to produce oxygen and energy in the form of sugar...</div>
+          </div>
+          <div class="preview-pane">
+            <div class="preview-pane-label">✦ Generated Notes</div>
+            <div class="preview-text generated">
+              <strong>📚 Photosynthesis — Key Concepts</strong><br /><br />
+              <strong>Definition:</strong> The biochemical process by which autotrophs convert light energy into chemical energy.<br /><br />
+              <strong>Equation:</strong> 6CO₂ + 6H₂O + light → C₆H₁₂O₆ + 6O₂<br /><br />
+              <strong>Key Stages:</strong><br />
+              • Light-dependent reactions (thylakoid)<br />
+              • Calvin Cycle / Dark reactions (stroma)<span class="typing-cursor"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- Scripts -->
-    <script src="scripts/app.js"></script>
+    <!-- ─── FEATURES ─── -->
+    <section class="section" id="features" aria-labelledby="features-heading">
+      <div class="section-header">
+        <div class="section-tag">Features</div>
+        <h2 id="features-heading">Everything you need to master your notes</h2>
+        <p>Ten powerful AI tools in one beautiful interface — inspired by the best, built to be better.</p>
+        <div class="divider" aria-hidden="true"></div>
+      </div>
+
+      <div class="features-grid" role="list">
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">✨</div>
+          <h3>Extend</h3>
+          <p>Intelligently expand your writing with relevant detail, examples, and elaboration while maintaining your original voice.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">🔬</div>
+          <h3>Shorten</h3>
+          <p>Strip excess content and distill your text to its essential points without losing any critical information.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">🤖</div>
+          <h3>Rephrase</h3>
+          <p>When something doesn't sound right, let AI rewrite it with improved clarity, flow, and readability.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">📖</div>
+          <h3>Spelling &amp; Grammar</h3>
+          <p>Instantly correct entire paragraphs — punctuation, grammar, sentence structure, all fixed in one click.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">📕</div>
+          <h3>Thesaurus</h3>
+          <p>Upgrade your vocabulary with contextually-aware word replacements that enhance sophistication without losing meaning.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">🌍</div>
+          <h3>Translate</h3>
+          <p>Accurate translation across 50+ languages with better contextual understanding than standard machine translation.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">📢</div>
+          <h3>Tone of Voice</h3>
+          <p>Shift your content between professional, casual, academic, persuasive, or any tone to match your audience perfectly.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">📝</div>
+          <h3>Writing Style</h3>
+          <p>Adapt your text for specific audiences — academic papers, blog posts, executive summaries, and more.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">👏</div>
+          <h3>Combine</h3>
+          <p>Chain multiple AI transformations together in a single operation for complex, multi-step document improvements.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">🎯</div>
+          <h3>Notes Generation</h3>
+          <p>Generate comprehensive, structured study notes from any topic, document, or source material instantly.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">📄</div>
+          <h3>File Upload</h3>
+          <p>Upload PDFs, Word documents, images, and text files — AI extracts and processes content automatically.</p>
+        </article>
+
+        <article class="feature-card" role="listitem">
+          <div class="feature-icon" aria-hidden="true">🃏</div>
+          <h3>Flashcards</h3>
+          <p>Automatically generate Q&amp;A flashcard sets from any content for accelerated revision and memorisation.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- ─── HOW IT WORKS ─── -->
+    <section class="section" id="how-it-works" aria-labelledby="how-heading" style="background:var(--bg-secondary);max-width:none;padding:80px 32px;">
+      <div style="max-width:1200px;margin:0 auto;">
+        <div class="section-header">
+          <div class="section-tag">Process</div>
+          <h2 id="how-heading">Three steps to perfect notes</h2>
+          <p>Simple, fast, and powerful — start generating in under 30 seconds.</p>
+          <div class="divider" aria-hidden="true"></div>
+        </div>
+
+        <div class="steps-grid" role="list">
+          <div class="step-card" role="listitem">
+            <div class="step-num" aria-hidden="true">1</div>
+            <h3>Input Your Content</h3>
+            <p>Type a topic, paste your text, or upload a PDF, Word doc, or image. Any format works.</p>
+          </div>
+          <div class="step-card" role="listitem">
+            <div class="step-num" aria-hidden="true">2</div>
+            <h3>Choose Your Action</h3>
+            <p>Select from 10+ AI actions — generate notes, rephrase, translate, extend, or create flashcards.</p>
+          </div>
+          <div class="step-card" role="listitem">
+            <div class="step-num" aria-hidden="true">3</div>
+            <h3>Download &amp; Share</h3>
+            <p>Export as PDF, DOCX, or TXT. Copy to clipboard or share directly with a link.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── LANGUAGES ─── -->
+    <section class="section" id="languages" aria-labelledby="lang-heading">
+      <div class="section-header">
+        <div class="section-tag">Global Reach</div>
+        <h2 id="lang-heading">50+ languages supported</h2>
+        <p>Translate and generate notes in virtually any language with superior accuracy.</p>
+        <div class="divider" aria-hidden="true"></div>
+      </div>
+
+      <div class="languages-scroll" aria-hidden="true">
+        <div class="languages-track" id="langTrack">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── PRICING ─── -->
+    <section class="section" id="pricing" aria-labelledby="pricing-heading" style="background:var(--bg-secondary);max-width:none;padding:80px 32px;">
+      <div style="max-width:1200px;margin:0 auto;">
+        <div class="section-header">
+          <div class="section-tag">Pricing</div>
+          <h2 id="pricing-heading">Simple, transparent pricing</h2>
+          <p>Start free, upgrade when you need more power.</p>
+          <div class="divider" aria-hidden="true"></div>
+        </div>
+
+        <div class="pricing-grid">
+          <!-- Basic -->
+          <div class="pricing-card">
+            <div class="pricing-name">Basic</div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:0">For casual users trying AI notes</p>
+            <div class="pricing-price">
+              <span class="amount">$0</span>
+              <span class="period">forever</span>
+            </div>
+            <ul class="pricing-features">
+              <li><span class="check">✓</span> 3 AI note generations</li>
+              <li><span class="check">✓</span> 3 AI summaries</li>
+              <li><span class="check">✓</span> 5 AI edits per note</li>
+              <li><span class="check">✓</span> Image upload (OCR)</li>
+              <li><span class="cross">✗</span> <span style="color:var(--text-muted)">PDF &amp; Word upload</span></li>
+              <li><span class="cross">✗</span> <span style="color:var(--text-muted)">Unlimited generations</span></li>
+              <li><span class="cross">✗</span> <span style="color:var(--text-muted)">Priority AI models</span></li>
+            </ul>
+            <a href="dashboard.html" class="btn btn-ghost w-full" style="justify-content:center">Get Started Free</a>
+          </div>
+
+          <!-- Annual (Featured) -->
+          <div class="pricing-card featured" aria-label="Recommended plan">
+            <div class="pricing-badge">Best Value — Save 56%</div>
+            <div class="pricing-name" style="color:var(--gold-light)">Annual</div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:0">For students and power users</p>
+            <div class="pricing-price">
+              <span class="amount">$3.99</span>
+              <span class="period">/month, billed annually</span>
+            </div>
+            <ul class="pricing-features">
+              <li><span class="check">✓</span> Unlimited AI generations</li>
+              <li><span class="check">✓</span> All 10+ AI tools</li>
+              <li><span class="check">✓</span> PDF, Word &amp; image upload</li>
+              <li><span class="check">✓</span> 50+ language translation</li>
+              <li><span class="check">✓</span> Flashcards &amp; outlines</li>
+              <li><span class="check">✓</span> Download PDF / DOCX / TXT</li>
+              <li><span class="check">✓</span> Priority AI models</li>
+            </ul>
+            <a href="dashboard.html" class="btn btn-primary w-full" style="justify-content:center">Start Annual Plan</a>
+          </div>
+
+          <!-- Monthly -->
+          <div class="pricing-card">
+            <div class="pricing-name">Monthly</div>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:0">Flexible, cancel anytime</p>
+            <div class="pricing-price">
+              <span class="amount">$8.99</span>
+              <span class="period">/month</span>
+            </div>
+            <ul class="pricing-features">
+              <li><span class="check">✓</span> Unlimited AI generations</li>
+              <li><span class="check">✓</span> All 10+ AI tools</li>
+              <li><span class="check">✓</span> PDF, Word &amp; image upload</li>
+              <li><span class="check">✓</span> 50+ language translation</li>
+              <li><span class="check">✓</span> Flashcards &amp; outlines</li>
+              <li><span class="check">✓</span> Download PDF / DOCX / TXT</li>
+              <li><span class="check">✓</span> Priority AI models</li>
+            </ul>
+            <a href="dashboard.html" class="btn btn-ghost w-full" style="justify-content:center">Start Monthly Plan</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FAQ ─── -->
+    <section class="section" id="faq" aria-labelledby="faq-heading">
+      <div class="section-header">
+        <div class="section-tag">FAQ</div>
+        <h2 id="faq-heading">Frequently asked questions</h2>
+        <div class="divider" aria-hidden="true"></div>
+      </div>
+
+      <div class="faq-list" role="list">
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            How does Savoiré AI generate notes?
+            <span class="faq-arrow" aria-hidden="true">+</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p>Savoiré AI uses state-of-the-art large language models (including Google Gemini 2.0, DeepSeek, and others) through an intelligent fallback system. You provide text, a topic, or upload a document, and our AI processes it to create structured, comprehensive notes tailored to your chosen format and style.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            Is Savoiré AI really free to use?
+            <span class="faq-arrow" aria-hidden="true">+</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p>Yes! The Basic plan is completely free with no credit card required. You get 3 AI note generations, 3 summaries, and 5 AI edits per day. For unlimited access and advanced features like PDF uploads and priority models, our affordable Annual plan starts at just $3.99/month.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            What file types can I upload?
+            <span class="faq-arrow" aria-hidden="true">+</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p>Free users can upload images (.jpg, .jpeg, .png) which are processed with OCR to extract text. Premium users gain access to PDF (.pdf), Word documents (.docx), PowerPoint (.pptx), and plain text (.txt) uploads, all processed automatically before being sent to the AI.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            How accurate is the translation feature?
+            <span class="faq-arrow" aria-hidden="true">+</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p>Our translation feature uses large language models that understand context, idioms, and nuance far better than traditional translation engines. This results in more natural-sounding translations that preserve the original meaning and tone. We support 50+ languages including Arabic, Chinese, French, German, Hindi, Japanese, Spanish, and many more.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            Is my data private and secure?
+            <span class="faq-arrow" aria-hidden="true">+</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p>We take privacy seriously. Your uploaded documents and generated content are processed in memory and not stored permanently on our servers. We do not use your data to train AI models. API requests are made securely with HTTPS encryption. See our Privacy Policy for full details.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            Can I export my generated notes?
+            <span class="faq-arrow" aria-hidden="true">+</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p>Yes! All generated content can be exported in multiple formats: PDF (formatted and print-ready), DOCX (editable Word document), or plain TXT. You can also copy to clipboard with one click or use the share button to generate a shareable link to your notes.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <button class="faq-question" aria-expanded="false">
+            What AI models does Savoiré AI use?
+            <span class="faq-arrow" aria-hidden="true">+</span>
+          </button>
+          <div class="faq-answer" role="region">
+            <p>We use an intelligent pool of top-tier free AI models through OpenRouter, including Google Gemini 2.0 Flash (primary), DeepSeek Chat v3 (backup), and several others as fallbacks. If one model is unavailable or slow, we automatically switch to the next best option to ensure you always get fast, high-quality results.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── CTA BANNER ─── -->
+    <section style="padding:0 32px 80px;" aria-labelledby="cta-heading">
+      <div style="max-width:800px;margin:0 auto;background:linear-gradient(135deg,var(--bg-elevated) 0%,var(--bg-card) 100%);border:1px solid var(--gold-border);border-radius:var(--radius-xl);padding:60px 48px;text-align:center;box-shadow:var(--shadow-gold);">
+        <div class="section-tag" style="margin-bottom:20px;">Start Today</div>
+        <h2 id="cta-heading" style="margin-bottom:16px;">Ready to elevate your notes?</h2>
+        <p style="max-width:480px;margin:0 auto 32px;">Join thousands of students and professionals who use Savoiré AI to save time and produce better work.</p>
+        <a href="dashboard.html" class="btn btn-primary btn-lg">Open Dashboard — It's Free</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- ─── FOOTER ─── -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html" class="logo" style="margin-bottom:8px;display:inline-flex;">
+            <div class="logo-mark" style="width:28px;height:28px;font-size:14px;">✦</div>
+            Savoiré AI
+          </a>
+          <p>Premium AI-powered notes generator. Enhance, extend, and perfect your documents with cutting-edge artificial intelligence.</p>
+          <p style="margin-top:10px;font-size:12px;color:var(--text-muted);">
+            Built by <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">Sooban Talha Technologies</a>
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Languages</h4>
+          <ul>
+            <li><a href="dashboard.html">English</a></li>
+            <li><a href="dashboard.html">Arabic (عربي)</a></li>
+            <li><a href="dashboard.html">Chinese (中文)</a></li>
+            <li><a href="dashboard.html">50+ More →</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+            <li><a href="#">Cookie Policy</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2025 Savoiré AI · Sooban Talha Technologies · <a href="https://savoireai.vercel.app">savoireai.vercel.app</a></span>
+        <span>Made with ✦ for learners everywhere</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── SCRIPTS ─── -->
+  <script>
+    // ── Theme Toggle ──────────────────────────────────────────────────────────
+    const html = document.documentElement;
+    const themeBtn = document.getElementById('themeToggle');
+    const savedTheme = localStorage.getItem('sv-theme') || 'dark';
+    html.setAttribute('data-theme', savedTheme);
+    themeBtn.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+    themeBtn.addEventListener('click', () => {
+      const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      themeBtn.textContent = next === 'dark' ? '🌙' : '☀️';
+      localStorage.setItem('sv-theme', next);
+    });
+
+    // ── FAQ Accordion ─────────────────────────────────────────────────────────
+    document.querySelectorAll('.faq-question').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.faq-item');
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.faq-item').forEach(i => {
+          i.classList.remove('open');
+          i.querySelector('.faq-question').setAttribute('aria-expanded', 'false');
+        });
+        if (!isOpen) {
+          item.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+
+    // ── Languages Scroll ──────────────────────────────────────────────────────
+    const LANGUAGES = [
+      { flag: '🇬🇧', name: 'English' }, { flag: '🇸🇦', name: 'Arabic' },
+      { flag: '🇨🇳', name: 'Chinese' }, { flag: '🇫🇷', name: 'French' },
+      { flag: '🇩🇪', name: 'German' }, { flag: '🇪🇸', name: 'Spanish' },
+      { flag: '🇯🇵', name: 'Japanese' }, { flag: '🇰🇷', name: 'Korean' },
+      { flag: '🇮🇳', name: 'Hindi' }, { flag: '🇮🇹', name: 'Italian' },
+      { flag: '🇵🇹', name: 'Portuguese' }, { flag: '🇷🇺', name: 'Russian' },
+      { flag: '🇳🇱', name: 'Dutch' }, { flag: '🇹🇷', name: 'Turkish' },
+      { flag: '🇵🇱', name: 'Polish' }, { flag: '🇸🇪', name: 'Swedish' },
+      { flag: '🇳🇴', name: 'Norwegian' }, { flag: '🇩🇰', name: 'Danish' },
+      { flag: '🇫🇮', name: 'Finnish' }, { flag: '🇬🇷', name: 'Greek' },
+      { flag: '🇮🇩', name: 'Indonesian' }, { flag: '🇲🇾', name: 'Malay' },
+      { flag: '🇹🇭', name: 'Thai' }, { flag: '🇻🇳', name: 'Vietnamese' },
+      { flag: '🇵🇭', name: 'Filipino' }, { flag: '🇺🇦', name: 'Ukrainian' },
+      { flag: '🇨🇿', name: 'Czech' }, { flag: '🇷🇴', name: 'Romanian' },
+      { flag: '🇭🇺', name: 'Hungarian' }, { flag: '🇧🇬', name: 'Bulgarian' },
+    ];
+
+    const track = document.getElementById('langTrack');
+    const doubled = [...LANGUAGES, ...LANGUAGES]; // duplicate for seamless loop
+    track.innerHTML = doubled.map(l => `
+      <div class="lang-pill">
+        <span class="lang-flag">${l.flag}</span>
+        <span>${l.name}</span>
+      </div>
+    `).join('');
+
+    // ── Intersection Observer for animations ──────────────────────────────────
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.feature-card, .step-card, .pricing-card').forEach(el => {
+      el.style.animationPlayState = 'paused';
+      observer.observe(el);
+    });
+  </script>
 </body>
 </html>
