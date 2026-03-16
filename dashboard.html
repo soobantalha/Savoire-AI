@@ -1,1536 +1,910 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Savoiré AI — Dashboard</title>
-    <meta name="description" content="160+ free AI tools for notes, summarization, research, and writing. No login. No subscription. Forever free.">
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="/styles/global.css">
-    
-    <!-- PDF Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-    </script>
-    
-    <style>
-        /* Critical dashboard styles to prevent FOUC */
-        .app-wrapper { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        .app-header { height: 64px; flex-shrink: 0; display: flex; align-items: center; gap: var(--s4); padding: 0 var(--s5); background: var(--bg-deep); border-bottom: 1px solid var(--border-1); z-index: 50; }
-        .app-body { flex: 1; display: flex; overflow: hidden; }
-        .sidebar { width: 272px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--bg-deep); border-right: 1px solid var(--border-1); overflow-y: auto; transition: width 0.38s var(--ease); }
-        .sidebar.collapsed { width: 0; overflow: hidden; }
-        .workspace { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .toolbar { flex-shrink: 0; height: 48px; display: flex; align-items: center; gap: var(--s2); padding: 0 var(--s4); background: var(--bg-deep); border-bottom: 1px solid var(--border-1); flex-wrap: wrap; }
-        .panels { flex: 1; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
-        .panel { display: flex; flex-direction: column; overflow: hidden; }
-        .panel + .panel { border-left: 1px solid var(--border-1); }
-        .panel-header { flex-shrink: 0; height: 44px; display: flex; align-items: center; gap: var(--s3); padding: 0 var(--s4); background: var(--bg-raised); border-bottom: 1px solid var(--border-1); }
-        .panel-label { font-family: var(--f-ui); font-size: 0.78rem; font-weight: 500; color: var(--text-2); letter-spacing: 0.04em; text-transform: uppercase; }
-        .input-textarea { flex: 1; width: 100%; background: transparent; border: none; outline: none; resize: none; font-family: var(--f-body); font-size: 1.05rem; line-height: 1.85; color: var(--text-1); padding: var(--s4) var(--s4) var(--s2); caret-color: var(--gold); }
-        .input-textarea::placeholder { color: var(--text-3); }
-        .out-body { flex: 1; overflow-y: auto; padding: var(--s4); }
-        .out-body.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s3); }
-        .empty-ornament { font-family: var(--f-display); font-size: 6rem; color: var(--gold); opacity: 0.2; line-height: 1; }
-        .empty-title { font-family: var(--f-display); font-size: 1.3rem; color: var(--text-2); }
-        .empty-sub { font-family: var(--f-ui); font-size: 0.85rem; color: var(--text-3); text-align: center; max-width: 220px; }
-        .stream-cursor { display: inline-block; width: 2px; height: 1.1em; background: var(--gold); animation: blink 1s step-end infinite; vertical-align: middle; margin-left: 2px; }
-        .out-footer { display: none; flex-shrink: 0; height: 50px; align-items: center; gap: var(--s2); padding: 0 var(--s4); background: var(--bg-raised); border-top: 1px solid var(--border-1); }
-        .out-footer.show { display: flex; }
-        .out-brand { font-family: var(--f-ui); font-size: 0.75rem; color: var(--text-3); margin-right: auto; }
-        .out-meta { display: flex; align-items: center; gap: var(--s4); font-family: var(--f-mono); font-size: 0.72rem; color: var(--text-3); }
-        .shimmer-wrap { display: none; flex-direction: column; gap: var(--s3); padding: var(--s4); }
-        .shimmer-wrap.show { display: flex; }
-        .shimmer-line { height: 14px; border-radius: var(--r-xs); background: linear-gradient(90deg, var(--bg-raised) 25%, var(--bg-hover) 50%, var(--bg-raised) 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite; }
-        .toast-container { position: fixed; bottom: var(--s6); right: var(--s6); display: flex; flex-direction: column; gap: var(--s2); z-index: 9999; }
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 500; display: none; align-items: center; justify-content: center; }
-        .modal-backdrop.open { display: flex; }
-        .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; background: var(--bg-float); border-left: 1px solid var(--border-2); box-shadow: var(--sh-xl); z-index: 400; transform: translateX(100%); transition: transform 0.38s var(--ease); }
-        .drawer.open { transform: none; }
-        .wax-seal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: var(--s4); }
-        [data-theme="light"] .wax-seal-overlay { background: rgba(255,255,255,0.7); }
-        @media (max-width: 900px) { .panels { grid-template-columns: 1fr; } .panel + .panel { border-left: none; border-top: 1px solid var(--border-1); } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Savoiré AI v2.0 — Free AI study companion dashboard.">
+<meta name="theme-color" content="#C9A96E">
+<title>Savoiré AI v2.0 — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── DASHBOARD OVERRIDES & SPECIFIC STYLES ── */
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+.dash-hdr{flex-shrink:0;height:56px;display:flex;align-items:center;gap:12px;
+padding:0 16px;background:var(--bg1);border-bottom:1px solid var(--b2);z-index:100}
+.dh-mark{width:32px;height:32px;border-radius:var(--r2);background:linear-gradient(135deg,var(--gold),var(--gold3));
+display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:1.1rem;font-weight:700;color:#02020A;flex-shrink:0}
+.dh-name{font-family:var(--fd);font-size:.92rem;font-weight:600;color:var(--gold)}
+.dh-ver{font-family:var(--fm);font-size:.6rem;color:var(--t3)}
+.dh-sp{flex:1}
+.dh-greeting{font-family:var(--fb);font-size:.88rem;color:var(--t2);font-style:italic}
+.dh-btn{width:34px;height:34px;border:1px solid var(--b2);border-radius:var(--r2);
+background:var(--bg3);color:var(--t2);display:flex;align-items:center;justify-content:center;
+font-size:.88rem;cursor:pointer;transition:all .2s;position:relative;flex-shrink:0}
+.dh-btn:hover{border-color:var(--goldb);color:var(--gold);background:var(--goldd)}
+.dh-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:99px;
+background:var(--gold);color:#02020A;font-size:.58rem;font-weight:700;
+display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:var(--fm)}
+.dh-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));
+border:2px solid var(--goldb);display:flex;align-items:center;justify-content:center;
+font-family:var(--fd);font-size:.88rem;font-weight:700;color:#02020A;cursor:pointer;flex-shrink:0;transition:box-shadow .2s}
+.dh-av:hover{box-shadow:0 0 0 3px var(--goldg)}
+
+/* ── MAIN LAYOUT ── */
+.dash-body{flex:1;display:flex;overflow:hidden}
+
+/* ── LEFT PANEL (ALL INPUTS) ── */
+.left-panel{width:320px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--b2);
+display:flex;flex-direction:column;overflow:hidden;transition:width .3s var(--ease)}
+.left-panel.collapsed{width:0;overflow:hidden}
+
+/* Left panel header */
+.lp-hdr{flex-shrink:0;padding:14px 14px 10px;border-bottom:1px solid var(--b1)}
+.lp-hdr-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.lp-title{font-family:var(--fu);font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+
+/* Tool selector */
+.tool-selector{display:flex;flex-direction:column;gap:3px;padding:10px 10px 6px}
+.ts-label{font-family:var(--fu);font-size:.65rem;font-weight:600;letter-spacing:.1em;
+text-transform:uppercase;color:var(--t4);padding:0 4px;margin-bottom:4px}
+.ts-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r2);
+border:1px solid transparent;cursor:pointer;font-size:.83rem;color:var(--t2);
+transition:all .2s;font-family:var(--fu);background:none;width:100%;text-align:left}
+.ts-item:hover{background:var(--bg3);color:var(--t1)}
+.ts-item.active{background:var(--goldd);border-color:var(--goldb);color:var(--gold)}
+.ts-item i{font-size:.82rem;width:16px;text-align:center;flex-shrink:0}
+.ts-item-text{flex:1}
+.ts-item-badge{font-family:var(--fm);font-size:.58rem;color:var(--t3)}
+
+/* Input fields area */
+.lp-fields{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+.lp-fields::-webkit-scrollbar{width:4px}
+.lp-fields::-webkit-scrollbar-track{background:transparent}
+.lp-fields::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:99px}
+
+.field-group{display:flex;flex-direction:column;gap:4px}
+.field-lbl{font-family:var(--fu);font-size:.68rem;font-weight:600;color:var(--t3);
+letter-spacing:.06em;text-transform:uppercase;padding:0 2px}
+.field-sel-wrap{position:relative}
+.field-sel-arrow{position:absolute;right:9px;top:50%;transform:translateY(-50%);
+font-size:.6rem;color:var(--t3);pointer-events:none}
+.field-sel{width:100%;appearance:none;-webkit-appearance:none;padding:8px 28px 8px 10px;
+border:1px solid var(--b2);border-radius:var(--r2);background:var(--bg3);
+color:var(--t2);font-size:.82rem;font-family:var(--fu);cursor:pointer;transition:all .2s}
+.field-sel:hover,.field-sel:focus{border-color:var(--goldb);color:var(--t1);outline:none}
+
+/* Main textarea */
+.textarea-group{display:flex;flex-direction:column;gap:4px;flex:1}
+.main-ta{width:100%;min-height:130px;max-height:220px;resize:none;padding:10px 12px;
+border:1.5px solid var(--b2);border-radius:var(--r3);background:var(--bg2);
+color:var(--t1);font-family:var(--fu);font-size:.88rem;line-height:1.6;
+caret-color:var(--gold);transition:border-color .2s,box-shadow .2s;overflow-y:auto}
+.main-ta:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--goldd)}
+.main-ta::placeholder{color:var(--t4)}
+.ta-footer{display:flex;align-items:center;justify-content:space-between;padding:0 2px}
+.ta-count{font-family:var(--fm);font-size:.64rem;color:var(--t4)}
+.ta-count.warn{color:var(--gold)}.ta-count.danger{color:var(--ruby,#EF4444)}
+
+/* File upload */
+.upload-zone{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px dashed var(--b2);
+border-radius:var(--r2);background:var(--bg2);cursor:pointer;transition:all .2s;font-size:.8rem;color:var(--t3)}
+.upload-zone:hover{border-color:var(--goldb);color:var(--gold);background:var(--goldd)}
+.upload-zone i{font-size:.88rem;flex-shrink:0}
+.file-chip{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r2);
+background:var(--bg3);border:1px solid var(--b1);font-size:.78rem;color:var(--t1)}
+.file-chip-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip-rm{cursor:pointer;color:var(--t3);font-size:.8rem;flex-shrink:0;padding:1px 3px}
+.file-chip-rm:hover{color:var(--ruby,#EF4444)}
+
+/* RUN BUTTON */
+.run-btn{width:100%;padding:12px;border:none;border-radius:var(--r3);
+background:var(--gold);color:#02020A;font-family:var(--fu);font-size:.92rem;font-weight:700;
+cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+transition:all .25s var(--ease);flex-shrink:0}
+.run-btn:hover{background:var(--gold3);transform:translateY(-1px);box-shadow:0 6px 24px var(--goldg)}
+.run-btn:active{transform:translateY(0)}
+.run-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.lp-run-wrap{flex-shrink:0;padding:10px}
+
+/* Sidebar history */
+.lp-history{flex-shrink:0;border-top:1px solid var(--b1);padding:10px}
+.lp-hist-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.lp-hist-title{font-family:var(--fu);font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--t4)}
+.lp-hist-all{font-size:.7rem;color:var(--gold);cursor:pointer;font-family:var(--fu)}
+.lp-hist-list{display:flex;flex-direction:column;gap:3px;max-height:120px;overflow-y:auto}
+.lp-hist-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--r2);
+cursor:pointer;transition:all .2s;border:1px solid transparent}
+.lp-hist-item:hover{background:var(--bg3);border-color:var(--b1)}
+.lp-hist-icon{width:22px;height:22px;border-radius:var(--r1);background:var(--bg4);
+display:flex;align-items:center;justify-content:center;font-size:.68rem;color:var(--gold);flex-shrink:0}
+.lp-hist-text{flex:1;font-size:.78rem;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lp-hist-time{font-family:var(--fm);font-size:.6rem;color:var(--t4);flex-shrink:0}
+
+/* ── RIGHT PANEL (OUTPUT) ── */
+.right-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg0);min-width:0}
+
+/* Output toolbar */
+.out-toolbar{flex-shrink:0;height:46px;display:flex;align-items:center;gap:6px;
+padding:0 16px;background:var(--bg1);border-bottom:1px solid var(--b1)}
+.otb-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid var(--b1);
+border-radius:var(--r2);background:transparent;color:var(--t3);font-size:.76rem;
+font-family:var(--fu);cursor:pointer;transition:all .2s;white-space:nowrap}
+.otb-btn:hover{border-color:var(--b2);color:var(--t2);background:var(--bg3)}
+.otb-btn i{font-size:.72rem}
+.otb-sep{width:1px;height:20px;background:var(--b1);margin:0 3px;flex-shrink:0}
+.otb-hint{font-family:var(--fm);font-size:.66rem;color:var(--t4);margin-left:auto}
+kbd{display:inline-block;padding:1px 5px;border:1px solid var(--b2);border-radius:3px;
+background:var(--bg3);font-family:var(--fm);font-size:.64rem;color:var(--t3)}
+
+/* Output area */
+.out-area{flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:20px}
+.out-area::-webkit-scrollbar{width:5px}
+.out-area::-webkit-scrollbar-track{background:transparent}
+.out-area::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:99px}
+
+/* Empty state */
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+text-align:center;padding:40px;gap:16px;min-height:400px}
+.es-mark{font-family:var(--fd);font-size:5rem;font-weight:700;line-height:1;
+background:linear-gradient(135deg,var(--gold),var(--gold3));
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+animation:floatAnim 4s ease-in-out infinite;display:block}
+.es-title{font-family:var(--fd);font-size:1.4rem;font-weight:600;color:var(--t2)}
+.es-sub{font-family:var(--fb);font-size:.95rem;color:var(--t3);line-height:1.7;max-width:340px}
+.es-tips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+.es-tip{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--rf);
+background:var(--bg3);border:1px solid var(--b1);font-size:.76rem;color:var(--t3)}
+.es-tip i{color:var(--gold);font-size:.72rem}
+
+/* Thinking indicator */
+.thinking-wrap{padding:4px 0;animation:fadeUp .3s var(--ease)}
+.thinking-card{display:flex;gap:14px;align-items:flex-start;background:var(--bg3);
+border:1px solid var(--goldb);border-radius:var(--r4);padding:16px 18px}
+.th-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));
+display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:.88rem;
+font-weight:700;color:#02020A;flex-shrink:0;animation:pulseAnim 2s ease-in-out infinite}
+.th-body{flex:1}
+.th-title{font-size:.84rem;color:var(--gold);font-weight:500;margin-bottom:8px}
+.th-dots{display:flex;gap:5px;margin-bottom:10px}
+.th-dots span{width:7px;height:7px;border-radius:50%;background:var(--gold);animation:dotBounce 1.2s ease-in-out infinite}
+.th-dots span:nth-child(2){animation-delay:.2s}.th-dots span:nth-child(3){animation-delay:.4s}
+.th-stages{display:flex;gap:6px;flex-wrap:wrap}
+.ths{display:flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--rf);
+border:1px solid var(--b1);font-size:.7rem;color:var(--t4);transition:all .3s}
+.ths.active{color:var(--gold);border-color:var(--goldb);background:var(--goldd)}
+.ths.done{color:var(--em2,#42C98A);border-color:rgba(66,201,138,.2);background:rgba(66,201,138,.08)}
+.ths i{font-size:.66rem}
+
+/* Result message */
+.result-wrap{animation:fadeUp .4s var(--ease)}
+.result-hdr{background:linear-gradient(135deg,var(--bg3) 0%,rgba(201,169,110,.05) 100%);
+border:1px solid var(--goldb);border-radius:var(--r4);padding:18px 20px;margin-bottom:14px;
+display:flex;gap:14px;align-items:flex-start}
+.rh-left{flex:1}
+.rh-topic{font-family:var(--fd);font-size:1.35rem;font-weight:700;color:var(--t1);margin-bottom:8px;line-height:1.2}
+.rh-meta{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:6px}
+.rh-mi{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:.68rem;color:var(--t3)}
+.rh-mi i{color:var(--gold);font-size:.64rem}
+.rh-powered{font-family:var(--fm);font-size:.64rem;color:var(--t4)}
+.rh-powered strong{color:var(--t3)}
+.rh-score{width:54px;height:54px;border-radius:50%;flex-shrink:0;
+background:conic-gradient(var(--gold) calc(var(--pct)*3.6deg),var(--b1) 0deg);
+display:flex;align-items:center;justify-content:center;position:relative}
+.rh-score::before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--bg3)}
+.rh-score-val{position:relative;font-family:var(--fm);font-size:.72rem;font-weight:700;color:var(--gold)}
+
+/* Study section card */
+.study-sec{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r4);
+overflow:hidden;transition:border-color .2s;animation:studyReveal .45s var(--ease) both}
+.study-sec:hover{border-color:var(--b3)}
+.ss-hdr{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--b1);background:var(--bg3)}
+.ss-title{font-family:var(--fu);font-size:.75rem;font-weight:600;letter-spacing:.1em;
+text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:7px}
+.ss-title i{font-size:.72rem}
+.ss-body{padding:16px}
+
+/* Markdown content */
+.md-content{font-family:var(--fb);font-size:1rem;line-height:1.82;color:var(--t1)}
+.md-content h1{font-family:var(--fd);font-size:1.65rem;font-weight:600;color:var(--t1);margin:1.1em 0 .45em;line-height:1.12}
+.md-content h2{font-family:var(--fd);font-size:1.28rem;font-weight:500;color:var(--t1);margin:1em 0 .4em;border-bottom:1px solid var(--b1);padding-bottom:.3em}
+.md-content h3{font-family:var(--fu);font-size:.98rem;font-weight:600;color:var(--gold);margin:.9em 0 .35em}
+.md-content h4{font-family:var(--fu);font-size:.88rem;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin:.85em 0 .3em}
+.md-content p{margin-bottom:.82em}
+.md-content ul,.md-content ol{margin:.4em 0 .82em 1.4em}
+.md-content li{margin-bottom:.28em}
+.md-content strong{color:var(--t1);font-weight:600}
+.md-content em{color:var(--gold3,#EDD4A8);font-style:italic}
+.md-content code{font-family:var(--fm);font-size:.84em;background:var(--bg4);padding:2px 6px;border-radius:3px;color:var(--gold2,#DFC08A)}
+.md-content pre{background:var(--bg1);border:1px solid var(--b2);border-radius:var(--r3);padding:14px;margin:12px 0;overflow-x:auto}
+.md-content pre code{background:none;padding:0;color:var(--t1)}
+.md-content blockquote{border-left:3px solid var(--gold);padding-left:14px;margin:12px 0;color:var(--t2);font-style:italic}
+.md-content table{width:100%;border-collapse:collapse;margin:12px 0;font-family:var(--fu);font-size:.86rem}
+.md-content th{background:var(--goldd);color:var(--gold);font-weight:600;padding:8px 12px;text-align:left;border:1px solid var(--goldb)}
+.md-content td{padding:8px 12px;border:1px solid var(--b1);color:var(--t2)}
+.md-content tr:nth-child(even) td{background:var(--bg3)}
+.md-content hr{border:none;border-top:1px solid var(--b2);margin:16px 0}
+
+/* Concepts grid */
+.concepts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:11px}
+.concept-card{background:var(--bg3);border:1px solid var(--b2);border-radius:var(--r3);
+padding:14px;position:relative;overflow:hidden;transition:all .2s}
+.concept-card:hover{border-color:var(--goldb);transform:translateY(-2px)}
+.concept-num{font-family:var(--fd);font-size:3rem;font-weight:900;color:var(--gold);
+opacity:.12;position:absolute;top:-6px;right:6px;line-height:1;pointer-events:none}
+.concept-text{font-family:var(--fb);font-size:.93rem;color:var(--t1);line-height:1.62;position:relative;z-index:1}
+
+/* Tricks */
+.tricks-list{display:flex;flex-direction:column;gap:10px}
+.trick-item{display:flex;align-items:flex-start;gap:12px;background:var(--bg3);
+border:1px solid var(--b2);border-left:3px solid var(--gold);border-radius:var(--r3);padding:13px;transition:all .2s}
+.trick-item:hover{border-color:var(--goldb);transform:translateX(3px)}
+.trick-icon{width:28px;height:28px;border-radius:50%;background:var(--goldd);border:1px solid var(--goldb);
+display:flex;align-items:center;justify-content:center;font-size:.82rem;color:var(--gold);flex-shrink:0}
+.trick-text{font-family:var(--fb);font-size:.93rem;color:var(--t1);line-height:1.65}
+
+/* Q&A */
+.qa-list{display:flex;flex-direction:column;gap:12px}
+.qa-card{background:var(--bg3);border:1px solid var(--b2);border-radius:var(--r3);overflow:hidden;transition:border-color .2s}
+.qa-card:hover{border-color:var(--b3)}
+.qa-head{display:flex;align-items:flex-start;gap:11px;padding:13px;cursor:pointer;user-select:none}
+.qa-num{width:26px;height:26px;border-radius:50%;background:var(--goldd);border:1px solid var(--goldb);
+display:flex;align-items:center;justify-content:center;font-family:var(--fd);
+font-size:.82rem;font-weight:700;color:var(--gold);flex-shrink:0}
+.qa-q{flex:1;font-family:var(--fb);font-size:.97rem;font-weight:500;color:var(--t1);line-height:1.52}
+.qa-toggle{display:flex;align-items:center;gap:4px;padding:4px 11px;border:1px solid var(--goldb);
+border-radius:var(--rf);background:var(--goldd);color:var(--gold);font-size:.7rem;
+font-family:var(--fu);font-weight:500;flex-shrink:0;cursor:pointer;transition:all .15s;white-space:nowrap}
+.qa-toggle:hover{background:var(--goldg)}
+.qa-toggle i{font-size:.65rem;transition:transform .25s}
+.qa-toggle.open i{transform:rotate(180deg)}
+.qa-answer{display:none;padding:0 13px 13px}
+.qa-answer.visible{display:block;animation:fadeUp .2s var(--ease)}
+.qa-answer-inner{background:rgba(66,201,138,.08);border:1px solid rgba(66,201,138,.18);
+border-radius:var(--r2);padding:13px;font-family:var(--fb);font-size:.95rem;color:var(--t1);line-height:1.74}
+.qa-albl{font-family:var(--fu);font-size:.68rem;font-weight:600;letter-spacing:.08em;
+text-transform:uppercase;color:var(--em2,#42C98A);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+
+/* List items */
+.items-list{display:flex;flex-direction:column;gap:10px}
+.list-item{display:flex;align-items:flex-start;gap:11px;background:var(--bg3);
+border:1px solid var(--b2);border-radius:var(--r3);padding:13px;transition:all .2s}
+.list-item.app{border-left:3px solid var(--em,#2D8C62)}.list-item.misc{border-left:3px solid #8B1A1A}
+.list-item:hover{transform:translateX(3px);border-color:var(--b3)}
+.li-ico{font-size:1rem;flex-shrink:0;margin-top:1px}
+.li-text{font-family:var(--fb);font-size:.95rem;color:var(--t1);line-height:1.65}
+
+/* Flashcards */
+.fc-mode{display:flex;flex-direction:column;align-items:center;gap:18px}
+.fc-prog{font-family:var(--fm);font-size:.76rem;color:var(--t3)}
+.fc-prog span{color:var(--gold);font-weight:700}
+.fc-wrap{width:100%;max-width:600px;perspective:1200px;cursor:pointer;user-select:none}
+.flashcard{width:100%;aspect-ratio:16/9;position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.68,-.55,.265,1.55)}
+.flashcard.flipped{transform:rotateY(180deg)}
+.fc-face{position:absolute;inset:0;border-radius:var(--r4);backface-visibility:hidden;
+-webkit-backface-visibility:hidden;display:flex;flex-direction:column;
+align-items:center;justify-content:center;padding:28px;text-align:center}
+.fc-front{background:linear-gradient(135deg,var(--bg3) 0%,rgba(201,169,110,.06) 100%);
+border:2px solid var(--goldb);box-shadow:var(--shg,0 6px 40px rgba(201,169,110,.22))}
+.fc-back{background:linear-gradient(135deg,var(--bg3) 0%,rgba(66,201,138,.07) 100%);
+border:2px solid rgba(66,201,138,.28);transform:rotateY(180deg)}
+.fc-lbl{font-family:var(--fu);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px}
+.fc-front .fc-lbl{color:var(--gold)}.fc-back .fc-lbl{color:var(--em2,#42C98A)}
+.fc-content{font-family:var(--fb);font-size:1.05rem;color:var(--t1);line-height:1.65}
+.fc-hint{position:absolute;bottom:10px;font-family:var(--fu);font-size:.66rem;color:var(--t4)}
+.fc-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.fc-btn{display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:var(--rf);
+border:1px solid var(--b2);background:var(--bg3);color:var(--t2);font-size:.82rem;
+font-family:var(--fu);font-weight:500;cursor:pointer;transition:all .2s}
+.fc-btn:hover{border-color:var(--goldb);color:var(--gold);background:var(--goldd)}
+.fc-btn.primary{background:var(--gold);border-color:var(--gold);color:#02020A}
+.fc-btn.primary:hover{background:var(--gold3)}
+.fc-btn:disabled{opacity:.4;cursor:not-allowed}
+.fc-kb{font-family:var(--fm);font-size:.68rem;color:var(--t4);text-align:center}
+
+/* Quiz */
+.quiz-mode{display:flex;flex-direction:column;gap:16px}
+.quiz-pb-wrap{height:3px;background:var(--b1);border-radius:var(--rf);overflow:hidden}
+.quiz-pb-fill{height:100%;background:var(--gold);border-radius:var(--rf);transition:width .5s var(--ease)}
+.quiz-q-card{background:var(--bg3);border:1px solid var(--b2);border-radius:var(--r4);padding:18px}
+.quiz-q-num{font-family:var(--fm);font-size:.72rem;color:var(--t3);margin-bottom:10px}
+.quiz-q-text{font-family:var(--fb);font-size:1.05rem;color:var(--t1);line-height:1.6;margin-bottom:16px}
+.quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quiz-opt{padding:11px 14px;border:1.5px solid var(--b2);border-radius:var(--r3);
+background:var(--bg2);color:var(--t1);font-family:var(--fb);font-size:.93rem;
+text-align:left;cursor:pointer;display:flex;align-items:flex-start;gap:9px;
+transition:all .2s;line-height:1.5}
+.quiz-opt:hover:not(:disabled){border-color:var(--goldb);background:var(--goldd);color:var(--gold2)}
+.quiz-opt.correct{background:rgba(66,201,138,.1);border-color:rgba(66,201,138,.38);color:var(--em2,#42C98A)}
+.quiz-opt.wrong{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#F87171}
+.quiz-opt:disabled{cursor:not-allowed}
+.qol{width:20px;height:20px;border-radius:50%;background:var(--b1);border:1px solid var(--b2);
+display:flex;align-items:center;justify-content:center;font-family:var(--fm);
+font-size:.68rem;font-weight:700;flex-shrink:0;margin-top:1px}
+.quiz-result{background:linear-gradient(135deg,var(--bg3) 0%,rgba(201,169,110,.06) 100%);
+border:1px solid var(--goldb);border-radius:var(--r4);padding:32px;text-align:center}
+.qr-title{font-family:var(--fd);font-size:1.45rem;color:var(--t1);margin-bottom:12px}
+.qr-score{font-family:var(--fd);font-size:3.2rem;font-weight:700;color:var(--gold);line-height:1;margin-bottom:8px}
+.qr-msg{font-family:var(--fb);color:var(--t2);margin-bottom:20px}
+.qr-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* Summary */
+.sum-tldr{background:var(--goldd);border:1px solid var(--goldb);border-radius:var(--r3);padding:16px;margin-bottom:14px}
+.sum-tldr-lbl{font-family:var(--fu);font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+.sum-tldr-text{font-family:var(--fb);font-size:1rem;color:var(--t1);line-height:1.76}
+.sum-points{display:flex;flex-direction:column;gap:8px}
+.sum-pt{display:flex;align-items:baseline;gap:11px;padding:9px 14px;
+background:var(--bg3);border:1px solid var(--b1);border-radius:var(--r2);
+font-family:var(--fb);font-size:.95rem;color:var(--t1);line-height:1.6}
+.spt-num{font-family:var(--fd);font-size:1.2rem;color:var(--gold);font-weight:700;line-height:1;flex-shrink:0}
+
+/* Mind map */
+.mm-root{text-align:center;margin-bottom:20px}
+.mm-root-node{display:inline-block;padding:11px 26px;border-radius:var(--rf);
+background:var(--gold);color:#02020A;font-family:var(--fd);font-size:1rem;font-weight:700;
+box-shadow:var(--shg,0 6px 40px rgba(201,169,110,.22))}
+.mm-branches{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+.mm-branch{background:var(--bg3);border:1px solid var(--b2);border-radius:var(--r3);
+padding:14px;min-width:150px;flex:1;max-width:220px;transition:all .2s}
+.mm-branch:hover{border-color:var(--goldb);transform:translateY(-2px)}
+.mm-branch-title{font-family:var(--fu);font-size:.78rem;font-weight:600;color:var(--gold);
+margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:6px}
+.mm-items{display:flex;flex-direction:column;gap:5px}
+.mm-item{font-family:var(--fb);font-size:.85rem;color:var(--t2);padding:2px 6px;
+border-radius:2px;display:flex;align-items:baseline;gap:6px}
+.mm-item::before{content:'·';color:var(--gold)}
+
+/* Export controls */
+.export-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+padding:12px 16px;background:var(--bg2);border-top:1px solid var(--b1)}
+.exp-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r3);
+border:1px solid var(--b2);background:var(--bg3);color:var(--t2);font-family:var(--fu);
+font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s}
+.exp-btn:hover{transform:translateY(-1px)}
+.exp-btn i{font-size:.74rem}
+.exp-btn.pdf:hover{border-color:rgba(239,68,68,.35);color:#F87171;background:rgba(239,68,68,.08)}
+.exp-btn.copy:hover{border-color:var(--goldb);color:var(--gold);background:var(--goldd)}
+.exp-btn.save:hover{border-color:var(--goldb);color:var(--gold);background:var(--goldd)}
+.exp-btn.share:hover{border-color:rgba(96,165,250,.3);color:#60a5fa;background:rgba(96,165,250,.07)}
+.exp-brand{margin-left:auto;font-family:var(--fm);font-size:.64rem;color:var(--t4)}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.78);
+backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .2s ease}
+.modal{background:var(--bg4);border:1px solid var(--b2);border-radius:20px;
+box-shadow:0 40px 100px rgba(0,0,0,.7);max-width:580px;width:100%;max-height:88vh;
+display:flex;flex-direction:column;overflow:hidden;animation:scaleIn .25s var(--ease)}
+.modal.modal-lg{max-width:720px}.modal.modal-sm{max-width:440px}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;
+padding:18px 22px;border-bottom:1px solid var(--b1);flex-shrink:0}
+.modal-hdr-left{display:flex;align-items:center;gap:10px}
+.modal-hdr-icon{color:var(--gold);font-size:.9rem}
+.modal-title{font-family:var(--fd);font-size:1.25rem;font-weight:500;color:var(--t1)}
+.modal-close{width:30px;height:30px;border-radius:var(--r2);border:1px solid var(--b1);
+background:transparent;color:var(--t3);display:flex;align-items:center;justify-content:center;
+font-size:.8rem;cursor:pointer;transition:all .15s}
+.modal-close:hover{border-color:rgba(239,68,68,.35);color:#F87171;background:rgba(239,68,68,.08)}
+.modal-body{flex:1;overflow-y:auto;padding:18px 22px}
+.modal-ftr{display:flex;align-items:center;justify-content:flex-end;gap:10px;
+padding:14px 22px;border-top:1px solid var(--b1);flex-shrink:0}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:var(--rf);
+font-family:var(--fu);font-size:.875rem;font-weight:500;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:var(--gold);color:#02020A}.btn-primary:hover{background:var(--gold3);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--b2)}.btn-ghost:hover{border-color:var(--b3);color:var(--t1)}
+.btn-danger{background:#8B1A1A;color:#fff}.btn-danger:hover{background:#EF4444}
+.btn-sm{padding:6px 13px;font-size:.8rem}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* Toast */
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9000;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:var(--r3);
+background:var(--bg4);border:1px solid var(--b2);box-shadow:0 8px 28px rgba(0,0,0,.6);
+font-family:var(--fu);font-size:.84rem;color:var(--t1);cursor:pointer;
+animation:slideInRight .25s var(--ease);max-width:360px}
+.toast.removing{animation:slideOutRight .25s var(--ease) forwards}
+.toast i{font-size:.9rem;flex-shrink:0}
+.toast.success{border-color:rgba(66,201,138,.35)}.toast.success i{color:var(--em2,#42C98A)}
+.toast.error{border-color:rgba(239,68,68,.35)}.toast.error i{color:#F87171}
+.toast.info{border-color:var(--goldb)}.toast.info i{color:var(--gold)}
+.toast.warning{border-color:rgba(245,158,11,.35)}.toast.warning i{color:#F59E0B}
+
+/* History modal */
+.hist-search-bar{display:flex;align-items:center;gap:10px;padding:9px 13px;border:1px solid var(--b2);
+border-radius:var(--r3);background:var(--bg3);margin-bottom:14px;transition:border-color .2s}
+.hist-search-bar:focus-within{border-color:var(--gold)}
+.hist-search-bar i{color:var(--t3);flex-shrink:0}
+.hist-search-input{flex:1;border:none;background:none;color:var(--t1);font-size:.88rem;outline:none}
+.hist-search-input::placeholder{color:var(--t4)}
+.hist-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.hf{padding:5px 13px;border-radius:var(--rf);border:1px solid var(--b2);background:transparent;
+color:var(--t3);font-size:.76rem;font-family:var(--fu);cursor:pointer;transition:all .15s}
+.hf:hover{border-color:var(--b3);color:var(--t2)}.hf.active{border-color:var(--goldb);background:var(--goldd);color:var(--gold)}
+.hist-list{display:flex;flex-direction:column;gap:6px}
+.hist-item{display:flex;align-items:center;gap:11px;padding:11px 13px;
+border:1px solid var(--b1);border-radius:var(--r3);background:var(--bg3);cursor:pointer;transition:all .2s}
+.hist-item:hover{border-color:var(--goldb);background:var(--goldd)}
+.hist-tool-av{width:30px;height:30px;border-radius:var(--r2);background:var(--bg5);
+border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:.76rem;color:var(--gold);flex-shrink:0}
+.hist-info{flex:1;min-width:0}
+.hist-topic{font-size:.86rem;font-weight:500;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-meta{display:flex;gap:8px;align-items:center;margin-top:2px}
+.hist-tag{padding:2px 8px;border-radius:var(--rf);background:var(--goldd);border:1px solid var(--goldb);color:var(--gold);font-size:.65rem;font-family:var(--fu)}
+.hist-time{font-family:var(--fm);font-size:.64rem;color:var(--t4)}
+.hist-acts{display:flex;flex-shrink:0}
+.hist-del{width:26px;height:26px;border-radius:var(--r2);border:none;background:transparent;
+color:var(--t4);display:flex;align-items:center;justify-content:center;font-size:.72rem;cursor:pointer;transition:all .15s}
+.hist-del:hover{color:#F87171;background:rgba(239,68,68,.08)}
+.modal-empty{display:flex;flex-direction:column;align-items:center;padding:36px 20px;text-align:center;gap:12px;color:var(--t3)}
+.modal-empty i{font-size:2.2rem;color:var(--t4)}
+.modal-empty p{font-family:var(--fb);font-size:.95rem}
+
+/* Settings */
+.settings-sec{padding:16px 0;border-bottom:1px solid var(--b1)}
+.settings-sec:last-child{border-bottom:none}
+.settings-sec-title{font-family:var(--fu);font-size:.72rem;font-weight:600;letter-spacing:.1em;
+text-transform:uppercase;color:var(--gold);display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.settings-row:last-child{margin-bottom:0}
+.settings-lbl{font-family:var(--fu);font-size:.86rem;color:var(--t2);font-weight:500}
+.settings-input-row{display:flex;gap:7px;flex:1;justify-content:flex-end;max-width:280px}
+.settings-input{flex:1;padding:7px 11px;border:1px solid var(--b2);border-radius:var(--r2);
+background:var(--bg3);color:var(--t1);font-size:.88rem;transition:border-color .2s}
+.settings-input:focus{outline:none;border-color:var(--gold)}
+.toggle-row{display:flex;gap:6px}
+.toggle-btn{padding:6px 14px;border-radius:var(--rf);border:1px solid var(--b2);
+background:transparent;color:var(--t2);font-size:.8rem;font-family:var(--fu);cursor:pointer;transition:all .2s}
+.toggle-btn:hover{border-color:var(--b3);color:var(--t1)}
+.toggle-btn.active{border-color:var(--goldb);background:var(--goldd);color:var(--gold)}
+.settings-btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.ds-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.ds-stat{background:var(--bg3);border:1px solid var(--b1);border-radius:var(--r3);padding:10px;text-align:center}
+.ds-val{font-family:var(--fm);font-size:1.2rem;font-weight:700;color:var(--gold)}
+.ds-lbl{font-size:.68rem;color:var(--t3);margin-top:2px}
+.about-card{text-align:center;padding:16px 0}
+.about-mark{width:56px;height:56px;border-radius:var(--r3);background:linear-gradient(135deg,var(--gold),var(--gold3));
+margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+font-family:var(--fd);font-size:1.7rem;font-weight:700;color:#02020A}
+.about-name{font-family:var(--fd);font-size:1.2rem;font-weight:600;color:var(--t1);margin-bottom:3px}
+.about-tagline{font-family:var(--fb);font-style:italic;color:var(--gold);margin-bottom:12px}
+.about-desc{font-family:var(--fb);color:var(--t2);line-height:1.7;margin-bottom:14px;font-size:.95rem}
+.about-quote-card{background:var(--bg3);border:1px solid var(--goldb);border-radius:var(--r3);padding:16px;margin-bottom:12px;text-align:left}
+.about-qico{color:var(--gold);font-size:1.1rem;display:block;margin-bottom:8px}
+.about-quote{font-family:var(--fb);font-style:italic;color:var(--t1);line-height:1.72;margin-bottom:8px;font-size:.95rem}
+.about-cite{font-family:var(--fm);font-size:.72rem;color:var(--gold);display:block}
+.about-link{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;border-radius:var(--rf);
+border:1px solid var(--goldb);background:var(--goldd);color:var(--gold);font-size:.82rem;transition:all .2s}
+.about-link:hover{background:var(--goldg,rgba(201,169,110,.18));text-decoration:none}
+
+/* Confirm */
+.confirm-msg{font-family:var(--fb);color:var(--t2);line-height:1.7;font-size:.95rem}
+
+/* Avatar dropdown */
+.av-dropdown{display:none;position:absolute;top:calc(100%+8px);right:0;
+min-width:210px;background:var(--bg4);border:1px solid var(--b2);
+border-radius:var(--r4);box-shadow:0 20px 60px rgba(0,0,0,.6);z-index:600;overflow:hidden}
+.av-dropdown.open{display:block;animation:fadeDown .18s var(--ease)}
+.av-user{display:flex;align-items:center;gap:10px;padding:13px;border-bottom:1px solid var(--b1)}
+.av-u-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));
+color:#02020A;display:flex;align-items:center;justify-content:center;font-family:var(--fd);
+font-size:.9rem;font-weight:700;flex-shrink:0}
+.av-u-name{font-weight:600;font-size:.88rem}.av-u-sub{font-size:.7rem;color:var(--gold);font-family:var(--fm)}
+.av-div{height:1px;background:var(--b1);margin:4px 0}
+.av-item{width:100%;display:flex;align-items:center;gap:10px;padding:9px 13px;
+background:none;border:none;color:var(--t2);font-size:.84rem;text-align:left;cursor:pointer;transition:all .15s}
+.av-item:hover{background:var(--bg5);color:var(--t1)}
+.av-item i{width:14px;text-align:center;color:var(--t3);font-size:.82rem}
+.av-danger:hover{color:#F87171}
+.av-danger i{color:#F87171}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes slideInRight{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+@keyframes slideOutRight{from{opacity:1;transform:none}to{opacity:0;transform:translateX(20px)}}
+@keyframes floatAnim{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes pulseAnim{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.65;transform:scale(1.08)}}
+@keyframes dotBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes studyReveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.study-sec:nth-child(1){animation-delay:.04s}.study-sec:nth-child(2){animation-delay:.09s}
+.study-sec:nth-child(3){animation-delay:.14s}.study-sec:nth-child(4){animation-delay:.19s}
+.study-sec:nth-child(5){animation-delay:.24s}.study-sec:nth-child(6){animation-delay:.29s}
+
+/* Responsive */
+@media(max-width:768px){
+  html,body{height:auto;overflow:auto}
+  .dash-body{flex-direction:column}
+  .left-panel{width:100%;height:auto;border-right:none;border-bottom:1px solid var(--b2)}
+  .right-panel{min-height:60vh}
+  .main-ta{min-height:80px}
+  .out-area{padding:16px}
+  .quiz-opts{grid-template-columns:1fr}
+  .mm-branches{flex-direction:column;align-items:center}
+  .mm-branch{max-width:100%;width:100%}
+  .exp-brand{display:none}
+  .dh-greeting{display:none}
+}
+@media(max-width:480px){
+  .run-btn span{font-size:.85rem}
+  .otb-btn span{display:none}
+  .otb-hint{display:none}
+  .dash-hdr{padding:0 10px;gap:8px}
+  .left-panel{width:100%}
+}
+</style>
 </head>
 <body>
-    <div class="app-wrapper">
-        <!-- Header -->
-        <header class="app-header">
-            <button id="sidebarToggle" class="btn-icon" aria-label="Toggle sidebar">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-                    <path d="M3 5H17M3 10H17M3 15H17" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </button>
-            
-            <a href="/" class="nav-logo" style="margin-right: var(--s3)">
-                <svg width="32" height="32" viewBox="0 0 100 100" fill="none" class="nav-logo-mark">
-                    <path d="M50 10L90 30V70L50 90L10 70V30L50 10Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M50 30L70 40V60L50 70L30 60V40L50 30Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                    <text x="50" y="68" text-anchor="middle" fill="currentColor" font-family="Playfair Display" font-size="36" font-weight="700">Ś</text>
-                </svg>
-                <span class="nav-logo-text" style="font-size: 1.2rem">Savoiré</span>
-            </a>
-            
-            <div class="breadcrumb" id="breadcrumb">
-                Library → <span id="currentToolName">Dashboard</span>
-            </div>
-            
-            <div class="nav-spacer"></div>
-            
-            <!-- Global Search -->
-            <div class="global-search">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-                    <circle cx="7" cy="7" r="5" stroke-width="1.5"/>
-                    <path d="M11 11L15 15" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-                <input type="text" id="globalSearch" placeholder="Search notes... (Ctrl+K)" spellcheck="false">
-                <span class="search-shortcut">⌘K</span>
-            </div>
-            
-            <div class="nav-right">
-                <div class="word-count" id="headerWordCount">0 words</div>
-                
-                <button id="themeToggle" class="btn-icon" aria-label="Toggle theme">
-                    <svg class="theme-sun" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-                        <circle cx="10" cy="10" r="4" stroke-width="1.5"/>
-                        <path d="M10 2V4M10 16V18M2 10H4M16 10H18M4.5 4.5L6 6M14 14L15.5 15.5M15.5 4.5L14 6M6 14L4.5 15.5" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    <svg class="theme-moon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" style="display:none">
-                        <path d="M15 10C15 12.7614 12.7614 15 10 15C7.23858 15 5 12.7614 5 10C5 7.23858 7.23858 5 10 5C10.5 5 11 5.1 11.5 5.3C10.5 6.5 10 8 10 9.5C10 11 10.5 12.5 11.5 13.7C11 13.9 10.5 14 10 14C8.5 14 7.5 13 7.5 11.5C7.5 10 8.5 9 10 9C11 9 11.5 8.5 11.5 7.5C11.5 6.5 11 5.5 10 5" stroke-width="1.5"/>
-                    </svg>
-                </button>
-                
-                <div class="user-menu" id="userMenu">
-                    <div class="user-avatar" id="userAvatar"></div>
-                    <span class="user-name" id="userNameDisplay"></span>
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor">
-                        <path d="M2 4L6 8L10 4" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    
-                    <div class="user-dropdown" id="userDropdown">
-                        <a href="#" class="dropdown-item" data-action="library">📚 My Library</a>
-                        <a href="#" class="dropdown-item" data-action="history">🕑 History</a>
-                        <a href="#" class="dropdown-item" data-action="settings">⚙️ Settings</a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item text-error" data-action="clear-data">🗑️ Clear All Data</a>
-                    </div>
-                </div>
-            </div>
-        </header>
-        
-        <div class="app-body">
-            <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
-                <button class="btn btn-primary sb-new-btn" id="newDocumentBtn">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-                        <path d="M8 3V13M3 8H13" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    New Document
-                </button>
-                
-                <div class="sb-section">
-                    <div class="sb-label">TOOLS</div>
-                    
-                    <!-- Category 1: Note Generation -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="notes">
-                            <span class="sb-cat-name">📝 Note Generation</span>
-                            <span class="sb-cat-count">25</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-notes">
-                            <div class="sb-tool" data-tool="generate-notes">Generate Notes</div>
-                            <div class="sb-tool" data-tool="lecture-notes">Lecture Notes</div>
-                            <div class="sb-tool" data-tool="meeting-notes">Meeting Notes</div>
-                            <div class="sb-tool" data-tool="article-notes">Article to Notes</div>
-                            <div class="sb-tool" data-tool="pdf-notes">PDF to Notes</div>
-                            <div class="sb-tool" data-tool="outline-generator">Outline Generator</div>
-                            <div class="sb-tool" data-tool="bullet-notes">Bullet Notes</div>
-                            <div class="sb-tool" data-tool="key-points">Key Point Extraction</div>
-                            <div class="sb-tool" data-tool="research-notes">Research Notes</div>
-                            <div class="sb-tool" data-tool="image-notes">Image to Notes</div>
-                            <div class="sb-tool" data-tool="code-notes">Code Explanation Notes</div>
-                            <div class="sb-tool" data-tool="legal-notes">Legal Document Notes</div>
-                            <div class="sb-tool" data-tool="medical-notes">Medical Record Notes</div>
-                            <div class="sb-tool" data-tool="study-guide">Study Guide Generator</div>
-                            <div class="sb-tool" data-tool="concept-notes">AI Concept Notes</div>
-                            <div class="sb-tool" data-tool="flashcards">AI Flashcards</div>
-                            <div class="sb-tool" data-tool="knowledge-cards">AI Knowledge Cards</div>
-                            <div class="sb-tool" data-tool="executive-summary">AI Executive Summary</div>
-                            <div class="sb-tool" data-tool="daily-notes">Daily Notes Generator</div>
-                            <div class="sb-tool" data-tool="mindmap-notes">AI Mindmap Notes</div>
-                            <div class="sb-tool" data-tool="insights">AI Key Insights</div>
-                            <div class="sb-tool" data-tool="topic-notes">Topic-based Notes</div>
-                            <div class="sb-tool" data-tool="quick-notes">Quick Notes</div>
-                            <div class="sb-tool" data-tool="paper-notes">Research Paper Notes</div>
-                            <div class="sb-tool" data-tool="debate-notes">Debate Notes</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 2: Summarization -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="summarization">
-                            <span class="sb-cat-name">📋 Summarization</span>
-                            <span class="sb-cat-count">20</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-summarization">
-                            <div class="sb-tool" data-tool="one-sentence">One-Sentence Summary</div>
-                            <div class="sb-tool" data-tool="three-bullet">3-Bullet Summary</div>
-                            <div class="sb-tool" data-tool="tldr">TL;DR</div>
-                            <div class="sb-tool" data-tool="long-summary">Long Text Summarizer</div>
-                            <div class="sb-tool" data-tool="abstract">Abstract Generator</div>
-                            <div class="sb-tool" data-tool="custom-length">Custom Length Summary</div>
-                            <div class="sb-tool" data-tool="key-ideas">Key Ideas Extractor</div>
-                            <div class="sb-tool" data-tool="quotes">Important Quotes</div>
-                            <div class="sb-tool" data-tool="multi-language">Multi-Language Summary</div>
-                            <div class="sb-tool" data-tool="academic">Academic Summary</div>
-                            <div class="sb-tool" data-tool="legal-summary">Legal Summary</div>
-                            <div class="sb-tool" data-tool="medical-summary">Medical Summary</div>
-                            <div class="sb-tool" data-tool="news-digest">News Digest</div>
-                            <div class="sb-tool" data-tool="timeline">Timeline Summary</div>
-                            <div class="sb-tool" data-tool="comparative">Comparative Summary</div>
-                            <div class="sb-tool" data-tool="debate-summary">Debate Summary</div>
-                            <div class="sb-tool" data-tool="swot-summary">SWOT Summary</div>
-                            <div class="sb-tool" data-tool="chapter">Chapter Summary</div>
-                            <div class="sb-tool" data-tool="argument">Argument Extraction</div>
-                            <div class="sb-tool" data-tool="digest">AI Digest</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 3: Meeting Tools -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="meetings">
-                            <span class="sb-cat-name">🎙️ Meeting Tools</span>
-                            <span class="sb-cat-count">15</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-meetings">
-                            <div class="sb-tool" data-tool="action-items">Action Items Extractor</div>
-                            <div class="sb-tool" data-tool="decisions">Decision Extractor</div>
-                            <div class="sb-tool" data-tool="followup-email">Follow-up Email</div>
-                            <div class="sb-tool" data-tool="highlights">Meeting Highlights</div>
-                            <div class="sb-tool" data-tool="speaker-qa">Speaker Q&A Notes</div>
-                            <div class="sb-tool" data-tool="meeting-timeline">Meeting Timeline</div>
-                            <div class="sb-tool" data-tool="sales-notes">Sales Meeting Notes</div>
-                            <div class="sb-tool" data-tool="client-notes">Client Meeting Notes</div>
-                            <div class="sb-tool" data-tool="team-notes">Team Meeting Notes</div>
-                            <div class="sb-tool" data-tool="strategy-notes">Strategy Session Notes</div>
-                            <div class="sb-tool" data-tool="meeting-agenda">Meeting Agenda</div>
-                            <div class="sb-tool" data-tool="meeting-recap">Meeting Recap</div>
-                            <div class="sb-tool" data-tool="interview-notes">Interview Notes</div>
-                            <div class="sb-tool" data-tool="training-notes">Training Notes</div>
-                            <div class="sb-tool" data-tool="workshop-notes">Workshop Notes</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 4: Text Transformation -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="transform">
-                            <span class="sb-cat-name">✏️ Text Transformation</span>
-                            <span class="sb-cat-count">15</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-transform">
-                            <div class="sb-tool" data-tool="extend">Extend Text</div>
-                            <div class="sb-tool" data-tool="shorten">Shorten Text</div>
-                            <div class="sb-tool" data-tool="rephrase">Rephrase</div>
-                            <div class="sb-tool" data-tool="grammar">Fix Spelling & Grammar</div>
-                            <div class="sb-tool" data-tool="vocabulary">Improve Vocabulary</div>
-                            <div class="sb-tool" data-tool="change-tone">Change Tone</div>
-                            <div class="sb-tool" data-tool="change-style">Change Writing Style</div>
-                            <div class="sb-tool" data-tool="translate">Translate</div>
-                            <div class="sb-tool" data-tool="simplify">Simplify Complex Text</div>
-                            <div class="sb-tool" data-tool="formalize">Formalize</div>
-                            <div class="sb-tool" data-tool="engage">Make More Engaging</div>
-                            <div class="sb-tool" data-tool="remove-redundancy">Remove Redundancy</div>
-                            <div class="sb-tool" data-tool="add-examples">Add Examples</div>
-                            <div class="sb-tool" data-tool="passive-to-active">Passive to Active Voice</div>
-                            <div class="sb-tool" data-tool="clarity">Improve Clarity</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 5: Study & Learning -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="study">
-                            <span class="sb-cat-name">🎓 Study & Learning</span>
-                            <span class="sb-cat-count">15</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-study">
-                            <div class="sb-tool" data-tool="flashcard-gen">Flashcard Generator</div>
-                            <div class="sb-tool" data-tool="mcq">Multiple Choice Quiz</div>
-                            <div class="sb-tool" data-tool="fill-blanks">Fill-in-the-Blank</div>
-                            <div class="sb-tool" data-tool="true-false">True/False Quiz</div>
-                            <div class="sb-tool" data-tool="study-schedule">Study Schedule Creator</div>
-                            <div class="sb-tool" data-tool="exam-notes">Exam Preparation Notes</div>
-                            <div class="sb-tool" data-tool="explain">Concept Explanation</div>
-                            <div class="sb-tool" data-tool="definitions">Definition Extractor</div>
-                            <div class="sb-tool" data-tool="formulas">Formula Extractor</div>
-                            <div class="sb-tool" data-tool="case-study">Case Study Breakdown</div>
-                            <div class="sb-tool" data-tool="comparison-table">Comparison Table</div>
-                            <div class="sb-tool" data-tool="procon">Pro/Con List</div>
-                            <div class="sb-tool" data-tool="timeline-study">Historical Timeline</div>
-                            <div class="sb-tool" data-tool="glossary">Glossary Generator</div>
-                            <div class="sb-tool" data-tool="mindmap-study">Study Mind Map</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 6: Research & Writing -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="research">
-                            <span class="sb-cat-name">🔬 Research & Writing</span>
-                            <span class="sb-cat-count">15</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-research">
-                            <div class="sb-tool" data-tool="research-outline">Research Outline</div>
-                            <div class="sb-tool" data-tool="thesis">Thesis Statement</div>
-                            <div class="sb-tool" data-tool="intro">Introduction Writer</div>
-                            <div class="sb-tool" data-tool="conclusion">Conclusion Writer</div>
-                            <div class="sb-tool" data-tool="essay-planner">Essay Structure Planner</div>
-                            <div class="sb-tool" data-tool="bibliography">Bibliography Formatter</div>
-                            <div class="sb-tool" data-tool="strengthen">Argument Strengthener</div>
-                            <div class="sb-tool" data-tool="counter-arg">Counter-Argument</div>
-                            <div class="sb-tool" data-tool="evidence">Evidence Suggestions</div>
-                            <div class="sb-tool" data-tool="research-questions">Research Questions</div>
-                            <div class="sb-tool" data-tool="hypothesis">Hypothesis Generator</div>
-                            <div class="sb-tool" data-tool="lit-review">Literature Review Notes</div>
-                            <div class="sb-tool" data-tool="abstract-writer">Abstract Writer</div>
-                            <div class="sb-tool" data-tool="report-structure">Report Structure</div>
-                            <div class="sb-tool" data-tool="white-paper">White Paper Outline</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 7: Content Creation -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="content">
-                            <span class="sb-cat-name">✍️ Content Creation</span>
-                            <span class="sb-cat-count">15</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-content">
-                            <div class="sb-tool" data-tool="blog-outline">Blog Post Outline</div>
-                            <div class="sb-tool" data-tool="blog-intro">Blog Introduction</div>
-                            <div class="sb-tool" data-tool="social-caption">Social Media Caption</div>
-                            <div class="sb-tool" data-tool="email-writer">Email Writer</div>
-                            <div class="sb-tool" data-tool="newsletter">Newsletter Section</div>
-                            <div class="sb-tool" data-tool="press-release">Press Release Outline</div>
-                            <div class="sb-tool" data-tool="product-desc">Product Description</div>
-                            <div class="sb-tool" data-tool="ad-copy">Ad Copy Writer</div>
-                            <div class="sb-tool" data-tool="tagline">Tagline Generator</div>
-                            <div class="sb-tool" data-tool="headline">Headline Generator</div>
-                            <div class="sb-tool" data-tool="faq">FAQ Generator</div>
-                            <div class="sb-tool" data-tool="about-page">About Page Content</div>
-                            <div class="sb-tool" data-tool="bio">Bio Writer</div>
-                            <div class="sb-tool" data-tool="cover-letter">Cover Letter Writer</div>
-                            <div class="sb-tool" data-tool="job-desc">Job Description Writer</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 8: Document Tools -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="documents">
-                            <span class="sb-cat-name">📄 Document Tools</span>
-                            <span class="sb-cat-count">15</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-documents">
-                            <div class="sb-tool" data-tool="doc-analyzer">Document Structure Analyzer</div>
-                            <div class="sb-tool" data-tool="toc">Table of Contents</div>
-                            <div class="sb-tool" data-tool="exec-summary">Executive Summary</div>
-                            <div class="sb-tool" data-tool="action-plan">Action Plan Creator</div>
-                            <div class="sb-tool" data-tool="project-brief">Project Brief Writer</div>
-                            <div class="sb-tool" data-tool="sop">SOP Creator</div>
-                            <div class="sb-tool" data-tool="policy-outline">Policy Document Outline</div>
-                            <div class="sb-tool" data-tool="proposal-outline">Proposal Outline</div>
-                            <div class="sb-tool" data-tool="contract-simplify">Contract Clause Simplifier</div>
-                            <div class="sb-tool" data-tool="tos-simplify">Terms of Service Simplifier</div>
-                            <div class="sb-tool" data-tool="privacy-simplify">Privacy Policy Simplifier</div>
-                            <div class="sb-tool" data-tool="meeting-agenda-doc">Meeting Agenda Creator</div>
-                            <div class="sb-tool" data-tool="business-plan">Business Plan Outline</div>
-                            <div class="sb-tool" data-tool="pitch-deck">Pitch Deck Outline</div>
-                            <div class="sb-tool" data-tool="investor-brief">Investor Brief Creator</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 9: AI Rewriting -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="rewriting">
-                            <span class="sb-cat-name">🔄 AI Rewriting</span>
-                            <span class="sb-cat-count">15</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-rewriting">
-                            <div class="sb-tool" data-tool="academic-rewrite">Academic Rewriter</div>
-                            <div class="sb-tool" data-tool="humanize">Humanize AI Text</div>
-                            <div class="sb-tool" data-tool="make-formal">Make Formal</div>
-                            <div class="sb-tool" data-tool="make-casual">Make Casual</div>
-                            <div class="sb-tool" data-tool="paraphrase">Plagiarism Paraphraser</div>
-                            <div class="sb-tool" data-tool="restructure">Sentence Restructurer</div>
-                            <div class="sb-tool" data-tool="condense">Paragraph Condenser</div>
-                            <div class="sb-tool" data-tool="expand">Text Expander</div>
-                            <div class="sb-tool" data-tool="transitions">Add Transitions</div>
-                            <div class="sb-tool" data-tool="clarity-rewrite">Clarity Improver</div>
-                            <div class="sb-tool" data-tool="coherence">Coherence Checker</div>
-                            <div class="sb-tool" data-tool="flow">Flow Improver</div>
-                            <div class="sb-tool" data-tool="emphasis">Emphasis Adder</div>
-                            <div class="sb-tool" data-tool="storytelling">Storytelling Rewriter</div>
-                            <div class="sb-tool" data-tool="tech-to-simple">Technical to Simple</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Category 10: Special AI Tools -->
-                    <div class="sb-category">
-                        <div class="sb-cat-header" data-category="special">
-                            <span class="sb-cat-name">⚡ Special AI Tools</span>
-                            <span class="sb-cat-count">10</span>
-                            <span class="sb-cat-arrow">▼</span>
-                        </div>
-                        <div class="sb-tools" id="cat-special">
-                            <div class="sb-tool" data-tool="swot">SWOT Analysis</div>
-                            <div class="sb-tool" data-tool="risk">Risk Assessment Notes</div>
-                            <div class="sb-tool" data-tool="decision-matrix">Decision Matrix</div>
-                            <div class="sb-tool" data-tool="root-cause">Root Cause Analysis</div>
-                            <div class="sb-tool" data-tool="five-why">5-Why Analysis</div>
-                            <div class="sb-tool" data-tool="problem-solution">Problem-Solution Notes</div>
-                            <div class="sb-tool" data-tool="brainstorming">Brainstorming Ideas</div>
-                            <div class="sb-tool" data-tool="mindmap-special">Mind Map Creator</div>
-                            <div class="sb-tool" data-tool="concept-map">Concept Map Notes</div>
-                            <div class="sb-tool" data-tool="knowledge-base">Knowledge Base Article</div>
-                            <div class="sb-tool" data-tool="lesson-plan">Lesson Plan Creator</div>
-                            <div class="sb-tool" data-tool="training">Training Material Outline</div>
-                            <div class="sb-tool" data-tool="workshop">Workshop Agenda</div>
-                            <div class="sb-tool" data-tool="tutorial">Tutorial Outline</div>
-                            <div class="sb-tool" data-tool="how-to">How-To Guide Creator</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="sb-divider"></div>
-                
-                <!-- Library & History -->
-                <div class="sb-section">
-                    <div class="sb-cat-header" data-action="open-library">
-                        <span class="sb-cat-name">📚 My Library</span>
-                    </div>
-                    <div class="sb-cat-header" data-action="open-history">
-                        <span class="sb-cat-name">🕑 Recent History</span>
-                    </div>
-                    
-                    <!-- Recent items (populated by JS) -->
-                    <div id="recentHistorySidebar" class="recent-list"></div>
-                </div>
-                
-                <div class="sb-divider"></div>
-                
-                <!-- Templates -->
-                <div class="sb-section">
-                    <div class="sb-label">TEMPLATES</div>
-                    <div class="template-item" data-template="study-notes">📘 Study Notes</div>
-                    <div class="template-item" data-template="essay-outline">📝 Essay Outline</div>
-                    <div class="template-item" data-template="meeting-recap">🎙️ Meeting Recap</div>
-                    <div class="template-item" data-template="research-brief">🔬 Research Brief</div>
-                    <div class="template-item" data-template="blog-post">✍️ Blog Post</div>
-                    <div class="template-item" data-template="flashcard-deck">🎴 Flashcard Deck</div>
-                    <div class="template-item" data-template="lecture-notes">📚 Lecture Notes</div>
-                    <div class="template-item" data-template="daily-summary">📅 Daily Summary</div>
-                </div>
-                
-                <div class="sb-spacer"></div>
-                
-                <!-- Bottom of sidebar -->
-                <div class="sb-footer">
-                    <div class="user-info-compact" id="sidebarUser"></div>
-                    <a href="#" class="sb-about-link" id="aboutLink">About Savoiré AI</a>
-                </div>
-            </aside>
-            
-            <!-- Main Workspace -->
-            <main class="workspace">
-                <!-- Toolbar -->
-                <div class="toolbar" id="toolbar">
-                    <button class="action-btn" id="copyBtn" title="Copy to clipboard">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-                            <rect x="3" y="3" width="8" height="8" rx="1" stroke-width="1.2"/>
-                            <path d="M10 2H3C2 2 2 2 2 3V10" stroke-width="1.2"/>
-                        </svg>
-                        Copy
-                    </button>
-                    
-                    <div class="action-btn dropdown-trigger" id="downloadBtn">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-                            <path d="M7 2V9M7 9L4 6M7 9L10 6" stroke-width="1.2" stroke-linecap="round"/>
-                            <path d="M2 11H12" stroke-width="1.2" stroke-linecap="round"/>
-                        </svg>
-                        Download ▾
-                        <div class="dropdown-menu" id="downloadMenu">
-                            <a href="#" class="dropdown-item" data-format="txt">TXT</a>
-                            <a href="#" class="dropdown-item" data-format="md">Markdown</a>
-                            <a href="#" class="dropdown-item" data-format="pdf">PDF</a>
-                            <a href="#" class="dropdown-item" data-format="docx">DOCX</a>
-                        </div>
-                    </div>
-                    
-                    <button class="action-btn" id="printBtn">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-                            <path d="M3 5V3H11V5M3 9H2C1 9 1 9 1 8V6C1 5 1 5 2 5H12C13 5 13 5 13 6V8C13 9 13 9 12 9H11" stroke-width="1.2"/>
-                            <rect x="3" y="8" width="8" height="4" rx="1" stroke-width="1.2"/>
-                        </svg>
-                        Print
-                    </button>
-                    
-                    <button class="action-btn" id="shareBtn">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-                            <circle cx="4" cy="7" r="2" stroke-width="1.2"/>
-                            <circle cx="10" cy="4" r="2" stroke-width="1.2"/>
-                            <circle cx="10" cy="10" r="2" stroke-width="1.2"/>
-                            <path d="M6 6L8 5M6 8L8 9" stroke-width="1.2" stroke-linecap="round"/>
-                        </svg>
-                        Share
-                    </button>
-                    
-                    <div class="toolbar-divider"></div>
-                    
-                    <button class="action-btn" id="clearBtn">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-                            <path d="M2 4H12M4 4V11C4 12 5 12 5 12H9C9 12 10 12 10 11V4" stroke-width="1.2"/>
-                            <path d="M5 2H9" stroke-width="1.2" stroke-linecap="round"/>
-                        </svg>
-                        Clear
-                    </button>
-                    
-                    <button class="action-btn" id="swapBtn">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-                            <path d="M10 4L12 6L10 8" stroke-width="1.2" stroke-linecap="round"/>
-                            <path d="M4 10L2 8L4 6" stroke-width="1.2" stroke-linecap="round"/>
-                            <path d="M2 8H12" stroke-width="1.2" stroke-linecap="round"/>
-                        </svg>
-                        Swap
-                    </button>
-                    
-                    <button class="action-btn" id="useAsInputBtn">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
-                            <path d="M4 7H10M10 7L7 4M10 7L7 10" stroke-width="1.2" stroke-linecap="round"/>
-                        </svg>
-                        Use as Input
-                    </button>
-                    
-                    <div class="toolbar-spacer"></div>
-                    
-                    <div class="shortcut-hint">⌘+Enter</div>
-                </div>
-                
-                <!-- Panels -->
-                <div class="panels">
-                    <!-- Input Panel -->
-                    <div class="panel" id="inputPanel">
-                        <div class="panel-header">
-                            <span class="panel-label">✏️ INPUT</span>
-                            <span class="char-counter" id="charCounter">0 / 20,000</span>
-                            <span class="word-counter" id="wordCounter">0 words</span>
-                        </div>
-                        
-                        <!-- Active tool display -->
-                        <div class="active-tool-bar" id="activeToolBar">
-                            <span id="activeToolName">Select a tool</span>
-                            <span class="tool-description" id="toolDescription"></span>
-                            <a href="#" class="change-tool-link" id="changeToolLink">Change tool ↓</a>
-                        </div>
-                        
-                        <!-- Options strip (dynamic) -->
-                        <div class="opts-strip" id="optionsStrip"></div>
-                        
-                        <!-- Textarea -->
-                        <textarea class="input-textarea" id="inputTextarea" placeholder="Paste or type your content here... (Ctrl+Enter to run)" spellcheck="false"></textarea>
-                        
-                        <!-- File upload zone -->
-                        <div class="drop-zone" id="dropZone">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M12 16V4M12 4L15 7M12 4L9 7" stroke-width="1.5" stroke-linecap="round"/>
-                                <path d="M4 16V18C4 19 5 20 6 20H18C19 20 20 19 20 18V16" stroke-width="1.5"/>
-                            </svg>
-                            <span>Drop file or click to browse</span>
-                            <span class="drop-hint">PDF, DOCX, TXT, Images</span>
-                            <input type="file" id="fileInput" style="display: none" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp">
-                        </div>
-                        
-                        <!-- File card (hidden initially) -->
-                        <div class="file-card" id="fileCard">
-                            <span class="file-card-icon">📄</span>
-                            <span class="file-card-name" id="fileName">filename.pdf</span>
-                            <span class="file-card-size" id="fileSize">0 KB</span>
-                            <button class="file-card-remove" id="removeFileBtn">✕</button>
-                        </div>
-                        
-                        <!-- Action strip -->
-                        <div class="action-strip">
-                            <button class="action-btn quick-tool" data-tool="generate-notes">📝 Generate</button>
-                            <button class="action-btn quick-tool" data-tool="extend">✨ Extend</button>
-                            <button class="action-btn quick-tool" data-tool="shorten">🔬 Shorten</button>
-                            <button class="action-btn quick-tool" data-tool="rephrase">🤖 Rephrase</button>
-                            <button class="action-btn quick-tool" data-tool="grammar">📖 Grammar</button>
-                            <button class="action-btn quick-tool" data-tool="translate">🌍 Translate</button>
-                            
-                            <button class="run-btn" id="runBtn">
-                                <span>▶ RUN — </span>
-                                <span id="runBtnTool">Generate Notes</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Output Panel -->
-                    <div class="panel" id="outputPanel">
-                        <div class="panel-header">
-                            <span class="panel-label">✦ OUTPUT</span>
-                            <span class="word-counter" id="outputWordCounter">0 words</span>
-                            <span class="reading-time" id="readingTime">0 min read</span>
-                            <span class="output-watermark">✦ Savoiré AI</span>
-                        </div>
-                        
-                        <!-- Shimmer loading -->
-                        <div class="shimmer-wrap" id="shimmerWrap">
-                            <div class="shimmer-line" style="width: 80%"></div>
-                            <div class="shimmer-line" style="width: 60%"></div>
-                            <div class="shimmer-line" style="width: 90%"></div>
-                            <div class="shimmer-line" style="width: 70%"></div>
-                            <div class="shimmer-line" style="width: 50%"></div>
-                            <div class="shimmer-line" style="width: 85%"></div>
-                            <div class="shimmer-text" id="shimmerText">Savoiré AI is crafting your notes...</div>
-                        </div>
-                        
-                        <!-- Output body -->
-                        <div class="out-body empty" id="outputBody">
-                            <div class="empty-ornament">✦</div>
-                            <div class="empty-title">Your masterpiece awaits</div>
-                            <div class="empty-sub">Select a tool and press Run — or use Ctrl+Enter</div>
-                        </div>
-                        
-                        <!-- Output footer -->
-                        <div class="out-footer" id="outputFooter">
-                            <div class="out-brand">✦ Created by Savoiré AI</div>
-                            <div class="out-meta">
-                                <span id="processingTime">0.0s</span>
-                            </div>
-                            <div class="out-actions">
-                                <button class="action-btn small" id="copyOutputBtn">Copy</button>
-                                <button class="action-btn small" id="pdfOutputBtn">PDF</button>
-                                <button class="action-btn small" id="mdOutputBtn">MD</button>
-                                <button class="action-btn small" id="saveLibraryBtn">Save</button>
-                                <button class="action-btn small" id="regenerateBtn">↺</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
-    </div>
-    
-    <!-- Modals & Drawers -->
-    
-    <!-- Library Modal -->
-    <div class="modal-backdrop" id="libraryModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">📚 My Library</h2>
-                <button class="modal-close" id="closeLibraryModal">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="library-search">
-                    <input type="text" id="librarySearch" placeholder="Search notes...">
-                </div>
-                <div class="library-tabs">
-                    <button class="library-tab active" data-filter="all">All</button>
-                    <button class="library-tab" data-filter="starred">Starred</button>
-                    <button class="library-tab" data-filter="recent">Recent</button>
-                </div>
-                <div class="library-grid" id="libraryGrid"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" id="selectAllLib">Select All</button>
-                <button class="btn btn-danger" id="deleteSelectedLib">Delete Selected</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- History Modal -->
-    <div class="modal-backdrop" id="historyModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">🕑 History</h2>
-                <button class="modal-close" id="closeHistoryModal">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="history-list" id="historyList"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" id="clearHistoryBtn">Clear History</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Settings Modal -->
-    <div class="modal-backdrop" id="settingsModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">⚙️ Settings</h2>
-                <button class="modal-close" id="closeSettingsModal">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-group">
-                    <label class="settings-label">Your Name</label>
-                    <input type="text" id="settingsName" class="settings-input">
-                    <button class="btn btn-primary btn-sm" id="updateNameBtn">Update</button>
-                </div>
-                
-                <div class="settings-group">
-                    <label class="settings-label">Accent Color</label>
-                    <div class="color-swatches">
-                        <div class="color-swatch" data-color="gold" style="background: #C9A96E"></div>
-                        <div class="color-swatch" data-color="emerald" style="background: #2E7D5E"></div>
-                        <div class="color-swatch" data-color="crimson" style="background: #C0392B"></div>
-                        <div class="color-swatch" data-color="blue" style="background: #60A5FA"></div>
-                        <div class="color-swatch" data-color="purple" style="background: #8B5CF6"></div>
-                        <div class="color-swatch custom" id="customColor">+</div>
-                    </div>
-                </div>
-                
-                <div class="settings-group">
-                    <label class="settings-label">Theme</label>
-                    <select id="settingsTheme">
-                        <option value="dark">Dark</option>
-                        <option value="light">Light</option>
-                        <option value="auto">Auto (system)</option>
-                    </select>
-                </div>
-                
-                <div class="settings-group">
-                    <label class="settings-label">Font Size</label>
-                    <select id="settingsFontSize">
-                        <option value="small">Small</option>
-                        <option value="medium" selected>Medium</option>
-                        <option value="large">Large</option>
-                    </select>
-                </div>
-                
-                <div class="settings-group danger-zone">
-                    <label class="settings-label text-error">Danger Zone</label>
-                    <p class="settings-note">This will permanently delete all your notes and history.</p>
-                    <input type="text" id="deleteConfirm" placeholder="Type DELETE to confirm">
-                    <button class="btn btn-danger" id="confirmClearAll" disabled>Clear All Data</button>
-                </div>
-                
-                <div class="settings-group">
-                    <button class="btn btn-outline" id="exportDataBtn">Export All Data (JSON)</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Keyboard Shortcuts Modal -->
-    <div class="modal-backdrop" id="shortcutsModal">
-        <div class="modal modal-sm">
-            <div class="modal-header">
-                <h2 class="modal-title">⌨️ Keyboard Shortcuts</h2>
-                <button class="modal-close" id="closeShortcutsModal">✕</button>
-            </div>
-            <div class="modal-body">
-                <table class="shortcuts-table">
-                    <tr><td>Ctrl+Enter</td><td>Run current tool</td></tr>
-                    <tr><td>Ctrl+K</td><td>Focus search</td></tr>
-                    <tr><td>Ctrl+S</td><td>Save to library</td></tr>
-                    <tr><td>Ctrl+D</td><td>Download as PDF</td></tr>
-                    <tr><td>Ctrl+Shift+C</td><td>Clear all</td></tr>
-                    <tr><td>Ctrl+/</td><td>Show shortcuts</td></tr>
-                    <tr><td>Ctrl+Z</td><td>Undo last clear</td></tr>
-                    <tr><td>Esc</td><td>Close modals</td></tr>
-                    <tr><td>Tab</td><td>Move input→output</td></tr>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-    <!-- About Modal -->
-    <div class="modal-backdrop" id="aboutModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">About Savoiré AI</h2>
-                <button class="modal-close" id="closeAboutModal">✕</button>
-            </div>
-            <div class="modal-body text-center">
-                <svg width="80" height="80" viewBox="0 0 100 100" fill="none" style="color: var(--gold); margin: 0 auto var(--s4)">
-                    <path d="M50 10L90 30V70L50 90L10 70V30L50 10Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M50 30L70 40V60L50 70L30 60V40L50 30Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                    <text x="50" y="68" text-anchor="middle" fill="currentColor" font-family="Playfair Display" font-size="36" font-weight="700">Ś</text>
-                </svg>
-                <h3 class="about-version">Savoiré AI v2.0</h3>
-                <p class="about-text">160+ AI tools, completely free, for everyone.</p>
-                <p class="about-text">Built by Sooban Talha Technologies</p>
-                <p class="about-link">savoireai.vercel.app</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Save to Library Drawer -->
-    <div class="drawer" id="saveDrawer">
-        <div class="drawer-header">
-            <h3 class="drawer-title">Save to Library</h3>
-            <button class="drawer-close" id="closeSaveDrawer">✕</button>
-        </div>
-        <div class="drawer-body">
-            <div class="form-group">
-                <label class="form-label">Title</label>
-                <input type="text" id="saveTitle" class="form-input" placeholder="Note title...">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Tags (press Enter to add)</label>
-                <div class="tags-input" id="tagsInput">
-                    <input type="text" id="tagInputField" placeholder="Add tag...">
-                </div>
-                <div class="tags-list" id="tagsList"></div>
-            </div>
-            <div class="form-group">
-                <label class="form-label checkbox">
-                    <input type="checkbox" id="saveStarred"> ⭐ Star this note
-                </label>
-            </div>
-        </div>
-        <div class="drawer-footer">
-            <button class="btn btn-outline" id="cancelSave">Cancel</button>
-            <button class="btn btn-primary" id="confirmSave">Save</button>
-        </div>
-    </div>
-    
-    <!-- Wax Seal Animation (hidden initially) -->
-    <div class="wax-seal-overlay" id="waxSeal" style="display: none;">
-        <svg class="wax-seal" width="120" height="120" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="50" fill="var(--gold)" opacity="0.2"/>
-            <circle cx="60" cy="60" r="40" fill="var(--gold)" opacity="0.3"/>
-            <circle cx="60" cy="60" r="30" fill="var(--gold)" opacity="0.5"/>
-            <text x="60" y="70" text-anchor="middle" fill="var(--gold)" font-family="Playfair Display" font-size="32" font-weight="700">✦</text>
-        </svg>
-        <div class="wax-seal-text">Saved to Library</div>
-    </div>
-    
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-    
-    <!-- Ink Transition -->
-    <div class="ink-transition" id="inkTransition"></div>
-    
-    <!-- Gold Cursor Trail -->
-    <div class="cursor-trail" id="cursorTrail"></div>
-    
-    <script src="/app.js"></script>
-    <script>
-        (function() {
-            // Check for user
-            const userName = localStorage.getItem('sv_user');
-            if (!userName) {
-                window.location.replace('/index.html');
-                return;
-            }
-            
-            // Display user name
-            document.getElementById('userNameDisplay').textContent = `Welcome, ${userName}`;
-            document.getElementById('sidebarUser').textContent = userName;
-            
-            // Avatar first letter
-            const avatar = document.getElementById('userAvatar');
-            avatar.textContent = userName.charAt(0).toUpperCase();
-            
-            // Load saved theme
-            const savedTheme = localStorage.getItem('sv_theme');
-            if (savedTheme) {
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                if (savedTheme === 'light') {
-                    document.querySelector('.theme-sun').style.display = 'none';
-                    document.querySelector('.theme-moon').style.display = 'block';
-                }
-            }
-            
-            // URL parameter handling
-            const params = new URLSearchParams(window.location.search);
-            const preselectedTool = params.get('tool');
-            
-            // Tool definitions
-            const TOOL_DISPLAY_NAMES = {
-                'generate-notes': 'Generate Notes',
-                'lecture-notes': 'Lecture Notes',
-                'meeting-notes': 'Meeting Notes',
-                'article-notes': 'Article to Notes',
-                'pdf-notes': 'PDF to Notes',
-                'outline-generator': 'Outline Generator',
-                'bullet-notes': 'Bullet Notes',
-                'key-points': 'Key Point Extraction',
-                'research-notes': 'Research Notes',
-                'image-notes': 'Image to Notes',
-                'code-notes': 'Code Explanation',
-                'legal-notes': 'Legal Notes',
-                'medical-notes': 'Medical Notes',
-                'study-guide': 'Study Guide',
-                'concept-notes': 'Concept Notes',
-                'flashcards': 'Flashcards',
-                'knowledge-cards': 'Knowledge Cards',
-                'executive-summary': 'Executive Summary',
-                'daily-notes': 'Daily Notes',
-                'mindmap-notes': 'Mindmap Notes',
-                'insights': 'Key Insights',
-                'topic-notes': 'Topic Notes',
-                'quick-notes': 'Quick Notes',
-                'paper-notes': 'Paper Notes',
-                'debate-notes': 'Debate Notes',
-                'one-sentence': 'One-Sentence Summary',
-                'three-bullet': '3-Bullet Summary',
-                'tldr': 'TL;DR',
-                'long-summary': 'Long Summary',
-                'abstract': 'Abstract',
-                'custom-length': 'Custom Summary',
-                'key-ideas': 'Key Ideas',
-                'quotes': 'Important Quotes',
-                'multi-language': 'Multi-Language',
-                'academic': 'Academic Summary',
-                'legal-summary': 'Legal Summary',
-                'medical-summary': 'Medical Summary',
-                'news-digest': 'News Digest',
-                'timeline': 'Timeline',
-                'comparative': 'Comparative',
-                'debate-summary': 'Debate Summary',
-                'swot-summary': 'SWOT Summary',
-                'chapter': 'Chapter Summary',
-                'argument': 'Argument Extraction',
-                'digest': 'AI Digest',
-                'action-items': 'Action Items',
-                'decisions': 'Decisions',
-                'followup-email': 'Follow-up Email',
-                'highlights': 'Highlights',
-                'speaker-qa': 'Speaker Q&A',
-                'meeting-timeline': 'Meeting Timeline',
-                'sales-notes': 'Sales Notes',
-                'client-notes': 'Client Notes',
-                'team-notes': 'Team Notes',
-                'strategy-notes': 'Strategy Notes',
-                'meeting-agenda': 'Meeting Agenda',
-                'meeting-recap': 'Meeting Recap',
-                'interview-notes': 'Interview Notes',
-                'training-notes': 'Training Notes',
-                'workshop-notes': 'Workshop Notes',
-                'extend': 'Extend',
-                'shorten': 'Shorten',
-                'rephrase': 'Rephrase',
-                'grammar': 'Grammar Fix',
-                'vocabulary': 'Vocabulary',
-                'change-tone': 'Change Tone',
-                'change-style': 'Change Style',
-                'translate': 'Translate',
-                'simplify': 'Simplify',
-                'formalize': 'Formalize',
-                'engage': 'Make Engaging',
-                'remove-redundancy': 'Remove Redundancy',
-                'add-examples': 'Add Examples',
-                'passive-to-active': 'Passive→Active',
-                'clarity': 'Clarity',
-                'flashcard-gen': 'Flashcard Gen',
-                'mcq': 'MCQ Quiz',
-                'fill-blanks': 'Fill Blanks',
-                'true-false': 'True/False',
-                'study-schedule': 'Study Schedule',
-                'exam-notes': 'Exam Notes',
-                'explain': 'Explain',
-                'definitions': 'Definitions',
-                'formulas': 'Formulas',
-                'case-study': 'Case Study',
-                'comparison-table': 'Comparison Table',
-                'procon': 'Pro/Con',
-                'timeline-study': 'Timeline',
-                'glossary': 'Glossary',
-                'mindmap-study': 'Mindmap',
-                'research-outline': 'Research Outline',
-                'thesis': 'Thesis',
-                'intro': 'Intro',
-                'conclusion': 'Conclusion',
-                'essay-planner': 'Essay Planner',
-                'bibliography': 'Bibliography',
-                'strengthen': 'Strengthen',
-                'counter-arg': 'Counter-Argument',
-                'evidence': 'Evidence',
-                'research-questions': 'Research Questions',
-                'hypothesis': 'Hypothesis',
-                'lit-review': 'Lit Review',
-                'abstract-writer': 'Abstract',
-                'report-structure': 'Report',
-                'white-paper': 'White Paper',
-                'blog-outline': 'Blog Outline',
-                'blog-intro': 'Blog Intro',
-                'social-caption': 'Social Caption',
-                'email-writer': 'Email',
-                'newsletter': 'Newsletter',
-                'press-release': 'Press Release',
-                'product-desc': 'Product Desc',
-                'ad-copy': 'Ad Copy',
-                'tagline': 'Tagline',
-                'headline': 'Headline',
-                'faq': 'FAQ',
-                'about-page': 'About Page',
-                'bio': 'Bio',
-                'cover-letter': 'Cover Letter',
-                'job-desc': 'Job Desc',
-                'doc-analyzer': 'Doc Analyzer',
-                'toc': 'TOC',
-                'exec-summary': 'Exec Summary',
-                'action-plan': 'Action Plan',
-                'project-brief': 'Project Brief',
-                'sop': 'SOP',
-                'policy-outline': 'Policy',
-                'proposal-outline': 'Proposal',
-                'contract-simplify': 'Contract',
-                'tos-simplify': 'ToS',
-                'privacy-simplify': 'Privacy',
-                'meeting-agenda-doc': 'Agenda',
-                'business-plan': 'Business Plan',
-                'pitch-deck': 'Pitch Deck',
-                'investor-brief': 'Investor Brief',
-                'academic-rewrite': 'Academic Rewrite',
-                'humanize': 'Humanize',
-                'make-formal': 'Make Formal',
-                'make-casual': 'Make Casual',
-                'paraphrase': 'Paraphrase',
-                'restructure': 'Restructure',
-                'condense': 'Condense',
-                'expand': 'Expand',
-                'transitions': 'Transitions',
-                'clarity-rewrite': 'Clarity',
-                'coherence': 'Coherence',
-                'flow': 'Flow',
-                'emphasis': 'Emphasis',
-                'storytelling': 'Storytelling',
-                'tech-to-simple': 'Tech→Simple',
-                'swot': 'SWOT',
-                'risk': 'Risk',
-                'decision-matrix': 'Decision Matrix',
-                'root-cause': 'Root Cause',
-                'five-why': '5-Why',
-                'problem-solution': 'Problem-Solution',
-                'brainstorming': 'Brainstorm',
-                'mindmap-special': 'Mindmap',
-                'concept-map': 'Concept Map',
-                'knowledge-base': 'Knowledge Base',
-                'lesson-plan': 'Lesson Plan',
-                'training': 'Training',
-                'workshop': 'Workshop',
-                'tutorial': 'Tutorial',
-                'how-to': 'How-To'
-            };
-            
-            // Initialize tool selection
-            let currentTool = preselectedTool && TOOL_DISPLAY_NAMES[preselectedTool] ? preselectedTool : 'generate-notes';
-            
-            // Set active tool in UI
-            function setActiveTool(toolId) {
-                currentTool = toolId;
-                document.getElementById('activeToolName').textContent = TOOL_DISPLAY_NAMES[toolId] || 'Generate Notes';
-                document.getElementById('runBtnTool').textContent = TOOL_DISPLAY_NAMES[toolId] || 'Generate Notes';
-                document.getElementById('breadcrumb').innerHTML = `Library → <span>${TOOL_DISPLAY_NAMES[toolId] || 'Dashboard'}</span>`;
-                
-                // Update active class in sidebar
-                document.querySelectorAll('.sb-tool').forEach(el => {
-                    el.classList.remove('active');
-                    if (el.dataset.tool === toolId) {
-                        el.classList.add('active');
-                        
-                        // Expand parent category
-                        const parent = el.closest('.sb-tools');
-                        if (parent) {
-                            const category = parent.closest('.sb-category');
-                            if (category) {
-                                category.classList.add('sb-cat-open');
-                            }
-                        }
-                    }
-                });
-                
-                // Update options strip
-                updateOptionsStrip(toolId);
-            }
-            
-            // Options strip update
-            function updateOptionsStrip(toolId) {
-                const strip = document.getElementById('optionsStrip');
-                // This will be fully implemented in app.js with the TOOL_OPTIONS config
-                strip.innerHTML = '<div class="opt-wrap"><select class="opt-select"><option>Format</option></select></div>';
-            }
-            
-            // Click handlers for tools
-            document.querySelectorAll('.sb-tool').forEach(el => {
-                el.addEventListener('click', () => {
-                    setActiveTool(el.dataset.tool);
-                });
-            });
-            
-            // Quick tool buttons
-            document.querySelectorAll('.quick-tool').forEach(el => {
-                el.addEventListener('click', () => {
-                    setActiveTool(el.dataset.tool);
-                });
-            });
-            
-            // Category accordion
-            document.querySelectorAll('.sb-cat-header').forEach(el => {
-                if (el.dataset.category) {
-                    el.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const category = el.closest('.sb-category');
-                        category.classList.toggle('sb-cat-open');
-                    });
-                }
-            });
-            
-            // Sidebar toggle
-            const sidebar = document.getElementById('sidebar');
-            const sidebarToggle = document.getElementById('sidebarToggle');
-            sidebarToggle.addEventListener('click', () => {
-                sidebar.classList.toggle('collapsed');
-            });
-            
-            // New document button
-            document.getElementById('newDocumentBtn').addEventListener('click', () => {
-                document.getElementById('inputTextarea').value = '';
-                document.getElementById('outputBody').innerHTML = '<div class="empty-ornament">✦</div><div class="empty-title">Your masterpiece awaits</div><div class="empty-sub">Select a tool and press Run — or use Ctrl+Enter</div>';
-                document.getElementById('outputBody').classList.add('empty');
-                document.getElementById('outputFooter').classList.remove('show');
-                showToast('New document created', 'info');
-            });
-            
-            // Run button
-            document.getElementById('runBtn').addEventListener('click', runTool);
-            
-            // Ctrl+Enter handler
-            document.getElementById('inputTextarea').addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.key === 'Enter') {
-                    e.preventDefault();
-                    runTool();
-                }
-            });
-            
-            function runTool() {
-                const input = document.getElementById('inputTextarea').value.trim();
-                if (!input) {
-                    showToast('Please enter some text', 'warning');
-                    return;
-                }
-                
-                // Show shimmer
-                document.getElementById('shimmerWrap').classList.add('show');
-                document.getElementById('outputBody').classList.add('empty');
-                document.getElementById('outputBody').innerHTML = '';
-                document.getElementById('outputFooter').classList.remove('show');
-                
-                // Simulate streaming (replace with actual API call)
-                simulateStreamingOutput();
-            }
-            
-            function simulateStreamingOutput() {
-                const outputBody = document.getElementById('outputBody');
-                outputBody.classList.remove('empty');
-                outputBody.innerHTML = '';
-                
-                const sampleOutput = `# Generated Notes
 
-## Key Points
-- First important concept with detailed explanation
-- Second major idea with supporting evidence
-- Third critical takeaway for the reader
+<!-- HEADER -->
+<header class="dash-hdr" id="dashHdr">
+  <button class="dh-btn" id="sbToggle" title="Toggle sidebar" style="flex-shrink:0"><i class="fas fa-bars"></i></button>
+  <a href="index.html" class="dh-mark" title="Home">Ś</a>
+  <div style="display:flex;flex-direction:column;line-height:1.1">
+    <div class="dh-name">Savoiré AI</div>
+    <div class="dh-ver">v2.0</div>
+  </div>
+  <div class="dh-sp"></div>
+  <div class="dh-greeting" id="dhGreeting">Think Less. Know More.</div>
+  <div class="dh-sp"></div>
+  <button class="dh-btn" id="histBtn" title="History (Ctrl+H)">
+    <i class="fas fa-history"></i>
+    <span class="dh-badge" id="histBadge" style="display:none">0</span>
+  </button>
+  <button class="dh-btn" id="themeBtn" title="Toggle theme"><i class="fas fa-moon" id="themeIcon"></i></button>
+  <button class="dh-btn" id="settingsBtn" title="Settings"><i class="fas fa-cog"></i></button>
+  <div style="position:relative">
+    <button class="dh-av" id="avBtn" title="Your profile"><span id="avLetter">S</span></button>
+    <div class="av-dropdown" id="avDropdown">
+      <div class="av-user">
+        <div class="av-u-av" id="avDropAv">S</div>
+        <div><div class="av-u-name" id="avDropName">Scholar</div><div class="av-u-sub">Savoiré AI v2.0</div></div>
+      </div>
+      <div class="av-div"></div>
+      <button class="av-item" id="avHist"><i class="fas fa-history"></i>View History</button>
+      <button class="av-item" id="avSaved"><i class="fas fa-star"></i>Saved Notes</button>
+      <button class="av-item" id="avSettings"><i class="fas fa-cog"></i>Settings</button>
+      <div class="av-div"></div>
+      <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i>Clear All Data</button>
+    </div>
+  </div>
+</header>
 
-## Detailed Analysis
-The content you provided has been analyzed and transformed into structured notes. This demonstrates the power of Savoiré AI's note generation capabilities.
+<!-- BODY -->
+<div class="dash-body" id="dashBody">
 
-> "Think Less. Know More." — Savoiré AI
+  <!-- LEFT PANEL: ALL INPUTS -->
+  <div class="left-panel" id="leftPanel">
 
-## Summary
-This is a sample output. In the full implementation, this would be replaced with actual AI-generated content from the OpenRouter API.`;
-                
-                // Word-by-word streaming
-                const words = sampleOutput.split(' ');
-                let i = 0;
-                
-                function addWord() {
-                    if (i < words.length) {
-                        const span = document.createElement('span');
-                        span.className = 'stream-word';
-                        span.textContent = words[i] + ' ';
-                        outputBody.appendChild(span);
-                        
-                        // Add cursor after last word
-                        if (i === words.length - 1) {
-                            const cursor = document.createElement('span');
-                            cursor.className = 'stream-cursor';
-                            outputBody.appendChild(cursor);
-                        }
-                        
-                        i++;
-                        setTimeout(addWord, 30);
-                    } else {
-                        // Done streaming
-                        document.getElementById('shimmerWrap').classList.remove('show');
-                        document.getElementById('outputFooter').classList.add('show');
-                        updateWordCount();
-                    }
-                    
-                    // Auto-scroll
-                    outputBody.scrollTop = outputBody.scrollHeight;
-                }
-                
-                setTimeout(addWord, 500);
-            }
-            
-            function updateWordCount() {
-                const text = document.getElementById('outputBody').innerText;
-                const words = text.trim().split(/\s+/).length;
-                document.getElementById('outputWordCounter').textContent = words + ' words';
-                document.getElementById('readingTime').textContent = Math.ceil(words / 200) + ' min read';
-            }
-            
-            // Copy button
-            document.getElementById('copyBtn').addEventListener('click', () => {
-                const output = document.getElementById('outputBody').innerText;
-                navigator.clipboard.writeText(output).then(() => {
-                    showToast('Copied to clipboard!', 'success');
-                });
-            });
-            
-            // Share button
-            document.getElementById('shareBtn').addEventListener('click', () => {
-                const output = document.getElementById('outputBody').innerText;
-                navigator.clipboard.writeText(output).then(() => {
-                    showToast('Copied to clipboard! Ready to share.', 'success');
-                });
-            });
-            
-            // Clear button
-            document.getElementById('clearBtn').addEventListener('click', () => {
-                document.getElementById('inputTextarea').value = '';
-                showToast('Input cleared', 'info');
-            });
-            
-            // Swap button
-            document.getElementById('swapBtn').addEventListener('click', () => {
-                const input = document.getElementById('inputTextarea').value;
-                const output = document.getElementById('outputBody').innerText;
-                document.getElementById('inputTextarea').value = output;
-                document.getElementById('outputBody').innerHTML = '<div class="empty-ornament">✦</div><div class="empty-title">Your masterpiece awaits</div>';
-                document.getElementById('outputBody').classList.add('empty');
-                document.getElementById('outputFooter').classList.remove('show');
-                showToast('Swapped input and output', 'info');
-            });
-            
-            // Use as input
-            document.getElementById('useAsInputBtn').addEventListener('click', () => {
-                const output = document.getElementById('outputBody').innerText;
-                document.getElementById('inputTextarea').value = output;
-                showToast('Output copied to input', 'info');
-            });
-            
-            // Save to library
-            document.getElementById('saveLibraryBtn').addEventListener('click', () => {
-                document.getElementById('saveDrawer').classList.add('open');
-                
-                // Auto-fill title from first heading
-                const outputText = document.getElementById('outputBody').innerText;
-                const firstLine = outputText.split('\n')[0].replace('#', '').trim();
-                document.getElementById('saveTitle').value = firstLine || 'Untitled Note';
-            });
-            
-            document.getElementById('closeSaveDrawer').addEventListener('click', () => {
-                document.getElementById('saveDrawer').classList.remove('open');
-            });
-            
-            document.getElementById('cancelSave').addEventListener('click', () => {
-                document.getElementById('saveDrawer').classList.remove('open');
-            });
-            
-            document.getElementById('confirmSave').addEventListener('click', () => {
-                document.getElementById('saveDrawer').classList.remove('open');
-                
-                // Show wax seal
-                const seal = document.getElementById('waxSeal');
-                seal.style.display = 'flex';
-                setTimeout(() => {
-                    seal.style.display = 'none';
-                }, 1800);
-                
-                showToast('Note saved to library', 'success');
-            });
-            
-            // Theme toggle
-            document.getElementById('themeToggle').addEventListener('click', () => {
-                const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-                document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-                localStorage.setItem('sv_theme', isDark ? 'light' : 'dark');
-                
-                const sun = document.querySelector('.theme-sun');
-                const moon = document.querySelector('.theme-moon');
-                if (isDark) {
-                    sun.style.display = 'none';
-                    moon.style.display = 'block';
-                } else {
-                    sun.style.display = 'block';
-                    moon.style.display = 'none';
-                }
-            });
-            
-            // User menu dropdown
-            const userMenu = document.getElementById('userMenu');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            userMenu.addEventListener('click', (e) => {
-                e.stopPropagation();
-                userDropdown.classList.toggle('show');
-            });
-            
-            document.addEventListener('click', () => {
-                userDropdown.classList.remove('show');
-            });
-            
-            // Dropdown actions
-            document.querySelectorAll('[data-action="library"]').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    document.getElementById('libraryModal').classList.add('open');
-                });
-            });
-            
-            document.querySelectorAll('[data-action="history"]').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    document.getElementById('historyModal').classList.add('open');
-                });
-            });
-            
-            document.querySelectorAll('[data-action="settings"]').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    document.getElementById('settingsModal').classList.add('open');
-                    document.getElementById('settingsName').value = localStorage.getItem('sv_user');
-                });
-            });
-            
-            // Close modals
-            document.getElementById('closeLibraryModal').addEventListener('click', () => {
-                document.getElementById('libraryModal').classList.remove('open');
-            });
-            
-            document.getElementById('closeHistoryModal').addEventListener('click', () => {
-                document.getElementById('historyModal').classList.remove('open');
-            });
-            
-            document.getElementById('closeSettingsModal').addEventListener('click', () => {
-                document.getElementById('settingsModal').classList.remove('open');
-            });
-            
-            document.getElementById('closeShortcutsModal').addEventListener('click', () => {
-                document.getElementById('shortcutsModal').classList.remove('open');
-            });
-            
-            document.getElementById('closeAboutModal').addEventListener('click', () => {
-                document.getElementById('aboutModal').classList.remove('open');
-            });
-            
-            // About link
-            document.getElementById('aboutLink').addEventListener('click', (e) => {
-                e.preventDefault();
-                document.getElementById('aboutModal').classList.add('open');
-            });
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.key === '/') {
-                    e.preventDefault();
-                    document.getElementById('shortcutsModal').classList.add('open');
-                }
-                if (e.ctrlKey && e.key === 'k') {
-                    e.preventDefault();
-                    document.getElementById('globalSearch').focus();
-                }
-                if (e.key === 'Escape') {
-                    document.querySelectorAll('.modal-backdrop.open, .drawer.open').forEach(el => {
-                        el.classList.remove('open');
-                    });
-                }
-            });
-            
-            // File upload
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
-            
-            dropZone.addEventListener('click', () => {
-                fileInput.click();
-            });
-            
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('drag-over');
-            });
-            
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('drag-over');
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
-                const file = e.dataTransfer.files[0];
-                if (file) handleFile(file);
-            });
-            
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files[0]) handleFile(e.target.files[0]);
-            });
-            
-            function handleFile(file) {
-                const fileCard = document.getElementById('fileCard');
-                document.getElementById('fileName').textContent = file.name;
-                document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
-                fileCard.classList.add('visible');
-                
-                // Simulate extraction
-                showToast(`Extracting text from ${file.name}...`, 'info');
-                setTimeout(() => {
-                    document.getElementById('inputTextarea').value = 'Extracted text from file would appear here. In the full implementation, this would use pdf.js or OCR.';
-                    showToast('✓ Extracted text from file', 'success');
-                }, 1500);
-            }
-            
-            document.getElementById('removeFileBtn').addEventListener('click', () => {
-                document.getElementById('fileCard').classList.remove('visible');
-                fileInput.value = '';
-            });
-            
-            // Character counter
-            const textarea = document.getElementById('inputTextarea');
-            const charCounter = document.getElementById('charCounter');
-            const wordCounter = document.getElementById('wordCounter');
-            
-            textarea.addEventListener('input', () => {
-                const chars = textarea.value.length;
-                charCounter.textContent = `${chars} / 20,000`;
-                
-                const words = textarea.value.trim() ? textarea.value.trim().split(/\s+/).length : 0;
-                wordCounter.textContent = words + ' words';
-                
-                if (chars > 18000) {
-                    charCounter.style.color = 'var(--warning)';
-                } else if (chars > 15000) {
-                    charCounter.style.color = 'var(--gold)';
-                } else {
-                    charCounter.style.color = '';
-                }
-            });
-            
-            // Toast system
-            function showToast(message, type = 'info') {
-                const container = document.getElementById('toastContainer');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                
-                let icon = '✦';
-                if (type === 'success') icon = '✓';
-                if (type === 'error') icon = '✗';
-                if (type === 'warning') icon = '⚠';
-                
-                toast.innerHTML = `
-                    <span class="toast-icon">${icon}</span>
-                    <span class="toast-msg">${message}</span>
-                    <button class="toast-close">✕</button>
-                `;
-                
-                container.appendChild(toast);
-                
-                toast.querySelector('.toast-close').addEventListener('click', () => {
-                    toast.remove();
-                });
-                
-                setTimeout(() => {
-                    if (toast.parentNode) toast.remove();
-                }, 4000);
-            }
-            
-            // Initialize with preselected tool or default
-            setActiveTool(preselectedTool || 'generate-notes');
-            
-            // Draft auto-save
-            setInterval(() => {
-                const draft = textarea.value;
-                if (draft) {
-                    localStorage.setItem('sv_draft', draft);
-                }
-            }, 20000);
-            
-            // Check for draft
-            const savedDraft = localStorage.getItem('sv_draft');
-            if (savedDraft) {
-                textarea.value = savedDraft;
-                showToast('💡 Draft restored from last session', 'info');
-                localStorage.removeItem('sv_draft');
-            }
-            
-            // Gold cursor trail (desktop)
-            if (window.innerWidth >= 1024) {
-                const trail = document.getElementById('cursorTrail');
-                let mouseX = 0, mouseY = 0;
-                let trailX = 0, trailY = 0;
-                let lastMove = Date.now();
-                
-                document.addEventListener('mousemove', (e) => {
-                    mouseX = e.clientX;
-                    mouseY = e.clientY;
-                    lastMove = Date.now();
-                    trail.style.opacity = '0.35';
-                });
-                
-                function animateTrail() {
-                    trailX += (mouseX - trailX) * 0.12;
-                    trailY += (mouseY - trailY) * 0.12;
-                    
-                    trail.style.transform = `translate(${trailX - 3.5}px, ${trailY - 3.5}px)`;
-                    
-                    if (Date.now() - lastMove > 800) {
-                        trail.style.opacity = '0';
-                    }
-                    
-                    requestAnimationFrame(animateTrail);
-                }
-                
-                animateTrail();
-            }
-            
-            // Ink transition
-            document.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    if (link.target === '_blank' || link.href.includes('#') || e.ctrlKey || e.metaKey) return;
-                    if (link.href && !link.href.startsWith(window.location.origin)) return;
-                    
-                    e.preventDefault();
-                    const ink = document.getElementById('inkTransition');
-                    const rect = link.getBoundingClientRect();
-                    const cx = rect.left + rect.width / 2;
-                    const cy = rect.top + rect.height / 2;
-                    
-                    ink.style.setProperty('--ix', cx + 'px');
-                    ink.style.setProperty('--iy', cy + 'px');
-                    ink.classList.add('active');
-                    
-                    setTimeout(() => {
-                        window.location.href = link.href;
-                    }, 300);
-                });
-            });
-        })();
-    </script>
+    <!-- Tool selector -->
+    <div class="lp-hdr">
+      <div class="lp-hdr-row">
+        <div class="lp-title">AI Tools</div>
+        <a href="index.html" style="font-size:.7rem;color:var(--gold);display:flex;align-items:center;gap:4px"><i class="fas fa-home"></i>Home</a>
+      </div>
+    </div>
+    <div class="tool-selector">
+      <div class="ts-label">Select Tool</div>
+      <button class="ts-item active" data-tool="notes"><i class="fas fa-book-open"></i><span class="ts-item-text">Generate Notes</span></button>
+      <button class="ts-item" data-tool="flashcards"><i class="fas fa-layer-group"></i><span class="ts-item-text">Flashcards</span></button>
+      <button class="ts-item" data-tool="quiz"><i class="fas fa-question-circle"></i><span class="ts-item-text">Practice Quiz</span></button>
+      <button class="ts-item" data-tool="summary"><i class="fas fa-align-left"></i><span class="ts-item-text">Smart Summary</span></button>
+      <button class="ts-item" data-tool="mindmap"><i class="fas fa-project-diagram"></i><span class="ts-item-text">Mind Map</span></button>
+    </div>
+
+    <!-- Fields -->
+    <div class="lp-fields">
+
+      <!-- Topic input -->
+      <div class="textarea-group">
+        <div class="field-lbl">Topic / Text</div>
+        <textarea id="mainInput" class="main-ta"
+          placeholder="Enter any topic, concept, question, or paste text to study…"
+          maxlength="12000" rows="5" spellcheck="true" aria-label="Study topic"></textarea>
+        <div class="ta-footer">
+          <div class="ta-count" id="charCount">0 / 12,000</div>
+          <button class="exp-btn" style="padding:3px 8px;font-size:.68rem" onclick="document.getElementById('mainInput').value='';document.getElementById('charCount').textContent='0 / 12,000'" title="Clear input"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <!-- File upload -->
+      <div class="field-group">
+        <div class="field-lbl">Upload File (.txt)</div>
+        <div class="upload-zone" id="uploadZone" title="Upload .txt file">
+          <i class="fas fa-paperclip"></i>
+          <span id="uploadZoneText">Click to upload a .txt file</span>
+          <input type="file" id="fileInput" accept=".txt,.md,.csv" style="display:none">
+        </div>
+        <div class="file-chip" id="fileChip" style="display:none">
+          <i class="fas fa-file-alt" style="color:var(--gold)"></i>
+          <span class="file-chip-name" id="fileChipName"></span>
+          <span class="file-chip-rm" id="fileChipRm" title="Remove file"><i class="fas fa-times"></i></span>
+        </div>
+      </div>
+
+      <!-- Depth -->
+      <div class="field-group">
+        <div class="field-lbl">Detail Level</div>
+        <div class="field-sel-wrap">
+          <select id="depthSel" class="field-sel">
+            <option value="standard">Standard (600-900 words)</option>
+            <option value="detailed" selected>Detailed (1000-1500 words)</option>
+            <option value="comprehensive">Comprehensive (1500-2000 words)</option>
+            <option value="expert">Expert Level (2000+ words)</option>
+          </select>
+          <i class="fas fa-chevron-down field-sel-arrow"></i>
+        </div>
+      </div>
+
+      <!-- Language -->
+      <div class="field-group">
+        <div class="field-lbl">Output Language</div>
+        <div class="field-sel-wrap">
+          <select id="langSel" class="field-sel">
+            <option value="English" selected>🇬🇧 English</option>
+            <option value="Urdu">🇵🇰 Urdu</option>
+            <option value="Hindi">🇮🇳 Hindi</option>
+            <option value="Arabic">🇸🇦 Arabic</option>
+            <option value="French">🇫🇷 French</option>
+            <option value="German">🇩🇪 German</option>
+            <option value="Spanish">🇪🇸 Spanish</option>
+            <option value="Italian">🇮🇹 Italian</option>
+            <option value="Portuguese">🇵🇹 Portuguese</option>
+            <option value="Russian">🇷🇺 Russian</option>
+            <option value="Chinese (Simplified)">🇨🇳 Chinese</option>
+            <option value="Japanese">🇯🇵 Japanese</option>
+            <option value="Korean">🇰🇷 Korean</option>
+            <option value="Turkish">🇹🇷 Turkish</option>
+            <option value="Dutch">🇳🇱 Dutch</option>
+            <option value="Polish">🇵🇱 Polish</option>
+            <option value="Bengali">🇧🇩 Bengali</option>
+            <option value="Tamil">Tamil</option>
+            <option value="Telugu">Telugu</option>
+            <option value="Punjabi">Punjabi</option>
+            <option value="Persian">🇮🇷 Persian</option>
+            <option value="Indonesian">🇮🇩 Indonesian</option>
+            <option value="Malay">🇲🇾 Malay</option>
+            <option value="Thai">🇹🇭 Thai</option>
+            <option value="Vietnamese">🇻🇳 Vietnamese</option>
+            <option value="Swedish">🇸🇪 Swedish</option>
+            <option value="Danish">🇩🇰 Danish</option>
+            <option value="Norwegian">🇳🇴 Norwegian</option>
+            <option value="Finnish">🇫🇮 Finnish</option>
+            <option value="Greek">🇬🇷 Greek</option>
+            <option value="Hebrew">🇮🇱 Hebrew</option>
+            <option value="Ukrainian">🇺🇦 Ukrainian</option>
+            <option value="Czech">🇨🇿 Czech</option>
+            <option value="Romanian">🇷🇴 Romanian</option>
+            <option value="Hungarian">🇭🇺 Hungarian</option>
+            <option value="Swahili">Swahili</option>
+            <option value="Filipino">Filipino</option>
+            <option value="Nepali">Nepali</option>
+          </select>
+          <i class="fas fa-chevron-down field-sel-arrow"></i>
+        </div>
+      </div>
+
+      <!-- Style -->
+      <div class="field-group">
+        <div class="field-lbl">Writing Style</div>
+        <div class="field-sel-wrap">
+          <select id="styleSel" class="field-sel">
+            <option value="simple" selected>Simple &amp; Clear</option>
+            <option value="academic">Academic</option>
+            <option value="detailed">In-Depth Detail</option>
+            <option value="exam">Exam-Focused</option>
+            <option value="visual">Visual-Oriented</option>
+          </select>
+          <i class="fas fa-chevron-down field-sel-arrow"></i>
+        </div>
+      </div>
+
+      <!-- Quick suggestions -->
+      <div class="field-group">
+        <div class="field-lbl">Quick Topics</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px">
+          <button class="exp-btn" style="padding:4px 10px;font-size:.74rem" onclick="setSugg('Quantum Mechanics')">Quantum Mechanics</button>
+          <button class="exp-btn" style="padding:4px 10px;font-size:.74rem" onclick="setSugg('DNA Replication')">DNA Replication</button>
+          <button class="exp-btn" style="padding:4px 10px;font-size:.74rem" onclick="setSugg('Newton\\s Laws')">Newton's Laws</button>
+          <button class="exp-btn" style="padding:4px 10px;font-size:.74px" onclick="setSugg('Machine Learning fundamentals')">Machine Learning</button>
+          <button class="exp-btn" style="padding:4px 10px;font-size:.74rem" onclick="setSugg('French Revolution causes and effects')">French Revolution</button>
+          <button class="exp-btn" style="padding:4px 10px;font-size:.74rem" onclick="setSugg('Photosynthesis process and stages')">Photosynthesis</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RUN BUTTON -->
+    <div class="lp-run-wrap">
+      <button class="run-btn" id="runBtn">
+        <i class="fas fa-paper-plane" id="runIcon"></i>
+        <span id="runLabel">Generate Notes</span>
+      </button>
+    </div>
+
+    <!-- History preview -->
+    <div class="lp-history">
+      <div class="lp-hist-header">
+        <div class="lp-hist-title">Recent History</div>
+        <div class="lp-hist-all" id="lpHistAll">See all</div>
+      </div>
+      <div class="lp-hist-list" id="lpHistList">
+        <div style="font-size:.76rem;color:var(--t4);padding:4px 6px;font-family:var(--fu)">No history yet</div>
+      </div>
+    </div>
+
+  </div><!-- /left-panel -->
+
+  <!-- RIGHT PANEL: OUTPUT -->
+  <div class="right-panel" id="rightPanel">
+
+    <!-- Toolbar -->
+    <div class="out-toolbar">
+      <button class="otb-btn" id="copyBtn" title="Copy output"><i class="fas fa-copy"></i><span>Copy</span></button>
+      <button class="otb-btn" id="pdfBtn" title="Download PDF"><i class="fas fa-file-pdf"></i><span>PDF</span></button>
+      <button class="otb-btn" id="saveBtn" title="Save note"><i class="fas fa-star"></i><span>Save</span></button>
+      <button class="otb-btn" id="shareBtn" title="Share"><i class="fas fa-share-alt"></i><span>Share</span></button>
+      <div class="otb-sep"></div>
+      <button class="otb-btn" id="clearBtn" title="Clear output"><i class="fas fa-trash-alt"></i><span>Clear</span></button>
+      <div class="otb-hint"><kbd>Enter</kbd> to generate</div>
+    </div>
+
+    <!-- Output area -->
+    <div class="out-area" id="outArea">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <span class="es-mark">Ś</span>
+        <div class="es-title">Your study materials appear here</div>
+        <div class="es-sub">Enter a topic on the left, choose your tool and press Generate. Results stream here in seconds.</div>
+        <div class="es-tips">
+          <span class="es-tip"><i class="fas fa-book-open"></i>Detailed Notes</span>
+          <span class="es-tip"><i class="fas fa-layer-group"></i>Flashcards</span>
+          <span class="es-tip"><i class="fas fa-question-circle"></i>Quiz</span>
+          <span class="es-tip"><i class="fas fa-file-pdf"></i>PDF Export</span>
+          <span class="es-tip"><i class="fas fa-globe"></i>50+ Languages</span>
+        </div>
+        <div style="font-size:.74rem;color:var(--t4);font-family:var(--fm);margin-top:8px">Powered by Savoiré AI v2.0 · Sooban Talha Technologies · savoireai.vercel.app</div>
+      </div>
+
+      <!-- Thinking indicator -->
+      <div class="thinking-wrap" id="thinkingWrap" style="display:none">
+        <div class="thinking-card">
+          <div class="th-av">Ś</div>
+          <div class="th-body">
+            <div class="th-title">Savoiré AI is crafting your study materials…</div>
+            <div class="th-dots"><span></span><span></span><span></span></div>
+            <div class="th-stages">
+              <span class="ths" id="ts0"><i class="fas fa-search"></i> Analyzing</span>
+              <span class="ths" id="ts1"><i class="fas fa-pen-nib"></i> Writing</span>
+              <span class="ths" id="ts2"><i class="fas fa-layer-group"></i> Building</span>
+              <span class="ths" id="ts3"><i class="fas fa-question-circle"></i> Quiz</span>
+              <span class="ths" id="ts4"><i class="fas fa-check-circle"></i> Done</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result area -->
+      <div id="resultArea" style="display:none"></div>
+
+    </div><!-- /out-area -->
+  </div><!-- /right-panel -->
+
+</div><!-- /dash-body -->
+
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="histModal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left"><i class="fas fa-history modal-hdr-icon"></i><h3 class="modal-title">Study History</h3><span id="histCount" style="font-family:var(--fm);font-size:.68rem;color:var(--t3);margin-left:6px"></span></div>
+      <button class="modal-close" data-close="histModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="hist-search-bar"><i class="fas fa-search"></i><input type="text" id="histSearchInput" class="hist-search-input" placeholder="Search history…" autocomplete="off"></div>
+      <div class="hist-filters">
+        <button class="hf active" data-filter="all">All</button>
+        <button class="hf" data-filter="notes">Notes</button>
+        <button class="hf" data-filter="flashcards">Flashcards</button>
+        <button class="hf" data-filter="quiz">Quiz</button>
+        <button class="hf" data-filter="summary">Summary</button>
+        <button class="hf" data-filter="mindmap">Mind Map</button>
+      </div>
+      <div class="hist-list" id="histList"></div>
+      <div class="modal-empty" id="histEmpty" style="display:none"><i class="fas fa-history"></i><p>No history yet. Start studying!</p></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" id="clearHistBtn"><i class="fas fa-trash"></i> Clear History</button>
+      <button class="btn btn-ghost" id="exportHistBtn"><i class="fas fa-download"></i> Export JSON</button>
+      <button class="btn btn-primary" data-close="histModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED MODAL -->
+<div class="modal-overlay" id="savedModal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left"><i class="fas fa-star modal-hdr-icon"></i><h3 class="modal-title">Saved Notes</h3><span id="savedCount" style="font-family:var(--fm);font-size:.68rem;color:var(--t3);margin-left:6px"></span></div>
+      <button class="modal-close" data-close="savedModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="hist-list" id="savedList"></div>
+      <div class="modal-empty" id="savedEmpty" style="display:none"><i class="fas fa-star"></i><p>No saved notes yet. Use the Save button after generating.</p></div>
+    </div>
+    <div class="modal-ftr"><button class="btn btn-primary" data-close="savedModal">Close</button></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left"><i class="fas fa-cog modal-hdr-icon"></i><h3 class="modal-title">Settings &amp; About</h3></div>
+      <button class="modal-close" data-close="settingsModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-user"></i> Your Profile</div>
+        <div class="settings-row">
+          <div class="settings-lbl">Display Name</div>
+          <div class="settings-input-row"><input type="text" id="nameInput" class="settings-input" placeholder="Your name" maxlength="40"><button class="btn btn-primary btn-sm" id="saveNameBtn">Save</button></div>
+        </div>
+      </div>
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-palette"></i> Appearance</div>
+        <div class="settings-row"><div class="settings-lbl">Theme</div><div class="toggle-row"><button class="toggle-btn active" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button><button class="toggle-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button></div></div>
+        <div class="settings-row"><div class="settings-lbl">Font Size</div><div class="toggle-row"><button class="toggle-btn font-sz" data-size="small">Small</button><button class="toggle-btn font-sz active" data-size="medium">Medium</button><button class="toggle-btn font-sz" data-size="large">Large</button></div></div>
+      </div>
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-database"></i> Your Data</div>
+        <div class="ds-stats" id="dsStats"></div>
+        <div class="settings-btn-row"><button class="btn btn-ghost" id="exportDataBtn"><i class="fas fa-download"></i> Export Data</button><button class="btn btn-danger" id="clearDataBtn"><i class="fas fa-trash"></i> Clear All Data</button></div>
+      </div>
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-info-circle"></i> About</div>
+        <div class="about-card">
+          <div class="about-mark">Ś</div>
+          <div class="about-name">Savoiré AI v2.0</div>
+          <div class="about-tagline">Think Less. Know More.</div>
+          <p class="about-desc">A completely free AI study companion. No login, no payment, no subscription — ever. All your data stays private in your browser.</p>
+          <div class="about-quote-card"><i class="fas fa-quote-left about-qico"></i><blockquote class="about-quote">"I built Savoiré AI because great learning tools shouldn't cost anything. Every student, everywhere, deserves access to the best AI has to offer — free, forever."</blockquote><cite class="about-cite">— Sooban Talha, Founder · Sooban Talha Technologies</cite></div>
+          <a href="https://savoireai.vercel.app" class="about-link" target="_blank"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
+  <div class="modal modal-sm">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left"><i class="fas fa-exclamation-triangle modal-hdr-icon" style="color:#EF4444"></i><h3 class="modal-title" id="confirmTitle">Confirm</h3></div>
+      <button class="modal-close" data-close="confirmModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body"><p class="confirm-msg" id="confirmMsg"></p></div>
+    <div class="modal-ftr"><button class="btn btn-ghost" data-close="confirmModal">Cancel</button><button class="btn btn-danger" id="confirmOkBtn">Confirm</button></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+if (window.marked) marked.setOptions({ breaks: true, gfm: true });
+function setSugg(t){const el=document.getElementById('mainInput');if(el){el.value=t;el.dispatchEvent(new Event('input'));el.focus();}}
+</script>
+<script src="app.js"></script>
 </body>
 </html>
