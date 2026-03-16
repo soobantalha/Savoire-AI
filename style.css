@@ -10,239 +10,62 @@ html { font-size: 16px; scroll-behavior: smooth; -webkit-text-size-adjust: 100%;
 
 /* ─── 2. VARIABLES (Dark) ─── */
 :root {
-  
-  /* ── Core Brand Colors ─────────────────────────────────────── */
-  --gold:           #C9A96E;
-  --gold-light:     #E8C98A;
-  --gold-dark:      #A07840;
-  --gold-glow:      rgba(201,169,110,0.18);
-  --gold-glow-deep: rgba(201,169,110,0.35);
-
-  /* ── Dark Theme (Default) ──────────────────────────────────── */
-  --bg-primary:     #0A0A0F;
-  --bg-secondary:   #111118;
-  --bg-card:        #16161F;
-  --bg-card-hover:  #1E1E2A;
-  --bg-glass:       rgba(22,22,31,0.85);
-  --bg-glass-light: rgba(255,255,255,0.04);
-  --bg-input:       #1A1A25;
-  --bg-sidebar:     #0D0D14;
-  --bg-header:      rgba(10,10,15,0.95);
-
-  /* ── Text Colors ────────────────────────────────────────────── */
-  --text-primary:   #F0EDE8;
-  --text-secondary: #A8A4A0;
-  --text-muted:     #6A6670;
-  --text-accent:    #C9A96E;
-  --text-inverse:   #0A0A0F;
-
-  /* ── Border Colors ──────────────────────────────────────────── */
-  --border:         rgba(201,169,110,0.12);
-  --border-hover:   rgba(201,169,110,0.30);
-  --border-focus:   rgba(201,169,110,0.55);
-  --border-card:    rgba(255,255,255,0.06);
-
-  /* ── Semantic Colors ────────────────────────────────────────── */
-  --success:        #2ECC71;
-  --success-bg:     rgba(46,204,113,0.12);
-  --warning:        #F39C12;
-  --warning-bg:     rgba(243,156,18,0.12);
-  --error:          #E74C3C;
-  --error-bg:       rgba(231,76,60,0.12);
-  --info:           #3498DB;
-  --info-bg:        rgba(52,152,219,0.12);
-
-  /* ── Gradients ──────────────────────────────────────────────── */
-  --grad-gold:      linear-gradient(135deg, #C9A96E 0%, #E8C98A 50%, #A07840 100%);
-  --grad-gold-h:    linear-gradient(90deg,  #C9A96E 0%, #E8C98A 100%);
-  --grad-dark:      linear-gradient(135deg, #0A0A0F 0%, #16161F 100%);
-  --grad-card:      linear-gradient(145deg, #16161F 0%, #1A1A25 100%);
-  --grad-sidebar:   linear-gradient(180deg, #0D0D14 0%, #0A0A0F 100%);
-  --grad-hero:      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,169,110,0.15) 0%, transparent 70%);
-  --grad-mesh:      radial-gradient(circle at 20% 80%, rgba(201,169,110,0.06) 0%, transparent 40%),
-                    radial-gradient(circle at 80% 20%, rgba(201,169,110,0.04) 0%, transparent 40%);
-
-  /* ── Shadows ────────────────────────────────────────────────── */
-  --shadow-sm:      0 2px 8px rgba(0,0,0,0.4);
-  --shadow-md:      0 4px 20px rgba(0,0,0,0.5);
-  --shadow-lg:      0 8px 40px rgba(0,0,0,0.6);
-  --shadow-xl:      0 16px 60px rgba(0,0,0,0.7);
-  --shadow-gold:    0 4px 20px rgba(201,169,110,0.25);
-  --shadow-gold-lg: 0 8px 40px rgba(201,169,110,0.35);
-  --shadow-inset:   inset 0 1px 0 rgba(255,255,255,0.06);
-
-  /* ── Spacing ────────────────────────────────────────────────── */
-  --sp-xs:  0.25rem;
-  --sp-sm:  0.5rem;
-  --sp-md:  1rem;
-  --sp-lg:  1.5rem;
-  --sp-xl:  2rem;
-  --sp-2xl: 3rem;
-  --sp-3xl: 4rem;
-
-  /* ── Radii ──────────────────────────────────────────────────── */
-  --r-sm:   0.375rem;
-  --r-md:   0.75rem;
-  --r-lg:   1rem;
-  --r-xl:   1.5rem;
-  --r-2xl:  2rem;
-  --r-full: 9999px;
-
-  /* ── Transitions ────────────────────────────────────────────── */
-  --tr-fast:   0.15s ease;
-  --tr-normal: 0.25s ease;
-  --tr-slow:   0.4s ease;
-  --tr-spring: 0.35s cubic-bezier(0.34,1.56,0.64,1);
-
-  /* ── Typography ─────────────────────────────────────────────── */
-  --font-display: 'Playfair Display', 'Georgia', serif;
-  --font-body:    'DM Sans', 'Helvetica Neue', sans-serif;
-  --font-mono:    'Fira Code', 'Courier New', monospace;
-  --font-ui:      'DM Sans', system-ui, sans-serif;
-
-  /* ── Layout ─────────────────────────────────────────────────── */
-  --sidebar-w:    280px;
-  --header-h:     64px;
-  --content-max:  900px;
-  --panel-max:    1200px;
-
-  /* ── Z-Index Scale ──────────────────────────────────────────── */
-  --z-base:    1;
-  --z-sticky:  10;
-  --z-sidebar: 100;
-  --z-overlay: 200;
-  --z-modal:   300;
-  --z-toast:   400;
-  --z-top:     500;
-}
-
-/* ── Light Theme ─────────────────────────────────────────────── */
-[data-theme="light"] {
-  --bg-primary:     #FAF8F4;
-  --bg-secondary:   #F3EFE7;
-  --bg-card:        #FFFFFF;
-  --bg-card-hover:  #F9F6F0;
-  --bg-glass:       rgba(255,255,255,0.92);
-  --bg-glass-light: rgba(0,0,0,0.03);
-  --bg-input:       #FFFFFF;
-  --bg-sidebar:     #F3EFE7;
-  --bg-header:      rgba(250,248,244,0.97);
-
-  --text-primary:   #1A1612;
-  --text-secondary: #5A5550;
-  --text-muted:     #9A9590;
-  --text-accent:    #8A6030;
-
-  --border:         rgba(160,120,64,0.15);
-  --border-hover:   rgba(160,120,64,0.35);
-  --border-focus:   rgba(160,120,64,0.55);
-  --border-card:    rgba(0,0,0,0.07);
-
-  --gold:           #A07840;
-  --gold-light:     #C9A96E;
-  --gold-dark:      #7A5820;
-  --gold-glow:      rgba(160,120,64,0.12);
-
-  --shadow-sm:      0 2px 8px rgba(0,0,0,0.08);
-  --shadow-md:      0 4px 20px rgba(0,0,0,0.1);
-  --shadow-lg:      0 8px 40px rgba(0,0,0,0.12);
-  --shadow-xl:      0 16px 60px rgba(0,0,0,0.14);
-  --shadow-gold:    0 4px 20px rgba(160,120,64,0.2);
-
-  --grad-hero:      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(160,120,64,0.1) 0%, transparent 70%);
-  --grad-mesh:      radial-gradient(circle at 20% 80%, rgba(160,120,64,0.05) 0%, transparent 40%),
-                    radial-gradient(circle at 80% 20%, rgba(160,120,64,0.03) 0%, transparent 40%);
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   SECTION 2 — RESET & BASE
-══════════════════════════════════════════════════════════════════ */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin:     0;
-  padding:    0;
-}
-
-html {
-  font-size:       16px;
-  scroll-behavior: smooth;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  font-family:      var(--font-body);
-  font-size:        1rem;
-  line-height:      1.65;
-  color:            var(--text-primary);
-  background-color: var(--bg-primary);
-  background-image: var(--grad-mesh);
-  min-height:       100vh;
-  overflow-x:       hidden;
-  transition:       background-color var(--tr-slow), color var(--tr-slow);
-}
-
-/* Font size classes */
-body.font-small  { font-size: 0.9rem; }
-body.font-medium { font-size: 1rem; }
-body.font-large  { font-size: 1.1rem; }
-
-img, video, svg { max-width: 100%; display: block; }
-a { color: var(--gold); text-decoration: none; transition: color var(--tr-fast); }
-a:hover { color: var(--gold-light); }
-button { cursor: pointer; font-family: inherit; }
-input, textarea, select { font-family: inherit; }
-ul, ol { list-style: none; }
-
-::selection {
-  background: var(--gold-glow-deep);
-  color:      var(--gold-light);
-}
-
-:focus-visible {
-  outline:        2px solid var(--gold);
-  outline-offset: 2px;
-  border-radius:  var(--r-sm);
-}
-
-/* Scrollbar Styling */
-::-webkit-scrollbar       { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-secondary); }
-::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--gold); }
-
-/* ══════════════════════════════════════════════════════════════════
-   SECTION 3 — TYPOGRAPHY
-══════════════════════════════════════════════════════════════════ */
-h1, h2, h3, h4, h5, h6 {
-  font-family:  var(--font-display);
-  font-weight:  700;
-  line-height:  1.2;
-  color:        var(--text-primary);
-  letter-spacing: -0.02em;
-}
-
-h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
-h2 { font-size: clamp(1.5rem, 3.5vw, 2.5rem); }
-h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
-h4 { font-size: 1.25rem; }
-h5 { font-size: 1.1rem; }
-h6 { font-size: 1rem; }
-
-p { color: var(--text-secondary); line-height: 1.7; }
-
-.text-gold    { color: var(--gold); }
-.text-primary { color: var(--text-primary); }
-.text-muted   { color: var(--text-muted); }
-.text-center  { text-align: center; }
-.text-sm      { font-size: 0.875rem; }
-.text-xs      { font-size: 0.75rem; }
-.text-lg      { font-size: 1.125rem; }
-
-.font-display { font-family: var(--font-display); }
-.font-mono    { font-family: var(--font-mono); }
   /* Backgrounds */
+  --bg0:#02020A; --bg1:#06060F; --bg2:#0B0B18; --bg3:#101020;
+  --bg4:#161628; --bg5:#1D1D33; --bg6:#24243E;
 
+  /* Gold */
+  --gold:#C9A96E; --gold2:#DFC08A; --gold3:#EDD4A8; --gold4:#F5E4C4;
+  --goldd:rgba(201,169,110,.12); --goldb:rgba(201,169,110,.28); --goldg:rgba(201,169,110,.18);
+  --golds:0 0 48px rgba(201,169,110,.20);
+
+  /* Emerald */
+  --em:#2D8C62; --em2:#42C98A; --emd:rgba(66,201,138,.12);
+
+  /* Ruby */
+  --ruby:#EF4444; --ruby2:#F87171; --rubyd:rgba(239,68,68,.12);
+
+  /* Amber */
+  --amber:#F59E0B; --amberd:rgba(245,158,11,.12);
+
+  /* Text */
+  --t1:#F0EBE0; --t2:#B2A99C; --t3:#756D63; --t4:#433F38;
+
+  /* Borders */
+  --b1:rgba(255,255,255,.04); --b2:rgba(255,255,255,.09); --b3:rgba(255,255,255,.16);
+  --bgold:rgba(201,169,110,.28);
+
+  /* Shadows */
+  --sh1:0 2px 10px rgba(0,0,0,.45);
+  --sh2:0 8px 28px rgba(0,0,0,.56);
+  --sh3:0 20px 64px rgba(0,0,0,.68);
+  --sh4:0 40px 100px rgba(0,0,0,.78);
+  --shg:0 6px 36px rgba(201,169,110,.20);
+
+  /* Typography */
+  --fd:'Playfair Display',Georgia,'Times New Roman',serif;
+  --fb:'Crimson Pro',Georgia,'Times New Roman',serif;
+  --fu:'DM Sans',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --fm:'JetBrains Mono','Fira Code','Courier New',monospace;
+
+  /* Spacing */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px;
+  --s6:24px; --s8:32px; --s10:40px; --s12:48px; --s16:64px;
+
+  /* Radius */
+  --r1:4px; --r2:8px; --r3:12px; --r4:16px; --r5:20px; --r6:24px; --r7:32px; --rf:9999px;
+
+  /* Transitions */
+  --ease:cubic-bezier(.16,1,.3,1);
+  --easeback:cubic-bezier(.34,1.56,.64,1);
+  --t1s:.12s; --t2s:.22s; --t3s:.38s; --t4s:.55s;
+
+  /* Layout */
+  --header-h:64px;
+  --mobile-bar-h:46px;
+  --sidebar-w:270px;
+  --input-h:170px;
+}
 
 /* ─── 3. LIGHT THEME ─── */
 [data-theme="light"] {
@@ -1378,7 +1201,237 @@ kbd {
 /* ══════════════════════════════════════════════════════════════════
    SECTION 1 — CSS CUSTOM PROPERTIES (DESIGN TOKENS)
 ══════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Core Brand Colors ─────────────────────────────────────── */
+  --gold:           #C9A96E;
+  --gold-light:     #E8C98A;
+  --gold-dark:      #A07840;
+  --gold-glow:      rgba(201,169,110,0.18);
+  --gold-glow-deep: rgba(201,169,110,0.35);
 
+  /* ── Dark Theme (Default) ──────────────────────────────────── */
+  --bg-primary:     #0A0A0F;
+  --bg-secondary:   #111118;
+  --bg-card:        #16161F;
+  --bg-card-hover:  #1E1E2A;
+  --bg-glass:       rgba(22,22,31,0.85);
+  --bg-glass-light: rgba(255,255,255,0.04);
+  --bg-input:       #1A1A25;
+  --bg-sidebar:     #0D0D14;
+  --bg-header:      rgba(10,10,15,0.95);
+
+  /* ── Text Colors ────────────────────────────────────────────── */
+  --text-primary:   #F0EDE8;
+  --text-secondary: #A8A4A0;
+  --text-muted:     #6A6670;
+  --text-accent:    #C9A96E;
+  --text-inverse:   #0A0A0F;
+
+  /* ── Border Colors ──────────────────────────────────────────── */
+  --border:         rgba(201,169,110,0.12);
+  --border-hover:   rgba(201,169,110,0.30);
+  --border-focus:   rgba(201,169,110,0.55);
+  --border-card:    rgba(255,255,255,0.06);
+
+  /* ── Semantic Colors ────────────────────────────────────────── */
+  --success:        #2ECC71;
+  --success-bg:     rgba(46,204,113,0.12);
+  --warning:        #F39C12;
+  --warning-bg:     rgba(243,156,18,0.12);
+  --error:          #E74C3C;
+  --error-bg:       rgba(231,76,60,0.12);
+  --info:           #3498DB;
+  --info-bg:        rgba(52,152,219,0.12);
+
+  /* ── Gradients ──────────────────────────────────────────────── */
+  --grad-gold:      linear-gradient(135deg, #C9A96E 0%, #E8C98A 50%, #A07840 100%);
+  --grad-gold-h:    linear-gradient(90deg,  #C9A96E 0%, #E8C98A 100%);
+  --grad-dark:      linear-gradient(135deg, #0A0A0F 0%, #16161F 100%);
+  --grad-card:      linear-gradient(145deg, #16161F 0%, #1A1A25 100%);
+  --grad-sidebar:   linear-gradient(180deg, #0D0D14 0%, #0A0A0F 100%);
+  --grad-hero:      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,169,110,0.15) 0%, transparent 70%);
+  --grad-mesh:      radial-gradient(circle at 20% 80%, rgba(201,169,110,0.06) 0%, transparent 40%),
+                    radial-gradient(circle at 80% 20%, rgba(201,169,110,0.04) 0%, transparent 40%);
+
+  /* ── Shadows ────────────────────────────────────────────────── */
+  --shadow-sm:      0 2px 8px rgba(0,0,0,0.4);
+  --shadow-md:      0 4px 20px rgba(0,0,0,0.5);
+  --shadow-lg:      0 8px 40px rgba(0,0,0,0.6);
+  --shadow-xl:      0 16px 60px rgba(0,0,0,0.7);
+  --shadow-gold:    0 4px 20px rgba(201,169,110,0.25);
+  --shadow-gold-lg: 0 8px 40px rgba(201,169,110,0.35);
+  --shadow-inset:   inset 0 1px 0 rgba(255,255,255,0.06);
+
+  /* ── Spacing ────────────────────────────────────────────────── */
+  --sp-xs:  0.25rem;
+  --sp-sm:  0.5rem;
+  --sp-md:  1rem;
+  --sp-lg:  1.5rem;
+  --sp-xl:  2rem;
+  --sp-2xl: 3rem;
+  --sp-3xl: 4rem;
+
+  /* ── Radii ──────────────────────────────────────────────────── */
+  --r-sm:   0.375rem;
+  --r-md:   0.75rem;
+  --r-lg:   1rem;
+  --r-xl:   1.5rem;
+  --r-2xl:  2rem;
+  --r-full: 9999px;
+
+  /* ── Transitions ────────────────────────────────────────────── */
+  --tr-fast:   0.15s ease;
+  --tr-normal: 0.25s ease;
+  --tr-slow:   0.4s ease;
+  --tr-spring: 0.35s cubic-bezier(0.34,1.56,0.64,1);
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --font-display: 'Playfair Display', 'Georgia', serif;
+  --font-body:    'DM Sans', 'Helvetica Neue', sans-serif;
+  --font-mono:    'Fira Code', 'Courier New', monospace;
+  --font-ui:      'DM Sans', system-ui, sans-serif;
+
+  /* ── Layout ─────────────────────────────────────────────────── */
+  --sidebar-w:    280px;
+  --header-h:     64px;
+  --content-max:  900px;
+  --panel-max:    1200px;
+
+  /* ── Z-Index Scale ──────────────────────────────────────────── */
+  --z-base:    1;
+  --z-sticky:  10;
+  --z-sidebar: 100;
+  --z-overlay: 200;
+  --z-modal:   300;
+  --z-toast:   400;
+  --z-top:     500;
+}
+
+/* ── Light Theme ─────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-primary:     #FAF8F4;
+  --bg-secondary:   #F3EFE7;
+  --bg-card:        #FFFFFF;
+  --bg-card-hover:  #F9F6F0;
+  --bg-glass:       rgba(255,255,255,0.92);
+  --bg-glass-light: rgba(0,0,0,0.03);
+  --bg-input:       #FFFFFF;
+  --bg-sidebar:     #F3EFE7;
+  --bg-header:      rgba(250,248,244,0.97);
+
+  --text-primary:   #1A1612;
+  --text-secondary: #5A5550;
+  --text-muted:     #9A9590;
+  --text-accent:    #8A6030;
+
+  --border:         rgba(160,120,64,0.15);
+  --border-hover:   rgba(160,120,64,0.35);
+  --border-focus:   rgba(160,120,64,0.55);
+  --border-card:    rgba(0,0,0,0.07);
+
+  --gold:           #A07840;
+  --gold-light:     #C9A96E;
+  --gold-dark:      #7A5820;
+  --gold-glow:      rgba(160,120,64,0.12);
+
+  --shadow-sm:      0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md:      0 4px 20px rgba(0,0,0,0.1);
+  --shadow-lg:      0 8px 40px rgba(0,0,0,0.12);
+  --shadow-xl:      0 16px 60px rgba(0,0,0,0.14);
+  --shadow-gold:    0 4px 20px rgba(160,120,64,0.2);
+
+  --grad-hero:      radial-gradient(ellipse 80% 60% at 50% 0%, rgba(160,120,64,0.1) 0%, transparent 70%);
+  --grad-mesh:      radial-gradient(circle at 20% 80%, rgba(160,120,64,0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 80% 20%, rgba(160,120,64,0.03) 0%, transparent 40%);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SECTION 2 — RESET & BASE
+══════════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin:     0;
+  padding:    0;
+}
+
+html {
+  font-size:       16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family:      var(--font-body);
+  font-size:        1rem;
+  line-height:      1.65;
+  color:            var(--text-primary);
+  background-color: var(--bg-primary);
+  background-image: var(--grad-mesh);
+  min-height:       100vh;
+  overflow-x:       hidden;
+  transition:       background-color var(--tr-slow), color var(--tr-slow);
+}
+
+/* Font size classes */
+body.font-small  { font-size: 0.9rem; }
+body.font-medium { font-size: 1rem; }
+body.font-large  { font-size: 1.1rem; }
+
+img, video, svg { max-width: 100%; display: block; }
+a { color: var(--gold); text-decoration: none; transition: color var(--tr-fast); }
+a:hover { color: var(--gold-light); }
+button { cursor: pointer; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+ul, ol { list-style: none; }
+
+::selection {
+  background: var(--gold-glow-deep);
+  color:      var(--gold-light);
+}
+
+:focus-visible {
+  outline:        2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius:  var(--r-sm);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ══════════════════════════════════════════════════════════════════
+   SECTION 3 — TYPOGRAPHY
+══════════════════════════════════════════════════════════════════ */
+h1, h2, h3, h4, h5, h6 {
+  font-family:  var(--font-display);
+  font-weight:  700;
+  line-height:  1.2;
+  color:        var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2.5rem); }
+h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1.1rem; }
+h6 { font-size: 1rem; }
+
+p { color: var(--text-secondary); line-height: 1.7; }
+
+.text-gold    { color: var(--gold); }
+.text-primary { color: var(--text-primary); }
+.text-muted   { color: var(--text-muted); }
+.text-center  { text-align: center; }
+.text-sm      { font-size: 0.875rem; }
+.text-xs      { font-size: 0.75rem; }
+.text-lg      { font-size: 1.125rem; }
+
+.font-display { font-family: var(--font-display); }
+.font-mono    { font-family: var(--font-mono); }
 
 /* ══════════════════════════════════════════════════════════════════
    SECTION 4 — LAYOUT UTILITIES
