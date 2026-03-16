@@ -2107,7 +2107,7 @@ async function callAI(userPrompt, systemPrompt, streamMode = false, res = null) 
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json',
-                    'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000',
+                    'HTTP-Referer': process.env.SITE_URL || 'http://savoireai.vercel.app',
                     'X-Title': 'Savoiré AI'
                 },
                 body: JSON.stringify({
@@ -2268,7 +2268,7 @@ async function extractFromImage(buffer, mimetype) {
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
-                'HTTP-Referer': process.env.SITE_URL || 'http://localhost:3000',
+                'HTTP-Referer': process.env.SITE_URL || 'http://savoireai.vercel.app',
                 'X-Title': 'Savoiré AI'
             },
             body: JSON.stringify({
