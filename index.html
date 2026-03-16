@@ -1,1367 +1,663 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>Savoiré AI — The Scholar's Atelier</title>
-    <meta name="description" content="160+ free AI tools for notes, summarization, research, and writing. No login. No subscription. Forever free.">
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="/styles/global.css">
-    
-    <style>
-        /* Critical inline styles for first-visit overlay to prevent flash */
-        .welcome-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: rgba(4, 4, 10, 0.98);
-            backdrop-filter: blur(12px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
-        }
-        .welcome-overlay.hiding {
-            opacity: 0;
-            transform: scale(0.98);
-            pointer-events: none;
-        }
-        .welcome-card {
-            background: var(--bg-float, #151525);
-            border: 1px solid var(--border-gold, rgba(201,169,110,0.3));
-            border-radius: var(--r-xl, 28px);
-            padding: var(--s12, 48px);
-            max-width: 440px;
-            width: 90%;
-            box-shadow: var(--sh-xl, 0 48px 120px rgba(0,0,0,0.8));
-            text-align: center;
-        }
-        .welcome-logo-svg {
-            width: 72px;
-            height: 72px;
-            margin: 0 auto var(--s6, 24px);
-            color: var(--gold, #C9A96E);
-        }
-        .welcome-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            color: var(--gold, #C9A96E);
-            margin-bottom: var(--s2, 8px);
-            line-height: 1.1;
-        }
-        .welcome-sub {
-            font-family: 'Crimson Pro', serif;
-            font-size: 1.1rem;
-            color: var(--text-2, #B0A898);
-            margin-bottom: var(--s8, 32px);
-        }
-        .welcome-input {
-            width: 100%;
-            padding: 16px 24px;
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            text-align: center;
-            background: var(--bg-raised, #0E0E1A);
-            border: 2px solid var(--border-2, rgba(255,255,255,0.09));
-            border-radius: var(--r-lg, 20px);
-            color: var(--text-1, #F0ECE4);
-            margin-bottom: var(--s4, 16px);
-            transition: all 0.22s var(--ease);
-        }
-        .welcome-input:focus {
-            border-color: var(--gold, #C9A96E);
-            box-shadow: 0 0 0 4px var(--gold-dim, rgba(201,169,110,0.12));
-            outline: none;
-        }
-        .welcome-btn {
-            width: 100%;
-            padding: 16px 32px;
-            background: var(--gold, #C9A96E);
-            color: var(--bg-void, #04040A);
-            border: none;
-            border-radius: var(--r-full, 9999px);
-            font-family: 'DM Sans', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.22s var(--ease);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--s2, 8px);
-        }
-        .welcome-btn:hover {
-            background: var(--gold-bright, #E8CFA0);
-            transform: translateY(-2px);
-            box-shadow: var(--sh-gold, 0 8px 40px rgba(201,169,110,0.2));
-        }
-        .welcome-note {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.75rem;
-            color: var(--text-3, #706860);
-            margin-top: var(--s3, 12px);
-        }
-        /* Prevent body scroll when overlay is active */
-        body.overlay-active {
-            overflow: hidden;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Savoiré AI v2.0 — Free AI study companion. Comprehensive notes, flashcards, quizzes, summaries and mind maps. No login. No payment. Forever free.">
+<meta name="keywords" content="AI notes,free AI study,flashcards generator,quiz maker,study companion,Savoiré AI,Sooban Talha">
+<meta name="author" content="Sooban Talha Technologies">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="Savoiré AI v2.0 — Think Less. Know More.">
+<meta property="og:description" content="Free AI study companion. Comprehensive notes, flashcards, quizzes and more. No login required.">
+<meta property="og:url" content="https://savoireai.vercel.app">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Savoiré AI v2.0 — Think Less. Know More.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#C9A96E" media="(prefers-color-scheme:dark)">
+<meta name="theme-color" content="#8A5C18" media="(prefers-color-scheme:light)">
+<title>Savoiré AI v2.0 — Think Less. Know More. | Free AI Study Companion by Sooban Talha Technologies</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- jsPDF for PDF Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- Marked.js for Markdown Rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+
+<!-- DOMPurify for XSS Protection -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+<!-- Main Stylesheet -->
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Welcome Overlay (shown only if no sv_user) -->
-    <div id="welcomeOverlay" class="welcome-overlay">
-        <div class="welcome-card">
-            <!-- Ornate SVG logo -->
-            <svg class="welcome-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M50 10L90 30V70L50 90L10 70V30L50 10Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                <path d="M50 30L70 40V60L50 70L30 60V40L50 30Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                <text x="50" y="68" text-anchor="middle" fill="currentColor" font-family="Playfair Display" font-size="36" font-weight="700">Ś</text>
-            </svg>
-            
-            <h1 class="welcome-title">Welcome, Scholar</h1>
-            <p class="welcome-sub">What shall we call you?</p>
-            
-            <input type="text" id="scholarNameInput" class="welcome-input" placeholder="Your name..." maxlength="30" autofocus>
-            
-            <button id="enterAtelierBtn" class="welcome-btn btn-mag">
-                Enter the Atelier
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M4.16663 10H15.8333M15.8333 10L11.6666 5.83331M15.8333 10L11.6666 14.1666" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            
-            <p class="welcome-note">✦ No account needed. Completely free. Forever.</p>
-        </div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PAGE LOADING SCREEN
+═══════════════════════════════════════════════════════════ -->
+<div id="pageLoader" class="page-loader">
+  <div class="loader-content">
+    <div class="loader-mark">Ś</div>
+    <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
+    <div class="loader-text">Savoiré AI v2.0</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     WELCOME OVERLAY (first visit)
+═══════════════════════════════════════════════════════════ -->
+<div id="welcomeOverlay" class="welcome-overlay" style="display:none">
+  <canvas id="welcomeCanvas" class="welcome-canvas"></canvas>
+  <div class="welcome-card" id="welcomeCard">
+
+    <!-- Animated logo -->
+    <div class="wc-logo-wrap">
+      <svg class="wc-svg" width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#C9A96E"><animate attributeName="stop-color" values="#C9A96E;#EDD4A8;#C9A96E" dur="4s" repeatCount="indefinite"/></stop>
+            <stop offset="50%" stop-color="#EDD4A8"><animate attributeName="stop-color" values="#EDD4A8;#C9A96E;#EDD4A8" dur="4s" repeatCount="indefinite"/></stop>
+            <stop offset="100%" stop-color="#C9A96E"><animate attributeName="stop-color" values="#C9A96E;#EDD4A8;#C9A96E" dur="4s" repeatCount="indefinite"/></stop>
+          </linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- outer ring -->
+        <circle cx="55" cy="55" r="50" stroke="url(#lg1)" stroke-width="1.5" fill="none" stroke-dasharray="6 3" opacity="0.5">
+          <animateTransform attributeName="transform" type="rotate" from="0 55 55" to="360 55 55" dur="30s" repeatCount="indefinite"/>
+        </circle>
+        <!-- inner ring -->
+        <circle cx="55" cy="55" r="42" stroke="url(#lg1)" stroke-width="1" fill="rgba(201,169,110,0.04)"/>
+        <!-- S letter -->
+        <text x="55" y="74" text-anchor="middle" font-family="Playfair Display,serif" font-size="48" font-weight="700" fill="url(#lg1)" filter="url(#glow)">Ś</text>
+        <!-- corner accents -->
+        <line x1="14" y1="14" x2="24" y2="24" stroke="#C9A96E" stroke-width="1.5" opacity="0.35" stroke-linecap="round"/>
+        <line x1="96" y1="14" x2="86" y2="24" stroke="#C9A96E" stroke-width="1.5" opacity="0.35" stroke-linecap="round"/>
+        <line x1="14" y1="96" x2="24" y2="86" stroke="#C9A96E" stroke-width="1.5" opacity="0.35" stroke-linecap="round"/>
+        <line x1="96" y1="96" x2="86" y2="86" stroke="#C9A96E" stroke-width="1.5" opacity="0.35" stroke-linecap="round"/>
+      </svg>
+      <div class="wc-glow-orb"></div>
     </div>
 
-    <!-- Canvas Particle System (fixed background) -->
-    <canvas id="particleCanvas" class="hero-canvas"></canvas>
+    <div class="wc-badge">v2.0 &nbsp;·&nbsp; Completely Free &nbsp;·&nbsp; Forever</div>
+    <h1 class="wc-title">Savoiré AI</h1>
+    <p class="wc-tagline">Think Less. Know More.</p>
+    <p class="wc-desc">Your intelligent AI study companion. Generate comprehensive notes, flashcards, quizzes, summaries and mind maps on any topic — completely free, forever.</p>
 
-    <!-- Navigation -->
-    <nav class="nav" id="mainNav">
-        <div class="nav-inner">
-            <a href="/" class="nav-logo">
-                <svg width="36" height="36" viewBox="0 0 100 100" fill="none" class="nav-logo-mark">
-                    <path d="M50 10L90 30V70L50 90L10 70V30L50 10Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M50 30L70 40V60L50 70L30 60V40L50 30Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                    <text x="50" y="68" text-anchor="middle" fill="currentColor" font-family="Playfair Display" font-size="36" font-weight="700">Ś</text>
-                </svg>
-                <div>
-                    <div class="nav-logo-text">Savoiré AI</div>
-                    <div class="nav-logo-sub">Think Less. Know More.</div>
-                </div>
-            </a>
-            
-            <div class="nav-links">
-                <a href="#features">Features</a>
-                <a href="#tools">Tools</a>
-                <a href="#about">About</a>
-            </div>
-            
-            <div class="nav-spacer"></div>
-            
-            <div class="nav-right">
-                <button id="themeToggle" class="btn-icon" aria-label="Toggle theme">
-                    <svg class="theme-sun" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor">
-                        <circle cx="10" cy="10" r="4" stroke-width="1.5"/>
-                        <path d="M10 2V4M10 16V18M2 10H4M16 10H18M4.5 4.5L6 6M14 14L15.5 15.5M15.5 4.5L14 6M6 14L4.5 15.5" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    <svg class="theme-moon" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" style="display:none">
-                        <path d="M15 10C15 12.7614 12.7614 15 10 15C7.23858 15 5 12.7614 5 10C5 7.23858 7.23858 5 10 5C10.5 5 11 5.1 11.5 5.3C10.5 6.5 10 8 10 9.5C10 11 10.5 12.5 11.5 13.7C11 13.9 10.5 14 10 14C8.5 14 7.5 13 7.5 11.5C7.5 10 8.5 9 10 9C11 9 11.5 8.5 11.5 7.5C11.5 6.5 11 5.5 10 5" stroke-width="1.5"/>
-                    </svg>
-                </button>
-                <a href="/dashboard.html" class="btn btn-primary btn-mag" id="tryFreeNavBtn">Try Free →</a>
-                <button class="nav-hamburger" id="hamburgerBtn" aria-label="Menu">
-                    <span></span><span></span><span></span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Mobile Menu -->
-    <div class="nav-mobile-menu" id="mobileMenu">
-        <a href="#features" class="mobile-link">Features</a>
-        <a href="#tools" class="mobile-link">Tools</a>
-        <a href="#about" class="mobile-link">About</a>
-        <a href="/dashboard.html" class="btn btn-primary btn-mag mobile-cta">Try Free →</a>
+    <div class="wc-form">
+      <label class="wc-label">What shall we call you, Scholar?</label>
+      <input type="text" id="welcomeNameInput" class="wc-input" placeholder="Enter your name…" maxlength="40" autocomplete="off" autocapitalize="words" spellcheck="false">
+      <div class="wc-err" id="welcomeErr"></div>
+      <button class="wc-btn" id="welcomeBtn">
+        <span>Enter the Atelier</span>
+        <i class="fas fa-arrow-right"></i>
+      </button>
     </div>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <!-- Decorative orbs -->
-        <div class="hero-orb orb-gold"></div>
-        <div class="hero-orb orb-emerald"></div>
-        
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span class="hero-badge-dot"></span>
-                160+ Free AI Tools · No Login · Works Instantly
-            </div>
-            
-            <h1 class="hero-h1">
-                The Scholar's Atelier<br>
-                <span id="typewriterText" class="typewriter"></span>
-            </h1>
-            
-            <p class="hero-sub">
-                Savoiré AI gives every student, researcher, and professional access to 160+ AI writing and note tools — completely free, forever. No account. No subscription. No limits.
-            </p>
-            
-            <div class="hero-cta">
-                <a href="/dashboard.html" class="btn btn-primary btn-lg btn-mag" id="heroStartBtn">
-                    Start Creating
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M4.16663 10H15.8333M15.8333 10L11.6666 5.83331M15.8333 10L11.6666 14.1666" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </a>
-                <a href="#tools" class="btn btn-ghost btn-lg">See All 160 Tools ↓</a>
-            </div>
-            
-            <p class="hero-note">✦ Your work stays private in your browser. We never see your data.</p>
-            
-            <div class="scroll-indicator">
-                <div class="scroll-chevron"></div>
-                <div class="scroll-chevron"></div>
-                <div class="scroll-chevron"></div>
-            </div>
+    <div class="wc-features">
+      <span class="wc-feat"><i class="fas fa-book-open"></i> Deep Notes</span>
+      <span class="wc-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+      <span class="wc-feat"><i class="fas fa-question-circle"></i> Quiz</span>
+      <span class="wc-feat"><i class="fas fa-align-left"></i> Summary</span>
+      <span class="wc-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+      <span class="wc-feat"><i class="fas fa-file-pdf"></i> PDF Export</span>
+    </div>
+
+    <p class="wc-note"><i class="fas fa-shield-alt"></i> No account &nbsp;·&nbsp; No payment &nbsp;·&nbsp; Your data stays in your browser &nbsp;·&nbsp; Free forever</p>
+    <p class="wc-credit">Built by <strong>Sooban Talha Technologies</strong> &nbsp;·&nbsp; <a href="https://savoireai.vercel.app" target="_blank">savoireai.vercel.app</a></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     APP HEADER
+═══════════════════════════════════════════════════════════ -->
+<header class="app-header" id="appHeader">
+  <div class="hdr-left">
+    <button class="hdr-icon-btn" id="sidebarToggleBtn" title="Toggle sidebar" aria-label="Toggle sidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+    <a class="hdr-brand" href="#" id="homeLink">
+      <div class="hdr-brand-mark">Ś</div>
+      <div class="hdr-brand-text">
+        <span class="hdr-brand-name">Savoiré AI</span>
+        <span class="hdr-brand-ver">v2.0</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="hdr-center">
+    <div class="tool-pills-row" id="toolPillsDesktop">
+      <button class="tool-pill active" data-tool="notes"><i class="fas fa-book-open"></i><span>Notes</span></button>
+      <button class="tool-pill" data-tool="flashcards"><i class="fas fa-layer-group"></i><span>Flashcards</span></button>
+      <button class="tool-pill" data-tool="quiz"><i class="fas fa-question-circle"></i><span>Quiz</span></button>
+      <button class="tool-pill" data-tool="summary"><i class="fas fa-align-left"></i><span>Summary</span></button>
+      <button class="tool-pill" data-tool="mindmap"><i class="fas fa-project-diagram"></i><span>Mind Map</span></button>
+    </div>
+  </div>
+
+  <div class="hdr-right">
+    <button class="hdr-icon-btn" id="historyOpenBtn" title="History (Ctrl+H)" aria-label="Open history">
+      <i class="fas fa-history"></i>
+      <span class="hdr-badge" id="histBadge" style="display:none">0</span>
+    </button>
+    <button class="hdr-icon-btn" id="themeToggleBtn" title="Toggle theme" aria-label="Toggle theme">
+      <i class="fas fa-moon" id="themeIconEl"></i>
+    </button>
+    <button class="hdr-icon-btn" id="settingsOpenBtn" title="Settings" aria-label="Settings">
+      <i class="fas fa-cog"></i>
+    </button>
+    <div class="hdr-avatar-wrap" id="avatarWrap">
+      <button class="hdr-avatar" id="avatarBtn" aria-label="User menu" title="Your profile">
+        <span id="avatarLetter">S</span>
+      </button>
+      <div class="avatar-dropdown" id="avatarDropdown">
+        <div class="ad-user">
+          <div class="ad-av" id="adAvLetter">S</div>
+          <div class="ad-info">
+            <div class="ad-name" id="adName">Scholar</div>
+            <div class="ad-sub">Savoiré AI v2.0</div>
+          </div>
         </div>
-    </section>
+        <div class="ad-divider"></div>
+        <button class="ad-item" id="adHistoryBtn"><i class="fas fa-history"></i>View History</button>
+        <button class="ad-item" id="adSavedBtn"><i class="fas fa-star"></i>Saved Notes</button>
+        <button class="ad-item" id="adSettingsBtn"><i class="fas fa-cog"></i>Settings</button>
+        <div class="ad-divider"></div>
+        <button class="ad-item ad-danger" id="adClearBtn"><i class="fas fa-trash-alt"></i>Clear All Data</button>
+      </div>
+    </div>
+  </div>
+</header>
 
-    <!-- Stats Counter Row -->
-    <section class="section" id="stats">
-        <div class="container">
-            <div class="stats-row">
-                <div class="stat-card reveal">
-                    <div class="stat-number" data-target="160">160+</div>
-                    <div class="stat-label">AI Tools</div>
-                </div>
-                <div class="stat-card reveal">
-                    <div class="stat-number" data-target="50">50+</div>
-                    <div class="stat-label">Languages</div>
-                </div>
-                <div class="stat-card reveal">
-                    <div class="stat-number" data-target="6">6</div>
-                    <div class="stat-label">AI Models</div>
-                </div>
-                <div class="stat-card reveal">
-                    <div class="stat-number" data-target="999">∞</div>
-                    <div class="stat-label">Free, Forever</div>
-                </div>
-            </div>
+<!-- Mobile tool pills bar -->
+<div class="mobile-tools-bar" id="mobileToolsBar">
+  <button class="tool-pill active" data-tool="notes"><i class="fas fa-book-open"></i>Notes</button>
+  <button class="tool-pill" data-tool="flashcards"><i class="fas fa-layer-group"></i>Cards</button>
+  <button class="tool-pill" data-tool="quiz"><i class="fas fa-question-circle"></i>Quiz</button>
+  <button class="tool-pill" data-tool="summary"><i class="fas fa-align-left"></i>Summary</button>
+  <button class="tool-pill" data-tool="mindmap"><i class="fas fa-project-diagram"></i>Map</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN LAYOUT
+═══════════════════════════════════════════════════════════ -->
+<div class="app-layout" id="appLayout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-inner">
+
+      <!-- New session btn -->
+      <div class="sb-top">
+        <button class="sb-new-btn" id="sbNewBtn"><i class="fas fa-plus"></i> New Session</button>
+      </div>
+
+      <!-- Tools nav -->
+      <div class="sb-section">
+        <div class="sb-section-label">AI Tools</div>
+        <nav class="sb-nav" id="sbNav">
+          <button class="sb-nav-item active" data-tool="notes"><span class="sni-icon"><i class="fas fa-book-open"></i></span><span class="sni-text">Generate Notes</span></button>
+          <button class="sb-nav-item" data-tool="flashcards"><span class="sni-icon"><i class="fas fa-layer-group"></i></span><span class="sni-text">Flashcards</span></button>
+          <button class="sb-nav-item" data-tool="quiz"><span class="sni-icon"><i class="fas fa-question-circle"></i></span><span class="sni-text">Practice Quiz</span></button>
+          <button class="sb-nav-item" data-tool="summary"><span class="sni-icon"><i class="fas fa-align-left"></i></span><span class="sni-text">Smart Summary</span></button>
+          <button class="sb-nav-item" data-tool="mindmap"><span class="sni-icon"><i class="fas fa-project-diagram"></i></span><span class="sni-text">Mind Map</span></button>
+        </nav>
+      </div>
+
+      <!-- History preview -->
+      <div class="sb-section">
+        <div class="sb-section-label" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Recent</span>
+          <button class="sb-see-all" id="sbHistoryAllBtn">See all</button>
         </div>
-    </section>
-
-    <!-- Live Demo Section -->
-    <section class="section" id="demo">
-        <div class="container">
-            <div class="section-badge reveal">
-                <span class="section-badge-dot"></span>
-                REAL AI · REAL OUTPUT
-            </div>
-            <h2 class="section-title reveal">Watch Savoiré Think</h2>
-            <p class="section-sub reveal">Real AI. Real output. No signup.</p>
-            
-            <div class="demo-panel reveal">
-                <div class="demo-tabs" id="demoTabs">
-                    <div class="demo-tab active" data-demo="notes">Generate Notes</div>
-                    <div class="demo-tab" data-demo="summarize">Summarize</div>
-                    <div class="demo-tab" data-demo="translate">Translate</div>
-                    <div class="demo-tab" data-demo="flashcards">Flashcards</div>
-                    <div class="demo-tab" data-demo="rewrite">Rewrite</div>
-                </div>
-                <div class="demo-body">
-                    <div class="demo-input-col">
-                        <div class="demo-label">INPUT</div>
-                        <div class="demo-text" id="demoInput"></div>
-                    </div>
-                    <div class="demo-divider"></div>
-                    <div class="demo-output-col">
-                        <div class="demo-label">OUTPUT</div>
-                        <div class="demo-text" id="demoOutput"></div>
-                    </div>
-                    <div class="demo-processing" id="demoProcessing">
-                        <div class="shimmer-line" style="width:60%"></div>
-                        <div class="shimmer-line" style="width:40%"></div>
-                        <div class="shimmer-line" style="width:80%"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="text-center" style="margin-top: var(--s8)">
-                <a href="/dashboard.html" class="btn btn-primary btn-lg btn-mag">Try it yourself →</a>
-            </div>
+        <div class="sb-history-list" id="sbHistoryList">
+          <div class="sb-empty"><i class="fas fa-clock"></i><span>No history yet</span></div>
         </div>
-    </section>
+      </div>
 
-    <!-- Feature Categories Grid -->
-    <section class="section" id="features">
-        <div class="container">
-            <div class="section-badge reveal">
-                <span class="section-badge-dot"></span>
-                160 TOOLS · 10 CATEGORIES
-            </div>
-            <h2 class="section-title reveal">160 Tools Across 10 Categories</h2>
-            
-            <div class="categories-grid">
-                <!-- Category 1 -->
-                <div class="category-card reveal" data-category="notes">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M8 8H40V40H8V8Z" stroke-width="1.5"/>
-                        <path d="M16 16H32" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M16 24H32" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M16 32H26" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <h3 class="category-name">Note Generation</h3>
-                    <div class="category-count">25 tools</div>
-                    <div class="category-examples">Lecture Notes · Meeting Notes · Research Notes</div>
-                </div>
-                
-                <!-- Category 2 -->
-                <div class="category-card reveal" data-category="summarization">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M12 20L24 8L36 20L24 32L12 20Z" stroke-width="1.5"/>
-                        <path d="M8 36H40" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <h3 class="category-name">Summarization</h3>
-                    <div class="category-count">20 tools</div>
-                    <div class="category-examples">TL;DR · Key Ideas · Multi-Language</div>
-                </div>
-                
-                <!-- Category 3 -->
-                <div class="category-card reveal" data-category="meetings">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <circle cx="24" cy="20" r="8" stroke-width="1.5"/>
-                        <path d="M8 36C8 30 16 26 24 26C32 26 40 30 40 36" stroke-width="1.5"/>
-                    </svg>
-                    <h3 class="category-name">Meeting Tools</h3>
-                    <div class="category-count">15 tools</div>
-                    <div class="category-examples">Action Items · Decisions · Follow-up</div>
-                </div>
-                
-                <!-- Category 4 -->
-                <div class="category-card reveal" data-category="transform">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M12 24H36M36 24L30 18M36 24L30 30" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M18 12L24 6L30 12" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    <h3 class="category-name">Text Transformation</h3>
-                    <div class="category-count">15 tools</div>
-                    <div class="category-examples">Rephrase · Tone · Translate</div>
-                </div>
-                
-                <!-- Category 5 -->
-                <div class="category-card reveal" data-category="study">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M8 8L24 16L40 8V32L24 40L8 32V8Z" stroke-width="1.5"/>
-                        <path d="M24 16V40" stroke-width="1.5"/>
-                    </svg>
-                    <h3 class="category-name">Study & Learning</h3>
-                    <div class="category-count">15 tools</div>
-                    <div class="category-examples">Flashcards · Quizzes · Study Guides</div>
-                </div>
-                
-                <!-- Category 6 -->
-                <div class="category-card reveal" data-category="research">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <circle cx="30" cy="18" r="8" stroke-width="1.5"/>
-                        <path d="M12 30L24 18L36 30" stroke-width="1.5"/>
-                        <path d="M18 36L30 24" stroke-width="1.5"/>
-                    </svg>
-                    <h3 class="category-name">Research & Writing</h3>
-                    <div class="category-count">15 tools</div>
-                    <div class="category-examples">Thesis · Bibliography · Outlines</div>
-                </div>
-                
-                <!-- Category 7 -->
-                <div class="category-card reveal" data-category="content">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M12 14H36V34H12V14Z" stroke-width="1.5"/>
-                        <path d="M18 20H30" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M18 26H30" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <h3 class="category-name">Content Creation</h3>
-                    <div class="category-count">15 tools</div>
-                    <div class="category-examples">Blog · Social · Email · Ads</div>
-                </div>
-                
-                <!-- Category 8 -->
-                <div class="category-card reveal" data-category="documents">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M12 8H30L36 14V40H12V8Z" stroke-width="1.5"/>
-                        <path d="M18 20H30" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M18 28H30" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <h3 class="category-name">Document Tools</h3>
-                    <div class="category-count">15 tools</div>
-                    <div class="category-examples">TOC · Executive Summary · SOPs</div>
-                </div>
-                
-                <!-- Category 9 -->
-                <div class="category-card reveal" data-category="rewriting">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M12 16L24 28L36 16" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M12 28L24 40L36 28" stroke-width="1.5" stroke-linecap="round"/>
-                    </svg>
-                    <h3 class="category-name">AI Rewriting</h3>
-                    <div class="category-count">15 tools</div>
-                    <div class="category-examples">Humanize · Formal · Academic</div>
-                </div>
-                
-                <!-- Category 10 -->
-                <div class="category-card reveal" data-category="special">
-                    <svg class="category-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor">
-                        <path d="M24 8L28 18H40L30 24L34 34L24 28L14 34L18 24L8 18H20L24 8Z" stroke-width="1.5"/>
-                    </svg>
-                    <h3 class="category-name">Special AI Tools</h3>
-                    <div class="category-count">10 tools</div>
-                    <div class="category-examples">SWOT · Root Cause · Decision Matrix</div>
-                </div>
-            </div>
+      <!-- Templates -->
+      <div class="sb-section">
+        <div class="sb-section-label">Quick Templates</div>
+        <div class="sb-templates">
+          <button class="sb-tpl" data-tpl="Study notes on [topic] — comprehensive academic coverage with key concepts, examples, and practice questions." data-tool="notes"><i class="fas fa-graduation-cap"></i>Study Notes</button>
+          <button class="sb-tpl" data-tpl="Create flashcards for [topic] covering all key terms and concepts." data-tool="flashcards"><i class="fas fa-layer-group"></i>Flashcard Deck</button>
+          <button class="sb-tpl" data-tpl="Generate a 5-question quiz on [topic] with detailed explanations." data-tool="quiz"><i class="fas fa-question-circle"></i>Practice Quiz</button>
+          <button class="sb-tpl" data-tpl="Summarize [topic] concisely with key takeaways." data-tool="summary"><i class="fas fa-align-left"></i>Quick Summary</button>
+          <button class="sb-tpl" data-tpl="Create a mind map for [topic] covering all major branches." data-tool="mindmap"><i class="fas fa-project-diagram"></i>Mind Map</button>
+          <button class="sb-tpl" data-tpl="Lecture notes on [topic] — structured for exam preparation with key points and common questions." data-tool="notes"><i class="fas fa-chalkboard-teacher"></i>Lecture Notes</button>
+          <button class="sb-tpl" data-tpl="Research overview of [topic] — background, current state, key findings." data-tool="notes"><i class="fas fa-flask"></i>Research Brief</button>
+          <button class="sb-tpl" data-tpl="Executive summary of [topic] in professional tone, concise and actionable." data-tool="summary"><i class="fas fa-briefcase"></i>Executive Summary</button>
         </div>
-    </section>
+      </div>
 
-    <!-- Selected Tools Showcase -->
-    <section class="section" id="tools">
-        <div class="container">
-            <div class="section-badge reveal">
-                <span class="section-badge-dot"></span>
-                MOST USED
-            </div>
-            <h2 class="section-title reveal">Most Used Tools</h2>
-            
-            <div class="tools-showcase">
-                <!-- Tool cards (20 most used) -->
-                <div class="tool-card reveal" data-tool="flashcards">
-                    <span class="tool-emoji">🎴</span>
-                    <div class="tool-info">
-                        <h4>Flashcard Generator</h4>
-                        <p>Create Q&A flashcards from any content</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="summarize">
-                    <span class="tool-emoji">📋</span>
-                    <div class="tool-info">
-                        <h4>TL;DR Summarizer</h4>
-                        <p>One-sentence ultra-concise summaries</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="lecture">
-                    <span class="tool-emoji">🎓</span>
-                    <div class="tool-info">
-                        <h4>Lecture Notes</h4>
-                        <p>Structured notes with headings & bullets</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="translate">
-                    <span class="tool-emoji">🌍</span>
-                    <div class="tool-info">
-                        <h4>Translate</h4>
-                        <p>50+ languages with context preservation</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="meeting">
-                    <span class="tool-emoji">🎙️</span>
-                    <div class="tool-info">
-                        <h4>Meeting Action Items</h4>
-                        <p>Extract tasks from transcripts</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="rewrite">
-                    <span class="tool-emoji">✏️</span>
-                    <div class="tool-info">
-                        <h4>Academic Rewriter</h4>
-                        <p>Formal, scholarly language enhancement</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="quiz">
-                    <span class="tool-emoji">❓</span>
-                    <div class="tool-info">
-                        <h4>MCQ Generator</h4>
-                        <p>Multiple choice quizzes with answers</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="outline">
-                    <span class="tool-emoji">📊</span>
-                    <div class="tool-info">
-                        <h4>Research Outline</h4>
-                        <p>Structured academic paper outlines</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="swot">
-                    <span class="tool-emoji">⚡</span>
-                    <div class="tool-info">
-                        <h4>SWOT Analysis</h4>
-                        <p>Strengths, weaknesses, opportunities, threats</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="email">
-                    <span class="tool-emoji">📧</span>
-                    <div class="tool-info">
-                        <h4>Email Writer</h4>
-                        <p>Professional emails for any context</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="bullets">
-                    <span class="tool-emoji">•</span>
-                    <div class="tool-info">
-                        <h4>Bullet Notes</h4>
-                        <p>Convert any text to clean bullet points</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="explain">
-                    <span class="tool-emoji">💡</span>
-                    <div class="tool-info">
-                        <h4>ELI5 Explainer</h4>
-                        <p>Explain like I'm 5 years old</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="compare">
-                    <span class="tool-emoji">⚖️</span>
-                    <div class="tool-info">
-                        <h4>Comparison Table</h4>
-                        <p>Side-by-side comparison of concepts</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="procon">
-                    <span class="tool-emoji">✅❌</span>
-                    <div class="tool-info">
-                        <h4>Pro/Con List</h4>
-                        <p>Balanced argument analysis</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="timeline">
-                    <span class="tool-emoji">⏳</span>
-                    <div class="tool-info">
-                        <h4>Timeline Creator</h4>
-                        <p>Chronological event sequences</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="glossary">
-                    <span class="tool-emoji">📚</span>
-                    <div class="tool-info">
-                        <h4>Glossary Generator</h4>
-                        <p>Key terms with definitions</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="mindmap">
-                    <span class="tool-emoji">🗺️</span>
-                    <div class="tool-info">
-                        <h4>Mind Map Notes</h4>
-                        <p>Hierarchical concept relationships</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="grammar">
-                    <span class="tool-emoji">🔍</span>
-                    <div class="tool-info">
-                        <h4>Grammar Fix</h4>
-                        <p>Perfect spelling and grammar</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="casestudy">
-                    <span class="tool-emoji">📑</span>
-                    <div class="tool-info">
-                        <h4>Case Study Breakdown</h4>
-                        <p>Structured business/medical case analysis</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-                
-                <div class="tool-card reveal" data-tool="headline">
-                    <span class="tool-emoji">📰</span>
-                    <div class="tool-info">
-                        <h4>Headline Generator</h4>
-                        <p>Click-worthy titles and headers</p>
-                    </div>
-                    <span class="badge-free">Free</span>
-                </div>
-            </div>
-            
-            <div class="text-center" style="margin-top: var(--s10)">
-                <a href="/dashboard.html" class="btn btn-outline btn-lg">View All 160 Tools →</a>
-            </div>
+      <!-- Sidebar footer -->
+      <div class="sb-footer">
+        <div class="sb-footer-user">
+          <div class="sb-footer-av" id="sbFooterAv">S</div>
+          <div class="sb-footer-info">
+            <div class="sb-footer-name" id="sbFooterName">Scholar</div>
+            <div class="sb-footer-brand">Savoiré AI v2.0</div>
+          </div>
         </div>
-    </section>
+        <div class="sb-footer-credit">Built by <strong>Sooban Talha Technologies</strong></div>
+      </div>
+    </div>
+  </aside>
 
-    <!-- How It Works -->
-    <section class="section" id="how-it-works">
-        <div class="container">
-            <div class="section-badge reveal">
-                <span class="section-badge-dot"></span>
-                SIMPLE · POWERFUL · INSTANT
-            </div>
-            <h2 class="section-title reveal">How It Works</h2>
-            
-            <div class="steps-container">
-                <div class="step reveal">
-                    <div class="step-number">I</div>
-                    <div class="step-content">
-                        <h3>Enter Your Material</h3>
-                        <p>Type anything, paste text, upload a file — PDF, DOCX, image, or plain text.</p>
-                    </div>
-                </div>
-                
-                <div class="step-connector"></div>
-                
-                <div class="step reveal">
-                    <div class="step-number">II</div>
-                    <div class="step-content">
-                        <h3>Choose Your Tool</h3>
-                        <p>Pick from 160+ AI-powered tools across 10 categories.</p>
-                    </div>
-                </div>
-                
-                <div class="step-connector"></div>
-                
-                <div class="step reveal">
-                    <div class="step-number">III</div>
-                    <div class="step-content">
-                        <h3>Get Your Masterpiece</h3>
-                        <p>Watch your output stream in real-time, then export, save, or copy.</p>
-                    </div>
-                </div>
-            </div>
+  <!-- MAIN WORKSPACE -->
+  <main class="workspace" id="workspace">
+
+    <!-- Welcome / empty state -->
+    <div class="ws-welcome" id="wsWelcome">
+      <div class="wsw-inner">
+        <div class="wsw-logo-mark">Ś</div>
+        <h2 class="wsw-title">Savoiré AI v2.0</h2>
+        <p class="wsw-greeting" id="wswGreeting">Think Less. Know More.</p>
+        <p class="wsw-sub">Enter any topic below, choose your AI tool, and press Generate. Comprehensive study materials — completely free, instantly.</p>
+
+        <!-- Features marquee -->
+        <div class="wsw-marquee-wrap">
+          <div class="wsw-marquee">
+            <span class="wsw-feat"><i class="fas fa-book-open"></i>Comprehensive Notes</span>
+            <span class="wsw-feat"><i class="fas fa-layer-group"></i>Interactive Flashcards</span>
+            <span class="wsw-feat"><i class="fas fa-question-circle"></i>Practice Quizzes</span>
+            <span class="wsw-feat"><i class="fas fa-align-left"></i>Smart Summaries</span>
+            <span class="wsw-feat"><i class="fas fa-project-diagram"></i>Mind Maps</span>
+            <span class="wsw-feat"><i class="fas fa-file-pdf"></i>PDF Export</span>
+            <span class="wsw-feat"><i class="fas fa-globe"></i>50+ Languages</span>
+            <span class="wsw-feat"><i class="fas fa-lock"></i>100% Private</span>
+            <span class="wsw-feat"><i class="fas fa-infinity"></i>Completely Free</span>
+            <!-- duplicate for seamless loop -->
+            <span class="wsw-feat"><i class="fas fa-book-open"></i>Comprehensive Notes</span>
+            <span class="wsw-feat"><i class="fas fa-layer-group"></i>Interactive Flashcards</span>
+            <span class="wsw-feat"><i class="fas fa-question-circle"></i>Practice Quizzes</span>
+            <span class="wsw-feat"><i class="fas fa-align-left"></i>Smart Summaries</span>
+            <span class="wsw-feat"><i class="fas fa-project-diagram"></i>Mind Maps</span>
+            <span class="wsw-feat"><i class="fas fa-file-pdf"></i>PDF Export</span>
+            <span class="wsw-feat"><i class="fas fa-globe"></i>50+ Languages</span>
+            <span class="wsw-feat"><i class="fas fa-lock"></i>100% Private</span>
+            <span class="wsw-feat"><i class="fas fa-infinity"></i>Completely Free</span>
+          </div>
         </div>
-    </section>
 
-    <!-- Language Support Section -->
-    <section class="section" id="languages">
-        <div class="container">
-            <div class="section-badge reveal">
-                <span class="section-badge-dot"></span>
-                50+ LANGUAGES
-            </div>
-            <h2 class="section-title reveal">In Any Language</h2>
-            
-            <div class="marquee-wrap">
-                <div class="marquee-row">
-                    <!-- First row (left to right) -->
-                    <span class="lang-pill">English</span>
-                    <span class="lang-pill">French</span>
-                    <span class="lang-pill">German</span>
-                    <span class="lang-pill">Spanish</span>
-                    <span class="lang-pill">Italian</span>
-                    <span class="lang-pill">Portuguese</span>
-                    <span class="lang-pill">Russian</span>
-                    <span class="lang-pill">Japanese</span>
-                    <span class="lang-pill">Chinese (Simplified)</span>
-                    <span class="lang-pill">Chinese (Traditional)</span>
-                    <span class="lang-pill">Korean</span>
-                    <span class="lang-pill">Arabic</span>
-                    <span class="lang-pill">Hindi</span>
-                    <span class="lang-pill">Dutch</span>
-                    <span class="lang-pill">Polish</span>
-                    <span class="lang-pill">Turkish</span>
-                    <span class="lang-pill">Swedish</span>
-                    <span class="lang-pill">Danish</span>
-                    <span class="lang-pill">Norwegian</span>
-                    <span class="lang-pill">Finnish</span>
-                    <span class="lang-pill">Greek</span>
-                    <span class="lang-pill">Czech</span>
-                    <span class="lang-pill">Romanian</span>
-                    <span class="lang-pill">Hungarian</span>
-                    <span class="lang-pill">Ukrainian</span>
-                    <span class="lang-pill">Thai</span>
-                    <span class="lang-pill">Vietnamese</span>
-                    <!-- Duplicate for seamless loop -->
-                    <span class="lang-pill">English</span>
-                    <span class="lang-pill">French</span>
-                    <span class="lang-pill">German</span>
-                    <span class="lang-pill">Spanish</span>
-                </div>
-                <div class="marquee-row reverse">
-                    <!-- Second row (right to left) -->
-                    <span class="lang-pill">Indonesian</span>
-                    <span class="lang-pill">Malay</span>
-                    <span class="lang-pill">Filipino</span>
-                    <span class="lang-pill">Hebrew</span>
-                    <span class="lang-pill">Persian</span>
-                    <span class="lang-pill">Swahili</span>
-                    <span class="lang-pill">Catalan</span>
-                    <span class="lang-pill">Croatian</span>
-                    <span class="lang-pill">Bulgarian</span>
-                    <span class="lang-pill">Slovak</span>
-                    <span class="lang-pill">Lithuanian</span>
-                    <span class="lang-pill">Latvian</span>
-                    <span class="lang-pill">Estonian</span>
-                    <span class="lang-pill">Slovenian</span>
-                    <span class="lang-pill">Serbian</span>
-                    <span class="lang-pill">Macedonian</span>
-                    <span class="lang-pill">Albanian</span>
-                    <span class="lang-pill">Georgian</span>
-                    <span class="lang-pill">Armenian</span>
-                    <span class="lang-pill">Azerbaijani</span>
-                    <span class="lang-pill">Kazakh</span>
-                    <span class="lang-pill">Uzbek</span>
-                    <span class="lang-pill">Bengali</span>
-                    <span class="lang-pill">Punjabi</span>
-                    <span class="lang-pill">Tamil</span>
-                    <span class="lang-pill">Telugu</span>
-                    <span class="lang-pill">Marathi</span>
-                    <span class="lang-pill">Gujarati</span>
-                    <!-- Duplicate for seamless loop -->
-                    <span class="lang-pill">Indonesian</span>
-                    <span class="lang-pill">Malay</span>
-                    <span class="lang-pill">Filipino</span>
-                    <span class="lang-pill">Hebrew</span>
-                </div>
-            </div>
+        <!-- Suggestions -->
+        <div class="wsw-sugg-wrap">
+          <p class="wsw-sugg-label">Try these topics to get started:</p>
+          <div class="wsw-sugg-grid">
+            <button class="sugg-chip" data-prompt="Quantum Mechanics"><i class="fas fa-atom"></i>Quantum Mechanics</button>
+            <button class="sugg-chip" data-prompt="The French Revolution — causes, events, consequences"><i class="fas fa-flag"></i>French Revolution</button>
+            <button class="sugg-chip" data-prompt="Machine Learning fundamentals — algorithms, types, applications"><i class="fas fa-brain"></i>Machine Learning</button>
+            <button class="sugg-chip" data-prompt="DNA Replication — process, enzymes, importance"><i class="fas fa-dna"></i>DNA Replication</button>
+            <button class="sugg-chip" data-prompt="Newton's Laws of Motion with real-world examples"><i class="fas fa-apple-alt"></i>Newton's Laws</button>
+            <button class="sugg-chip" data-prompt="World War II — timeline, causes, major events, outcome"><i class="fas fa-globe-europe"></i>World War II</button>
+            <button class="sugg-chip" data-prompt="Photosynthesis — light and dark reactions, importance"><i class="fas fa-leaf"></i>Photosynthesis</button>
+            <button class="sugg-chip" data-prompt="Shakespeare's Hamlet — themes, characters, analysis"><i class="fas fa-book"></i>Hamlet</button>
+            <button class="sugg-chip" data-prompt="Calculus — derivatives, integrals, key rules"><i class="fas fa-square-root-alt"></i>Calculus</button>
+            <button class="sugg-chip" data-prompt="Climate Change — causes, effects, solutions"><i class="fas fa-temperature-high"></i>Climate Change</button>
+            <button class="sugg-chip" data-prompt="Python programming fundamentals for beginners"><i class="fab fa-python"></i>Python Basics</button>
+            <button class="sugg-chip" data-prompt="The Human Digestive System — organs, functions, process"><i class="fas fa-heartbeat"></i>Digestive System</button>
+          </div>
         </div>
-    </section>
 
-    <!-- Testimonials -->
-    <section class="section" id="testimonials">
-        <div class="container">
-            <div class="section-badge reveal">
-                <span class="section-badge-dot"></span>
-                LOVED BY SCHOLARS
-            </div>
-            <h2 class="section-title reveal">Trusted by Thinkers</h2>
-            
-            <div class="testimonials-grid">
-                <!-- Testimonial 1 -->
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-avatar" style="background:#C9A96E20; color:#C9A96E">JD</div>
-                    <div class="testimonial-name">Dr. James Donovan</div>
-                    <div class="testimonial-role">Professor, Cambridge</div>
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"Savoiré AI has transformed how my students engage with lecture materials. The note generation is remarkably accurate and saves hours of manual work."</p>
-                </div>
-                
-                <!-- Testimonial 2 -->
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-avatar" style="background:#2E7D5E20; color:#2E7D5E">MP</div>
-                    <div class="testimonial-name">Maya Patel</div>
-                    <div class="testimonial-role">PhD Researcher, Stanford</div>
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"The research tools are incredible. Literature reviews that took weeks now take hours. And it's completely free? Unbelievable."</p>
-                </div>
-                
-                <!-- Testimonial 3 -->
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-avatar" style="background:#C0392B20; color:#C0392B">SK</div>
-                    <div class="testimonial-name">Sarah Kim</div>
-                    <div class="testimonial-role">Content Writer</div>
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"From blog outlines to social captions, Savoiré handles everything. The rewriting tools make my content shine. Best free tool I've ever used."</p>
-                </div>
-                
-                <!-- Testimonial 4 -->
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-avatar" style="background:#C9A96E40; color:#C9A96E">AR</div>
-                    <div class="testimonial-name">Dr. Ahmed Rashid</div>
-                    <div class="testimonial-role">Medical Researcher</div>
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"The medical summarization tools are precise and reliable. I use it daily for research paper analysis and patient notes."</p>
-                </div>
-                
-                <!-- Testimonial 5 -->
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-avatar" style="background:#2E7D5E40; color:#2E7D5E">LW</div>
-                    <div class="testimonial-name">Laura Williams</div>
-                    <div class="testimonial-role">High School Teacher</div>
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"My students use it for study guides and flashcards. The fact that there's no login means everyone can use it instantly."</p>
-                </div>
-                
-                <!-- Testimonial 6 -->
-                <div class="testimonial-card reveal">
-                    <div class="testimonial-avatar" style="background:#C0392B40; color:#C0392B">MC</div>
-                    <div class="testimonial-name">Michael Chen</div>
-                    <div class="testimonial-role">Startup Founder</div>
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-quote">"The business plan and pitch deck tools helped us secure funding. Professional quality output without paying a cent."</p>
-                </div>
-            </div>
+        <p class="wsw-credit">Powered by <strong>Savoiré AI v2.0</strong> &nbsp;·&nbsp; Built by <strong>Sooban Talha Technologies</strong> &nbsp;·&nbsp; <a href="https://savoireai.vercel.app" target="_blank">savoireai.vercel.app</a></p>
+      </div>
+    </div>
+
+    <!-- Messages area -->
+    <div class="ws-messages" id="wsMessages" style="display:none">
+      <div class="messages-list" id="messagesList"></div>
+    </div>
+
+    <!-- Thinking / Loading -->
+    <div class="ws-thinking" id="wsThinking" style="display:none">
+      <div class="thinking-card">
+        <div class="thinking-av">Ś</div>
+        <div class="thinking-body">
+          <div class="thinking-title">Savoiré AI is crafting your study materials…</div>
+          <div class="thinking-dots"><span></span><span></span><span></span></div>
+          <div class="thinking-stages" id="thinkingStages">
+            <span class="ts" id="ts0"><i class="fas fa-search"></i>Analyzing topic</span>
+            <span class="ts" id="ts1"><i class="fas fa-pen-nib"></i>Writing notes</span>
+            <span class="ts" id="ts2"><i class="fas fa-layer-group"></i>Building cards</span>
+            <span class="ts" id="ts3"><i class="fas fa-question-circle"></i>Crafting quiz</span>
+            <span class="ts" id="ts4"><i class="fas fa-check-circle"></i>Finalizing</span>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
 
-    <!-- FAQ Section -->
-    <section class="section" id="faq">
-        <div class="container">
-            <div class="section-badge reveal">
-                <span class="section-badge-dot"></span>
-                QUESTIONS & ANSWERS
-            </div>
-            <h2 class="section-title reveal">Frequently Asked Questions</h2>
-            
-            <div class="faq-list">
-                <!-- FAQ 1 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>Is Savoiré AI really completely free?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Yes. Completely, permanently, 100% free. No hidden charges. No trial periods. No premium tier. Every tool, every feature, available to everyone forever.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 2 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>Do I need to create an account or log in?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>No account. No login. No email. On first visit you simply enter your name — that's it. Everything is stored privately in your browser.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 3 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>What happens to my notes and data?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Everything you create stays in YOUR browser via localStorage. Nothing is ever sent to or stored on our servers. Your data is 100% private.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 4 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>What AI powers Savoiré?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Savoiré AI uses a proprietary ensemble of advanced language models, continuously updated with the latest AI research. We handle all the complexity — you just get results.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 5 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>Which file types can I upload?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>PDF (.pdf), Word (.docx), Plain text (.txt), Images (.png, .jpg, .webp) with OCR text recognition.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 6 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>How many tools are available?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Over 160 tools across 10 categories: notes, summarization, meetings, study, research, content, documents, rewriting, and more.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 7 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>Which languages are supported?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Over 50 languages including all major European, Asian, Middle Eastern, and South Asian languages.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 8 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>Can I export my notes as PDF?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Yes. Export any output as PDF, Markdown, or plain text with one click — fully formatted, branded with Savoiré AI.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 9 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>Does it work on mobile?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Perfectly. Savoiré AI is fully responsive and optimized for mobile browsers.</p>
-                    </div>
-                </div>
-                
-                <!-- FAQ 10 -->
-                <div class="faq-item reveal">
-                    <div class="faq-q">
-                        <span>Who built Savoiré AI?</span>
-                        <span class="faq-arrow">▼</span>
-                    </div>
-                    <div class="faq-a">
-                        <p>Savoiré AI is built by Sooban Talha Technologies. Contact: savoireai.vercel.app</p>
-                    </div>
-                </div>
-            </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     INPUT AREA (fixed bottom)
+═══════════════════════════════════════════════════════════ -->
+<div class="input-area" id="inputArea">
+  <div class="ia-inner">
+
+    <!-- Tool indicator strip -->
+    <div class="ia-tool-strip">
+      <div class="ia-tool-info">
+        <i class="fas fa-book-open" id="iaToolIcon"></i>
+        <span id="iaTToolText">Generating: Comprehensive Study Notes</span>
+      </div>
+      <div class="ia-hint">Press <kbd>Enter</kbd> to generate &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line</div>
+    </div>
+
+    <!-- Options row -->
+    <div class="ia-options" id="iaOptions">
+      <div class="opt-group">
+        <label class="opt-lbl">Depth</label>
+        <div class="opt-sel-wrap">
+          <select id="depthSel" class="opt-sel">
+            <option value="standard">Standard</option>
+            <option value="detailed" selected>Detailed</option>
+            <option value="comprehensive">Comprehensive</option>
+            <option value="expert">Expert Level</option>
+          </select>
+          <i class="fas fa-chevron-down opt-sel-arrow"></i>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-inner container">
-            <div class="footer-left">
-                <div class="footer-logo">
-                    <svg width="40" height="40" viewBox="0 0 100 100" fill="none" style="color: var(--gold)">
-                        <path d="M50 10L90 30V70L50 90L10 70V30L50 10Z" stroke="currentColor" stroke-width="2" fill="none"/>
-                        <path d="M50 30L70 40V60L50 70L30 60V40L50 30Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                        <text x="50" y="68" text-anchor="middle" fill="currentColor" font-family="Playfair Display" font-size="36" font-weight="700">Ś</text>
-                    </svg>
-                    <span class="footer-logo-text">Savoiré AI</span>
-                </div>
-                <p class="footer-tagline">Think Less. Know More.</p>
-                <p class="footer-credit">Built with precision by Sooban Talha Technologies</p>
-            </div>
-            
-            <div class="footer-center">
-                <h4 class="footer-heading">Quick Links</h4>
-                <div class="footer-links">
-                    <a href="/">Home</a>
-                    <a href="/dashboard.html">Dashboard</a>
-                    <a href="#tools">All Tools</a>
-                    <a href="#about">About</a>
-                </div>
-            </div>
-            
-            <div class="footer-right">
-                <h4 class="footer-heading">Savoiré AI</h4>
-                <p class="footer-description">The world's most advanced free AI notes platform. 160+ tools. 50+ languages. Zero cost. Zero login. Forever.</p>
-            </div>
+      </div>
+      <div class="opt-group">
+        <label class="opt-lbl">Language</label>
+        <div class="opt-sel-wrap">
+          <select id="langSel" class="opt-sel">
+            <option value="English" selected>🇬🇧 English</option>
+            <option value="Urdu">🇵🇰 Urdu</option>
+            <option value="Hindi">🇮🇳 Hindi</option>
+            <option value="Arabic">🇸🇦 Arabic</option>
+            <option value="French">🇫🇷 French</option>
+            <option value="German">🇩🇪 German</option>
+            <option value="Spanish">🇪🇸 Spanish</option>
+            <option value="Italian">🇮🇹 Italian</option>
+            <option value="Portuguese">🇵🇹 Portuguese</option>
+            <option value="Russian">🇷🇺 Russian</option>
+            <option value="Chinese (Simplified)">🇨🇳 Chinese</option>
+            <option value="Japanese">🇯🇵 Japanese</option>
+            <option value="Korean">🇰🇷 Korean</option>
+            <option value="Turkish">🇹🇷 Turkish</option>
+            <option value="Dutch">🇳🇱 Dutch</option>
+            <option value="Polish">🇵🇱 Polish</option>
+            <option value="Bengali">🇧🇩 Bengali</option>
+            <option value="Tamil">Tamil</option>
+            <option value="Telugu">Telugu</option>
+            <option value="Punjabi">Punjabi</option>
+            <option value="Persian">🇮🇷 Persian</option>
+            <option value="Indonesian">🇮🇩 Indonesian</option>
+            <option value="Malay">🇲🇾 Malay</option>
+            <option value="Thai">🇹🇭 Thai</option>
+            <option value="Vietnamese">🇻🇳 Vietnamese</option>
+            <option value="Swedish">🇸🇪 Swedish</option>
+            <option value="Danish">🇩🇰 Danish</option>
+            <option value="Norwegian">🇳🇴 Norwegian</option>
+            <option value="Finnish">🇫🇮 Finnish</option>
+            <option value="Greek">🇬🇷 Greek</option>
+            <option value="Hebrew">🇮🇱 Hebrew</option>
+            <option value="Ukrainian">🇺🇦 Ukrainian</option>
+            <option value="Czech">🇨🇿 Czech</option>
+            <option value="Romanian">🇷🇴 Romanian</option>
+            <option value="Hungarian">🇭🇺 Hungarian</option>
+            <option value="Swahili">Swahili</option>
+            <option value="Filipino">Filipino</option>
+            <option value="Nepali">Nepali</option>
+          </select>
+          <i class="fas fa-chevron-down opt-sel-arrow"></i>
         </div>
-        
-        <div class="footer-bottom container">
-            © 2025 Savoiré AI · Sooban Talha Technologies · savoireai.vercel.app
+      </div>
+      <div class="opt-group">
+        <label class="opt-lbl">Style</label>
+        <div class="opt-sel-wrap">
+          <select id="styleSel" class="opt-sel">
+            <option value="simple" selected>Simple &amp; Clear</option>
+            <option value="academic">Academic</option>
+            <option value="detailed">In-Depth</option>
+            <option value="exam">Exam-Focused</option>
+            <option value="visual">Visual-Oriented</option>
+          </select>
+          <i class="fas fa-chevron-down opt-sel-arrow"></i>
         </div>
-    </footer>
+      </div>
+      <div class="opt-group">
+        <label class="opt-lbl">File</label>
+        <button class="opt-file-btn" id="uploadFileBtn" title="Upload .txt file">
+          <i class="fas fa-paperclip"></i><span>Upload</span>
+        </button>
+        <input type="file" id="fileInput" accept=".txt,.md,.csv" style="display:none">
+      </div>
+    </div>
 
-    <!-- Ink Transition Overlay -->
-    <div class="ink-transition" id="inkTransition"></div>
+    <!-- Textarea + Send -->
+    <div class="ia-input-row">
+      <div class="ia-textarea-wrap">
+        <textarea
+          id="mainInput"
+          class="main-textarea"
+          placeholder="Enter any topic, concept, question, or paste text to study…"
+          rows="1"
+          maxlength="12000"
+          aria-label="Enter study topic"
+          spellcheck="true"
+        ></textarea>
+        <div class="ia-char-count" id="charCount">0 / 12,000</div>
+      </div>
+      <button class="ia-send-btn" id="sendBtn" aria-label="Generate study materials">
+        <i class="fas fa-paper-plane" id="sendBtnIcon"></i>
+        <span id="sendBtnLabel">Generate</span>
+      </button>
+    </div>
 
-    <!-- Gold Cursor Trail (desktop only) -->
-    <div class="cursor-trail" id="cursorTrail"></div>
+    <!-- Bottom bar -->
+    <div class="ia-footer">
+      <div class="ia-footer-left">
+        <button class="ia-foot-btn" id="clearChatBtn" title="Clear all messages">
+          <i class="fas fa-trash-alt"></i><span>Clear</span>
+        </button>
+        <button class="ia-foot-btn" id="exportAllPdfBtn" title="Export all as PDF">
+          <i class="fas fa-file-pdf"></i><span>Export PDF</span>
+        </button>
+        <button class="ia-foot-btn" id="copyAllBtn" title="Copy all text">
+          <i class="fas fa-copy"></i><span>Copy All</span>
+        </button>
+      </div>
+      <div class="ia-footer-center">
+        <span class="ia-brand">Savoiré AI v2.0 &nbsp;·&nbsp; Sooban Talha Technologies</span>
+      </div>
+      <div class="ia-footer-right">
+        <span class="ia-shortcut"><kbd>Ctrl+K</kbd> focus &nbsp; <kbd>Ctrl+H</kbd> history</span>
+      </div>
+    </div>
 
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        // First-visit check and redirect
-        (function() {
-            const userName = localStorage.getItem('sv_user');
-            const welcomeOverlay = document.getElementById('welcomeOverlay');
-            
-            // If user exists, hide overlay immediately and show content
-            if (userName) {
-                welcomeOverlay.style.display = 'none';
-                document.body.classList.remove('overlay-active');
-            } else {
-                // Show overlay, prevent body scroll
-                welcomeOverlay.style.display = 'flex';
-                document.body.classList.add('overlay-active');
-            }
-            
-            // Welcome overlay functionality
-            const nameInput = document.getElementById('scholarNameInput');
-            const enterBtn = document.getElementById('enterAtelierBtn');
-            
-            function saveNameAndRedirect() {
-                const name = nameInput.value.trim();
-                if (name) {
-                    localStorage.setItem('sv_user', name);
-                    welcomeOverlay.classList.add('hiding');
-                    setTimeout(() => {
-                        window.location.replace('/dashboard.html');
-                    }, 400);
-                } else {
-                    nameInput.style.borderColor = 'var(--crimson, #C0392B)';
-                    setTimeout(() => {
-                        nameInput.style.borderColor = '';
-                    }, 1000);
-                }
-            }
-            
-            enterBtn.addEventListener('click', saveNameAndRedirect);
-            nameInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') saveNameAndRedirect();
-            });
-        })();
-    </script>
-    
-    <script src="/app.js"></script>
-    <script>
-        // Particle System
-        const canvas = document.getElementById('particleCanvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        
-        function initParticles() {
-            const particleCount = 150;
-            particles = [];
-            for (let i = 0; i < particleCount; i++) {
-                particles.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    vx: (Math.random() - 0.5) * 0.3,
-                    vy: (Math.random() - 0.5) * 0.3,
-                    radius: Math.random() * 2 + 0.5,
-                    opacity: Math.random() * 0.3 + 0.1
-                });
-            }
-        }
-        
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            initParticles();
-        }
-        
-        function drawParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            particles.forEach(p => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(201, 169, 110, ${p.opacity})`;
-                ctx.fill();
-                
-                // Update position
-                p.x += p.vx;
-                p.y += p.vy;
-                
-                // Mouse repulsion (simplified - will be enhanced in full JS)
-                // Edge wrap
-                if (p.x < 0) p.x = canvas.width;
-                if (p.x > canvas.width) p.x = 0;
-                if (p.y < 0) p.y = canvas.height;
-                if (p.y > canvas.height) p.y = 0;
-            });
-            
-            requestAnimationFrame(drawParticles);
-        }
-        
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        drawParticles();
-        
-        // Typewriter Effect
-        const phrases = [
-            "Think Less. Know More.",
-            "Your AI Scholar. Always Free.",
-            "160 Tools. Zero Cost.",
-            "Notes at the Speed of Thought.",
-            "The World's Free AI Atelier."
-        ];
-        
-        let phraseIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-        const typewriterElement = document.getElementById('typewriterText');
-        
-        function typewriterEffect() {
-            const currentPhrase = phrases[phraseIndex];
-            
-            if (isDeleting) {
-                typewriterElement.textContent = currentPhrase.substring(0, charIndex - 1);
-                charIndex--;
-            } else {
-                typewriterElement.textContent = currentPhrase.substring(0, charIndex + 1);
-                charIndex++;
-            }
-            
-            if (!isDeleting && charIndex === currentPhrase.length) {
-                isDeleting = true;
-                setTimeout(typewriterEffect, 2200);
-                return;
-            }
-            
-            if (isDeleting && charIndex === 0) {
-                isDeleting = false;
-                phraseIndex = (phraseIndex + 1) % phrases.length;
-                setTimeout(typewriterEffect, 200);
-                return;
-            }
-            
-            const speed = isDeleting ? 50 : 100;
-            setTimeout(typewriterEffect, speed);
-        }
-        
-        setTimeout(typewriterEffect, 500);
-        
-        // Mobile menu
-        const hamburger = document.getElementById('hamburgerBtn');
-        const mobileMenu = document.getElementById('mobileMenu');
-        
-        hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            mobileMenu.classList.toggle('open');
-        });
-        
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const sunIcon = document.querySelector('.theme-sun');
-        const moonIcon = document.querySelector('.theme-moon');
-        
-        themeToggle.addEventListener('click', () => {
-            const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
-            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            localStorage.setItem('sv_theme', isDark ? 'light' : 'dark');
-            
-            if (isDark) {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            } else {
-                sunIcon.style.display = 'block';
-                moonIcon.style.display = 'none';
-            }
-        });
-        
-        // Load saved theme
-        const savedTheme = localStorage.getItem('sv_theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            if (savedTheme === 'light') {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            }
-        }
-        
-        // Nav scroll effect
-        const nav = document.getElementById('mainNav');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 60) {
-                nav.classList.add('scrolled');
-            } else {
-                nav.classList.remove('scrolled');
-            }
-        });
-        
-        // FAQ accordion
-        document.querySelectorAll('.faq-q').forEach(q => {
-            q.addEventListener('click', () => {
-                const item = q.closest('.faq-item');
-                item.classList.toggle('open');
-            });
-        });
-        
-        // Demo tabs
-        const demoInputs = {
-            notes: "Explain the concept of neural networks in machine learning...",
-            summarize: "Artificial intelligence has transformed numerous industries including healthcare, finance, education, and transportation. The impact has been profound...",
-            translate: "The quick brown fox jumps over the lazy dog.",
-            flashcards: "Photosynthesis is the process by which plants convert light energy into chemical energy...",
-            rewrite: "The meeting was quite long and not very productive."
-        };
-        
-        const demoOutputs = {
-            notes: "# Neural Networks\n\n## Overview\nNeural networks are computing systems inspired by biological neural networks...",
-            summarize: "AI has transformed healthcare, finance, education, and transportation with profound impacts across industries.",
-            translate: "Le renard brun rapide saute par-dessus le chien paresseux.",
-            flashcards: "Q: What is photosynthesis?\nA: Process where plants convert light energy into chemical energy.\n\nQ: What is needed for photosynthesis?\nA: Sunlight, carbon dioxide, water, and chlorophyll.",
-            rewrite: "The extended meeting yielded minimal productivity gains."
-        };
-        
-        const demoInput = document.getElementById('demoInput');
-        const demoOutput = document.getElementById('demoOutput');
-        const demoProcessing = document.getElementById('demoProcessing');
-        const demoTabs = document.querySelectorAll('.demo-tab');
-        
-        let demoTimeout;
-        
-        function setDemoTab(tabId) {
-            // Update active tab
-            demoTabs.forEach(t => t.classList.remove('active'));
-            document.querySelector(`[data-demo="${tabId}"]`).classList.add('active');
-            
-            // Show processing
-            demoProcessing.style.display = 'flex';
-            demoOutput.style.opacity = '0.4';
-            
-            // Update input with typewriter effect
-            const inputText = demoInputs[tabId];
-            demoInput.textContent = '';
-            let i = 0;
-            const inputInterval = setInterval(() => {
-                if (i < inputText.length) {
-                    demoInput.textContent += inputText[i];
-                    i++;
-                } else {
-                    clearInterval(inputInterval);
-                }
-            }, 20);
-            
-            // Simulate processing then show output
-            clearTimeout(demoTimeout);
-            demoTimeout = setTimeout(() => {
-                demoProcessing.style.display = 'none';
-                demoOutput.style.opacity = '1';
-                demoOutput.textContent = demoOutputs[tabId];
-            }, 1800);
-        }
-        
-        demoTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                setDemoTab(tab.dataset.demo);
-            });
-        });
-        
-        // Auto-cycle demos
-        let demoCycleIndex = 0;
-        const demoKeys = ['notes', 'summarize', 'translate', 'flashcards', 'rewrite'];
-        
-        setInterval(() => {
-            demoCycleIndex = (demoCycleIndex + 1) % demoKeys.length;
-            setDemoTab(demoKeys[demoCycleIndex]);
-        }, 8000);
-        
-        // Initialize first demo
-        setDemoTab('notes');
-        
-        // Scroll reveal
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('shown');
-                    
-                    // Number counters
-                    if (entry.target.classList.contains('stat-card')) {
-                        const numElement = entry.target.querySelector('.stat-number');
-                        const target = parseInt(numElement.dataset.target);
-                        let current = 0;
-                        const increment = target / 30;
-                        
-                        const counter = setInterval(() => {
-                            current += increment;
-                            if (current >= target) {
-                                numElement.textContent = target === 999 ? '∞' : target + '+';
-                                clearInterval(counter);
-                            } else {
-                                numElement.textContent = Math.floor(current) + '+';
-                            }
-                        }, 50);
-                    }
-                }
-            });
-        }, { threshold: 0.12 });
-        
-        document.querySelectorAll('.reveal').forEach(el => {
-            el.classList.add('reveal-init');
-            revealObserver.observe(el);
-        });
-        
-        // Tool card clicks
-        document.querySelectorAll('.tool-card, .category-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const tool = card.dataset.tool || card.dataset.category;
-                if (tool) {
-                    window.location.href = `/dashboard.html?tool=${tool}`;
-                }
-            });
-        });
-        
-        // Magnetic button effect
-        document.querySelectorAll('.btn-mag').forEach(btn => {
-            btn.addEventListener('mousemove', (e) => {
-                const rect = btn.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-                
-                btn.style.transform = `translate(${x * 0.35}px, ${y * 0.35}px)`;
-            });
-            
-            btn.addEventListener('mouseleave', () => {
-                btn.style.transform = '';
-            });
-        });
-        
-        // Ink transition on navigation
-        document.querySelectorAll('a[href^="/"]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                if (link.target === '_blank' || link.href.includes('#') || e.ctrlKey || e.metaKey) return;
-                
-                e.preventDefault();
-                const ink = document.getElementById('inkTransition');
-                const rect = link.getBoundingClientRect();
-                const cx = rect.left + rect.width / 2;
-                const cy = rect.top + rect.height / 2;
-                
-                ink.style.setProperty('--ix', cx + 'px');
-                ink.style.setProperty('--iy', cy + 'px');
-                ink.classList.add('active');
-                
-                setTimeout(() => {
-                    window.location.href = link.href;
-                }, 300);
-            });
-        });
-        
-        // Gold cursor trail (desktop only)
-        if (window.innerWidth >= 1024) {
-            const trail = document.getElementById('cursorTrail');
-            let mouseX = 0, mouseY = 0;
-            let trailX = 0, trailY = 0;
-            let lastMove = Date.now();
-            
-            document.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-                lastMove = Date.now();
-                trail.style.opacity = '0.35';
-            });
-            
-            function animateTrail() {
-                trailX += (mouseX - trailX) * 0.12;
-                trailY += (mouseY - trailY) * 0.12;
-                
-                trail.style.transform = `translate(${trailX - 3.5}px, ${trailY - 3.5}px)`;
-                
-                if (Date.now() - lastMove > 800) {
-                    trail.style.opacity = '0';
-                }
-                
-                requestAnimationFrame(animateTrail);
-            }
-            
-            animateTrail();
-        }
-    </script>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     HISTORY MODAL
+═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="historyModal" style="display:none" role="dialog" aria-modal="true" aria-label="History">
+  <div class="modal modal-lg">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <i class="fas fa-history modal-hdr-icon"></i>
+        <h3 class="modal-title">Study History</h3>
+        <span class="modal-badge" id="histModalCount"></span>
+      </div>
+      <button class="modal-close-btn" data-close="historyModal" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-search-bar">
+        <i class="fas fa-search"></i>
+        <input type="text" id="histSearchInput" class="modal-search-input" placeholder="Search history by topic…" autocomplete="off">
+      </div>
+      <div class="hist-filter-row">
+        <button class="hist-filter active" data-filter="all">All</button>
+        <button class="hist-filter" data-filter="notes">Notes</button>
+        <button class="hist-filter" data-filter="flashcards">Flashcards</button>
+        <button class="hist-filter" data-filter="quiz">Quiz</button>
+        <button class="hist-filter" data-filter="summary">Summary</button>
+        <button class="hist-filter" data-filter="mindmap">Mind Map</button>
+      </div>
+      <div class="hist-list" id="histModalList"></div>
+      <div class="modal-empty" id="histModalEmpty" style="display:none">
+        <i class="fas fa-history"></i>
+        <p>No history yet. Start studying!</p>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" id="clearHistoryBtn"><i class="fas fa-trash"></i> Clear History</button>
+      <button class="btn btn-ghost" id="exportHistBtn"><i class="fas fa-download"></i> Export JSON</button>
+      <button class="btn btn-primary" data-close="historyModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SAVED NOTES MODAL
+═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="savedModal" style="display:none" role="dialog" aria-modal="true" aria-label="Saved Notes">
+  <div class="modal modal-lg">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <i class="fas fa-star modal-hdr-icon"></i>
+        <h3 class="modal-title">Saved Notes</h3>
+        <span class="modal-badge" id="savedModalCount"></span>
+      </div>
+      <button class="modal-close-btn" data-close="savedModal" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="hist-list" id="savedModalList"></div>
+      <div class="modal-empty" id="savedModalEmpty" style="display:none">
+        <i class="fas fa-star"></i>
+        <p>No saved notes yet. Use the ⭐ button after generating content.</p>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-primary" data-close="savedModal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SETTINGS MODAL
+═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="settingsModal" style="display:none" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <i class="fas fa-cog modal-hdr-icon"></i>
+        <h3 class="modal-title">Settings &amp; About</h3>
+      </div>
+      <button class="modal-close-btn" data-close="settingsModal" aria-label="Close"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Profile -->
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-user"></i> Your Profile</div>
+        <div class="settings-row">
+          <label class="settings-lbl">Display Name</label>
+          <div class="settings-input-row">
+            <input type="text" id="nameInput" class="settings-input" placeholder="Your name" maxlength="40" autocomplete="off">
+            <button class="btn btn-primary btn-sm" id="saveNameBtn">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-palette"></i> Appearance</div>
+        <div class="settings-row">
+          <label class="settings-lbl">Theme</label>
+          <div class="toggle-row">
+            <button class="toggle-btn active" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button>
+            <button class="toggle-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button>
+          </div>
+        </div>
+        <div class="settings-row">
+          <label class="settings-lbl">Font Size</label>
+          <div class="toggle-row">
+            <button class="toggle-btn font-size-btn" data-size="small">Small</button>
+            <button class="toggle-btn font-size-btn active" data-size="medium">Medium</button>
+            <button class="toggle-btn font-size-btn" data-size="large">Large</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data -->
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-database"></i> Your Data</div>
+        <div class="settings-data-stats" id="settingsDataStats"></div>
+        <div class="settings-btn-row">
+          <button class="btn btn-ghost" id="exportDataBtn"><i class="fas fa-download"></i> Export Data</button>
+          <button class="btn btn-danger" id="clearDataBtn"><i class="fas fa-trash"></i> Clear All Data</button>
+        </div>
+      </div>
+
+      <!-- About -->
+      <div class="settings-sec">
+        <div class="settings-sec-title"><i class="fas fa-info-circle"></i> About Savoiré AI</div>
+        <div class="about-card">
+          <div class="about-logo-mark">Ś</div>
+          <div class="about-name">Savoiré AI v2.0</div>
+          <div class="about-tagline">Think Less. Know More.</div>
+          <p class="about-desc">A completely free AI study companion. No login, no payment, no subscription — ever. All your data stays private in your browser.</p>
+          <div class="about-quote-card">
+            <i class="fas fa-quote-left about-quote-icon"></i>
+            <blockquote class="about-quote">"I built Savoiré AI because great learning tools shouldn't cost anything. Every student, everywhere, deserves access to the best AI has to offer — free, forever."</blockquote>
+            <cite class="about-cite">— Sooban Talha, Founder · Sooban Talha Technologies</cite>
+          </div>
+          <a href="https://savoireai.vercel.app" class="about-link" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     CONFIRM MODAL
+═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="confirmModal" style="display:none" role="dialog" aria-modal="true">
+  <div class="modal modal-sm">
+    <div class="modal-hdr">
+      <div class="modal-hdr-left">
+        <i class="fas fa-exclamation-triangle modal-hdr-icon" style="color:var(--ruby)"></i>
+        <h3 class="modal-title" id="confirmTitle">Confirm Action</h3>
+      </div>
+      <button class="modal-close-btn" data-close="confirmModal"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-msg" id="confirmMsg"></p>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" data-close="confirmModal">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TOAST CONTAINER
+═══════════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════════ -->
+<script>
+// Init marked.js
+if (window.marked) {
+  marked.setOptions({ breaks: true, gfm: true });
+}
+</script>
+<script src="app.js"></script>
+
 </body>
 </html>

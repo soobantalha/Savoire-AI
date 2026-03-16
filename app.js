@@ -1,2559 +1,1514 @@
-/*
- * ════════════════════════════════════════════════════════
- * SAVOIRÉ AI v2.0 — SETUP GUIDE
- * Built by Sooban Talha Technologies | savoireai.vercel.app
- * ════════════════════════════════════════════════════════
- *
- * WHAT YOU NEED (all free):
- *   1. OpenRouter API key → https://openrouter.ai (free signup)
- *   2. Node.js installed → https://nodejs.org
- *   3. Vercel account → https://vercel.com (free)
- *
- * LOCAL SETUP:
- *   1. Copy .env.example to .env
- *   2. Add your OPENROUTER_API_KEY to .env
- *   3. Run: npm install
- *   4. Run: npm run dev
- *   5. Open: http://localhost:3000
- *
- * DEPLOY TO VERCEL:
- *   1. Push this folder to a GitHub repository
- *   2. Go to vercel.com → Import Project → Select repo
- *   3. Add OPENROUTER_API_KEY in Environment Variables
- *   4. Click Deploy → Done in 60 seconds
- *
- * ════════════════════════════════════════════════════════
- */
-
 'use strict';
-
-// ========================================================
-// DEPENDENCIES
-// ========================================================
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const path = require('path');
-const crypto = require('crypto');
-const { RateLimiterMemory } = require('rate-limiter-flexible');
-const { v4: uuidv4 } = require('uuid');
-
-// Optional file parsing libraries (graceful fallback if not installed)
-let pdfParse = null;
-let mammoth = null;
-try { pdfParse = require('pdf-parse'); } catch (e) { console.log('PDF parsing disabled'); }
-try { mammoth = require('mammoth'); } catch (e) { console.log('DOCX parsing disabled'); }
-
-// ========================================================
-// APP INITIALIZATION
-// ========================================================
-const app = express();
-const PORT = process.env.PORT || 3000;
-const upload = multer({ 
-    limits: { fileSize: 15 * 1024 * 1024 }, // 15MB max
-    storage: multer.memoryStorage()
-});
-
-// ========================================================
-// CONFIGURATION
-// ========================================================
-
-// AI Models (NEVER exposed to frontend)
-const MODELS = [
-    'google/gemini-2.0-flash-exp:free',
-    'deepseek/deepseek-chat-v3-0324:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'z-ai/glm-4.5-air:free',
-    'microsoft/phi-4-reasoning-plus:free',
-    'qwen/qwen3-8b:free',
-];
-
-// Response Cache (in-memory LRU)
-const cache = new Map();
-const CACHE_MAX = 200;
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-// Rate Limiter
-const rateLimiter = new RateLimiterMemory({
-    points: 30, // 30 requests
-    duration: 60, // per minute
-});
-
-// Share store (in-memory, resets on restart)
-const shareStore = new Map();
-
-// ========================================================
-// TOOL PROMPTS CONFIGURATION (ALL 160 TOOLS)
-// ========================================================
-
-const TOOL_PROMPTS = {
-    // ========== CATEGORY 1: NOTE GENERATION (25 tools) ==========
-    'generate-notes': {
-        system: `You are a master scholar and educator. Create comprehensive, beautifully structured notes using markdown formatting. Use rich H1/H2/H3 headings, organized bullet points, bold key terms, italicized definitions, and clear section breaks. Your notes must be thorough, accurate, and genuinely useful for learning. Always end with a "Key Takeaways" section.`,
-        build: (text, opts) => `Create ${opts.format || 'comprehensive notes'} on the following content.
-Style: ${opts.style || 'academic'}
-Tone: ${opts.tone || 'professional'}  
-Length: ${opts.length || 'medium'}
-Language: ${opts.language || 'English'}
-
-Content:
-${text}
-
-Format with clear markdown headings, bullet points, and a key takeaways section.`
-    },
-    
-    'lecture-notes': {
-        system: `You are a university professor creating lecture notes. Structure your notes with clear learning objectives, main concepts with detailed explanations, examples, and a summary section. Use headings, subheadings, and bullet points for clarity. Include "Key Terms" and "Discussion Questions" at the end.`,
-        build: (text, opts) => `Create detailed lecture notes from the following content.
-Style: ${opts.style || 'academic'}
-Tone: ${opts.tone || 'professional'}
-Length: ${opts.length || 'medium'}
-
-Content to transform:
-${text}
-
-Format with: Learning Objectives, Main Concepts (with explanations), Examples, Summary, Key Terms, Discussion Questions.`
-    },
-    
-    'meeting-notes': {
-        system: `You are an executive assistant creating professional meeting notes. Structure with: Meeting Title, Date, Attendees, Agenda Items (with discussion summaries), Decisions Made, Action Items (with owners), Next Steps. Be concise but capture all key points.`,
-        build: (text, opts) => `Transform this meeting transcript into professional meeting notes.
-Tone: ${opts.tone || 'professional'}
-
-Transcript:
-${text}
-
-Format with: Meeting Title, Date, Attendees, Agenda Items, Decisions, Action Items (with owners), Next Steps.`
-    },
-    
-    'article-notes': {
-        system: `You are a research assistant creating notes from articles. Extract the thesis, methodology, key findings, limitations, and implications. Use clear headings and bullet points. Maintain academic rigor while making it accessible.`,
-        build: (text, opts) => `Create research notes from this article.
-Style: ${opts.style || 'academic'}
-
-Article text:
-${text}
-
-Structure: Title, Author/Purpose, Thesis, Methodology, Key Findings, Limitations, Implications, Key Quotes.`
-    },
-    
-    'pdf-notes': {
-        system: `You are a document analyst. Extract the most important information from this PDF content and create structured notes. Focus on main ideas, key data points, conclusions, and actionable insights. Use headings and bullet points.`,
-        build: (text, opts) => `Create structured notes from this PDF content.
-Length: ${opts.length || 'medium'}
-
-Content:
-${text}
-
-Extract: Document Purpose, Main Sections, Key Findings, Important Data, Conclusions, Actionable Insights.`
-    },
-    
-    'outline-generator': {
-        system: `You are an expert at creating structured outlines. Create a hierarchical outline with Roman numerals (I, II, III) for main sections, capital letters (A, B, C) for subsections, and numbers (1, 2, 3) for details. Ensure logical flow and completeness.`,
-        build: (text, opts) => `Create a detailed outline from this content.
-Style: ${opts.style || 'academic'}
-
-Content:
-${text}
-
-Create an outline with: I. Main sections, A. Subsections, 1. Details. Include introduction and conclusion sections.`
-    },
-    
-    'bullet-notes': {
-        system: `You convert any text into clean, organized bullet points. Use primary bullets (•) for main ideas, secondary bullets (◦) for supporting details, and tertiary bullets (▪) for examples. Keep points concise but informative.`,
-        build: (text, opts) => `Convert this text into organized bullet points.
-Tone: ${opts.tone || 'professional'}
-
-Text:
-${text}
-
-Use: • for main ideas, ◦ for supporting details, ▪ for examples. Group related points together.`
-    },
-    
-    'key-points': {
-        system: `You are an expert at extracting key points. Identify the 5-10 most important ideas from the text. Each key point should be a complete sentence that captures a core concept. Order them by importance.`,
-        build: (text, opts) => `Extract the key points from this text.
-Number of points: ${opts.count || '5-10'}
-
-Text:
-${text}
-
-List each key point as a complete sentence. Order from most to least important.`
-    },
-    
-    'research-notes': {
-        system: `You are a research assistant creating comprehensive research notes. Include: Research Question, Hypothesis, Methodology, Results, Analysis, Conclusions, Limitations, Future Research. Use academic language but maintain clarity.`,
-        build: (text, opts) => `Create research notes from this content.
-Style: academic
-Language: ${opts.language || 'English'}
-
-Content:
-${text}
-
-Structure with: Research Question, Hypothesis, Methodology, Results, Analysis, Conclusions, Limitations, Future Research.`
-    },
-    
-    'image-notes': {
-        system: `You are an OCR and document analysis expert. Extract all text from the image description provided and create structured notes. Preserve any formatting, lists, or tables mentioned. If the image contains diagrams, describe them in text.`,
-        build: (text, opts) => `Extract and organize text from this image description.
-Language: ${opts.language || 'English'}
-
-Image content description:
-${text}
-
-Create notes preserving all text, formatting, and describing any visual elements.`
-    },
-    
-    'code-notes': {
-        system: `You are a senior developer creating code explanation notes. Explain the code's purpose, how it works line by line, time/space complexity, potential edge cases, and suggestions for improvement. Use code blocks for examples.`,
-        build: (text, opts) => `Create explanation notes for this code.
-Audience: ${opts.audience || 'developer'}
-
-Code:
-${text}
-
-Include: Purpose, Line-by-line explanation, Complexity analysis, Edge cases, Improvement suggestions.`
-    },
-    
-    'legal-notes': {
-        system: `You are a legal analyst simplifying complex legal documents. Extract key parties, obligations, rights, deadlines, risks, and important clauses. Use plain language while preserving legal accuracy. Include warnings about critical sections.`,
-        build: (text, opts) => `Simplify this legal document into clear notes.
-Language: ${opts.language || 'English'}
-
-Document:
-${text}
-
-Extract: Parties Involved, Key Obligations, Rights, Deadlines, Risks, Important Clauses, Action Items.`
-    },
-    
-    'medical-notes': {
-        system: `You are a medical scribe creating patient notes. Structure with: Patient Info, Chief Complaint, History, Physical Exam, Assessment, Plan, Medications, Follow-up. Use professional medical terminology while maintaining clarity.`,
-        build: (text, opts) => `Create medical notes from this content.
-Language: ${opts.language || 'English'}
-
-Content:
-${text}
-
-Format: Patient Info, Chief Complaint, History, Physical Exam, Assessment, Plan, Medications, Follow-up.`
-    },
-    
-    'study-guide': {
-        system: `You are creating a comprehensive study guide. Include: Chapter summaries, key terms with definitions, important concepts explained, practice questions, and study tips. Make it visually organized with headings and bullet points.`,
-        build: (text, opts) => `Create a study guide from this content.
-Difficulty: ${opts.difficulty || 'medium'}
-
-Content:
-${text}
-
-Include: Summary, Key Terms (with definitions), Important Concepts, Practice Questions, Study Tips.`
-    },
-    
-    'concept-notes': {
-        system: `You explain complex concepts clearly. Start with a simple definition, then provide detailed explanation, examples, analogies, and applications. Use headings to organize different aspects of the concept.`,
-        build: (text, opts) => `Create concept notes explaining this topic.
-Audience: ${opts.audience || 'student'}
-
-Topic/concept:
-${text}
-
-Structure: Simple Definition, Detailed Explanation, Examples, Analogies, Applications, Related Concepts.`
-    },
-    
-    'flashcards': {
-        system: `You are an expert educator specializing in spaced repetition and active recall learning. Create high-quality flashcard pairs that test genuine understanding, not just memorization. Each Q should be specific and unambiguous. Each A should be complete but concise. Format exactly as: Q: [question] A: [answer] ---`,
-        build: (text, opts) => `Create ${opts.count || 10} flashcards from this content at ${opts.difficulty || 'medium'} difficulty.
-
-Content:
-${text}
-
-Format each flashcard EXACTLY as:
-Q: [clear, specific question]
-A: [complete, concise answer]
----
-
-Create exactly ${opts.count || 10} cards.`
-    },
-    
-    'knowledge-cards': {
-        system: `You create knowledge cards (compact, fact-rich summaries). Each card should have a title, 3-5 key facts, and a "connected ideas" section. Think of them as Wikipedia-style summaries but ultra-condensed.`,
-        build: (text, opts) => `Create knowledge cards from this content.
-Count: ${opts.count || 5}
-
-Content:
-${text}
-
-For each card: Title, 3-5 Key Facts, Connected Ideas.`
-    },
-    
-    'executive-summary': {
-        system: `You are a business analyst creating executive summaries. Capture the problem, solution, key findings, recommendations, and expected outcomes. Be concise but comprehensive. Use bullet points for key metrics.`,
-        build: (text, opts) => `Create an executive summary from this content.
-Length: ${opts.length || 'brief'}
-
-Content:
-${text}
-
-Include: Problem Statement, Solution Overview, Key Findings, Recommendations, Expected Outcomes.`
-    },
-    
-    'daily-notes': {
-        system: `You create organized daily notes from scattered information. Structure with: Date, Top Priorities, Completed Tasks, Notes & Ideas, Meetings, Tomorrow's Focus. Use a clean, scannable format.`,
-        build: (text, opts) => `Organize this into daily notes.
-Date: ${new Date().toLocaleDateString()}
-
-Content:
-${text}
-
-Format: Date, Top Priorities, Completed Tasks, Notes & Ideas, Meetings, Tomorrow's Focus.`
-    },
-    
-    'mindmap-notes': {
-        system: `You create text-based mind maps showing hierarchical relationships. Start with central concept, then branch to main categories, then sub-branches. Use indentation to show levels. Format as a tree structure.`,
-        build: (text, opts) => `Create a mind map from this content.
-Central topic: ${text.substring(0, 50)}...
-
-Content:
-${text}
-
-Create a hierarchical tree with: Central Concept → Main Branches → Sub-branches → Details. Use indentation (2 spaces per level).`
-    },
-    
-    'insights': {
-        system: `You extract deep insights from content. Go beyond surface-level to identify patterns, implications, connections, and novel perspectives. Each insight should be thought-provoking and actionable.`,
-        build: (text, opts) => `Extract key insights from this content.
-Number: ${opts.count || 5}
-
-Content:
-${text}
-
-For each insight: Insight statement, Why it matters, How to apply it.`
-    },
-    
-    'topic-notes': {
-        system: `You create comprehensive notes on specific topics. Include: Definition, Core Principles, Key Components, Examples, Common Misconceptions, and Further Reading suggestions. Be thorough but well-organized.`,
-        build: (text, opts) => `Create topic notes on this subject.
-Topic: ${text.substring(0, 100)}...
-
-Content:
-${text}
-
-Structure: Definition, Core Principles, Key Components, Examples, Common Misconceptions, Further Reading.`
-    },
-    
-    'quick-notes': {
-        system: `You create ultra-concise quick notes. Capture only the absolute essentials. Use short phrases, abbreviations where clear, and minimal formatting. Designed for quick reference.`,
-        build: (text, opts) => `Create quick notes from this content.
-Max length: ultra-concise
-
-Content:
-${text}
-
-Extract only the essential points. Use short phrases, abbreviations where clear.`
-    },
-    
-    'paper-notes': {
-        system: `You are a research paper analyst. Create structured notes including: Citation, Research Question, Methodology, Key Findings, Limitations, Contribution to Field, and Critical Analysis.`,
-        build: (text, opts) => `Create research paper notes from this content.
-Style: academic
-
-Paper content:
-${text}
-
-Include: Citation, Research Question, Methodology, Key Findings, Limitations, Contribution, Critical Analysis.`
-    },
-    
-    'debate-notes': {
-        system: `You analyze debates and create balanced notes. Capture: Motion/Topic, Arguments For (with evidence), Arguments Against (with evidence), Key Clashes, Rhetorical Techniques, and Judge's Decision (if applicable).`,
-        build: (text, opts) => `Create debate notes from this content.
-Format: balanced
-
-Debate content:
-${text}
-
-Structure: Motion/Topic, Arguments For (with evidence), Arguments Against (with evidence), Key Clashes, Rhetorical Techniques, Decision.`
-    },
-
-    // ========== CATEGORY 2: SUMMARIZATION (20 tools) ==========
-    'one-sentence': {
-        system: `You are a master of extreme concision. Summarize any text into ONE clear, complete sentence that captures the core message. No bullet points, no lists, just one elegant sentence.`,
-        build: (text, opts) => `Summarize this in ONE sentence.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Output only one sentence, nothing else.`
-    },
-    
-    'three-bullet': {
-        system: `You distill complex information into exactly three bullet points. Each bullet should be a complete thought, capturing the essence. Make them scanable but substantive.`,
-        build: (text, opts) => `Summarize this in EXACTLY 3 bullet points.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Output only three bullet points (•), nothing else.`
-    },
-    
-    'tldr': {
-        system: `You create ultra-short TL;DR summaries. Capture the absolute core in 1-2 sentences. Perfect for quick scanning. Be brutally concise.`,
-        build: (text, opts) => `Create a TL;DR summary of this.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Output only the TL;DR (1-2 sentences).`
-    },
-    
-    'long-summary': {
-        system: `You create detailed summaries that preserve nuance and important details. Maintain the original structure but condense explanations. Include key examples and data points.`,
-        build: (text, opts) => `Create a detailed summary of this text.
-Length: ${opts.length || 'medium'}
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Preserve key details, examples, and nuance. Maintain logical flow.`
-    },
-    
-    'abstract': {
-        system: `You write academic abstracts. Include: background, purpose, methodology, key findings, and implications. Use formal academic language. Be precise and comprehensive within 250-300 words.`,
-        build: (text, opts) => `Write an academic abstract for this.
-Language: ${opts.language || 'English'}
-
-Research content:
-${text}
-
-Include: Background, Purpose, Methodology, Key Findings, Implications. 250-300 words.`
-    },
-    
-    'custom-length': {
-        system: `You summarize text to a specific word count. Preserve the most important information first, then add details up to the limit. Maintain coherence and flow.`,
-        build: (text, opts) => `Summarize this to ${opts.wordCount || 200} words.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Create a summary that is exactly ${opts.wordCount || 200} words.`
-    },
-    
-    'key-ideas': {
-        system: `You extract the key ideas from any text. Focus on the main concepts, theories, or arguments. Ignore examples and supporting details unless essential to understanding the idea.`,
-        build: (text, opts) => `Extract the key ideas from this.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-List the main ideas/concepts only.`
-    },
-    
-    'quotes': {
-        system: `You identify the most important quotes in a text. Select quotes that capture the essence, are frequently cited, or represent key arguments. Include context for each.`,
-        build: (text, opts) => `Extract important quotes from this.
-Number: ${opts.count || 5}
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-For each quote: provide the quote and brief context/explanation.`
-    },
-    
-    'multi-language': {
-        system: `You are a professional translator and summarizer. First understand the text, then create a summary in the target language. Preserve meaning, tone, and key details while adapting to language conventions.`,
-        build: (text, opts) => `Summarize this text in ${opts['target-language'] || opts.language || 'Spanish'}.
-Target language: ${opts['target-language'] || opts.language || 'Spanish'}
-Original language: Detect automatically
-
-Text:
-${text}
-
-Provide a fluent summary in the target language.`
-    },
-    
-    'academic': {
-        system: `You write academic summaries for scholarly audiences. Use formal language, precise terminology, and maintain academic rigor. Include citations of key sources mentioned.`,
-        build: (text, opts) => `Write an academic summary of this.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Use formal academic language. Include key citations.`
-    },
-    
-    'legal-summary': {
-        system: `You summarize legal documents for legal professionals. Preserve precise legal terminology, identify key clauses, obligations, and risks. Maintain accuracy above all.`,
-        build: (text, opts) => `Create a legal summary of this document.
-Language: ${opts.language || 'English'}
-
-Legal text:
-${text}
-
-Summarize key legal points, obligations, rights, and risks.`
-    },
-    
-    'medical-summary': {
-        system: `You summarize medical texts for healthcare professionals. Use correct medical terminology, highlight clinical findings, treatment protocols, and important caveats. Maintain precision.`,
-        build: (text, opts) => `Create a medical summary of this.
-Language: ${opts.language || 'English'}
-
-Medical content:
-${text}
-
-Summarize clinical findings, treatments, and important considerations.`
-    },
-    
-    'news-digest': {
-        system: `You create news digests. Capture the who, what, when, where, why, and how. Be objective, factual, and concise. Include key quotes and implications.`,
-        build: (text, opts) => `Create a news digest from this.
-Language: ${opts.language || 'English'}
-
-News text:
-${text}
-
-Include: Headline, Key Facts, Main Players, Implications, Key Quotes.`
-    },
-    
-    'timeline': {
-        system: `You create chronological summaries. Organize events in order, with dates and brief descriptions. Highlight causal relationships and key turning points.`,
-        build: (text, opts) => `Create a timeline summary of this.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Organize as: Date/Period | Event | Significance (if available)`
-    },
-    
-    'comparative': {
-        system: `You compare two or more texts. Identify similarities, differences, and relationships. Create a structured comparison with clear categories.`,
-        build: (text, opts) => `Create a comparative summary.
-Language: ${opts.language || 'English'}
-
-Texts to compare:
-${text}
-
-Structure: Overview, Similarities (by category), Differences (by category), Analysis.`
-    },
-    
-    'debate-summary': {
-        system: `You summarize debates impartially. Present both sides fairly, identify key arguments and rebuttals, and note areas of agreement. Do not take sides.`,
-        build: (text, opts) => `Create a balanced debate summary.
-Language: ${opts.language || 'English'}
-
-Debate content:
-${text}
-
-Include: Motion/Topic, Arguments For, Arguments Against, Key Exchanges, Areas of Agreement.`
-    },
-    
-    'swot-summary': {
-        system: `You create SWOT analyses from text. Identify Strengths, Weaknesses, Opportunities, and Threats. Present in a clear 2x2 format with bullet points.`,
-        build: (text, opts) => `Create a SWOT analysis from this.
-Language: ${opts.language || 'English'}
-
-Content:
-${text}
-
-Format as:
-STRENGTHS:
-• ...
-WEAKNESSES:
-• ...
-OPPORTUNITIES:
-• ...
-THREATS:
-• ...`
-    },
-    
-    'chapter': {
-        system: `You summarize book chapters. Include: chapter title, main argument, key concepts, supporting evidence, and connection to overall book thesis.`,
-        build: (text, opts) => `Summarize this chapter.
-Language: ${opts.language || 'English'}
-
-Chapter content:
-${text}
-
-Include: Chapter Title, Main Argument, Key Concepts, Supporting Evidence, Connection to Whole.`
-    },
-    
-    'argument': {
-        system: `You extract arguments from text. Identify premises, conclusions, and reasoning structure. Evaluate logical validity and note fallacies.`,
-        build: (text, opts) => `Extract the argument from this text.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Identify: Premises, Conclusion, Reasoning Structure, Validity Assessment.`
-    },
-    
-    'digest': {
-        system: `You create AI digests combining multiple sources. Synthesize information, identify consensus and disagreements, and highlight key takeaways from all sources.`,
-        build: (text, opts) => `Create an AI digest from this content.
-Language: ${opts.language || 'English'}
-
-Multiple sources:
-${text}
-
-Synthesize: Key Points Across Sources, Consensus Areas, Disagreements, Overall Takeaways.`
-    },
-
-    // ========== CATEGORY 3: MEETING TOOLS (15 tools) ==========
-    'action-items': {
-        system: `You extract action items from meeting transcripts. For each: clear task description, owner (if mentioned), deadline (if mentioned), and priority. Format as a table or checklist.`,
-        build: (text, opts) => `Extract action items from this meeting transcript.
-Language: ${opts.language || 'English'}
-
-Transcript:
-${text}
-
-For each action item: Task | Owner | Deadline | Priority`
-    },
-    
-    'decisions': {
-        system: `You extract decisions made during meetings. For each decision: what was decided, rationale, who made it, and any dissenting opinions.`,
-        build: (text, opts) => `Extract decisions from this meeting transcript.
-Language: ${opts.language || 'English'}
-
-Transcript:
-${text}
-
-For each decision: Decision | Rationale | Decision Maker | Dissent (if any)`
-    },
-    
-    'followup-email': {
-        system: `You write professional follow-up emails after meetings. Include: thank you, summary of discussion, decisions made, action items with owners, next meeting details. Tone: professional and clear.`,
-        build: (text, opts) => `Write a follow-up email for this meeting.
-Tone: ${opts.tone || 'professional'}
-
-Meeting details:
-${text}
-
-Write a complete email with subject line, greeting, body, and signature.`
-    },
-    
-    'highlights': {
-        system: `You extract meeting highlights. Focus on key discussions, important announcements, breakthroughs, and critical decisions. Create a scannable summary.`,
-        build: (text, opts) => `Extract highlights from this meeting transcript.
-Language: ${opts.language || 'English'}
-
-Transcript:
-${text}
-
-List key highlights only.`
-    },
-    
-    'speaker-qa': {
-        system: `You organize Q&A sessions from meetings. For each question: who asked, what was asked, who answered, summary of answer. Identify follow-up questions.`,
-        build: (text, opts) => `Extract Q&A from this meeting transcript.
-Language: ${opts.language || 'English'}
-
-Transcript:
-${text}
-
-Format: Q: [Question, asker] → A: [Answer, answerer]`
-    },
-    
-    'meeting-timeline': {
-        system: `You create meeting timelines. Track when each topic was discussed, how long it took, and key timestamps. Useful for meeting analytics.`,
-        build: (text, opts) => `Create a timeline from this meeting transcript.
-Language: ${opts.language || 'English'}
-
-Transcript with timestamps:
-${text}
-
-Format: [Timestamp] Topic | Duration | Key Points`
-    },
-    
-    'sales-notes': {
-        system: `You create sales meeting notes. Capture: client needs, pain points, budget, decision makers, competition, next steps, and win probability.`,
-        build: (text, opts) => `Create sales meeting notes from this transcript.
-Language: ${opts.language || 'English'}
-
-Transcript:
-${text}
-
-Include: Client Needs, Pain Points, Budget, Decision Makers, Competition, Next Steps, Win Probability.`
-    },
-    
-    'client-notes': {
-        system: `You create client meeting notes. Focus on client requirements, feedback, concerns, and commitments. Maintain professional tone.`,
-        build: (text, opts) => `Create client meeting notes from this.
-Language: ${opts.language || 'English'}
-
-Meeting content:
-${text}
-
-Include: Client Requirements, Feedback Received, Concerns Raised, Commitments Made, Follow-up Actions.`
-    },
-    
-    'team-notes': {
-        system: `You create team meeting notes. Focus on updates, blockers, achievements, and team coordination. Include morale and team health indicators.`,
-        build: (text, opts) => `Create team meeting notes from this.
-Language: ${opts.language || 'English'}
-
-Team meeting content:
-${text}
-
-Include: Updates, Blockers, Achievements, Coordination Items, Team Health.`
-    },
-    
-    'strategy-notes': {
-        system: `You create strategy session notes. Capture strategic decisions, long-term goals, competitive analysis, resource allocation, and success metrics.`,
-        build: (text, opts) => `Create strategy session notes from this.
-Language: ${opts.language || 'English'}
-
-Session content:
-${text}
-
-Include: Strategic Decisions, Long-term Goals, Competitive Analysis, Resource Allocation, Success Metrics.`
-    },
-    
-    'meeting-agenda': {
-        system: `You create meeting agendas from discussion topics. Organize by priority, allocate time estimates, specify desired outcomes, and identify pre-work.`,
-        build: (text, opts) => `Create a meeting agenda from these topics.
-Language: ${opts.language || 'English'}
-
-Topics/notes:
-${text}
-
-Format: Topic | Time | Desired Outcome | Lead | Pre-work`
-    },
-    
-    'meeting-recap': {
-        system: `You create meeting recaps for absentees. Summarize what they missed, key decisions, action items they need to know, and how to get up to speed.`,
-        build: (text, opts) => `Create a meeting recap for absent team members.
-Language: ${opts.language || 'English'}
-
-Meeting content:
-${text}
-
-Include: What Was Discussed, Key Decisions, Relevant Action Items, How to Catch Up.`
-    },
-    
-    'interview-notes': {
-        system: `You create interview notes. Capture candidate responses, strengths, concerns, technical assessment, and hiring recommendation. Be objective.`,
-        build: (text, opts) => `Create interview notes from this transcript.
-Language: ${opts.language || 'English'}
-
-Interview transcript:
-${text}
-
-Include: Candidate Responses, Strengths, Concerns, Technical Assessment, Hiring Recommendation.`
-    },
-    
-    'training-notes': {
-        system: `You create training session notes. Capture learning objectives, key concepts covered, exercises completed, questions asked, and follow-up needed.`,
-        build: (text, opts) => `Create training session notes from this.
-Language: ${opts.language || 'English'}
-
-Training content:
-${text}
-
-Include: Learning Objectives, Key Concepts, Exercises, Questions, Follow-up.`
-    },
-    
-    'workshop-notes': {
-        system: `You create workshop notes. Capture activities, ideas generated, decisions made, and next steps. Focus on outcomes and actionability.`,
-        build: (text, opts) => `Create workshop notes from this.
-Language: ${opts.language || 'English'}
-
-Workshop content:
-${text}
-
-Include: Activities, Ideas Generated, Decisions Made, Next Steps.`
-    },
-
-    // ========== CATEGORY 4: TEXT TRANSFORMATION (15 tools) ==========
-    'extend': {
-        system: `You expand and elaborate on text while maintaining original style and intent. Add relevant details, examples, explanations, and nuance. Make it longer but not verbose.`,
-        build: (text, opts) => `Extend and elaborate this text.
-Style: ${opts.style || 'maintain original'}
-Length: ${opts.length || 'longer'}
-
-Text:
-${text}
-
-Add details, examples, explanations while maintaining original style.`
-    },
-    
-    'shorten': {
-        system: `You condense text while preserving core meaning. Remove redundancy, simplify phrases, and tighten sentences. Be concise but clear.`,
-        build: (text, opts) => `Shorten this text.
-Target length: ${opts.length || 'concise'}
-Style: ${opts.style || 'maintain original'}
-
-Text:
-${text}
-
-Make it shorter while preserving all key information.`
-    },
-    
-    'rephrase': {
-        system: `You rephrase text while preserving meaning. Use different sentence structures, synonyms, and phrasing. Improve flow and readability.`,
-        build: (text, opts) => `Rephrase this text.
-Tone: ${opts.tone || 'maintain original'}
-
-Text:
-${text}
-
-Express the same ideas differently with improved flow.`
-    },
-    
-    'grammar': {
-        system: `You fix spelling and grammar errors. Correct punctuation, verb tense, subject-verb agreement, and word usage. Preserve the author's voice.`,
-        build: (text, opts) => `Fix spelling and grammar in this text.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-Correct all errors while preserving the original voice.`
-    },
-    
-    'vocabulary': {
-        system: `You improve vocabulary usage. Replace simple words with more precise or sophisticated alternatives where appropriate. Maintain readability.`,
-        build: (text, opts) => `Improve vocabulary in this text.
-Level: ${opts.level || 'advanced'}
-
-Text:
-${text}
-
-Enhance word choice with more precise or sophisticated vocabulary.`
-    },
-    
-    'change-tone': {
-        system: `You change the tone of text while preserving meaning. Adjust word choice, sentence structure, and formality to match the target tone.`,
-        build: (text, opts) => `Change the tone of this text to ${opts.tone || 'professional'}.
-Target tone: ${opts.tone || 'professional'}
-
-Text:
-${text}
-
-Rewrite with appropriate vocabulary and phrasing for the target tone.`
-    },
-    
-    'change-style': {
-        system: `You change writing style while preserving content. Adapt to academic, blog, technical, creative, or report styles as requested.`,
-        build: (text, opts) => `Change this text to ${opts.style || 'academic'} style.
-Target style: ${opts.style || 'academic'}
-
-Text:
-${text}
-
-Rewrite with appropriate structure, vocabulary, and conventions for the target style.`
-    },
-    
-    'translate': {
-        system: `You are a professional translator. Translate accurately while preserving meaning, tone, and nuance. Adapt idioms and cultural references appropriately.`,
-        build: (text, opts) => `Translate this text to ${opts['target-language'] || opts.language || 'Spanish'}.
-Target language: ${opts['target-language'] || opts.language || 'Spanish'}
-
-Text:
-${text}
-
-Provide a fluent, accurate translation.`
-    },
-    
-    'simplify': {
-        system: `You simplify complex text for broader audiences. Use simpler words, shorter sentences, and clear explanations. Maintain all key information.`,
-        build: (text, opts) => `Simplify this complex text.
-Audience: ${opts.audience || 'general'}
-
-Text:
-${text}
-
-Make it easier to understand without losing important information.`
-    },
-    
-    'formalize': {
-        system: `You make informal text more formal. Remove colloquialisms, contractions, and casual language. Use professional vocabulary and structure.`,
-        build: (text, opts) => `Make this text more formal.
-Text:
-${text}
-
-Rewrite in formal, professional language.`
-    },
-    
-    'engage': {
-        system: `You make text more engaging and compelling. Use rhetorical devices, varied sentence structure, and vivid language. Capture reader attention.`,
-        build: (text, opts) => `Make this text more engaging.
-Text:
-${text}
-
-Enhance with rhetorical devices, varied sentences, and vivid language.`
-    },
-    
-    'remove-redundancy': {
-        system: `You remove redundancy and repetition from text. Eliminate duplicate ideas, unnecessary words, and verbose phrases. Tighten without losing meaning.`,
-        build: (text, opts) => `Remove redundancy from this text.
-Text:
-${text}
-
-Eliminate repetition and unnecessary words while preserving all information.`
-    },
-    
-    'add-examples': {
-        system: `You add relevant examples to illustrate concepts. Examples should be clear, concrete, and helpful for understanding. Match the text's tone.`,
-        build: (text, opts) => `Add examples to this text.
-Number: ${opts.count || 3}
-
-Text:
-${text}
-
-Add clear, relevant examples to illustrate key points.`
-    },
-    
-    'passive-to-active': {
-        system: `You convert passive voice to active voice where appropriate. Identify passive constructions and rewrite with active subjects. Improve clarity and directness.`,
-        build: (text, opts) => `Convert passive voice to active voice.
-Text:
-${text}
-
-Rewrite passive constructions to active voice. Preserve meaning.`
-    },
-    
-    'clarity': {
-        system: `You improve text clarity. Untangle confusing sentences, clarify ambiguous references, and improve logical flow. Make the text easier to understand.`,
-        build: (text, opts) => `Improve clarity of this text.
-Text:
-${text}
-
-Clarify confusing parts, fix ambiguity, improve flow.`
-    },
-
-    // ========== CATEGORY 5: STUDY & LEARNING (15 tools) ==========
-    'flashcard-gen': {
-        system: `You create high-quality flashcards for learning. Questions should test understanding, not just recall. Answers should be complete but concise. Format: Q: [question] A: [answer] ---`,
-        build: (text, opts) => `Create ${opts.count || 10} flashcards from this content.
-Difficulty: ${opts.difficulty || 'medium'}
-
-Content:
-${text}
-
-Format each: Q: [question] A: [answer] ---`
-    },
-    
-    'mcq': {
-        system: `You create multiple choice questions. Each question should have 4 options (A-D), one correct answer, and explanations for why the correct answer is right and others are wrong.`,
-        build: (text, opts) => `Create ${opts.count || 5} multiple choice questions.
-Difficulty: ${opts.difficulty || 'medium'}
-Type: ${opts.type || 'standard'}
-
-Content:
-${text}
-
-For each: Question, Options A-D, Correct Answer, Explanation.`
-    },
-    
-    'fill-blanks': {
-        system: `You create fill-in-the-blank questions. Remove key terms or phrases, replace with _____ . Provide context clues. Include answer key.`,
-        build: (text, opts) => `Create ${opts.count || 5} fill-in-the-blank questions.
-Difficulty: ${opts.difficulty || 'medium'}
-
-Content:
-${text}
-
-For each: Sentence with blank, context, answer.`
-    },
-    
-    'true-false': {
-        system: `You create true/false questions. Statements should be clearly true or false (not ambiguous). Include explanation for the answer.`,
-        build: (text, opts) => `Create ${opts.count || 5} true/false questions.
-Difficulty: ${opts.difficulty || 'medium'}
-
-Content:
-${text}
-
-For each: Statement, Answer (T/F), Explanation.`
-    },
-    
-    'study-schedule': {
-        system: `You create study schedules based on content and time available. Break topics into sessions, estimate time needed, suggest review intervals, and include breaks.`,
-        build: (text, opts) => `Create a study schedule for this content.
-Time available: ${opts.time || '1 week'}
-
-Content to study:
-${text}
-
-Create schedule with: daily sessions, topics to cover, review intervals, breaks.`
-    },
-    
-    'exam-notes': {
-        system: `You create exam preparation notes. Focus on likely test topics, key formulas/concepts, common pitfalls, and practice questions. Highlight what's most important.`,
-        build: (text, opts) => `Create exam prep notes from this content.
-Exam type: ${opts.type || 'standard'}
-
-Content:
-${text}
-
-Include: Key Topics, Important Formulas/Concepts, Common Pitfalls, Practice Questions.`
-    },
-    
-    'explain': {
-        system: `You explain concepts at different levels. For ELI5: use simple analogies. For Student: clear educational explanation. For Expert: technical depth.`,
-        build: (text, opts) => `Explain this concept for a ${opts.audience || 'student'} audience.
-Audience level: ${opts.audience || 'student'}
-
-Concept:
-${text}
-
-Provide clear explanation appropriate for the audience.`
-    },
-    
-    'definitions': {
-        system: `You extract key terms and provide clear definitions. Include pronunciation if helpful, part of speech, and example sentence.`,
-        build: (text, opts) => `Extract key terms and define them.
-Language: ${opts.language || 'English'}
-
-Text:
-${text}
-
-For each term: Term, Definition, Example sentence.`
-    },
-    
-    'formulas': {
-        system: `You extract formulas and explain them. For each: formula in proper notation, what each variable means, when to use it, and example application.`,
-        build: (text, opts) => `Extract formulas from this content.
-Text:
-${text}
-
-For each formula: Formula, Variables (with meanings), When to use, Example.`
-    },
-    
-    'case-study': {
-        system: `You break down case studies. Include: background, problem, solution, outcomes, key lessons, and discussion questions. Use structured format.`,
-        build: (text, opts) => `Create a case study breakdown.
-Text:
-${text}
-
-Structure: Background, Problem, Solution, Outcomes, Key Lessons, Discussion Questions.`
-    },
-    
-    'comparison-table': {
-        system: `You create comparison tables. Identify items to compare, relevant dimensions, and populate cells with accurate information. Present as markdown table.`,
-        build: (text, opts) => `Create a comparison table from this.
-Text:
-${text}
-
-Create a markdown table comparing the key items across relevant dimensions.`
-    },
-    
-    'procon': {
-        system: `You create balanced pro/con lists. Identify arguments for and against, weight them by importance, and provide analysis.`,
-        build: (text, opts) => `Create a pro/con list for this topic.
-Topic/issue:
-${text}
-
-Format:
-PROS:
-• ...
-CONS:
-• ...
-Analysis: ...`
-    },
-    
-    'timeline-study': {
-        system: `You create historical timelines. Organize events chronologically, include dates, brief descriptions, and significance. Note causal relationships.`,
-        build: (text, opts) => `Create a historical timeline from this.
-Text:
-${text}
-
-Format: Date | Event | Description | Significance`
-    },
-    
-    'glossary': {
-        system: `You create glossaries from text. Alphabetize terms, provide clear definitions, and cross-reference related terms.`,
-        build: (text, opts) => `Create a glossary from this text.
-Text:
-${text}
-
-Alphabetical list of key terms with definitions.`
-    },
-    
-    'mindmap-study': {
-        system: `You create study mind maps. Central topic, main branches, sub-branches. Use indentation to show hierarchy. Include connections between branches.`,
-        build: (text, opts) => `Create a study mind map from this.
-Central topic: ${text.substring(0, 50)}...
-
-Text:
-${text}
-
-Create hierarchical tree with: Central Topic → Main Branches → Sub-branches → Details. Use indentation.`
-    },
-
-    // ========== CATEGORY 6: RESEARCH & WRITING (15 tools) ==========
-    'research-outline': {
-        system: `You create research paper outlines. Include: title, abstract summary, introduction sections, literature review structure, methodology, results organization, discussion points, conclusion, references.`,
-        build: (text, opts) => `Create a research outline from this.
-Topic: ${text.substring(0, 100)}...
-
-Additional details:
-${text}
-
-Structure: Title, Abstract (summary), Introduction sections, Literature Review, Methodology, Results, Discussion, Conclusion, References.`
-    },
-    
-    'thesis': {
-        system: `You craft strong thesis statements. Should be specific, arguable, and map the paper's structure. Provide options with explanations.`,
-        build: (text, opts) => `Create a thesis statement for this topic.
-Topic/notes:
-${text}
-
-Provide 3 thesis options with brief explanation of each.`
-    },
-    
-    'intro': {
-        system: `You write engaging introduction paragraphs. Hook reader, provide context, state thesis, and preview structure. Adjust to academic or general audience.`,
-        build: (text, opts) => `Write an introduction for this topic.
-Audience: ${opts.audience || 'academic'}
-
-Topic/notes:
-${text}
-
-Write a complete introduction with hook, context, thesis, and preview.`
-    },
-    
-    'conclusion': {
-        system: `You write strong conclusion paragraphs. Synthesize main points, restate thesis freshly, discuss implications, and end memorably. No new information.`,
-        build: (text, opts) => `Write a conclusion for this paper.
-Paper content:
-${text}
-
-Write conclusion synthesizing main points and discussing implications.`
-    },
-    
-    'essay-planner': {
-        system: `You create essay structure plans. Include: thesis, topic sentences for each paragraph, evidence needed, and transitions. Create coherent argument flow.`,
-        build: (text, opts) => `Create an essay structure plan.
-Topic/notes:
-${text}
-
-Plan: Thesis, Paragraph 1 (topic sentence + evidence), Paragraph 2 (...), etc., Conclusion approach.`
-    },
-    
-    'bibliography': {
-        system: `You format citations in APA, MLA, or Chicago style. Provide properly formatted references and in-text citation examples.`,
-        build: (text, opts) => `Format these sources in ${opts.style || 'APA'} style.
-Style: ${opts.style || 'APA'}
-
-Sources:
-${text}
-
-Provide formatted bibliography and in-text citation examples.`
-    },
-    
-    'strengthen': {
-        system: `You strengthen arguments by adding evidence, improving logic, addressing counterarguments, and using rhetorical devices. Make arguments more persuasive.`,
-        build: (text, opts) => `Strengthen this argument.
-Argument:
-${text}
-
-Add evidence, improve logic, address counterarguments, enhance persuasion.`
-    },
-    
-    'counter-arg': {
-        system: `You generate thoughtful counterarguments. Anticipate objections, acknowledge valid points, and prepare rebuttals. Strengthen critical thinking.`,
-        build: (text, opts) => `Generate counterarguments for this position.
-Position/argument:
-${text}
-
-For each counterargument: The objection, why it's valid (if it is), potential rebuttal.`
-    },
-    
-    'evidence': {
-        system: `You suggest types of evidence that would support arguments. Recommend statistics, expert opinions, case studies, examples, or data needed.`,
-        build: (text, opts) => `Suggest evidence for this argument.
-Argument:
-${text}
-
-Recommend specific types of evidence and how to find/use them.`
-    },
-    
-    'research-questions': {
-        system: `You formulate research questions. Questions should be specific, researchable, and significant. Provide main question and sub-questions.`,
-        build: (text, opts) => `Formulate research questions for this topic.
-Topic/area:
-${text}
-
-Provide main research question and 3-5 sub-questions.`
-    },
-    
-    'hypothesis': {
-        system: `You generate testable hypotheses. Should be specific, falsifiable, and based on existing knowledge. Include independent and dependent variables.`,
-        build: (text, opts) => `Generate a hypothesis for this research topic.
-Topic/background:
-${text}
-
-Provide hypothesis with: If... then... statement, variables, and rationale.`
-    },
-    
-    'lit-review': {
-        system: `You create literature review notes. Summarize key papers, identify themes and debates, note methodological approaches, and highlight gaps.`,
-        build: (text, opts) => `Create literature review notes from these sources.
-Sources:
-${text}
-
-Organize by themes/debates, summarize key findings, identify gaps.`
-    },
-    
-    'abstract-writer': {
-        system: `You write abstracts for papers. Include: background, objective, methods, key results, conclusion, keywords. Stay within word limit.`,
-        build: (text, opts) => `Write an abstract for this paper.
-Paper content:
-${text}
-
-Include: Background, Objective, Methods, Results, Conclusion, Keywords.`
-    },
-    
-    'report-structure': {
-        system: `You create report structures. Include: executive summary, introduction, methodology, findings, analysis, conclusions, recommendations, appendices.`,
-        build: (text, opts) => `Create a report structure for this topic.
-Topic/content:
-${text}
-
-Outline complete report structure with section descriptions.`
-    },
-    
-    'white-paper': {
-        system: `You create white paper outlines. Include: title, abstract, problem statement, solution overview, detailed solution, case studies, implementation, conclusion, about author.`,
-        build: (text, opts) => `Create a white paper outline on this topic.
-Topic:
-${text}
-
-Outline with: Title, Abstract, Problem, Solution, Details, Case Studies, Implementation, Conclusion.`
-    },
-
-    // ========== CATEGORY 7: CONTENT CREATION (15 tools) ==========
-    'blog-outline': {
-        system: `You create blog post outlines. Include: catchy title, introduction hook, 3-5 main sections with subpoints, conclusion, and SEO keywords.`,
-        build: (text, opts) => `Create a blog post outline on this topic.
-Topic:
-${text}
-
-Outline: Title, Introduction, Main sections (3-5 with subpoints), Conclusion, SEO keywords.`
-    },
-    
-    'blog-intro': {
-        system: `You write engaging blog introductions. Start with hook, establish relevance, preview content, and encourage reading. Match blog's voice.`,
-        build: (text, opts) => `Write a blog introduction for this topic.
-Topic/notes:
-${text}
-Tone: ${opts.tone || 'conversational'}
-
-Write engaging introduction paragraph(s).`
-    },
-    
-    'social-caption': {
-        system: `You write social media captions for different platforms. For Twitter/X: concise with hashtags. LinkedIn: professional with insights. Instagram: visual-focused with emojis.`,
-        build: (text, opts) => `Write a ${opts.platform || 'Twitter'} caption for this.
-Platform: ${opts.platform || 'Twitter'}
-Content:
-${text}
-
-Write appropriate caption with hashtags.`
-    },
-    
-    'email-writer': {
-        system: `You write professional emails. Include subject line, appropriate greeting, clear purpose, call to action, professional closing, and signature.`,
-        build: (text, opts) => `Write an email about this.
-Context:
-${text}
-Tone: ${opts.tone || 'professional'}
-
-Write complete email with subject, greeting, body, call to action, closing.`
-    },
-    
-    'newsletter': {
-        system: `You write newsletter sections. Engaging subject line, welcoming intro, main content with subheadings, and closing with call to action.`,
-        build: (text, opts) => `Write a newsletter section on this topic.
-Topic/content:
-${text}
-
-Include: Subject line idea, engaging intro, main content, call to action.`
-    },
-    
-    'press-release': {
-        system: `You write press release outlines. Include: FOR IMMEDIATE RELEASE, headline, dateline, lead paragraph, body quotes, boilerplate, media contact.`,
-        build: (text, opts) => `Create a press release outline for this announcement.
-Announcement details:
-${text}
-
-Structure with all standard press release elements.`
-    },
-    
-    'product-desc': {
-        system: `You write compelling product descriptions. Highlight benefits, features, use cases, and differentiation. Persuasive and clear.`,
-        build: (text, opts) => `Write a product description for this.
-Product info:
-${text}
-
-Describe benefits, features, use cases, what makes it different.`
-    },
-    
-    'ad-copy': {
-        system: `You write advertising copy. Attention-grabbing headline, persuasive body, strong call to action. Adapt to medium (print, digital, social).`,
-        build: (text, opts) => `Write ad copy for this product/service.
-Details:
-${text}
-Medium: ${opts.medium || 'digital'}
-
-Write headline, body, call to action.`
-    },
-    
-    'tagline': {
-        system: `You create memorable taglines. Short, catchy, meaningful, and brand-appropriate. Provide options with rationale.`,
-        build: (text, opts) => `Create taglines for this brand/product.
-Description:
-${text}
-
-Provide 5 tagline options with brief explanation for each.`
-    },
-    
-    'headline': {
-        system: `You write attention-grabbing headlines. Use power words, create curiosity, promise value, and optimize for clicks. Provide options.`,
-        build: (text, opts) => `Write headlines for this content.
-Content summary:
-${text}
-
-Provide 10 headline options with different angles.`
-    },
-    
-    'faq': {
-        system: `You create FAQ sections. Anticipate common questions, provide clear answers, organize logically. Use customer-friendly language.`,
-        build: (text, opts) => `Create FAQ for this topic/product.
-Information:
-${text}
-
-Create 8-10 FAQs with clear, helpful answers.`
-    },
-    
-    'about-page': {
-        system: `You write About page content. Tell company story, convey mission/values, build trust, and include call to action. Engaging and authentic.`,
-        build: (text, opts) => `Write About page content for this company.
-Company info:
-${text}
-
-Include: Story, Mission/Values, Team (if relevant), Call to action.`
-    },
-    
-    'bio': {
-        system: `You write professional or casual bios. Include key achievements, expertise, personality, and purpose. Adapt to platform.`,
-        build: (text, opts) => `Write a ${opts.tone || 'professional'} bio for this person.
-Information:
-${text}
-Tone: ${opts.tone || 'professional'}
-
-Write appropriate bio for the context.`
-    },
-    
-    'cover-letter': {
-        system: `You write cover letters. Address specific job, highlight relevant skills, show enthusiasm, and request interview. Professional and personalized.`,
-        build: (text, opts) => `Write a cover letter for this job application.
-Job details and qualifications:
-${text}
-
-Write complete, professional cover letter.`
-    },
-    
-    'job-desc': {
-        system: `You write job descriptions. Include: job title, summary, responsibilities, requirements, benefits, and how to apply. Clear and attractive.`,
-        build: (text, opts) => `Write a job description from these notes.
-Position details:
-${text}
-
-Include: Title, Summary, Responsibilities, Requirements, Benefits, Application process.`
-    },
-
-    // ========== CATEGORY 8: DOCUMENT TOOLS (15 tools) ==========
-    'doc-analyzer': {
-        system: `You analyze document structure. Identify document type, sections, purpose, audience, and key elements. Provide structural insights.`,
-        build: (text, opts) => `Analyze this document's structure.
-Document:
-${text}
-
-Identify: Document type, Main sections, Purpose, Target audience, Key structural elements.`
-    },
-    
-    'toc': {
-        system: `You generate table of contents from documents. Extract headings at all levels, maintain hierarchy, include page numbers if available.`,
-        build: (text, opts) => `Generate a table of contents from this document.
-Document:
-${text}
-
-Extract headings with proper indentation showing hierarchy.`
-    },
-    
-    'exec-summary': {
-        system: `You write executive summaries for business documents. Capture problem, solution, key findings, recommendations, and expected outcomes. Concise for executives.`,
-        build: (text, opts) => `Write an executive summary for this document.
-Document:
-${text}
-
-Summarize for executives: Problem, Solution, Findings, Recommendations, Outcomes.`
-    },
-    
-    'action-plan': {
-        system: `You create action plans from goals. Break down into steps, assign responsibilities, set timelines, identify resources needed, and define success metrics.`,
-        build: (text, opts) => `Create an action plan from these goals.
-Goals/objectives:
-${text}
-
-Plan: Steps (with owner and timeline), Resources needed, Success metrics.`
-    },
-    
-    'project-brief': {
-        system: `You write project briefs. Include: project overview, objectives, scope, deliverables, timeline, stakeholders, success criteria.`,
-        build: (text, opts) => `Write a project brief from these notes.
-Project information:
-${text}
-
-Include: Overview, Objectives, Scope, Deliverables, Timeline, Stakeholders, Success criteria.`
-    },
-    
-    'sop': {
-        system: `You create Standard Operating Procedures. Clear title, purpose, scope, responsibilities, step-by-step instructions, safety notes, and review date.`,
-        build: (text, opts) => `Create an SOP from these instructions.
-Process information:
-${text}
-
-Format: Title, Purpose, Scope, Responsibilities, Steps (numbered), Safety notes, Review date.`
-    },
-    
-    'policy-outline': {
-        system: `You create policy document outlines. Include: policy statement, purpose, scope, definitions, policy details, compliance, exceptions, review cycle.`,
-        build: (text, opts) => `Create a policy outline for this area.
-Policy topic/notes:
-${text}
-
-Outline with all standard policy sections.`
-    },
-    
-    'proposal-outline': {
-        system: `You create proposal outlines. Include: executive summary, problem statement, proposed solution, methodology, timeline, budget, qualifications, conclusion.`,
-        build: (text, opts) => `Create a proposal outline for this project.
-Project details:
-${text}
-
-Outline with all proposal sections.`
-    },
-    
-    'contract-simplify': {
-        system: `You simplify contract clauses into plain language. Explain what each clause means in practice, highlight obligations and risks.`,
-        build: (text, opts) => `Simplify these contract clauses.
-Contract text:
-${text}
-
-For each clause: Original summary, Plain language explanation, Key obligations, Risks.`
-    },
-    
-    'tos-simplify': {
-        system: `You simplify Terms of Service. Highlight key points: what user agrees to, what company promises, limitations, termination, dispute resolution.`,
-        build: (text, opts) => `Simplify these Terms of Service.
-ToS text:
-${text}
-
-Summarize: User obligations, Company commitments, Limitations, Termination, Dispute resolution.`
-    },
-    
-    'privacy-simplify': {
-        system: `You simplify Privacy Policies. Explain: what data collected, how used, who shared with, user rights, cookie policy, contact info.`,
-        build: (text, opts) => `Simplify this Privacy Policy.
-Policy text:
-${text}
-
-Summarize: Data collected, Usage, Sharing, User rights, Cookies, Contact.`
-    },
-    
-    'meeting-agenda-doc': {
-        system: `You create professional meeting agendas. Include: meeting title, date/time, attendees, objectives, agenda items with time allocations, pre-work, preparation notes.`,
-        build: (text, opts) => `Create a meeting agenda from these notes.
-Meeting details:
-${text}
-
-Create complete agenda with all elements.`
-    },
-    
-    'business-plan': {
-        system: `You create business plan outlines. Include: executive summary, company description, market analysis, organization, product line, marketing, funding request, financial projections.`,
-        build: (text, opts) => `Create a business plan outline for this venture.
-Venture details:
-${text}
-
-Outline with all standard business plan sections.`
-    },
-    
-    'pitch-deck': {
-        system: `You create pitch deck outlines. Include: problem, solution, market size, product, business model, traction, team, competition, financials, ask.`,
-        build: (text, opts) => `Create a pitch deck outline for this startup.
-Company details:
-${text}
-
-Outline 10-12 slides with key content for each.`
-    },
-    
-    'investor-brief': {
-        system: `You create investor briefs. Concise document with: company overview, market opportunity, competitive advantage, financial highlights, use of funds, traction.`,
-        build: (text, opts) => `Create an investor brief for this company.
-Company information:
-${text}
-
-Create 1-page brief covering key investment information.`
-    },
-
-    // ========== CATEGORY 9: AI REWRITING (15 tools) ==========
-    'academic-rewrite': {
-        system: `You rewrite text in formal academic style. Use scholarly vocabulary, complex sentences, passive voice where appropriate, and citation-style references.`,
-        build: (text, opts) => `Rewrite this in academic style.
-Text:
-${text}
-
-Use formal academic language, appropriate terminology, and scholarly tone.`
-    },
-    
-    'humanize': {
-        system: `You make AI-generated text sound more human and natural. Add personality, vary sentence structure, include natural hesitations and emphasis, make it conversational.`,
-        build: (text, opts) => `Humanize this AI-generated text.
-Text:
-${text}
-
-Make it sound more natural, conversational, and human.`
-    },
-    
-    'make-formal': {
-        system: `You make text more formal. Remove contractions, colloquialisms, casual language. Use professional vocabulary and sentence structure.`,
-        build: (text, opts) => `Make this text more formal.
-Text:
-${text}
-
-Rewrite in formal, professional language.`
-    },
-    
-    'make-casual': {
-        system: `You make text more casual and conversational. Use contractions, simpler words, friendly tone. Write like you're talking to a friend.`,
-        build: (text, opts) => `Make this text more casual.
-Text:
-${text}
-
-Rewrite in friendly, conversational style.`
-    },
-    
-    'paraphrase': {
-        system: `You paraphrase text to avoid plagiarism while preserving meaning. Use different sentence structures and synonyms. Maintain original ideas.`,
-        build: (text, opts) => `Paraphrase this text.
-Text:
-${text}
-
-Express the same ideas completely differently.`
-    },
-    
-    'restructure': {
-        system: `You restructure sentences for variety and flow. Vary sentence length, change sentence openings, combine or split sentences as needed.`,
-        build: (text, opts) => `Restructure sentences in this text.
-Text:
-${text}
-
-Improve sentence variety and flow while preserving meaning.`
-    },
-    
-    'condense': {
-        system: `You condense paragraphs while preserving key information. Remove redundancy, combine ideas, tighten phrasing. Make it concise.`,
-        build: (text, opts) => `Condense these paragraphs.
-Text:
-${text}
-
-Make it more concise while preserving all key information.`
-    },
-    
-    'expand': {
-        system: `You expand on ideas with additional explanation, examples, and details. Maintain original style and add value.`,
-        build: (text, opts) => `Expand on these ideas.
-Text:
-${text}
-
-Add explanations, examples, and relevant details.`
-    },
-    
-    'transitions': {
-        system: `You add transitional phrases to improve flow between sentences and paragraphs. Use appropriate transitions for logical relationships.`,
-        build: (text, opts) => `Add transitions to improve flow.
-Text:
-${text}
-
-Insert appropriate transitional words and phrases.`
-    },
-    
-    'clarity-rewrite': {
-        system: `You rewrite for maximum clarity. Untangle complex sentences, clarify ambiguous references, use simpler words where appropriate, improve readability.`,
-        build: (text, opts) => `Rewrite this for clarity.
-Text:
-${text}
-
-Make it easier to understand while preserving all information.`
-    },
-    
-    'coherence': {
-        system: `You improve coherence by ensuring ideas connect logically. Add linking concepts, ensure smooth progression, check that each sentence follows from the last.`,
-        build: (text, opts) => `Improve coherence of this text.
-Text:
-${text}
-
-Ensure logical flow and smooth connections between ideas.`
-    },
-    
-    'flow': {
-        system: `You improve writing flow. Vary sentence structure, use appropriate rhythm, ensure smooth reading experience. Make it pleasurable to read.`,
-        build: (text, opts) => `Improve the flow of this text.
-Text:
-${text}
-
-Enhance rhythm and reading experience.`
-    },
-    
-    'emphasis': {
-        system: `You add emphasis to key points. Use rhetorical devices, strategic repetition, strong vocabulary, and sentence structure that highlights important ideas.`,
-        build: (text, opts) => `Add emphasis to key points in this text.
-Text:
-${text}
-
-Highlight the most important ideas without changing meaning.`
-    },
-    
-    'storytelling': {
-        system: `You rewrite text in storytelling style. Use narrative elements: character, conflict, resolution, vivid details, emotional engagement. Make it compelling.`,
-        build: (text, opts) => `Rewrite this as a story.
-Text:
-${text}
-
-Use narrative elements to make it engaging and compelling.`
-    },
-    
-    'tech-to-simple': {
-        system: `You translate technical language to simple terms. Explain jargon, avoid acronyms without explanation, use analogies. Make it accessible to non-experts.`,
-        build: (text, opts) => `Simplify this technical text for non-experts.
-Technical text:
-${text}
-
-Explain concepts simply with analogies where helpful.`
-    },
-
-    // ========== CATEGORY 10: SPECIAL AI TOOLS (15 tools) ==========
-    'swot': {
-        system: `You create comprehensive SWOT analyses. Identify Strengths, Weaknesses, Opportunities, and Threats. Provide strategic insights based on the analysis.`,
-        build: (text, opts) => `Create a SWOT analysis for this situation.
-Context:
-${text}
-
-Format:
-STRENGTHS:
-• ...
-WEAKNESSES:
-• ...
-OPPORTUNITIES:
-• ...
-THREATS:
-• ...
-Strategic Insights: ...`
-    },
-    
-    'risk': {
-        system: `You create risk assessment notes. Identify risks, assess likelihood and impact, propose mitigation strategies, and assign owners.`,
-        build: (text, opts) => `Create risk assessment for this project/activity.
-Context:
-${text}
-
-For each risk: Risk description, Likelihood (H/M/L), Impact (H/M/L), Mitigation strategy, Owner.`
-    },
-    
-    'decision-matrix': {
-        system: `You create decision matrices. Identify options, criteria, weights, and scores. Calculate weighted scores and recommend best option.`,
-        build: (text, opts) => `Create a decision matrix for this choice.
-Decision context and options:
-${text}
-
-Create matrix with: Options, Criteria (with weights), Scores, Weighted totals, Recommendation.`
-    },
-    
-    'root-cause': {
-        system: `You perform root cause analysis. Identify problem, gather data, identify causal factors, find root causes, recommend solutions. Use fishbone or 5-why approach.`,
-        build: (text, opts) => `Perform root cause analysis for this problem.
-Problem description:
-${text}
-
-Identify: Problem statement, Causal factors, Root causes, Recommended solutions.`
-    },
-    
-    'five-why': {
-        system: `You apply 5-Why analysis. Start with problem, ask "why" five times to trace to root cause. Document each level with evidence.`,
-        build: (text, opts) => `Apply 5-Why analysis to this problem.
-Problem:
-${text}
-
-Document:
-Why 1: ... → Because ...
-Why 2: ... → Because ...
-Why 3: ... → Because ...
-Why 4: ... → Because ...
-Why 5: ... → Because ...
-Root cause: ...`
-    },
-    
-    'problem-solution': {
-        system: `You create problem-solution notes. Clearly define problem, analyze causes, generate multiple solutions, evaluate options, recommend best solution with implementation steps.`,
-        build: (text, opts) => `Create problem-solution analysis for this.
-Issue:
-${text}
-
-Include: Problem definition, Cause analysis, Solution options, Evaluation, Recommended solution, Implementation steps.`
-    },
-    
-    'brainstorming': {
-        system: `You generate brainstorming ideas. Quantity over quality initially, then refine and organize. Encourage creative, diverse ideas.`,
-        build: (text, opts) => `Brainstorm ideas for this topic/challenge.
-Topic:
-${text}
-
-Generate 20+ diverse ideas, then group and prioritize the best ones.`
-    },
-    
-    'mindmap-special': {
-        system: `You create mind maps for any topic. Central idea, main branches, sub-branches, and connections. Use indentation for hierarchy.`,
-        build: (text, opts) => `Create a mind map for this topic.
-Topic:
-${text}
-
-Create hierarchical tree with indentation showing relationships.`
-    },
-    
-    'concept-map': {
-        system: `You create concept maps showing relationships between ideas. Identify concepts, connect with labeled arrows (e.g., "leads to", "contradicts", "supports").`,
-        build: (text, opts) => `Create a concept map for these ideas.
-Content:
-${text}
-
-List concepts and describe relationships between them. Format as: Concept A --[relationship]--> Concept B`
-    },
-    
-    'knowledge-base': {
-        system: `You write knowledge base articles. Clear title, brief summary, detailed sections, examples, related articles. Make it useful and searchable.`,
-        build: (text, opts) => `Create a knowledge base article on this topic.
-Topic/information:
-${text}
-
-Structure: Title, Summary, Detailed sections, Examples, Related topics.`
-    },
-    
-    'lesson-plan': {
-        system: `You create lesson plans. Include: learning objectives, materials needed, lesson flow (with timing), activities, assessment, differentiation, homework.`,
-        build: (text, opts) => `Create a lesson plan for this topic.
-Topic/notes:
-${text}
-Duration: ${opts.duration || '60 minutes'}
-
-Create complete lesson plan with all elements.`
-    },
-    
-    'training': {
-        system: `You create training material outlines. Include: learning objectives, modules with topics, activities, assessments, resources, and time allocation.`,
-        build: (text, opts) => `Create training material outline for this subject.
-Subject/content:
-${text}
-Duration: ${opts.duration || 'full day'}
-
-Outline modules, topics, activities, assessments.`
-    },
-    
-    'workshop': {
-        system: `You create workshop agendas. Include: workshop title, learning objectives, schedule with timings, activities for each segment, materials needed, facilitation notes.`,
-        build: (text, opts) => `Create a workshop agenda for this topic.
-Workshop topic:
-${text}
-Duration: ${opts.duration || 'half day'}
-
-Create detailed agenda with timings and activities.`
-    },
-    
-    'tutorial': {
-        system: `You create tutorial outlines. Step-by-step instructions, prerequisites, learning objectives, practice exercises, troubleshooting tips.`,
-        build: (text, opts) => `Create a tutorial outline for this skill/topic.
-Topic:
-${text}
-
-Include: Prerequisites, Learning objectives, Steps (with explanations), Practice exercises, Troubleshooting.`
-    },
-    
-    'how-to': {
-        system: `You create how-to guides. Clear title, brief introduction, list of required items/skills, numbered steps with explanations, tips, and troubleshooting.`,
-        build: (text, opts) => `Create a how-to guide for this task.
-Task description:
-${text}
-
-Create complete guide: Introduction, Requirements, Steps (numbered with explanations), Tips, Troubleshooting.`
+/* =====================================================================
+   SAVOIRÉ AI v2.0 — FRONTEND APPLICATION
+   Built by Sooban Talha Technologies
+   Founder: Sooban Talha
+   Website: https://savoireai.vercel.app
+   ===================================================================== */
+
+class SavoireApp {
+  constructor() {
+    /* ── branding ── */
+    this.VERSION   = '2.0';
+    this.BRAND     = 'Savoiré AI v2.0';
+    this.DEVELOPER = 'Sooban Talha Technologies';
+    this.FOUNDER   = 'Sooban Talha';
+    this.WEBSITE   = 'savoireai.vercel.app';
+
+    /* ── state ── */
+    this.tool          = 'notes';
+    this.generating    = false;
+    this.currentData   = null;
+    this.userName      = '';
+    this.confirmCb     = null;
+    this.particleRAF   = null;
+    this.thinkTimer    = null;
+    this.stageIdx      = 0;
+    this.sidebarOpen   = true;
+
+    /* ── interactive state ── */
+    this.fcCards    = [];
+    this.fcCurrent  = 0;
+    this.fcFlipped  = false;
+    this.quizData   = [];
+    this.quizIdx    = 0;
+    this.quizScore  = 0;
+    this.quizDone   = false;
+
+    /* ── persistence ── */
+    this.history  = this._load('sv_history',  []);
+    this.saved    = this._load('sv_saved',     []);
+    this.prefs    = this._load('sv_prefs',     {});
+    this.userName = localStorage.getItem('sv_user') || '';
+
+    /* ── boot ── */
+    this._boot();
+  }
+
+  /* ═══════════════════════════════════════════
+     BOOT
+  ═══════════════════════════════════════════ */
+  _boot() {
+    /* hide page loader */
+    const loader = this._el('pageLoader');
+    if (loader) {
+      setTimeout(() => {
+        loader.classList.add('hidden');
+        setTimeout(() => { if (loader.parentNode) loader.parentNode.removeChild(loader); }, 600);
+      }, 1600);
     }
-};
 
-// ========================================================
-// OPTIONS CONFIGURATION
-// ========================================================
+    this._bindAll();
+    this._applyPrefs();
+    this._initWelcome();
+    this._updateHistBadge();
 
-const TOOL_OPTIONS = {
-    // Note Generation
-    'generate-notes': ['format', 'style', 'tone', 'length', 'language'],
-    'lecture-notes': ['style', 'tone', 'length', 'language'],
-    'meeting-notes': ['tone', 'language'],
-    'article-notes': ['style', 'language'],
-    'pdf-notes': ['length', 'language'],
-    'outline-generator': ['style', 'language'],
-    'bullet-notes': ['tone', 'language'],
-    'key-points': ['count', 'language'],
-    'research-notes': ['language'],
-    'image-notes': ['language'],
-    'code-notes': ['audience', 'language'],
-    'legal-notes': ['language'],
-    'medical-notes': ['language'],
-    'study-guide': ['difficulty', 'language'],
-    'concept-notes': ['audience', 'language'],
-    'flashcards': ['count', 'difficulty', 'language'],
-    'knowledge-cards': ['count', 'language'],
-    'executive-summary': ['length', 'language'],
-    'daily-notes': ['language'],
-    'mindmap-notes': ['language'],
-    'insights': ['count', 'language'],
-    'topic-notes': ['language'],
-    'quick-notes': ['language'],
-    'paper-notes': ['language'],
-    'debate-notes': ['language'],
-    
-    // Summarization
-    'one-sentence': ['language'],
-    'three-bullet': ['language'],
-    'tldr': ['language'],
-    'long-summary': ['length', 'language'],
-    'abstract': ['language'],
-    'custom-length': ['wordCount', 'language'],
-    'key-ideas': ['language'],
-    'quotes': ['count', 'language'],
-    'multi-language': ['target-language', 'language'],
-    'academic': ['language'],
-    'legal-summary': ['language'],
-    'medical-summary': ['language'],
-    'news-digest': ['language'],
-    'timeline': ['language'],
-    'comparative': ['language'],
-    'debate-summary': ['language'],
-    'swot-summary': ['language'],
-    'chapter': ['language'],
-    'argument': ['language'],
-    'digest': ['language'],
-    
-    // Meeting Tools
-    'action-items': ['language'],
-    'decisions': ['language'],
-    'followup-email': ['tone', 'language'],
-    'highlights': ['language'],
-    'speaker-qa': ['language'],
-    'meeting-timeline': ['language'],
-    'sales-notes': ['language'],
-    'client-notes': ['language'],
-    'team-notes': ['language'],
-    'strategy-notes': ['language'],
-    'meeting-agenda': ['language'],
-    'meeting-recap': ['language'],
-    'interview-notes': ['language'],
-    'training-notes': ['language'],
-    'workshop-notes': ['language'],
-    
-    // Text Transformation
-    'extend': ['style', 'length', 'language'],
-    'shorten': ['length', 'style', 'language'],
-    'rephrase': ['tone', 'language'],
-    'grammar': ['language'],
-    'vocabulary': ['level', 'language'],
-    'change-tone': ['tone', 'language'],
-    'change-style': ['style', 'language'],
-    'translate': ['target-language', 'language'],
-    'simplify': ['audience', 'language'],
-    'formalize': ['language'],
-    'engage': ['language'],
-    'remove-redundancy': ['language'],
-    'add-examples': ['count', 'language'],
-    'passive-to-active': ['language'],
-    'clarity': ['language'],
-    
-    // Study & Learning
-    'flashcard-gen': ['count', 'difficulty', 'language'],
-    'mcq': ['count', 'difficulty', 'type', 'language'],
-    'fill-blanks': ['count', 'difficulty', 'language'],
-    'true-false': ['count', 'difficulty', 'language'],
-    'study-schedule': ['time', 'language'],
-    'exam-notes': ['type', 'language'],
-    'explain': ['audience', 'language'],
-    'definitions': ['language'],
-    'formulas': ['language'],
-    'case-study': ['language'],
-    'comparison-table': ['language'],
-    'procon': ['language'],
-    'timeline-study': ['language'],
-    'glossary': ['language'],
-    'mindmap-study': ['language'],
-    
-    // Research & Writing
-    'research-outline': ['language'],
-    'thesis': ['language'],
-    'intro': ['audience', 'language'],
-    'conclusion': ['language'],
-    'essay-planner': ['language'],
-    'bibliography': ['style', 'language'],
-    'strengthen': ['language'],
-    'counter-arg': ['language'],
-    'evidence': ['language'],
-    'research-questions': ['language'],
-    'hypothesis': ['language'],
-    'lit-review': ['language'],
-    'abstract-writer': ['language'],
-    'report-structure': ['language'],
-    'white-paper': ['language'],
-    
-    // Content Creation
-    'blog-outline': ['language'],
-    'blog-intro': ['tone', 'language'],
-    'social-caption': ['platform', 'language'],
-    'email-writer': ['tone', 'language'],
-    'newsletter': ['language'],
-    'press-release': ['language'],
-    'product-desc': ['language'],
-    'ad-copy': ['medium', 'language'],
-    'tagline': ['language'],
-    'headline': ['language'],
-    'faq': ['language'],
-    'about-page': ['language'],
-    'bio': ['tone', 'language'],
-    'cover-letter': ['language'],
-    'job-desc': ['language'],
-    
-    // Document Tools
-    'doc-analyzer': ['language'],
-    'toc': ['language'],
-    'exec-summary': ['language'],
-    'action-plan': ['language'],
-    'project-brief': ['language'],
-    'sop': ['language'],
-    'policy-outline': ['language'],
-    'proposal-outline': ['language'],
-    'contract-simplify': ['language'],
-    'tos-simplify': ['language'],
-    'privacy-simplify': ['language'],
-    'meeting-agenda-doc': ['language'],
-    'business-plan': ['language'],
-    'pitch-deck': ['language'],
-    'investor-brief': ['language'],
-    
-    // AI Rewriting
-    'academic-rewrite': ['language'],
-    'humanize': ['language'],
-    'make-formal': ['language'],
-    'make-casual': ['language'],
-    'paraphrase': ['language'],
-    'restructure': ['language'],
-    'condense': ['language'],
-    'expand': ['language'],
-    'transitions': ['language'],
-    'clarity-rewrite': ['language'],
-    'coherence': ['language'],
-    'flow': ['language'],
-    'emphasis': ['language'],
-    'storytelling': ['language'],
-    'tech-to-simple': ['language'],
-    
-    // Special Tools
-    'swot': ['language'],
-    'risk': ['language'],
-    'decision-matrix': ['language'],
-    'root-cause': ['language'],
-    'five-why': ['language'],
-    'problem-solution': ['language'],
-    'brainstorming': ['language'],
-    'mindmap-special': ['language'],
-    'concept-map': ['language'],
-    'knowledge-base': ['language'],
-    'lesson-plan': ['duration', 'language'],
-    'training': ['duration', 'language'],
-    'workshop': ['duration', 'language'],
-    'tutorial': ['language'],
-    'how-to': ['language']
-};
+    console.log(`%c✨ ${this.BRAND} — Think Less. Know More.`, 'color:#C9A96E;font-size:18px;font-weight:bold');
+    console.log(`%cBuilt by ${this.DEVELOPER} | ${this.WEBSITE}`, 'color:#C9A96E;font-size:12px');
+  }
 
-// ========================================================
-// MIDDLEWARE
-// ========================================================
+  /* ═══════════════════════════════════════════
+     HELPERS
+  ═══════════════════════════════════════════ */
+  _el(id)       { return document.getElementById(id); }
+  _qs(sel)      { return document.querySelector(sel); }
+  _qsa(sel)     { return document.querySelectorAll(sel); }
+  _on(id,ev,fn) { const el=this._el(id); if(el) el.addEventListener(ev,fn); }
 
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
-app.use(cors({
-    origin: '*', // Open CORS for public tool
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-}));
-app.use(express.static(__dirname)); // Serve static files
+  _load(key, def) {
+    try { const v=localStorage.getItem(key); return v?JSON.parse(v):def; }
+    catch(e) { return def; }
+  }
+  _save(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
 
-// Rate limiting middleware
-app.use(async (req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-        try {
-            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-            await rateLimiter.consume(ip);
-            next();
-        } catch (error) {
-            res.status(429).json({ 
-                error: 'Savoiré AI is busy. Please wait a moment.' 
-            });
-        }
-    } else {
-        next();
+  _esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  _relTime(ts) {
+    if (!ts) return '';
+    const d = Date.now() - ts;
+    const m = Math.floor(d/60000);
+    const h = Math.floor(d/3600000);
+    const day = Math.floor(d/86400000);
+    if (m < 1)  return 'just now';
+    if (m < 60) return `${m}m ago`;
+    if (h < 24) return `${h}h ago`;
+    return `${day}d ago`;
+  }
+
+  _genId() { return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+
+  _shuffle(arr) {
+    const a=[...arr];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
     }
-});
+    return a;
+  }
 
-// Security headers
-app.use((req, res, next) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    next();
-});
-
-// ========================================================
-// UTILITY FUNCTIONS
-// ========================================================
-
-// Generate cache key
-function generateCacheKey(text, tool, opts) {
-    const data = { text, tool, ...opts };
-    return crypto.createHash('sha256').update(JSON.stringify(data)).digest('hex');
-}
-
-// Clean cache periodically
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of cache.entries()) {
-        if (now - value.timestamp > CACHE_TTL) {
-            cache.delete(key);
-        }
-    }
-}, 60000); // Clean every minute
-
-// Sanitize text input
-function sanitizeText(text) {
+  _renderMd(text) {
     if (!text) return '';
-    // Strip HTML tags
-    text = text.replace(/<[^>]*>/g, '');
-    // Limit length
-    return text.substring(0, 25000);
-}
-
-// Validate tool
-function validateTool(tool) {
-    return TOOL_PROMPTS.hasOwnProperty(tool);
-}
-
-// Async handler wrapper
-const asyncHandler = (fn) => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-};
-
-// ========================================================
-// AI CALL FUNCTION (SSE STREAMING + FALLBACK)
-// ========================================================
-
-async function callAI(userPrompt, systemPrompt, streamMode = false, res = null) {
-    const cacheKey = generateCacheKey(userPrompt, systemPrompt, {});
-    
-    // Check cache first (for non-streaming)
-    if (!streamMode && cache.has(cacheKey)) {
-        const cached = cache.get(cacheKey);
-        if (Date.now() - cached.timestamp < CACHE_TTL) {
-            return cached.result;
-        }
+    if (window.marked && window.DOMPurify) {
+      return DOMPurify.sanitize(marked.parse(text));
     }
-    
-    const startTime = Date.now();
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    
-    if (!apiKey) {
-        const errorMsg = 'OpenRouter API key not configured';
-        if (streamMode && res) {
-            res.write(`data: ${JSON.stringify({ type: 'error', message: errorMsg })}\n\n`);
-            res.end();
-            return;
-        }
-        throw new Error(errorMsg);
-    }
-    
-    // Try each model in order
-    for (const model of MODELS) {
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 40000); // 40s timeout
-            
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': process.env.SITE_URL || 'http://savoireai.vercel.app',
-                    'X-Title': 'Savoiré AI'
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: userPrompt }
-                    ],
-                    temperature: 0.7,
-                    max_tokens: 4000,
-                    stream: streamMode
-                }),
-                signal: controller.signal
-            });
-            
-            clearTimeout(timeout);
-            
-            if (!response.ok) {
-                console.log(`Model ${model} failed: ${response.status}`);
-                continue; // Try next model
-            }
-            
-            if (streamMode && res) {
-                // Handle streaming response
-                res.setHeader('Content-Type', 'text/event-stream');
-                res.setHeader('Cache-Control', 'no-cache');
-                res.setHeader('Connection', 'keep-alive');
-                
-                res.write(`data: ${JSON.stringify({ type: 'start' })}\n\n`);
-                
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let fullText = '';
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-                    
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const data = line.slice(6);
-                            if (data === '[DONE]') continue;
-                            
-                            try {
-                                const parsed = JSON.parse(data);
-                                const content = parsed.choices[0]?.delta?.content || '';
-                                if (content) {
-                                    fullText += content;
-                                    // Send token (word by word handled by frontend)
-                                    res.write(`data: ${JSON.stringify({ type: 'token', content })}\n\n`);
-                                }
-                            } catch (e) {
-                                // Ignore parse errors
-                            }
-                        }
-                    }
-                }
-                
-                const processingTime = Date.now() - startTime;
-                res.write(`data: ${JSON.stringify({ type: 'done', meta: { ms: processingTime } })}\n\n`);
-                res.end();
-                
-                // Cache the full result
-                const cacheEntry = {
-                    result: fullText,
-                    timestamp: Date.now()
-                };
-                
-                if (cache.size >= CACHE_MAX) {
-                    // Remove oldest entry
-                    const oldestKey = cache.keys().next().value;
-                    cache.delete(oldestKey);
-                }
-                cache.set(cacheKey, cacheEntry);
-                
-                return;
-            } else {
-                // Handle non-streaming response
-                const data = await response.json();
-                const result = data.choices[0]?.message?.content || '';
-                
-                // Cache the result
-                const cacheEntry = {
-                    result,
-                    timestamp: Date.now()
-                };
-                
-                if (cache.size >= CACHE_MAX) {
-                    const oldestKey = cache.keys().next().value;
-                    cache.delete(oldestKey);
-                }
-                cache.set(cacheKey, cacheEntry);
-                
-                return result;
-            }
-        } catch (error) {
-            console.log(`Error with model ${model}:`, error.message);
-            continue; // Try next model
-        }
-    }
-    
-    // All models failed
-    const fallbackText = "Savoiré AI is processing your request. Please try again in a moment.";
-    
-    if (streamMode && res) {
-        res.write(`data: ${JSON.stringify({ type: 'token', content: fallbackText })}\n\n`);
-        res.write(`data: ${JSON.stringify({ type: 'done', meta: { ms: Date.now() - startTime } })}\n\n`);
-        res.end();
-    } else {
-        return fallbackText;
-    }
-}
+    /* fallback manual render */
+    return text
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/^###\s(.+)$/gm,'<h3>$1</h3>')
+      .replace(/^##\s(.+)$/gm,'<h2>$1</h2>')
+      .replace(/^#\s(.+)$/gm,'<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/`(.+?)`/g,'<code>$1</code>')
+      .replace(/^>\s(.+)$/gm,'<blockquote>$1</blockquote>')
+      .replace(/^[-*]\s(.+)$/gm,'<li>$1</li>')
+      .replace(/^\d+\.\s(.+)$/gm,'<li>$2</li>')
+      .replace(/\n\n/g,'</p><p>')
+      .replace(/\n/g,'<br>');
+  }
 
-// ========================================================
-// FILE EXTRACTION FUNCTIONS
-// ========================================================
+  _stripMd(t) {
+    if (!t) return '';
+    return t.replace(/#{1,6}\s/g,'').replace(/\*\*(.+?)\*\*/g,'$1')
+            .replace(/\*(.+?)\*/g,'$1').replace(/`(.+?)`/g,'$1')
+            .replace(/^[-*]\s/gm,'').replace(/^\d+\.\s/gm,'').trim();
+  }
 
-async function extractFromPDF(buffer) {
-    if (!pdfParse) return "PDF parsing library not available. Please install pdf-parse.";
-    try {
-        const data = await pdfParse(buffer);
-        return data.text;
-    } catch (error) {
-        console.error('PDF extraction error:', error);
-        return "Error extracting text from PDF.";
-    }
-}
+  /* ═══════════════════════════════════════════
+     BIND ALL EVENTS
+  ═══════════════════════════════════════════ */
+  _bindAll() {
+    /* welcome */
+    this._on('welcomeBtn',       'click',  ()=>this._submitWelcome());
+    this._on('welcomeNameInput', 'keydown', e=>{ if(e.key==='Enter') this._submitWelcome(); });
 
-async function extractFromDOCX(buffer) {
-    if (!mammoth) return "DOCX parsing library not available. Please install mammoth.";
-    try {
-        const result = await mammoth.extractRawText({ buffer });
-        return result.value;
-    } catch (error) {
-        console.error('DOCX extraction error:', error);
-        return "Error extracting text from DOCX.";
-    }
-}
+    /* header */
+    this._on('sidebarToggleBtn', 'click',  ()=>this._toggleSidebar());
+    this._on('homeLink',         'click',  e=>{ e.preventDefault(); this._goHome(); });
+    this._on('historyOpenBtn',   'click',  ()=>this._openHistModal());
+    this._on('themeToggleBtn',   'click',  ()=>this._toggleTheme());
+    this._on('settingsOpenBtn',  'click',  ()=>this._openSettingsModal());
+    this._on('avatarBtn',        'click',  e=>{ e.stopPropagation(); this._toggleDropdown(); });
 
-function extractFromTXT(buffer) {
-    return buffer.toString('utf-8');
-}
+    /* dropdown */
+    this._on('adHistoryBtn',  'click', ()=>{ this._closeDropdown(); this._openHistModal(); });
+    this._on('adSavedBtn',    'click', ()=>{ this._closeDropdown(); this._openSavedModal(); });
+    this._on('adSettingsBtn', 'click', ()=>{ this._closeDropdown(); this._openSettingsModal(); });
+    this._on('adClearBtn',    'click', ()=>{ this._closeDropdown(); this._confirm('Clear ALL data? This cannot be undone.', ()=>this._clearAllData()); });
+    document.addEventListener('click', ()=>this._closeDropdown());
 
-async function extractFromImage(buffer, mimetype) {
-    // Use OpenRouter vision API
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    if (!apiKey) return "OpenRouter API key not configured for image extraction.";
-    
-    const base64Image = buffer.toString('base64');
-    const dataUrl = `data:${mimetype};base64,${base64Image}`;
-    
-    try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                'HTTP-Referer': process.env.SITE_URL || 'http://savoireai.vercel.app',
-                'X-Title': 'Savoiré AI'
-            },
-            body: JSON.stringify({
-                model: 'google/gemini-2.0-flash-exp:free',
-                messages: [
-                    {
-                        role: 'user',
-                        content: [
-                            { type: 'text', text: 'Extract all text from this image exactly as written. Return only the extracted text.' },
-                            { type: 'image_url', image_url: { url: dataUrl } }
-                        ]
-                    }
-                ],
-                max_tokens: 2000
-            })
-        });
-        
-        const data = await response.json();
-        return data.choices[0]?.message?.content || 'No text extracted from image.';
-    } catch (error) {
-        console.error('Image extraction error:', error);
-        return 'Error extracting text from image.';
-    }
-}
-
-async function extractFromFile(file) {
-    const { mimetype, buffer } = file;
-    
-    if (mimetype === 'application/pdf') {
-        return await extractFromPDF(buffer);
-    } else if (mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-        return await extractFromDOCX(buffer);
-    } else if (mimetype === 'text/plain') {
-        return extractFromTXT(buffer);
-    } else if (mimetype.startsWith('image/')) {
-        return await extractFromImage(buffer, mimetype);
-    } else {
-        return 'Unsupported file type.';
-    }
-}
-
-// ========================================================
-// API ROUTES
-// ========================================================
-
-// GET /api/health
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'operational', 
-        version: '2.0', 
-        tools: Object.keys(TOOL_PROMPTS).length 
+    /* all tool pills */
+    this._qsa('.tool-pill').forEach(btn => {
+      btn.addEventListener('click', ()=>this._setTool(btn.dataset.tool));
     });
-});
 
-// GET /api/tools
-app.get('/api/tools', (req, res) => {
-    const tools = Object.keys(TOOL_PROMPTS).map(key => ({
-        id: key,
-        name: key.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-        description: TOOL_PROMPTS[key].system.substring(0, 100) + '...',
-        category: getCategoryFromTool(key),
-        options: TOOL_OPTIONS[key] || []
+    /* sidebar nav */
+    this._qsa('.sb-nav-item').forEach(btn => {
+      btn.addEventListener('click', ()=>this._setTool(btn.dataset.tool));
+    });
+
+    /* sidebar templates */
+    this._qsa('.sb-tpl').forEach(btn => {
+      btn.addEventListener('click', ()=>{
+        const tpl  = btn.dataset.tpl;
+        const tool = btn.dataset.tool || 'notes';
+        const inp  = this._el('mainInput');
+        if (inp) { inp.value=tpl; this._autoResize(); this._updateCharCount(); inp.focus(); }
+        this._setTool(tool);
+        if (window.innerWidth <= 768) this._closeSidebarMobile();
+      });
+    });
+
+    /* sidebar history */
+    this._on('sbHistoryAllBtn', 'click', ()=>this._openHistModal());
+    this._on('sbNewBtn',        'click', ()=>this._goHome());
+
+    /* input */
+    this._on('mainInput',  'input',   ()=>{ this._autoResize(); this._updateCharCount(); });
+    this._on('mainInput',  'keydown', e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();this._send();} });
+    this._on('sendBtn',    'click',   ()=>this._send());
+    this._on('uploadFileBtn','click', ()=>this._el('fileInput')?.click());
+    this._on('fileInput',  'change',  e=>this._handleFile(e.target.files[0]));
+
+    /* suggestion chips */
+    this._qsa('.sugg-chip').forEach(c => {
+      c.addEventListener('click', ()=>{
+        const inp = this._el('mainInput');
+        if (inp) { inp.value=c.dataset.prompt; this._autoResize(); this._updateCharCount(); inp.focus(); }
+      });
+    });
+
+    /* bottom bar */
+    this._on('clearChatBtn',    'click', ()=>this._confirm('Clear all messages?',    ()=>this._clearChat()));
+    this._on('exportAllPdfBtn', 'click', ()=>this._exportAllPdf());
+    this._on('copyAllBtn',      'click', ()=>this._copyAll());
+
+    /* history modal */
+    this._on('histSearchInput', 'input',  e=>this._filterHist(e.target.value));
+    this._on('clearHistoryBtn', 'click',  ()=>this._confirm('Clear all history?', ()=>{ this.history=[]; this._save('sv_history',this.history); this._renderHistModal(); this._renderSbHistory(); this._updateHistBadge(); this._toast('info','fa-trash','History cleared.'); }));
+    this._on('exportHistBtn',   'click',  ()=>this._exportDataJson());
+    this._qsa('.hist-filter').forEach(btn => {
+      btn.addEventListener('click', ()=>{
+        this._qsa('.hist-filter').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        this._renderHistModal(btn.dataset.filter, this._el('histSearchInput')?.value||'');
+      });
+    });
+
+    /* settings modal */
+    this._on('saveNameBtn',  'click', ()=>this._saveName());
+    this._on('exportDataBtn','click', ()=>this._exportDataJson());
+    this._on('clearDataBtn', 'click', ()=>this._confirm('Delete ALL data — history, saved notes, preferences?', ()=>this._clearAllData()));
+    this._qsa('[data-theme-btn]').forEach(btn => {
+      btn.addEventListener('click', ()=>this._setTheme(btn.dataset.themeBtn));
+    });
+    this._qsa('.font-size-btn').forEach(btn => {
+      btn.addEventListener('click', ()=>this._setFontSize(btn.dataset.size));
+    });
+
+    /* modal close buttons */
+    this._qsa('[data-close]').forEach(btn => {
+      btn.addEventListener('click', ()=>this._closeModal(btn.dataset.close));
+    });
+    this._qsa('.modal-close-btn').forEach(btn => {
+      const overlay = btn.closest('.modal-overlay');
+      if (overlay) btn.addEventListener('click', ()=>this._closeModal(overlay.id));
+    });
+    this._qsa('.modal-overlay').forEach(ov => {
+      ov.addEventListener('click', e=>{ if(e.target===ov) this._closeModal(ov.id); });
+    });
+
+    /* confirm modal */
+    this._on('confirmOkBtn', 'click', ()=>{
+      this._closeModal('confirmModal');
+      if (typeof this.confirmCb === 'function') this.confirmCb();
+      this.confirmCb = null;
+    });
+
+    /* keyboard shortcuts */
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey||e.metaKey) && e.key==='k') { e.preventDefault(); this._el('mainInput')?.focus(); }
+      if ((e.ctrlKey||e.metaKey) && e.key==='h') { e.preventDefault(); this._openHistModal(); }
+      if (e.key==='Escape') this._closeAllModals();
+      /* flashcard keyboard */
+      if (this.fcCards.length>0) {
+        if (e.key===' '||e.key==='Enter') { e.preventDefault(); this._fcFlip(); }
+        if (e.key==='ArrowLeft')  this._fcNav(-1);
+        if (e.key==='ArrowRight') this._fcNav(1);
+      }
+    });
+
+    /* window resize */
+    window.addEventListener('resize', ()=>this._handleResize());
+  }
+
+  /* ═══════════════════════════════════════════
+     WELCOME
+  ═══════════════════════════════════════════ */
+  _initWelcome() {
+    const overlay = this._el('welcomeOverlay');
+    if (this.userName && this.userName.length >= 2) {
+      if (overlay) overlay.style.display='none';
+      this._updateUserUI();
+    } else {
+      if (overlay) { overlay.style.display='flex'; this._startParticles(); }
+      setTimeout(() => this._el('welcomeNameInput')?.focus(), 500);
+    }
+  }
+
+  _submitWelcome() {
+    const inp  = this._el('welcomeNameInput');
+    const errEl= this._el('welcomeErr');
+    const name = inp?.value?.trim() || '';
+    if (!name||name.length<2) {
+      if (errEl) errEl.textContent='Please enter your name (at least 2 characters).';
+      inp?.focus();
+      return;
+    }
+    if (errEl) errEl.textContent='';
+    this.userName = name;
+    localStorage.setItem('sv_user', name);
+    const overlay = this._el('welcomeOverlay');
+    if (overlay) {
+      overlay.classList.add('closing');
+      setTimeout(()=>{ overlay.style.display='none'; overlay.classList.remove('closing'); }, 400);
+    }
+    if (this.particleRAF) { cancelAnimationFrame(this.particleRAF); this.particleRAF=null; }
+    this._updateUserUI();
+    this._toast('success','fa-check',`Welcome to Savoiré AI, ${name}! 🎓`);
+  }
+
+  _updateUserUI() {
+    const ini = (this.userName||'S').charAt(0).toUpperCase();
+    ['avatarLetter','adAvLetter','sbFooterAv'].forEach(id=>{
+      const el=this._el(id); if(el) el.textContent=ini;
+    });
+    const adName = this._el('adName'); if(adName) adName.textContent=this.userName||'Scholar';
+    const sbName = this._el('sbFooterName'); if(sbName) sbName.textContent=this.userName||'Scholar';
+    const greet  = this._el('wswGreeting');
+    if (greet) greet.textContent = this.userName ? `Welcome back, ${this.userName}!` : 'Think Less. Know More.';
+  }
+
+  /* ═══════════════════════════════════════════
+     PARTICLES (welcome canvas)
+  ═══════════════════════════════════════════ */
+  _startParticles() {
+    const canvas = this._el('welcomeCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const resize = () => { canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const N = 120;
+    const pts = Array.from({length:N}, ()=>({
+      x:  Math.random()*canvas.width,
+      y:  Math.random()*canvas.height,
+      vx: (Math.random()-.5)*.45,
+      vy: (Math.random()-.5)*.45,
+      r:  Math.random()*1.8+.4,
+      a:  Math.random()*.35+.07,
     }));
-    
-    res.json({ tools });
-});
 
-// Helper to determine category
-function getCategoryFromTool(toolId) {
-    if (toolId.includes('notes') || toolId.includes('lecture') || toolId.includes('outline') || 
-        toolId.includes('bullet') || toolId.includes('flashcard') || toolId.includes('mindmap') ||
-        toolId.includes('study') || toolId.includes('knowledge') || toolId.includes('topic')) {
-        return 'note-generation';
+    let mx=-999, my=-999;
+    canvas.addEventListener('mousemove', e=>{
+      const r=canvas.getBoundingClientRect();
+      mx=e.clientX-r.left; my=e.clientY-r.top;
+    });
+
+    const draw = () => {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      pts.forEach(p=>{
+        const dx=p.x-mx, dy=p.y-my;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        if (dist<130) { p.vx+=dx/dist*.1; p.vy+=dy/dist*.1; }
+        p.vx*=.97; p.vy*=.97;
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.x<0) p.x=canvas.width;
+        if(p.x>canvas.width) p.x=0;
+        if(p.y<0) p.y=canvas.height;
+        if(p.y>canvas.height) p.y=0;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(201,169,110,${p.a})`;
+        ctx.fill();
+      });
+      this.particleRAF=requestAnimationFrame(draw);
+    };
+    draw();
+  }
+
+  /* ═══════════════════════════════════════════
+     TOOL SELECTION
+  ═══════════════════════════════════════════ */
+  _setTool(tool) {
+    this.tool = tool;
+
+    /* sync all pill buttons */
+    this._qsa('.tool-pill').forEach(p => p.classList.toggle('active', p.dataset.tool===tool));
+    this._qsa('.sb-nav-item').forEach(p => p.classList.toggle('active', p.dataset.tool===tool));
+
+    /* tool indicator */
+    const ICONS   = {notes:'fa-book-open',flashcards:'fa-layer-group',quiz:'fa-question-circle',summary:'fa-align-left',mindmap:'fa-project-diagram'};
+    const LABELS  = {notes:'Generating: Comprehensive Study Notes',flashcards:'Generating: Interactive Flashcards',quiz:'Generating: Practice Quiz',summary:'Generating: Smart Summary',mindmap:'Generating: Mind Map'};
+    const PLACEHOLDERS = {
+      notes:      'Enter any topic, concept, or paste text for comprehensive notes…',
+      flashcards: 'Enter a topic to create interactive flashcards…',
+      quiz:       'Enter a topic to generate a practice quiz with answers…',
+      summary:    'Enter a topic or paste text to summarize concisely…',
+      mindmap:    'Enter a topic to build a structured mind map…',
+    };
+    const SEND_LABELS = {notes:'Generate',flashcards:'Create Cards',quiz:'Build Quiz',summary:'Summarize',mindmap:'Make Map'};
+
+    const iconEl = this._el('iaToolIcon');
+    const textEl = this._el('iaTToolText');
+    const lblEl  = this._el('sendBtnLabel');
+    const inpEl  = this._el('mainInput');
+    if (iconEl) iconEl.className=`fas ${ICONS[tool]||'fa-book-open'}`;
+    if (textEl) textEl.textContent=LABELS[tool]||'Generating…';
+    if (lblEl)  lblEl.textContent=SEND_LABELS[tool]||'Generate';
+    if (inpEl)  inpEl.placeholder=PLACEHOLDERS[tool]||'Enter topic…';
+
+    this.prefs.lastTool=tool; this._save('sv_prefs',this.prefs);
+  }
+
+  /* ═══════════════════════════════════════════
+     SEND / GENERATE
+  ═══════════════════════════════════════════ */
+  async _send() {
+    const inp  = this._el('mainInput');
+    const text = inp?.value?.trim();
+    if (!text) { this._toast('info','fa-info-circle','Please enter a topic or question.'); return; }
+    if (this.generating) { this._toast('warning','fa-hourglass-half','Please wait for the current generation.'); return; }
+
+    const depth = this._el('depthSel')?.value   || 'detailed';
+    const lang  = this._el('langSel')?.value    || 'English';
+    const style = this._el('styleSel')?.value   || 'simple';
+
+    /* show messages, hide welcome */
+    this._el('wsWelcome').style.display  = 'none';
+    this._el('wsMessages').style.display = 'block';
+
+    this._addUserMsg(text);
+    if (inp) { inp.value=''; this._autoResize(); this._updateCharCount(); }
+
+    this._showThinking();
+    this.generating = true;
+    this._setSendLoading(true);
+
+    try {
+      const data = await this._callAPI(text, {depth, language:lang, style, tool:this.tool});
+      this.currentData = data;
+      this._hideThinking();
+      this._renderResult(data);
+      this._addToHistory({id:this._genId(), topic:data.topic||text, tool:this.tool, data, ts:Date.now()});
+      this._toast('success','fa-check-circle','Study materials generated!');
+    } catch(err) {
+      this._hideThinking();
+      this._addErrMsg(err.message||'Something went wrong. Please try again.');
+      this._toast('error','fa-exclamation-circle',err.message||'Generation failed.');
+    } finally {
+      this.generating = false;
+      this._setSendLoading(false);
     }
-    if (toolId.includes('summary') || toolId.includes('tldr') || toolId.includes('abstract') ||
-        toolId.includes('digest') || toolId.includes('quotes') || toolId.includes('extract')) {
-        return 'summarization';
+  }
+
+  async _callAPI(message, opts={}) {
+    const controller = new AbortController();
+    const timer      = setTimeout(()=>controller.abort(), 180000);
+    try {
+      const res = await fetch('/api/study', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message, options:opts}),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    } catch(e) {
+      clearTimeout(timer);
+      if (e.name==='AbortError') throw new Error('Request timed out. The AI is busy — please try again.');
+      throw e;
     }
-    if (toolId.includes('meeting') || toolId.includes('action') || toolId.includes('decision') ||
-        toolId.includes('agenda') || toolId.includes('recap') || toolId.includes('interview')) {
-        return 'meeting-tools';
+  }
+
+  /* ═══════════════════════════════════════════
+     MESSAGE HELPERS
+  ═══════════════════════════════════════════ */
+  _addUserMsg(text) {
+    const list = this._el('messagesList');
+    if (!list) return;
+    const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const ini  = (this.userName||'U').charAt(0).toUpperCase();
+    const row  = document.createElement('div');
+    row.className = 'msg-row user-row';
+    row.innerHTML = `
+      <div class="msg-av user-av">${ini}</div>
+      <div class="msg-content">
+        <div class="msg-bubble">${this._esc(text)}</div>
+        <div class="msg-time">${time}</div>
+      </div>`;
+    list.appendChild(row);
+    this._scrollBottom();
+  }
+
+  _addErrMsg(text) {
+    const list = this._el('messagesList');
+    if (!list) return;
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.innerHTML = `
+      <div class="msg-av ai-av">Ś</div>
+      <div class="msg-content">
+        <div class="msg-error">
+          <strong><i class="fas fa-exclamation-circle"></i> Error</strong><br>
+          ${this._esc(text)}<br>
+          <small style="color:var(--t3);margin-top:8px;display:block">Please check your internet connection and try again. The AI models may be temporarily busy.</small>
+        </div>
+      </div>`;
+    list.appendChild(row);
+    this._scrollBottom();
+  }
+
+  _renderResult(data) {
+    const list = this._el('messagesList');
+    if (!list) return;
+    const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const html = this._buildStudyHTML(data);
+    const row  = document.createElement('div');
+    row.className = 'msg-row';
+    row.innerHTML = `
+      <div class="msg-av ai-av">Ś</div>
+      <div class="msg-content" style="max-width:100%">
+        ${html}
+        <div class="msg-time">${time}</div>
+      </div>`;
+    list.appendChild(row);
+    this._scrollBottom();
+
+    /* init interactive features */
+    if (this.tool==='flashcards') this._fcInit(data);
+    if (this.tool==='quiz')       this._quizInit(data);
+  }
+
+  /* ═══════════════════════════════════════════
+     STUDY HTML BUILDER
+  ═══════════════════════════════════════════ */
+  _buildStudyHTML(data) {
+    const topic = this._esc(data.topic || 'Study Material');
+    const score = data.study_score || 96;
+    const pct   = Math.min(100, Math.max(0, score));
+
+    /* header */
+    const header = `
+      <div class="study-header-card">
+        <div class="shc-left">
+          <div class="study-h-topic">${topic}</div>
+          <div class="study-h-meta">
+            <div class="shm-item"><i class="fas fa-graduation-cap"></i>${this._esc(data.curriculum_alignment||'General Study')}</div>
+            <div class="shm-item"><i class="fas fa-calendar-alt"></i>${new Date().toLocaleDateString()}</div>
+            <div class="shm-item"><i class="fas fa-star"></i>Score: ${score}/100</div>
+            <div class="shm-item"><i class="fas fa-globe"></i>${this._esc(data._language||'')}</div>
+          </div>
+          <div class="study-powered"><strong>${this.BRAND}</strong> &nbsp;·&nbsp; ${this.DEVELOPER} &nbsp;·&nbsp; ${this.WEBSITE}</div>
+        </div>
+        <div class="study-score-ring" style="--pct:${pct}">
+          <div class="study-score-val">${score}</div>
+        </div>
+      </div>`;
+
+    let content = '';
+    switch (this.tool) {
+      case 'flashcards': content = this._buildFcHTML(data);      break;
+      case 'quiz':       content = this._buildQuizHTML(data);     break;
+      case 'summary':    content = this._buildSummaryHTML(data);  break;
+      case 'mindmap':    content = this._buildMindmapHTML(data);  break;
+      default:           content = this._buildNotesHTML(data);    break;
     }
-    if (toolId.includes('extend') || toolId.includes('shorten') || toolId.includes('rephrase') ||
-        toolId.includes('grammar') || toolId.includes('vocabulary') || toolId.includes('tone') ||
-        toolId.includes('style') || toolId.includes('translate')) {
-        return 'text-transformation';
+
+    const exports = `
+      <div class="export-controls">
+        <button class="exp-btn pdf"   onclick="window._sav.downloadPDF(this)"><i class="fas fa-file-pdf"></i>Download PDF</button>
+        <button class="exp-btn copy"  onclick="window._sav.copyResult(this)"><i class="fas fa-copy"></i>Copy Text</button>
+        <button class="exp-btn save"  onclick="window._sav.saveNote(this)"><i class="fas fa-star"></i>Save Note</button>
+        <button class="exp-btn share" onclick="window._sav.shareResult(this)"><i class="fas fa-share-alt"></i>Share</button>
+        <span class="exp-brand">${this.BRAND} &nbsp;·&nbsp; ${this.DEVELOPER}</span>
+      </div>`;
+
+    return `<div class="study-output">${header}${content}${exports}</div>`;
+  }
+
+  /* ─── NOTES HTML ─── */
+  _buildNotesHTML(data) {
+    let h = '';
+
+    /* comprehensive notes */
+    if (data.ultra_long_notes) {
+      h += `<div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-book-open"></i> Comprehensive Analysis</div></div>
+        <div class="section-body"><div class="notes-md">${this._renderMd(data.ultra_long_notes)}</div></div>
+      </div>`;
     }
-    if (toolId.includes('flashcard') || toolId.includes('quiz') || toolId.includes('explain') ||
-        toolId.includes('definition') || toolId.includes('formula') || toolId.includes('glossary')) {
-        return 'study-learning';
+
+    /* key concepts */
+    if (data.key_concepts?.length) {
+      const cards = data.key_concepts.map((c,i)=>`
+        <div class="concept-card">
+          <div class="concept-num">${i+1}</div>
+          <div class="concept-text">${this._esc(c)}</div>
+        </div>`).join('');
+      h += `<div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-lightbulb"></i> Key Concepts</div></div>
+        <div class="section-body"><div class="concepts-grid">${cards}</div></div>
+      </div>`;
     }
-    if (toolId.includes('research') || toolId.includes('thesis') || toolId.includes('bibliography') ||
-        toolId.includes('hypothesis') || toolId.includes('literature') || toolId.includes('abstract')) {
-        return 'research-writing';
+
+    /* key tricks */
+    if (data.key_tricks?.length) {
+      const icons = ['fas fa-magic','fas fa-star','fas fa-bolt','fas fa-key'];
+      const items = data.key_tricks.map((t,i)=>`
+        <div class="trick-item">
+          <div class="trick-icon"><i class="${icons[i]||'fas fa-magic'}"></i></div>
+          <div class="trick-text">${this._esc(t)}</div>
+        </div>`).join('');
+      h += `<div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-magic"></i> Study Tricks &amp; Tips</div></div>
+        <div class="section-body"><div class="tricks-list">${items}</div></div>
+      </div>`;
     }
-    if (toolId.includes('blog') || toolId.includes('social') || toolId.includes('email') ||
-        toolId.includes('newsletter') || toolId.includes('press') || toolId.includes('ad') ||
-        toolId.includes('tagline') || toolId.includes('headline') || toolId.includes('faq')) {
-        return 'content-creation';
+
+    /* practice questions */
+    if (data.practice_questions?.length) {
+      const qs = data.practice_questions.map((qa,i)=>`
+        <div class="q-card">
+          <div class="q-head" onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.q-toggle-btn').classList.toggle('open')">
+            <div class="q-num">${i+1}</div>
+            <div class="q-text">${this._esc(qa.question)}</div>
+            <button class="q-toggle-btn"><i class="fas fa-chevron-down"></i> Answer</button>
+          </div>
+          <div class="q-answer">
+            <div class="q-answer-label"><i class="fas fa-check-circle"></i> Answer &amp; Explanation</div>
+            <div class="q-answer-inner">${this._esc(qa.answer)}</div>
+          </div>
+        </div>`).join('');
+      h += `<div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-pen-alt"></i> Practice Questions</div></div>
+        <div class="section-body"><div class="questions-list">${qs}</div></div>
+      </div>`;
     }
-    if (toolId.includes('document') || toolId.includes('sop') || toolId.includes('policy') ||
-        toolId.includes('proposal') || toolId.includes('contract') || toolId.includes('plan')) {
-        return 'document-tools';
+
+    /* applications */
+    if (data.real_world_applications?.length) {
+      const items = data.real_world_applications.map(a=>`
+        <div class="list-item app-item">
+          <i class="fas fa-globe li-icon" style="color:var(--em2)"></i>
+          <div class="li-text">${this._esc(a)}</div>
+        </div>`).join('');
+      h += `<div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-globe"></i> Real World Applications</div></div>
+        <div class="section-body"><div class="items-list">${items}</div></div>
+      </div>`;
     }
-    if (toolId.includes('rewrite') || toolId.includes('humanize') || toolId.includes('paraphrase') ||
-        toolId.includes('restructure') || toolId.includes('condense') || toolId.includes('expand')) {
-        return 'ai-rewriting';
+
+    /* misconceptions */
+    if (data.common_misconceptions?.length) {
+      const items = data.common_misconceptions.map(m=>`
+        <div class="list-item misc-item">
+          <i class="fas fa-exclamation-triangle li-icon" style="color:var(--ruby2)"></i>
+          <div class="li-text">${this._esc(m)}</div>
+        </div>`).join('');
+      h += `<div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-exclamation-triangle"></i> Common Misconceptions</div></div>
+        <div class="section-body"><div class="items-list">${items}</div></div>
+      </div>`;
     }
-    return 'special-tools';
+
+    return h;
+  }
+
+  /* ─── FLASHCARDS HTML ─── */
+  _buildFcHTML(data) {
+    const cards = [];
+    (data.key_concepts||[]).forEach(c=>{
+      const p = c.split(':'); cards.push({q:p[0]?.trim()||c, a:p.slice(1).join(':').trim()||c});
+    });
+    (data.practice_questions||[]).forEach(qa=>{ cards.push({q:qa.question, a:qa.answer}); });
+    this.fcCards   = cards;
+    this.fcCurrent = 0;
+    this.fcFlipped = false;
+    const total    = cards.length;
+    const first    = cards[0]||{q:'No cards',a:''};
+    return `
+      <div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-layer-group"></i> Interactive Flashcards (${total} cards)</div></div>
+        <div class="section-body">
+          <div class="fc-mode">
+            <div class="fc-progress">Card <span id="fcCurNum">1</span> of <span id="fcTotNum">${total}</span></div>
+            <div class="fc-wrap" onclick="window._sav._fcFlip()">
+              <div class="flashcard" id="theFlashcard">
+                <div class="fc-face fc-front">
+                  <div class="fc-label">Question / Concept</div>
+                  <div class="fc-content" id="fcFront">${this._esc(first.q)}</div>
+                  <div class="fc-hint">Click or press Space to reveal answer</div>
+                </div>
+                <div class="fc-face fc-back">
+                  <div class="fc-label">Answer / Explanation</div>
+                  <div class="fc-content" id="fcBack">${this._esc(first.a)}</div>
+                </div>
+              </div>
+            </div>
+            <div class="fc-controls">
+              <button class="fc-btn" id="fcPrevBtn" onclick="window._sav._fcNav(-1)" ${total<=1?'disabled':''}><i class="fas fa-arrow-left"></i> Previous</button>
+              <button class="fc-btn primary" onclick="window._sav._fcFlip()"><i class="fas fa-sync-alt"></i> Flip</button>
+              <button class="fc-btn" id="fcNextBtn" onclick="window._sav._fcNav(1)" ${total<=1?'disabled':''}><i class="fas fa-arrow-right"></i> Next</button>
+            </div>
+            <div class="fc-kb-hint"><kbd>Space</kbd> to flip &nbsp;·&nbsp; <kbd>←</kbd><kbd>→</kbd> to navigate</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  _fcInit(data) { /* already initialized in _buildFcHTML */ }
+
+  _fcFlip() {
+    const fc = this._el('theFlashcard');
+    if (!fc) return;
+    this.fcFlipped = !this.fcFlipped;
+    fc.classList.toggle('flipped', this.fcFlipped);
+  }
+
+  _fcNav(dir) {
+    if (!this.fcCards.length) return;
+    this.fcCurrent = Math.max(0, Math.min(this.fcCards.length-1, this.fcCurrent+dir));
+    this.fcFlipped = false;
+    const fc = this._el('theFlashcard');
+    if (fc) fc.classList.remove('flipped');
+    const card = this.fcCards[this.fcCurrent];
+    const fe   = this._el('fcFront');
+    const be   = this._el('fcBack');
+    const cn   = this._el('fcCurNum');
+    if (fe) fe.textContent = card.q;
+    if (be) be.textContent = card.a;
+    if (cn) cn.textContent = this.fcCurrent+1;
+    const pb = this._el('fcPrevBtn'); const nb = this._el('fcNextBtn');
+    if (pb) pb.disabled = this.fcCurrent===0;
+    if (nb) nb.disabled = this.fcCurrent===this.fcCards.length-1;
+  }
+
+  /* ─── QUIZ HTML ─── */
+  _buildQuizHTML(data) {
+    const qs = (data.practice_questions||[]).slice(0,5);
+    this.quizData  = qs;
+    this.quizIdx   = 0;
+    this.quizScore = 0;
+    this.quizDone  = false;
+    if (!qs.length) return '<div class="study-section"><div class="section-body"><p style="color:var(--t3)">No quiz questions available for this topic.</p></div></div>';
+    return `
+      <div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-question-circle"></i> Practice Quiz — ${qs.length} Questions</div></div>
+        <div class="section-body">
+          <div class="quiz-mode">
+            <div class="quiz-pb-wrap"><div class="quiz-pb-fill" id="quizPB" style="width:0%"></div></div>
+            <div id="quizArea">${this._buildQCard(qs, 0)}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  _buildQCard(qs, idx) {
+    const qa      = qs[idx];
+    const correct = this._esc((qa.answer||'').substring(0,90)+'...');
+    const wrongs  = [
+      'This concept relies on indirect mechanisms and external environmental factors.',
+      'The opposite interpretation applies — the effect precedes the cause in this model.',
+      'This primarily applies to historical contexts and is no longer considered valid.',
+    ];
+    const opts = this._shuffle([{text:correct,ok:true},...wrongs.map(w=>({text:w,ok:false}))]);
+    const optsHTML = opts.map((o,i)=>`
+      <button class="quiz-opt" data-ok="${o.ok}" onclick="window._sav._pickOpt(this,${idx})"
+        data-idx="${i}">
+        <span class="q-opt-letter">${String.fromCharCode(65+i)}</span>
+        ${o.text}
+      </button>`).join('');
+    return `
+      <div class="quiz-q-card" id="qCard${idx}">
+        <div class="quiz-q-num">Question ${idx+1} of ${qs.length}</div>
+        <div class="quiz-q-text">${this._esc(qa.question)}</div>
+        <div class="quiz-options">${optsHTML}</div>
+      </div>`;
+  }
+
+  _quizInit(data) { /* state set in _buildQuizHTML */ }
+
+  _pickOpt(btn, idx) {
+    const card = btn.closest('.quiz-q-card');
+    if (!card) return;
+    /* disable all options */
+    card.querySelectorAll('.quiz-opt').forEach(b=>{
+      b.disabled = true;
+      if (b.dataset.ok==='true') b.classList.add('correct');
+    });
+    const ok = btn.dataset.ok==='true';
+    if (!ok) btn.classList.add('wrong');
+    if (ok)  this.quizScore++;
+
+    /* update progress bar */
+    const answered = idx+1;
+    const total    = this.quizData.length;
+    const pb = this._el('quizPB');
+    if (pb) pb.style.width=`${(answered/total)*100}%`;
+
+    /* next or result */
+    setTimeout(()=>{
+      const area = this._el('quizArea');
+      if (!area) return;
+      if (answered >= total) {
+        const pct = Math.round((this.quizScore/total)*100);
+        const msg = pct>=80?'🎉 Excellent!':pct>=60?'👍 Good effort!':'📚 Keep studying!';
+        area.innerHTML=`
+          <div class="quiz-result">
+            <div class="qr-title">Quiz Complete!</div>
+            <div class="qr-score">${this.quizScore}/${total}</div>
+            <div class="qr-msg">${pct}% correct &nbsp;·&nbsp; ${msg}</div>
+            <div class="qr-btns">
+              <button class="btn btn-ghost" onclick="window._sav._retryQuiz()"><i class="fas fa-redo"></i> Try Again</button>
+              <button class="btn btn-primary" onclick="window._sav._setTool('notes');document.getElementById('mainInput').focus()">
+                <i class="fas fa-book-open"></i> Study Notes
+              </button>
+            </div>
+          </div>`;
+      } else {
+        area.innerHTML = this._buildQCard(this.quizData, idx+1);
+        this.quizIdx = idx+1;
+      }
+    }, 950);
+  }
+
+  _retryQuiz() {
+    const area = this._el('quizArea');
+    const pb   = this._el('quizPB');
+    this.quizScore=0; this.quizIdx=0;
+    if (pb) pb.style.width='0%';
+    if (area) area.innerHTML=this._buildQCard(this.quizData,0);
+  }
+
+  /* ─── SUMMARY HTML ─── */
+  _buildSummaryHTML(data) {
+    const notes = data.ultra_long_notes||'';
+    const tldr  = this._esc(this._stripMd(notes).substring(0,400)+'…');
+    const points = (data.key_concepts||[]).map((c,i)=>`
+      <div class="sum-point"><span class="sum-pt-num">${i+1}</span><span>${this._esc(c)}</span></div>`).join('');
+    const full = notes?`
+      <div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-book-open"></i> Full Notes</div></div>
+        <div class="section-body"><div class="notes-md">${this._renderMd(notes)}</div></div>
+      </div>`:'';
+    return `
+      <div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-align-left"></i> Smart Summary</div></div>
+        <div class="section-body">
+          <div class="summary-mode">
+            <div class="summary-tldr-card">
+              <div class="sum-tldr-label">TL;DR</div>
+              <div class="sum-tldr-text">${tldr}</div>
+            </div>
+            <div class="sum-points">${points}</div>
+          </div>
+        </div>
+      </div>${full}`;
+  }
+
+  /* ─── MINDMAP HTML ─── */
+  _buildMindmapHTML(data) {
+    const topic    = data.topic||'Topic';
+    const concepts = data.key_concepts||[];
+    const tricks   = data.key_tricks||[];
+    const apps     = data.real_world_applications||[];
+    const misc     = data.common_misconceptions||[];
+
+    const branch = (title, icon, items) => {
+      if (!items.length) return '';
+      const its = items.map(i=>`<div class="mm-item">${this._esc((i.split(':')[0]||i).trim())}</div>`).join('');
+      return `<div class="mm-branch"><div class="mm-branch-title"><i class="${icon}"></i> ${this._esc(title)}</div><div class="mm-items">${its}</div></div>`;
+    };
+
+    const branches = [
+      branch('Key Concepts',        'fas fa-lightbulb',            concepts),
+      branch('Study Tips',          'fas fa-magic',                tricks),
+      branch('Applications',        'fas fa-globe',                apps),
+      branch('Misconceptions',      'fas fa-exclamation-triangle', misc),
+    ].join('');
+
+    return `
+      <div class="study-section">
+        <div class="section-hdr"><div class="section-hdr-title"><i class="fas fa-project-diagram"></i> Mind Map</div></div>
+        <div class="section-body">
+          <div class="mm-mode">
+            <div class="mm-root"><div class="mm-root-node">${this._esc(topic)}</div></div>
+            <div class="mm-branches">${branches}</div>
+          </div>
+        </div>
+      </div>
+      ${this._buildNotesHTML(data)}`;
+  }
+
+  /* ═══════════════════════════════════════════
+     PDF EXPORT
+  ═══════════════════════════════════════════ */
+  downloadPDF(btn) {
+    const data = this.currentData;
+    if (!data) { this._toast('warning','fa-exclamation','No content to export yet.'); return; }
+    if (!window.jspdf) { this._toast('error','fa-times','PDF library not loaded. Please refresh.'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc  = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pw   = 210, ph = 297, m = 15, cw = pw-(m*2);
+    let y = 0;
+
+    const addHdr = () => {
+      doc.setFillColor(201,169,110);
+      doc.rect(0,0,pw,13,'F');
+      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+      doc.text('Savoiré AI v2.0',m,9);
+      doc.setFontSize(7); doc.setFont('helvetica','normal');
+      doc.text('savoireai.vercel.app  ·  Sooban Talha Technologies',pw-m,9,{align:'right'});
+      y=22;
+    };
+
+    const addFtr = (pg,tot) => {
+      doc.setDrawColor(201,169,110); doc.setLineWidth(.35);
+      doc.line(m,ph-13,pw-m,ph-13);
+      doc.setFontSize(6.5); doc.setTextColor(140);
+      doc.text(`Page ${pg} of ${tot}  ·  Generated by Savoiré AI v2.0  ·  Sooban Talha Technologies  ·  savoireai.vercel.app  ·  ${new Date().toLocaleString()}`,pw/2,ph-7.5,{align:'center'});
+    };
+
+    const check = (n=14) => {
+      if (y+n > ph-18) {
+        addFtr(doc.internal.getCurrentPageInfo().pageNumber,'?');
+        doc.addPage(); addHdr();
+      }
+    };
+
+    const write = (text, sz, bold, color, indent=0) => {
+      doc.setFontSize(sz);
+      doc.setFont('helvetica', bold?'bold':'normal');
+      doc.setTextColor(...color);
+      const lines = doc.splitTextToSize(text, cw-indent);
+      lines.forEach(l=>{ check(sz*.38+1); doc.text(l,m+indent,y); y+=sz*.38+1; });
+    };
+
+    const heading = (txt,sz) => {
+      check(sz*.4+6); y+=4;
+      doc.setFillColor(201,169,110,50);
+      write(txt,sz,true,[100,65,10]);
+      y+=3;
+    };
+
+    addHdr();
+
+    /* Title */
+    doc.setFontSize(22); doc.setFont('helvetica','bold'); doc.setTextColor(20,12,0);
+    const titleLines = doc.splitTextToSize(data.topic||'Study Notes', cw);
+    titleLines.forEach(l=>{ doc.text(l,m,y); y+=9; });
+    y+=2;
+
+    doc.setFontSize(8.5); doc.setFont('helvetica','normal'); doc.setTextColor(100,88,70);
+    doc.text(`${data.curriculum_alignment||''}  ·  Score: ${data.study_score||96}/100  ·  ${new Date().toLocaleDateString()}  ·  Savoiré AI v2.0`,m,y); y+=4;
+    doc.setDrawColor(201,169,110); doc.setLineWidth(.6);
+    doc.line(m,y,pw-m,y); y+=8;
+
+    /* Notes */
+    if (data.ultra_long_notes) {
+      heading('COMPREHENSIVE ANALYSIS',12);
+      write(this._stripMd(data.ultra_long_notes),9.5,false,[35,28,20]); y+=6;
+    }
+
+    /* Key concepts */
+    if (data.key_concepts?.length) {
+      heading('KEY CONCEPTS',12);
+      data.key_concepts.forEach((c,i)=>{ check(10); write(`${i+1}. ${c}`,9.5,false,[35,28,20],5); y+=1; });
+      y+=5;
+    }
+
+    /* Tricks */
+    if (data.key_tricks?.length) {
+      heading('STUDY TRICKS & TIPS',12);
+      data.key_tricks.forEach(t=>{ check(10); write(`✦  ${t}`,9.5,false,[35,28,20],5); y+=1.5; });
+      y+=5;
+    }
+
+    /* Questions */
+    if (data.practice_questions?.length) {
+      heading('PRACTICE QUESTIONS',12);
+      data.practice_questions.forEach((qa,i)=>{
+        check(16); write(`Q${i+1}: ${qa.question}`,9.5,true,[35,28,20],5); y+=1;
+        write(`A:  ${qa.answer}`,9,false,[55,45,35],12); y+=4;
+      });
+      y+=3;
+    }
+
+    /* Applications */
+    if (data.real_world_applications?.length) {
+      heading('REAL WORLD APPLICATIONS',12);
+      data.real_world_applications.forEach(a=>{ check(10); write(`•  ${a}`,9.5,false,[35,28,20],5); y+=1.5; });
+      y+=5;
+    }
+
+    /* Misconceptions */
+    if (data.common_misconceptions?.length) {
+      heading('COMMON MISCONCEPTIONS',12);
+      data.common_misconceptions.forEach(mc=>{ check(10); write(`⚠  ${mc}`,9.5,false,[35,28,20],5); y+=1.5; });
+    }
+
+    /* Add footers */
+    const tot = doc.internal.getNumberOfPages();
+    for (let i=1;i<=tot;i++) { doc.setPage(i); addFtr(i,tot); }
+
+    const fname = `SavoireAI_${(data.topic||'Notes').replace(/[^a-zA-Z0-9]/g,'_').slice(0,40)}_${Date.now()}.pdf`;
+    doc.save(fname);
+    this._toast('success','fa-file-pdf','PDF downloaded successfully!');
+    if (btn) { const o=btn.innerHTML; btn.innerHTML='<i class="fas fa-check"></i> Downloaded!'; setTimeout(()=>{btn.innerHTML=o;},2500); }
+  }
+
+  /* ─── copy ─── */
+  copyResult(btn) {
+    const data = this.currentData;
+    if (!data) { this._toast('info','fa-info-circle','No content to copy yet.'); return; }
+    this._copyText(this._dataToText(data), btn);
+  }
+
+  _copyText(text, btn) {
+    navigator.clipboard.writeText(text)
+      .then(()=>{
+        this._toast('success','fa-copy','Copied to clipboard!');
+        if (btn) { const o=btn.innerHTML; btn.innerHTML='<i class="fas fa-check"></i> Copied!'; setTimeout(()=>{btn.innerHTML=o;},2000); }
+      })
+      .catch(()=>{
+        const ta=document.createElement('textarea');
+        ta.value=text; ta.style.cssText='position:fixed;opacity:0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+        this._toast('success','fa-copy','Copied!');
+      });
+  }
+
+  /* ─── save note ─── */
+  saveNote(btn) {
+    const data = this.currentData;
+    if (!data) { this._toast('info','fa-info-circle','No content to save yet.'); return; }
+    this.saved.unshift({id:this._genId(),topic:data.topic||'Note',tool:this.tool,data,savedAt:Date.now()});
+    if (this.saved.length>100) this.saved=this.saved.slice(0,100);
+    this._save('sv_saved',this.saved);
+    this._toast('success','fa-star','Note saved to your library!');
+    if (btn) { const o=btn.innerHTML; btn.innerHTML='<i class="fas fa-check"></i> Saved!'; setTimeout(()=>{btn.innerHTML=o;},2000); }
+  }
+
+  /* ─── share ─── */
+  shareResult(btn) {
+    const data = this.currentData;
+    if (!data) return;
+    const text = `📚 ${data.topic} — Study Notes\n\n${this._stripMd(data.ultra_long_notes||'').substring(0,300)}…\n\nGenerated free by Savoiré AI v2.0 — savoireai.vercel.app\nBuilt by Sooban Talha Technologies`;
+    if (navigator.share) {
+      navigator.share({title:`${data.topic} — Savoiré AI v2.0`, text}).catch(()=>{});
+    } else {
+      this._copyText(text);
+    }
+  }
+
+  /* ─── export all ─── */
+  _exportAllPdf() {
+    if (this.currentData) { this.downloadPDF(null); }
+    else { this._toast('info','fa-info-circle','Generate some content first.'); }
+  }
+
+  _copyAll() {
+    const outs = document.querySelectorAll('.study-output');
+    if (!outs.length) { this._toast('info','fa-info-circle','No content to copy yet.'); return; }
+    const text = Array.from(outs).map(el=>el.innerText).join('\n\n─────────────────────────────────\n\n');
+    this._copyText(text);
+  }
+
+  _dataToText(data) {
+    let t = `${data.topic||'Study Notes'}\n${'═'.repeat(60)}\n`;
+    t += `Powered by Savoiré AI v2.0 · Sooban Talha Technologies · savoireai.vercel.app\n\n`;
+    if (data.ultra_long_notes)  t += `COMPREHENSIVE NOTES\n\n${this._stripMd(data.ultra_long_notes)}\n\n`;
+    if (data.key_concepts?.length) { t+=`KEY CONCEPTS\n`; data.key_concepts.forEach((c,i)=>{t+=`${i+1}. ${c}\n`;}); t+='\n'; }
+    if (data.key_tricks?.length)   { t+=`STUDY TRICKS\n`; data.key_tricks.forEach(tr=>{t+=`✦ ${tr}\n`;}); t+='\n'; }
+    if (data.practice_questions?.length) {
+      t+=`PRACTICE QUESTIONS\n`;
+      data.practice_questions.forEach((qa,i)=>{t+=`Q${i+1}: ${qa.question}\nA: ${qa.answer}\n\n`;});
+    }
+    if (data.real_world_applications?.length) { t+=`APPLICATIONS\n`; data.real_world_applications.forEach(a=>{t+=`• ${a}\n`;}); t+='\n'; }
+    if (data.common_misconceptions?.length)    { t+=`MISCONCEPTIONS\n`; data.common_misconceptions.forEach(m=>{t+=`⚠ ${m}\n`;}); }
+    t += `\n${'─'.repeat(60)}\nSavoiré AI v2.0 · savoireai.vercel.app\nSooban Talha Technologies · ${new Date().toLocaleString()}\n`;
+    return t;
+  }
+
+  /* ═══════════════════════════════════════════
+     FILE UPLOAD
+  ═══════════════════════════════════════════ */
+  _handleFile(file) {
+    if (!file) return;
+    if (file.size > 5*1024*1024) { this._toast('error','fa-times','File too large (max 5MB).'); return; }
+    const allowed = ['text/plain','text/markdown','text/csv','application/csv'];
+    if (!allowed.includes(file.type) && !file.name.match(/\.(txt|md|csv)$/i)) {
+      this._toast('error','fa-times','Only .txt, .md, .csv files are supported for direct text extraction.'); return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = (e.target.result||'').substring(0, 8000);
+      const inp  = this._el('mainInput');
+      if (inp) { inp.value=text; this._autoResize(); this._updateCharCount(); }
+      this._toast('success','fa-paperclip',`File loaded: ${file.name} (${text.length.toLocaleString()} chars)`);
+    };
+    reader.onerror = ()=>{ this._toast('error','fa-times','Could not read the file.'); };
+    reader.readAsText(file);
+    /* reset input so same file can be re-uploaded */
+    this._el('fileInput').value='';
+  }
+
+  /* ═══════════════════════════════════════════
+     THINKING INDICATOR
+  ═══════════════════════════════════════════ */
+  _showThinking() {
+    const el = this._el('wsThinking');
+    if (el) el.style.display='block';
+    this.stageIdx = 0;
+    this._resetStages();
+    this._activateStage(0);
+    this.thinkTimer = setInterval(()=>{
+      this.stageIdx++;
+      if (this.stageIdx < 5) {
+        this._doneStage(this.stageIdx-1);
+        this._activateStage(this.stageIdx);
+      }
+    }, 3000);
+    this._scrollBottom();
+  }
+
+  _hideThinking() {
+    const el = this._el('wsThinking');
+    if (el) el.style.display='none';
+    if (this.thinkTimer) { clearInterval(this.thinkTimer); this.thinkTimer=null; }
+  }
+
+  _resetStages()   { for(let i=0;i<5;i++){const e=this._el(`ts${i}`); if(e) e.className='ts';} }
+  _activateStage(i){ const e=this._el(`ts${i}`); if(e) e.classList.add('active'); }
+  _doneStage(i)    { const e=this._el(`ts${i}`); if(e){e.classList.remove('active');e.classList.add('done');} }
+
+  /* ═══════════════════════════════════════════
+     HISTORY
+  ═══════════════════════════════════════════ */
+  _addToHistory(entry) {
+    this.history.unshift(entry);
+    if (this.history.length>50) this.history=this.history.slice(0,50);
+    this._save('sv_history',this.history);
+    this._updateHistBadge();
+    this._renderSbHistory();
+  }
+
+  _updateHistBadge() {
+    const b = this._el('histBadge');
+    if (!b) return;
+    if (this.history.length>0) {
+      b.textContent = Math.min(this.history.length,99);
+      b.style.display='flex';
+    } else { b.style.display='none'; }
+  }
+
+  _renderSbHistory() {
+    const list = this._el('sbHistoryList');
+    if (!list) return;
+    if (!this.history.length) {
+      list.innerHTML='<div class="sb-empty"><i class="fas fa-clock"></i><span>No history yet</span></div>';
+      return;
+    }
+    const ICONS = {notes:'fa-book-open',flashcards:'fa-layer-group',quiz:'fa-question-circle',summary:'fa-align-left',mindmap:'fa-project-diagram'};
+    list.innerHTML = this.history.slice(0,5).map(h=>`
+      <div class="sb-hist-item" onclick="window._sav._loadHistEntry('${h.id}')">
+        <div class="sb-hist-icon"><i class="fas ${ICONS[h.tool]||'fa-book-open'}"></i></div>
+        <div class="sb-hist-topic">${this._esc((h.topic||'Session').substring(0,35))}</div>
+        <div class="sb-hist-time">${this._relTime(h.ts)}</div>
+      </div>`).join('');
+  }
+
+  _openHistModal() {
+    this._openModal('historyModal');
+    this._renderHistModal();
+  }
+
+  _renderHistModal(filter='all', query='') {
+    const list  = this._el('histModalList');
+    const empty = this._el('histModalEmpty');
+    const count = this._el('histModalCount');
+    if (!list) return;
+
+    let items = this.history;
+    if (filter!=='all')  items=items.filter(h=>h.tool===filter);
+    if (query)           items=items.filter(h=>(h.topic||'').toLowerCase().includes(query.toLowerCase()));
+
+    if (count) count.textContent=`${items.length} ${items.length===1?'entry':'entries'}`;
+
+    if (!items.length) {
+      list.innerHTML='';
+      if (empty) empty.style.display='flex';
+      return;
+    }
+    if (empty) empty.style.display='none';
+
+    const ICONS = {notes:'fa-book-open',flashcards:'fa-layer-group',quiz:'fa-question-circle',summary:'fa-align-left',mindmap:'fa-project-diagram'};
+    list.innerHTML = items.map((h,i)=>`
+      <div class="hist-item" onclick="window._sav._loadHistEntry('${h.id}')">
+        <div class="hist-tool-av"><i class="fas ${ICONS[h.tool]||'fa-book-open'}"></i></div>
+        <div class="hist-info">
+          <div class="hist-topic">${this._esc(h.topic||'Study Session')}</div>
+          <div class="hist-meta">
+            <span class="hist-tag">${h.tool||'notes'}</span>
+            <span class="hist-time">${this._relTime(h.ts)}</span>
+          </div>
+        </div>
+        <div class="hist-acts">
+          <button class="hist-act-btn del" onclick="event.stopPropagation();window._sav._deleteHistEntry('${h.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`).join('');
+  }
+
+  _filterHist(q) {
+    const f = this._qs('.hist-filter.active')?.dataset.filter||'all';
+    this._renderHistModal(f,q);
+  }
+
+  _loadHistEntry(id) {
+    const h = this.history.find(x=>x.id===id);
+    if (!h?.data) return;
+    this._closeModal('historyModal');
+    this.currentData = h.data;
+    this.tool = h.tool||'notes';
+    this._setTool(this.tool);
+    this._el('wsWelcome').style.display  = 'none';
+    this._el('wsMessages').style.display = 'block';
+    this._addUserMsg(`📂 Loaded: ${h.topic}`);
+    this._renderResult(h.data);
+    this._toast('info','fa-history',`Loaded: ${h.topic}`);
+  }
+
+  _deleteHistEntry(id) {
+    this.history = this.history.filter(x=>x.id!==id);
+    this._save('sv_history',this.history);
+    this._updateHistBadge();
+    this._renderSbHistory();
+    const f = this._qs('.hist-filter.active')?.dataset.filter||'all';
+    const q = this._el('histSearchInput')?.value||'';
+    this._renderHistModal(f,q);
+  }
+
+  /* ═══════════════════════════════════════════
+     SAVED NOTES
+  ═══════════════════════════════════════════ */
+  _openSavedModal() {
+    this._openModal('savedModal');
+    this._renderSavedModal();
+  }
+
+  _renderSavedModal() {
+    const list  = this._el('savedModalList');
+    const empty = this._el('savedModalEmpty');
+    const count = this._el('savedModalCount');
+    if (!list) return;
+    if (count) count.textContent=`${this.saved.length} ${this.saved.length===1?'note':'notes'}`;
+    if (!this.saved.length) {
+      list.innerHTML=''; if(empty) empty.style.display='flex'; return;
+    }
+    if (empty) empty.style.display='none';
+    const ICONS = {notes:'fa-book-open',flashcards:'fa-layer-group',quiz:'fa-question-circle',summary:'fa-align-left',mindmap:'fa-project-diagram'};
+    list.innerHTML = this.saved.map(s=>`
+      <div class="hist-item" onclick="window._sav._loadSavedEntry('${s.id}')">
+        <div class="hist-tool-av"><i class="fas ${ICONS[s.tool]||'fa-book-open'}"></i></div>
+        <div class="hist-info">
+          <div class="hist-topic">${this._esc(s.topic)}</div>
+          <div class="hist-meta">
+            <span class="hist-tag">${s.tool}</span>
+            <span class="hist-time">${this._relTime(s.savedAt)}</span>
+          </div>
+        </div>
+        <div class="hist-acts">
+          <button class="hist-act-btn del" onclick="event.stopPropagation();window._sav._deleteSaved('${s.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`).join('');
+  }
+
+  _loadSavedEntry(id) {
+    const s = this.saved.find(x=>x.id===id);
+    if (!s?.data) return;
+    this._closeModal('savedModal');
+    this.currentData = s.data;
+    this.tool = s.tool||'notes';
+    this._setTool(this.tool);
+    this._el('wsWelcome').style.display  = 'none';
+    this._el('wsMessages').style.display = 'block';
+    this._addUserMsg(`⭐ Loaded saved: ${s.topic}`);
+    this._renderResult(s.data);
+  }
+
+  _deleteSaved(id) {
+    this.saved = this.saved.filter(x=>x.id!==id);
+    this._save('sv_saved',this.saved);
+    this._renderSavedModal();
+  }
+
+  /* ═══════════════════════════════════════════
+     SETTINGS
+  ═══════════════════════════════════════════ */
+  _openSettingsModal() {
+    /* populate */
+    const ni = this._el('nameInput'); if(ni) ni.value=this.userName;
+    /* sync theme btns */
+    const th = document.documentElement.dataset.theme||'dark';
+    this._qsa('[data-theme-btn]').forEach(b=>b.classList.toggle('active',b.dataset.themeBtn===th));
+    /* sync font btns */
+    const fn = document.documentElement.dataset.font||'medium';
+    this._qsa('.font-size-btn').forEach(b=>b.classList.toggle('active',b.dataset.size===fn));
+    /* data stats */
+    const ds = this._el('settingsDataStats');
+    if (ds) {
+      const hs = JSON.stringify(this.history).length;
+      const ss = JSON.stringify(this.saved).length;
+      ds.innerHTML=`
+        <div class="sds-item"><div class="sds-val">${this.history.length}</div><div class="sds-lbl">History</div></div>
+        <div class="sds-item"><div class="sds-val">${this.saved.length}</div><div class="sds-lbl">Saved</div></div>
+        <div class="sds-item"><div class="sds-val">${Math.round((hs+ss)/1024)}KB</div><div class="sds-lbl">Storage</div></div>`;
+    }
+    this._openModal('settingsModal');
+  }
+
+  _saveName() {
+    const inp  = this._el('nameInput');
+    const name = inp?.value?.trim();
+    if (!name||name.length<2) { this._toast('error','fa-times','Name must be at least 2 characters.'); return; }
+    this.userName = name;
+    localStorage.setItem('sv_user',name);
+    this._updateUserUI();
+    this._toast('success','fa-check','Name updated!');
+  }
+
+  _exportDataJson() {
+    const obj = {
+      exported: new Date().toISOString(),
+      app: 'Savoiré AI v2.0',
+      developer: 'Sooban Talha Technologies',
+      website: 'savoireai.vercel.app',
+      userName: this.userName,
+      history:  this.history,
+      saved:    this.saved,
+      preferences: this.prefs,
+    };
+    const blob = new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=`savoiré-ai-data-${Date.now()}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    this._toast('success','fa-download','Data exported!');
+  }
+
+  _clearAllData() {
+    Object.keys(localStorage).filter(k=>k.startsWith('sv_')).forEach(k=>localStorage.removeItem(k));
+    this._toast('info','fa-trash','All data cleared. Reloading…');
+    setTimeout(()=>window.location.reload(), 1200);
+  }
+
+  /* ═══════════════════════════════════════════
+     THEME
+  ═══════════════════════════════════════════ */
+  _toggleTheme() {
+    const cur = document.documentElement.dataset.theme||'dark';
+    this._setTheme(cur==='dark'?'light':'dark');
+  }
+
+  _setTheme(theme) {
+    document.documentElement.dataset.theme=theme;
+    const ic = this._el('themeIconEl');
+    if (ic) ic.className=theme==='dark'?'fas fa-moon':'fas fa-sun';
+    this._qsa('[data-theme-btn]').forEach(b=>b.classList.toggle('active',b.dataset.themeBtn===theme));
+    this.prefs.theme=theme; this._save('sv_prefs',this.prefs);
+  }
+
+  _setFontSize(size) {
+    document.documentElement.dataset.font=size;
+    this._qsa('.font-size-btn').forEach(b=>b.classList.toggle('active',b.dataset.size===size));
+    this.prefs.fontSize=size; this._save('sv_prefs',this.prefs);
+  }
+
+  _applyPrefs() {
+    if (this.prefs.theme)    this._setTheme(this.prefs.theme);
+    if (this.prefs.fontSize) this._setFontSize(this.prefs.fontSize);
+    if (this.prefs.lastTool) this._setTool(this.prefs.lastTool);
+    this._renderSbHistory();
+  }
+
+  /* ═══════════════════════════════════════════
+     SIDEBAR
+  ═══════════════════════════════════════════ */
+  _toggleSidebar() {
+    const sb = this._el('sidebar');
+    const ws = this._el('workspace');
+    if (window.innerWidth<=768) {
+      sb?.classList.toggle('mobile-open');
+    } else {
+      this.sidebarOpen = !this.sidebarOpen;
+      sb?.classList.toggle('collapsed',!this.sidebarOpen);
+      ws?.classList.toggle('sb-collapsed',!this.sidebarOpen);
+    }
+  }
+
+  _closeSidebarMobile() { this._el('sidebar')?.classList.remove('mobile-open'); }
+
+  _handleResize() {
+    if (window.innerWidth>768) {
+      this._el('sidebar')?.classList.remove('mobile-open');
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     MODALS
+  ═══════════════════════════════════════════ */
+  _openModal(id) {
+    const el = this._el(id);
+    if (!el) return;
+    el.style.display='flex';
+    document.body.style.overflow='hidden';
+  }
+
+  _closeModal(id) {
+    const el = this._el(id);
+    if (!el) return;
+    el.style.display='none';
+    if (!document.querySelector('.modal-overlay[style*="flex"]'))
+      document.body.style.overflow='';
+  }
+
+  _closeAllModals() {
+    this._qsa('.modal-overlay').forEach(m=>{ m.style.display='none'; });
+    document.body.style.overflow='';
+  }
+
+  _confirm(msg, cb) {
+    const me = this._el('confirmMsg');
+    if (me) me.textContent=msg;
+    this.confirmCb = cb;
+    this._openModal('confirmModal');
+  }
+
+  _toggleDropdown() {
+    this._el('avatarDropdown')?.classList.toggle('open');
+  }
+
+  _closeDropdown() {
+    this._el('avatarDropdown')?.classList.remove('open');
+  }
+
+  /* ═══════════════════════════════════════════
+     TOAST
+  ═══════════════════════════════════════════ */
+  _toast(type, icon, msg, dur=4000) {
+    const container = this._el('toastContainer');
+    if (!container) return;
+    while (container.children.length>=3) container.removeChild(container.firstChild);
+    const t = document.createElement('div');
+    t.className=`toast ${type}`;
+    t.innerHTML=`<i class="fas ${icon}"></i><span>${this._esc(msg)}</span>`;
+    t.addEventListener('click',()=>t.remove());
+    container.appendChild(t);
+    setTimeout(()=>{
+      if (t.parentNode) {
+        t.classList.add('removing');
+        setTimeout(()=>t.remove(), 300);
+      }
+    }, dur);
+  }
+
+  /* ═══════════════════════════════════════════
+     MISC UI
+  ═══════════════════════════════════════════ */
+  _setSendLoading(on) {
+    const btn  = this._el('sendBtn');
+    const icon = this._el('sendBtnIcon');
+    const lbl  = this._el('sendBtnLabel');
+    if (!btn) return;
+    btn.disabled = on;
+    if (icon) icon.className = on?'fas fa-spinner fa-spin':'fas fa-paper-plane';
+    if (lbl)  lbl.textContent = on?'Generating…':({notes:'Generate',flashcards:'Create Cards',quiz:'Build Quiz',summary:'Summarize',mindmap:'Make Map'}[this.tool]||'Generate');
+  }
+
+  _autoResize() {
+    const el = this._el('mainInput');
+    if (!el) return;
+    el.style.height='auto';
+    el.style.height=Math.min(el.scrollHeight,140)+'px';
+  }
+
+  _updateCharCount() {
+    const el  = this._el('mainInput');
+    const cnt = this._el('charCount');
+    if (!el||!cnt) return;
+    const n = el.value.length;
+    cnt.textContent=`${n.toLocaleString()} / 12,000`;
+    cnt.className='ia-char-count'+(n>10000?' danger':n>7500?' warn':'');
+  }
+
+  _scrollBottom() {
+    const ms = this._el('wsMessages');
+    if (ms) { setTimeout(()=>{ms.scrollTop=ms.scrollHeight;},80); }
+  }
+
+  _clearChat() {
+    const ml = this._el('messagesList');
+    const wm = this._el('wsMessages');
+    const ww = this._el('wsWelcome');
+    if (ml) ml.innerHTML='';
+    if (wm) wm.style.display='none';
+    if (ww) ww.style.display='flex';
+    this.currentData=null;
+    this.fcCards=[];
+    this._toast('info','fa-trash-alt','Chat cleared.');
+  }
+
+  _goHome() {
+    this._clearChat();
+  }
 }
 
-// POST /api/process (SSE streaming)
-app.post('/api/process', upload.single('file'), asyncHandler(async (req, res) => {
-    const { tool, text, format, style, tone, length, language, targetLanguage, audience, count, difficulty, type, wordCount, platform, medium, level, time, duration } = req.body;
-    const file = req.file;
-    
-    // Validate tool
-    if (!tool || !validateTool(tool)) {
-        return res.status(400).json({ error: 'Invalid or missing tool' });
-    }
-    
-    // Get input text (either from body or extracted from file)
-    let inputText = text || '';
-    if (file) {
-        const extracted = await extractFromFile(file);
-        inputText = extracted;
-    }
-    
-    // Sanitize and validate
-    inputText = sanitizeText(inputText);
-    if (!inputText && !file) {
-        return res.status(400).json({ error: 'No input text provided' });
-    }
-    
-    // Build options object
-    const opts = {
-        format, style, tone, length, language,
-        'target-language': targetLanguage,
-        audience, count, difficulty, type,
-        wordCount: parseInt(wordCount) || 200,
-        platform, medium, level, time, duration
-    };
-    
-    // Get tool config
-    const toolConfig = TOOL_PROMPTS[tool];
-    const userPrompt = toolConfig.build(inputText, opts);
-    
-    // Call AI with streaming
-    await callAI(userPrompt, toolConfig.system, true, res);
-}));
-
-// POST /api/process/sync (non-streaming fallback)
-app.post('/api/process/sync', upload.single('file'), asyncHandler(async (req, res) => {
-    const { tool, text, format, style, tone, length, language, targetLanguage, audience, count, difficulty, type, wordCount, platform, medium, level, time, duration } = req.body;
-    const file = req.file;
-    
-    // Validate tool
-    if (!tool || !validateTool(tool)) {
-        return res.status(400).json({ error: 'Invalid or missing tool' });
-    }
-    
-    // Get input text
-    let inputText = text || '';
-    if (file) {
-        const extracted = await extractFromFile(file);
-        inputText = extracted;
-    }
-    
-    inputText = sanitizeText(inputText);
-    if (!inputText && !file) {
-        return res.status(400).json({ error: 'No input text provided' });
-    }
-    
-    // Build options
-    const opts = {
-        format, style, tone, length, language,
-        'target-language': targetLanguage,
-        audience, count, difficulty, type,
-        wordCount: parseInt(wordCount) || 200,
-        platform, medium, level, time, duration
-    };
-    
-    // Get tool config
-    const toolConfig = TOOL_PROMPTS[tool];
-    const userPrompt = toolConfig.build(inputText, opts);
-    
-    // Call AI (non-streaming)
-    const startTime = Date.now();
-    const result = await callAI(userPrompt, toolConfig.system, false);
-    const processingTime = Date.now() - startTime;
-    
-    // Count words
-    const wordCount_result = result.trim().split(/\s+/).length;
-    
-    res.json({
-        success: true,
-        result: {
-            text: result,
-            tool,
-            wordCount: wordCount_result
-        },
-        meta: { ms: processingTime }
-    });
-}));
-
-// POST /api/extract
-app.post('/api/extract', upload.single('file'), asyncHandler(async (req, res) => {
-    const file = req.file;
-    
-    if (!file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-    }
-    
-    const extractedText = await extractFromFile(file);
-    const charCount = extractedText.length;
-    const wordCount = extractedText.trim().split(/\s+/).length;
-    
-    res.json({
-        success: true,
-        text: extractedText,
-        charCount,
-        wordCount
-    });
-}));
-
-// POST /api/share
-app.post('/api/share', asyncHandler(async (req, res) => {
-    const { title, content, tool } = req.body;
-    
-    if (!content) {
-        return res.status(400).json({ error: 'No content to share' });
-    }
-    
-    const id = uuidv4();
-    shareStore.set(id, {
-        title: title || 'Shared Note',
-        content,
-        tool,
-        created: Date.now()
-    });
-    
-    res.json({ id });
-}));
-
-// GET /api/share/:id
-app.get('/api/share/:id', asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    
-    if (!shareStore.has(id)) {
-        return res.status(404).json({ error: 'Shared content not found' });
-    }
-    
-    res.json(shareStore.get(id));
-}));
-
-// ========================================================
-// ERROR HANDLING
-// ========================================================
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, '404.html'));
+/* ═══════════════════════════════════════════
+   GLOBAL INIT
+═══════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  window._sav = new SavoireApp();
 });
-
-// Error handler middleware
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    
-    // Don't leak error details in production
-    const message = process.env.NODE_ENV === 'production' 
-        ? 'An unexpected error occurred'
-        : err.message;
-    
-    res.status(500).json({ error: message });
-});
-
-// ========================================================
-// START SERVER
-// ========================================================
-
-app.listen(PORT, () => {
-    console.log(`✦ Savoiré AI v2.0 running on port ${PORT}`);
-    console.log(`✦ ${Object.keys(TOOL_PROMPTS).length} tools loaded`);
-    console.log(`✦ Open http://localhost:${PORT} to start`);
-});
-
-// Export for Vercel
-module.exports = app;
