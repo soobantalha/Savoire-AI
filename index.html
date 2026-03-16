@@ -1,577 +1,1259 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="Savoiré AI v2.0 — Free AI study companion. Notes, flashcards, quizzes and more. No login.">
-<meta name="author" content="Sooban Talha Technologies">
-<meta name="theme-color" content="#C9A96E">
-<title>Savoiré AI v2.0 — Think Less. Know More. | Free AI Study Companion by Sooban Talha</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:16px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
-:root{
---bg0:#02020A;--bg1:#07070F;--bg2:#0D0D1C;--bg3:#131325;--bg4:#1A1A2E;
---gold:#C9A96E;--gold2:#DFC08A;--gold3:#EDD4A8;
---goldd:rgba(201,169,110,.12);--goldb:rgba(201,169,110,.28);--goldg:rgba(201,169,110,.18);
---shg:0 6px 40px rgba(201,169,110,.22);
---em2:#42C98A;--emd:rgba(66,201,138,.12);
---t1:#F0EBE0;--t2:#B2A99C;--t3:#756D63;--t4:#433F38;
---b1:rgba(255,255,255,.04);--b2:rgba(255,255,255,.09);--b3:rgba(255,255,255,.16);
---fd:'Playfair Display',Georgia,serif;--fb:'Crimson Pro',Georgia,serif;
---fu:'DM Sans',system-ui,sans-serif;--fm:'JetBrains Mono',monospace;
---r2:8px;--r3:12px;--r4:16px;--r5:20px;--r6:24px;--rf:9999px;
---ease:cubic-bezier(.16,1,.3,1);
-}
-[data-theme="light"]{
---bg0:#ECE7DE;--bg1:#F2EDE4;--bg2:#F8F4EE;--bg3:#FFFDF9;--bg4:#FFF;
---t1:#1A1510;--t2:#56504A;--t3:#988E84;--t4:#BEB7B0;
---b1:rgba(0,0,0,.04);--b2:rgba(0,0,0,.09);--b3:rgba(0,0,0,.16);
---gold:#8A5C18;--gold2:#6A4008;--goldd:rgba(138,92,24,.10);--goldg:rgba(138,92,24,.15);--goldb:rgba(138,92,24,.28);
-}
-body{font-family:var(--fu);background:var(--bg0);color:var(--t1);line-height:1.6;overflow-x:hidden}
-::selection{background:var(--goldg);color:var(--gold3)}
-a{color:var(--gold);text-decoration:none}a:hover{color:var(--gold2)}
-::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:99px}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="description" content="Savoiré AI — The World's Most Advanced Free AI Study Notes Generator. Generate rich notes, flashcards, quizzes & more in 50+ languages. Built by Sooban Talha Technologies." />
+  <meta name="author" content="Sooban Talha Technologies" />
+  <meta property="og:title" content="Savoiré AI v2.0 — Think Less. Know More." />
+  <meta property="og:description" content="Transform any topic into ultra-rich study notes, flashcards, quizzes and more — completely free, powered by 20 AI models." />
+  <meta name="theme-color" content="#0A0A0F" />
+  <title>Savoiré AI v2.0 — Think Less. Know More. | Sooban Talha Technologies</title>
 
-/* NAV */
-.nav{position:fixed;top:0;left:0;right:0;z-index:900;height:66px;display:flex;align-items:center;
-padding:0 48px;gap:32px;background:rgba(2,2,10,.88);backdrop-filter:blur(24px);
-border-bottom:1px solid var(--b1);transition:background .3s}
-[data-theme="light"] .nav{background:rgba(236,231,222,.92)}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.nlm{width:36px;height:36px;border-radius:var(--r2);background:linear-gradient(135deg,var(--gold),var(--gold3));
-display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:1.2rem;
-font-weight:700;color:#02020A;box-shadow:0 2px 14px rgba(201,169,110,.3)}
-.nlt{font-family:var(--fd);font-size:1rem;font-weight:600;color:var(--gold)}
-.nlv{font-family:var(--fm);font-size:.58rem;color:var(--t3);display:block}
-.nav-sp{flex:1}
-.nav-lk{display:flex;gap:28px}.nav-lk a{font-size:.875rem;color:var(--t2);font-weight:500;transition:color .2s}
-.nav-lk a:hover{color:var(--t1)}
-.nav-th{width:34px;height:34px;border:1px solid var(--b2);border-radius:var(--r2);background:var(--bg3);
-color:var(--t2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.88rem;transition:all .2s}
-.nav-th:hover{border-color:var(--goldb);color:var(--gold)}
-.nav-cta{display:flex;align-items:center;gap:7px;padding:9px 22px;border-radius:var(--rf);
-background:var(--gold);color:#02020A;font-weight:700;font-size:.875rem;transition:all .2s;border:none;cursor:pointer;text-decoration:none}
-.nav-cta:hover{background:var(--gold3);transform:translateY(-1px);box-shadow:var(--shg);color:#02020A;text-decoration:none}
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
 
-/* HERO */
-.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;
-position:relative;overflow:hidden;padding:110px 48px 80px;text-align:center}
-canvas{position:absolute;inset:0;pointer-events:none;z-index:0}
-.ho1{position:absolute;width:700px;height:700px;border-radius:50%;
-background:radial-gradient(circle,rgba(201,169,110,.09) 0%,transparent 70%);
-top:-220px;left:-200px;pointer-events:none;animation:orb1 12s ease-in-out infinite}
-.ho2{position:absolute;width:500px;height:500px;border-radius:50%;
-background:radial-gradient(circle,rgba(45,140,98,.07) 0%,transparent 70%);
-bottom:-100px;right:-100px;pointer-events:none;animation:orb1 16s ease-in-out infinite reverse}
-.hero-in{position:relative;z-index:1;max-width:840px}
-.h-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 16px;border-radius:var(--rf);
-background:var(--goldd);border:1px solid var(--goldb);font-size:.74rem;letter-spacing:.1em;
-text-transform:uppercase;color:var(--gold);margin-bottom:28px;animation:fadeDown .7s var(--ease)}
-.bdot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
-h1{font-family:var(--fd);font-size:clamp(2.6rem,5.5vw,5rem);font-weight:800;line-height:1.06;
-color:var(--t1);margin-bottom:22px;animation:fadeUp .8s var(--ease) .1s both}
-h1 em{font-style:italic;background:linear-gradient(135deg,var(--gold) 0%,var(--gold3) 50%,var(--gold) 100%);
-background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;
-background-clip:text;animation:shine 4s linear infinite}
-.h-sub{font-family:var(--fb);font-size:1.18rem;color:var(--t2);line-height:1.76;
-max-width:580px;margin:0 auto 40px;animation:fadeUp .8s var(--ease) .2s both}
-.h-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s var(--ease) .3s both;margin-bottom:20px}
-.btn-g{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:var(--rf);
-background:var(--gold);color:#02020A;font-weight:700;font-size:1rem;border:none;cursor:pointer;transition:all .25s var(--ease);text-decoration:none}
-.btn-g:hover{background:var(--gold3);transform:translateY(-2px);box-shadow:var(--shg);color:#02020A;text-decoration:none}
-.btn-o{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:var(--rf);
-background:transparent;color:var(--t1);font-weight:600;font-size:1rem;border:1.5px solid var(--b3);cursor:pointer;transition:all .25s var(--ease);text-decoration:none}
-.btn-o:hover{border-color:var(--goldb);color:var(--gold);background:var(--goldd);text-decoration:none}
-.h-note{font-size:.78rem;color:var(--t3);animation:fadeUp .8s var(--ease) .4s both}
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-/* STATS */
-.stats{background:var(--bg2);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:30px 48px}
-.stats-g{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:20px;text-align:center}
-.sn{font-family:var(--fd);font-size:2.4rem;font-weight:700;background:linear-gradient(135deg,var(--gold),var(--gold3));
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
-.sl{font-size:.8rem;color:var(--t3);margin-top:4px}
+  <!-- Master Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
 
-/* FEATURES TICKER */
-.ticker{padding:0;overflow:hidden;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);
-background:var(--bg1);mask-image:linear-gradient(to right,transparent,black 8%,black 92%,transparent);
--webkit-mask-image:linear-gradient(to right,transparent,black 8%,black 92%,transparent)}
-.ticker-inner{display:flex;gap:0;animation:ticker 35s linear infinite;width:max-content}
-.tick{display:flex;align-items:center;gap:8px;padding:14px 22px;border-right:1px solid var(--b1);
-font-size:.79rem;color:var(--t2);white-space:nowrap}
-.tick i{color:var(--gold);font-size:.75rem}
+  <style>
+    /* ── Landing Page Extra Styles ───────────────────────────── */
+    .nav-burger {
+      display:       none;
+      flex-direction: column;
+      gap:           5px;
+      cursor:        pointer;
+      padding:       4px;
+      background:    none;
+      border:        none;
+    }
+    .nav-burger span {
+      display:       block;
+      width:         22px;
+      height:        2px;
+      background:    var(--text-secondary);
+      border-radius: 2px;
+      transition:    all var(--tr-normal);
+    }
+    @media (max-width: 900px) { .nav-burger { display: flex; } }
 
-/* SECTION */
-.sec{padding:96px 48px}
-.si{max-width:1100px;margin:0 auto}
-.stag{font-family:var(--fu);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
-color:var(--gold);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.stag::before{content:'✦';font-size:.6rem}
-.sh{font-family:var(--fd);font-size:clamp(1.9rem,3.5vw,2.8rem);font-weight:700;
-color:var(--t1);line-height:1.15;margin-bottom:14px}
-.sh em{font-style:italic;color:var(--gold)}
-.ss{font-family:var(--fb);font-size:1.05rem;color:var(--t2);line-height:1.76;max-width:560px}
+    /* Scroll-reveal */
+    .reveal {
+      opacity:   0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
 
-/* HOW IT WORKS */
-.how-g{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:54px}
-.hw{background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:34px 26px;
-position:relative;overflow:hidden;transition:all .3s var(--ease)}
-.hw:hover{border-color:var(--goldb);transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
-.hw::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity .3s}
-.hw:hover::after{opacity:1}
-.hw-n{font-family:var(--fd);font-size:4.5rem;font-weight:900;color:var(--gold);opacity:.12;
-line-height:1;position:absolute;top:10px;right:18px}
-.hw-ic{width:50px;height:50px;border-radius:var(--r3);background:var(--goldd);border:1px solid var(--goldb);
-display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:18px}
-.hw-t{font-family:var(--fd);font-size:1.15rem;font-weight:600;color:var(--t1);margin-bottom:10px}
-.hw-d{font-family:var(--fb);font-size:.95rem;color:var(--t2);line-height:1.72}
+    /* Animated gradient headline */
+    .anim-grad {
+      background:             linear-gradient(270deg, #C9A96E, #E8C98A, #C9A96E, #A07840);
+      background-size:        300% 300%;
+      -webkit-background-clip: text;
+      background-clip:        text;
+      -webkit-text-fill-color: transparent;
+      animation:              gradientShift 4s ease infinite;
+    }
 
-/* TOOLS GRID */
-.tools-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:52px}
-.tc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r4);padding:22px;
-display:flex;gap:15px;align-items:flex-start;transition:all .25s var(--ease)}
-.tc:hover{border-color:var(--goldb);background:var(--bg3);transform:translateY(-2px)}
-.ti{width:40px;height:40px;border-radius:var(--r2);background:var(--goldd);border:1px solid var(--goldb);
-display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0}
-.tn{font-family:var(--fu);font-size:.88rem;font-weight:600;color:var(--t1);margin-bottom:4px}
-.td{font-family:var(--fb);font-size:.86rem;color:var(--t2);line-height:1.62}
-.tb{display:inline-block;margin-top:8px;padding:2px 10px;border-radius:var(--rf);font-size:.66rem;
-font-family:var(--fu);font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-background:var(--emd);color:var(--em2);border:1px solid rgba(66,201,138,.2)}
+    /* Language ticker */
+    .language-ticker {
+      overflow:   hidden;
+      padding:    var(--sp-sm) 0;
+    }
+    .ticker-inner {
+      display:   flex;
+      gap:       var(--sp-xl);
+      width:     max-content;
+      animation: tickerScroll 20s linear infinite;
+    }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .ticker-item {
+      display:       inline-flex;
+      align-items:   center;
+      gap:           0.5rem;
+      font-size:     0.82rem;
+      color:         var(--text-muted);
+      white-space:   nowrap;
+      font-weight:   500;
+    }
+    .ticker-item i { color: var(--gold); font-size: 0.7rem; }
 
-/* DEMO */
-.demo-sec{background:var(--bg1);border-top:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:96px 48px}
-.demo-win{background:var(--bg2);border:1px solid var(--b2);border-radius:20px;overflow:hidden;
-box-shadow:0 32px 80px rgba(0,0,0,.55);margin-top:54px}
-.demo-bar{background:var(--bg3);border-bottom:1px solid var(--b1);padding:11px 16px;display:flex;align-items:center;gap:8px}
-.dd{width:11px;height:11px;border-radius:50%}.ddr{background:#FF5F57}.ddy{background:#FFBD2E}.ddg{background:#28C840}
-.demo-bar-title{font-family:var(--fm);font-size:.72rem;color:var(--t3);margin:0 auto}
-.demo-bd{display:grid;grid-template-columns:270px 1fr;min-height:400px}
-.demo-sb{background:var(--bg3);border-right:1px solid var(--b1);padding:14px;display:flex;flex-direction:column;gap:4px}
-.dsbl{font-family:var(--fu);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t4);padding:0 8px;margin:8px 0 3px}
-.dsbi{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--r2);
-font-size:.8rem;color:var(--t2);cursor:default;transition:all .2s}
-.dsbi.a{background:var(--goldd);border:1px solid var(--goldb);color:var(--gold)}
-.dsbi i{font-size:.76rem;width:14px;text-align:center}
-.demo-main{display:flex;flex-direction:column}
-.demo-top{flex:1;padding:24px 28px;display:flex;gap:22px}
-.demo-ic{flex:0 0 41%}
-.demo-oc{flex:1}
-.demo-lbl{font-family:var(--fu);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
-.demo-olbl{font-family:var(--fu);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
-.demo-ib{background:var(--bg4);border:1px solid var(--b2);border-radius:var(--r3);padding:14px;
-font-family:var(--fb);font-size:.88rem;color:var(--t1);line-height:1.72;min-height:110px}
-.demo-ob{background:var(--bg4);border:1px solid var(--goldb);border-radius:var(--r3);padding:14px;
-font-family:var(--fb);font-size:.88rem;color:var(--t1);line-height:1.72;min-height:110px}
-.cursor{display:inline-block;width:2px;height:1em;background:var(--gold);
-animation:blink 1s step-end infinite;vertical-align:text-bottom;margin-left:2px}
-.demo-bot{padding:14px 28px;border-top:1px solid var(--b1);background:var(--bg3);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.demo-tab{padding:6px 14px;border-radius:var(--rf);border:1px solid var(--b2);background:transparent;
-font-size:.76rem;color:var(--t3);cursor:pointer;transition:all .2s;font-family:var(--fu)}
-.demo-tab.a{background:var(--goldd);border-color:var(--goldb);color:var(--gold)}
+    /* Nav mobile menu */
+    .mobile-menu {
+      display:         none;
+      position:        fixed;
+      top:             70px;
+      left:            0;
+      right:           0;
+      background:      var(--bg-card);
+      border-bottom:   1px solid var(--border);
+      padding:         var(--sp-md);
+      z-index:         var(--z-sidebar);
+      flex-direction:  column;
+      gap:             var(--sp-sm);
+      animation:       slideInDown 0.3s ease;
+      box-shadow:      var(--shadow-lg);
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu .nav-link { padding: var(--sp-sm) var(--sp-md); display: block; font-size: 0.95rem; border-radius: var(--r-md); }
+    .mobile-menu .nav-link:hover { background: var(--bg-glass-light); }
 
-/* FOUNDER */
-.founder-sec{padding:96px 48px;background:linear-gradient(135deg,var(--bg0) 0%,var(--bg2) 100%)}
-.fnd-in{max-width:880px;margin:0 auto;text-align:center}
-.fnd-card{background:var(--bg3);border:1px solid var(--goldb);border-radius:20px;
-padding:54px 48px;position:relative;overflow:hidden}
-.fnd-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.fnd-qm{font-family:var(--fd);font-size:8rem;color:var(--gold);opacity:.08;
-position:absolute;top:-20px;left:22px;line-height:1;pointer-events:none}
-.fnd-q{font-family:var(--fd);font-size:clamp(1.15rem,2.3vw,1.5rem);font-style:italic;
-color:var(--t1);line-height:1.65;margin-bottom:36px;position:relative;z-index:1}
-.fnd-q em{color:var(--gold);font-style:normal;font-weight:700}
-.fnd-av-wrap{display:flex;align-items:center;justify-content:center;gap:18px}
-.fnd-av{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold3));
-display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:1.7rem;
-font-weight:700;color:#02020A;border:3px solid var(--goldb);box-shadow:var(--shg)}
-.fnd-name{font-family:var(--fd);font-size:1.08rem;font-weight:700;color:var(--t1)}
-.fnd-role{font-size:.8rem;color:var(--gold);font-family:var(--fm)}
-.fnd-co{font-size:.76rem;color:var(--t3);margin-top:2px}
+    /* Counter animation */
+    .count-num { font-variant-numeric: tabular-nums; }
 
-/* TESTIMONIALS */
-.testi-g{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:52px}
-.tcc{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r4);padding:26px;transition:all .25s var(--ease)}
-.tcc:hover{border-color:var(--goldb);transform:translateY(-2px)}
-.tstars{display:flex;gap:3px;margin-bottom:12px;color:var(--gold);font-size:.8rem}
-.tq{font-family:var(--fb);font-size:.95rem;color:var(--t2);line-height:1.72;margin-bottom:18px;font-style:italic}
-.ta{display:flex;align-items:center;gap:10px}
-.tav{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-font-family:var(--fd);font-size:.88rem;font-weight:700;color:#02020A;flex-shrink:0}
-.tan{font-size:.86rem;font-weight:600;color:var(--t1)}
-.tat{font-size:.74rem;color:var(--t3)}
+    /* Feature demo tab */
+    .demo-tabs {
+      display:    flex;
+      gap:        var(--sp-xs);
+      margin-bottom: var(--sp-md);
+      background: var(--bg-card-hover);
+      padding:    var(--sp-xs);
+      border-radius: var(--r-lg);
+      border:     1px solid var(--border-card);
+    }
+    .demo-tab {
+      flex:          1;
+      padding:       0.4rem;
+      text-align:    center;
+      font-size:     0.75rem;
+      font-weight:   600;
+      color:         var(--text-muted);
+      border-radius: var(--r-md);
+      cursor:        pointer;
+      transition:    all var(--tr-fast);
+      background:    none;
+      border:        none;
+      font-family:   inherit;
+    }
+    .demo-tab.active {
+      background: var(--gold-glow-deep);
+      color:      var(--gold);
+      border:     1px solid var(--border-hover);
+    }
 
-/* FAQ */
-.faq-l{max-width:740px;margin:52px auto 0;display:flex;flex-direction:column;gap:7px}
-.faq-i{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r3);overflow:hidden}
-.faq-q{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;
-cursor:pointer;font-weight:500;font-size:.93rem;user-select:none;transition:color .2s}
-.faq-q:hover{color:var(--gold)}
-.faq-arr{color:var(--t3);font-size:.72rem;transition:transform .3s;flex-shrink:0}
-.faq-i.op .faq-arr{transform:rotate(180deg)}
-.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease}
-.faq-i.op .faq-a{max-height:280px}
-.faq-ai{padding:0 22px 18px;font-family:var(--fb);font-size:.93rem;color:var(--t2);line-height:1.72}
+    /* Live demo output panels */
+    .demo-panel { display: none; }
+    .demo-panel.active { display: block; animation: fadeIn 0.3s ease; }
 
-/* CTA */
-.cta{padding:96px 48px;text-align:center;background:linear-gradient(135deg,rgba(201,169,110,.06) 0%,transparent 60%);border-top:1px solid var(--b1)}
-.cta-h{font-family:var(--fd);font-size:clamp(1.9rem,3.8vw,2.9rem);font-weight:700;color:var(--t1);margin-bottom:14px}
-.cta-h em{font-style:italic;color:var(--gold)}
-.cta-s{font-family:var(--fb);font-size:1.08rem;color:var(--t2);line-height:1.72;margin-bottom:38px}
-.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+    /* Comparison table */
+    .compare-table {
+      width:           100%;
+      border-collapse: separate;
+      border-spacing:  0;
+      font-size:       0.875rem;
+    }
+    .compare-table th {
+      padding:       0.75rem var(--sp-md);
+      background:    var(--bg-input);
+      font-weight:   700;
+      font-size:     0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .compare-table th:first-child { text-align: left; color: var(--text-secondary); }
+    .compare-table th:nth-child(2) { color: var(--text-muted); }
+    .compare-table th:nth-child(3) {
+      color:         var(--gold);
+      background:    var(--gold-glow);
+      border-left:   2px solid var(--gold);
+      border-right:  2px solid var(--gold);
+    }
+    .compare-table th:first-child  { border-radius: var(--r-lg) 0 0 0; }
+    .compare-table th:last-child   { border-radius: 0 var(--r-lg) 0 0; }
 
-/* FOOTER */
-footer{background:var(--bg1);border-top:1px solid var(--b2);padding:56px 48px 26px}
-.fi{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:44px;margin-bottom:44px}
-.fbn{font-family:var(--fd);font-size:1.15rem;font-weight:700;color:var(--gold);margin-bottom:10px}
-.fbd{font-family:var(--fb);font-size:.88rem;color:var(--t3);line-height:1.7}
-.fct{font-family:var(--fu);font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);margin-bottom:14px}
-.fc a{display:block;font-size:.86rem;color:var(--t3);margin-bottom:9px;transition:color .2s}
-.fc a:hover{color:var(--gold)}
-.fb{border-top:1px solid var(--b1);padding-top:22px;display:flex;align-items:center;
-justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:.76rem;color:var(--t4)}
-.fb a{color:var(--t3)}.fb a:hover{color:var(--gold)}
+    .compare-table td {
+      padding:     0.6rem var(--sp-md);
+      border-top:  1px solid var(--border);
+      color:       var(--text-secondary);
+      text-align:  center;
+    }
+    .compare-table td:first-child  { text-align: left; font-weight: 500; color: var(--text-primary); }
+    .compare-table td:nth-child(3) {
+      background:  rgba(201,169,110,0.04);
+      border-left:  2px solid var(--gold);
+      border-right: 2px solid var(--gold);
+    }
+    .compare-table tr:last-child td:nth-child(3) { border-bottom: 2px solid var(--gold); }
+    .compare-table .check   { color: var(--success); font-size: 1rem; }
+    .compare-table .cross   { color: var(--error); font-size: 1rem; opacity: 0.5; }
+    .compare-table .partial { color: var(--warning); font-size: 0.75rem; }
 
-/* ANIMATIONS */
-@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-@keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
-@keyframes orb1{0%,100%{transform:translate(0,0)}50%{transform:translate(28px,-18px)}}
-@keyframes shine{0%{background-position:0%}100%{background-position:200%}}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.9)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
-.reveal.visible{opacity:1;transform:none}
+    /* FAQ */
+    .faq-list { display: flex; flex-direction: column; gap: var(--sp-sm); max-width: 700px; margin: 0 auto; }
 
-@media(max-width:900px){
-.nav-lk{display:none}.how-g,.testi-g{grid-template-columns:1fr}
-.demo-bd{grid-template-columns:1fr}.demo-sb{display:none}
-.fi{grid-template-columns:1fr 1fr}.stats-g{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:600px){
-.nav{padding:0 18px}.sec{padding:64px 18px}.hero{padding:96px 18px 64px}
-.fi{grid-template-columns:1fr}.fnd-card{padding:34px 22px}
-.demo-top{flex-direction:column}.cta{padding:64px 18px}
-}
-</style>
+    .faq-item {
+      background:    var(--bg-card);
+      border:        1px solid var(--border-card);
+      border-radius: var(--r-lg);
+      overflow:      hidden;
+      transition:    border-color var(--tr-normal);
+    }
+    .faq-item.open { border-color: var(--border-hover); }
+
+    .faq-q {
+      display:         flex;
+      align-items:     center;
+      justify-content: space-between;
+      padding:         var(--sp-md) var(--sp-lg);
+      cursor:          pointer;
+      font-weight:     600;
+      color:           var(--text-primary);
+      font-size:       0.9rem;
+      gap:             var(--sp-sm);
+      user-select:     none;
+    }
+
+    .faq-arrow { color: var(--gold); transition: transform var(--tr-normal); font-size: 0.8rem; flex-shrink: 0; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+    .faq-a {
+      padding:    0 var(--sp-lg) var(--sp-md);
+      font-size:  0.875rem;
+      color:      var(--text-secondary);
+      line-height: 1.7;
+      display:    none;
+    }
+    .faq-item.open .faq-a { display: block; animation: slideInUp 0.3s ease; }
+
+    /* Floating CTA button */
+    .float-cta {
+      position:      fixed;
+      bottom:        var(--sp-xl);
+      right:         var(--sp-xl);
+      z-index:       var(--z-sticky);
+      display:       none;
+    }
+    .float-cta.visible { display: block; animation: slideInUp 0.4s var(--tr-spring); }
+
+    @media (max-width: 900px) {
+      .float-cta { bottom: var(--sp-md); right: var(--sp-md); }
+    }
+
+    /* Brand watermark in footer */
+    .site-footer {
+      background:    var(--bg-secondary);
+      border-top:    1px solid var(--border);
+      padding:       var(--sp-2xl) 0 var(--sp-lg);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap:    var(--sp-2xl);
+      margin-bottom: var(--sp-xl);
+    }
+
+    @media (max-width: 768px) {
+      .footer-grid { grid-template-columns: 1fr; gap: var(--sp-xl); }
+    }
+
+    .footer-brand-desc {
+      font-size:   0.875rem;
+      color:       var(--text-muted);
+      line-height: 1.7;
+      margin:      var(--sp-md) 0 var(--sp-lg);
+    }
+
+    .footer-links-title {
+      font-size:      0.72rem;
+      font-weight:    700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color:          var(--text-muted);
+      margin-bottom:  var(--sp-md);
+    }
+
+    .footer-links { display: flex; flex-direction: column; gap: var(--sp-sm); }
+
+    .footer-link {
+      font-size:   0.875rem;
+      color:       var(--text-secondary);
+      transition:  color var(--tr-fast);
+    }
+    .footer-link:hover { color: var(--gold); }
+
+    .footer-bottom {
+      display:         flex;
+      align-items:     center;
+      justify-content: space-between;
+      padding-top:     var(--sp-lg);
+      border-top:      1px solid var(--border);
+      flex-wrap:       wrap;
+      gap:             var(--sp-sm);
+    }
+
+    .footer-copy {
+      font-size:   0.78rem;
+      color:       var(--text-muted);
+    }
+
+    .footer-copy a { color: var(--gold); font-weight: 600; }
+    .footer-copy a:hover { color: var(--gold-light); }
+  </style>
 </head>
 <body>
 
-<nav class="nav" id="mainNav">
-  <a href="#" class="nav-logo">
-    <div class="nlm">Ś</div>
-    <div><div class="nlt">Savoiré AI</div><span class="nlv">v2.0</span></div>
-  </a>
-  <div class="nav-lk">
-    <a href="#how">How It Works</a>
-    <a href="#tools">Tools</a>
-    <a href="#demo">Demo</a>
-    <a href="#founder">About</a>
-    <a href="#faq">FAQ</a>
-  </div>
-  <div class="nav-sp"></div>
-  <button class="nav-th" id="themeBtn"><i class="fas fa-moon" id="themeIcon"></i></button>
-  <a href="dashboard.html" class="nav-cta"><i class="fas fa-rocket"></i> Start Free</a>
-</nav>
-
-<!-- HERO -->
-<section class="hero" id="hero">
-  <canvas id="pc"></canvas>
-  <div class="ho1"></div><div class="ho2"></div>
-  <div class="hero-in">
-    <div class="h-badge"><span class="bdot"></span> v2.0 &nbsp;·&nbsp; No Login &nbsp;·&nbsp; No Payment &nbsp;·&nbsp; Free Forever</div>
-    <h1>Your AI Study<br>Companion — <em>Free Forever</em></h1>
-    <p class="h-sub">Generate comprehensive notes, flashcards, quizzes, summaries and mind maps on any topic in seconds. Powered by 10 advanced AI models. No account. No payment. Ever.</p>
-    <div class="h-btns">
-      <a href="dashboard.html" class="btn-g"><i class="fas fa-rocket"></i> Start Studying Free</a>
-      <a href="#demo" class="btn-o"><i class="fas fa-play-circle"></i> See Live Demo</a>
-    </div>
-    <p class="h-note"><i class="fas fa-shield-alt"></i> &nbsp;No account &nbsp;·&nbsp; No credit card &nbsp;·&nbsp; Your data never leaves your browser</p>
-  </div>
-</section>
-
-<!-- STATS -->
-<div class="stats">
-  <div class="stats-g">
-    <div class="reveal"><div class="sn" data-to="10" data-sfx="+">0+</div><div class="sl">Free AI Models</div></div>
-    <div class="reveal"><div class="sn" data-to="50" data-sfx="+">0+</div><div class="sl">Languages</div></div>
-    <div class="reveal"><div class="sn" data-to="5" data-sfx="">0</div><div class="sl">AI Tool Types</div></div>
-    <div class="reveal"><div class="sn">100%</div><div class="sl">Free Forever</div></div>
-  </div>
-</div>
-
-<!-- TICKER -->
-<div class="ticker">
-  <div class="ticker-inner" id="tickerInner">
-    <span class="tick"><i class="fas fa-book-open"></i>Comprehensive Notes</span>
-    <span class="tick"><i class="fas fa-layer-group"></i>Flashcard Generator</span>
-    <span class="tick"><i class="fas fa-question-circle"></i>Practice Quiz</span>
-    <span class="tick"><i class="fas fa-align-left"></i>Smart Summary</span>
-    <span class="tick"><i class="fas fa-project-diagram"></i>Mind Maps</span>
-    <span class="tick"><i class="fas fa-file-pdf"></i>PDF Export</span>
-    <span class="tick"><i class="fas fa-globe"></i>50+ Languages</span>
-    <span class="tick"><i class="fas fa-copy"></i>Copy to Clipboard</span>
-    <span class="tick"><i class="fas fa-star"></i>Save to Library</span>
-    <span class="tick"><i class="fas fa-history"></i>Full History</span>
-    <span class="tick"><i class="fas fa-moon"></i>Dark &amp; Light Mode</span>
-    <span class="tick"><i class="fas fa-mobile-alt"></i>Mobile Friendly</span>
-    <span class="tick"><i class="fas fa-infinity"></i>No Limits</span>
-    <span class="tick"><i class="fas fa-lock"></i>100% Private</span>
-    <!-- duplicate for seamless loop -->
-    <span class="tick"><i class="fas fa-book-open"></i>Comprehensive Notes</span>
-    <span class="tick"><i class="fas fa-layer-group"></i>Flashcard Generator</span>
-    <span class="tick"><i class="fas fa-question-circle"></i>Practice Quiz</span>
-    <span class="tick"><i class="fas fa-align-left"></i>Smart Summary</span>
-    <span class="tick"><i class="fas fa-project-diagram"></i>Mind Maps</span>
-    <span class="tick"><i class="fas fa-file-pdf"></i>PDF Export</span>
-    <span class="tick"><i class="fas fa-globe"></i>50+ Languages</span>
-    <span class="tick"><i class="fas fa-copy"></i>Copy to Clipboard</span>
-    <span class="tick"><i class="fas fa-star"></i>Save to Library</span>
-    <span class="tick"><i class="fas fa-history"></i>Full History</span>
-    <span class="tick"><i class="fas fa-moon"></i>Dark &amp; Light Mode</span>
-    <span class="tick"><i class="fas fa-mobile-alt"></i>Mobile Friendly</span>
-    <span class="tick"><i class="fas fa-infinity"></i>No Limits</span>
-    <span class="tick"><i class="fas fa-lock"></i>100% Private</span>
-  </div>
-</div>
-
-<!-- HOW IT WORKS -->
-<section class="sec" id="how">
-  <div class="si">
-    <div class="stag reveal">Process</div>
-    <h2 class="sh reveal">How <em>Savoiré AI</em> Works</h2>
-    <p class="ss reveal">Three steps from topic to mastery. No setup, no account, no payment.</p>
-    <div class="how-g">
-      <div class="hw reveal"><div class="hw-n">I</div><div class="hw-ic"><i class="fas fa-keyboard" style="color:var(--gold)"></i></div><div class="hw-t">Enter Your Topic</div><div class="hw-d">Type any topic, concept, question, or paste text. Upload a .txt file. Supports 50+ languages. No character limits.</div></div>
-      <div class="hw reveal"><div class="hw-n">II</div><div class="hw-ic"><i class="fas fa-sliders-h" style="color:var(--gold)"></i></div><div class="hw-t">Choose Your Tool</div><div class="hw-d">Select from 5 AI tools. Adjust depth (standard to expert), language, and writing style to match your needs.</div></div>
-      <div class="hw reveal"><div class="hw-n">III</div><div class="hw-ic"><i class="fas fa-magic" style="color:var(--gold)"></i></div><div class="hw-t">Get Your Masterpiece</div><div class="hw-d">Receive detailed study materials. Export as PDF, copy text, save to your library, or share with anyone.</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- TOOLS -->
-<section class="sec" id="tools" style="background:var(--bg1);border-top:1px solid var(--b1)">
-  <div class="si">
-    <div class="stag reveal">Features</div>
-    <h2 class="sh reveal">Five Powerful <em>AI Tools</em></h2>
-    <p class="ss reveal">Everything a student, researcher or professional needs — all in one place, all completely free.</p>
-    <div class="tools-g">
-      <div class="tc reveal"><div class="ti"><i class="fas fa-book-open" style="color:var(--gold)"></i></div><div><div class="tn">Comprehensive Notes</div><div class="td">Deep structured notes with headings, key terms, examples, practice questions, applications and misconceptions. 1000–2500 words of genuine content.</div><span class="tb">Free</span></div></div>
-      <div class="tc reveal"><div class="ti"><i class="fas fa-layer-group" style="color:var(--gold)"></i></div><div><div class="tn">Flashcard Generator</div><div class="td">Interactive 3D flip flashcards from key concepts and Q&A pairs. Navigate with keyboard arrows or swipe on mobile. Perfect for memorization.</div><span class="tb">Free</span></div></div>
-      <div class="tc reveal"><div class="ti"><i class="fas fa-question-circle" style="color:var(--gold)"></i></div><div><div class="tn">Practice Quiz</div><div class="td">5-question multiple-choice quiz with instant correct/wrong feedback, score tracking and retry. Ideal for exam preparation and self-testing.</div><span class="tb">Free</span></div></div>
-      <div class="tc reveal"><div class="ti"><i class="fas fa-align-left" style="color:var(--gold)"></i></div><div><div class="tn">Smart Summary</div><div class="td">Concise TL;DR summary with key points list. Perfect for revision, quick reference, or when you need just the essentials fast.</div><span class="tb">Free</span></div></div>
-      <div class="tc reveal"><div class="ti"><i class="fas fa-project-diagram" style="color:var(--gold)"></i></div><div><div class="tn">Mind Map</div><div class="td">Visual hierarchical mind map showing the central topic, major branches and sub-points clearly organized for visual learners.</div><span class="tb">Free</span></div></div>
-      <div class="tc reveal"><div class="ti"><i class="fas fa-file-pdf" style="color:var(--gold)"></i></div><div><div class="tn">PDF Export</div><div class="td">Export any output as a professionally formatted PDF with Savoiré AI branding, page numbers, headers and footers. One click, instant download.</div><span class="tb">Free</span></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- DEMO -->
-<section class="demo-sec" id="demo">
-  <div class="si">
-    <div class="stag reveal">Live Demo</div>
-    <h2 class="sh reveal">Watch <em>Savoiré AI</em> Think</h2>
-    <p class="ss reveal">A live preview of the dashboard and the quality of output you receive.</p>
-    <div class="demo-win reveal">
-      <div class="demo-bar">
-        <div class="dd ddr"></div><div class="dd ddy"></div><div class="dd ddg"></div>
-        <div class="demo-bar-title">Savoiré AI v2.0 — dashboard.html</div>
+  <!-- ═══════════════════════════════════════════════════════════
+       NAVIGATION
+  ═══════════════════════════════════════════════════════════════ -->
+  <nav class="landing-nav" id="landingNav" role="navigation" aria-label="Main navigation">
+    <!-- Brand -->
+    <div class="header-brand">
+      <div class="brand-logo" aria-hidden="true">S</div>
+      <div class="brand-text-wrap">
+        <span class="brand-name">Savoiré AI</span>
+        <span class="brand-tagline">v2.0 Ultra</span>
       </div>
-      <div class="demo-bd">
-        <div class="demo-sb">
-          <div class="dsbl">AI Tools</div>
-          <div class="dsbi a"><i class="fas fa-book-open"></i> Generate Notes</div>
-          <div class="dsbi"><i class="fas fa-layer-group"></i> Flashcards</div>
-          <div class="dsbi"><i class="fas fa-question-circle"></i> Practice Quiz</div>
-          <div class="dsbi"><i class="fas fa-align-left"></i> Smart Summary</div>
-          <div class="dsbi"><i class="fas fa-project-diagram"></i> Mind Map</div>
-          <div class="dsbl" style="margin-top:10px">Settings</div>
-          <div class="dsbi"><i class="fas fa-sliders-h"></i> Depth: Detailed</div>
-          <div class="dsbi"><i class="fas fa-globe"></i> Language: English</div>
-          <div class="dsbi"><i class="fas fa-pen"></i> Style: Academic</div>
+    </div>
+
+    <div class="nav-spacer"></div>
+
+    <!-- Desktop Links -->
+    <div class="nav-links" role="list">
+      <a href="#features" class="nav-link" role="listitem">Features</a>
+      <a href="#demo"     class="nav-link" role="listitem">Demo</a>
+      <a href="#how"      class="nav-link" role="listitem">How It Works</a>
+      <a href="#reviews"  class="nav-link" role="listitem">Reviews</a>
+      <a href="#faq"      class="nav-link" role="listitem">FAQ</a>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:0.625rem;margin-left:1.5rem;">
+      <!-- Theme Toggle -->
+      <button class="btn-icon" id="landThemeBtn" aria-label="Toggle theme" title="Toggle dark/light mode">
+        <i class="fas fa-moon"></i>
+      </button>
+
+      <!-- Launch App -->
+      <a href="dashboard.html" class="btn btn-gold btn-sm" aria-label="Open Savoiré AI application">
+        <i class="fas fa-rocket"></i>
+        <span>Launch App</span>
+      </a>
+
+      <!-- Burger -->
+      <button class="nav-burger" id="navBurger" aria-label="Open navigation menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu" role="navigation" aria-label="Mobile navigation">
+    <a href="#features" class="nav-link" onclick="closeMobileMenu()">✦ Features</a>
+    <a href="#demo"     class="nav-link" onclick="closeMobileMenu()">✦ Demo</a>
+    <a href="#how"      class="nav-link" onclick="closeMobileMenu()">✦ How It Works</a>
+    <a href="#reviews"  class="nav-link" onclick="closeMobileMenu()">✦ Reviews</a>
+    <a href="#faq"      class="nav-link" onclick="closeMobileMenu()">✦ FAQ</a>
+    <a href="dashboard.html" class="btn btn-gold btn-full" style="margin-top:0.5rem;">
+      <i class="fas fa-rocket"></i> Launch App
+    </a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO SECTION
+  ═══════════════════════════════════════════════════════════════ -->
+  <main>
+  <section class="hero-section" id="home" aria-label="Hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+
+    <!-- Floating particles -->
+    <div class="hero-particles" aria-hidden="true" id="heroParticles"></div>
+
+    <div class="hero-content">
+      <!-- Eyebrow badge -->
+      <div class="hero-eyebrow" role="text">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Savoiré AI v2.0 Ultra — Free Forever</span>
+        <span class="dot" aria-hidden="true"></span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="hero-headline">
+        Study Smarter.<br />
+        <span class="anim-grad">Learn Anything.</span>
+      </h1>
+
+      <!-- Sub -->
+      <p class="hero-sub">
+        The world's most advanced free AI study assistant. Generate ultra-rich notes, 
+        flashcards, quizzes, mindmaps &amp; more from any topic — in 50+ languages, 
+        powered by 20 AI models, in seconds.
+      </p>
+
+      <!-- CTAs -->
+      <div class="hero-cta-row">
+        <a href="dashboard.html" class="btn btn-gold btn-lg" aria-label="Start using Savoiré AI for free">
+          <i class="fas fa-rocket"></i>
+          Start Studying — It's Free
+        </a>
+        <a href="#demo" class="btn btn-outline btn-lg" aria-label="See a live demo">
+          <i class="fas fa-play"></i>
+          Watch Demo
+        </a>
+      </div>
+
+      <!-- Stats -->
+      <div class="hero-stats" role="list">
+        <div class="hero-stat-item" role="listitem">
+          <span class="hero-stat-num count-num" data-target="50">0</span>
+          <span class="hero-stat-label">Languages</span>
         </div>
-        <div class="demo-main">
-          <div class="demo-top">
-            <div class="demo-ic">
-              <div class="demo-lbl">Your Input</div>
-              <div class="demo-ib" id="demoInput">Photosynthesis — how plants convert sunlight into glucose.</div>
-            </div>
-            <div class="demo-oc">
-              <div class="demo-olbl">✦ Savoiré AI Output</div>
-              <div class="demo-ob"><span id="demoText"></span><span class="cursor"></span></div>
-            </div>
-          </div>
-          <div class="demo-bot">
-            <button class="demo-tab a" onclick="dTab(0,this)">📚 Notes</button>
-            <button class="demo-tab" onclick="dTab(1,this)">🃏 Flashcards</button>
-            <button class="demo-tab" onclick="dTab(2,this)">❓ Quiz</button>
-            <button class="demo-tab" onclick="dTab(3,this)">📋 Summary</button>
-            <a href="dashboard.html" style="margin-left:auto;font-size:.78rem;color:var(--gold);display:flex;align-items:center;gap:5px"><i class="fas fa-external-link-alt"></i> Try it yourself →</a>
-          </div>
+        <div class="hero-stat-item" role="listitem">
+          <span class="hero-stat-num count-num" data-target="20">0</span>
+          <span class="hero-stat-label">AI Models</span>
+        </div>
+        <div class="hero-stat-item" role="listitem">
+          <span class="hero-stat-num count-num" data-target="5">0</span>
+          <span class="hero-stat-label">Study Tools</span>
+        </div>
+        <div class="hero-stat-item" role="listitem">
+          <span class="hero-stat-num count-num" data-target="100">0</span>
+          <span class="hero-stat-label">% Free</span>
         </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- FOUNDER -->
-<section class="founder-sec" id="founder">
-  <div class="fnd-in">
-    <div class="stag reveal" style="justify-content:center">From the Founder</div>
-    <div class="fnd-card reveal">
-      <div class="fnd-qm">"</div>
-      <p class="fnd-q">"I built Savoiré AI because <em>great learning tools shouldn't cost anything.</em> Every student — whether in Karachi or California, in a top university or teaching themselves at home — deserves access to the best AI has to offer. <em>Free, forever.</em>"</p>
-      <div class="fnd-av-wrap">
-        <div class="fnd-av">S</div>
+  <!-- Language Ticker -->
+  <div class="language-ticker" style="background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:var(--sp-sm) 0;" aria-label="Supported languages">
+    <div class="ticker-inner" aria-hidden="true">
+      <span class="ticker-item"><i class="fas fa-language"></i> English</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> اردو (Urdu)</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> 中文 (Chinese)</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Español</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Français</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Deutsch</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> العربية</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> हिन्दी</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Português</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> 日本語</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Русский</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Italiano</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> 한국어</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Türkçe</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Bahasa</span>
+      <!-- Duplicate for seamless scroll -->
+      <span class="ticker-item"><i class="fas fa-language"></i> English</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> اردو (Urdu)</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> 中文 (Chinese)</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Español</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Français</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Deutsch</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> العربية</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> हिन्दी</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Português</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> 日本語</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Русский</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Italiano</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> 한국어</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Türkçe</span>
+      <span class="ticker-item"><i class="fas fa-language"></i> Bahasa</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FEATURES SECTION
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section" id="features" aria-labelledby="featTitle">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">✦ Capabilities</span>
+        <h2 class="section-title-lg" id="featTitle">Everything You Need to Master Any Subject</h2>
+        <p class="section-sub">Five powerful study tools, one intelligent platform. Choose how you learn.</p>
+      </div>
+
+      <div class="features-grid">
+        <!-- Notes -->
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon"><i class="fas fa-book-open"></i></div>
+          <h3 class="feature-title">Ultra-Rich Study Notes</h3>
+          <p class="feature-desc">1000–2800 word comprehensive notes with key concepts, real-world applications, common misconceptions, exam tips, and a 7-day study plan — all instantly generated.</p>
+        </div>
+
+        <!-- Flashcards -->
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
+          <h3 class="feature-title">3D Flip Flashcards</h3>
+          <p class="feature-desc">Interactive 3D flashcards with keyboard navigation. Study front-and-back, track progress, and never forget what you learned. Perfect for active recall.</p>
+        </div>
+
+        <!-- Quiz -->
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon"><i class="fas fa-trophy"></i></div>
+          <h3 class="feature-title">Self-Scoring Quiz</h3>
+          <p class="feature-desc">Auto-generated quizzes with instant feedback, explanations, and a final score. Challenge yourself and know exactly where you stand before exams.</p>
+        </div>
+
+        <!-- Summary -->
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-icon"><i class="fas fa-compress-alt"></i></div>
+          <h3 class="feature-title">Smart Summary</h3>
+          <p class="feature-desc">Concise, exam-ready summaries that distill complex topics into clear bullet points. Save time without sacrificing understanding.</p>
+        </div>
+
+        <!-- Mindmap -->
+        <div class="feature-card reveal reveal-delay-5">
+          <div class="feature-icon"><i class="fas fa-project-diagram"></i></div>
+          <h3 class="feature-title">Text Mindmap</h3>
+          <p class="feature-desc">Hierarchical mindmaps showing how concepts connect. See the big picture, spot relationships, and build mental models that actually stick.</p>
+        </div>
+
+        <!-- PDF -->
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon"><i class="fas fa-file-pdf"></i></div>
+          <h3 class="feature-title">Professional PDF Export</h3>
+          <p class="feature-desc">Download your notes as a beautifully formatted, multi-page PDF — complete with all sections, branding, and structured content ready to print or share.</p>
+        </div>
+
+        <!-- Multilingual -->
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon"><i class="fas fa-globe"></i></div>
+          <h3 class="feature-title">50+ Languages</h3>
+          <p class="feature-desc">Study in your native language. Savoiré AI generates complete, fluent output in English, Urdu, Arabic, Chinese, Spanish, French, Hindi, and 43 more languages.</p>
+        </div>
+
+        <!-- Live Streaming -->
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+          <h3 class="feature-title">Live Streaming Output</h3>
+          <p class="feature-desc">Watch your notes appear word-by-word in real time. No waiting, no loading spinner — the AI streams directly to your screen the moment it starts generating.</p>
+        </div>
+
+        <!-- History -->
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-icon"><i class="fas fa-history"></i></div>
+          <h3 class="feature-title">Full History & Saved Library</h3>
+          <p class="feature-desc">Every session is saved locally. Search, filter, restore any previous result, star favourites, and export your entire study library as JSON anytime.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DEMO SECTION
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section alt" id="demo" aria-labelledby="demoTitle">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">✦ Live Demo</span>
+        <h2 class="section-title-lg" id="demoTitle">See It in Action</h2>
+        <p class="section-sub">Watch how Savoiré AI transforms a simple topic into a world-class study resource in seconds.</p>
+      </div>
+
+      <div class="demo-section reveal">
+        <!-- Browser chrome -->
+        <div class="demo-topbar">
+          <span class="demo-dot red"   aria-hidden="true"></span>
+          <span class="demo-dot yellow" aria-hidden="true"></span>
+          <span class="demo-dot green"  aria-hidden="true"></span>
+          <span class="demo-url">savoireai.vercel.app/dashboard</span>
+          <span style="font-size:0.75rem;color:var(--gold);">● Live</span>
+        </div>
+
+        <div class="demo-body">
+          <!-- Tool tabs demo -->
+          <div class="demo-tabs" role="tablist" aria-label="Demo tool selector">
+            <button class="demo-tab active" onclick="switchDemoTab(this,'notesDemo')"  role="tab" aria-selected="true">📚 Notes</button>
+            <button class="demo-tab"        onclick="switchDemoTab(this,'flashDemo')"  role="tab" aria-selected="false">🃏 Cards</button>
+            <button class="demo-tab"        onclick="switchDemoTab(this,'quizDemo')"   role="tab" aria-selected="false">🏆 Quiz</button>
+          </div>
+
+          <!-- Notes Demo -->
+          <div class="demo-panel active" id="notesDemo">
+            <div style="display:flex;gap:0.5rem;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--r-lg);padding:0.75rem 1rem;margin-bottom:var(--sp-md);">
+              <i class="fas fa-search" style="color:var(--text-muted);font-size:0.8rem;"></i>
+              <span class="demo-typing" id="demoTyping" aria-live="polite">Quantum Entanglement</span>
+            </div>
+            <div class="demo-output-lines" id="demoLines" aria-live="polite">
+              <div class="demo-line gold"><i class="fas fa-bolt"></i> Generating ultra-rich notes…</div>
+              <div class="demo-line head"># Quantum Entanglement</div>
+              <div class="demo-line">Quantum entanglement is one of the most remarkable phenomena in physics, where two particles become interconnected in such a way that the quantum state of each particle cannot be described independently.</div>
+              <div class="demo-line gold">## ✦ Key Concepts</div>
+              <div class="demo-line"><strong>1. Bell's Theorem</strong> — Proves that quantum correlations cannot be explained by classical hidden variable theories.</div>
+              <div class="demo-line"><strong>2. EPR Paradox</strong> — Einstein, Podolsky &amp; Rosen's challenge to quantum mechanics and its resolution.</div>
+              <div class="demo-line gold">## ✦ 7-Day Study Plan</div>
+              <div class="demo-line">Day 1: Foundations of superposition → Day 2: Measurement problem → Day 3: Bell inequalities…</div>
+              <div class="demo-line gold"><i class="fas fa-check-circle"></i> Notes complete · 1,847 words · Difficulty: Advanced</div>
+            </div>
+          </div>
+
+          <!-- Flashcard Demo -->
+          <div class="demo-panel" id="flashDemo">
+            <div style="background:var(--bg-card-hover);border:2px solid var(--border-hover);border-radius:var(--r-xl);padding:var(--sp-xl);text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all var(--tr-normal);" onclick="flipDemoCard(this)">
+              <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:var(--sp-sm);">FRONT — Click to flip</div>
+              <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:var(--text-primary);" id="demoCardText">What is quantum entanglement?</div>
+            </div>
+            <div style="display:flex;justify-content:center;gap:var(--sp-md);margin-top:var(--sp-md);">
+              <span class="badge badge-gold">Card 1 / 10</span>
+              <span class="badge badge-success"><i class="fas fa-keyboard" style="margin-right:4px;"></i> Click to flip</span>
+            </div>
+          </div>
+
+          <!-- Quiz Demo -->
+          <div class="demo-panel" id="quizDemo">
+            <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--sp-md);margin-bottom:var(--sp-md);">
+              <div style="height:4px;background:var(--border);border-radius:var(--r-full);overflow:hidden;margin-bottom:var(--sp-md);">
+                <div style="height:100%;width:40%;background:var(--grad-gold);border-radius:var(--r-full);"></div>
+              </div>
+              <div style="font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:var(--sp-md);">
+                Which experiment famously demonstrated quantum entanglement and disproved local realism?
+              </div>
+              <div style="display:flex;flex-direction:column;gap:var(--sp-xs);" id="demoOptions">
+                <button onclick="selectDemoOpt(this,'incorrect')" style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">A) Double-slit experiment</button>
+                <button onclick="selectDemoOpt(this,'correct')"   style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">B) Aspect experiment (Bell test)</button>
+                <button onclick="selectDemoOpt(this,'incorrect')" style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">C) Schrödinger's thought experiment</button>
+                <button onclick="selectDemoOpt(this,'incorrect')" style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">D) Heisenberg's uncertainty measurements</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HOW IT WORKS
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section" id="how" aria-labelledby="howTitle">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">✦ Process</span>
+        <h2 class="section-title-lg" id="howTitle">Three Steps to Academic Excellence</h2>
+        <p class="section-sub">From topic to masterclass notes in under 30 seconds.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card reveal reveal-delay-1">
+          <div class="step-num">1</div>
+          <h3 class="step-title">Type Your Topic</h3>
+          <p class="step-desc">Enter anything — a subject, a chapter title, a concept, or paste an entire paragraph. Choose your language, depth level, and preferred study tool.</p>
+        </div>
+        <div class="step-card reveal reveal-delay-2">
+          <div class="step-num">2</div>
+          <h3 class="step-title">Watch It Generate Live</h3>
+          <p class="step-desc">Our AI streams your content word-by-word in real time. See notes, definitions, study plans, and quiz questions appear instantly on your screen.</p>
+        </div>
+        <div class="step-card reveal reveal-delay-3">
+          <div class="step-num">3</div>
+          <h3 class="step-title">Study, Save & Export</h3>
+          <p class="step-desc">Use the interactive quiz, flip through flashcards, download a professional PDF, or save your notes to a personal library — all in one click.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       COMPARISON TABLE
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section alt" aria-labelledby="compareTitle">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">✦ Comparison</span>
+        <h2 class="section-title-lg" id="compareTitle">Why Savoiré AI Wins</h2>
+        <p class="section-sub">We stacked ourselves against the competition. The results speak for themselves.</p>
+      </div>
+
+      <div style="overflow-x:auto;border-radius:var(--r-xl);border:1px solid var(--border-card);box-shadow:var(--shadow-md);" class="reveal">
+        <table class="compare-table" role="table" aria-label="Feature comparison">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Generic AI Tools</th>
+              <th>⭐ Savoiré AI</th>
+              <th>Paid Competitors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Study Notes</td><td class="partial">Basic</td><td class="check">✔ Ultra-Rich (1800+ words)</td><td class="partial">Moderate</td></tr>
+            <tr><td>Live Streaming</td><td class="cross">✕</td><td class="check">✔ Token-by-token</td><td class="partial">Sometimes</td></tr>
+            <tr><td>50+ Languages</td><td class="cross">✕</td><td class="check">✔ Full output</td><td class="partial">Limited</td></tr>
+            <tr><td>Flashcards</td><td class="cross">✕</td><td class="check">✔ 3D flip, keyboard nav</td><td class="check">✔</td></tr>
+            <tr><td>Interactive Quiz</td><td class="cross">✕</td><td class="check">✔ Self-scoring + tips</td><td class="check">✔ (Paid)</td></tr>
+            <tr><td>7-Day Study Plan</td><td class="cross">✕</td><td class="check">✔ Personalised</td><td class="cross">✕</td></tr>
+            <tr><td>Glossary (8 terms)</td><td class="cross">✕</td><td class="check">✔ Auto-generated</td><td class="cross">✕</td></tr>
+            <tr><td>PDF Export</td><td class="cross">✕</td><td class="check">✔ Professional</td><td class="check">✔ (Paid)</td></tr>
+            <tr><td>History Library</td><td class="cross">✕</td><td class="check">✔ Full search & filter</td><td class="check">✔ (Paid)</td></tr>
+            <tr><td>20 AI Model Fallback</td><td class="cross">✕</td><td class="check">✔ Never fails</td><td class="cross">✕</td></tr>
+            <tr><td>Price</td><td>Free (limited)</td><td class="check">✔ 100% Free Always</td><td class="cross">$9–$49/mo</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TESTIMONIALS / REVIEWS
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section" id="reviews" aria-labelledby="reviewsTitle">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">✦ Student Reviews</span>
+        <h2 class="section-title-lg" id="reviewsTitle">Real Students. Real Results.</h2>
+        <p class="section-sub">Thousands of students use Savoiré AI every day to ace their exams and master new skills.</p>
+      </div>
+
+      <div class="testimonials-grid">
+        <!-- Abu Bakr -->
+        <div class="testimonial-card reveal reveal-delay-1">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <div class="stars" aria-label="5 out of 5 stars">
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+          </div>
+          <p class="testimonial-text">
+            "Savoiré AI completely changed how I prepare for exams. I typed 'Organic Chemistry' and got 2,000 words of structured notes with a 7-day plan, glossary, and quiz — in minutes. I passed my finals with an A."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" aria-hidden="true">A</div>
+            <div>
+              <div class="testimonial-name">Abu Bakr</div>
+              <div class="testimonial-role">Medical Student</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Muhammad Sarim -->
+        <div class="testimonial-card reveal reveal-delay-2">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <div class="stars" aria-label="5 out of 5 stars">
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+          </div>
+          <p class="testimonial-text">
+            "The live streaming output is incredibly satisfying. Unlike other tools where you wait and wait, Savoiré AI starts showing content immediately. The flashcard feature is excellent for my law subjects."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" aria-hidden="true">M</div>
+            <div>
+              <div class="testimonial-name">Muhammad Sarim</div>
+              <div class="testimonial-role">Law Student</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mohammad Zaran -->
+        <div class="testimonial-card reveal reveal-delay-3">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <div class="stars" aria-label="5 out of 5 stars">
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+          </div>
+          <p class="testimonial-text">
+            "I study in Urdu and I was shocked to see the entire output — notes, quiz, flashcards — all in proper Urdu. No other free tool does this. Savoiré AI is genuinely the best free study app ever made."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" aria-hidden="true">Z</div>
+            <div>
+              <div class="testimonial-name">Mohammad Zaran</div>
+              <div class="testimonial-role">Engineering Student</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4th reviewer -->
+        <div class="testimonial-card reveal reveal-delay-4">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <div class="stars" aria-label="5 out of 5 stars">
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+          </div>
+          <p class="testimonial-text">
+            "The PDF export is professional-grade. I shared my Savoiré AI notes with my whole study group and they thought I'd spent hours writing them. The glossary section alone is worth it."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#8A6030,#C9A96E);" aria-hidden="true">F</div>
+            <div>
+              <div class="testimonial-name">Fatima Al-Rasheed</div>
+              <div class="testimonial-role">University Lecturer</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5th reviewer -->
+        <div class="testimonial-card reveal reveal-delay-5">
+          <div class="testimonial-quote" aria-hidden="true">"</div>
+          <div class="stars" aria-label="5 out of 5 stars">
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+            <i class="fas fa-star star"></i>
+          </div>
+          <p class="testimonial-text">
+            "I've tried every AI study tool — Notion AI, ChatGPT, Claude, Gemini. Nothing comes close to Savoiré AI for structured study content. The quiz with explanations is simply unmatched at any price point."
+          </p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#2980B9,#3498DB);" aria-hidden="true">K</div>
+            <div>
+              <div class="testimonial-name">Khalid Ibrahim</div>
+              <div class="testimonial-role">PhD Researcher</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOUNDER MESSAGE
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section alt" aria-labelledby="founderTitle">
+    <div class="container container-sm">
+      <div class="section-header reveal" style="margin-bottom:var(--sp-xl);">
+        <span class="section-label">✦ A Word From The Founder</span>
+        <h2 class="section-title-lg" id="founderTitle">Built With a Mission</h2>
+      </div>
+
+      <div class="founder-section reveal">
+        <div class="founder-avatar" aria-label="Sooban Talha founder avatar">ST</div>
+        <div class="founder-content">
+          <p class="founder-quote">
+            <span class="quote-mark" aria-hidden="true">"</span>
+            I built Savoiré AI because I believe every student — regardless of where they are in the world, what language they speak, or how much money they have — deserves access to the best possible learning tools. Education should be a right, not a privilege. With 20 free AI models, 50+ languages, and every feature completely free, Savoiré AI is my commitment to that belief. Study hard, dream bigger.
+            <span class="quote-mark" aria-hidden="true">"</span>
+          </p>
+          <div>
+            <div class="founder-name">Sooban Talha</div>
+            <div class="founder-role">
+              Founder &amp; CEO, 
+              <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" class="text-gold" style="-webkit-text-fill-color:var(--gold);">
+                Sooban Talha Technologies
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FAQ
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section" id="faq" aria-labelledby="faqTitle">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label">✦ FAQ</span>
+        <h2 class="section-title-lg" id="faqTitle">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-list reveal" role="list">
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
+            Is Savoiré AI really 100% free?
+            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+          </div>
+          <div class="faq-a">Yes, completely. There are no hidden fees, no paywalls, no credit card required. Savoiré AI is powered by OpenRouter's free-tier AI models and is committed to staying free forever. Every single feature — streaming, PDF, quizzes, flashcards, 50+ languages — is available to everyone.</div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
+            How does the live streaming work?
+            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+          </div>
+          <div class="faq-a">Savoiré AI uses Server-Sent Events (SSE) to stream the AI's response token-by-token directly to your browser. This means you see each word appear in real time as the AI generates it — no waiting for a full response. The streaming starts typically within 1-3 seconds of hitting Generate.</div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
+            What if the AI fails or is slow?
+            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+          </div>
+          <div class="faq-a">Savoiré AI has 20 free AI models with automatic failover. If the primary model is slow or unavailable, the system tries the next one automatically — using circuit breaker logic and exponential backoff. In the extremely unlikely event all 20 models fail, the system generates offline fallback content so you always get something useful.</div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
+            Is my data stored or shared?
+            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+          </div>
+          <div class="faq-a">Your study history and preferences are stored locally in your browser's localStorage — they never leave your device. We don't collect, store, or share your notes or personal data. The only data sent to the server is your topic query to generate the notes.</div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
+            Can I use it on mobile?
+            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+          </div>
+          <div class="faq-a">Absolutely. Savoiré AI is fully responsive and optimised for all screen sizes — smartphones, tablets, laptops, and desktops. The interface adapts beautifully to any device with touch-friendly controls, proper tap targets, and a clean mobile layout.</div>
+        </div>
+
+        <div class="faq-item" role="listitem">
+          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
+            Who built Savoiré AI?
+            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+          </div>
+          <div class="faq-a">Savoiré AI is built and maintained by Sooban Talha Technologies, a software development company founded by Sooban Talha. The company focuses on building high-quality, accessible digital tools for students and learners worldwide. Visit <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">soobantalhatech.xyz</a> to learn more.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FINAL CTA
+  ═══════════════════════════════════════════════════════════════ -->
+  <section class="landing-section" aria-label="Call to action">
+    <div class="container">
+      <div class="cta-section reveal">
+        <h2 class="cta-title">Your Academic Journey<br />Starts Right Now</h2>
+        <p class="cta-sub">Join thousands of students transforming their study habits with the most powerful free AI study tool ever built.</p>
+        <div class="cta-btn-row">
+          <a href="dashboard.html" class="btn btn-gold btn-lg" aria-label="Start using Savoiré AI for free">
+            <i class="fas fa-rocket"></i>
+            Start for Free — No Sign Up
+          </a>
+          <a href="#features" class="btn btn-outline btn-lg" aria-label="See all features">
+            <i class="fas fa-list"></i>
+            Explore Features
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SITE FOOTER
+  ═══════════════════════════════════════════════════════════════ -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-grid">
+        <!-- Brand column -->
         <div>
-          <div class="fnd-name">Sooban Talha</div>
-          <div class="fnd-role">Founder &amp; Developer</div>
-          <div class="fnd-co">Sooban Talha Technologies &nbsp;·&nbsp; savoireai.vercel.app</div>
+          <div class="header-brand" style="margin-bottom:var(--sp-md);">
+            <div class="brand-logo" aria-hidden="true">S</div>
+            <div class="brand-text-wrap">
+              <span class="brand-name">Savoiré AI</span>
+              <span class="brand-tagline">v2.0 Ultra</span>
+            </div>
+          </div>
+          <p class="footer-brand-desc">
+            The world's most advanced free AI study notes generator. Powered by 20 free AI models, supporting 50+ languages, and committed to making quality education accessible to everyone.
+          </p>
+          <div style="display:flex;align-items:center;gap:var(--sp-sm);font-size:0.78rem;color:var(--text-muted);">
+            <i class="fas fa-heart" style="color:var(--error);"></i>
+            Built with passion by
+            <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" class="text-gold font-weight-600" style="-webkit-text-fill-color:var(--gold);">Sooban Talha Technologies</a>
+          </div>
+        </div>
+
+        <!-- Tools -->
+        <div>
+          <div class="footer-links-title">Study Tools</div>
+          <div class="footer-links">
+            <a href="dashboard.html?tool=notes"      class="footer-link">📚 Study Notes</a>
+            <a href="dashboard.html?tool=flashcards" class="footer-link">🃏 Flashcards</a>
+            <a href="dashboard.html?tool=quiz"       class="footer-link">🏆 Quiz Mode</a>
+            <a href="dashboard.html?tool=summary"    class="footer-link">📋 Summary</a>
+            <a href="dashboard.html?tool=mindmap"    class="footer-link">🗺️ Mindmap</a>
+          </div>
+        </div>
+
+        <!-- Company -->
+        <div>
+          <div class="footer-links-title">Company</div>
+          <div class="footer-links">
+            <a href="https://soobantalhatech.xyz"        target="_blank" rel="noopener noreferrer" class="footer-link">🌐 Sooban Talha Technologies</a>
+            <a href="#features"  class="footer-link">✦ Features</a>
+            <a href="#reviews"   class="footer-link">⭐ Reviews</a>
+            <a href="#faq"       class="footer-link">❓ FAQ</a>
+            <a href="#how"       class="footer-link">📖 How It Works</a>
+          </div>
         </div>
       </div>
+
+      <!-- Bottom bar -->
+      <div class="footer-bottom">
+        <p class="footer-copy">
+          © 2024 <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer">Sooban Talha Technologies</a>. 
+          Built by <strong style="color:var(--gold);">Sooban Talha</strong>. All rights reserved.
+        </p>
+        <p class="footer-copy" style="text-align:right;">
+          Savoiré AI v2.0 — <span style="color:var(--gold);">Think Less. Know More.</span>
+        </p>
+      </div>
     </div>
+  </footer>
+
+  <!-- Floating CTA -->
+  <div class="float-cta" id="floatCta">
+    <a href="dashboard.html" class="btn btn-gold" style="box-shadow:var(--shadow-gold-lg);border-radius:var(--r-full);padding:0.75rem 1.5rem;">
+      <i class="fas fa-rocket"></i> Open App
+    </a>
   </div>
-</section>
 
-<!-- TESTIMONIALS -->
-<section class="sec">
-  <div class="si">
-    <div class="stag reveal">What Scholars Say</div>
-    <h2 class="sh reveal">Loved by <em>Students Worldwide</em></h2>
-    <div class="testi-g">
-      <div class="tcc reveal"><div class="tstars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div><div class="tq">"The notes generated by Savoiré AI are better than anything I've found in textbooks. Deep, structured, with real practice questions. And it's completely free — I can't believe it."</div><div class="ta"><div class="tav" style="background:#C9A96E">A</div><div><div class="tan">Aisha Rahman</div><div class="tat">Physics Student, Karachi</div></div></div></div>
-      <div class="tcc reveal"><div class="tstars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div><div class="tq">"The flashcard feature is incredible. I generate a deck on any topic and study it on my phone. I've replaced three different paid apps with just this one free tool."</div><div class="ta"><div class="tav" style="background:#42C98A">M</div><div><div class="tan">Marcus Chen</div><div class="tat">Medical Student, Hong Kong</div></div></div></div>
-      <div class="tcc reveal"><div class="tstars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div><div class="tq">"I use Savoiré AI to quickly create quiz questions for my class. The questions are genuinely challenging and the answers are detailed enough that students actually learn from them."</div><div class="ta"><div class="tav" style="background:#6366f1">S</div><div><div class="tan">Sarah Mitchell</div><div class="tat">High School Teacher, London</div></div></div></div>
-    </div>
-  </div>
-</section>
+  <!-- ═══════════════════════════════════════════════════════════
+       SCRIPTS
+  ═══════════════════════════════════════════════════════════════ -->
+  <script>
+  /* ── Theme ──────────────────────────────────────────────────── */
+  (function() {
+    const stored = localStorage.getItem('sv_theme');
+    if (stored) document.documentElement.setAttribute('data-theme', stored);
+  })();
 
-<!-- FAQ -->
-<section class="sec" id="faq" style="background:var(--bg1);border-top:1px solid var(--b1)">
-  <div class="si" style="max-width:800px">
-    <div class="stag reveal" style="justify-content:center">FAQ</div>
-    <h2 class="sh reveal" style="text-align:center">Common <em>Questions</em></h2>
-    <div class="faq-l">
-      <div class="faq-i reveal"><div class="faq-q">Is Savoiré AI really completely free? <i class="fas fa-chevron-down faq-arr"></i></div><div class="faq-a"><div class="faq-ai">Yes — 100% free, permanently. No hidden fees, no trial period, no premium tier, no credit card ever required. Every tool, every feature, every export is free for everyone, forever.</div></div></div>
-      <div class="faq-i reveal"><div class="faq-q">Do I need an account or login? <i class="fas fa-chevron-down faq-arr"></i></div><div class="faq-a"><div class="faq-ai">No. You simply enter your name on your first visit. No email, no password. Everything is stored in your browser's localStorage — completely private.</div></div></div>
-      <div class="faq-i reveal"><div class="faq-q">Why does generation sometimes take 20–60 seconds? <i class="fas fa-chevron-down faq-arr"></i></div><div class="faq-a"><div class="faq-ai">Free AI models can be busy during peak hours. Savoiré AI automatically tries 10 different models in sequence with no timeout — it will ALWAYS deliver a result, just wait and it will come. We never cut you off.</div></div></div>
-      <div class="faq-i reveal"><div class="faq-q">What AI powers Savoiré AI? <i class="fas fa-chevron-down faq-arr"></i></div><div class="faq-a"><div class="faq-ai">Savoiré AI uses 10 advanced language models including Gemini, LLaMA, DeepSeek, and others via a smart fallback chain. If one model is busy, the next takes over automatically. You always see "Powered by Savoiré AI."</div></div></div>
-      <div class="faq-i reveal"><div class="faq-q">Can I export my notes as PDF? <i class="fas fa-chevron-down faq-arr"></i></div><div class="faq-a"><div class="faq-ai">Yes! Every output can be exported as a beautifully formatted PDF with Savoiré AI branding, page numbers, and professional layout. Just click "Download PDF."</div></div></div>
-      <div class="faq-i reveal"><div class="faq-q">Which languages are supported? <i class="fas fa-chevron-down faq-arr"></i></div><div class="faq-a"><div class="faq-ai">Over 50 languages including English, Urdu, Hindi, Arabic, French, German, Spanish, Chinese, Japanese, Korean, Russian, Turkish, Bengali and many more.</div></div></div>
-      <div class="faq-i reveal"><div class="faq-q">Who built Savoiré AI? <i class="fas fa-chevron-down faq-arr"></i></div><div class="faq-a"><div class="faq-ai">Savoiré AI was built by Sooban Talha of Sooban Talha Technologies with the mission of making world-class AI study tools free for every student everywhere. Visit savoireai.vercel.app.</div></div></div>
-    </div>
-  </div>
-</section>
+  /* ── Theme Toggle ───────────────────────────────────────────── */
+  document.getElementById('landThemeBtn').addEventListener('click', function() {
+    const cur  = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sv_theme', next);
+    this.innerHTML = next === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+  });
 
-<!-- CTA -->
-<section class="cta">
-  <div style="max-width:660px;margin:0 auto">
-    <h2 class="cta-h reveal">Ready to <em>Think Less</em> and Know More?</h2>
-    <p class="cta-s reveal">Join students worldwide using Savoiré AI to study smarter. No account. No payment. Start in 3 seconds.</p>
-    <div class="cta-btns reveal">
-      <a href="dashboard.html" class="btn-g"><i class="fas fa-rocket"></i> Start Studying Free Now</a>
-      <a href="#demo" class="btn-o"><i class="fas fa-play-circle"></i> Watch Demo First</a>
-    </div>
-  </div>
-</section>
+  // Set correct icon on load
+  (function() {
+    const t  = document.documentElement.getAttribute('data-theme') || 'dark';
+    const bt = document.getElementById('landThemeBtn');
+    if (bt) bt.innerHTML = t === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+  })();
 
-<!-- FOOTER -->
-<footer>
-  <div class="fi">
-    <div>
-      <div class="fbn">Savoiré AI v2.0</div>
-      <div class="fbd" style="margin-bottom:10px">Think Less. Know More. A completely free AI study companion for students and researchers worldwide.</div>
-      <div class="fbd">Built by <strong style="color:var(--t2)">Sooban Talha Technologies</strong><br>Founder: <strong style="color:var(--t2)">Sooban Talha</strong><br><a href="https://savoireai.vercel.app" style="color:var(--gold)">savoireai.vercel.app</a></div>
-    </div>
-    <div class="fc"><div class="fct">Tools</div><a href="dashboard.html">Generate Notes</a><a href="dashboard.html">Flashcards</a><a href="dashboard.html">Practice Quiz</a><a href="dashboard.html">Smart Summary</a><a href="dashboard.html">Mind Map</a></div>
-    <div class="fc"><div class="fct">Product</div><a href="#how">How It Works</a><a href="#demo">Live Demo</a><a href="#faq">FAQ</a><a href="dashboard.html">Open Dashboard</a></div>
-    <div class="fc"><div class="fct">About</div><a href="#founder">Founder</a><a href="https://savoireai.vercel.app">Website</a><a href="dashboard.html">Get Started</a></div>
-  </div>
-  <div class="fb">
-    <span>© 2025 Savoiré AI &nbsp;·&nbsp; Built by <a href="#">Sooban Talha Technologies</a> &nbsp;·&nbsp; <a href="#">savoireai.vercel.app</a></span>
-    <span>Free for everyone, forever ✦</span>
-  </div>
-</footer>
+  /* ── Mobile Menu ────────────────────────────────────────────── */
+  const burger = document.getElementById('navBurger');
+  const mmenu  = document.getElementById('mobileMenu');
 
-<script>
-/* theme */
-const html=document.documentElement;
-let dark=localStorage.getItem('sv_theme')!=='light';
-if(!dark){html.dataset.theme='light';document.getElementById('themeIcon').className='fas fa-sun';}
-document.getElementById('themeBtn').addEventListener('click',()=>{
-  dark=!dark;html.dataset.theme=dark?'dark':'light';
-  document.getElementById('themeIcon').className=dark?'fas fa-moon':'fas fa-sun';
-  localStorage.setItem('sv_theme',dark?'dark':'light');
-});
+  burger.addEventListener('click', function() {
+    const isOpen = mmenu.classList.toggle('open');
+    burger.setAttribute('aria-expanded', isOpen);
+  });
 
-/* scroll reveal */
-const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}}),{threshold:.1});
-document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  function closeMobileMenu() {
+    mmenu.classList.remove('open');
+    burger.setAttribute('aria-expanded', 'false');
+  }
 
-/* counters */
-const cobs=new IntersectionObserver(es=>es.forEach(e=>{
-  if(!e.isIntersecting)return;
-  const el=e.target.querySelector('.sn');
-  if(!el||!el.dataset.to||el.dataset.counted)return;
-  el.dataset.counted='1';
-  const to=parseInt(el.dataset.to),sfx=el.dataset.sfx||'';
-  let cur=0;const step=Math.ceil(to/55);
-  const t=setInterval(()=>{cur=Math.min(cur+step,to);el.textContent=cur+sfx;if(cur>=to)clearInterval(t);},38);
-}),{threshold:.5});
-document.querySelectorAll('.stats-g>div').forEach(el=>cobs.observe(el));
+  // Close on outside click
+  document.addEventListener('click', function(e) {
+    if (!burger.contains(e.target) && !mmenu.contains(e.target)) {
+      closeMobileMenu();
+    }
+  });
 
-/* particles */
-const c=document.getElementById('pc'),ctx=c.getContext('2d');
-let W,H,pts;
-function resize(){W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;
-pts=Array.from({length:100},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.7+.4,a:Math.random()*.28+.06}));}
-resize();window.addEventListener('resize',resize);
-let mx=-999,my=-999;
-document.getElementById('hero').addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();mx=e.clientX-r.left;my=e.clientY-r.top;});
-(function dp(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{
-const dx=p.x-mx,dy=p.y-my,d=Math.sqrt(dx*dx+dy*dy);
-if(d<130){p.vx+=dx/d*.08;p.vy+=dy/d*.08;}
-p.vx*=.98;p.vy*=.98;p.x+=p.vx;p.y+=p.vy;
-if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
-ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(201,169,110,${p.a})`;ctx.fill();
-});requestAnimationFrame(dp);})();
+  /* ── Scroll Reveal ──────────────────────────────────────────── */
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
 
-/* FAQ */
-document.querySelectorAll('.faq-q').forEach(q=>{
-q.addEventListener('click',()=>{
-const i=q.parentElement,o=i.classList.contains('op');
-document.querySelectorAll('.faq-i').forEach(x=>x.classList.remove('op'));
-if(!o)i.classList.add('op');
-});});
+  document.querySelectorAll('.reveal').forEach(function(el) {
+    observer.observe(el);
+  });
 
-/* Demo typewriter */
-const demos=[
-{i:"Photosynthesis — how plants convert sunlight into glucose.",o:"## Photosynthesis\n\n**Definition:** The process by which plants, algae and cyanobacteria use sunlight, water and CO₂ to produce glucose and oxygen.\n\n**Key Equation:**\n6CO₂ + 6H₂O + light energy → C₆H₁₂O₆ + 6O₂\n\n**Two Main Stages:**\n• Light Reactions — thylakoid membranes\n• Calvin Cycle — stroma of chloroplast\n\n**Key Fact:** Chlorophyll absorbs red and blue light most efficiently."},
-{i:"Newton's Laws of Motion — classical mechanics.",o:"🃏 Flashcard 1 of 5\n\nFRONT: What does Newton's 1st Law state?\n\nBACK: An object at rest stays at rest; an object in motion continues in motion unless acted on by a net external force. (Law of Inertia)\n\n─────────────────\n[← Prev]  [Flip ↕]  [Next →]\nKeyboard: Space to flip, arrows to navigate"},
-{i:"The French Revolution — causes, events, consequences.",o:"Quiz: The French Revolution (Q2 of 5)\n\nQuestion: What year did the storming of the Bastille occur?\n\nA) 1776 ✗ — American independence, not French\nB) 1789 ✓ — Correct! July 14, 1789\nC) 1793 ✗ — Execution of Louis XVI\nD) 1804 ✗ — Napoleon crowned Emperor\n\nScore so far: 2/2 🎉"},
-{i:"Machine Learning — algorithms, types, and applications.",o:"📋 TL;DR Summary\n\nMachine Learning = systems that learn patterns from data without explicit programming.\n\nKey Points:\n1. Three types: Supervised, Unsupervised, Reinforcement\n2. Core algorithms: Linear Regression, Neural Networks, Decision Trees\n3. Applications: image recognition, spam detection, recommendations\n4. Training requires quality data — 'garbage in, garbage out'"}
-];
-let di=0,typing=false,dTimer=null;
-function dTab(idx,btn){
-document.querySelectorAll('.demo-tab').forEach(t=>t.classList.remove('a'));
-btn.classList.add('a');di=idx;clearTimeout(dTimer);typing=false;runDemo();}
-function runDemo(){
-if(typing)return;const d=demos[di];
-document.getElementById('demoInput').textContent=d.i;
-const el=document.getElementById('demoText');el.textContent='';
-typing=true;let i=0;
-function type(){if(i<d.o.length){el.textContent+=d.o[i++];dTimer=setTimeout(type,16);}
-else{typing=false;di=(di+1)%demos.length;
-dTimer=setTimeout(()=>{document.querySelectorAll('.demo-tab').forEach((t,ti)=>t.classList.toggle('a',ti===di));runDemo();},4500);}}
-type();}
-setTimeout(runDemo,900);
-</script>
+  /* ── Counter Animation ──────────────────────────────────────── */
+  function animateCounter(el, target, duration) {
+    const start = performance.now();
+    function update(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const val = Math.round(eased * target);
+      el.textContent = val + (el.parentElement.querySelector('.hero-stat-label')?.textContent.includes('%') ? '' : '');
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  const heroObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        document.querySelectorAll('.count-num').forEach(function(el) {
+          animateCounter(el, parseInt(el.dataset.target), 1500);
+        });
+        heroObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.5 });
+
+  const heroContent = document.querySelector('.hero-content');
+  if (heroContent) heroObserver.observe(heroContent);
+
+  /* ── Particles ──────────────────────────────────────────────── */
+  (function() {
+    const container = document.getElementById('heroParticles');
+    if (!container) return;
+    for (let i = 0; i < 30; i++) {
+      const p    = document.createElement('div');
+      p.className = 'particle';
+      p.style.cssText = [
+        'left:'  + Math.random() * 100 + '%',
+        'top:'   + Math.random() * 100 + '%',
+        '--dur:' + (4 + Math.random() * 6) + 's',
+        '--delay:' + (-Math.random() * 8) + 's',
+        'opacity:' + (0.2 + Math.random() * 0.35),
+        'width:'  + (2 + Math.random() * 2) + 'px',
+        'height:' + (2 + Math.random() * 2) + 'px',
+      ].join(';');
+      container.appendChild(p);
+    }
+  })();
+
+  /* ── Demo Animations ────────────────────────────────────────── */
+  // Animate demo lines into view
+  function startDemoLineAnimation() {
+    const lines = document.querySelectorAll('#demoLines .demo-line');
+    lines.forEach(function(line, i) {
+      setTimeout(function() {
+        line.classList.add('visible');
+      }, 800 + i * 500);
+    });
+  }
+
+  const demoObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        startDemoLineAnimation();
+        demoObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+
+  const demoEl = document.querySelector('.demo-section');
+  if (demoEl) demoObserver.observe(demoEl);
+
+  /* ── Demo Tab Switching ─────────────────────────────────────── */
+  function switchDemoTab(btn, panelId) {
+    document.querySelectorAll('.demo-tab').forEach(function(t) {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.demo-panel').forEach(function(p) { p.classList.remove('active'); });
+
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    const panel = document.getElementById(panelId);
+    if (panel) panel.classList.add('active');
+  }
+
+  /* ── Demo Flashcard Flip ────────────────────────────────────── */
+  var demoCardFlipped = false;
+  function flipDemoCard(el) {
+    demoCardFlipped = !demoCardFlipped;
+    const textEl = document.getElementById('demoCardText');
+    const label  = el.querySelector('.demo-line') || el.firstElementChild;
+    if (demoCardFlipped) {
+      el.style.background   = 'rgba(201,169,110,0.12)';
+      el.style.borderColor  = 'var(--gold)';
+      el.firstElementChild.textContent = 'BACK — Click to flip back';
+      textEl.textContent = 'When two particles interact in certain ways, they become "entangled" — measuring one instantly determines the state of the other, regardless of distance.';
+    } else {
+      el.style.background  = 'var(--bg-card-hover)';
+      el.style.borderColor = 'var(--border-hover)';
+      el.firstElementChild.textContent = 'FRONT — Click to flip';
+      textEl.textContent = 'What is quantum entanglement?';
+    }
+  }
+
+  /* ── Demo Quiz Select ───────────────────────────────────────── */
+  var demoAnswered = false;
+  function selectDemoOpt(btn, type) {
+    if (demoAnswered) return;
+    demoAnswered = true;
+    const opts = document.querySelectorAll('#demoOptions button');
+    opts.forEach(function(b) {
+      b.style.pointerEvents = 'none';
+      if (b === btn) {
+        b.style.background   = type === 'correct' ? 'var(--success-bg)' : 'var(--error-bg)';
+        b.style.borderColor  = type === 'correct' ? 'var(--success)'    : 'var(--error)';
+        b.style.color        = type === 'correct' ? 'var(--success)'    : 'var(--error)';
+      }
+    });
+    // Find correct and highlight it
+    opts.forEach(function(b) {
+      if (b.textContent.includes('Aspect')) {
+        b.style.background  = 'var(--success-bg)';
+        b.style.borderColor = 'var(--success)';
+        b.style.color       = 'var(--success)';
+      }
+    });
+  }
+
+  /* ── FAQ Toggle ─────────────────────────────────────────────── */
+  function toggleFaq(el) {
+    const item = el.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-item.open').forEach(function(i) {
+      i.classList.remove('open');
+      i.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+    });
+    // Toggle current
+    if (!isOpen) {
+      item.classList.add('open');
+      el.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  // Keyboard support for FAQ
+  document.querySelectorAll('.faq-q').forEach(function(q) {
+    q.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleFaq(this);
+      }
+    });
+  });
+
+  /* ── Floating CTA ───────────────────────────────────────────── */
+  window.addEventListener('scroll', function() {
+    const floatCta = document.getElementById('floatCta');
+    if (!floatCta) return;
+    if (window.scrollY > 600) {
+      floatCta.classList.add('visible');
+    } else {
+      floatCta.classList.remove('visible');
+    }
+  }, { passive: true });
+
+  /* ── Smooth scroll for anchor links ─────────────────────────── */
+  document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href.length > 1) {
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  });
+
+  /* ── Nav background on scroll ───────────────────────────────── */
+  window.addEventListener('scroll', function() {
+    const nav = document.getElementById('landingNav');
+    if (!nav) return;
+    if (window.scrollY > 20) {
+      nav.style.borderBottomColor = 'var(--border-hover)';
+    } else {
+      nav.style.borderBottomColor = '';
+    }
+  }, { passive: true });
+  </script>
 </body>
 </html>
