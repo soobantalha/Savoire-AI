@@ -1,1292 +1,716 @@
-// =====================================================================
-// api/study.js  —  Savoiré AI v2.0 ULTRA ADVANCED
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// SAVOIRÉ AI v2.0 — api/study.js — VERCEL SERVERLESS BACKEND
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha
 //
-// ██████████████████████████████████████████████████████████████████████
-// ██  SAVOIRÉ AI v2.0 — THE WORLD'S MOST ADVANCED FREE AI STUDY     ██
-// ██  NOTES GENERATOR — LIVE STREAMING, NEVER FAILS, ULTRA RICH     ██
-// ██████████████████████████████████████████████████████████████████████
+// ── HOW TO DEPLOY ──────────────────────────────────────────────────────────────────────────────────
+// 1. Place this file at:  /api/study.js  in your Vercel project
+// 2. Add to vercel.json:
+//    {
+//      "functions": { "api/study.js": { "maxDuration": 300 } }
+//    }
+// 3. Set environment variable in Vercel dashboard:
+//    OPENROUTER_API_KEY = your_key_from_openrouter.ai  (free account, free models)
 //
-// ARCHITECTURE:
-// ┌─────────────────────────────────────────────────────────────────┐
-// │  REQUEST  →  Rate Limit  →  Cache?  →  Prompt Build             │
-// │           →  Model 1 (streaming)  →  Parse JSON                 │
-// │           →  Model 2 (fallback)   →  Enrich Output              │
-// │           →  … Model 20           →  Offline Fallback            │
-// │           →  SSE or JSON Response                               │
-// └─────────────────────────────────────────────────────────────────┘
+// ── LIVE OUTPUT / STREAMING ARCHITECTURE ───────────────────────────────────────────────────────────
+// This file implements TRUE Server-Sent Events (SSE) streaming so output appears
+// on the user's screen CHARACTER BY CHARACTER — exactly like ChatGPT, Claude, Gemini.
 //
-// KEY FEATURES v2.0 ULTRA:
-// ─────────────────────────────────────────────────────────────────
-// ✅ LIVE STREAMING       — SSE token-by-token, user sees output instantly
-// ✅ 20 FREE MODELS       — Triple the models, NEVER returns empty
-// ✅ SMART CACHE          — In-memory LRU, 100 results, 30min TTL
-// ✅ RATE LIMITING        — 30 req/IP/10min, protects abuse
-// ✅ ANALYTICS ENGINE     — Full per-request tracking, model perf
-// ✅ DEEP PROMPT v2.0     — Most comprehensive study prompt ever built
-// ✅ 10 KEY CONCEPTS      — Double the original (was 5)
-// ✅ 5 PRACTICE QS        — More exam prep (was 3)
-// ✅ GLOSSARY             — 8 term auto-glossary per topic
-// ✅ 7-DAY STUDY PLAN     — Personalized daily plan per topic
-// ✅ RELATED TOPICS       — 5 connected topics for broader learning
-// ✅ EXAM TIPS            — Specific exam strategies per topic
-// ✅ DIFFICULTY RATING    — 1-10 scale per topic
-// ✅ FLASHCARD FORMAT     — Dedicated flashcard output mode
-// ✅ MINDMAP TEXT         — Hierarchical text mindmap output
-// ✅ CURRICULUM TAGGING   — Auto-detects school/uni level
-// ✅ MULTILINGUAL         — 50+ languages, all output in target lang
-// ✅ ULTRA LONG NOTES     — 1000-2800 words of rich markdown
-// ✅ CIRCUIT BREAKER      — Skips failing models automatically
-// ✅ EXPONENTIAL BACKOFF  — Smart retry with jitter
-// ✅ INPUT SANITIZATION   — XSS, injection prevention
-// ✅ HEALTH ENDPOINT      — GET ?health=1 returns system status
-// ✅ STREAMING STATUS     — Live status events (analyzing, generating)
-// ✅ PDF READY OUTPUT     — Structured for perfect PDF generation
-// ✅ BRANDING PROTECTED   — Brand injected server-side, can't be spoofed
-// ✅ vercel.json maxDuration:300 — 5 min, never Vercel-timeout
-// ═════════════════════════════════════════════════════════════════
-// FILE:   api/study.js
-// DEPLOY: Vercel Serverless Function (Node.js 18+)
-// ENV:    OPENROUTER_API_KEY (required)
-// VERCEL.JSON: { "functions": { "api/study.js": { "maxDuration": 300 } } }
-// =====================================================================
+// Flow:
+//   Frontend sends POST { message, options: { stream: true } }
+//   → Server sets Content-Type: text/event-stream
+//   → For each token from OpenRouter: writes  event: token\ndata: {"t":"word"}\n\n
+//   → Frontend appends each token to the live display in real time
+//   → When complete: writes  event: done\ndata: { full structured JSON }\n\n
+//   → Frontend hides stream overlay and renders full structured result
+//
+// This means ZERO waiting — output starts appearing within ~1 second of hitting Generate.
+// The user sees every word as it is written, just like every major AI product.
+//
+// ── FEATURES ───────────────────────────────────────────────────────────────────────────────────────
+// ✦ True SSE Streaming   — token-by-token live output, no waiting
+// ✦ Heartbeat System     — prevents proxy/CDN timeouts on long generations
+// ✦ 10 Free AI Models    — tried in sequence with smart failover
+// ✦ Double Retry Logic   — each model tried twice before giving up
+// ✦ Rate Limit Detection — 429/503 skipped immediately, no wasted time
+// ✦ Simulated Streaming  — even offline fallback streams word by word
+// ✦ Ultra-Rich Prompts   — 5 tools × 4 depths × 5 styles × 42 languages
+// ✦ Robust JSON Parsing  — handles messy model output, code fences, escapes
+// ✦ Field Validation     — all required fields checked and filled
+// ✦ Quality Fallback     — 2000+ word offline content when all AI fails
+// ✦ Branding Enforcement — model names NEVER exposed, always "Savoiré AI"
+// ✦ Structured Logging   — every request/response logged for Vercel dashboard
+// ✦ Full CORS Support    — works from any domain
+// ✦ Input Sanitisation   — length limits, type checks, trim
+// ✦ Request Timing       — every attempt timed and logged
+// ✦ Security Headers     — nosniff, no framing
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+
 'use strict';
 
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 // SECTION 1 — CONSTANTS & BRANDING
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-const SAVOIR_VERSION   = '2.0';
-const SAVOIR_BRAND     = 'Savoiré AI v2.0 by Sooban Talha Technologies';
-const SAVOIR_REFERER   = 'https://savoireai.vercel.app';
-const SAVOIR_TITLE     = 'Savoiré AI v2.0';
-const SAVOIR_DEVSITE   = 'https://soobantalhatech.xyz';
-const SAVOIR_SCORE     = 96;
+const BRAND       = 'Savoiré AI v2.0';
+const DEVELOPER   = 'Sooban Talha Technologies';
+const DEVSITE     = 'soobantalhatech.xyz';
+const WEBSITE     = 'savoireai.vercel.app';
+const FOUNDER     = 'Sooban Talha';
+const APP_VERSION = '2.0';
 
-// Cache configuration
-const CACHE_MAX_ENTRIES = 100;
-const CACHE_TTL_MS      = 30 * 60 * 1000; // 30 minutes
+const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
+const HTTP_REFERER    = `https://${WEBSITE}`;
+const APP_TITLE       = BRAND;
 
-// Rate limit configuration
-const RATE_LIMIT_MAX     = 30;             // max requests
-const RATE_LIMIT_WINDOW  = 10 * 60 * 1000; // per 10 minutes
+// SSE event names — used by both server and client
+const EVT_TOKEN     = 'token';      // individual chunk: { t: "word " }
+const EVT_DONE      = 'done';       // final structured data object
+const EVT_ERROR     = 'error';      // error event: { message: "..." }
+const EVT_HEARTBEAT = 'heartbeat';  // keep-alive: { ts: 1234567890 }
+const EVT_STAGE     = 'stage';      // thinking stage update: { idx: 0-4 }
 
-// Retry configuration
-const MAX_ATTEMPTS_PER_MODEL = 2;
-const RETRY_BASE_DELAY_MS    = 1200;
-const RETRY_MAX_DELAY_MS     = 8000;
-const JITTER_MAX_MS          = 400;
-
-// Input validation
-const MIN_MSG_LENGTH  = 2;
-const MAX_MSG_LENGTH  = 20000;
-
-// Circuit breaker — skip model after this many consecutive failures
-const CIRCUIT_BREAK_THRESHOLD = 4;
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 2 — MODEL REGISTRY (20 FREE MODELS)
-// Names are NEVER exposed to the frontend — internal only
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 2 — FREE AI MODEL ROSTER
+// 10 models, tried in priority order. Internal only — NEVER sent to frontend.
+// All use the :free suffix on OpenRouter which means $0/request.
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 const MODELS = [
-  // ── TIER 1: Best quality, fastest response ─────────────────────
   {
-    id:      'google/gemini-2.0-flash-exp:free',
-    max:     8000,
-    timeout: 120000,
-    tier:    1,
-    label:   'G2F',
+    id:          'google/gemini-2.0-flash-exp:free',
+    max_tokens:   8000,
+    timeout_ms:  120000,
+    priority:    1,
+    description: 'Gemini 2.0 Flash — best quality, fastest response, excellent at structured JSON',
   },
   {
-    id:      'deepseek/deepseek-chat-v3-0324:free',
-    max:     8000,
-    timeout: 120000,
-    tier:    1,
-    label:   'DSV3',
+    id:          'deepseek/deepseek-chat-v3-0324:free',
+    max_tokens:   8000,
+    timeout_ms:  120000,
+    priority:    2,
+    description: 'DeepSeek Chat v3 — outstanding reasoning, very strong at detailed academic content',
   },
   {
-    id:      'meta-llama/llama-3.3-70b-instruct:free',
-    max:     6000,
-    timeout: 110000,
-    tier:    1,
-    label:   'L33',
-  },
-
-  // ── TIER 2: Strong mid-range models ────────────────────────────
-  {
-    id:      'z-ai/glm-4.5-air:free',
-    max:     6000,
-    timeout: 100000,
-    tier:    2,
-    label:   'GLM45',
+    id:          'meta-llama/llama-3.3-70b-instruct:free',
+    max_tokens:   6000,
+    timeout_ms:  110000,
+    priority:    3,
+    description: 'LLaMA 3.3 70B — Meta flagship, excellent instruction following and long-form writing',
   },
   {
-    id:      'microsoft/phi-4-reasoning-plus:free',
-    max:     4000,
-    timeout: 90000,
-    tier:    2,
-    label:   'PHI4',
+    id:          'z-ai/glm-4.5-air:free',
+    max_tokens:   6000,
+    timeout_ms:  100000,
+    priority:    4,
+    description: 'GLM 4.5 Air — strong multilingual capabilities, good for non-English output',
   },
   {
-    id:      'qwen/qwen3-8b:free',
-    max:     4000,
-    timeout: 90000,
-    tier:    2,
-    label:   'Q3',
+    id:          'microsoft/phi-4-reasoning-plus:free',
+    max_tokens:   4000,
+    timeout_ms:   90000,
+    priority:    5,
+    description: 'Phi-4 Reasoning Plus — Microsoft, excellent logical reasoning and analysis',
   },
   {
-    id:      'google/gemini-flash-1.5-8b:free',
-    max:     4000,
-    timeout: 80000,
-    tier:    2,
-    label:   'GF15',
+    id:          'qwen/qwen3-8b:free',
+    max_tokens:   4000,
+    timeout_ms:   90000,
+    priority:    6,
+    description: 'Qwen3 8B — Alibaba, solid multilingual and general purpose performance',
   },
   {
-    id:      'nousresearch/hermes-3-llama-3.1-405b:free',
-    max:     6000,
-    timeout: 110000,
-    tier:    2,
-    label:   'H3',
-  },
-
-  // ── TIER 3: Reliable fallbacks ─────────────────────────────────
-  {
-    id:      'mistralai/mistral-7b-instruct-v0.3:free',
-    max:     3500,
-    timeout: 80000,
-    tier:    3,
-    label:   'M7',
+    id:          'google/gemini-flash-1.5-8b:free',
+    max_tokens:   4000,
+    timeout_ms:   80000,
+    priority:    7,
+    description: 'Gemini Flash 1.5 8B — lightweight Gemini, fast and reliable for standard content',
   },
   {
-    id:      'openchat/openchat-7b:free',
-    max:     3500,
-    timeout: 80000,
-    tier:    3,
-    label:   'OC7',
+    id:          'nousresearch/hermes-3-llama-3.1-405b:free',
+    max_tokens:   6000,
+    timeout_ms:  110000,
+    priority:    8,
+    description: 'Hermes 3 LLaMA 405B — massive model, great for comprehensive deep content',
   },
   {
-    id:      'meta-llama/llama-3.1-8b-instruct:free',
-    max:     3500,
-    timeout: 80000,
-    tier:    3,
-    label:   'L31-8B',
+    id:          'mistralai/mistral-7b-instruct-v0.3:free',
+    max_tokens:   3500,
+    timeout_ms:   80000,
+    priority:    9,
+    description: 'Mistral 7B v0.3 — reliable European model, consistent and dependable',
   },
   {
-    id:      'google/gemma-3-12b-it:free',
-    max:     4000,
-    timeout: 85000,
-    tier:    3,
-    label:   'GEM12',
-  },
-  {
-    id:      'qwen/qwen-2.5-7b-instruct:free',
-    max:     3500,
-    timeout: 80000,
-    tier:    3,
-    label:   'Q25-7B',
-  },
-
-  // ── TIER 4: Additional safety net models ───────────────────────
-  {
-    id:      'microsoft/phi-3-mini-128k-instruct:free',
-    max:     3000,
-    timeout: 75000,
-    tier:    4,
-    label:   'PHI3M',
-  },
-  {
-    id:      'huggingfaceh4/zephyr-7b-beta:free',
-    max:     3000,
-    timeout: 75000,
-    tier:    4,
-    label:   'ZPH7',
-  },
-  {
-    id:      'mistralai/mistral-nemo:free',
-    max:     3500,
-    timeout: 80000,
-    tier:    4,
-    label:   'MNEMO',
-  },
-  {
-    id:      'google/gemma-2-9b-it:free',
-    max:     3500,
-    timeout: 80000,
-    tier:    4,
-    label:   'GEM2-9',
-  },
-  {
-    id:      'meta-llama/llama-3.2-3b-instruct:free',
-    max:     3000,
-    timeout: 70000,
-    tier:    4,
-    label:   'L32-3B',
-  },
-  {
-    id:      'qwen/qwen-2.5-72b-instruct:free',
-    max:     5000,
-    timeout: 100000,
-    tier:    4,
-    label:   'Q25-72B',
-  },
-  {
-    id:      'nousresearch/nous-hermes-2-mistral-7b-dpo:free',
-    max:     3000,
-    timeout: 75000,
-    tier:    4,
-    label:   'NH2-M7',
+    id:          'openchat/openchat-7b:free',
+    max_tokens:   3500,
+    timeout_ms:   80000,
+    priority:    10,
+    description: 'OpenChat 7B — final fallback, consistently available and adequate quality',
   },
 ];
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 3 — IN-MEMORY LRU CACHE
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 3 — DEPTH CONFIGURATION
+// Maps depth selector value to word targets and description for prompt
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-const _cache      = new Map();   // key → { data, timestamp }
-const _cacheOrder = [];          // LRU order (oldest at index 0)
-
-/**
- * Build a deterministic cache key from input + options
- * @param {string} message
- * @param {object} opts
- * @returns {string}
- */
-function buildCacheKey(message, opts) {
-  const lang  = (opts.language || 'english').toLowerCase().trim();
-  const depth = (opts.depth    || 'detailed').toLowerCase().trim();
-  const style = (opts.style    || 'simple').toLowerCase().trim();
-  const tool  = (opts.tool     || 'notes').toLowerCase().trim();
-  const msg   = message.toLowerCase().trim().slice(0, 250).replace(/\s+/g, ' ');
-  return `${lang}|${depth}|${style}|${tool}|${msg}`;
-}
-
-/**
- * Retrieve a cached result if it exists and is still fresh
- * @param {string} key
- * @returns {object|null}
- */
-function cacheGet(key) {
-  const entry = _cache.get(key);
-  if (!entry) return null;
-
-  // Expire stale entries
-  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
-    _cache.delete(key);
-    const idx = _cacheOrder.indexOf(key);
-    if (idx !== -1) _cacheOrder.splice(idx, 1);
-    return null;
-  }
-
-  // Promote to most-recently-used position
-  const idx = _cacheOrder.indexOf(key);
-  if (idx !== -1) _cacheOrder.splice(idx, 1);
-  _cacheOrder.push(key);
-
-  // Return a deep copy so callers cannot mutate cached data
-  return JSON.parse(JSON.stringify(entry.data));
-}
-
-/**
- * Store a result in the cache, evicting LRU if at capacity
- * @param {string} key
- * @param {object} data
- */
-function cacheSet(key, data) {
-  // Evict least-recently-used entry when at capacity
-  if (_cache.size >= CACHE_MAX_ENTRIES && _cacheOrder.length > 0) {
-    const lruKey = _cacheOrder.shift();
-    _cache.delete(lruKey);
-  }
-
-  _cache.set(key, {
-    data:      JSON.parse(JSON.stringify(data)),
-    timestamp: Date.now(),
-  });
-
-  // Update LRU order
-  const idx = _cacheOrder.indexOf(key);
-  if (idx !== -1) _cacheOrder.splice(idx, 1);
-  _cacheOrder.push(key);
-}
-
-/**
- * Return current cache statistics
- * @returns {object}
- */
-function cacheStats() {
-  return {
-    size:        _cache.size,
-    maxSize:     CACHE_MAX_ENTRIES,
-    ttlMinutes:  CACHE_TTL_MS / 60000,
-    keys:        _cacheOrder.length,
-  };
-}
-
-/**
- * Purge all expired entries from the cache
- */
-function cachePurgeExpired() {
-  const now = Date.now();
-  for (const [key, entry] of _cache.entries()) {
-    if (now - entry.timestamp > CACHE_TTL_MS) {
-      _cache.delete(key);
-      const idx = _cacheOrder.indexOf(key);
-      if (idx !== -1) _cacheOrder.splice(idx, 1);
-    }
-  }
-}
-
-// Run cache cleanup every 10 minutes
-setInterval(cachePurgeExpired, 10 * 60 * 1000);
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 4 — RATE LIMITING
-// ══════════════════════════════════════════════════════════════════
-
-const _rateLimitMap = new Map(); // ip → [timestamp, timestamp, ...]
-
-/**
- * Check if an IP is within rate limits
- * Automatically cleans up old timestamps
- * @param {string} ip
- * @returns {{ allowed: boolean, remaining: number, resetMs: number }}
- */
-function checkRateLimit(ip) {
-  const now     = Date.now();
-  const cutoff  = now - RATE_LIMIT_WINDOW;
-  const history = (_rateLimitMap.get(ip) || []).filter(t => t > cutoff);
-
-  history.push(now);
-  _rateLimitMap.set(ip, history);
-
-  const allowed   = history.length <= RATE_LIMIT_MAX;
-  const remaining = Math.max(0, RATE_LIMIT_MAX - history.length);
-  const oldest    = history[0] || now;
-  const resetMs   = oldest + RATE_LIMIT_WINDOW - now;
-
-  return { allowed, remaining, resetMs };
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 5 — CIRCUIT BREAKER
-// Models that fail CIRCUIT_BREAK_THRESHOLD times in a row get
-// temporarily skipped to avoid wasting time
-// ══════════════════════════════════════════════════════════════════
-
-const _circuitState = new Map(); // modelId → { fails, openUntil }
-
-/**
- * Check if a model's circuit is currently open (skip it)
- * @param {string} modelId
- * @returns {boolean}
- */
-function isCircuitOpen(modelId) {
-  const state = _circuitState.get(modelId);
-  if (!state) return false;
-  if (state.openUntil && Date.now() < state.openUntil) return true;
-  // Half-open: allow one attempt
-  if (state.openUntil && Date.now() >= state.openUntil) {
-    state.openUntil = null;
-    state.fails     = 0;
-  }
-  return false;
-}
-
-/**
- * Record a model failure — opens circuit if threshold reached
- * @param {string} modelId
- */
-function recordCircuitFailure(modelId) {
-  const state = _circuitState.get(modelId) || { fails: 0, openUntil: null };
-  state.fails++;
-  if (state.fails >= CIRCUIT_BREAK_THRESHOLD) {
-    // Keep circuit open for 5 minutes
-    state.openUntil = Date.now() + 5 * 60 * 1000;
-    console.warn(`[Savoiré AI] Circuit OPEN for ${modelId.split('/').pop()} — cooling down 5min`);
-  }
-  _circuitState.set(modelId, state);
-}
-
-/**
- * Record a model success — resets its circuit counter
- * @param {string} modelId
- */
-function recordCircuitSuccess(modelId) {
-  _circuitState.set(modelId, { fails: 0, openUntil: null });
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 6 — ANALYTICS ENGINE
-// ══════════════════════════════════════════════════════════════════
-
-const _analytics = {
-  serverStartedAt:    new Date().toISOString(),
-  totalRequests:      0,
-  streamRequests:     0,
-  syncRequests:       0,
-  cacheHitRequests:   0,
-  fallbackRequests:   0,
-  errorRequests:      0,
-  rateLimitedIPs:     0,
-  totalTokensSent:    0,      // approximate — counted via chunk events
-  modelSuccessCounts: {},     // label → count
-  modelFailureCounts: {},     // label → count
-  languageCounts:     {},     // language → count
-  toolCounts:         {},     // tool → count
-  depthCounts:        {},     // depth → count
-  responseTimes:      [],     // last 200 durations (ms)
-  avgResponseMs:      0,
-  minResponseMs:      Infinity,
-  maxResponseMs:      0,
+const DEPTH_MAP = {
+  standard: {
+    wordRange:         '600 to 900 words',
+    minWords:          600,
+    targetWords:       750,
+    description:       'Clear and accessible, covering all essentials with good depth',
+    sectionsRequired:  4,
+  },
+  detailed: {
+    wordRange:         '1000 to 1500 words',
+    minWords:          1000,
+    targetWords:       1250,
+    description:       'Detailed coverage with concrete examples and thorough explanations throughout',
+    sectionsRequired:  6,
+  },
+  comprehensive: {
+    wordRange:         '1500 to 2000 words',
+    minWords:          1500,
+    targetWords:       1750,
+    description:       'Comprehensive analysis covering all major aspects, nuances and edge cases in depth',
+    sectionsRequired:  7,
+  },
+  expert: {
+    wordRange:         '2000 to 2800 words including advanced subtopics, nuances, cutting-edge developments and critical debates',
+    minWords:          2000,
+    targetWords:       2400,
+    description:       'Expert-level deep dive covering advanced subtopics, academic debates, historical context and future directions',
+    sectionsRequired:  8,
+  },
 };
 
-/**
- * Record one completed request into analytics
- * @param {object} opts       — request options
- * @param {number} durationMs — wall-clock duration
- * @param {string} modelLabel — which model succeeded
- * @param {boolean} fromCache — was this a cache hit
- * @param {boolean} fallback  — was offline fallback used
- */
-function analyticsRecord(opts, durationMs, modelLabel, fromCache, fallback) {
-  _analytics.totalRequests++;
-  if (opts.stream)  _analytics.streamRequests++;
-  else              _analytics.syncRequests++;
-  if (fromCache)    _analytics.cacheHitRequests++;
-  if (fallback)     _analytics.fallbackRequests++;
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 4 — STYLE CONFIGURATION
+// Maps style selector to writing instruction injected into prompt
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  const lang  = opts.language || 'English';
-  const tool  = opts.tool     || 'notes';
-  const depth = opts.depth    || 'detailed';
+const STYLE_MAP = {
+  simple: {
+    name:        'Simple & Clear',
+    instruction: `Write in clear, accessible, beginner-friendly language throughout. Define every technical term immediately when first used — do not assume any prior knowledge. Use short sentences, everyday analogies and comparisons. Avoid jargon wherever possible. Structure every explanation to build from simple to complex. The goal is that a motivated student encountering this topic for the very first time should understand every sentence without needing to look anything up.`,
+  },
+  academic: {
+    name:        'Academic & Formal',
+    instruction: `Write in formal academic language with precise scholarly terminology throughout. Maintain a third-person objective tone. Use discipline-specific vocabulary without oversimplification. Employ citation-ready phrases, formal definitions, and reference theoretical frameworks by name where appropriate. The style should be suitable for a university essay or academic report.`,
+  },
+  detailed: {
+    name:        'Highly Detailed',
+    instruction: `Provide exhaustive detail at every point. Include numerous concrete examples, counterexamples, edge cases, specific numbers and statistics where relevant, and thorough multi-step explanations for every concept. Never summarise where you could explain fully. Leave nothing implicit or assumed. The goal is that after reading, the student feels they have read a complete textbook chapter on this topic.`,
+  },
+  exam: {
+    name:        'Exam-Focused',
+    instruction: `Structure the entire response around exam success. Provide clear key definitions written in mark-scheme language. Highlight the most frequently examined aspects of this topic. Explicitly state what examiners look for in high-scoring answers. Include mark-worthy phrases that score well. Flag the most common mistakes students make in exams on this topic. Where possible, frame explanations as model answers to typical exam questions.`,
+  },
+  visual: {
+    name:        'Visual & Analogy-Rich',
+    instruction: `Make every concept concrete and memorable through vivid analogies, metaphors, visual descriptions and step-by-step walkthroughs. Compare abstract ideas to everyday objects and situations. Build mental models that a student can visualise clearly. Use narrative and storytelling where helpful. The goal is that each concept leaves a lasting mental picture that makes it impossible to forget.`,
+  },
+};
 
-  _analytics.languageCounts[lang]  = (_analytics.languageCounts[lang]  || 0) + 1;
-  _analytics.toolCounts[tool]      = (_analytics.toolCounts[tool]      || 0) + 1;
-  _analytics.depthCounts[depth]    = (_analytics.depthCounts[depth]    || 0) + 1;
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 5 — TOOL CONFIGURATION
+// Each tool has a different objective and prompt emphasis
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  if (modelLabel) {
-    _analytics.modelSuccessCounts[modelLabel] =
-      (_analytics.modelSuccessCounts[modelLabel] || 0) + 1;
-  }
+const TOOL_MAP = {
+  notes: {
+    name:        'Generate Notes',
+    objective:   'Generate comprehensive, deeply detailed, well-structured study notes.',
+    emphasis:    `The ultra_long_notes field is the centrepiece. It MUST be genuinely long and detailed — the student is relying on this as their primary study resource. Use rich markdown formatting throughout: ## headings for each section, **bold** for every key term on first use, bullet lists for enumerations, numbered steps for processes, > blockquotes for important definitions or quotes, and horizontal rules --- between major sections. The notes must feel like a well-written textbook chapter.`,
+    sections:    ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Advanced Aspects', 'Common Applications', 'Critical Analysis', 'Summary & Key Takeaways'],
+  },
+  flashcards: {
+    name:        'Create Flashcards',
+    objective:   'Generate study materials optimised for interactive flashcard learning and spaced repetition.',
+    emphasis:    `The key_concepts should be formatted as perfect flashcard pairs — clear concise front side (term/question) followed by colon then clear accurate back side (definition/answer). Each pair should stand completely alone and make sense without context. The practice_questions should use the same format — short memorable questions with concise definitive answers that can be recalled in under 30 seconds. All content should be optimised for the spacing effect and active recall.`,
+    sections:    ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary'],
+  },
+  quiz: {
+    name:        'Build Quiz',
+    objective:   'Generate challenging, varied practice questions at exam level for self-testing.',
+    emphasis:    `The practice_questions are the core of this tool. Make them genuinely challenging — not trivial definitions. Vary the question types: one analytical question requiring reasoning, one application question requiring a scenario, one comparison/evaluation question requiring critical thinking. Each answer MUST be extremely comprehensive — minimum 200 words — covering: (1) direct answer, (2) detailed explanation with reasoning, (3) a specific concrete example, (4) real-world relevance, (5) a common exam mistake to avoid. The notes and concepts should also reflect this exam-prep focus.`,
+    sections:    ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary'],
+  },
+  summary: {
+    name:        'Smart Summary',
+    objective:   'Generate a concise, punchy smart summary for fast review and revision.',
+    emphasis:    `Begin the ultra_long_notes with a 2-3 sentence TL;DR paragraph that captures the absolute essence of the topic. Then follow with clearly labelled sections covering only the most critical points — cut everything non-essential. The key_concepts should represent the absolute TOP 5 things a student MUST know. Key_tricks should focus on retention and recall. The tone should be efficient and direct — every word must earn its place.`,
+    sections:    ['TL;DR', 'Core Concepts', 'Key Mechanisms', 'Critical Examples', 'What to Remember'],
+  },
+  mindmap: {
+    name:        'Build Mind Map',
+    objective:   'Generate content structured hierarchically for a visual mind map with clear branches.',
+    emphasis:    `Structure ALL content to reveal the hierarchical relationships between ideas. The ultra_long_notes should organise content using nested bullet points that mirror the branch structure of a mind map. key_concepts represent the 5 main branches from the central node. real_world_applications represent the Applications branch. key_tricks represent the Study Strategies branch. common_misconceptions represent the Watch Out branch. Every item should be concise enough to fit on a mind map node (under 12 words) where possible.`,
+    sections:    ['Central Topic', 'Main Branches', 'Sub-Branches', 'Connections', 'Applications'],
+  },
+};
 
-  if (durationMs) {
-    _analytics.responseTimes.push(durationMs);
-    if (_analytics.responseTimes.length > 200) _analytics.responseTimes.shift();
-    const sum = _analytics.responseTimes.reduce((a, b) => a + b, 0);
-    _analytics.avgResponseMs = Math.round(sum / _analytics.responseTimes.length);
-    if (durationMs < _analytics.minResponseMs) _analytics.minResponseMs = durationMs;
-    if (durationMs > _analytics.maxResponseMs) _analytics.maxResponseMs = durationMs;
-  }
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 6 — UTILITY FUNCTIONS
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+// Sleep utility
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Structured logger — appears in Vercel function logs
+const logger = {
+  info:    (...a) => console.log   (`[${new Date().toISOString()}] [${BRAND}] INFO  `, ...a),
+  ok:      (...a) => console.log   (`[${new Date().toISOString()}] [${BRAND}] ✓     `, ...a),
+  warn:    (...a) => console.warn  (`[${new Date().toISOString()}] [${BRAND}] WARN  `, ...a),
+  error:   (...a) => console.error (`[${new Date().toISOString()}] [${BRAND}] ERROR `, ...a),
+  model:   (...a) => console.log   (`[${new Date().toISOString()}] [MODEL]   →     `, ...a),
+};
+
+// Word count helper
+function wordCount(text) {
+  if (!text || typeof text !== 'string') return 0;
+  return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-/**
- * Record a model-level failure in analytics
- * @param {string} label
- */
-function analyticsRecordModelFailure(label) {
-  _analytics.modelFailureCounts[label] =
-    (_analytics.modelFailureCounts[label] || 0) + 1;
+// Truncate for logging
+function trunc(s, n = 100) {
+  if (!s) return '';
+  return String(s).length > n ? String(s).slice(0, n) + '…' : String(s);
 }
 
-/**
- * Return a snapshot of current analytics
- * @returns {object}
- */
-function analyticsSnapshot() {
-  return {
-    uptime:            process.uptime ? `${Math.floor(process.uptime())}s` : 'N/A',
-    startedAt:         _analytics.serverStartedAt,
-    totalRequests:     _analytics.totalRequests,
-    streamRequests:    _analytics.streamRequests,
-    syncRequests:      _analytics.syncRequests,
-    cacheHitRequests:  _analytics.cacheHitRequests,
-    fallbackRequests:  _analytics.fallbackRequests,
-    errorRequests:     _analytics.errorRequests,
-    cacheHitRate:      _analytics.totalRequests > 0
-      ? `${((_analytics.cacheHitRequests / _analytics.totalRequests) * 100).toFixed(1)}%`
-      : '0%',
-    avgResponseMs:     _analytics.avgResponseMs,
-    minResponseMs:     _analytics.minResponseMs === Infinity ? 0 : _analytics.minResponseMs,
-    maxResponseMs:     _analytics.maxResponseMs,
-    topLanguages:      Object.entries(_analytics.languageCounts)
-      .sort((a, b) => b[1] - a[1]).slice(0, 10)
-      .map(([lang, count]) => ({ lang, count })),
-    topTools:          Object.entries(_analytics.toolCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([tool, count]) => ({ tool, count })),
-    modelSuccesses:    _analytics.modelSuccessCounts,
-    modelFailures:     _analytics.modelFailureCounts,
-    cache:             cacheStats(),
-  };
-}
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 7 — PROMPT BUILDER
+// Constructs the full system prompt with all options injected
+// This prompt is what makes the AI generate the exact structured JSON we need
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 7 — INPUT SANITIZATION & VALIDATION
-// ══════════════════════════════════════════════════════════════════
-
-/**
- * Sanitize a free-text input string
- * Removes null bytes, control characters, excessive whitespace
- * @param {string} input
- * @returns {string}
- */
-function sanitizeInput(input) {
-  if (typeof input !== 'string') return '';
-  return input
-    .replace(/\0/g, '')                         // null bytes
-    .replace(/[\x01-\x08\x0B\x0C\x0E-\x1F]/g, '') // control chars (keep \n \r \t)
-    .replace(/\s+/g, ' ')                       // collapse whitespace
-    .trim();
-}
-
-/**
- * Validate and normalize request options
- * @param {object} raw — raw options from req.body
- * @returns {object}   — safe, normalized options
- */
-function normalizeOptions(raw) {
-  if (!raw || typeof raw !== 'object') return {};
-
-  const validDepths  = ['standard', 'detailed', 'comprehensive', 'expert'];
-  const validStyles  = ['simple', 'academic', 'detailed', 'exam', 'visual'];
-  const validTools   = ['notes', 'flashcards', 'quiz', 'summary', 'mindmap'];
-
-  const depth    = validDepths.includes(raw.depth)    ? raw.depth    : 'detailed';
-  const style    = validStyles.includes(raw.style)    ? raw.style    : 'simple';
-  const tool     = validTools.includes(raw.tool)      ? raw.tool     : 'notes';
-  const stream   = raw.stream === true;
-
-  // Whitelist safe language strings: letters, spaces, hyphens only
-  let language = 'English';
-  if (typeof raw.language === 'string') {
-    const cleaned = raw.language.replace(/[^a-zA-Z\s\-]/g, '').trim().slice(0, 50);
-    if (cleaned.length > 0) language = cleaned;
-  }
-
-  return { depth, style, tool, stream, language };
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 8 — PROMPT BUILDER v2.0 ULTRA
-// The most comprehensive study prompt ever built for a free AI
-// ══════════════════════════════════════════════════════════════════
-
-/**
- * Build the master prompt for the AI
- * @param {string} input — the user's topic/text
- * @param {object} opts  — normalized options
- * @returns {string}     — complete prompt string
- */
 function buildPrompt(input, opts) {
-  const lang  = opts.language || 'English';
-  const depth = opts.depth    || 'detailed';
-  const style = opts.style    || 'simple';
-  const tool  = opts.tool     || 'notes';
+  const language = (opts.language || 'English').trim();
+  const depth    = opts.depth  || 'detailed';
+  const style    = opts.style  || 'simple';
+  const tool     = opts.tool   || 'notes';
 
-  // ── DEPTH MAP ────────────────────────────────────────────────────
-  const depthMap = {
-    standard:      {
-      noteWords:  '600 to 900 words',
-      conceptsN:  5,
-      tricksN:    3,
-      questionsN: 3,
-      appsN:      3,
-      miscN:      3,
-    },
-    detailed:      {
-      noteWords:  '1000 to 1500 words',
-      conceptsN:  7,
-      tricksN:    4,
-      questionsN: 4,
-      appsN:      3,
-      miscN:      3,
-    },
-    comprehensive: {
-      noteWords:  '1500 to 2000 words',
-      conceptsN:  8,
-      tricksN:    5,
-      questionsN: 5,
-      appsN:      4,
-      miscN:      4,
-    },
-    expert:        {
-      noteWords:  '2000 to 2800 words including advanced subtopics and cutting-edge research',
-      conceptsN:  10,
-      tricksN:    6,
-      questionsN: 5,
-      appsN:      5,
-      miscN:      5,
-    },
-  };
+  const depthCfg = DEPTH_MAP[depth]  || DEPTH_MAP.detailed;
+  const styleCfg = STYLE_MAP[style]  || STYLE_MAP.simple;
+  const toolCfg  = TOOL_MAP[tool]    || TOOL_MAP.notes;
 
-  // ── STYLE MAP ────────────────────────────────────────────────────
-  const styleMap = {
-    simple:   'Use clear, accessible, beginner-friendly language. Define every technical term immediately. Use analogies freely. Avoid jargon unless explained.',
-    academic: 'Use formal academic language, precise scholarly terminology, citations to relevant theories, and structured argument. Assume undergraduate-level reader.',
-    detailed: 'Provide exhaustive, encyclopaedic detail. Include sub-cases, edge conditions, historical context, comparisons with related topics, and multiple worked examples.',
-    exam:     'Focus exclusively on exam-relevant content: key definitions, marking criteria, common question patterns, mark-worthy phrases, examiners\' expectations, and model-answer structure.',
-    visual:   'Use vivid analogies, mental models, step-by-step visual descriptions, flow metaphors, and spatial thinking. Make every concept feel tangible and visible.',
-  };
+  const nowISO   = new Date().toISOString();
+  const sections = toolCfg.sections.map(s => `  ## ${s}`).join('\n');
 
-  // ── TOOL MAP ─────────────────────────────────────────────────────
-  const toolInstructionMap = {
-    notes: `Generate ultra-comprehensive, beautifully structured study notes. Notes must be richly formatted in Markdown with nested headings, bold key terms, bullet lists, numbered steps, and blockquotes for important insights.`,
+  return `You are ${BRAND}, the world's most advanced free AI study companion.
+Built by ${DEVELOPER} | ${DEVSITE} | Founder: ${FOUNDER}
 
-    flashcards: `Generate study materials optimized for flashcard learning. In the ultra_long_notes field write 15 to 20 Q&A flashcard pairs in this exact format:
-**CARD 1**
-FRONT: [concise question]
-BACK: [clear, complete answer — 2 to 4 sentences]
-—
-**CARD 2**
-FRONT: [question]
-BACK: [answer]
-—
-...and so on for all cards. Make cards test recall of key facts, definitions, formulas, and applications.`,
+╔══════════════════════════════════════════════════════════════════════╗
+  YOUR TASK: ${toolCfg.objective}
+╚══════════════════════════════════════════════════════════════════════╝
 
-    quiz: `Generate a quiz-focused study guide. In the ultra_long_notes field write a comprehensive set of 10 practice quiz questions with full, detailed answers, graded from basic recall to analysis and evaluation. Format:
-**Q1 [BASIC]:** question
-**Answer:** detailed answer (minimum 60 words)
-**Q2 [APPLIED]:** question
-**Answer:** detailed answer
-... and so on through Q10, escalating in difficulty.`,
+STUDENT'S TOPIC / INPUT:
+━━━━━━━━━━━━━━━━━━━━━━━━
+${input}
+━━━━━━━━━━━━━━━━━━━━━━━━
 
-    summary: `Generate a concise but complete summary of the topic. In the ultra_long_notes field write:
-## Executive Summary (2-3 paragraphs)
-## The 5 Things You Must Know
-## Quick Reference Table (key terms and one-line definitions)
-## The Big Picture (how this topic fits into broader knowledge)
-## TL;DR (one sentence capturing the essence)`,
+OUTPUT LANGUAGE: ${language}
+ALL content — every single word, heading, bullet, sentence — MUST be in ${language}.
+Do not use any other language anywhere in the output, not even for section headings.
 
-    mindmap: `Generate a detailed hierarchical text mindmap of the topic. In the ultra_long_notes field write the mindmap using indentation:
-# [TOPIC] — Central Node
-## Branch 1: [Major Aspect]
-  ### Sub-branch 1.1: [Sub-concept]
-    - Detail point
-    - Detail point
-  ### Sub-branch 1.2: [Sub-concept]
-    - Detail point
-## Branch 2: [Major Aspect]
-... and so on for 5 to 7 major branches, each with 3 to 5 sub-branches.`,
-  };
+OUTPUT DEPTH: ${depthCfg.wordRange}
+${depthCfg.description}
+The ultra_long_notes field ALONE must meet this word count.
 
-  const cfg = depthMap[depth] || depthMap.detailed;
+WRITING STYLE: ${styleCfg.name}
+${styleCfg.instruction}
 
-  // ── GLOSSARY INSTRUCTION ─────────────────────────────────────────
-  const glossaryInstruction = `- glossary: EXACTLY 8 items — each item is a string "TERM: definition (15-25 words, crystal clear)"`;
+TOOL MODE: ${toolCfg.name}
+${toolCfg.emphasis}
 
-  // ── STUDY PLAN INSTRUCTION ───────────────────────────────────────
-  const studyPlanInstruction = `- study_plan: EXACTLY 7 items (one per day) — each item is a string:
-  "Day N: [specific focus area and activity] — [time recommendation, e.g. 45 min]"`;
+REQUIRED SECTION STRUCTURE for ultra_long_notes:
+${sections}
+Each section must be substantive — minimum 80 words per section, more is better.
 
-  // ── EXAM TIPS INSTRUCTION ────────────────────────────────────────
-  const examTipsInstruction = `- exam_tips: EXACTLY 5 items — specific, actionable exam-day and exam-prep strategies for this topic`;
+═══════════════════════════════════════════════════════════════════════
+MANDATORY OUTPUT SPECIFICATION — READ CAREFULLY
+═══════════════════════════════════════════════════════════════════════
 
-  // ── RELATED TOPICS INSTRUCTION ───────────────────────────────────
-  const relatedTopicsInstruction = `- related_topics: EXACTLY 5 items — closely connected topics the student should explore next, each as a string "TOPIC: why it connects"`;
+[FIELD: ultra_long_notes]
+TYPE: string
+LENGTH: MINIMUM ${depthCfg.wordRange}
+FORMAT: Rich markdown
+REQUIRED ELEMENTS:
+  • ## headings for every major section
+  • **bold text** for EVERY key term on first use
+  • Bullet lists (- item) for enumerations and lists
+  • Numbered lists (1. item) for processes and sequences
+  • > blockquotes for important definitions, rules or key statements
+  • --- horizontal rules between major sections
+  • Concrete examples in EVERY section
+  • NO empty sections — every section must be substantive
 
-  // ── DIFFICULTY INSTRUCTION ───────────────────────────────────────
-  const difficultyInstruction = `- difficulty_rating: integer 1 to 10 (1 = trivial, 10 = PhD-level). Be realistic.`;
-  const difficultyLabelInstruction = `- difficulty_label: one of "Beginner", "Intermediate", "Advanced", "Expert"`;
+[FIELD: key_concepts]
+TYPE: array of exactly 5 strings
+FORMAT: "Term: comprehensive explanation (25-40 words each)"
+REQUIREMENT: Cover the 5 most important concepts — be informative, not just definitions
+LANGUAGE: All in ${language}
 
-  // ── KEY CONCEPTS ─────────────────────────────────────────────────
-  const conceptsInstruction = `- key_concepts: EXACTLY ${cfg.conceptsN} items — format each as "TERM: explanation (20-35 words, precise and memorable)"`;
+[FIELD: key_tricks]
+TYPE: array of exactly 3 strings
+LENGTH: 55-75 words each
+CONTENT: Practical memory aids, mnemonics, study strategies specific to this topic
+OPTIONS: Feynman Technique, Spaced Repetition, visual anchors, acronyms, exam tips
+LANGUAGE: All in ${language}
 
-  // ── KEY TRICKS ───────────────────────────────────────────────────
-  const tricksInstruction = `- key_tricks: EXACTLY ${cfg.tricksN} items — practical memory aids, mnemonics, or study strategies (40-70 words each, immediately actionable)`;
+[FIELD: practice_questions]
+TYPE: array of exactly 3 objects, each with "question" and "answer"
+QUESTION FORMAT: Exam-level, varied types (analytical / application / evaluation)
+ANSWER FORMAT: MINIMUM 160 words each, covering:
+  1. Direct answer to the question (1-2 sentences)
+  2. Detailed reasoning and explanation (3-4 sentences)
+  3. A specific concrete example with detail
+  4. Real-world relevance or professional application
+  5. A common student mistake to avoid on this question
+LANGUAGE: All in ${language}
 
-  // ── PRACTICE QUESTIONS ───────────────────────────────────────────
-  const questionsInstruction = `- practice_questions: EXACTLY ${cfg.questionsN} items, each with "question" and "answer"
-  Each answer MINIMUM 150 words covering: direct answer + conceptual reasoning + concrete worked example + real-world relevance + common student mistake to avoid`;
+[FIELD: real_world_applications]
+TYPE: array of exactly 3 strings
+LENGTH: 45-65 words each
+FORMAT: "Domain: specific mechanism of application and outcome"
+EXAMPLES: Healthcare, Engineering, Finance, Education, Environmental Science, AI/Tech
+REQUIREMENT: Explain HOW it applies specifically — not just THAT it applies
+LANGUAGE: All in ${language}
 
-  // ── REAL WORLD APPS ──────────────────────────────────────────────
-  const appsInstruction = `- real_world_applications: EXACTLY ${cfg.appsN} items (40-60 words each, specific domain + mechanism + measurable impact)`;
+[FIELD: common_misconceptions]
+TYPE: array of exactly 3 strings
+LENGTH: 45-65 words each
+FORMAT: "Many students believe [wrong idea]. In reality, [correct explanation with reason]."
+REQUIREMENT: Corrections must be memorable and clearly explain WHY the misconception is wrong
+LANGUAGE: All in ${language}
 
-  // ── MISCONCEPTIONS ───────────────────────────────────────────────
-  const miscInstruction = `- common_misconceptions: EXACTLY ${cfg.miscN} items (40-60 words each: state the wrong belief + why students hold it + precise correction)`;
+[FIELD: topic]
+TYPE: string — clean, specific topic name in ${language}
 
-  // ── FULL PROMPT ──────────────────────────────────────────────────
-  return `You are Savoiré AI v2.0, the world's most advanced AI study companion, built by Sooban Talha Technologies (soobantalhatech.xyz). You generate the richest, most educational study materials available from any free AI.
+[FIELD: curriculum_alignment]
+TYPE: string — most likely academic level and subject
+EXAMPLES: "A-Level Biology", "University Computer Science", "GCSE History", "IB Physics", "MBA Finance"
 
-═══════════════════════════════════════════════════
-TASK CONFIGURATION
-═══════════════════════════════════════════════════
-TASK:             ${toolInstructionMap[tool] || toolInstructionMap.notes}
-TOPIC / CONTENT:  "${input}"
-OUTPUT LANGUAGE:  ${lang} — Every single word of every field MUST be in ${lang}. Zero exceptions.
-WRITING STYLE:    ${styleMap[style] || styleMap.simple}
-NOTES LENGTH:     ${cfg.noteWords}
+[FIELD: study_score]
+TYPE: integer — always output exactly 96
 
-═══════════════════════════════════════════════════
-FIELD-BY-FIELD REQUIREMENTS
-═══════════════════════════════════════════════════
-- topic: Clean, properly capitalised topic name (not the raw user input)
-- curriculum_alignment: Most specific academic context (e.g. "GCSE Biology Unit 3", "University Calculus I", "A-Level Computer Science", "MBA Marketing")
-- ultra_long_notes: ${cfg.noteWords}, rich Markdown. REQUIRED sections in this order:
-    ## Introduction
-    ## Core Concepts  
-    ## How It Works (with numbered steps where applicable)
-    ## Key Examples (minimum 2 detailed examples)
-    ## Advanced Aspects
-    ## Connections to Other Topics
-    ## Summary & Key Takeaways
-  Use **bold** for key terms, > blockquotes for crucial insights, numbered lists for processes, bullet lists for features/properties.
-${conceptsInstruction}
-${tricksInstruction}
-${questionsInstruction}
-${appsInstruction}
-${miscInstruction}
-${glossaryInstruction}
-${studyPlanInstruction}
-${examTipsInstruction}
-${relatedTopicsInstruction}
-${difficultyInstruction}
-${difficultyLabelInstruction}
-- study_score: always exactly 96
-- powered_by: always exactly "Savoiré AI v2.0 by Sooban Talha Technologies"
-- generated_at: current ISO 8601 timestamp
+[FIELD: powered_by]
+TYPE: string — always output exactly "${BRAND} by ${DEVELOPER}"
 
-═══════════════════════════════════════════════════
-ABSOLUTE RULES
-═══════════════════════════════════════════════════
-1. RESPOND WITH ONLY VALID JSON — nothing before { and nothing after }
-2. No Markdown code fences, no preamble, no commentary outside the JSON
-3. ALL text in every field must be in ${lang}
-4. Do NOT mention model names, OpenRouter, or any underlying AI provider
-5. Do NOT truncate — complete ALL fields fully
-6. Escape all special characters properly for valid JSON
-7. If the topic is a passage of text, extract and study the key concepts from it
+[FIELD: generated_at]
+TYPE: string — always output exactly "${nowISO}"
 
-RESPOND WITH ONLY THIS EXACT JSON STRUCTURE — NOTHING ELSE:
+═══════════════════════════════════════════════════════════════════════
+OUTPUT FORMAT — ABSOLUTELY CRITICAL
+═══════════════════════════════════════════════════════════════════════
+Your ENTIRE response must be a single valid JSON object.
+— NO text before the opening {
+— NO text after the closing }
+— NO markdown code fences (no \`\`\`json)
+— NO comments or annotations inside the JSON
+— All string values must use proper JSON escaping
+— Newlines inside strings must be \\n (escaped)
+— Double quotes inside strings must be \\" (escaped)
+
 {
-  "topic": "...",
-  "curriculum_alignment": "...",
-  "ultra_long_notes": "...",
-  "key_concepts": ["Term: explanation", "Term: explanation"${', "Term: explanation"'.repeat(cfg.conceptsN - 2)}],
-  "key_tricks": ["Trick 1 text", "Trick 2 text"${cfg.tricksN > 2 ? ', "Trick 3 text"' : ''}],
-  "practice_questions": [
-    {"question": "...", "answer": "minimum 150 words..."},
-    {"question": "...", "answer": "minimum 150 words..."},
-    {"question": "...", "answer": "minimum 150 words..."}
+  "topic": "specific topic name in ${language}",
+  "curriculum_alignment": "e.g. A-Level Biology",
+  "ultra_long_notes": "full rich markdown study notes in ${language} — at least ${depthCfg.wordRange}",
+  "key_concepts": [
+    "Term 1: explanation in ${language} — 25-40 words",
+    "Term 2: explanation in ${language} — 25-40 words",
+    "Term 3: explanation in ${language} — 25-40 words",
+    "Term 4: explanation in ${language} — 25-40 words",
+    "Term 5: explanation in ${language} — 25-40 words"
   ],
-  "real_world_applications": ["app1", "app2", "app3"],
-  "common_misconceptions": ["misc1", "misc2", "misc3"],
-  "glossary": ["TERM: definition", "TERM: definition", "TERM: definition", "TERM: definition", "TERM: definition", "TERM: definition", "TERM: definition", "TERM: definition"],
-  "study_plan": ["Day 1: ...", "Day 2: ...", "Day 3: ...", "Day 4: ...", "Day 5: ...", "Day 6: ...", "Day 7: ..."],
-  "exam_tips": ["Tip 1", "Tip 2", "Tip 3", "Tip 4", "Tip 5"],
-  "related_topics": ["TOPIC: reason", "TOPIC: reason", "TOPIC: reason", "TOPIC: reason", "TOPIC: reason"],
-  "difficulty_rating": 6,
-  "difficulty_label": "Intermediate",
+  "key_tricks": [
+    "Trick 1 in ${language} — 55-75 words",
+    "Trick 2 in ${language} — 55-75 words",
+    "Trick 3 in ${language} — 55-75 words"
+  ],
+  "practice_questions": [
+    {
+      "question": "Analytical question in ${language}",
+      "answer": "Comprehensive answer in ${language} — minimum 160 words"
+    },
+    {
+      "question": "Application question in ${language}",
+      "answer": "Comprehensive answer in ${language} — minimum 160 words"
+    },
+    {
+      "question": "Evaluation question in ${language}",
+      "answer": "Comprehensive answer in ${language} — minimum 160 words"
+    }
+  ],
+  "real_world_applications": [
+    "Domain 1: specific application in ${language} — 45-65 words",
+    "Domain 2: specific application in ${language} — 45-65 words",
+    "Domain 3: specific application in ${language} — 45-65 words"
+  ],
+  "common_misconceptions": [
+    "Misconception 1 in ${language} — 45-65 words",
+    "Misconception 2 in ${language} — 45-65 words",
+    "Misconception 3 in ${language} — 45-65 words"
+  ],
   "study_score": 96,
-  "powered_by": "Savoiré AI v2.0 by Sooban Talha Technologies",
-  "generated_at": "${new Date().toISOString()}"
+  "powered_by": "${BRAND} by ${DEVELOPER}",
+  "generated_at": "${nowISO}"
 }`;
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 9 — UTILITY HELPERS
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 8 — JSON EXTRACTION & PARSING
+// Robustly extracts JSON from model output that may contain extra text,
+// markdown fences, partial content, or escape issues
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-/**
- * Sleep for a given number of milliseconds
- * @param {number} ms
- * @returns {Promise<void>}
- */
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+function extractAndParseJSON(rawContent) {
+  if (!rawContent || typeof rawContent !== 'string') {
+    throw new Error('Model returned empty or non-string content');
+  }
 
-/**
- * Compute retry delay with exponential backoff + random jitter
- * @param {number} attempt — 1-indexed attempt number
- * @returns {number}       — delay in milliseconds
- */
-function retryDelay(attempt) {
-  const base    = Math.min(RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1), RETRY_MAX_DELAY_MS);
-  const jitter  = Math.floor(Math.random() * JITTER_MAX_MS);
-  return base + jitter;
+  let text = rawContent.trim();
+
+  // Step 1: Strip markdown code fences
+  text = text.replace(/^```(?:json)?\s*/i, '');
+  text = text.replace(/\s*```\s*$/i, '');
+  text = text.trim();
+
+  // Step 2: Find outermost JSON object boundaries
+  const startIdx = text.indexOf('{');
+  const endIdx   = text.lastIndexOf('}');
+
+  if (startIdx === -1) {
+    throw new Error(`No JSON object opening brace found. Content preview: "${trunc(text, 150)}"`);
+  }
+  if (endIdx === -1 || endIdx <= startIdx) {
+    throw new Error(`No valid JSON object closing brace found. Content preview: "${trunc(text, 150)}"`);
+  }
+
+  let jsonStr = text.slice(startIdx, endIdx + 1);
+
+  // Step 3: Try direct parse first
+  try {
+    return JSON.parse(jsonStr);
+  } catch (directErr) {
+    logger.warn(`Direct JSON parse failed: ${directErr.message} — attempting auto-repair`);
+  }
+
+  // Step 4: Attempt repairs on common model JSON errors
+
+  let repaired = jsonStr;
+
+  // Fix 4a: Remove actual newline characters inside string values
+  // This is the most common model error — they output raw newlines inside JSON strings
+  repaired = repaired.replace(/"((?:[^"\\]|\\.)*)"/g, (match, inner) => {
+    // Replace raw newlines, tabs, carriage returns inside string values
+    const fixed = inner
+      .replace(/\r\n/g, '\\n')
+      .replace(/\r/g,   '\\r')
+      .replace(/\n/g,   '\\n')
+      .replace(/\t/g,   '\\t');
+    return `"${fixed}"`;
+  });
+
+  // Fix 4b: Remove trailing commas before } or ]
+  repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+
+  // Fix 4c: Fix unquoted property keys
+  repaired = repaired.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, (m, pre, key, post) => {
+    return `${pre}"${key}"${post}`;
+  });
+
+  try {
+    return JSON.parse(repaired);
+  } catch (repairErr) {
+    throw new Error(
+      `JSON parse failed after repair attempts. Original error: ${repairErr.message}. ` +
+      `Content length: ${jsonStr.length}. First 300 chars: "${trunc(jsonStr, 300)}"`
+    );
+  }
 }
 
-/**
- * Extract and parse a JSON object from a raw string
- * Handles: markdown code fences, leading/trailing text, multiple JSON attempts
- * @param {string} raw
- * @returns {object}
- * @throws {Error} if no valid JSON object found
- */
-function extractJSON(raw) {
-  if (!raw || typeof raw !== 'string') throw new Error('Empty raw input');
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 9 — DATA VALIDATION & ENRICHMENT
+// Validates all required fields, fills missing optional fields,
+// enforces branding and removes model identity
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  // Strip markdown code fences
-  let clean = raw.trim()
-    .replace(/^```(?:json)?\s*/i, '')
-    .replace(/\s*```\s*$/i, '')
-    .trim();
-
-  // Find outermost { ... }
-  const start = clean.indexOf('{');
-  const end   = clean.lastIndexOf('}');
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error('No JSON object delimiters found in response');
+function validateAndEnrich(parsed, opts) {
+  // ── Required field checks ──
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Parsed result is not an object');
   }
 
-  const jsonStr = clean.slice(start, end + 1);
-
-  let parsed;
-  try {
-    parsed = JSON.parse(jsonStr);
-  } catch (e1) {
-    // Attempt aggressive repair: remove control characters and retry
-    const repaired = jsonStr
-      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')  // strip bad control chars
-      .replace(/,\s*([}\]])/g, '$1');                  // trailing commas
-    try {
-      parsed = JSON.parse(repaired);
-    } catch (e2) {
-      throw new Error(`JSON parse failed: ${e1.message}`);
-    }
+  if (!parsed.topic || typeof parsed.topic !== 'string' || parsed.topic.trim().length < 2) {
+    throw new Error(`Invalid or missing "topic" field (got: ${JSON.stringify(parsed.topic)})`);
   }
+
+  if (!parsed.ultra_long_notes || typeof parsed.ultra_long_notes !== 'string') {
+    throw new Error('Missing required field: ultra_long_notes');
+  }
+
+  const notesLength = parsed.ultra_long_notes.trim().length;
+  if (notesLength < 150) {
+    throw new Error(`ultra_long_notes too short: ${notesLength} characters (minimum 150)`);
+  }
+
+  if (!Array.isArray(parsed.practice_questions) || parsed.practice_questions.length === 0) {
+    throw new Error('Missing or empty required field: practice_questions');
+  }
+
+  if (!Array.isArray(parsed.key_concepts) || parsed.key_concepts.length === 0) {
+    throw new Error('Missing or empty required field: key_concepts');
+  }
+
+  // ── Validate practice_questions structure ──
+  parsed.practice_questions = parsed.practice_questions
+    .filter(q => q && typeof q === 'object')
+    .map(q => ({
+      question: String(q.question || q.q || '').trim(),
+      answer:   String(q.answer   || q.a || '').trim(),
+    }))
+    .filter(q => q.question.length > 0 && q.answer.length > 0);
+
+  if (parsed.practice_questions.length === 0) {
+    throw new Error('All practice_questions items were invalid after filtering');
+  }
+
+  // ── Fill missing optional arrays with quality fallbacks ──
+  const topic = parsed.topic;
+
+  if (!Array.isArray(parsed.key_tricks) || parsed.key_tricks.length === 0) {
+    parsed.key_tricks = buildFallbackTricks(topic);
+  }
+
+  if (!Array.isArray(parsed.real_world_applications) || parsed.real_world_applications.length === 0) {
+    parsed.real_world_applications = buildFallbackApplications(topic);
+  }
+
+  if (!Array.isArray(parsed.common_misconceptions) || parsed.common_misconceptions.length === 0) {
+    parsed.common_misconceptions = buildFallbackMisconceptions(topic);
+  }
+
+  // ── Trim arrays to maximum lengths ──
+  if (parsed.key_concepts.length > 5)            parsed.key_concepts            = parsed.key_concepts.slice(0, 5);
+  if (parsed.key_tricks.length > 3)              parsed.key_tricks              = parsed.key_tricks.slice(0, 3);
+  if (parsed.real_world_applications.length > 3) parsed.real_world_applications = parsed.real_world_applications.slice(0, 3);
+  if (parsed.common_misconceptions.length > 3)   parsed.common_misconceptions   = parsed.common_misconceptions.slice(0, 3);
+  if (parsed.practice_questions.length > 3)      parsed.practice_questions      = parsed.practice_questions.slice(0, 3);
+
+  // ── Enforce branding — NEVER expose model identity ──
+  parsed.powered_by    = `${BRAND} by ${DEVELOPER}`;
+  parsed.study_score   = 96;
+  parsed.generated_at  = parsed.generated_at || new Date().toISOString();
+  parsed._language     = opts.language || 'English';
+  parsed._version      = APP_VERSION;
+
+  // ── Delete any model identity fields ──
+  delete parsed._model;
+  delete parsed.model;
+  delete parsed.model_used;
+  delete parsed.model_id;
+  delete parsed.ai_model;
+
+  // ── Log quality metrics ──
+  const notesWc = wordCount(parsed.ultra_long_notes);
+  logger.info(`Quality: ${notesWc} words in notes, ${parsed.key_concepts.length} concepts, ${parsed.practice_questions.length} questions`);
 
   return parsed;
 }
 
-/**
- * Validate that a parsed AI response has all required fields
- * @param {object} parsed
- * @throws {Error} if validation fails
- */
-function validateAIResponse(parsed) {
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Response is not an object');
-  }
-  if (!parsed.topic || typeof parsed.topic !== 'string') {
-    throw new Error('Missing required field: topic');
-  }
-  if (!parsed.ultra_long_notes || typeof parsed.ultra_long_notes !== 'string') {
-    throw new Error('Missing required field: ultra_long_notes');
-  }
-  if (!Array.isArray(parsed.practice_questions) || parsed.practice_questions.length === 0) {
-    throw new Error('Missing required field: practice_questions');
-  }
-  if (!Array.isArray(parsed.key_concepts) || parsed.key_concepts.length === 0) {
-    throw new Error('Missing required field: key_concepts');
-  }
-  // Notes must be substantial
-  if (parsed.ultra_long_notes.trim().length < 200) {
-    throw new Error('ultra_long_notes is too short — model may have truncated');
-  }
-}
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 10 — MODEL CALLER (SYNC — NON-STREAMING)
+// Calls one model with stream:false, returns full response
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-/**
- * Enrich a parsed AI response with fallback values for optional fields
- * and enforce branding. Mutates the object in place.
- * @param {object} data   — parsed AI response
- * @param {string} topic  — original topic for fallback generation
- * @returns {object}      — the enriched data object
- */
-function enrichResponse(data, topic) {
-  const t = data.topic || topic || 'This Topic';
-
-  // Optional array fields — fill with fallbacks if missing/empty
-  if (!Array.isArray(data.key_tricks)              || data.key_tricks.length === 0)
-    data.key_tricks = fallbackTricks(t);
-
-  if (!Array.isArray(data.real_world_applications) || data.real_world_applications.length === 0)
-    data.real_world_applications = fallbackRealWorldApps(t);
-
-  if (!Array.isArray(data.common_misconceptions)   || data.common_misconceptions.length === 0)
-    data.common_misconceptions = fallbackMisconceptions(t);
-
-  if (!Array.isArray(data.glossary)                || data.glossary.length === 0)
-    data.glossary = fallbackGlossary(t);
-
-  if (!Array.isArray(data.study_plan)              || data.study_plan.length === 0)
-    data.study_plan = fallbackStudyPlan(t);
-
-  if (!Array.isArray(data.exam_tips)               || data.exam_tips.length === 0)
-    data.exam_tips = fallbackExamTips(t);
-
-  if (!Array.isArray(data.related_topics)          || data.related_topics.length === 0)
-    data.related_topics = fallbackRelatedTopics(t);
-
-  // Scalar fields with defaults
-  if (!data.curriculum_alignment) data.curriculum_alignment = 'General Academic Study';
-  if (!data.difficulty_rating || typeof data.difficulty_rating !== 'number')
-    data.difficulty_rating = 5;
-  if (!data.difficulty_label) data.difficulty_label = 'Intermediate';
-
-  // Enforce immutable branding — cannot be overridden by model
-  data.powered_by   = SAVOIR_BRAND;
-  data.study_score  = SAVOIR_SCORE;
-  data.generated_at = data.generated_at || new Date().toISOString();
-
-  // Remove any leaking model identifiers
-  delete data._model;
-  delete data._modelId;
-  delete data.model;
-
-  return data;
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 10 — FALLBACK CONTENT GENERATORS
-// Comprehensive, high-quality fallbacks for when AI fields are missing
-// ══════════════════════════════════════════════════════════════════
-
-/**
- * Generate fallback key tricks (memory aids + study strategies)
- * @param {string} t — topic name
- * @returns {string[]}
- */
-function fallbackTricks(t) {
-  return [
-    `FIVE W's FRAMEWORK: Systematically ask Who, What, When, Where, and Why about every aspect of ${t}. Answering all five questions creates a complete mental map and immediately reveals knowledge gaps. Write your answers down — the act of writing deepens retention significantly more than just thinking through them.`,
-
-    `FEYNMAN TECHNIQUE (4 Steps): Step 1 — Write "${t}" at the top of a blank page. Step 2 — Explain it in your own words as if teaching a curious 12-year-old. Step 3 — Every time you stumble or reach for jargon, you have found a gap — go back to your notes and fill it. Step 4 — Simplify your language further until it flows without hesitation. Gaps you cannot explain are the exact topics to study next.`,
-
-    `SPACED REPETITION SCHEDULE: Study ${t} using scientifically-proven intervals — Session 1 today, Session 2 after 1 day, Session 3 after 3 days, Session 4 after 7 days, Session 5 after 14 days, Session 6 after 30 days. Each review session should begin just as memory begins to fade. This spacing creates memory traces up to 10× stronger than marathon single-session studying and dramatically reduces total study time.`,
-
-    `ACTIVE RECALL TESTING: After studying ${t}, close all notes and write down everything you remember. Then check what you missed and study only those gaps. Testing yourself is 50% more effective than re-reading. Use the "brain dump" method — set a 10-minute timer and write continuously without stopping. The items you cannot recall are precisely the items most worth studying.`,
-
-    `CONNECTION MAPPING: Draw ${t} at the centre of a blank page. Draw 6 lines outward and label each with a question: What causes it? What does it cause? Where does it appear? What is it similar to? What contradicts it? Why does it matter? The answers to these questions form a connection web that makes ${t} almost impossible to forget and reveals how it fits into the larger subject.`,
-
-    `TEACH-BACK METHOD: After studying ${t}, find someone — a classmate, family member, even a pet — and teach it to them for exactly 5 minutes. The constraint of limited time forces you to identify the absolute essentials. Questions from your "student" (even imagined questions) push you to examine your understanding from unexpected angles and consolidate knowledge you thought you already had.`,
-  ];
-}
-
-/**
- * Generate fallback real-world applications
- * @param {string} t — topic name
- * @returns {string[]}
- */
-function fallbackRealWorldApps(t) {
-  return [
-    `Healthcare & Medicine: Clinical practitioners apply principles from ${t} to improve diagnostic accuracy, design evidence-based treatment protocols, and advance medical research methodology. Understanding ${t} contributes directly to improved patient outcomes and informs national health policy frameworks, particularly in preventive medicine and epidemiological modelling.`,
-
-    `Technology & Software Engineering: The concepts underlying ${t} directly guide software architecture decisions, algorithm design, and scalable system engineering. Technology teams use frameworks derived from ${t} to build more reliable, efficient, and maintainable digital infrastructure — from cloud computing platforms to mobile applications used by billions of people daily.`,
-
-    `Business Strategy & Management: Forward-looking organisations systematically apply analytical frameworks from ${t} to strategic decision-making processes, operational optimisation, staff development programmes, and competitive positioning. Companies that rigorously apply these principles demonstrate measurably better resource allocation, faster adaptation to market changes, and sustained competitive advantage.`,
-
-    `Education & Pedagogical Design: Curriculum designers and educators integrate ${t} into learning programmes to build deeper conceptual understanding rather than surface-level memorisation. Evidence-based teaching methods informed by ${t} produce students who can transfer knowledge to novel problems, think critically, and engage in genuine intellectual enquiry.`,
-
-    `Environmental Science & Policy: Researchers studying environmental systems apply ${t} to model complex ecological interactions, predict outcomes of interventions, and evaluate the effectiveness of sustainability policies. Policymakers rely on this understanding to design regulations that balance economic development with environmental protection across local and global scales.`,
-  ];
-}
-
-/**
- * Generate fallback common misconceptions
- * @param {string} t — topic name
- * @returns {string[]}
- */
-function fallbackMisconceptions(t) {
-  return [
-    `❌ Misconception: "${t} is best learned by memorising facts and definitions." Students often believe that re-reading notes and memorising terminology constitutes mastery. ✅ Reality: True understanding of ${t} requires grasping underlying principles, mechanisms, and interconnections. Memorisation without comprehension produces fragile knowledge that collapses under novel exam questions. Active recall and application are the only reliable routes to durable mastery.`,
-
-    `❌ Misconception: "${t} is only relevant to specialists in that field." Many students mentally file ${t} as a niche topic they will forget after their exam. ✅ Reality: The reasoning patterns, analytical frameworks, and mental models developed through studying ${t} transfer broadly to other disciplines and everyday decision-making. Students who understand ${t} deeply have been shown to outperform peers in unrelated analytical tasks.`,
-
-    `❌ Misconception: "Once you understand the basics of ${t}, there is little more to learn." Students who grasp introductory material often feel confident they have mastered the topic. ✅ Reality: ${t} has substantial depth with multiple advanced dimensions, ongoing research debates, and evolving practical applications. The fundamentals are a doorway, not a destination — even experts in ${t} identify important open questions and continue discovering new connections.`,
-
-    `❌ Misconception: "${t} can be understood in a single intensive study session." Students often plan marathon last-minute study sessions before exams. ✅ Reality: Cognitive science consistently shows that distributed practice produces 2× to 3× better retention than massed practice for conceptual topics like ${t}. Understanding is built cumulatively through repeated exposure with rest periods — the brain consolidates learning during sleep. Short sessions across multiple days outperform single long sessions every time.`,
-
-    `❌ Misconception: "Passive review of ${t} (re-reading, highlighting) is sufficient preparation." Highlighting and re-reading feel productive and are widely practiced. ✅ Reality: Research on learning consistently shows passive review is one of the least effective study strategies. Active strategies — self-testing, problem-solving, and teaching back — produce dramatically superior retention and transfer for ${t} because they force retrieval, which strengthens memory traces in ways passive reading cannot.`,
-  ];
-}
-
-/**
- * Generate a fallback glossary of 8 key terms
- * @param {string} t — topic name
- * @returns {string[]}
- */
-function fallbackGlossary(t) {
-  return [
-    `${t} (Core Definition): The fundamental subject of study encompassing its theoretical basis, practical applications, and key principles within its academic discipline.`,
-    `Foundational Framework: The conceptual structure underpinning ${t}, providing the vocabulary and logical scaffolding on which all deeper understanding is built.`,
-    `Primary Mechanism: The central process or set of interactions through which ${t} operates, producing observable and predictable outcomes under defined conditions.`,
-    `Applied Context: The practical domain in which ${t} is deployed to solve real problems, design systems, or inform decisions beyond purely academic settings.`,
-    `Analytical Method: The systematic approach used to examine, evaluate, and draw conclusions about phenomena related to ${t} in both research and professional settings.`,
-    `Theoretical Model: An abstract representation of ${t} that simplifies complex reality to highlight essential relationships and enable prediction of outcomes.`,
-    `Empirical Evidence: Data and observations gathered from experimentation or systematic study that supports, refines, or challenges the current understanding of ${t}.`,
-    `Critical Evaluation: The practice of assessing the scope, limitations, assumptions, and validity of claims made within the study of ${t}, which separates surface-level learners from genuine experts.`,
-  ];
-}
-
-/**
- * Generate a fallback 7-day study plan
- * @param {string} t — topic name
- * @returns {string[]}
- */
-function fallbackStudyPlan(t) {
-  return [
-    `Day 1 — Foundation Building: Read your core notes on ${t} from beginning to end without highlighting. Write a one-paragraph summary in your own words immediately after. Focus: What is ${t} and why does it matter? — 45 minutes`,
-    `Day 2 — Active Recall & Gap Identification: Close all notes. Brain-dump everything you remember about ${t} onto paper for 10 minutes. Then open notes and identify 5 specific knowledge gaps. Study those gaps only. — 40 minutes`,
-    `Day 3 — Deep Concepts: Focus on the 2 to 3 most complex aspects of ${t}. Work through examples step by step. Draw concept diagrams connecting ideas. Explain each concept aloud as if teaching a class. — 50 minutes`,
-    `Day 4 — Practice Questions: Attempt all practice questions for ${t} under timed conditions without referring to notes. Grade yourself honestly. Study every question where you lost marks. — 45 minutes`,
-    `Day 5 — Real-World Connections: Research 3 real-world examples where ${t} appears. Write one paragraph on each explaining how the topic applies. This deepens comprehension and makes the topic memorable. — 35 minutes`,
-    `Day 6 — Teaching & Review: Teach ${t} to someone else or record yourself explaining it for 10 minutes. Review your glossary, key concepts, and common misconceptions. Write 5 potential exam questions you would ask. — 40 minutes`,
-    `Day 7 — Final Consolidation: Write a one-page complete summary of ${t} from memory. Compare against full notes and add anything missing. Rest well — sleep is when the brain consolidates everything you have studied this week. — 30 minutes`,
-  ];
-}
-
-/**
- * Generate fallback exam tips
- * @param {string} t — topic name
- * @returns {string[]}
- */
-function fallbackExamTips(t) {
-  return [
-    `Always define key terms at the start of any answer about ${t}. Examiners award marks specifically for accurate terminology — a precise definition signals immediately that you know the topic and earns easy marks before your main argument even begins.`,
-    `Structure every extended answer about ${t} as: (1) Clear direct answer in the first sentence, (2) Conceptual explanation of why/how, (3) Concrete example, (4) Wider significance or real-world relevance. This four-part structure ensures you hit every marking criterion.`,
-    `When you encounter a ${t} question you find difficult, spend 90 seconds planning before writing. List the key points you will cover. Students who plan first write more focused, higher-scoring answers than those who write immediately, even though planning feels like wasting time.`,
-    `Look for command words in exam questions about ${t}: "Describe" needs facts and features; "Explain" needs mechanisms and reasons; "Evaluate" needs advantages, disadvantages, and a justified conclusion; "Analyse" needs breaking down into components. Responding to the wrong command word is the most common source of lost marks.`,
-    `In revision, make a one-page "cheat sheet" for ${t} condensing the absolute essentials into one side of A4 — key definitions, formulas, diagrams, and examples. The act of deciding what is essential is itself a powerful learning exercise, and the cheat sheet becomes your final 10-minute review before entering the exam room.`,
-  ];
-}
-
-/**
- * Generate fallback related topics
- * @param {string} t — topic name
- * @returns {string[]}
- */
-function fallbackRelatedTopics(t) {
-  return [
-    `Foundational Prerequisites of ${t}: Understanding the historical and theoretical origins that gave rise to ${t} provides crucial context for why current concepts are framed the way they are, and explains many features that otherwise seem arbitrary.`,
-    `Advanced Extensions of ${t}: Exploring the cutting-edge developments and current research frontiers in ${t} reveals how the field is evolving and opens up specialisation pathways for deeper academic or professional engagement.`,
-    `Methodological Tools Used in ${t}: The research methods, analytical frameworks, and measurement tools specific to ${t} deserve separate study — knowing how knowledge in this field is generated helps you evaluate claims critically.`,
-    `Interdisciplinary Applications: The principles of ${t} intersect with multiple other disciplines. Studying these intersections deepens understanding of both ${t} and the neighbouring fields, and reveals connections that generate new insights.`,
-    `Comparative Frameworks: Studying topics that contrast with or complement ${t} — whether as alternatives, critiques, or parallel systems — strengthens conceptual understanding by forcing the brain to distinguish between similar ideas, which is exactly how expert knowledge is structured.`,
-  ];
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 11 — COMPREHENSIVE OFFLINE FALLBACK
-// Used only when ALL 20 AI models fail
-// Generates genuinely useful content without any AI calls
-// ══════════════════════════════════════════════════════════════════
-
-/**
- * Generate a full, high-quality offline fallback result
- * @param {string} topic — user's topic
- * @param {object} opts  — normalized options
- * @returns {object}     — complete result object
- */
-function generateOfflineFallback(topic, opts) {
-  const t    = (topic || 'This Topic').trim();
-  const lang = opts.language || 'English';
-
-  const notes = `## Introduction to ${t}
-
-${t} is a significant and multifaceted area of study with broad implications across multiple academic disciplines and real-world domains. A thorough understanding of ${t} opens doors to deeper intellectual engagement, practical problem-solving capability, and the ability to connect ideas across disciplinary boundaries. Whether you are approaching ${t} for the first time or deepening existing knowledge, mastering its principles will provide lasting intellectual value.
-
-> **Core Insight:** The study of ${t} is not merely an exercise in information acquisition — it is the development of a new way of thinking, seeing, and analysing the world.
-
-## Core Concepts
-
-The study of ${t} begins with its fundamental concepts — the building blocks upon which all advanced understanding is constructed. These foundations are not arbitrary; they represent decades of intellectual refinement aimed at capturing the most essential features of the domain.
-
-**Key Principle 1 — Theoretical Framework:** The theoretical framework of ${t} provides the conceptual vocabulary needed to analyse, discuss, and apply knowledge in this domain. Without this shared language, communication about ${t} is imprecise and understanding shallow.
-
-**Key Principle 2 — Practical Dimension:** The practical dimension of ${t} connects abstract theory to real-world outcomes. Understanding how principles manifest in observable, measurable practice makes the subject both meaningful and immediately applicable.
-
-**Key Principle 3 — Critical Thinking:** Engaging critically with ${t} means questioning assumptions, evaluating evidence quality, identifying the scope and limitations of claims, and forming well-reasoned, defensible conclusions rather than accepting information uncritically.
-
-**Key Principle 4 — Systemic Thinking:** Advanced understanding of ${t} requires thinking systemically — recognising that individual elements are embedded in larger wholes, that changes in one part affect others, and that many real-world phenomena resist simple cause-and-effect explanations.
-
-## How It Works
-
-The processes central to ${t} unfold through a series of identifiable, interconnected phases:
-
-1. **Initial Conditions** — The starting state, inputs, or context that sets the process in motion. Understanding initial conditions in ${t} is critical because small differences here can produce dramatically different outcomes.
-2. **Active Mechanisms** — The forces, rules, interactions, or transformations that drive change within ${t}. These mechanisms operate according to consistent principles, which is what makes the domain analysable and outcomes predictable.
-3. **Output or Result** — The observable product, changed state, or measurable outcome produced by the mechanisms. In ${t}, learning to identify and measure outputs correctly is a core skill.
-4. **Feedback Loops** — How outcomes feed back to influence subsequent cycles of the process. Many advanced phenomena in ${t} arise from feedback dynamics rather than simple linear causation.
-5. **Boundary Conditions** — The scope within which normal ${t} principles apply. Knowing where the framework breaks down is as important as knowing where it succeeds.
-
-## Key Examples
-
-**Example 1 — Foundational Case:** The classic demonstration of ${t} shows principles at their most basic and transparent, where core mechanisms operate exactly as predicted by theoretical models. Studying this foundational case builds intuition that transfers to more complex scenarios.
-
-**Example 2 — Complex Real-World Application:** A sophisticated real-world application shows ${t} operating under conditions of uncertainty, multiple competing variables, and incomplete information. The gap between the idealised model and messy reality is itself a crucial lesson — it reveals where theoretical frameworks need refinement and where practitioners must exercise judgment.
-
-**Example 3 — Edge Case:** An edge case or exception to the normal pattern of ${t} illuminates the boundaries of the framework and often reveals the deepest structural features of the domain. Experts in ${t} are distinguished precisely by their knowledge of when general principles apply and when they do not.
-
-## Advanced Aspects
-
-At an advanced level, ${t} introduces important complications that beginner treatments typically omit or simplify:
-
-- **Edge Cases and Exceptions:** General principles of ${t} have well-defined exceptions. Knowing when exceptions apply separates novice from expert-level understanding and is heavily tested in advanced assessments.
-- **Interacting Variables:** Advanced application requires simultaneously holding multiple factors in mind, understanding their interactions, and tracking how changes propagate through the system.
-- **Scale Dependencies:** Many phenomena in ${t} behave differently at different scales. What holds at the micro level may not hold at the macro level, and vice versa.
-- **Dynamic Change Over Time:** ${t} is not static — the field has evolved substantially and continues to evolve. Awareness of historical development and current debates is a mark of genuine expertise.
-- **Ongoing Research Questions:** There are important unresolved questions and active debates in ${t}. Engaging with these debates rather than treating the field as settled knowledge builds intellectual maturity and research literacy.
-
-## Connections to Other Topics
-
-${t} does not exist in isolation — it intersects with and informs numerous other areas of knowledge:
-
-- It shares foundational assumptions with closely related disciplines, making cross-disciplinary study highly productive.
-- Methodological tools developed in adjacent fields often illuminate aspects of ${t} that purely internal analysis cannot reach.
-- Historical and philosophical analysis of ${t} reveals why current frameworks are structured as they are, making them easier to remember and critique.
-- Practical applications of ${t} frequently sit at the intersection of multiple fields, requiring professionals to draw on knowledge from diverse areas simultaneously.
-
-## Summary & Key Takeaways
-
-Mastering ${t} requires moving decisively beyond memorisation toward genuine comprehension — understanding *why* things work the way they do, not merely *that* they do. The most important takeaways are:
-
-- **Understand the framework, not just the facts** — facts without framework are easily forgotten; frameworks allow you to reconstruct facts from first principles.
-- **Connect theory to practice** — always ask how abstract principles manifest in observable reality.
-- **Embrace complexity** — resist the temptation to over-simplify; the interesting and important features of ${t} often live in the nuances.
-- **Test yourself actively** — passive review produces a false sense of mastery; regular testing reveals real understanding.
-- **Study consistently** — distributed practice across time dramatically outperforms last-minute cramming for a topic like ${t}.`;
-
-  return {
-    topic:                   t,
-    curriculum_alignment:    'General Academic Study',
-    _language:               lang,
-    ultra_long_notes:        notes,
-    key_concepts: [
-      `Core Definition: ${t} refers to the fundamental principles, concepts, and frameworks forming its theoretical and practical foundation within its academic and professional field.`,
-      `Primary Mechanisms: The main processes driving ${t} involve systematic interactions between components, producing predictable and measurable outcomes under well-defined conditions.`,
-      `Historical Development: ${t} evolved through a series of key discoveries, intellectual contributions, and paradigm shifts that gradually established the current foundational principles and methodological standards.`,
-      `Practical Significance: ${t} has direct and measurable applications across multiple domains, enabling practitioners to solve real problems, design better systems, and make more informed decisions.`,
-      `Analytical Framework: Studying ${t} provides a structured analytical lens that can be applied systematically to examine, evaluate, and draw reliable conclusions about relevant phenomena.`,
-      `Scope and Limitations: Complete understanding of ${t} requires honestly recognising both its explanatory power and the contexts in which its standard frameworks reach their limits or require modification.`,
-      `Interconnections: ${t} is embedded in a network of related concepts and disciplines; understanding these connections enables richer, more flexible application of its principles.`,
-    ],
-    key_tricks:              fallbackTricks(t),
-    practice_questions: [
-      {
-        question: `Explain the core principles of ${t} and describe how they work together to form a coherent and useful analytical framework.`,
-        answer:   `The core principles of ${t} form an integrated system in which each component reinforces and contextualises the others, making the whole far more powerful than the sum of its parts. At the foundational level, these principles establish basic definitions and assumptions upon which all further understanding is built — without this foundation, advanced concepts lack necessary context and are both difficult to apply accurately and easy to confuse with superficially similar ideas. The mechanisms driving ${t} follow consistent patterns, which is precisely what makes the subject analysable and outcomes predictable rather than arbitrary. The framework becomes complete when we recognise relationships between individual components — each element influences others through both direct and indirect pathways, often creating emergent properties not visible in any single component. Practically, this integrated understanding enables genuine problem-solving rather than the rote application of memorised procedures. Students who master core principles can adapt their knowledge to novel situations, recognise which principles apply in a given context, construct principled arguments under examination pressure, and explain their reasoning clearly to others. The most common mistake students make is treating principles as an unconnected list of facts to memorise rather than as components of a living, interconnected system. The former produces brittle knowledge that fails under novel questions; the latter produces flexible expertise that transfers across contexts.`,
-      },
-      {
-        question: `Describe a specific real-world scenario in which ${t} knowledge is essential for making good decisions. Walk through your complete reasoning process step by step.`,
-        answer:   `Consider a high-stakes professional context where decisions informed by ${t} carry significant practical consequences — this might be in a clinical, technological, organisational, or policy setting depending on the domain. Step one is thorough problem definition: precisely stating what challenge needs to be addressed, what constraints operate, what resources are available, and what a successful outcome would look like in measurable terms. This diagnostic phase is arguably the most critical — many failures in applying ${t} stem not from wrong analysis but from solving the wrong problem in the first place. Step two is selecting the most relevant aspects of ${t} for this specific context, filtering out peripheral considerations to focus analytical energy where it matters most. Step three is developing a structured solution strategy grounded in the relevant principles, decomposing the complex challenge into addressable components and determining the sequence in which to address them. Step four is implementation combined with active monitoring — this is where theoretical knowledge meets practical reality, and adjustments to the original plan are almost always necessary as new information emerges. Step five is rigorous evaluation: comparing actual outcomes against initial goals, identifying what worked as expected, what did not, and extracting specific lessons for future application. This reflection phase is where experience genuinely consolidates into expertise — skipping it means surrendering the most valuable learning opportunity the entire exercise provides.`,
-      },
-      {
-        question: `Critically compare two different approaches to understanding or analysing ${t}. What are the specific strengths, limitations, and ideal use cases for each?`,
-        answer:   `Understanding ${t} benefits from examining it through multiple complementary frameworks, each of which illuminates aspects the others cannot. The theoretical or deductive approach begins with first principles, formal models, and axioms, deriving conclusions through logical inference. Its primary strength is generalisability — deep theoretical understanding of ${t} applies across a far wider range of situations than experience alone can cover. It also produces precise, communicable knowledge that can be shared, criticised, and refined across a scholarly community. Its limitation is that without ongoing engagement with concrete cases, theoretical knowledge can remain abstract and difficult to deploy reliably under real-world conditions of ambiguity, incomplete data, and time pressure. The empirical or inductive approach focuses on specific instances, observational data, experimental results, and measurable patterns. This method produces actionable, grounded knowledge that practitioners can apply with confidence and builds the intuitive judgment that comes only from extensive direct experience. Its limitation is that patterns identified in one context may not generalise, and without theoretical grounding, practitioners struggle to explain why something works or to adapt when circumstances change. The most effective mastery of ${t} integrates both approaches in a continuous dialogue: theoretical frameworks organise and give meaning to empirical experience, while empirical engagement perpetually challenges, refines, and enriches theoretical understanding. The most common mistake is committing exclusively to one approach and regarding the other with suspicion — experts in ${t} move fluidly between levels of abstraction.`,
-      },
-      {
-        question: `What are the most important things a student must understand about ${t} to perform well in an exam, and what study strategies are most effective for achieving that?`,
-        answer:   `Performing well on assessments in ${t} requires three types of knowledge working together: declarative knowledge (knowing what), procedural knowledge (knowing how), and conditional knowledge (knowing when and why). Pure memorisation of declarative facts is the least sufficient and the most commonly over-relied-upon strategy. The most effective preparation begins with building a genuine conceptual map — understanding how every major idea in ${t} connects to every other, so that each piece of information exists in a network of meaning rather than in isolation. Active recall testing — attempting to reproduce key information from memory before checking notes — is the single most evidence-supported individual study technique and should occupy the majority of revision time. Interleaving different aspects of ${t} within study sessions rather than blocking by sub-topic produces better long-term retention and improves the ability to identify which approach applies to which type of question. Practice under exam conditions — timed, without notes, with attention to command words in questions — builds the specific skill of examination performance, which is distinct from general subject knowledge. Finally, explaining ${t} clearly to another person remains one of the most powerful consolidation tools, because it forces a level of clarity and completeness that private re-reading never demands. Students who combine spaced practice, active recall, and regular self-testing consistently outperform those who rely on passive review, regardless of raw intelligence.`,
-      },
-    ],
-    real_world_applications: fallbackRealWorldApps(t),
-    common_misconceptions:   fallbackMisconceptions(t),
-    glossary:                fallbackGlossary(t),
-    study_plan:              fallbackStudyPlan(t),
-    exam_tips:               fallbackExamTips(t),
-    related_topics:          fallbackRelatedTopics(t),
-    difficulty_rating:       5,
-    difficulty_label:        'Intermediate',
-    study_score:             SAVOIR_SCORE,
-    powered_by:              SAVOIR_BRAND,
-    generated_at:            new Date().toISOString(),
-    _fallback:               true,
-    _language:               lang,
-  };
-}
-
-// ══════════════════════════════════════════════════════════════════
-// SECTION 12 — MODEL CALLER (NON-STREAMING)
-// Calls a single model synchronously, returns full parsed result
-// ══════════════════════════════════════════════════════════════════
-
-/**
- * Call one AI model without streaming — returns complete JSON result
- * @param {object} model   — from MODELS array
- * @param {string} prompt  — built prompt string
- * @returns {Promise<object>}
- * @throws {Error} on any failure
- */
-async function callModelSync(model, prompt) {
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout);
+async function callModelSync(model, prompt, opts) {
+  const ctrl    = new AbortController();
+  const timer   = setTimeout(() => ctrl.abort(), model.timeout_ms);
+  const t0      = Date.now();
+  const name    = model.id.split('/').pop().replace(':free', '');
 
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(OPENROUTER_BASE, {
       method:  'POST',
       headers: {
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  SAVOIR_REFERER,
-        'X-Title':       SAVOIR_TITLE,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
       },
       body: JSON.stringify({
         model:       model.id,
-        max_tokens:  model.max,
+        max_tokens:  model.max_tokens,
         temperature: 0.72,
-        top_p:       0.95,
+        stream:      false,
         messages:    [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
 
     clearTimeout(timer);
+    const elapsed = Date.now() - t0;
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      const errorMsg  = `HTTP ${response.status} from ${name} after ${elapsed}ms: ${trunc(errorBody, 200)}`;
+
+      // Rate limit or server overload — flag for fast skip
+      if (response.status === 429 || response.status === 503 || response.status === 502) {
+        throw new Error(`[RATE_LIMITED] ${errorMsg}`);
+      }
+
+      throw new Error(errorMsg);
     }
 
-    const json = await res.json();
+    const data    = await response.json();
+    const content = data?.choices?.[0]?.message?.content;
 
-    // OpenRouter-specific error signalling
-    if (json.error) {
-      throw new Error(`API error: ${JSON.stringify(json.error).slice(0, 150)}`);
+    if (!content || typeof content !== 'string' || content.trim().length < 100) {
+      throw new Error(`${name} returned empty/too-short content after ${elapsed}ms (${content?.length || 0} chars)`);
     }
 
-    const content = json?.choices?.[0]?.message?.content;
-    if (!content || content.trim().length < 50) {
-      throw new Error('Empty or near-empty response from model');
-    }
+    logger.ok(`${name} sync responded in ${elapsed}ms, content: ${content.length} chars`);
 
-    const parsed = extractJSON(content);
-    validateAIResponse(parsed);
-    return parsed;
+    const parsed = extractAndParseJSON(content);
+    return validateAndEnrich(parsed, opts);
 
   } catch (err) {
     clearTimeout(timer);
-    if (err.name === 'AbortError') {
-      throw new Error(`Model timed out after ${model.timeout / 1000}s`);
-    }
     throw err;
   }
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 13 — MODEL CALLER (STREAMING)
-// Calls a single model with SSE streaming
-// Fires onChunk(delta) for every received token
-// Returns full parsed result after stream completes
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 11 — MODEL CALLER (STREAMING — SSE)
+// Calls one model with stream:true
+// Fires onChunk(tokenText) for every token received
+// Returns the complete structured data object when stream ends
+// This is what makes output appear live on screen like ChatGPT
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-/**
- * Call one AI model with streaming — fires onChunk per token
- * Returns complete parsed JSON result after stream ends
- * @param {object}   model     — from MODELS array
- * @param {string}   prompt    — built prompt
- * @param {function} onChunk   — callback(delta: string)
- * @returns {Promise<object>}
- * @throws {Error} on any failure
- */
-async function callModelStreaming(model, prompt, onChunk) {
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout);
+async function callModelStream(model, prompt, opts, onChunk) {
+  const ctrl    = new AbortController();
+  const timer   = setTimeout(() => ctrl.abort(), model.timeout_ms);
+  const t0      = Date.now();
+  const name    = model.id.split('/').pop().replace(':free', '');
 
   try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(OPENROUTER_BASE, {
       method:  'POST',
       headers: {
         'Content-Type':  'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  SAVOIR_REFERER,
-        'X-Title':       SAVOIR_TITLE,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
       },
       body: JSON.stringify({
         model:       model.id,
-        max_tokens:  model.max,
+        max_tokens:  model.max_tokens,
         temperature: 0.72,
-        top_p:       0.95,
-        stream:      true,
+        stream:      true,   // ← THIS enables SSE streaming from OpenRouter
         messages:    [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
@@ -1294,628 +718,737 @@ async function callModelStreaming(model, prompt, onChunk) {
 
     clearTimeout(timer);
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => '');
+      const errorMsg  = `HTTP ${response.status} from ${name}: ${trunc(errorBody, 200)}`;
+      if (response.status === 429 || response.status === 503 || response.status === 502) {
+        throw new Error(`[RATE_LIMITED] ${errorMsg}`);
+      }
+      throw new Error(errorMsg);
     }
 
-    if (!res.body) {
-      throw new Error('Response body is null — streaming not supported');
-    }
+    // ── Read the SSE stream line by line ──
+    const reader      = response.body.getReader();
+    const decoder     = new TextDecoder('utf-8');
+    let   lineBuffer  = '';      // incomplete line buffer
+    let   fullContent = '';      // accumulate all tokens
+    let   tokenCount  = 0;
+    let   charsEmitted = 0;
 
-    const reader  = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let   fullText = '';
-    let   buffer   = '';
-
-    // SSE parsing loop
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // keep incomplete final line for next iteration
+      if (done) {
+        // Stream ended — process any remaining buffered line
+        if (lineBuffer.trim()) {
+          processLine(lineBuffer.trim());
+        }
+        break;
+      }
+
+      // Decode chunk and add to line buffer
+      lineBuffer += decoder.decode(value, { stream: true });
+
+      // Process all complete lines
+      const lines = lineBuffer.split('\n');
+      lineBuffer  = lines.pop() || ''; // last element may be incomplete
 
       for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith('data: ')) continue;
-
-        const jsonStr = trimmed.slice(6).trim();
-        if (jsonStr === '[DONE]') continue;
-
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const delta  = parsed?.choices?.[0]?.delta?.content;
-          if (delta && typeof delta === 'string') {
-            fullText += delta;
-            onChunk(delta);
-          }
-        } catch (_) {
-          // Skip malformed SSE lines — this is normal for some models
-        }
+        processLine(line);
       }
     }
 
-    // Process any remaining buffer content
-    if (buffer.trim().startsWith('data: ')) {
-      const jsonStr = buffer.trim().slice(6).trim();
-      if (jsonStr && jsonStr !== '[DONE]') {
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const delta  = parsed?.choices?.[0]?.delta?.content;
-          if (delta) {
-            fullText += delta;
-            onChunk(delta);
-          }
-        } catch (_) {}
+    // ── Line processor ──
+    function processLine(line) {
+      line = line.trim();
+      if (!line || !line.startsWith('data: ')) return;
+
+      const dataStr = line.slice(6).trim();
+      if (dataStr === '[DONE]') return;
+      if (!dataStr || dataStr === '') return;
+
+      let evt;
+      try { evt = JSON.parse(dataStr); }
+      catch { return; /* skip malformed SSE data */ }
+
+      const delta = evt?.choices?.[0]?.delta?.content;
+      if (delta && typeof delta === 'string' && delta.length > 0) {
+        fullContent  += delta;
+        charsEmitted += delta.length;
+        tokenCount++;
+        // ── Fire the live output callback ──
+        // This sends the token to the frontend via SSE immediately
+        onChunk(delta);
       }
     }
 
-    if (fullText.trim().length < 50) {
-      throw new Error('Empty streaming response — model returned insufficient content');
+    const elapsed = Date.now() - t0;
+
+    if (fullContent.trim().length < 100) {
+      throw new Error(`${name} stream produced too-short content: ${fullContent.length} chars after ${elapsed}ms`);
     }
 
-    const parsed = extractJSON(fullText);
-    validateAIResponse(parsed);
-    return parsed;
+    logger.ok(`${name} stream complete: ${tokenCount} tokens, ${charsEmitted} chars, ${elapsed}ms`);
+
+    // ── Parse and validate the accumulated streamed content ──
+    const parsed = extractAndParseJSON(fullContent);
+    return validateAndEnrich(parsed, opts);
 
   } catch (err) {
     clearTimeout(timer);
-    if (err.name === 'AbortError') {
-      throw new Error(`Streaming model timed out after ${model.timeout / 1000}s`);
-    }
     throw err;
   }
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 14 — MAIN AI GENERATOR
-// Tries all 20 models in order with circuit breaking and retry
-// Supports both streaming and sync modes
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 12 — MAIN AI GENERATOR WITH FULL FALLBACK CHAIN
+// Tries all 10 models × 2 attempts = up to 20 tries before giving up
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-/**
- * Generate study content using AI — tries all models until one succeeds
- * @param {string}   message   — user input topic
- * @param {object}   options   — normalized options
- * @param {function} [onChunk] — if provided, use streaming mode
- * @returns {Promise<object>}  — enriched result object
- * @throws {Error} if ALL models fail (very rare — offline fallback handles this)
- */
-async function generateWithAI(message, options, onChunk) {
+async function generateWithAI(message, opts, onChunk) {
   if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error('OPENROUTER_API_KEY environment variable is not set. Configure this in Vercel project settings.');
+    throw new Error(
+      'OPENROUTER_API_KEY environment variable is not set. ' +
+      'Please add it in your Vercel project settings → Environment Variables.'
+    );
   }
 
-  const prompt       = buildPrompt(message, options);
   const useStreaming = typeof onChunk === 'function';
+  const prompt       = buildPrompt(message, opts);
   const errors       = [];
-  let   successModel = null;
+  let   modelsTried  = 0;
+  let   totalAttempts = 0;
+
+  logger.info(
+    `Generation start — ` +
+    `tool: ${opts.tool || 'notes'} | ` +
+    `lang: ${opts.language || 'English'} | ` +
+    `depth: ${opts.depth || 'detailed'} | ` +
+    `style: ${opts.style || 'simple'} | ` +
+    `mode: ${useStreaming ? 'STREAM' : 'SYNC'} | ` +
+    `input: ${message.length} chars`
+  );
 
   for (const model of MODELS) {
-    // Skip circuit-broken models
-    if (isCircuitOpen(model.id)) {
-      console.log(`[Savoiré AI] Skipping ${model.label} — circuit open`);
-      continue;
-    }
+    const name        = model.id.split('/').pop().replace(':free', '');
+    const maxAttempts = 2;
+    modelsTried++;
 
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      totalAttempts++;
+      logger.model(`Attempt ${totalAttempts}: ${name} (try ${attempt}/${maxAttempts})`);
+
       try {
-        console.log(`[Savoiré AI] ${model.label} attempt ${attempt}/${MAX_ATTEMPTS_PER_MODEL} (${useStreaming ? 'stream' : 'sync'})`);
-
         let result;
+
         if (useStreaming) {
-          result = await callModelStreaming(model, prompt, onChunk);
+          result = await callModelStream(model, prompt, opts, onChunk);
         } else {
-          result = await callModelSync(model, prompt);
+          result = await callModelSync(model, prompt, opts);
         }
 
-        // Success
-        recordCircuitSuccess(model.id);
-        enrichResponse(result, message);
-        result._language = options.language || 'English';
-        successModel     = model.label;
+        result._language     = opts.language || 'English';
+        result._models_tried = modelsTried;
+        result._attempts     = totalAttempts;
 
-        console.log(`[Savoiré AI] ✓ SUCCESS — ${model.label} (attempt ${attempt})`);
-        analyticsRecordModelFailure(model.label); // won't track — tracked below
+        logger.ok(
+          `SUCCESS — ${name} (attempt ${attempt}) | ` +
+          `models tried: ${modelsTried}/${MODELS.length} | ` +
+          `total attempts: ${totalAttempts}`
+        );
+
         return result;
 
       } catch (err) {
-        const errMsg = err.message ? err.message.slice(0, 100) : 'Unknown error';
-        errors.push(`${model.label} A${attempt}: ${errMsg}`);
-        analyticsRecordModelFailure(model.label);
+        const errMsg = (err.message || 'Unknown error').slice(0, 150);
+        errors.push(`${name}[${attempt}]: ${errMsg}`);
+        logger.warn(`FAIL — ${name} attempt ${attempt}: ${errMsg}`);
 
-        console.warn(`[Savoiré AI] ✗ FAIL — ${model.label} A${attempt}: ${errMsg}`);
-
-        // Record failure for circuit breaker
-        if (attempt === MAX_ATTEMPTS_PER_MODEL) {
-          recordCircuitFailure(model.id);
+        // Rate limited → skip second attempt immediately, no delay
+        if (errMsg.includes('[RATE_LIMITED]')) {
+          logger.warn(`Rate limited on ${name} — skipping to next model`);
+          break;
         }
 
-        // Wait between attempts, with backoff
-        if (attempt < MAX_ATTEMPTS_PER_MODEL) {
-          await sleep(retryDelay(attempt));
+        // Aborted (timeout) → skip second attempt
+        if (err.name === 'AbortError') {
+          logger.warn(`${name} timed out after ${model.timeout_ms}ms`);
+          break;
+        }
+
+        // Wait before retry (only for attempt 1, not if we're about to give up)
+        if (attempt < maxAttempts) {
+          const waitMs = 1200;
+          logger.info(`Waiting ${waitMs}ms before retry ${attempt + 1}...`);
+          await sleep(waitMs);
         }
       }
+    }
+
+    // Brief pause between models to be a good API citizen
+    if (modelsTried < MODELS.length) {
+      await sleep(350);
     }
   }
 
   // All models exhausted
-  const errorSummary = errors.slice(0, 8).join(' | ');
-  console.error(`[Savoiré AI] ALL MODELS FAILED: ${errorSummary}`);
-  throw new Error(`All AI models temporarily unavailable. Errors: ${errorSummary}`);
+  logger.error(`ALL MODELS FAILED — ${MODELS.length} models tried, ${totalAttempts} total attempts`);
+  logger.error(`Error summary: ${errors.slice(0, 6).join(' || ')}`);
+
+  throw new Error(
+    `All ${MODELS.length} AI models are temporarily unavailable after ${totalAttempts} attempts. ` +
+    `Please try again in a moment — this is usually a temporary peak load issue.`
+  );
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 15 — SSE STREAMING HELPERS
-// Utilities for writing SSE events cleanly to the response
-// ══════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 13 — FALLBACK CONTENT BUILDERS
+// High-quality content generated from topic name alone, used when all AI fails
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-/**
- * Send a named SSE event with JSON data
- * @param {object} res    — Node.js response object
- * @param {string} event  — event name
- * @param {object} data   — data to JSON-serialise
- */
-function sendSSE(res, event, data) {
-  const payload = JSON.stringify(data);
-  res.write(`event: ${event}\ndata: ${payload}\n\n`);
-  if (typeof res.flush === 'function') res.flush();
+function buildFallbackTricks(topic) {
+  const t = topic || 'this topic';
+  return [
+    `FIVE W's FRAMEWORK: Apply Who, What, When, Where and Why systematically to every dimension of ${t}. For each concept you study, explicitly answer all five questions before moving on. This forces active engagement with the material rather than passive reading, creates a complete mental map, and immediately reveals which specific aspects you don't fully understand yet — those gaps are exactly where your next study session should focus.`,
+
+    `THE FEYNMAN TECHNIQUE: After studying ${t}, close your notes and try to explain the entire topic out loud as if teaching a curious 12-year-old who knows nothing about it. Every time you hesitate, use unexplained jargon, or lose the thread of your explanation, you have discovered a genuine gap in your understanding. Return to your source, study that specific gap, then restart the explanation. Repeat until you can explain it completely and fluently from memory.`,
+
+    `SPACED REPETITION SCHEDULE: Study ${t} in focused 20-minute sessions across multiple days — not in one marathon session. Optimal spacing: Day 1 (initial learning), Day 3 (first review), Day 7 (consolidation), Day 14 (long-term retention), Day 30 (mastery verification). Each review session begins precisely when memories are starting to fade. This exploits the spacing effect, which research consistently shows produces 2-3x better long-term retention than massed practice.`,
+  ];
 }
 
-/**
- * Send a simple status SSE event (shown as loading state to user)
- * @param {object} res     — Node.js response object
- * @param {string} message — human-readable status text
- */
-function sendStatus(res, message) {
-  sendSSE(res, 'status', { message });
+function buildFallbackApplications(topic) {
+  const t = topic || 'this topic';
+  return [
+    `Healthcare & Medicine: Principles from ${t} directly inform clinical decision-making, diagnostic reasoning, treatment protocol design and patient outcome prediction. Medical professionals who deeply understand these concepts make more accurate assessments, avoid systematic errors in reasoning, and deliver measurably better patient care. Medical education worldwide incorporates these frameworks as foundational competencies for every practising clinician.`,
+
+    `Technology & Software Engineering: ${t} concepts underpin critical software architecture decisions, algorithm selection, system optimisation strategies and quality assurance processes. Software engineers who understand these principles design more scalable, maintainable and reliable systems. They make better technical decisions under uncertainty, communicate more effectively with stakeholders, and produce software that continues to function correctly as requirements evolve and scale increases.`,
+
+    `Business Strategy & Management: Organisations that apply frameworks derived from ${t} systematically outperform those that do not. Strategic planners use these principles to analyse competitive environments and identify opportunities. Operations managers apply them to streamline workflows and eliminate inefficiencies. HR professionals leverage them to design better training programmes. The resulting improvements in decision quality compound over time into significant and sustainable competitive advantages.`,
+  ];
 }
 
-/**
- * Send a token SSE event (live streaming chunk)
- * @param {object} res   — Node.js response
- * @param {string} chunk — raw token text
- */
-function sendToken(res, chunk) {
-  sendSSE(res, 'token', { t: chunk });
+function buildFallbackMisconceptions(topic) {
+  const t = topic || 'this topic';
+  return [
+    `Many students believe ${t} can be mastered through repeated memorisation of facts, definitions and formulae. In reality, genuine mastery requires understanding the underlying principles, the causal relationships between ideas, and the reasoning that connects them. Memorisation without comprehension produces knowledge that collapses under exam pressure when questions are framed differently, or in professional practice when situations do not match the textbook template.`,
+
+    `A widespread misconception is that ${t} is only relevant to specialists in that specific field, making it optional knowledge for students pursuing other disciplines. In reality, the core reasoning patterns, analytical frameworks and mental models that ${t} develops transfer powerfully and broadly. Professionals across every field — from law to engineering to art — regularly discover that their understanding of ${t} provides unexpected intellectual advantages in their primary domain.`,
+
+    `Students often assume that once they understand the basic concepts of ${t}, there is little of substance left to learn. In reality, ${t} has significant depth with important nuances, active ongoing research, and genuine unresolved debates at its frontier. The difference between introductory understanding and genuine expertise is vast. Even leading researchers in ${t} describe regularly encountering aspects of the field that surprise and challenge their existing mental models.`,
+  ];
 }
 
-/**
- * Send the final "done" SSE event with the complete result
- * @param {object} res    — Node.js response
- * @param {object} result — complete enriched result object
- */
-function sendDone(res, result) {
-  // Final safety: enforce branding before sending
-  result.powered_by  = SAVOIR_BRAND;
-  result.study_score = SAVOIR_SCORE;
-  result._version    = SAVOIR_VERSION;
-  result._timestamp  = new Date().toISOString();
-  delete result._model;
-  delete result._modelId;
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 14 — FULL OFFLINE FALLBACK
+// Complete quality study content generated without any AI
+// Used as the absolute final safety net — ALWAYS returns something useful
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  sendSSE(res, 'done', result);
-}
+function generateOfflineFallback(topic, opts) {
+  const t    = (topic || 'This Subject').trim();
+  const lang = opts.language || 'English';
+  const tool = opts.tool     || 'notes';
 
-/**
- * Send an error SSE event
- * @param {object} res     — Node.js response
- * @param {string} message — error message (safe to display)
- * @param {string} code    — machine-readable error code
- */
-function sendError(res, message, code) {
-  sendSSE(res, 'error', { error: message, code });
-}
+  logger.warn(`Using offline fallback for topic: "${t}", lang: ${lang}, tool: ${tool}`);
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 16 — STREAMING FALLBACK SIMULATOR
-// When ALL AI models fail in streaming mode, we still stream the
-// offline fallback content word-by-word so the user sees live output
-// ══════════════════════════════════════════════════════════════════
+  return {
+    topic:                t,
+    curriculum_alignment: 'General Academic Study',
+    _language:            lang,
+    _fallback:            true,
+    _fallback_reason:     'All AI models temporarily unavailable — high-quality offline content generated',
 
-/**
- * Simulate streaming of offline fallback content
- * Sends token events word by word at ~human reading pace
- * @param {object} res      — Node.js response
- * @param {object} fallback — offline fallback result object
- * @param {number} chunkSize — words per token event (default 3)
- * @param {number} delayMs   — ms between token events (default 20)
- */
-async function streamOfflineFallback(res, fallback, chunkSize = 3, delayMs = 20) {
-  const notesText = fallback.ultra_long_notes || '';
-  const words     = notesText.split(' ').filter(w => w.length > 0);
+    ultra_long_notes: buildOfflineNotes(t),
 
-  for (let i = 0; i < words.length; i += chunkSize) {
-    const chunk = words.slice(i, i + chunkSize).join(' ') + ' ';
-    sendToken(res, chunk);
-    if (delayMs > 0) await sleep(delayMs);
-  }
-}
+    key_concepts: [
+      `Core Definition: ${t} refers to the fundamental principles, concepts and frameworks forming its theoretical and practical foundation within its academic and professional domain of study and application.`,
+      `Primary Mechanisms: The main processes central to ${t} involve systematic, analysable interactions between identifiable components that produce consistent, observable and — under appropriate conditions — predictable outcomes.`,
+      `Historical Development: ${t} evolved through successive waves of intellectual discovery, critical reappraisal and paradigm shifts, with key contributors gradually establishing the foundational frameworks, validated methods and accepted principles in use today.`,
+      `Practical Significance: ${t} carries substantial direct application value across multiple professional and research domains, enabling practitioners to solve real-world problems more effectively, make higher-quality decisions, and achieve measurably better outcomes.`,
+      `Critical Boundaries: A complete and intellectually honest understanding of ${t} requires explicitly recognising both its considerable explanatory power and the specific conditions and contexts in which its standard frameworks have important limitations that require modification or supplementation.`,
+    ],
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 17 — HEALTH CHECK HANDLER
-// Returns system status without consuming AI credits
-// ══════════════════════════════════════════════════════════════════
+    key_tricks: buildFallbackTricks(t),
 
-/**
- * Handle GET ?health=1 requests
- * Returns complete system status and analytics
- * @param {object} req
- * @param {object} res
- */
-function handleHealthCheck(req, res) {
-  const snapshot  = analyticsSnapshot();
-  const hasApiKey = !!process.env.OPENROUTER_API_KEY;
-  const status    = hasApiKey ? 'operational' : 'degraded';
+    practice_questions: [
+      {
+        question: `Explain the core principles of ${t} and describe how they interact to form a coherent, integrated theoretical framework.`,
+        answer:   buildFallbackAnswer1(t),
+      },
+      {
+        question: `Describe a realistic professional scenario where deep knowledge of ${t} would be essential. Walk through your approach step by step and explain the role of key principles at each stage.`,
+        answer:   buildFallbackAnswer2(t),
+      },
+      {
+        question: `Compare two fundamentally different approaches to understanding ${t}. What are the core strengths and primary limitations of each, and how might a sophisticated practitioner integrate both?`,
+        answer:   buildFallbackAnswer3(t),
+      },
+    ],
 
-  const modelStatuses = MODELS.map(m => {
-    const state = _circuitState.get(m.id);
-    return {
-      label:        m.label,
-      tier:         m.tier,
-      circuitOpen:  !!(state?.openUntil && Date.now() < state.openUntil),
-      failures:     state?.fails || 0,
-      successes:    snapshot.modelSuccesses[m.label] || 0,
-    };
-  });
+    real_world_applications: buildFallbackApplications(t),
+    common_misconceptions:   buildFallbackMisconceptions(t),
 
-  const payload = {
-    status,
-    version:       SAVOIR_VERSION,
-    brand:         SAVOIR_BRAND,
-    apiKeyPresent: hasApiKey,
-    nodeVersion:   process.version || 'unknown',
-    models: {
-      total:        MODELS.length,
-      tiers:        { 1: MODELS.filter(m => m.tier === 1).length, 2: MODELS.filter(m => m.tier === 2).length, 3: MODELS.filter(m => m.tier === 3).length, 4: MODELS.filter(m => m.tier === 4).length },
-      circuitOpen:  modelStatuses.filter(m => m.circuitOpen).length,
-      statuses:     modelStatuses,
-    },
-    analytics:     snapshot,
-    rateLimit: {
-      maxRequests: RATE_LIMIT_MAX,
-      windowMs:    RATE_LIMIT_WINDOW,
-    },
-    cache: {
-      ...cacheStats(),
-      purgeIntervalMinutes: 10,
-    },
-    timestamp: new Date().toISOString(),
+    study_score:   96,
+    powered_by:    `${BRAND} by ${DEVELOPER}`,
+    generated_at:  new Date().toISOString(),
+    _version:      APP_VERSION,
   };
-
-  res.setHeader('Content-Type', 'application/json');
-  res.status(200).json(payload);
 }
 
-// ══════════════════════════════════════════════════════════════════
-// SECTION 18 — MAIN VERCEL SERVERLESS HANDLER
-// Entry point — called by Vercel for every request to /api/study
-// ══════════════════════════════════════════════════════════════════
+function buildOfflineNotes(t) {
+  return `## Introduction to ${t}
 
-/**
- * Main Vercel serverless handler
- * @param {object} req — Vercel/Node.js request
- * @param {object} res — Vercel/Node.js response
- */
-module.exports = async (req, res) => {
-  const requestStart = Date.now();
+${t} is a significant, multi-dimensional area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields. A rigorous, well-structured understanding of ${t} is not merely valuable for passing examinations — it opens doors to deeper intellectual capability, more sophisticated professional reasoning, and the capacity for continued independent learning throughout a career.
 
-  // ── CORS & SECURITY HEADERS ──────────────────────────────────────
+This comprehensive study guide covers the complete scope of ${t}: its foundational concepts, core mechanisms, key examples, advanced aspects, real-world applications, and an integrative summary that anchors your understanding.
+
+---
+
+## Core Concepts
+
+The study of ${t} begins by establishing its fundamental conceptual infrastructure — the vocabulary, definitions and foundational ideas upon which all subsequent understanding must be built. Without this foundation, advanced concepts lack their necessary grounding.
+
+**Theoretical Foundation:** Every developed field of knowledge has a theoretical core — a set of foundational assumptions, definitions and logical relationships that organise its knowledge claims and give its conclusions their authority. Understanding the theoretical foundation of ${t} means understanding not just what the field claims, but why those claims are considered justified, what evidence supports them, and what reasoning connects individual facts to broader principles.
+
+**Practical Dimension:** The practical dimension of ${t} is what connects its abstract theoretical content to concrete real-world value. Understanding how principles manifest in practice — in professional decisions, in designed systems, in observed phenomena — transforms theoretical knowledge from inert information into usable capability. Theory and practice in ${t} are not separate domains but different aspects of a unified whole.
+
+**Analytical Framework:** ${t} provides practitioners with a structured way of perceiving, decomposing and reasoning about complex problems. This analytical framework is transferable — once internalised, it enables higher-quality thinking not just within ${t} but across many adjacent domains where similar reasoning structures apply.
+
+**Systemic Perspective:** No component of ${t} exists in isolation. Every concept connects to others through relationships of logical dependence, causal influence, or structural analogy. Developing a systemic perspective — understanding the field as an integrated whole rather than a collection of isolated facts — is the defining characteristic of genuine expertise.
+
+---
+
+## How It Works
+
+The core processes and mechanisms central to ${t} unfold through identifiable stages that can be studied, understood and applied systematically:
+
+**Stage 1 — Initial Conditions and Prerequisites:** Every application of ${t} begins with specific initial conditions, inputs or prerequisite states. Accurately identifying and characterising these starting conditions is critical — misunderstanding or overlooking initial conditions is a primary source of errors in both academic analysis and professional practice.
+
+**Stage 2 — Active Mechanisms and Transformations:** The defining mechanisms of ${t} transform initial conditions into outcomes through processes that follow identifiable patterns and obey describable rules. Understanding these mechanisms at a deep level — not just recognising their outputs but understanding why they produce those outputs — enables practitioners to predict behaviour, explain anomalies and design effective interventions.
+
+**Stage 3 — Feedback and Dynamic Adjustment:** Many systems described by ${t} are not static but dynamic — they incorporate feedback loops through which outcomes influence subsequent inputs, creating adaptive or self-correcting behaviour. Understanding these feedback dynamics is essential for accurate long-term prediction and effective intervention design.
+
+**Stage 4 — Outputs and Observable Consequences:** The ultimate products of the processes central to ${t} take observable forms — measurable quantities, categorical outcomes, behavioural changes or structural modifications. Understanding how to correctly identify, measure and interpret these outputs is a core practical competency.
+
+---
+
+## Key Examples
+
+**Foundational Canonical Example:** The classic demonstration cases of ${t} are valuable precisely because they isolate core mechanisms from confounding complexity, allowing the underlying principles to be seen with maximum clarity. These canonical examples should be studied thoroughly — they form the shared reference points that allow practitioners to communicate efficiently about complex ideas.
+
+**Complex Multi-Variable Case:** Real-world applications of ${t} rarely present themselves with the clean simplicity of textbook examples. Professional practice requires applying core principles under conditions of incomplete information, multiple interacting variables, time pressure and genuine uncertainty. Studying complex cases builds the applied judgment that distinguishes expert practitioners from those with only theoretical knowledge.
+
+**Edge Cases and Boundary Conditions:** Understanding where the standard frameworks of ${t} break down, require modification or produce counterintuitive results reveals the true scope and limits of the theory. These boundary cases are intellectually important and frequently appear in advanced examinations and professional assessments precisely because they test genuine understanding rather than surface-level familiarity.
+
+---
+
+## Advanced Aspects
+
+**Theoretical Complications and Nuances:** As understanding deepens, the apparently simple core principles of ${t} reveal layers of complexity. Boundary conditions require careful specification. General principles require contextual modification in specific domains. Competing theoretical frameworks offer different but partially valid perspectives on the same phenomena. Navigating this complexity is what graduate-level and professional-level engagement with ${t} requires.
+
+**Methodological Questions:** Every field faces fundamental questions about its own methods — how knowledge is produced, how evidence is evaluated, how theories are tested and revised. Understanding the methodological foundations of ${t} enables more sophisticated engagement with its literature and more critical evaluation of its knowledge claims.
+
+**Current Frontiers and Open Questions:** ${t} is not a closed, completed body of knowledge. Active researchers continue to explore open questions, challenge established assumptions, develop new methodological tools and discover connections to adjacent fields. Awareness of these frontiers contextualises current knowledge within the ongoing project of intellectual discovery.
+
+**Cross-Domain Integration:** The most sophisticated practitioners of ${t} understand its connections to other fields — recognising how insights transfer across disciplinary boundaries, how developments in adjacent areas reshape understanding within ${t}, and how genuinely interdisciplinary approaches to complex problems require synthesising knowledge from multiple sources.
+
+---
+
+## Common Applications
+
+${t} finds systematic application in research and academic contexts, where rigorous understanding enables better study design, more accurate data interpretation, and more reliable theoretical contribution. In professional practice, it supports higher-quality decision-making, more effective problem diagnosis, and better-designed interventions. In educational settings, it provides frameworks that help learners structure new knowledge effectively and retain it durably.
+
+---
+
+## Summary & Key Takeaways
+
+Mastering ${t} is fundamentally a project of building genuine understanding — comprehending the why behind the what, the mechanisms behind the patterns, the principles behind the applications. Surface-level familiarity with facts and procedures provides only fragile, inflexible knowledge. Deep understanding, by contrast, enables confident application to novel situations, accurate communication with other practitioners, continued independent learning, and the creative synthesis of ideas that characterises genuine expertise.
+
+**Five essential commitments for mastery:** (1) Build strong conceptual foundations before advancing to complex applications. (2) Connect every abstract principle to concrete, specific examples. (3) Understand the limits and boundary conditions of every general rule. (4) Regularly practice applying knowledge to unfamiliar situations and novel questions. (5) Engage actively with the material through explanation, teaching, self-testing and deliberate reflection on what you do and do not yet understand.`;
+}
+
+function buildFallbackAnswer1(t) {
+  return `The core principles of ${t} form an integrated theoretical system in which each component reinforces and contextualises the others — a system where the whole is substantially greater than the sum of its parts. At the foundational level, these principles establish the definitions, assumptions and logical categories upon which all subsequent understanding must be built. Without a clear grasp of these foundations, advanced concepts remain poorly anchored and are applied unreliably.
+
+The mechanisms central to ${t} follow internally consistent patterns, and this consistency is precisely what enables systematic analysis, reliable prediction and purposeful intervention. The framework becomes analytically powerful when we understand not just individual components in isolation but the relationships between them — how each element influences and is shaped by others through both direct and indirect pathways operating across multiple levels and timescales.
+
+From a practical perspective, integrated understanding of the core principles is what distinguishes practitioners who can genuinely problem-solve from those who can only apply memorised procedures to familiar situations. Students who achieve real mastery of the principles can adapt their knowledge confidently to novel problems they have never previously encountered, identify which specific principles are most relevant to a given context, and construct clear well-reasoned explanations of their analytical decisions.
+
+The most common and consequential mistake is treating the principles of ${t} as a collection of isolated, independent facts to be memorised separately. This approach makes the subject harder to learn, easier to forget under examination pressure, and more likely to be misapplied when real situations do not match the exact form in which content was originally studied. Understanding the system is always more powerful than knowing the parts.`;
+}
+
+function buildFallbackAnswer2(t) {
+  return `Consider a professional context where decisions involving ${t} carry significant real-world consequences — where errors are costly, information is incomplete, multiple stakeholders have conflicting interests, and time pressure demands efficient thinking under uncertainty. This is the normal operating environment of professional practice in any field where ${t} is applied.
+
+Step one — precise problem identification: Define exactly what challenge needs to be addressed, what constraints and available resources exist, what a successful outcome looks like in specific measurable terms, and what failure would mean for each stakeholder involved. This diagnostic phase is consistently the most critical in professional practice, because the great majority of costly professional failures stem not from poor execution of a solution but from solving the wrong problem with impressive efficiency.
+
+Step two — selecting relevant frameworks: Identify which specific aspects of ${t} are most directly applicable to this particular situation. A defining characteristic of genuine expertise is knowing which principles to apply in which contexts — and equally important, which to set aside as irrelevant to the problem at hand.
+
+Step three — developing a grounded strategy: Design an approach rooted in the applicable principles, decomposing the complex problem into manageable sub-problems, sequencing them appropriately, and anticipating where the standard frameworks may require contextual modification.
+
+Step four — disciplined implementation with monitoring: Execute the strategy while actively observing what is happening and remaining prepared to adjust. Real-world application always reveals complexity that theoretical frameworks alone cannot fully anticipate. The ability to adapt in real time distinguishes experienced practitioners.
+
+Step five — rigorous evaluation and learning: Compare actual outcomes against the original success criteria. Identify what worked, what did not, and why. Extract specific transferable lessons. Professionals who omit this reflection forfeit the opportunity to convert experience into genuine expertise.`;
+}
+
+function buildFallbackAnswer3(t) {
+  return `Two fundamentally different approaches to understanding ${t} offer complementary and partially overlapping perspectives, each with distinctive strengths and real limitations.
+
+The theoretical or first-principles approach emphasises conceptual understanding, formal frameworks, and the ability to reason rigorously from foundational axioms and definitions. Its principal strength is generalisability — deep theoretical understanding applies across diverse situations precisely because it is independent of any particular context or set of surface features. Theoretical knowledge also transfers more readily to genuinely novel situations that practitioners have never previously encountered, because it equips them with the reasoning tools to construct new solutions rather than relying on memorised analogues. Its core limitation is that without substantial engagement with concrete applications and cases, theoretical knowledge can remain stubbornly abstract and difficult to deploy under real conditions of time pressure, incomplete information and genuine ambiguity.
+
+The empirical or case-based approach focuses on specific historical instances, observable data patterns, successful and failed professional examples, and the accumulated practical wisdom of experience. This method produces actionable, context-sensitive knowledge grounded in verifiable reality, and builds the kind of rapid intuitive judgment that characterises highly effective expert practitioners across every applied field. Its limitation is that patterns reliably observed in one context may not generalise safely to substantially different settings, and without theoretical grounding, case-based knowledge becomes brittle and fragile when genuinely novel situations arise for which no closely similar precedent exists.
+
+The most sophisticated approach to ${t} deliberately integrates both — using theoretical frameworks to organise, interpret and generalise from empirical experience, while using empirical engagement to stress-test theoretical predictions, reveal where they break down, and keep abstract principles anchored in reality. The most common and costly mistake is committing exclusively to one approach at the expense of the other.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 15 — RESPONSE HEADERS
+// Sets all required headers on every response
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+function applyResponseHeaders(res) {
+  // CORS
   res.setHeader('Access-Control-Allow-Origin',      '*');
-  res.setHeader('Access-Control-Allow-Methods',     'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers',     'Content-Type, Accept, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Methods',     'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers',     'Content-Type, Authorization, Accept');
   res.setHeader('Access-Control-Max-Age',           '86400');
-  res.setHeader('X-Powered-By',                     SAVOIR_BRAND);
-  res.setHeader('X-Content-Type-Options',           'nosniff');
-  res.setHeader('X-Frame-Options',                  'SAMEORIGIN');
-  res.setHeader('Referrer-Policy',                  'strict-origin-when-cross-origin');
-  res.setHeader('X-Savoir-Version',                 SAVOIR_VERSION);
 
-  // ── PREFLIGHT ────────────────────────────────────────────────────
+  // Branding
+  res.setHeader('X-Powered-By',   `${BRAND} by ${DEVELOPER}`);
+  res.setHeader('X-Developer',    DEVELOPER);
+  res.setHeader('X-Developer-Web',DEVSITE);
+  res.setHeader('X-Founder',      FOUNDER);
+  res.setHeader('X-App-Version',  APP_VERSION);
+
+  // Security
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options',        'DENY');
+  res.setHeader('X-XSS-Protection',       '1; mode=block');
+  res.setHeader('Referrer-Policy',        'strict-origin-when-cross-origin');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 16 — FINALIZE RESULT
+// Adds metadata, enforces branding, removes model identity
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+function finalizeResult(result, startTime, extra = {}) {
+  result.powered_by   = `${BRAND} by ${DEVELOPER}`;
+  result._timestamp   = new Date().toISOString();
+  result._version     = APP_VERSION;
+  result._duration_ms = Date.now() - startTime;
+
+  // Merge any extra metadata
+  Object.assign(result, extra);
+
+  // Remove model identity — NEVER expose to frontend
+  delete result._model;
+  delete result.model;
+  delete result.model_used;
+  delete result.model_id;
+  delete result.ai_model;
+  delete result.openrouter_model;
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 17 — MAIN VERCEL HANDLER
+// The exported function that Vercel calls for every request to /api/study
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+module.exports = async function handler(req, res) {
+
+  const requestId  = Math.random().toString(36).slice(2, 10);
+  const startTime  = Date.now();
+
+  logger.info(`[${requestId}] ${req.method} /api/study — ${req.headers['content-type'] || 'no content-type'}`);
+
+  // ── Apply headers to all responses ──
+  applyResponseHeaders(res);
+
+  // ── Handle CORS preflight ──
   if (req.method === 'OPTIONS') {
-    return res.status(204).end();
+    logger.info(`[${requestId}] OPTIONS preflight — responding 200`);
+    return res.status(200).end();
   }
 
-  // ── HEALTH CHECK ─────────────────────────────────────────────────
-  if (req.method === 'GET' && req.query?.health) {
-    return handleHealthCheck(req, res);
-  }
-
-  // ── ANALYTICS ENDPOINT ───────────────────────────────────────────
-  if (req.method === 'GET' && req.query?.analytics) {
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(200).json(analyticsSnapshot());
-  }
-
-  // ── METHOD GUARD ─────────────────────────────────────────────────
+  // ── Reject non-POST requests ──
   if (req.method !== 'POST') {
+    logger.warn(`[${requestId}] Rejected ${req.method} request`);
     return res.status(405).json({
-      error:   'Method not allowed. Use POST.',
+      error:   `Method ${req.method} not allowed. Use POST.`,
       allowed: ['POST'],
     });
   }
 
-  // ── BODY GUARD ───────────────────────────────────────────────────
-  if (!req.body || typeof req.body !== 'object') {
+  // ── Parse and validate request body ──
+  const body = req.body || {};
+
+  if (!body.message || typeof body.message !== 'string') {
     return res.status(400).json({
-      error: 'Request body must be JSON with a "message" field.',
+      error:   'Request body must include a "message" field of type string.',
+      example: '{ "message": "Photosynthesis", "options": { "tool": "notes", "language": "English" } }',
     });
   }
 
-  // ── INPUT EXTRACTION & VALIDATION ────────────────────────────────
-  const rawMessage = req.body.message;
-  if (!rawMessage || typeof rawMessage !== 'string') {
+  const trimmed = body.message.trim();
+
+  if (trimmed.length < 2) {
+    return res.status(400).json({ error: 'Message is too short — minimum 2 characters.' });
+  }
+
+  if (trimmed.length > 15000) {
     return res.status(400).json({
-      error: 'Request body must include a "message" field of type string.',
+      error:    `Message is too long — ${trimmed.length.toLocaleString()} characters (maximum 15,000).`,
+      received: trimmed.length,
+      maximum:  15000,
     });
   }
 
-  const trimmed = sanitizeInput(rawMessage);
+  // ── Validate and normalise options ──
+  const rawOpts = body.options || {};
 
-  if (trimmed.length < MIN_MSG_LENGTH) {
-    return res.status(400).json({
-      error: `Message too short. Minimum ${MIN_MSG_LENGTH} characters.`,
-    });
-  }
+  const opts = {
+    tool:     ['notes','flashcards','quiz','summary','mindmap'].includes(rawOpts.tool)    ? rawOpts.tool    : 'notes',
+    depth:    ['standard','detailed','comprehensive','expert'].includes(rawOpts.depth)   ? rawOpts.depth   : 'detailed',
+    style:    ['simple','academic','detailed','exam','visual'].includes(rawOpts.style)   ? rawOpts.style   : 'simple',
+    language: typeof rawOpts.language === 'string' && rawOpts.language.trim().length > 0  ? rawOpts.language.trim() : 'English',
+    stream:   rawOpts.stream === true,
+  };
 
-  if (trimmed.length > MAX_MSG_LENGTH) {
-    return res.status(400).json({
-      error: `Message too long. Maximum ${MAX_MSG_LENGTH} characters.`,
-      length: trimmed.length,
-    });
-  }
+  logger.info(
+    `[${requestId}] Input: ${trimmed.length} chars | ` +
+    `tool: ${opts.tool} | lang: ${opts.language} | depth: ${opts.depth} | style: ${opts.style} | stream: ${opts.stream}`
+  );
 
-  // ── OPTIONS NORMALISATION ─────────────────────────────────────────
-  const opts = normalizeOptions(req.body.options || {});
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // STREAMING MODE — Server-Sent Events
+  // Output appears on screen CHARACTER BY CHARACTER — like ChatGPT, Claude, Gemini
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
 
-  // ── RATE LIMITING ─────────────────────────────────────────────────
-  const ip        = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
-                 || req.socket?.remoteAddress
-                 || '127.0.0.1';
-  const rateCheck = checkRateLimit(ip);
-
-  if (!rateCheck.allowed) {
-    _analytics.rateLimitedIPs++;
-    res.setHeader('Retry-After',              Math.ceil(rateCheck.resetMs / 1000).toString());
-    res.setHeader('X-RateLimit-Limit',        RATE_LIMIT_MAX.toString());
-    res.setHeader('X-RateLimit-Remaining',    '0');
-    res.setHeader('X-RateLimit-Reset',        Math.ceil((Date.now() + rateCheck.resetMs) / 1000).toString());
-    return res.status(429).json({
-      error:        'Rate limit exceeded. Please wait before making another request.',
-      retryAfterMs: rateCheck.resetMs,
-    });
-  }
-
-  res.setHeader('X-RateLimit-Limit',     RATE_LIMIT_MAX.toString());
-  res.setHeader('X-RateLimit-Remaining', rateCheck.remaining.toString());
-
-  // ── LOGGING ───────────────────────────────────────────────────────
-  const preview = trimmed.slice(0, 80).replace(/\n/g, ' ');
-  console.log(`[Savoiré AI] ▶ Request | ip=${ip} | stream=${opts.stream} | lang=${opts.language} | depth=${opts.depth} | tool=${opts.tool} | msg="${preview}"`);
-
-  // ════════════════════════════════════════════════════════════════
-  // STREAMING PATH
-  // ════════════════════════════════════════════════════════════════
   if (opts.stream) {
-    res.setHeader('Content-Type',     'text/event-stream');
-    res.setHeader('Cache-Control',    'no-cache, no-transform');
-    res.setHeader('Connection',       'keep-alive');
-    res.setHeader('X-Accel-Buffering','no');
 
-    // Flush headers immediately so browser opens the SSE connection
-    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+    // ── Set SSE response headers ──
+    res.setHeader('Content-Type',    'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control',   'no-cache, no-store, no-transform');
+    res.setHeader('Connection',      'keep-alive');
+    res.setHeader('X-Accel-Buffering','no');         // Nginx: disable buffering
+    res.setHeader('Transfer-Encoding','chunked');
 
-    // Check cache first — even in streaming mode we stream cached results
-    const cKey    = buildCacheKey(trimmed, opts);
-    const cached  = cacheGet(cKey);
-    if (cached) {
-      console.log(`[Savoiré AI] ✦ CACHE HIT (stream) — "${preview}"`);
-      sendStatus(res, 'Loaded from cache');
-
-      // Stream cached notes token by token for consistent UX
-      await streamOfflineFallback(res, cached, 4, 12);
-      sendDone(res, cached);
-      res.end();
-
-      const dur = Date.now() - requestStart;
-      analyticsRecord(opts, dur, 'cache', true, false);
-      console.log(`[Savoiré AI] ✓ CACHE stream done | ${dur}ms`);
-      return;
+    // ── Flush headers immediately so browser can start reading ──
+    if (typeof res.flushHeaders === 'function') {
+      res.flushHeaders();
     }
 
-    // ── SEND INITIAL STATUS ────────────────────────────────────────
-    sendStatus(res, 'Connecting to AI...');
+    // ── Helper: write a named SSE event ──
+    const sendSSE = (eventName, data) => {
+      try {
+        const serialised = typeof data === 'string' ? data : JSON.stringify(data);
+        res.write(`event: ${eventName}\ndata: ${serialised}\n\n`);
+        if (typeof res.flush === 'function') res.flush();
+      } catch (writeErr) {
+        logger.warn(`[${requestId}] SSE write error: ${writeErr.message}`);
+      }
+    };
+
+    // ── Send immediate heartbeat so client knows connection is live ──
+    sendSSE(EVT_HEARTBEAT, { ts: Date.now(), requestId, status: 'connected', message: 'Savoiré AI connected — generating…' });
+
+    // ── Send initial stage event ──
+    sendSSE(EVT_STAGE, { idx: 0, label: 'Analysing your topic…' });
+
+    // ── Heartbeat interval — prevents proxy/CDN/Vercel from closing idle connection ──
+    let heartbeatInterval = setInterval(() => {
+      try {
+        // SSE comment line — keeps connection alive without polluting data stream
+        res.write(`: keepalive ${Date.now()}\n\n`);
+        if (typeof res.flush === 'function') res.flush();
+      } catch {
+        clearInterval(heartbeatInterval);
+      }
+    }, 12000); // every 12 seconds
+
+    // ── Stage advancement timer — sends stage updates to animate thinking indicator ──
+    const stageTimings = [0, 4000, 9000, 16000, 25000];
+    const stageLabels  = [
+      'Analysing your topic…',
+      'Writing your study content…',
+      'Building sections and cards…',
+      'Crafting practice questions…',
+      'Finalising and formatting…',
+    ];
+    const stageTimers = stageTimings.map((delay, idx) => {
+      if (idx === 0) return null; // already sent
+      return setTimeout(() => {
+        sendSSE(EVT_STAGE, { idx, label: stageLabels[idx] });
+      }, delay);
+    });
+
+    const clearStageTimers = () => stageTimers.forEach(t => t && clearTimeout(t));
 
     try {
-      let tokenCount = 0;
+      let tokensSent = 0;
+      let charsStreamed = 0;
 
-      const result = await generateWithAI(trimmed, opts, (chunk) => {
-        tokenCount++;
-        sendToken(res, chunk);
-        // Send periodic keep-alive pings every 100 tokens
-        if (tokenCount % 100 === 0) {
-          res.write(': keep-alive\n\n');
-          if (typeof res.flush === 'function') res.flush();
-        }
+      // ── Token callback — called for every token from the AI model ──
+      // This is what makes text appear live on the user's screen
+      const onToken = (chunk) => {
+        tokensSent++;
+        charsStreamed += chunk.length;
+        sendSSE(EVT_TOKEN, { t: chunk });
+      };
+
+      // ── Run AI generation with streaming ──
+      const result = await generateWithAI(trimmed, opts, onToken);
+
+      clearInterval(heartbeatInterval);
+      clearStageTimers();
+
+      // ── Mark final stage done ──
+      sendSSE(EVT_STAGE, { idx: 4, label: 'Done!', done: true });
+
+      // ── Finalise result ──
+      const final = finalizeResult(result, startTime, {
+        _tokens_sent:   tokensSent,
+        _chars_streamed: charsStreamed,
+        _request_id:    requestId,
       });
 
-      // Cache the result for future requests
-      cacheSet(cKey, result);
+      logger.ok(
+        `[${requestId}] Stream success — ` +
+        `${tokensSent} tokens, ${charsStreamed} chars, ` +
+        `${final._duration_ms}ms total`
+      );
 
-      sendDone(res, result);
+      // ── Send the complete structured data as final event ──
+      // Frontend uses this to render the full formatted result
+      sendSSE(EVT_DONE, final);
       res.end();
 
-      const dur = Date.now() - requestStart;
-      const modelLabel = MODELS.find(m => !isCircuitOpen(m.id))?.label || 'unknown';
-      analyticsRecord(opts, dur, modelLabel, false, false);
-      console.log(`[Savoiré AI] ✓ STREAM done | tokens=${tokenCount} | ${dur}ms`);
+    } catch (aiError) {
 
-    } catch (aiErr) {
-      console.warn(`[Savoiré AI] ⚠ Stream AI failed — using offline fallback: ${aiErr.message}`);
-      _analytics.fallbackRequests++;
+      clearInterval(heartbeatInterval);
+      clearStageTimers();
 
-      const fallback      = generateOfflineFallback(trimmed, opts);
-      fallback._timestamp = new Date().toISOString();
-      fallback._version   = SAVOIR_VERSION;
+      logger.warn(`[${requestId}] AI streaming failed: ${aiError.message} — simulating fallback stream`);
 
-      sendStatus(res, 'Generating offline content...');
+      // ── FALLBACK: Stream offline content word by word ──
+      // Even when all AI fails, user still sees live text appearing on screen
+      const fallback   = generateOfflineFallback(trimmed, opts);
+      const streamText = fallback.ultra_long_notes || '';
+      const words      = streamText.split(' ');
+      let   tokensSent = 0;
 
-      // Simulate streaming of fallback content
-      await streamOfflineFallback(res, fallback, 3, 18);
+      // Send stage update
+      sendSSE(EVT_STAGE, { idx: 2, label: 'Generating from local knowledge…' });
 
-      sendDone(res, fallback);
-      res.end();
+      // Stream words in small groups for natural feel
+      for (let i = 0; i < words.length; i += 3) {
+        if (res.writableEnded) break;
 
-      const dur = Date.now() - requestStart;
-      analyticsRecord(opts, dur, null, false, true);
-      console.log(`[Savoiré AI] ✓ OFFLINE fallback stream done | ${dur}ms`);
+        const chunk = words.slice(i, i + 3).join(' ') + ' ';
+        sendSSE(EVT_TOKEN, { t: chunk });
+        tokensSent++;
+
+        // ~40 words/second — feels natural, not too fast not too slow
+        await sleep(75);
+      }
+
+      sendSSE(EVT_STAGE, { idx: 4, label: 'Done!', done: true });
+
+      const finalFallback = finalizeResult(fallback, startTime, {
+        _tokens_sent: tokensSent,
+        _request_id:  requestId,
+        _fallback:    true,
+      });
+
+      logger.ok(`[${requestId}] Fallback stream complete — ${tokensSent} tokens, ${finalFallback._duration_ms}ms`);
+
+      sendSSE(EVT_DONE, finalFallback);
+
+      if (!res.writableEnded) res.end();
     }
 
     return;
   }
 
-  // ════════════════════════════════════════════════════════════════
-  // NON-STREAMING (JSON) PATH
-  // ════════════════════════════════════════════════════════════════
-  res.setHeader('Content-Type', 'application/json');
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
+  // NON-STREAMING MODE — Full JSON response (used as fallback by app.js)
+  // ══════════════════════════════════════════════════════════════════════════════════════════════
 
-  // Check cache
-  const cKey   = buildCacheKey(trimmed, opts);
-  const cached = cacheGet(cKey);
-  if (cached) {
-    console.log(`[Savoiré AI] ✦ CACHE HIT (sync) — "${preview}"`);
-    cached.powered_by  = SAVOIR_BRAND;
-    cached.study_score = SAVOIR_SCORE;
-    cached._version    = SAVOIR_VERSION;
-    cached._timestamp  = new Date().toISOString();
-    cached._cached     = true;
-
-    const dur = Date.now() - requestStart;
-    analyticsRecord(opts, dur, 'cache', true, false);
-    console.log(`[Savoiré AI] ✓ CACHE sync done | ${dur}ms`);
-    return res.status(200).json(cached);
-  }
-
-  // Generate with AI
   try {
-    let   result;
-    let   usedFallback = false;
-    let   modelLabel   = null;
+    let result;
 
     try {
-      result     = await generateWithAI(trimmed, opts);
-      modelLabel = 'AI';
+      result = await generateWithAI(trimmed, opts);
+      // Non-streaming: no onChunk callback
     } catch (aiErr) {
-      console.warn(`[Savoiré AI] ⚠ Sync AI failed — using offline fallback: ${aiErr.message}`);
-      result       = generateOfflineFallback(trimmed, opts);
-      usedFallback = true;
-      _analytics.fallbackRequests++;
+      logger.warn(`[${requestId}] AI failed in sync mode: ${aiErr.message} — using offline fallback`);
+      result = generateOfflineFallback(trimmed, opts);
     }
 
-    // Enforce branding
-    result.powered_by   = SAVOIR_BRAND;
-    result.study_score  = SAVOIR_SCORE;
-    result._version     = SAVOIR_VERSION;
-    result._timestamp   = new Date().toISOString();
-    result._fallback    = usedFallback;
-    delete result._model;
-    delete result._modelId;
+    const final = finalizeResult(result, startTime, { _request_id: requestId });
 
-    // Cache successful AI results (not fallbacks, to avoid caching degraded content)
-    if (!usedFallback) {
-      cacheSet(cKey, result);
-    }
+    logger.ok(
+      `[${requestId}] Sync response ready — ` +
+      `${final._duration_ms}ms | fallback: ${!!final._fallback}`
+    );
 
-    const dur = Date.now() - requestStart;
-    analyticsRecord(opts, dur, modelLabel, false, usedFallback);
-    console.log(`[Savoiré AI] ✓ SYNC done | fallback=${usedFallback} | ${dur}ms`);
+    return res.status(200).json(final);
 
-    return res.status(200).json(result);
+  } catch (unexpectedErr) {
 
-  } catch (err) {
-    // This should never happen — generateOfflineFallback never throws
-    _analytics.errorRequests++;
-    console.error(`[Savoiré AI] ✗ CRITICAL unexpected error: ${err.message || err}`);
+    logger.error(`[${requestId}] Unexpected error: ${unexpectedErr.message}`, unexpectedErr.stack);
 
-    const emergencyFallback      = generateOfflineFallback(trimmed, opts);
-    emergencyFallback._timestamp = new Date().toISOString();
-    emergencyFallback._version   = SAVOIR_VERSION;
-    emergencyFallback._error     = true;
+    // Even on unexpected error — return something useful, never a bare 500
+    const emergencyFallback = generateOfflineFallback(trimmed, opts);
+    const final = finalizeResult(emergencyFallback, startTime, {
+      _request_id: requestId,
+      _error:      true,
+      _error_type: 'unexpected',
+    });
 
-    return res.status(200).json(emergencyFallback);
+    return res.status(200).json(final);
   }
 };
 
-// =====================================================================
-// END — api/study.js  |  Savoiré AI v2.0 ULTRA ADVANCED
-// Built by Sooban Talha Technologies  |  soobantalhatech.xyz
-// Founder: Sooban Talha
-// =====================================================================
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 18 — VERCEL CONFIGURATION REFERENCE
 //
-// DEPLOYMENT CHECKLIST:
-// ─────────────────────────────────────────────────────────────────────
-// 1. Set OPENROUTER_API_KEY in Vercel project environment variables
-// 2. Add to vercel.json:
-//      {
-//        "functions": {
-//          "api/study.js": { "maxDuration": 300 }
-//        }
-//      }
-// 3. Ensure req.body is parsed (Vercel does this automatically for JSON)
-// 4. Deploy: vercel --prod
-//
-// API USAGE:
-// ─────────────────────────────────────────────────────────────────────
-// POST /api/study
-// Content-Type: application/json
+// vercel.json (place in project root):
+// ─────────────────────────────────────
 // {
-//   "message": "Photosynthesis",
-//   "options": {
-//     "language":  "English",         // any language
-//     "depth":     "detailed",        // standard | detailed | comprehensive | expert
-//     "style":     "simple",          // simple | academic | detailed | exam | visual
-//     "tool":      "notes",           // notes | flashcards | quiz | summary | mindmap
-//     "stream":    true               // true = SSE streaming | false = JSON response
+//   "functions": {
+//     "api/study.js": {
+//       "maxDuration": 300
+//     }
 //   }
 // }
 //
-// STREAMING RESPONSE EVENTS:
-// ─────────────────────────────────────────────────────────────────────
-// event: status   → { message: "Connecting to AI..." }
-// event: token    → { t: "chunk of text" }            (repeated)
-// event: done     → { topic, ultra_long_notes, ... }  (final complete result)
-// event: error    → { error: "message", code: "..." } (on failure)
+// Environment Variables (set in Vercel dashboard → Settings → Environment Variables):
+// ────────────────────────────────────────────────────────────────────────────────────
+// Name:  OPENROUTER_API_KEY
+// Value: sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 //
-// NON-STREAMING RESPONSE:
-// ─────────────────────────────────────────────────────────────────────
-// HTTP 200 JSON: { topic, curriculum_alignment, ultra_long_notes,
-//   key_concepts, key_tricks, practice_questions, real_world_applications,
-//   common_misconceptions, glossary, study_plan, exam_tips, related_topics,
-//   difficulty_rating, difficulty_label, study_score, powered_by, generated_at }
+// Get your free API key at: https://openrouter.ai
+// All 10 models used here have the :free suffix — $0 per request, no credit card needed.
 //
-// HEALTH CHECK:
-// ─────────────────────────────────────────────────────────────────────
-// GET /api/study?health=1  → system status + analytics
-// GET /api/study?analytics=1  → analytics snapshot
+// Testing locally with Vercel CLI:
+// ─────────────────────────────────
+// npm i -g vercel
+// vercel env pull .env.local
+// vercel dev
 //
-// NEW FIELDS IN v2.0 ULTRA (compared to original v2.0):
-// ─────────────────────────────────────────────────────────────────────
-// + glossary           (8 defined terms)
-// + study_plan         (7-day personalised plan)
-// + exam_tips          (5 actionable tips)
-// + related_topics     (5 connected topics)
-// + difficulty_rating  (1-10 integer)
-// + difficulty_label   ("Beginner"|"Intermediate"|"Advanced"|"Expert")
-// + More key_concepts  (up to 10 at expert depth)
-// + More practice_qs   (up to 5 at expert depth)
-// + Longer answers     (min 150 words vs original 130)
-// + Circuit breaker    (skips failing models automatically)
-// + LRU cache          (instant repeat queries)
-// + Rate limiting      (abuse protection)
-// + Analytics engine   (full observability)
-// + Health endpoint    (operational monitoring)
-// + Input sanitization (security hardening)
-// + JSON repair        (handles malformed model output)
-// =====================================================================
+// Then test with:
+// curl -X POST http://localhost:3000/api/study \
+//   -H "Content-Type: application/json" \
+//   -d '{"message":"Photosynthesis","options":{"tool":"notes","language":"English","stream":false}}'
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// END OF FILE — api/study.js
+// Savoiré AI v2.0 — Built by Sooban Talha Technologies | soobantalhatech.xyz
+// Founder: Sooban Talha | Free for every student on Earth, forever.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════

@@ -1,1259 +1,3740 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+<!--
+═══════════════════════════════════════════════════════════════════════════════════════════
+  SAVOIRÉ AI v2.0 — index.html — FILE 5 of 5 (Landing Page)
+  Built by Sooban Talha Technologies | soobantalhatech.xyz
+  Founder: Sooban Talha
+
+  SECTIONS:
+  01. Navigation — sticky, scrolled state, mobile menu, theme toggle
+  02. Hero — animated particles canvas, headline, CTA, animated counters
+  03. Language Ticker — 42 languages scrolling infinitely
+  04. Trust Bar — universities, logos, student count
+  05. Features Grid — 9 feature cards with hover effects
+  06. Live Demo Window — interactive tabs: Notes / Flashcards / Quiz / Summary / Mind Map
+  07. How It Works — 3 steps with animated icons
+  08. Comparison Table — Savoiré AI vs Generic AI vs Paid Competitors
+  09. Statistics Section — animated number counters
+  10. Student Testimonials — Abu Bakr / Muhammad Sarim / Mohammad Zaran / Sara Ahmed / Ali Hassan
+  11. Founder Message — Sooban Talha quote
+  12. FAQ Accordion — 8 questions
+  13. Final CTA Section
+  14. Footer — 4 columns, branding, links
+  15. Floating CTA Button
+  16. Full JavaScript — particles, counters, demo, FAQ, scroll-reveal, theme, mobile menu
+═══════════════════════════════════════════════════════════════════════════════════════════
+-->
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <meta name="description" content="Savoiré AI — The World's Most Advanced Free AI Study Notes Generator. Generate rich notes, flashcards, quizzes & more in 50+ languages. Built by Sooban Talha Technologies." />
-  <meta name="author" content="Sooban Talha Technologies" />
-  <meta property="og:title" content="Savoiré AI v2.0 — Think Less. Know More." />
-  <meta property="og:description" content="Transform any topic into ultra-rich study notes, flashcards, quizzes and more — completely free, powered by 20 AI models." />
-  <meta name="theme-color" content="#0A0A0F" />
-  <title>Savoiré AI v2.0 — Think Less. Know More. | Sooban Talha Technologies</title>
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=DM+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+<!-- ─────────────────────────────────────────────────────────────
+     META TAGS & SEO
+     ───────────────────────────────────────────────────────────── -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="description" content="Savoiré AI v2.0 — The world's most advanced completely free AI study companion. Generate ultra-rich notes, interactive flashcards, practice quizzes, smart summaries and visual mind maps in 50+ languages. No login. No payment. Free forever. Built by Sooban Talha Technologies.">
+<meta name="keywords" content="free AI study notes, AI flashcards, AI quiz generator, study companion, Sooban Talha, savoiré AI, free study tool, AI notes generator, study with AI, exam preparation AI">
+<meta name="author" content="Sooban Talha Technologies">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#02020A">
+<meta name="color-scheme" content="dark light">
+<meta name="copyright" content="Sooban Talha Technologies">
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+<!-- Open Graph -->
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="Savoiré AI v2.0 — Think Less. Know More. | Free AI Study Companion">
+<meta property="og:description" content="Transform any topic into ultra-rich study notes, interactive flashcards, practice quizzes, and mind maps — completely free, powered by 10 AI models, in 50+ languages. No login required.">
+<meta property="og:url"         content="https://savoireai.vercel.app">
+<meta property="og:site_name"   content="Savoiré AI">
+<meta property="og:image"       content="https://savoireai.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height"content="630">
 
-  <!-- Master Stylesheet -->
-  <link rel="stylesheet" href="style.css" />
+<!-- Twitter Card -->
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="Savoiré AI v2.0 — Free AI Study Companion">
+<meta name="twitter:description" content="Generate study notes, flashcards, quizzes, summaries & mind maps with AI. Free forever. No login.">
+<meta name="twitter:image"       content="https://savoireai.vercel.app/og-image.png">
 
-  <style>
-    /* ── Landing Page Extra Styles ───────────────────────────── */
-    .nav-burger {
-      display:       none;
-      flex-direction: column;
-      gap:           5px;
-      cursor:        pointer;
-      padding:       4px;
-      background:    none;
-      border:        none;
-    }
-    .nav-burger span {
-      display:       block;
-      width:         22px;
-      height:        2px;
-      background:    var(--text-secondary);
-      border-radius: 2px;
-      transition:    all var(--tr-normal);
-    }
-    @media (max-width: 900px) { .nav-burger { display: flex; } }
+<title>Savoiré AI v2.0 — Think Less. Know More. | Free AI Study Notes, Flashcards & Quiz Generator | Sooban Talha Technologies</title>
 
-    /* Scroll-reveal */
-    .reveal {
-      opacity:   0;
-      transform: translateY(30px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-    .reveal-delay-1 { transition-delay: 0.1s; }
-    .reveal-delay-2 { transition-delay: 0.2s; }
-    .reveal-delay-3 { transition-delay: 0.3s; }
-    .reveal-delay-4 { transition-delay: 0.4s; }
-    .reveal-delay-5 { transition-delay: 0.5s; }
+<!-- ─────────────────────────────────────────────────────────────
+     FONTS
+     ───────────────────────────────────────────────────────────── -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,800&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-    /* Animated gradient headline */
-    .anim-grad {
-      background:             linear-gradient(270deg, #C9A96E, #E8C98A, #C9A96E, #A07840);
-      background-size:        300% 300%;
-      -webkit-background-clip: text;
-      background-clip:        text;
-      -webkit-text-fill-color: transparent;
-      animation:              gradientShift 4s ease infinite;
-    }
+<!-- ─────────────────────────────────────────────────────────────
+     ICONS
+     ───────────────────────────────────────────────────────────── -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
 
-    /* Language ticker */
-    .language-ticker {
-      overflow:   hidden;
-      padding:    var(--sp-sm) 0;
-    }
-    .ticker-inner {
-      display:   flex;
-      gap:       var(--sp-xl);
-      width:     max-content;
-      animation: tickerScroll 20s linear infinite;
-    }
-    @keyframes tickerScroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-    .ticker-item {
-      display:       inline-flex;
-      align-items:   center;
-      gap:           0.5rem;
-      font-size:     0.82rem;
-      color:         var(--text-muted);
-      white-space:   nowrap;
-      font-weight:   500;
-    }
-    .ticker-item i { color: var(--gold); font-size: 0.7rem; }
+<!-- ─────────────────────────────────────────────────────────────
+     MASTER STYLESHEET
+     ───────────────────────────────────────────────────────────── -->
+<link rel="stylesheet" href="style.css">
 
-    /* Nav mobile menu */
-    .mobile-menu {
-      display:         none;
-      position:        fixed;
-      top:             70px;
-      left:            0;
-      right:           0;
-      background:      var(--bg-card);
-      border-bottom:   1px solid var(--border);
-      padding:         var(--sp-md);
-      z-index:         var(--z-sidebar);
-      flex-direction:  column;
-      gap:             var(--sp-sm);
-      animation:       slideInDown 0.3s ease;
-      box-shadow:      var(--shadow-lg);
-    }
-    .mobile-menu.open { display: flex; }
-    .mobile-menu .nav-link { padding: var(--sp-sm) var(--sp-md); display: block; font-size: 0.95rem; border-radius: var(--r-md); }
-    .mobile-menu .nav-link:hover { background: var(--bg-glass-light); }
+<!-- ─────────────────────────────────────────────────────────────
+     PAGE-SPECIFIC STYLES
+     ───────────────────────────────────────────────────────────── -->
+<style>
 
-    /* Counter animation */
-    .count-num { font-variant-numeric: tabular-nums; }
+/* ════════════════════════════════════════════════════════════════════
+   LANDING LAYOUT SYSTEM
+   ════════════════════════════════════════════════════════════════════ */
+.container     { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+.container-sm  { max-width: 820px;  margin: 0 auto; padding: 0 32px; }
+.container-xs  { max-width: 680px;  margin: 0 auto; padding: 0 32px; }
 
-    /* Feature demo tab */
-    .demo-tabs {
-      display:    flex;
-      gap:        var(--sp-xs);
-      margin-bottom: var(--sp-md);
-      background: var(--bg-card-hover);
-      padding:    var(--sp-xs);
-      border-radius: var(--r-lg);
-      border:     1px solid var(--border-card);
-    }
-    .demo-tab {
-      flex:          1;
-      padding:       0.4rem;
-      text-align:    center;
-      font-size:     0.75rem;
-      font-weight:   600;
-      color:         var(--text-muted);
-      border-radius: var(--r-md);
-      cursor:        pointer;
-      transition:    all var(--tr-fast);
-      background:    none;
-      border:        none;
-      font-family:   inherit;
-    }
-    .demo-tab.active {
-      background: var(--gold-glow-deep);
-      color:      var(--gold);
-      border:     1px solid var(--border-hover);
-    }
+/* ════════════════════════════════════════════════════════════════════
+   NAVIGATION
+   ════════════════════════════════════════════════════════════════════ */
+.landing-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  gap: 32px;
+  background: rgba(2, 2, 10, 0.82);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
 
-    /* Live demo output panels */
-    .demo-panel { display: none; }
-    .demo-panel.active { display: block; animation: fadeIn 0.3s ease; }
+[data-theme="light"] .landing-nav {
+  background: rgba(236, 231, 222, 0.92);
+}
 
-    /* Comparison table */
-    .compare-table {
-      width:           100%;
-      border-collapse: separate;
-      border-spacing:  0;
-      font-size:       0.875rem;
-    }
-    .compare-table th {
-      padding:       0.75rem var(--sp-md);
-      background:    var(--bg-input);
-      font-weight:   700;
-      font-size:     0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .compare-table th:first-child { text-align: left; color: var(--text-secondary); }
-    .compare-table th:nth-child(2) { color: var(--text-muted); }
-    .compare-table th:nth-child(3) {
-      color:         var(--gold);
-      background:    var(--gold-glow);
-      border-left:   2px solid var(--gold);
-      border-right:  2px solid var(--gold);
-    }
-    .compare-table th:first-child  { border-radius: var(--r-lg) 0 0 0; }
-    .compare-table th:last-child   { border-radius: 0 var(--r-lg) 0 0; }
+.landing-nav.scrolled {
+  background: rgba(2, 2, 10, 0.97);
+  border-bottom-color: rgba(255,255,255,.09);
+  box-shadow: 0 1px 24px rgba(0,0,0,.5);
+}
 
-    .compare-table td {
-      padding:     0.6rem var(--sp-md);
-      border-top:  1px solid var(--border);
-      color:       var(--text-secondary);
-      text-align:  center;
-    }
-    .compare-table td:first-child  { text-align: left; font-weight: 500; color: var(--text-primary); }
-    .compare-table td:nth-child(3) {
-      background:  rgba(201,169,110,0.04);
-      border-left:  2px solid var(--gold);
-      border-right: 2px solid var(--gold);
-    }
-    .compare-table tr:last-child td:nth-child(3) { border-bottom: 2px solid var(--gold); }
-    .compare-table .check   { color: var(--success); font-size: 1rem; }
-    .compare-table .cross   { color: var(--error); font-size: 1rem; opacity: 0.5; }
-    .compare-table .partial { color: var(--warning); font-size: 0.75rem; }
+[data-theme="light"] .landing-nav.scrolled {
+  background: rgba(236, 231, 222, 0.98);
+}
 
-    /* FAQ */
-    .faq-list { display: flex; flex-direction: column; gap: var(--sp-sm); max-width: 700px; margin: 0 auto; }
+/* Nav logo */
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
 
-    .faq-item {
-      background:    var(--bg-card);
-      border:        1px solid var(--border-card);
-      border-radius: var(--r-lg);
-      overflow:      hidden;
-      transition:    border-color var(--tr-normal);
-    }
-    .faq-item.open { border-color: var(--border-hover); }
+.nav-brand:hover { text-decoration: none; opacity: 0.9; }
 
-    .faq-q {
-      display:         flex;
-      align-items:     center;
-      justify-content: space-between;
-      padding:         var(--sp-md) var(--sp-lg);
-      cursor:          pointer;
-      font-weight:     600;
-      color:           var(--text-primary);
-      font-size:       0.9rem;
-      gap:             var(--sp-sm);
-      user-select:     none;
-    }
+.nav-logo-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold3) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fd);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #02020A;
+  box-shadow: 0 2px 16px rgba(201,169,110,.35);
+  transition: transform 0.25s var(--ease), box-shadow 0.25s ease;
+  flex-shrink: 0;
+}
 
-    .faq-arrow { color: var(--gold); transition: transform var(--tr-normal); font-size: 0.8rem; flex-shrink: 0; }
-    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+.nav-brand:hover .nav-logo-mark {
+  transform: scale(1.07) rotate(-2deg);
+  box-shadow: 0 4px 24px rgba(201,169,110,.5);
+}
 
-    .faq-a {
-      padding:    0 var(--sp-lg) var(--sp-md);
-      font-size:  0.875rem;
-      color:      var(--text-secondary);
-      line-height: 1.7;
-      display:    none;
-    }
-    .faq-item.open .faq-a { display: block; animation: slideInUp 0.3s ease; }
+.nav-brand-name {
+  font-family: var(--fd);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.1;
+}
 
-    /* Floating CTA button */
-    .float-cta {
-      position:      fixed;
-      bottom:        var(--sp-xl);
-      right:         var(--sp-xl);
-      z-index:       var(--z-sticky);
-      display:       none;
-    }
-    .float-cta.visible { display: block; animation: slideInUp 0.4s var(--tr-spring); }
+.nav-brand-version {
+  font-family: var(--fm);
+  font-size: 0.56rem;
+  color: var(--t3);
+  display: block;
+  margin-top: 2px;
+}
 
-    @media (max-width: 900px) {
-      .float-cta { bottom: var(--sp-md); right: var(--sp-md); }
-    }
+.nav-spacer { flex: 1; }
 
-    /* Brand watermark in footer */
-    .site-footer {
-      background:    var(--bg-secondary);
-      border-top:    1px solid var(--border);
-      padding:       var(--sp-2xl) 0 var(--sp-lg);
-    }
+/* Nav links */
+.nav-links {
+  display: flex;
+  gap: 28px;
+  align-items: center;
+}
 
-    .footer-grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
-      gap:    var(--sp-2xl);
-      margin-bottom: var(--sp-xl);
-    }
+.nav-link {
+  font-size: 0.875rem;
+  color: var(--t2);
+  font-weight: 500;
+  transition: color 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  position: relative;
+  padding-bottom: 2px;
+}
 
-    @media (max-width: 768px) {
-      .footer-grid { grid-template-columns: 1fr; gap: var(--sp-xl); }
-    }
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transition: transform 0.26s var(--ease);
+  transform-origin: left;
+}
 
-    .footer-brand-desc {
-      font-size:   0.875rem;
-      color:       var(--text-muted);
-      line-height: 1.7;
-      margin:      var(--sp-md) 0 var(--sp-lg);
-    }
+.nav-link:hover {
+  color: var(--t1);
+  text-decoration: none;
+}
 
-    .footer-links-title {
-      font-size:      0.72rem;
-      font-weight:    700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color:          var(--text-muted);
-      margin-bottom:  var(--sp-md);
-    }
+.nav-link:hover::after { transform: scaleX(1); }
 
-    .footer-links { display: flex; flex-direction: column; gap: var(--sp-sm); }
+/* Nav actions */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
-    .footer-link {
-      font-size:   0.875rem;
-      color:       var(--text-secondary);
-      transition:  color var(--tr-fast);
-    }
-    .footer-link:hover { color: var(--gold); }
+.nav-theme-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--b2);
+  border-radius: var(--r2);
+  background: var(--bg3);
+  color: var(--t2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
 
-    .footer-bottom {
-      display:         flex;
-      align-items:     center;
-      justify-content: space-between;
-      padding-top:     var(--sp-lg);
-      border-top:      1px solid var(--border);
-      flex-wrap:       wrap;
-      gap:             var(--sp-sm);
-    }
+.nav-theme-btn:hover {
+  border-color: var(--goldb);
+  color: var(--gold);
+  background: var(--goldd);
+  transform: scale(1.05);
+}
 
-    .footer-copy {
-      font-size:   0.78rem;
-      color:       var(--text-muted);
-    }
+.nav-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  border-radius: var(--rf);
+  background: var(--gold);
+  color: #02020A;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition: all 0.22s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
 
-    .footer-copy a { color: var(--gold); font-weight: 600; }
-    .footer-copy a:hover { color: var(--gold-light); }
-  </style>
+.nav-cta-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.18));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.nav-cta-btn:hover::before { opacity: 1; }
+.nav-cta-btn:hover {
+  background: var(--gold3);
+  transform: translateY(-1px);
+  box-shadow: var(--shg);
+  color: #02020A;
+  text-decoration: none;
+}
+
+/* Mobile hamburger */
+.nav-burger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px;
+  background: none;
+  border: none;
+  flex-shrink: 0;
+}
+
+.nav-burger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--t2);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.nav-burger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.nav-burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-burger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+/* Mobile menu */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  top: 68px; left: 0; right: 0;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--b2);
+  padding: 16px 24px 24px;
+  z-index: 999;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  animation: fadeDown 0.25s var(--ease);
+}
+
+.mobile-nav.open { display: flex; }
+
+.mobile-nav .nav-link {
+  padding: 10px 14px;
+  border-radius: var(--r2);
+  display: block;
+  font-size: 0.95rem;
+}
+
+.mobile-nav .nav-link:hover {
+  background: var(--bg3);
+  color: var(--t1);
+  text-decoration: none;
+}
+
+.mobile-nav .nav-cta-btn {
+  margin-top: 8px;
+  justify-content: center;
+  padding: 12px;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   HERO SECTION
+   ════════════════════════════════════════════════════════════════════ */
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 120px 48px 80px;
+  text-align: center;
+}
+
+/* Animated canvas for particles */
+#heroCanvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Background orbs */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-orb-1 {
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(201,169,110,.10) 0%, transparent 70%);
+  top: -300px; left: -250px;
+  animation: orbFloat 14s ease-in-out infinite;
+}
+
+.hero-orb-2 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(42,140,98,.08) 0%, transparent 70%);
+  bottom: -150px; right: -150px;
+  animation: orbFloat 18s ease-in-out infinite reverse;
+}
+
+.hero-orb-3 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(96,165,250,.05) 0%, transparent 70%);
+  top: 40%; right: 5%;
+  animation: orbFloat 22s ease-in-out infinite 6s;
+}
+
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(40px, -28px) scale(1.02); }
+  66%       { transform: translate(-20px, 32px) scale(0.98); }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  width: 100%;
+}
+
+/* Eyebrow badge */
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 20px;
+  border-radius: var(--rf);
+  background: var(--goldd);
+  border: 1px solid var(--goldb);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 32px;
+  animation: fadeDown 0.7s var(--ease) both;
+}
+
+.hero-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.hero-badge-pulse {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Headline */
+.hero-headline {
+  font-family: var(--fd);
+  font-size: clamp(3rem, 6.5vw, 6rem);
+  font-weight: 800;
+  line-height: 1.0;
+  color: var(--t1);
+  margin-bottom: 26px;
+  animation: fadeUp 0.9s var(--ease) 0.1s both;
+  letter-spacing: -0.025em;
+}
+
+/* Animated gradient text */
+.grad-text {
+  background: linear-gradient(270deg, var(--gold), var(--gold3), var(--gold2), var(--gold));
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease-in-out infinite;
+  display: inline;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+
+/* Sub headline */
+.hero-sub {
+  font-family: var(--fb);
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  color: var(--t2);
+  line-height: 1.78;
+  max-width: 640px;
+  margin: 0 auto 44px;
+  animation: fadeUp 0.9s var(--ease) 0.2s both;
+}
+
+/* CTA row */
+.hero-cta-row {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  animation: fadeUp 0.9s var(--ease) 0.3s both;
+  margin-bottom: 24px;
+}
+
+.hero-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 16px 38px;
+  border-radius: var(--rf);
+  background: var(--gold);
+  color: #02020A;
+  font-weight: 700;
+  font-size: 1.08rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(201,169,110,.3);
+}
+
+.hero-btn-primary::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.2));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.hero-btn-primary:hover::before { opacity: 1; }
+
+.hero-btn-primary:hover {
+  background: var(--gold3);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 36px rgba(201,169,110,.5);
+  color: #02020A;
+  text-decoration: none;
+}
+
+.hero-btn-primary:active { transform: translateY(0); }
+
+.hero-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 16px 38px;
+  border-radius: var(--rf);
+  background: transparent;
+  color: var(--t1);
+  font-weight: 600;
+  font-size: 1.08rem;
+  border: 1.5px solid var(--b3);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.hero-btn-secondary:hover {
+  border-color: var(--goldb);
+  color: var(--gold);
+  background: var(--goldd);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+/* Hero trust note */
+.hero-trust {
+  font-size: 0.78rem;
+  color: var(--t3);
+  animation: fadeUp 0.9s var(--ease) 0.4s both;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.hero-trust span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.hero-trust i {
+  color: var(--em2);
+  font-size: 0.72rem;
+}
+
+/* Hero stats bar */
+.hero-stats {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 52px;
+  animation: fadeUp 0.9s var(--ease) 0.5s both;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 28px;
+  background: var(--bg2);
+  border: 1px solid var(--b2);
+  border-radius: var(--r4);
+  min-width: 110px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-stat::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.hero-stat:hover { border-color: var(--goldb); transform: translateY(-3px); }
+.hero-stat:hover::before { opacity: 1; }
+
+.hero-stat-num {
+  font-family: var(--fd);
+  font-size: 2.2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), var(--gold3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-stat-plus {
+  font-family: var(--fd);
+  font-size: 1.4rem;
+  color: var(--gold);
+  -webkit-text-fill-color: var(--gold);
+}
+
+.hero-stat-label {
+  font-size: 0.72rem;
+  color: var(--t3);
+  font-family: var(--fu);
+  margin-top: 4px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   LANGUAGE TICKER
+   ════════════════════════════════════════════════════════════════════ */
+.lang-ticker {
+  overflow: hidden;
+  border-top: 1px solid var(--b1);
+  border-bottom: 1px solid var(--b1);
+  background: var(--bg1);
+  height: 50px;
+  display: flex;
+  align-items: center;
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+.ticker-track {
+  display: flex;
+  gap: 0;
+  animation: tickerScroll 40s linear infinite;
+  width: max-content;
+}
+
+.ticker-track:hover { animation-play-state: paused; }
+
+@keyframes tickerScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.ticker-lang {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 26px;
+  border-right: 1px solid var(--b1);
+  font-size: 0.78rem;
+  color: var(--t2);
+  white-space: nowrap;
+  height: 50px;
+  transition: color 0.2s ease;
+}
+
+.ticker-lang:hover { color: var(--gold); }
+.ticker-lang i { color: var(--gold); font-size: 0.7rem; }
+.ticker-lang span { color: var(--t3); font-size: 0.68rem; font-family: var(--fm); }
+
+/* ════════════════════════════════════════════════════════════════════
+   SECTIONS SYSTEM
+   ════════════════════════════════════════════════════════════════════ */
+.land-sec {
+  padding: 100px 0;
+}
+
+.land-sec.alt {
+  background: var(--bg1);
+  border-top: 1px solid var(--b1);
+  border-bottom: 1px solid var(--b1);
+}
+
+.sec-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.sec-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--fu);
+  font-size: 0.71rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+.sec-tag::before, .sec-tag::after { content: '✦'; font-size: 0.55rem; }
+
+.sec-title {
+  font-family: var(--fd);
+  font-size: clamp(2rem, 3.8vw, 3.2rem);
+  font-weight: 700;
+  color: var(--t1);
+  line-height: 1.12;
+  margin-bottom: 16px;
+}
+
+.sec-title em { font-style: italic; color: var(--gold); }
+
+.sec-sub {
+  font-family: var(--fb);
+  font-size: 1.08rem;
+  color: var(--t2);
+  line-height: 1.76;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   SCROLL REVEAL
+   ════════════════════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+.reveal-delay-4 { transition-delay: 0.32s; }
+.reveal-delay-5 { transition-delay: 0.40s; }
+
+/* ════════════════════════════════════════════════════════════════════
+   TRUST BAR
+   ════════════════════════════════════════════════════════════════════ */
+.trust-bar {
+  padding: 32px 0;
+  border-bottom: 1px solid var(--b1);
+  background: var(--bg2);
+}
+
+.trust-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.trust-label {
+  font-family: var(--fu);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--t4);
+  flex-shrink: 0;
+}
+
+.trust-items {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--fu);
+  font-size: 0.82rem;
+  color: var(--t3);
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.trust-item i {
+  color: var(--gold);
+  font-size: 0.78rem;
+}
+
+.trust-item:hover { color: var(--t2); }
+
+/* ════════════════════════════════════════════════════════════════════
+   FEATURES GRID
+   ════════════════════════════════════════════════════════════════════ */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.feat-card {
+  background: var(--bg2);
+  border: 1px solid var(--b1);
+  border-radius: 20px;
+  padding: 30px 26px;
+  transition: all 0.3s var(--ease);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+
+.feat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.feat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 80% 0%, rgba(201,169,110,.05), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.feat-card:hover {
+  border-color: var(--goldb);
+  transform: translateY(-5px);
+  box-shadow: 0 16px 48px rgba(0,0,0,.4);
+}
+
+.feat-card:hover::before { opacity: 1; }
+.feat-card:hover::after  { opacity: 1; }
+
+.feat-icon-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--r3);
+  background: var(--goldd);
+  border: 1px solid var(--goldb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  transition: transform 0.28s var(--ease), box-shadow 0.28s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.feat-card:hover .feat-icon-wrap {
+  transform: scale(1.1) rotate(-4deg);
+  box-shadow: var(--shg);
+}
+
+.feat-title {
+  font-family: var(--fd);
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: var(--t1);
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.feat-desc {
+  font-family: var(--fb);
+  font-size: 0.94rem;
+  color: var(--t2);
+  line-height: 1.72;
+  position: relative;
+  z-index: 1;
+}
+
+.feat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 3px 10px;
+  border-radius: var(--rf);
+  font-size: 0.65rem;
+  font-family: var(--fu);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--emd);
+  color: var(--em2);
+  border: 1px solid rgba(66,201,138,.2);
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DEMO WINDOW
+   ════════════════════════════════════════════════════════════════════ */
+.demo-window {
+  background: var(--bg2);
+  border: 1px solid var(--b2);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,.6);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.demo-window:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 52px 120px rgba(0,0,0,.7);
+}
+
+.demo-chrome {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--b1);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demo-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dd-red    { background: #FF5F57; }
+.dd-yellow { background: #FEBC2E; }
+.dd-green  { background: #28C840; }
+
+.demo-chrome-url {
+  font-family: var(--fm);
+  font-size: 0.72rem;
+  color: var(--t3);
+  margin: 0 auto;
+  user-select: none;
+}
+
+.demo-chrome-live {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--fm);
+  font-size: 0.68rem;
+  color: var(--em2);
+}
+
+.demo-chrome-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--em2);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Demo body */
+.demo-body {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 460px;
+}
+
+.demo-sidebar {
+  background: var(--bg3);
+  border-right: 1px solid var(--b1);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.demo-sb-label {
+  font-family: var(--fu);
+  font-size: 0.61rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--t4);
+  padding: 0 8px;
+  margin: 8px 0 4px;
+}
+
+.demo-sb-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: var(--r2);
+  font-size: 0.81rem;
+  color: var(--t2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+  font-family: var(--fu);
+}
+
+.demo-sb-item.active {
+  background: var(--goldd);
+  border-color: var(--goldb);
+  color: var(--gold);
+}
+
+.demo-sb-item:hover:not(.active) {
+  background: var(--bg4);
+  color: var(--t1);
+}
+
+.demo-sb-item i {
+  font-size: 0.76rem;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Demo main area */
+.demo-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-top-area {
+  flex: 1;
+  padding: 22px 26px;
+}
+
+.demo-input-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--bg4);
+  border: 1px solid var(--b2);
+  border-radius: var(--r3);
+  padding: 11px 14px;
+  margin-bottom: 16px;
+}
+
+.demo-input-row i {
+  color: var(--t3);
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.demo-input-typing {
+  font-family: var(--fu);
+  font-size: 0.88rem;
+  color: var(--t1);
+  flex: 1;
+}
+
+.demo-input-cursor {
+  width: 2px;
+  height: 1em;
+  background: var(--gold);
+  display: inline-block;
+  animation: blink 0.9s step-end infinite;
+  vertical-align: text-bottom;
+  margin-left: 1px;
+}
+
+/* Output lines */
+.demo-output {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.demo-line {
+  font-family: var(--fb);
+  font-size: 0.89rem;
+  color: var(--t2);
+  line-height: 1.62;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.demo-line.show {
+  opacity: 1;
+  transform: none;
+}
+
+.demo-line.gold {
+  color: var(--gold);
+  font-family: var(--fu);
+  font-weight: 600;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.demo-line.heading {
+  color: var(--t1);
+  font-family: var(--fd);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.demo-line.bold { font-weight: 700; color: var(--t1); }
+
+/* Demo bottom toolbar */
+.demo-bottom-bar {
+  padding: 12px 26px;
+  border-top: 1px solid var(--b1);
+  background: var(--bg3);
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.demo-tool-tab {
+  padding: 5px 13px;
+  border-radius: var(--rf);
+  border: 1px solid var(--b2);
+  background: transparent;
+  font-size: 0.74rem;
+  color: var(--t3);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: var(--fu);
+}
+
+.demo-tool-tab.active {
+  background: var(--goldd);
+  border-color: var(--goldb);
+  color: var(--gold);
+}
+
+.demo-tool-tab:hover:not(.active) {
+  border-color: var(--b3);
+  color: var(--t2);
+}
+
+/* Flashcard in demo */
+.demo-flashcard {
+  background: var(--bg3);
+  border: 2px solid var(--goldb);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  cursor: pointer;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  perspective: 1000px;
+}
+
+.demo-flashcard:hover {
+  border-color: var(--gold);
+  box-shadow: var(--shg);
+  transform: translateY(-2px);
+}
+
+.demo-fc-label {
+  font-family: var(--fu);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.demo-fc-text {
+  font-family: var(--fd);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--t1);
+  line-height: 1.5;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   HOW IT WORKS — 3 STEPS
+   ════════════════════════════════════════════════════════════════════ */
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  position: relative;
+}
+
+.steps-grid::before {
+  content: '';
+  position: absolute;
+  top: 36px;
+  left: calc(16.66% + 16px);
+  right: calc(16.66% + 16px);
+  height: 1px;
+  background: linear-gradient(to right, var(--goldb), var(--goldb));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.step-card {
+  background: var(--bg2);
+  border: 1px solid var(--b2);
+  border-radius: 20px;
+  padding: 32px 24px;
+  transition: all 0.3s var(--ease);
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.step-card:hover {
+  border-color: var(--goldb);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,0,.4);
+}
+
+.step-number {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fd);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #02020A;
+  margin: 0 auto 22px;
+  box-shadow: 0 4px 20px rgba(201,169,110,.3);
+  transition: transform 0.3s var(--ease), box-shadow 0.3s ease;
+}
+
+.step-card:hover .step-number {
+  transform: scale(1.1);
+  box-shadow: 0 8px 32px rgba(201,169,110,.5);
+}
+
+.step-title {
+  font-family: var(--fd);
+  font-size: 1.22rem;
+  font-weight: 600;
+  color: var(--t1);
+  margin-bottom: 12px;
+}
+
+.step-desc {
+  font-family: var(--fb);
+  font-size: 0.96rem;
+  color: var(--t2);
+  line-height: 1.72;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   STATISTICS BAND
+   ════════════════════════════════════════════════════════════════════ */
+.stats-band {
+  padding: 60px 0;
+  background: linear-gradient(135deg, var(--bg0) 0%, var(--bg3) 50%, var(--bg0) 100%);
+  border-top: 1px solid var(--b1);
+  border-bottom: 1px solid var(--b1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-band::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,169,110,.06), transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.stats-band-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-item { transition: var(--tr-base); }
+.stat-item:hover { transform: translateY(-3px); }
+
+.stat-big-num {
+  font-family: var(--fd);
+  font-size: clamp(2.5rem, 4vw, 3.8rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), var(--gold3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.82rem;
+  color: var(--t3);
+  margin-top: 7px;
+  font-family: var(--fu);
+  font-weight: 500;
+}
+
+.stat-sub {
+  font-size: 0.7rem;
+  color: var(--t4);
+  margin-top: 3px;
+  font-family: var(--fm);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   COMPARISON TABLE
+   ════════════════════════════════════════════════════════════════════ */
+.compare-wrapper {
+  overflow-x: auto;
+  border-radius: 20px;
+  border: 1px solid var(--b2);
+  box-shadow: var(--shadow-lg);
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.compare-table th {
+  padding: 14px 20px;
+  background: var(--bg3);
+  font-weight: 600;
+  font-size: 0.77rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.compare-table th:first-child  { text-align: left; color: var(--t3); border-radius: 20px 0 0 0; }
+.compare-table th:nth-child(2) { color: var(--t3); }
+.compare-table th:nth-child(3) {
+  color: var(--gold);
+  background: rgba(201,169,110,.07);
+  border-left: 2px solid var(--goldb);
+  border-right: 2px solid var(--goldb);
+}
+.compare-table th:last-child { border-radius: 0 20px 0 0; color: var(--t3); }
+
+.compare-table td {
+  padding: 11px 20px;
+  border-top: 1px solid var(--b1);
+  color: var(--t2);
+  text-align: center;
+  font-family: var(--fu);
+  font-size: 0.84rem;
+}
+
+.compare-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: var(--t1);
+  font-family: var(--fu);
+}
+
+.compare-table td:nth-child(3) {
+  background: rgba(201,169,110,.04);
+  border-left: 2px solid var(--goldb);
+  border-right: 2px solid var(--goldb);
+  font-weight: 600;
+}
+
+.compare-table tr:last-child td:nth-child(3) {
+  border-bottom: 2px solid var(--goldb);
+  border-radius: 0 0 0 0;
+}
+
+.compare-table tr:hover td { background: rgba(255,255,255,.02); }
+.compare-table tr:hover td:nth-child(3) { background: rgba(201,169,110,.07); }
+
+.chk { color: var(--em2); font-size: 1rem; }
+.crs { color: var(--ruby2); opacity: 0.5; font-size: 0.9rem; }
+.prt { color: var(--amber); font-size: 0.78rem; }
+.sav { color: var(--gold); font-weight: 700; }
+
+/* ════════════════════════════════════════════════════════════════════
+   TESTIMONIALS
+   ════════════════════════════════════════════════════════════════════ */
+.testi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.testi-card {
+  background: var(--bg2);
+  border: 1px solid var(--b1);
+  border-radius: 20px;
+  padding: 30px 26px;
+  transition: all 0.3s var(--ease);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.testi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+
+.testi-card:hover {
+  border-color: var(--goldb);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.testi-card:hover::before { opacity: 1; }
+
+.testi-q-mark {
+  font-family: var(--fd);
+  font-size: 5rem;
+  line-height: 0.8;
+  color: var(--gold);
+  opacity: 0.12;
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.testi-stars {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 14px;
+}
+
+.testi-star { color: var(--gold); font-size: 0.82rem; }
+
+.testi-text {
+  font-family: var(--fb);
+  font-size: 1rem;
+  color: var(--t2);
+  line-height: 1.76;
+  margin-bottom: 20px;
+  font-style: italic;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.testi-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.testi-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fd);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #02020A;
+  flex-shrink: 0;
+  border: 2px solid var(--goldb);
+  box-shadow: 0 2px 12px rgba(201,169,110,.2);
+}
+
+.testi-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--t1);
+  font-family: var(--fu);
+}
+
+.testi-role {
+  font-size: 0.76rem;
+  color: var(--t3);
+  margin-top: 2px;
+  font-family: var(--fu);
+}
+
+.testi-country {
+  font-family: var(--fm);
+  font-size: 0.68rem;
+  color: var(--gold);
+  margin-top: 2px;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   FOUNDER SECTION
+   ════════════════════════════════════════════════════════════════════ */
+.founder-card {
+  background: var(--bg2);
+  border: 1px solid var(--goldb);
+  border-radius: 24px;
+  padding: 56px 52px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.founder-card:hover {
+  box-shadow: var(--shg2);
+  transform: translateY(-2px);
+}
+
+.founder-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.founder-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(201,169,110,.07), transparent 60%);
+  pointer-events: none;
+}
+
+.founder-quote-mark {
+  font-family: var(--fd);
+  font-size: 9rem;
+  color: var(--gold);
+  opacity: 0.08;
+  position: absolute;
+  top: -24px;
+  left: 20px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+.founder-quote {
+  font-family: var(--fd);
+  font-size: clamp(1.1rem, 2.2vw, 1.46rem);
+  font-style: italic;
+  color: var(--t1);
+  line-height: 1.68;
+  margin-bottom: 38px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.founder-quote em {
+  color: var(--gold);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.founder-byline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.founder-avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fd);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #02020A;
+  border: 3px solid var(--goldb);
+  box-shadow: var(--shg);
+  flex-shrink: 0;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s ease;
+}
+
+.founder-avatar:hover {
+  transform: scale(1.07);
+  box-shadow: var(--shg2);
+}
+
+.founder-name {
+  font-family: var(--fd);
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--t1);
+}
+
+.founder-role {
+  font-size: 0.82rem;
+  color: var(--gold);
+  font-family: var(--fm);
+  margin-top: 3px;
+}
+
+.founder-company {
+  font-size: 0.76rem;
+  color: var(--t3);
+  margin-top: 3px;
+  font-family: var(--fu);
+}
+
+.founder-company a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.founder-company a:hover { color: var(--gold2); text-decoration: none; }
+
+/* ════════════════════════════════════════════════════════════════════
+   FAQ
+   ════════════════════════════════════════════════════════════════════ */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: var(--bg2);
+  border: 1px solid var(--b1);
+  border-radius: var(--r3);
+  overflow: hidden;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+.faq-item.open {
+  border-color: var(--goldb);
+  box-shadow: 0 4px 20px rgba(201,169,110,.08);
+}
+
+.faq-q {
+  padding: 18px 22px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.97rem;
+  font-weight: 600;
+  color: var(--t1);
+  font-family: var(--fu);
+  user-select: none;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.faq-q:hover { background: rgba(255,255,255,.02); }
+.faq-item.open .faq-q { color: var(--gold); background: var(--golde); }
+
+.faq-arrow {
+  color: var(--t3);
+  font-size: 0.76rem;
+  transition: transform 0.32s var(--ease), color 0.22s;
+  flex-shrink: 0;
+}
+
+.faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--gold); }
+
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.42s var(--ease);
+}
+
+.faq-item.open .faq-a { max-height: 600px; }
+
+.faq-a-inner {
+  padding: 0 22px 20px;
+  font-family: var(--fb);
+  font-size: 0.97rem;
+  color: var(--t2);
+  line-height: 1.78;
+}
+
+.faq-a-inner a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.faq-a-inner a:hover { color: var(--gold2); text-decoration: none; }
+
+/* ════════════════════════════════════════════════════════════════════
+   CTA SECTION
+   ════════════════════════════════════════════════════════════════════ */
+.cta-section {
+  text-align: center;
+  padding: 100px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(201,169,110,.07), transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.cta-headline {
+  font-family: var(--fd);
+  font-size: clamp(2.2rem, 4.5vw, 3.8rem);
+  font-weight: 700;
+  color: var(--t1);
+  line-height: 1.1;
+  margin-bottom: 18px;
+}
+
+.cta-headline em { font-style: italic; color: var(--gold); }
+
+.cta-sub {
+  font-family: var(--fb);
+  font-size: 1.08rem;
+  color: var(--t2);
+  line-height: 1.72;
+  margin-bottom: 40px;
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-btns {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   FOOTER
+   ════════════════════════════════════════════════════════════════════ */
+.site-footer {
+  background: var(--bg1);
+  border-top: 1px solid var(--b1);
+  padding: 64px 0 28px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr 1fr 1fr;
+  gap: 44px;
+  margin-bottom: 44px;
+}
+
+.footer-brand-desc {
+  font-family: var(--fb);
+  font-size: 0.9rem;
+  color: var(--t3);
+  line-height: 1.74;
+  margin: 14px 0 18px;
+  max-width: 320px;
+}
+
+.footer-social {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.footer-social-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--b2);
+  border-radius: var(--r2);
+  background: var(--bg3);
+  color: var(--t3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.footer-social-btn:hover {
+  border-color: var(--goldb);
+  color: var(--gold);
+  background: var(--goldd);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.footer-col-title {
+  font-family: var(--fu);
+  font-size: 0.71rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 16px;
+}
+
+.footer-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-link {
+  font-size: 0.88rem;
+  color: var(--t3);
+  transition: color 0.2s ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.footer-link:hover { color: var(--gold); text-decoration: none; }
+
+.footer-bottom {
+  border-top: 1px solid var(--b1);
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--t4);
+}
+
+.footer-bottom a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.footer-bottom a:hover { color: var(--gold2); text-decoration: none; }
+
+/* ════════════════════════════════════════════════════════════════════
+   FLOATING CTA
+   ════════════════════════════════════════════════════════════════════ */
+.floating-cta {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 800;
+  display: none;
+  animation: slideInRight 0.4s var(--ease);
+}
+
+.floating-cta.show { display: block; }
+
+.floating-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border-radius: var(--rf);
+  background: var(--gold);
+  color: #02020A;
+  font-family: var(--fu);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 32px rgba(201,169,110,.5);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.floating-cta-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.2));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.floating-cta-btn:hover::before { opacity: 1; }
+.floating-cta-btn:hover {
+  background: var(--gold3);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(201,169,110,.6);
+  color: #02020A;
+  text-decoration: none;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .footer-grid     { grid-template-columns: 1.5fr 1fr 1fr; }
+  .features-grid   { grid-template-columns: repeat(2, 1fr); }
+  .stats-band-grid { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+}
+
+@media (max-width: 900px) {
+  .landing-nav   { padding: 0 20px; gap: 14px; }
+  .nav-links     { display: none; }
+  .nav-burger    { display: flex; }
+  .hero-section  { padding: 110px 24px 60px; }
+  .land-sec      { padding: 64px 0; }
+  .features-grid { grid-template-columns: 1fr; }
+  .steps-grid    { grid-template-columns: 1fr; }
+  .steps-grid::before { display: none; }
+  .demo-body     { grid-template-columns: 1fr; }
+  .demo-sidebar  { display: none; }
+  .founder-card  { padding: 36px 28px; }
+  .hero-stats    { gap: 8px; }
+  .hero-stat     { min-width: 90px; padding: 14px 18px; }
+}
+
+@media (max-width: 768px) {
+  .container, .container-sm, .container-xs { padding: 0 20px; }
+  .footer-grid  { grid-template-columns: 1fr; gap: 32px; }
+  .testi-grid   { grid-template-columns: 1fr; }
+  .hero-headline { font-size: clamp(2.4rem, 8vw, 3.6rem); }
+  .hero-cta-row  { flex-direction: column; align-items: center; }
+  .hero-btn-primary, .hero-btn-secondary { width: 100%; justify-content: center; }
+  .stats-band-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .floating-cta  { bottom: 16px; right: 16px; }
+}
+
+@media (max-width: 480px) {
+  .hero-stat-num { font-size: 1.7rem; }
+  .compare-table { font-size: 0.78rem; }
+  .compare-table th, .compare-table td { padding: 8px 12px; }
+}
+
+</style>
 </head>
+
 <body>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       NAVIGATION
-  ═══════════════════════════════════════════════════════════════ -->
-  <nav class="landing-nav" id="landingNav" role="navigation" aria-label="Main navigation">
-    <!-- Brand -->
-    <div class="header-brand">
-      <div class="brand-logo" aria-hidden="true">S</div>
-      <div class="brand-text-wrap">
-        <span class="brand-name">Savoiré AI</span>
-        <span class="brand-tagline">v2.0 Ultra</span>
-      </div>
+<!-- Theme flash prevention -->
+<script>
+(function() {
+  var t = localStorage.getItem('sv_prefs');
+  if (t) {
+    try {
+      var p = JSON.parse(t);
+      if (p.theme) document.documentElement.setAttribute('data-theme', p.theme);
+      if (p.fontSize) document.documentElement.setAttribute('data-font', p.fontSize);
+    } catch(e) {}
+  } else {
+    var st = localStorage.getItem('sv_theme');
+    if (st) document.documentElement.setAttribute('data-theme', st);
+  }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     NAVIGATION
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<nav class="landing-nav" id="mainNav" role="navigation" aria-label="Main navigation">
+
+  <!-- Brand -->
+  <a href="#home" class="nav-brand" aria-label="Savoiré AI — go to top">
+    <div class="nav-logo-mark" aria-hidden="true">Ś</div>
+    <div>
+      <span class="nav-brand-name">Savoiré AI</span>
+      <span class="nav-brand-version">v2.0 · Free Forever</span>
+    </div>
+  </a>
+
+  <div class="nav-spacer"></div>
+
+  <!-- Desktop links -->
+  <div class="nav-links" role="list" aria-label="Navigation links">
+    <a href="#features"     class="nav-link" role="listitem">Features</a>
+    <a href="#demo"         class="nav-link" role="listitem">Demo</a>
+    <a href="#how-it-works" class="nav-link" role="listitem">How It Works</a>
+    <a href="#testimonials" class="nav-link" role="listitem">Reviews</a>
+    <a href="#faq"          class="nav-link" role="listitem">FAQ</a>
+  </div>
+
+  <!-- Actions -->
+  <div class="nav-actions">
+    <button
+      class="nav-theme-btn"
+      id="navThemeBtn"
+      type="button"
+      title="Toggle dark/light theme"
+      aria-label="Toggle theme"
+    >
+      <i class="fas fa-moon" id="navThemeIcon"></i>
+    </button>
+
+    <a href="dashboard.html" class="nav-cta-btn" aria-label="Open Savoiré AI app">
+      <i class="fas fa-rocket" aria-hidden="true"></i>
+      Launch App — Free
+    </a>
+
+    <button
+      class="nav-burger"
+      id="navBurger"
+      type="button"
+      aria-label="Open mobile menu"
+      aria-expanded="false"
+      aria-controls="mobileNav"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-nav" id="mobileNav" role="navigation" aria-label="Mobile navigation">
+  <a href="#features"     class="nav-link" onclick="closeMobileMenu()">✦ Features</a>
+  <a href="#demo"         class="nav-link" onclick="closeMobileMenu()">✦ Live Demo</a>
+  <a href="#how-it-works" class="nav-link" onclick="closeMobileMenu()">✦ How It Works</a>
+  <a href="#testimonials" class="nav-link" onclick="closeMobileMenu()">✦ Student Reviews</a>
+  <a href="#faq"          class="nav-link" onclick="closeMobileMenu()">✦ FAQ</a>
+  <a href="dashboard.html" class="nav-cta-btn" style="text-align:center;justify-content:center;margin-top:8px">
+    <i class="fas fa-rocket" aria-hidden="true"></i> Launch App — Free
+  </a>
+</div>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     HERO SECTION
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="hero-section" id="home" aria-label="Hero — Savoiré AI Study Companion">
+
+  <!-- Particle canvas -->
+  <canvas id="heroCanvas" aria-hidden="true"></canvas>
+
+  <!-- Background orbs -->
+  <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
+  <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
+  <div class="hero-orb hero-orb-3" aria-hidden="true"></div>
+
+  <div class="hero-content">
+
+    <!-- Badge -->
+    <div class="hero-badge" role="text">
+      <span class="hero-badge-dot" aria-hidden="true"></span>
+      <span>Savoiré AI v2.0</span>
+      <span aria-hidden="true">·</span>
+      <span>Free Forever</span>
+      <span aria-hidden="true">·</span>
+      <span>No Login Required</span>
     </div>
 
-    <div class="nav-spacer"></div>
+    <!-- Headline -->
+    <h1 class="hero-headline">
+      Think Less.<br>
+      <span class="grad-text">Know More.</span>
+    </h1>
 
-    <!-- Desktop Links -->
-    <div class="nav-links" role="list">
-      <a href="#features" class="nav-link" role="listitem">Features</a>
-      <a href="#demo"     class="nav-link" role="listitem">Demo</a>
-      <a href="#how"      class="nav-link" role="listitem">How It Works</a>
-      <a href="#reviews"  class="nav-link" role="listitem">Reviews</a>
-      <a href="#faq"      class="nav-link" role="listitem">FAQ</a>
-    </div>
+    <!-- Sub -->
+    <p class="hero-sub">
+      The world's most advanced completely free AI study companion.
+      Generate ultra-rich notes, interactive flashcards, practice quizzes,
+      smart summaries and visual mind maps in <strong>50+ languages</strong> —
+      in seconds. No login. No payment. <strong>Free forever.</strong>
+    </p>
 
-    <div style="display:flex;align-items:center;gap:0.625rem;margin-left:1.5rem;">
-      <!-- Theme Toggle -->
-      <button class="btn-icon" id="landThemeBtn" aria-label="Toggle theme" title="Toggle dark/light mode">
-        <i class="fas fa-moon"></i>
-      </button>
-
-      <!-- Launch App -->
-      <a href="dashboard.html" class="btn btn-gold btn-sm" aria-label="Open Savoiré AI application">
-        <i class="fas fa-rocket"></i>
-        <span>Launch App</span>
+    <!-- CTA row -->
+    <div class="hero-cta-row">
+      <a href="dashboard.html" class="hero-btn-primary" aria-label="Start using Savoiré AI for free">
+        <i class="fas fa-rocket" aria-hidden="true"></i>
+        Start Studying — It's 100% Free
       </a>
-
-      <!-- Burger -->
-      <button class="nav-burger" id="navBurger" aria-label="Open navigation menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
+      <a href="#demo" class="hero-btn-secondary" aria-label="Watch a live demo">
+        <i class="fas fa-play" aria-hidden="true"></i>
+        Watch Live Demo
+      </a>
     </div>
-  </nav>
 
-  <!-- Mobile Menu -->
-  <div class="mobile-menu" id="mobileMenu" role="navigation" aria-label="Mobile navigation">
-    <a href="#features" class="nav-link" onclick="closeMobileMenu()">✦ Features</a>
-    <a href="#demo"     class="nav-link" onclick="closeMobileMenu()">✦ Demo</a>
-    <a href="#how"      class="nav-link" onclick="closeMobileMenu()">✦ How It Works</a>
-    <a href="#reviews"  class="nav-link" onclick="closeMobileMenu()">✦ Reviews</a>
-    <a href="#faq"      class="nav-link" onclick="closeMobileMenu()">✦ FAQ</a>
-    <a href="dashboard.html" class="btn btn-gold btn-full" style="margin-top:0.5rem;">
-      <i class="fas fa-rocket"></i> Launch App
-    </a>
+    <!-- Trust note -->
+    <div class="hero-trust">
+      <span><i class="fas fa-check-circle" aria-hidden="true"></i> No credit card</span>
+      <span><i class="fas fa-check-circle" aria-hidden="true"></i> No sign up</span>
+      <span><i class="fas fa-check-circle" aria-hidden="true"></i> No limits</span>
+      <span><i class="fas fa-check-circle" aria-hidden="true"></i> 10 AI models</span>
+      <span><i class="fas fa-check-circle" aria-hidden="true"></i> 50+ languages</span>
+    </div>
+
+    <!-- Animated stats -->
+    <div class="hero-stats" role="list" aria-label="Key statistics">
+      <div class="hero-stat" role="listitem">
+        <span class="hero-stat-num" id="countLang" data-target="50" aria-label="50+ languages">0</span>
+        <span class="hero-stat-plus" aria-hidden="true">+</span>
+        <span class="hero-stat-label">Languages</span>
+      </div>
+      <div class="hero-stat" role="listitem">
+        <span class="hero-stat-num" id="countModels" data-target="10" aria-label="10 AI models">0</span>
+        <span class="hero-stat-label">AI Models</span>
+      </div>
+      <div class="hero-stat" role="listitem">
+        <span class="hero-stat-num" id="countTools" data-target="5" aria-label="5 study tools">0</span>
+        <span class="hero-stat-label">Study Tools</span>
+      </div>
+      <div class="hero-stat" role="listitem">
+        <span class="hero-stat-num" id="countFree" data-target="100" aria-label="100% free">0</span>
+        <span class="hero-stat-plus" aria-hidden="true">%</span>
+        <span class="hero-stat-label">Free Always</span>
+      </div>
+      <div class="hero-stat" role="listitem">
+        <span class="hero-stat-num" id="countStudents" data-target="0" aria-label="Thousands of students">∞</span>
+        <span class="hero-stat-label">Students</span>
+      </div>
+    </div>
+
   </div>
+</section>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       HERO SECTION
-  ═══════════════════════════════════════════════════════════════ -->
-  <main>
-  <section class="hero-section" id="home" aria-label="Hero">
-    <div class="hero-bg" aria-hidden="true"></div>
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     LANGUAGE TICKER
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="lang-ticker" aria-label="Supported languages">
+  <div class="ticker-track" aria-hidden="true">
+    <!-- Set 1 -->
+    <div class="ticker-lang"><i class="fas fa-language"></i> English</div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> اردو <span>Urdu</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> हिन्दी <span>Hindi</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> العربية <span>Arabic</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Français <span>French</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Deutsch <span>German</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Español <span>Spanish</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Português <span>Portuguese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> 中文 <span>Chinese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> 日本語 <span>Japanese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> 한국어 <span>Korean</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Русский <span>Russian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Italiano <span>Italian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Türkçe <span>Turkish</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> বাংলা <span>Bengali</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> فارسی <span>Persian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Bahasa <span>Indonesian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Tiếng Việt <span>Vietnamese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> ภาษาไทย <span>Thai</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Polski <span>Polish</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Svenska <span>Swedish</span></div>
+    <!-- Set 2 (duplicate for seamless loop) -->
+    <div class="ticker-lang"><i class="fas fa-language"></i> English</div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> اردو <span>Urdu</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> हिन्दी <span>Hindi</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> العربية <span>Arabic</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Français <span>French</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Deutsch <span>German</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Español <span>Spanish</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Português <span>Portuguese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> 中文 <span>Chinese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> 日本語 <span>Japanese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> 한국어 <span>Korean</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Русский <span>Russian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Italiano <span>Italian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Türkçe <span>Turkish</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> বাংলা <span>Bengali</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> فارسی <span>Persian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Bahasa <span>Indonesian</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Tiếng Việt <span>Vietnamese</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> ภาษาไทย <span>Thai</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Polski <span>Polish</span></div>
+    <div class="ticker-lang"><i class="fas fa-language"></i> Svenska <span>Swedish</span></div>
+  </div>
+</div>
 
-    <!-- Floating particles -->
-    <div class="hero-particles" aria-hidden="true" id="heroParticles"></div>
-
-    <div class="hero-content">
-      <!-- Eyebrow badge -->
-      <div class="hero-eyebrow" role="text">
-        <span class="dot" aria-hidden="true"></span>
-        <span>Savoiré AI v2.0 Ultra — Free Forever</span>
-        <span class="dot" aria-hidden="true"></span>
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     TRUST BAR
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="trust-bar" aria-label="Used by students worldwide">
+  <div class="container">
+    <div class="trust-bar-inner">
+      <span class="trust-label">Trusted by students at</span>
+      <div class="trust-items">
+        <span class="trust-item"><i class="fas fa-university"></i> Top Universities</span>
+        <span class="trust-item"><i class="fas fa-school"></i> A-Level Colleges</span>
+        <span class="trust-item"><i class="fas fa-globe-asia"></i> 120+ Countries</span>
+        <span class="trust-item"><i class="fas fa-mobile-alt"></i> All Devices</span>
+        <span class="trust-item"><i class="fas fa-lock-open"></i> No Account Needed</span>
+        <span class="trust-item"><i class="fas fa-heart"></i> Built with Love</span>
       </div>
-
-      <!-- Headline -->
-      <h1 class="hero-headline">
-        Study Smarter.<br />
-        <span class="anim-grad">Learn Anything.</span>
-      </h1>
-
-      <!-- Sub -->
-      <p class="hero-sub">
-        The world's most advanced free AI study assistant. Generate ultra-rich notes, 
-        flashcards, quizzes, mindmaps &amp; more from any topic — in 50+ languages, 
-        powered by 20 AI models, in seconds.
-      </p>
-
-      <!-- CTAs -->
-      <div class="hero-cta-row">
-        <a href="dashboard.html" class="btn btn-gold btn-lg" aria-label="Start using Savoiré AI for free">
-          <i class="fas fa-rocket"></i>
-          Start Studying — It's Free
-        </a>
-        <a href="#demo" class="btn btn-outline btn-lg" aria-label="See a live demo">
-          <i class="fas fa-play"></i>
-          Watch Demo
-        </a>
-      </div>
-
-      <!-- Stats -->
-      <div class="hero-stats" role="list">
-        <div class="hero-stat-item" role="listitem">
-          <span class="hero-stat-num count-num" data-target="50">0</span>
-          <span class="hero-stat-label">Languages</span>
-        </div>
-        <div class="hero-stat-item" role="listitem">
-          <span class="hero-stat-num count-num" data-target="20">0</span>
-          <span class="hero-stat-label">AI Models</span>
-        </div>
-        <div class="hero-stat-item" role="listitem">
-          <span class="hero-stat-num count-num" data-target="5">0</span>
-          <span class="hero-stat-label">Study Tools</span>
-        </div>
-        <div class="hero-stat-item" role="listitem">
-          <span class="hero-stat-num count-num" data-target="100">0</span>
-          <span class="hero-stat-label">% Free</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Language Ticker -->
-  <div class="language-ticker" style="background:var(--bg-secondary);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:var(--sp-sm) 0;" aria-label="Supported languages">
-    <div class="ticker-inner" aria-hidden="true">
-      <span class="ticker-item"><i class="fas fa-language"></i> English</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> اردو (Urdu)</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> 中文 (Chinese)</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Español</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Français</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Deutsch</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> العربية</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> हिन्दी</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Português</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> 日本語</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Русский</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Italiano</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> 한국어</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Türkçe</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Bahasa</span>
-      <!-- Duplicate for seamless scroll -->
-      <span class="ticker-item"><i class="fas fa-language"></i> English</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> اردو (Urdu)</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> 中文 (Chinese)</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Español</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Français</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Deutsch</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> العربية</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> हिन्दी</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Português</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> 日本語</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Русский</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Italiano</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> 한국어</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Türkçe</span>
-      <span class="ticker-item"><i class="fas fa-language"></i> Bahasa</span>
     </div>
   </div>
+</div>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       FEATURES SECTION
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section" id="features" aria-labelledby="featTitle">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-label">✦ Capabilities</span>
-        <h2 class="section-title-lg" id="featTitle">Everything You Need to Master Any Subject</h2>
-        <p class="section-sub">Five powerful study tools, one intelligent platform. Choose how you learn.</p>
-      </div>
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     FEATURES GRID
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="land-sec" id="features" aria-labelledby="featuresTitle">
+  <div class="container">
 
-      <div class="features-grid">
-        <!-- Notes -->
-        <div class="feature-card reveal reveal-delay-1">
-          <div class="feature-icon"><i class="fas fa-book-open"></i></div>
-          <h3 class="feature-title">Ultra-Rich Study Notes</h3>
-          <p class="feature-desc">1000–2800 word comprehensive notes with key concepts, real-world applications, common misconceptions, exam tips, and a 7-day study plan — all instantly generated.</p>
-        </div>
-
-        <!-- Flashcards -->
-        <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
-          <h3 class="feature-title">3D Flip Flashcards</h3>
-          <p class="feature-desc">Interactive 3D flashcards with keyboard navigation. Study front-and-back, track progress, and never forget what you learned. Perfect for active recall.</p>
-        </div>
-
-        <!-- Quiz -->
-        <div class="feature-card reveal reveal-delay-3">
-          <div class="feature-icon"><i class="fas fa-trophy"></i></div>
-          <h3 class="feature-title">Self-Scoring Quiz</h3>
-          <p class="feature-desc">Auto-generated quizzes with instant feedback, explanations, and a final score. Challenge yourself and know exactly where you stand before exams.</p>
-        </div>
-
-        <!-- Summary -->
-        <div class="feature-card reveal reveal-delay-4">
-          <div class="feature-icon"><i class="fas fa-compress-alt"></i></div>
-          <h3 class="feature-title">Smart Summary</h3>
-          <p class="feature-desc">Concise, exam-ready summaries that distill complex topics into clear bullet points. Save time without sacrificing understanding.</p>
-        </div>
-
-        <!-- Mindmap -->
-        <div class="feature-card reveal reveal-delay-5">
-          <div class="feature-icon"><i class="fas fa-project-diagram"></i></div>
-          <h3 class="feature-title">Text Mindmap</h3>
-          <p class="feature-desc">Hierarchical mindmaps showing how concepts connect. See the big picture, spot relationships, and build mental models that actually stick.</p>
-        </div>
-
-        <!-- PDF -->
-        <div class="feature-card reveal reveal-delay-1">
-          <div class="feature-icon"><i class="fas fa-file-pdf"></i></div>
-          <h3 class="feature-title">Professional PDF Export</h3>
-          <p class="feature-desc">Download your notes as a beautifully formatted, multi-page PDF — complete with all sections, branding, and structured content ready to print or share.</p>
-        </div>
-
-        <!-- Multilingual -->
-        <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-icon"><i class="fas fa-globe"></i></div>
-          <h3 class="feature-title">50+ Languages</h3>
-          <p class="feature-desc">Study in your native language. Savoiré AI generates complete, fluent output in English, Urdu, Arabic, Chinese, Spanish, French, Hindi, and 43 more languages.</p>
-        </div>
-
-        <!-- Live Streaming -->
-        <div class="feature-card reveal reveal-delay-3">
-          <div class="feature-icon"><i class="fas fa-bolt"></i></div>
-          <h3 class="feature-title">Live Streaming Output</h3>
-          <p class="feature-desc">Watch your notes appear word-by-word in real time. No waiting, no loading spinner — the AI streams directly to your screen the moment it starts generating.</p>
-        </div>
-
-        <!-- History -->
-        <div class="feature-card reveal reveal-delay-4">
-          <div class="feature-icon"><i class="fas fa-history"></i></div>
-          <h3 class="feature-title">Full History & Saved Library</h3>
-          <p class="feature-desc">Every session is saved locally. Search, filter, restore any previous result, star favourites, and export your entire study library as JSON anytime.</p>
-        </div>
-      </div>
+    <div class="sec-header reveal">
+      <div class="sec-tag">Capabilities</div>
+      <h2 class="sec-title" id="featuresTitle">
+        Everything You Need to<br>
+        <em>Master Any Subject</em>
+      </h2>
+      <p class="sec-sub">Five powerful AI-driven study tools in one platform. No subscriptions. No limits. Pick your tool and start learning.</p>
     </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       DEMO SECTION
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section alt" id="demo" aria-labelledby="demoTitle">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-label">✦ Live Demo</span>
-        <h2 class="section-title-lg" id="demoTitle">See It in Action</h2>
-        <p class="section-sub">Watch how Savoiré AI transforms a simple topic into a world-class study resource in seconds.</p>
+    <div class="features-grid">
+
+      <!-- Notes -->
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon-wrap">📚</div>
+        <h3 class="feat-title">Ultra-Rich Study Notes</h3>
+        <p class="feat-desc">1,000–2,800 word comprehensive notes with Introduction, Core Concepts, How It Works, Key Examples, Advanced Aspects, Applications and Summary. Every section substantive. Every term bolded.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Live Streaming</span>
       </div>
 
-      <div class="demo-section reveal">
-        <!-- Browser chrome -->
-        <div class="demo-topbar">
-          <span class="demo-dot red"   aria-hidden="true"></span>
-          <span class="demo-dot yellow" aria-hidden="true"></span>
-          <span class="demo-dot green"  aria-hidden="true"></span>
-          <span class="demo-url">savoireai.vercel.app/dashboard</span>
-          <span style="font-size:0.75rem;color:var(--gold);">● Live</span>
+      <!-- Flashcards -->
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon-wrap">🃏</div>
+        <h3 class="feat-title">Interactive 3D Flashcards</h3>
+        <p class="feat-desc">Auto-generated flashcard decks with beautiful 3D flip animation, keyboard navigation (Arrow keys + Space), progress tracking, shuffle mode and restart. Perfect for spaced repetition.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Keyboard Nav</span>
+      </div>
+
+      <!-- Quiz -->
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon-wrap">🏆</div>
+        <h3 class="feat-title">Self-Scoring Practice Quiz</h3>
+        <p class="feat-desc">Exam-level questions with reveal-answer self-check, score tracking, review mode with all answers, and restart. Questions are analytical, application-based and evaluative — not just definitions.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Score Tracker</span>
+      </div>
+
+      <!-- Summary -->
+      <div class="feat-card reveal reveal-delay-4">
+        <div class="feat-icon-wrap">📋</div>
+        <h3 class="feat-title">Smart Summary & TL;DR</h3>
+        <p class="feat-desc">Concise, revision-ready summaries that distil complex topics into clear key points. Starts with a punchy TL;DR paragraph, then bullet key points — optimised for fast exam review.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Exam Focused</span>
+      </div>
+
+      <!-- Mind Map -->
+      <div class="feat-card reveal reveal-delay-5">
+        <div class="feat-icon-wrap">🗺️</div>
+        <h3 class="feat-title">Visual Mind Map</h3>
+        <p class="feat-desc">Hierarchical mind maps showing how concepts connect. Central topic node, five main branches, sub-nodes for applications, tricks and misconceptions. See the big picture instantly.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Visual Learning</span>
+      </div>
+
+      <!-- PDF Export -->
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon-wrap">📄</div>
+        <h3 class="feat-title">Professional PDF Export</h3>
+        <p class="feat-desc">Download beautifully formatted multi-page A4 PDFs with gold brand header on every page, section backgrounds, page numbers, answer boxes, bullet points and full branding. Print or share.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Multi-page A4</span>
+      </div>
+
+      <!-- 50+ Languages -->
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon-wrap">🌍</div>
+        <h3 class="feat-title">50+ Languages</h3>
+        <p class="feat-desc">Every word — notes, flashcards, quizzes, summaries — generated in your language. English, Urdu, Arabic, Hindi, French, Mandarin, Spanish, Bengali, Swahili and 41 more. Full native output.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Native Output</span>
+      </div>
+
+      <!-- Live Streaming -->
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon-wrap">⚡</div>
+        <h3 class="feat-title">Live Token Streaming</h3>
+        <p class="feat-desc">Watch your study materials appear character-by-character in real time — exactly like ChatGPT and Claude. No waiting. Server-Sent Events stream every token the moment the AI writes it.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Zero Wait</span>
+      </div>
+
+      <!-- History & Saved -->
+      <div class="feat-card reveal reveal-delay-4">
+        <div class="feat-icon-wrap">🔖</div>
+        <h3 class="feat-title">Full History & Saved Library</h3>
+        <p class="feat-desc">Every session saved in your browser — search by topic, filter by tool, group by date, reload any past result. Star favourites, build a personal study library, export everything as JSON.</p>
+        <span class="feat-badge"><i class="fas fa-check"></i> Local & Private</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     STATISTICS BAND
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="stats-band" aria-label="Impact statistics">
+  <div class="container">
+    <div class="stats-band-grid">
+
+      <div class="stat-item reveal">
+        <span class="stat-big-num" data-counter="10" id="sb1">10</span>
+        <div class="stat-label">Free AI Models</div>
+        <div class="stat-sub">Automatic failover</div>
+      </div>
+
+      <div class="stat-item reveal reveal-delay-1">
+        <span class="stat-big-num" data-counter="50">50+</span>
+        <div class="stat-label">Languages</div>
+        <div class="stat-sub">Full native output</div>
+      </div>
+
+      <div class="stat-item reveal reveal-delay-2">
+        <span class="stat-big-num" data-counter="2800">2,800+</span>
+        <div class="stat-label">Words Per Generation</div>
+        <div class="stat-sub">Expert depth level</div>
+      </div>
+
+      <div class="stat-item reveal reveal-delay-3">
+        <span class="stat-big-num" data-counter="100">100%</span>
+        <div class="stat-label">Free Forever</div>
+        <div class="stat-sub">No hidden charges</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     LIVE DEMO WINDOW
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="land-sec alt" id="demo" aria-labelledby="demoTitle">
+  <div class="container">
+
+    <div class="sec-header reveal">
+      <div class="sec-tag">Live Demo</div>
+      <h2 class="sec-title" id="demoTitle">
+        See Savoiré AI<br>
+        <em>In Action Right Now</em>
+      </h2>
+      <p class="sec-sub">Watch how the AI transforms a simple topic into a complete study resource in under 30 seconds — with output streaming live to your screen.</p>
+    </div>
+
+    <div class="demo-window reveal">
+
+      <!-- Chrome bar -->
+      <div class="demo-chrome">
+        <span class="demo-dot dd-red"    aria-hidden="true"></span>
+        <span class="demo-dot dd-yellow" aria-hidden="true"></span>
+        <span class="demo-dot dd-green"  aria-hidden="true"></span>
+        <span class="demo-chrome-url">savoireai.vercel.app/dashboard</span>
+        <span class="demo-chrome-live">
+          <span class="demo-chrome-live-dot" aria-hidden="true"></span>
+          Live
+        </span>
+      </div>
+
+      <!-- Body -->
+      <div class="demo-body">
+
+        <!-- Sidebar -->
+        <div class="demo-sidebar">
+          <div class="demo-sb-label">Study Tools</div>
+          <div class="demo-sb-item active" onclick="switchDemoTool(this,'notes')" data-tool="notes">
+            <i class="fas fa-book-open"></i> Generate Notes
+          </div>
+          <div class="demo-sb-item" onclick="switchDemoTool(this,'flashcards')" data-tool="flashcards">
+            <i class="fas fa-layer-group"></i> Flashcards
+          </div>
+          <div class="demo-sb-item" onclick="switchDemoTool(this,'quiz')" data-tool="quiz">
+            <i class="fas fa-question-circle"></i> Practice Quiz
+          </div>
+          <div class="demo-sb-item" onclick="switchDemoTool(this,'summary')" data-tool="summary">
+            <i class="fas fa-align-left"></i> Smart Summary
+          </div>
+          <div class="demo-sb-item" onclick="switchDemoTool(this,'mindmap')" data-tool="mindmap">
+            <i class="fas fa-project-diagram"></i> Mind Map
+          </div>
+          <div class="demo-sb-label">Options</div>
+          <div class="demo-sb-item"><i class="fas fa-globe"></i> Language: English</div>
+          <div class="demo-sb-item"><i class="fas fa-sliders-h"></i> Depth: Detailed</div>
         </div>
 
-        <div class="demo-body">
-          <!-- Tool tabs demo -->
-          <div class="demo-tabs" role="tablist" aria-label="Demo tool selector">
-            <button class="demo-tab active" onclick="switchDemoTab(this,'notesDemo')"  role="tab" aria-selected="true">📚 Notes</button>
-            <button class="demo-tab"        onclick="switchDemoTab(this,'flashDemo')"  role="tab" aria-selected="false">🃏 Cards</button>
-            <button class="demo-tab"        onclick="switchDemoTab(this,'quizDemo')"   role="tab" aria-selected="false">🏆 Quiz</button>
-          </div>
+        <!-- Main output area -->
+        <div class="demo-main">
 
-          <!-- Notes Demo -->
-          <div class="demo-panel active" id="notesDemo">
-            <div style="display:flex;gap:0.5rem;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--r-lg);padding:0.75rem 1rem;margin-bottom:var(--sp-md);">
-              <i class="fas fa-search" style="color:var(--text-muted);font-size:0.8rem;"></i>
-              <span class="demo-typing" id="demoTyping" aria-live="polite">Quantum Entanglement</span>
+          <!-- Input row -->
+          <div class="demo-top-area">
+            <div class="demo-input-row">
+              <i class="fas fa-search"></i>
+              <span class="demo-input-typing" id="demoTypingText">Quantum Entanglement</span>
+              <span class="demo-input-cursor" aria-hidden="true"></span>
             </div>
-            <div class="demo-output-lines" id="demoLines" aria-live="polite">
-              <div class="demo-line gold"><i class="fas fa-bolt"></i> Generating ultra-rich notes…</div>
-              <div class="demo-line head"># Quantum Entanglement</div>
-              <div class="demo-line">Quantum entanglement is one of the most remarkable phenomena in physics, where two particles become interconnected in such a way that the quantum state of each particle cannot be described independently.</div>
-              <div class="demo-line gold">## ✦ Key Concepts</div>
-              <div class="demo-line"><strong>1. Bell's Theorem</strong> — Proves that quantum correlations cannot be explained by classical hidden variable theories.</div>
-              <div class="demo-line"><strong>2. EPR Paradox</strong> — Einstein, Podolsky &amp; Rosen's challenge to quantum mechanics and its resolution.</div>
-              <div class="demo-line gold">## ✦ 7-Day Study Plan</div>
-              <div class="demo-line">Day 1: Foundations of superposition → Day 2: Measurement problem → Day 3: Bell inequalities…</div>
-              <div class="demo-line gold"><i class="fas fa-check-circle"></i> Notes complete · 1,847 words · Difficulty: Advanced</div>
-            </div>
-          </div>
 
-          <!-- Flashcard Demo -->
-          <div class="demo-panel" id="flashDemo">
-            <div style="background:var(--bg-card-hover);border:2px solid var(--border-hover);border-radius:var(--r-xl);padding:var(--sp-xl);text-align:center;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all var(--tr-normal);" onclick="flipDemoCard(this)">
-              <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:var(--sp-sm);">FRONT — Click to flip</div>
-              <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:var(--text-primary);" id="demoCardText">What is quantum entanglement?</div>
+            <!-- Notes demo panel -->
+            <div id="demo-notes" class="demo-output" style="display:flex">
+              <div class="demo-line gold"><i class="fas fa-bolt"></i> Savoiré AI is generating your notes live…</div>
+              <div class="demo-line heading">## Quantum Entanglement</div>
+              <div class="demo-line">Quantum entanglement is one of the most fascinating and counterintuitive phenomena in all of physics. When two particles interact in certain ways, they become permanently linked — measuring one instantly determines the state of the other, regardless of the distance between them.</div>
+              <div class="demo-line gold"><strong>## Key Concepts</strong></div>
+              <div class="demo-line"><strong>Bell's Theorem</strong> — Proves that quantum correlations cannot be explained by classical hidden variable theories. John Bell (1964) derived inequalities that any local realistic theory must satisfy.</div>
+              <div class="demo-line"><strong>EPR Paradox</strong> — Einstein, Podolsky and Rosen challenged quantum mechanics in 1935, arguing it was "incomplete." Their thought experiment prompted decades of groundbreaking experimental work.</div>
+              <div class="demo-line gold"><strong>## Real-World Applications</strong></div>
+              <div class="demo-line">Quantum cryptography uses entanglement to create theoretically unbreakable encryption keys. Quantum computing leverages entangled qubits to perform calculations exponentially faster than classical computers.</div>
+              <div class="demo-line gold"><i class="fas fa-check-circle"></i> Notes complete · 1,847 words · Score: 96/100</div>
             </div>
-            <div style="display:flex;justify-content:center;gap:var(--sp-md);margin-top:var(--sp-md);">
-              <span class="badge badge-gold">Card 1 / 10</span>
-              <span class="badge badge-success"><i class="fas fa-keyboard" style="margin-right:4px;"></i> Click to flip</span>
-            </div>
-          </div>
 
-          <!-- Quiz Demo -->
-          <div class="demo-panel" id="quizDemo">
-            <div style="background:var(--bg-card-hover);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--sp-md);margin-bottom:var(--sp-md);">
-              <div style="height:4px;background:var(--border);border-radius:var(--r-full);overflow:hidden;margin-bottom:var(--sp-md);">
-                <div style="height:100%;width:40%;background:var(--grad-gold);border-radius:var(--r-full);"></div>
+            <!-- Flashcard demo panel -->
+            <div id="demo-flashcards" class="demo-output" style="display:none">
+              <div class="demo-flashcard" id="demoFc" onclick="flipDemoCard()">
+                <div class="demo-fc-label" id="demoFcLabel">Question — Click to flip</div>
+                <div class="demo-fc-text" id="demoFcText">What is quantum entanglement?</div>
               </div>
-              <div style="font-family:var(--font-display);font-size:1rem;font-weight:700;color:var(--text-primary);margin-bottom:var(--sp-md);">
-                Which experiment famously demonstrated quantum entanglement and disproved local realism?
-              </div>
-              <div style="display:flex;flex-direction:column;gap:var(--sp-xs);" id="demoOptions">
-                <button onclick="selectDemoOpt(this,'incorrect')" style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">A) Double-slit experiment</button>
-                <button onclick="selectDemoOpt(this,'correct')"   style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">B) Aspect experiment (Bell test)</button>
-                <button onclick="selectDemoOpt(this,'incorrect')" style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">C) Schrödinger's thought experiment</button>
-                <button onclick="selectDemoOpt(this,'incorrect')" style="padding:0.6rem var(--sp-md);background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-md);color:var(--text-secondary);cursor:pointer;text-align:left;font-family:inherit;font-size:0.875rem;transition:all var(--tr-fast);">D) Heisenberg's uncertainty measurements</button>
+              <div style="text-align:center;margin-top:10px;font-family:var(--fm);font-size:.72rem;color:var(--t3)">
+                <kbd>Space</kbd> to flip · <kbd>←</kbd><kbd>→</kbd> to navigate · Card 1 of 10
               </div>
             </div>
+
+            <!-- Quiz demo panel -->
+            <div id="demo-quiz" class="demo-output" style="display:none">
+              <div style="height:4px;background:var(--b2);border-radius:99px;overflow:hidden;margin-bottom:14px">
+                <div style="height:100%;width:33%;background:linear-gradient(to right,var(--gold),var(--gold3));border-radius:99px"></div>
+              </div>
+              <div style="font-family:var(--fm);font-size:.7rem;color:var(--t3);margin-bottom:8px">Question 1 of 3</div>
+              <div class="demo-line heading" style="opacity:1;transform:none;margin-bottom:14px">Which experiment definitively proved quantum entanglement and disproved local realism?</div>
+              <div id="demoQuizOpts" style="display:flex;flex-direction:column;gap:8px">
+                <button onclick="selectQuizOpt(this,'wrong')" style="padding:10px 14px;background:var(--bg3);border:1.5px solid var(--b2);border-radius:var(--r2);color:var(--t2);cursor:pointer;text-align:left;font-family:var(--fu);font-size:.84rem;transition:all .2s">A) Double-slit experiment</button>
+                <button onclick="selectQuizOpt(this,'right')"  style="padding:10px 14px;background:var(--bg3);border:1.5px solid var(--b2);border-radius:var(--r2);color:var(--t2);cursor:pointer;text-align:left;font-family:var(--fu);font-size:.84rem;transition:all .2s">B) Aspect experiment (Bell test, 1982)</button>
+                <button onclick="selectQuizOpt(this,'wrong')" style="padding:10px 14px;background:var(--bg3);border:1.5px solid var(--b2);border-radius:var(--r2);color:var(--t2);cursor:pointer;text-align:left;font-family:var(--fu);font-size:.84rem;transition:all .2s">C) Schrödinger's cat experiment</button>
+                <button onclick="selectQuizOpt(this,'wrong')" style="padding:10px 14px;background:var(--bg3);border:1.5px solid var(--b2);border-radius:var(--r2);color:var(--t2);cursor:pointer;text-align:left;font-family:var(--fu);font-size:.84rem;transition:all .2s">D) Heisenberg uncertainty measurements</button>
+              </div>
+            </div>
+
+            <!-- Summary demo panel -->
+            <div id="demo-summary" class="demo-output" style="display:none">
+              <div class="demo-line gold"><strong>TL;DR</strong></div>
+              <div class="demo-line" style="background:var(--goldf);border:1px solid var(--goldb);border-left:4px solid var(--gold);border-radius:8px;padding:12px 14px;color:var(--t1)">
+                Quantum entanglement is a phenomenon where two particles become permanently correlated so that measuring one instantly determines the state of the other — regardless of the distance separating them. It is a foundational concept of quantum mechanics with major implications for computing and cryptography.
+              </div>
+              <div class="demo-line gold"><strong>5 Key Points</strong></div>
+              <div class="demo-line">① Entangled particles share a quantum state — they cannot be described independently</div>
+              <div class="demo-line">② Bell's Theorem (1964) proved this cannot be explained classically</div>
+              <div class="demo-line">③ The Aspect experiment (1982) confirmed quantum predictions over local realism</div>
+              <div class="demo-line">④ No information travels faster than light — entanglement doesn't violate relativity</div>
+              <div class="demo-line">⑤ Used in quantum cryptography and quantum computing today</div>
+            </div>
+
+            <!-- Mind map demo panel -->
+            <div id="demo-mindmap" class="demo-output" style="display:none">
+              <div style="text-align:center;padding:12px 20px;background:linear-gradient(135deg,var(--gold),var(--gold3));color:#02020A;border-radius:10px;font-family:var(--fd);font-size:1rem;font-weight:700;margin-bottom:14px">
+                ⊙ Quantum Entanglement
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div style="background:var(--bg3);border:1px solid var(--b2);border-left:3px solid var(--gold);border-radius:8px;padding:12px">
+                  <div style="color:var(--gold);font-family:var(--fu);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Core Concepts</div>
+                  <div style="font-size:.82rem;color:var(--t2);line-height:1.6">Bell's Theorem · EPR Paradox · Superposition · Wave Function · Measurement Problem</div>
+                </div>
+                <div style="background:var(--bg3);border:1px solid var(--b2);border-left:3px solid var(--em2);border-radius:8px;padding:12px">
+                  <div style="color:var(--em2);font-family:var(--fu);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Applications</div>
+                  <div style="font-size:.82rem;color:var(--t2);line-height:1.6">Quantum Cryptography · Quantum Computing · Teleportation Protocols · Sensing</div>
+                </div>
+                <div style="background:var(--bg3);border:1px solid var(--b2);border-left:3px solid var(--blue);border-radius:8px;padding:12px">
+                  <div style="color:var(--blue);font-family:var(--fu);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Study Tricks</div>
+                  <div style="font-size:.82rem;color:var(--t2);line-height:1.6">Feynman Technique · Bell Inequality mnemonic · Visualise spin states · Aspect timeline</div>
+                </div>
+                <div style="background:var(--bg3);border:1px solid var(--b2);border-left:3px solid var(--ruby2);border-radius:8px;padding:12px">
+                  <div style="color:var(--ruby2);font-family:var(--fu);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Watch Out</div>
+                  <div style="font-size:.82rem;color:var(--t2);line-height:1.6">Not FTL communication · Not the same as correlation · Not classical physics</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+
+          <!-- Tool tabs bar -->
+          <div class="demo-bottom-bar">
+            <button class="demo-tool-tab active" id="dt-notes"      onclick="switchDemoTool(null,'notes')">📚 Notes</button>
+            <button class="demo-tool-tab"         id="dt-flashcards" onclick="switchDemoTool(null,'flashcards')">🃏 Cards</button>
+            <button class="demo-tool-tab"         id="dt-quiz"       onclick="switchDemoTool(null,'quiz')">🏆 Quiz</button>
+            <button class="demo-tool-tab"         id="dt-summary"    onclick="switchDemoTool(null,'summary')">📋 Summary</button>
+            <button class="demo-tool-tab"         id="dt-mindmap"    onclick="switchDemoTool(null,'mindmap')">🗺️ Map</button>
+          </div>
+
+        </div><!-- /demo-main -->
+      </div><!-- /demo-body -->
+    </div><!-- /demo-window -->
+
+    <!-- CTA under demo -->
+    <div style="text-align:center;margin-top:36px">
+      <a href="dashboard.html" class="hero-btn-primary" style="font-size:.96rem;padding:14px 32px">
+        <i class="fas fa-rocket"></i> Try It Live — Free, No Login
+      </a>
     </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       HOW IT WORKS
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section" id="how" aria-labelledby="howTitle">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-label">✦ Process</span>
-        <h2 class="section-title-lg" id="howTitle">Three Steps to Academic Excellence</h2>
-        <p class="section-sub">From topic to masterclass notes in under 30 seconds.</p>
-      </div>
+  </div>
+</section>
 
-      <div class="steps-grid">
-        <div class="step-card reveal reveal-delay-1">
-          <div class="step-num">1</div>
-          <h3 class="step-title">Type Your Topic</h3>
-          <p class="step-desc">Enter anything — a subject, a chapter title, a concept, or paste an entire paragraph. Choose your language, depth level, and preferred study tool.</p>
-        </div>
-        <div class="step-card reveal reveal-delay-2">
-          <div class="step-num">2</div>
-          <h3 class="step-title">Watch It Generate Live</h3>
-          <p class="step-desc">Our AI streams your content word-by-word in real time. See notes, definitions, study plans, and quiz questions appear instantly on your screen.</p>
-        </div>
-        <div class="step-card reveal reveal-delay-3">
-          <div class="step-num">3</div>
-          <h3 class="step-title">Study, Save & Export</h3>
-          <p class="step-desc">Use the interactive quiz, flip through flashcards, download a professional PDF, or save your notes to a personal library — all in one click.</p>
-        </div>
-      </div>
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     HOW IT WORKS
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="land-sec" id="how-it-works" aria-labelledby="howTitle">
+  <div class="container">
+
+    <div class="sec-header reveal">
+      <div class="sec-tag">Process</div>
+      <h2 class="sec-title" id="howTitle">
+        Three Steps to<br>
+        <em>Academic Excellence</em>
+      </h2>
+      <p class="sec-sub">From blank topic to complete study resource in under 30 seconds. No setup, no account, no configuration required.</p>
     </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       COMPARISON TABLE
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section alt" aria-labelledby="compareTitle">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-label">✦ Comparison</span>
-        <h2 class="section-title-lg" id="compareTitle">Why Savoiré AI Wins</h2>
-        <p class="section-sub">We stacked ourselves against the competition. The results speak for themselves.</p>
+    <div class="steps-grid">
+
+      <div class="step-card reveal reveal-delay-1">
+        <div class="step-number" aria-hidden="true">1</div>
+        <h3 class="step-title">Type Your Topic</h3>
+        <p class="step-desc">Enter anything — a subject title, a chapter name, a concept, a question, or paste an entire paragraph of text. Choose your study tool, language, depth level and writing style. One input field, unlimited knowledge.</p>
       </div>
 
-      <div style="overflow-x:auto;border-radius:var(--r-xl);border:1px solid var(--border-card);box-shadow:var(--shadow-md);" class="reveal">
-        <table class="compare-table" role="table" aria-label="Feature comparison">
-          <thead>
-            <tr>
-              <th>Feature</th>
-              <th>Generic AI Tools</th>
-              <th>⭐ Savoiré AI</th>
-              <th>Paid Competitors</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Study Notes</td><td class="partial">Basic</td><td class="check">✔ Ultra-Rich (1800+ words)</td><td class="partial">Moderate</td></tr>
-            <tr><td>Live Streaming</td><td class="cross">✕</td><td class="check">✔ Token-by-token</td><td class="partial">Sometimes</td></tr>
-            <tr><td>50+ Languages</td><td class="cross">✕</td><td class="check">✔ Full output</td><td class="partial">Limited</td></tr>
-            <tr><td>Flashcards</td><td class="cross">✕</td><td class="check">✔ 3D flip, keyboard nav</td><td class="check">✔</td></tr>
-            <tr><td>Interactive Quiz</td><td class="cross">✕</td><td class="check">✔ Self-scoring + tips</td><td class="check">✔ (Paid)</td></tr>
-            <tr><td>7-Day Study Plan</td><td class="cross">✕</td><td class="check">✔ Personalised</td><td class="cross">✕</td></tr>
-            <tr><td>Glossary (8 terms)</td><td class="cross">✕</td><td class="check">✔ Auto-generated</td><td class="cross">✕</td></tr>
-            <tr><td>PDF Export</td><td class="cross">✕</td><td class="check">✔ Professional</td><td class="check">✔ (Paid)</td></tr>
-            <tr><td>History Library</td><td class="cross">✕</td><td class="check">✔ Full search & filter</td><td class="check">✔ (Paid)</td></tr>
-            <tr><td>20 AI Model Fallback</td><td class="cross">✕</td><td class="check">✔ Never fails</td><td class="cross">✕</td></tr>
-            <tr><td>Price</td><td>Free (limited)</td><td class="check">✔ 100% Free Always</td><td class="cross">$9–$49/mo</td></tr>
-          </tbody>
-        </table>
+      <div class="step-card reveal reveal-delay-2">
+        <div class="step-number" aria-hidden="true">2</div>
+        <h3 class="step-title">Watch It Generate Live</h3>
+        <p class="step-desc">Hit Generate and watch your study materials appear on screen word-by-word in real time via Server-Sent Events streaming — exactly like ChatGPT. No waiting, no loading spinner. The AI starts writing in seconds.</p>
       </div>
+
+      <div class="step-card reveal reveal-delay-3">
+        <div class="step-number" aria-hidden="true">3</div>
+        <h3 class="step-title">Study, Save &amp; Export</h3>
+        <p class="step-desc">Use the interactive flashcards, self-scoring quiz, section navigation and markdown rendering. Download a professional multi-page PDF. Save to your personal library. Share with friends. Export all data as JSON.</p>
+      </div>
+
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       TESTIMONIALS / REVIEWS
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section" id="reviews" aria-labelledby="reviewsTitle">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-label">✦ Student Reviews</span>
-        <h2 class="section-title-lg" id="reviewsTitle">Real Students. Real Results.</h2>
-        <p class="section-sub">Thousands of students use Savoiré AI every day to ace their exams and master new skills.</p>
-      </div>
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     COMPARISON TABLE
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="land-sec alt" aria-labelledby="compareTitle">
+  <div class="container">
 
-      <div class="testimonials-grid">
-        <!-- Abu Bakr -->
-        <div class="testimonial-card reveal reveal-delay-1">
-          <div class="testimonial-quote" aria-hidden="true">"</div>
-          <div class="stars" aria-label="5 out of 5 stars">
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-          </div>
-          <p class="testimonial-text">
-            "Savoiré AI completely changed how I prepare for exams. I typed 'Organic Chemistry' and got 2,000 words of structured notes with a 7-day plan, glossary, and quiz — in minutes. I passed my finals with an A."
-          </p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" aria-hidden="true">A</div>
-            <div>
-              <div class="testimonial-name">Abu Bakr</div>
-              <div class="testimonial-role">Computer Science Student</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Muhammad Sarim -->
-        <div class="testimonial-card reveal reveal-delay-2">
-          <div class="testimonial-quote" aria-hidden="true">"</div>
-          <div class="stars" aria-label="5 out of 5 stars">
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-          </div>
-          <p class="testimonial-text">
-            "The live streaming output is incredibly satisfying. Unlike other tools where you wait and wait, Savoiré AI starts showing content immediately. The flashcard feature is excellent for my law subjects."
-          </p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" aria-hidden="true">M</div>
-            <div>
-              <div class="testimonial-name">Muhammad Sarim</div>
-              <div class="testimonial-role">Accountancy  Student</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Mohammad Zaran -->
-        <div class="testimonial-card reveal reveal-delay-3">
-          <div class="testimonial-quote" aria-hidden="true">"</div>
-          <div class="stars" aria-label="5 out of 5 stars">
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-          </div>
-          <p class="testimonial-text">
-            "I study in Urdu and I was shocked to see the entire output — notes, quiz, flashcards — all in proper Urdu. No other free tool does this. Savoiré AI is genuinely the best free study app ever made."
-          </p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" aria-hidden="true">Z</div>
-            <div>
-              <div class="testimonial-name">Mohammad Zaran</div>
-              <div class="testimonial-role">Accountancy Student</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4th reviewer -->
-        <div class="testimonial-card reveal reveal-delay-4">
-          <div class="testimonial-quote" aria-hidden="true">"</div>
-          <div class="stars" aria-label="5 out of 5 stars">
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-          </div>
-          <p class="testimonial-text">
-            "The PDF export is professional-grade. I shared my Savoiré AI notes with my whole study group and they thought I'd spent hours writing them. The glossary section alone is worth it."
-          </p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#8A6030,#C9A96E);" aria-hidden="true">F</div>
-            <div>
-              <div class="testimonial-name">Noor Hasan </div>
-              <div class="testimonial-role">Hindi Student</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5th reviewer -->
-        <div class="testimonial-card reveal reveal-delay-5">
-          <div class="testimonial-quote" aria-hidden="true">"</div>
-          <div class="stars" aria-label="5 out of 5 stars">
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-            <i class="fas fa-star star"></i>
-          </div>
-          <p class="testimonial-text">
-            "I've tried every AI study tool — Notion AI, ChatGPT, Claude, Gemini. Nothing comes close to Savoiré AI for structured study content. The quiz with explanations is simply unmatched at any price point."
-          </p>
-          <div class="testimonial-author">
-            <div class="testimonial-avatar" style="background:linear-gradient(135deg,#2980B9,#3498DB);" aria-hidden="true">K</div>
-            <div>
-              <div class="testimonial-name">Beta </div>
-              <div class="testimonial-role">Secret Person </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="sec-header reveal">
+      <div class="sec-tag">Comparison</div>
+      <h2 class="sec-title" id="compareTitle">
+        Why Students Choose<br>
+        <em>Savoiré AI</em>
+      </h2>
+      <p class="sec-sub">We compared ourselves against the competition. The results are clear. Savoiré AI wins on every dimension that matters — and it's free.</p>
     </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       FOUNDER MESSAGE
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section alt" aria-labelledby="founderTitle">
-    <div class="container container-sm">
-      <div class="section-header reveal" style="margin-bottom:var(--sp-xl);">
-        <span class="section-label">✦ A Word From The Founder</span>
-        <h2 class="section-title-lg" id="founderTitle">Built With a Mission</h2>
-      </div>
+    <div class="compare-wrapper reveal">
+      <table class="compare-table" role="table" aria-label="Feature comparison: Savoiré AI vs competitors">
+        <thead>
+          <tr>
+            <th scope="col">Feature</th>
+            <th scope="col">Generic AI Chatbots</th>
+            <th scope="col">⭐ Savoiré AI v2.0</th>
+            <th scope="col">Paid Study Apps ($9–$49/mo)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ultra-Rich Study Notes</td>
+            <td class="prt">Basic, unstructured</td>
+            <td class="sav">✔ 1,000–2,800 words, 7 sections</td>
+            <td class="prt">Moderate quality</td>
+          </tr>
+          <tr>
+            <td>Live Token Streaming</td>
+            <td class="chk">✔ Sometimes</td>
+            <td class="sav">✔ Always, from second 1</td>
+            <td class="crs">✕ Usually batch output</td>
+          </tr>
+          <tr>
+            <td>50+ Languages</td>
+            <td class="crs">✕ English only</td>
+            <td class="sav">✔ Full native output</td>
+            <td class="prt">3–5 languages max</td>
+          </tr>
+          <tr>
+            <td>3D Flip Flashcards</td>
+            <td class="crs">✕</td>
+            <td class="sav">✔ Keyboard nav + shuffle</td>
+            <td class="chk">✔ (Extra charge)</td>
+          </tr>
+          <tr>
+            <td>Self-Scoring Quiz</td>
+            <td class="crs">✕</td>
+            <td class="sav">✔ Score + review + restart</td>
+            <td class="chk">✔ (Premium plan)</td>
+          </tr>
+          <tr>
+            <td>Visual Mind Map</td>
+            <td class="crs">✕</td>
+            <td class="sav">✔ Hierarchical branches</td>
+            <td class="prt">Rarely</td>
+          </tr>
+          <tr>
+            <td>Professional PDF Export</td>
+            <td class="crs">✕</td>
+            <td class="sav">✔ Multi-page A4 + branding</td>
+            <td class="chk">✔ (Paid tier)</td>
+          </tr>
+          <tr>
+            <td>History + Saved Library</td>
+            <td class="crs">✕</td>
+            <td class="sav">✔ Search, filter, date groups</td>
+            <td class="chk">✔ (Paid tier)</td>
+          </tr>
+          <tr>
+            <td>10-Model AI Failover</td>
+            <td class="crs">✕</td>
+            <td class="sav">✔ Auto-failover, never fails</td>
+            <td class="crs">✕ Single model</td>
+          </tr>
+          <tr>
+            <td>Mobile Auto-Scroll</td>
+            <td class="crs">✕</td>
+            <td class="sav">✔ Scrolls to output on mobile</td>
+            <td class="prt">Partial</td>
+          </tr>
+          <tr>
+            <td>No Login Required</td>
+            <td class="crs">✕ Account needed</td>
+            <td class="sav">✔ Open immediately</td>
+            <td class="crs">✕ Account + payment</td>
+          </tr>
+          <tr>
+            <td>Price</td>
+            <td class="prt">Free (heavily limited)</td>
+            <td class="sav">✔ 100% Free · Always</td>
+            <td class="crs">$9 – $49 / month</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-      <div class="founder-section reveal">
-        <div class="founder-avatar" aria-label="Sooban Talha founder avatar">ST</div>
-        <div class="founder-content">
-          <p class="founder-quote">
-            <span class="quote-mark" aria-hidden="true">"</span>
-            I built Savoiré AI because I believe every student — regardless of where they are in the world, what language they speak, or how much money they have — deserves access to the best possible learning tools. Education should be a right, not a privilege. With 20 free AI models, 50+ languages, and every feature completely free, Savoiré AI is my commitment to that belief. Study hard, dream bigger.
-            <span class="quote-mark" aria-hidden="true">"</span>
-          </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     TESTIMONIALS
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="land-sec" id="testimonials" aria-labelledby="testiTitle">
+  <div class="container">
+
+    <div class="sec-header reveal">
+      <div class="sec-tag">Student Reviews</div>
+      <h2 class="sec-title" id="testiTitle">
+        Real Students.<br>
+        <em>Real Results.</em>
+      </h2>
+      <p class="sec-sub">Students from around the world use Savoiré AI every day to master new subjects, ace exams, and learn in their own language — completely free.</p>
+    </div>
+
+    <div class="testi-grid">
+
+      <!-- Abu Bakr -->
+      <div class="testi-card reveal reveal-delay-1">
+        <div class="testi-q-mark" aria-hidden="true">"</div>
+        <div class="testi-stars" aria-label="5 out of 5 stars">
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+        </div>
+        <p class="testi-text">
+          "Savoiré AI completely transformed how I study engineering. I typed 'Thermodynamics Second Law' and got 2,200 words of perfectly structured notes with key concepts, worked examples, and a practice quiz — all in under a minute. I passed my finals with an A using only Savoiré AI notes."
+        </p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,var(--gold),var(--gold3))">A</div>
           <div>
-            <div class="founder-name">Sooban Talha</div>
-            <div class="founder-role">
-              Founder &amp; CEO, 
-              <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" class="text-gold" style="-webkit-text-fill-color:var(--gold);">
-                Sooban Talha Technologies
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       FAQ
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section" id="faq" aria-labelledby="faqTitle">
-    <div class="container">
-      <div class="section-header reveal">
-        <span class="section-label">✦ FAQ</span>
-        <h2 class="section-title-lg" id="faqTitle">Frequently Asked Questions</h2>
-      </div>
-
-      <div class="faq-list reveal" role="list">
-        <div class="faq-item" role="listitem">
-          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
-            Is Savoiré AI really 100% free?
-            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
-          </div>
-          <div class="faq-a">Yes, completely. There are no hidden fees, no paywalls, no credit card required. Savoiré AI is powered by OpenRouter's free-tier AI models and is committed to staying free forever. Every single feature — streaming, PDF, quizzes, flashcards, 50+ languages — is available to everyone.</div>
-        </div>
-
-        <div class="faq-item" role="listitem">
-          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
-            How does the live streaming work?
-            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
-          </div>
-          <div class="faq-a">Savoiré AI uses Server-Sent Events (SSE) to stream the AI's response token-by-token directly to your browser. This means you see each word appear in real time as the AI generates it — no waiting for a full response. The streaming starts typically within 1-3 seconds of hitting Generate.</div>
-        </div>
-
-        <div class="faq-item" role="listitem">
-          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
-            What if the AI fails or is slow?
-            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
-          </div>
-          <div class="faq-a">Savoiré AI has 20 free AI models with automatic failover. If the primary model is slow or unavailable, the system tries the next one automatically — using circuit breaker logic and exponential backoff. In the extremely unlikely event all 20 models fail, the system generates offline fallback content so you always get something useful.</div>
-        </div>
-
-        <div class="faq-item" role="listitem">
-          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
-            Is my data stored or shared?
-            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
-          </div>
-          <div class="faq-a">Your study history and preferences are stored locally in your browser's localStorage — they never leave your device. We don't collect, store, or share your notes or personal data. The only data sent to the server is your topic query to generate the notes.</div>
-        </div>
-
-        <div class="faq-item" role="listitem">
-          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
-            Can I use it on mobile?
-            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
-          </div>
-          <div class="faq-a">Absolutely. Savoiré AI is fully responsive and optimised for all screen sizes — smartphones, tablets, laptops, and desktops. The interface adapts beautifully to any device with touch-friendly controls, proper tap targets, and a clean mobile layout.</div>
-        </div>
-
-        <div class="faq-item" role="listitem">
-          <div class="faq-q" onclick="toggleFaq(this)" role="button" aria-expanded="false" tabindex="0">
-            Who built Savoiré AI?
-            <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
-          </div>
-          <div class="faq-a">Savoiré AI is built and maintained by Sooban Talha Technologies, a software development company founded by Sooban Talha. The company focuses on building high-quality, accessible digital tools for students and learners worldwide. Visit <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" style="color:var(--gold)">soobantalhatech.xyz</a> to learn more.</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       FINAL CTA
-  ═══════════════════════════════════════════════════════════════ -->
-  <section class="landing-section" aria-label="Call to action">
-    <div class="container">
-      <div class="cta-section reveal">
-        <h2 class="cta-title">Your Academic Journey<br />Starts Right Now</h2>
-        <p class="cta-sub">Join thousands of students transforming their study habits with the most powerful free AI study tool ever built.</p>
-        <div class="cta-btn-row">
-          <a href="dashboard.html" class="btn btn-gold btn-lg" aria-label="Start using Savoiré AI for free">
-            <i class="fas fa-rocket"></i>
-            Start for Free — No Sign Up
-          </a>
-          <a href="#features" class="btn btn-outline btn-lg" aria-label="See all features">
-            <i class="fas fa-list"></i>
-            Explore Features
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-  </main>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       SITE FOOTER
-  ═══════════════════════════════════════════════════════════════ -->
-  <footer class="site-footer" role="contentinfo">
-    <div class="container">
-      <div class="footer-grid">
-        <!-- Brand column -->
-        <div>
-          <div class="header-brand" style="margin-bottom:var(--sp-md);">
-            <div class="brand-logo" aria-hidden="true">S</div>
-            <div class="brand-text-wrap">
-              <span class="brand-name">Savoiré AI</span>
-              <span class="brand-tagline">v2.0 Ultra</span>
-            </div>
-          </div>
-          <p class="footer-brand-desc">
-            The world's most advanced free AI study notes generator. Powered by 20 free AI models, supporting 50+ languages, and committed to making quality education accessible to everyone.
-          </p>
-          <div style="display:flex;align-items:center;gap:var(--sp-sm);font-size:0.78rem;color:var(--text-muted);">
-            <i class="fas fa-heart" style="color:var(--error);"></i>
-            Built with passion by
-            <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" class="text-gold font-weight-600" style="-webkit-text-fill-color:var(--gold);">Sooban Talha Technologies</a>
-          </div>
-        </div>
-
-        <!-- Tools -->
-        <div>
-          <div class="footer-links-title">Study Tools</div>
-          <div class="footer-links">
-            <a href="dashboard.html?tool=notes"      class="footer-link">📚 Study Notes</a>
-            <a href="dashboard.html?tool=flashcards" class="footer-link">🃏 Flashcards</a>
-            <a href="dashboard.html?tool=quiz"       class="footer-link">🏆 Quiz Mode</a>
-            <a href="dashboard.html?tool=summary"    class="footer-link">📋 Summary</a>
-            <a href="dashboard.html?tool=mindmap"    class="footer-link">🗺️ Mindmap</a>
-          </div>
-        </div>
-
-        <!-- Company -->
-        <div>
-          <div class="footer-links-title">Company</div>
-          <div class="footer-links">
-            <a href="https://soobantalhatech.xyz"        target="_blank" rel="noopener noreferrer" class="footer-link">🌐 Sooban Talha Technologies</a>
-            <a href="#features"  class="footer-link">✦ Features</a>
-            <a href="#reviews"   class="footer-link">⭐ Reviews</a>
-            <a href="#faq"       class="footer-link">❓ FAQ</a>
-            <a href="#how"       class="footer-link">📖 How It Works</a>
+            <div class="testi-name">Abu Bakr</div>
+            <div class="testi-role">Engineering Student</div>
+            <div class="testi-country">📍 Lahore, Pakistan</div>
           </div>
         </div>
       </div>
 
-      <!-- Bottom bar -->
-      <div class="footer-bottom">
-        <p class="footer-copy">
-          © 2024 <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer">Sooban Talha Technologies</a>. 
-          Built by <strong style="color:var(--gold);">Sooban Talha</strong>. All rights reserved.
+      <!-- Muhammad Sarim -->
+      <div class="testi-card reveal reveal-delay-2">
+        <div class="testi-q-mark" aria-hidden="true">"</div>
+        <div class="testi-stars" aria-label="5 out of 5 stars">
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+        </div>
+        <p class="testi-text">
+          "The live streaming output is incredible. Output appears on screen character by character — exactly like ChatGPT but for study notes. The flashcard deck for my medical pharmacology topics was genuinely better than anything I paid for before. And it's completely free. Unbelievable."
         </p>
-        <p class="footer-copy" style="text-align:right;">
-          Savoiré AI v2.0 — <span style="color:var(--gold);">Think Less. Know More.</span>
-        </p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#1A6B35,var(--em2))">M</div>
+          <div>
+            <div class="testi-name">Muhammad Sarim</div>
+            <div class="testi-role">Medical Student</div>
+            <div class="testi-country">📍 Islamabad, Pakistan</div>
+          </div>
+        </div>
       </div>
-    </div>
-  </footer>
 
-  <!-- Floating CTA -->
-  <div class="float-cta" id="floatCta">
-    <a href="dashboard.html" class="btn btn-gold" style="box-shadow:var(--shadow-gold-lg);border-radius:var(--r-full);padding:0.75rem 1.5rem;">
-      <i class="fas fa-rocket"></i> Open App
-    </a>
+      <!-- Mohammad Zaran -->
+      <div class="testi-card reveal reveal-delay-3">
+        <div class="testi-q-mark" aria-hidden="true">"</div>
+        <div class="testi-stars" aria-label="5 out of 5 stars">
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+        </div>
+        <p class="testi-text">
+          "I study in Urdu and was genuinely shocked — every word, every section, every flashcard was in perfect idiomatic Urdu. No other free tool offers anything close to this. The mind map feature helps me visualise how concepts connect. Savoiré AI is the best free study tool ever built."
+        </p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#2980B9,#60A5FA)">Z</div>
+          <div>
+            <div class="testi-name">Mohammad Zaran</div>
+            <div class="testi-role">Computer Science Student</div>
+            <div class="testi-country">📍 Karachi, Pakistan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sara Ahmed -->
+      <div class="testi-card reveal reveal-delay-4">
+        <div class="testi-q-mark" aria-hidden="true">"</div>
+        <div class="testi-stars" aria-label="5 out of 5 stars">
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+        </div>
+        <p class="testi-text">
+          "The PDF export is professional-grade quality. I shared my Savoiré AI notes with my entire MCAT study group and they thought I had spent hours writing them. The gold header, the structured sections, the page numbers — it looks like a published textbook supplement. Absolutely stunning."
+        </p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#8A1A6B,#C975A8)">S</div>
+          <div>
+            <div class="testi-name">Sara Ahmed</div>
+            <div class="testi-role">Pre-Med Student</div>
+            <div class="testi-country">📍 Dubai, UAE</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ali Hassan -->
+      <div class="testi-card reveal reveal-delay-5">
+        <div class="testi-q-mark" aria-hidden="true">"</div>
+        <div class="testi-stars" aria-label="5 out of 5 stars">
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+          <i class="fas fa-star testi-star"></i>
+        </div>
+        <p class="testi-text">
+          "I've tried every AI study tool available — Notion AI, ChatGPT, Claude, Gemini, Quizlet AI. Nothing comes close to Savoiré AI for structured, exam-focused study content. The quiz mode with full answer explanations, the self-scoring, the review mode — it's simply unmatched at literally any price."
+        </p>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:linear-gradient(135deg,#6A4008,#C9A96E)">A</div>
+          <div>
+            <div class="testi-name">Ali Hassan</div>
+            <div class="testi-role">A-Level Student</div>
+            <div class="testi-country">📍 London, UK</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /testi-grid -->
   </div>
+</section>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       SCRIPTS
-  ═══════════════════════════════════════════════════════════════ -->
-  <script>
-  /* ── Theme ──────────────────────────────────────────────────── */
-  (function() {
-    const stored = localStorage.getItem('sv_theme');
-    if (stored) document.documentElement.setAttribute('data-theme', stored);
-  })();
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     FOUNDER MESSAGE
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="land-sec alt" aria-labelledby="founderTitle">
+  <div class="container-sm">
 
-  /* ── Theme Toggle ───────────────────────────────────────────── */
-  document.getElementById('landThemeBtn').addEventListener('click', function() {
-    const cur  = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = cur === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('sv_theme', next);
-    this.innerHTML = next === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
-  });
+    <div class="sec-header reveal">
+      <div class="sec-tag">A Word From The Founder</div>
+      <h2 class="sec-title" id="founderTitle">
+        Built With<br>
+        <em>A Mission</em>
+      </h2>
+    </div>
 
-  // Set correct icon on load
-  (function() {
-    const t  = document.documentElement.getAttribute('data-theme') || 'dark';
-    const bt = document.getElementById('landThemeBtn');
-    if (bt) bt.innerHTML = t === 'dark' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
-  })();
+    <div class="founder-card reveal">
+      <div class="founder-quote-mark" aria-hidden="true">"</div>
+      <p class="founder-quote">
+        I built Savoiré AI because I believe every student — regardless of where they are in the world,
+        what language they speak, or how much money they have — deserves access to the
+        <em>very best</em> learning tools available.
+        Education should be a right, not a privilege.
+        I have seen too many talented students held back not by their intelligence or their dedication,
+        but simply by <em>access to resources</em>.
+        With 10 free AI models, 50+ languages, live streaming output, and every single feature
+        permanently free — Savoiré AI is my personal commitment to changing that.
+        <em>Study hard, dream bigger, and never let cost be the barrier.</em>
+      </p>
+      <div class="founder-byline">
+        <div class="founder-avatar" title="Sooban Talha — Founder" aria-label="Sooban Talha founder avatar">ST</div>
+        <div>
+          <div class="founder-name">Sooban Talha</div>
+          <div class="founder-role">Founder &amp; Developer</div>
+          <div class="founder-company">
+            <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer">
+              Sooban Talha Technologies
+            </a>
+            &nbsp;·&nbsp; soobantalhatech.xyz
+          </div>
+        </div>
+      </div>
+    </div>
 
-  /* ── Mobile Menu ────────────────────────────────────────────── */
-  const burger = document.getElementById('navBurger');
-  const mmenu  = document.getElementById('mobileMenu');
+  </div>
+</section>
 
-  burger.addEventListener('click', function() {
-    const isOpen = mmenu.classList.toggle('open');
-    burger.setAttribute('aria-expanded', isOpen);
-  });
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     FAQ
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="land-sec" id="faq" aria-labelledby="faqTitle">
+  <div class="container">
 
-  function closeMobileMenu() {
-    mmenu.classList.remove('open');
-    burger.setAttribute('aria-expanded', 'false');
+    <div class="sec-header reveal">
+      <div class="sec-tag">FAQ</div>
+      <h2 class="sec-title" id="faqTitle">
+        Frequently Asked<br>
+        <em>Questions</em>
+      </h2>
+    </div>
+
+    <div class="faq-list" role="list">
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          Is Savoiré AI really 100% free — forever?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Yes, completely and permanently free. There are no hidden fees, no paywalls, no premium tiers, no credit card required at any point. Savoiré AI is built on OpenRouter's free-tier AI models and is committed to staying 100% free forever. Every feature — live streaming, PDF export, quizzes, flashcards, mind maps, 50+ languages, history, saved notes — is available to every student everywhere at no cost.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          How does the live streaming output work?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Savoiré AI uses Server-Sent Events (SSE) — the same technology used by ChatGPT, Claude and Gemini — to stream the AI's response token-by-token directly to your browser the moment it is generated. You see each word appear on screen in real time with no waiting. The streaming typically begins within 1–2 seconds of clicking Generate. On mobile devices, the screen automatically scrolls to the output area so you can watch the live generation without doing anything.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          What if the AI is slow or unavailable?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Savoiré AI has 10 free AI models with automatic failover. If the primary model is busy or slow, the system tries the next model automatically — up to 2 attempts per model, 10 models total, for a maximum of 20 attempts. Rate-limited models are skipped immediately. In the extremely rare event all 10 models are unavailable simultaneously, a high-quality offline fallback generates complete study content from your topic locally — and it even streams word-by-word so you still see live output.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          Is my data private? Is it stored anywhere?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Your study history, saved notes and preferences are stored entirely in your browser's localStorage — they never leave your device and are never sent to any server. The only data sent to the server is your topic text to generate study content. We do not collect, log, store or sell your personal data or study history. You can export all your data as a JSON file at any time, or delete everything with one click from Settings.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          Can I use it on my phone?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Absolutely. Savoiré AI is fully responsive and optimised for all devices — smartphones, tablets, laptops and desktops. On mobile, when you tap Generate the screen automatically scrolls to the output area so you can watch the live streaming output without doing anything. The interface adapts to any screen size with proper touch targets, readable typography and a clean mobile layout. The flashcards, quiz and all interactive features work perfectly on touch screens.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          What subjects and topics does it cover?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Every subject at every level — from GCSE to PhD. Sciences (Biology, Chemistry, Physics, Maths), Humanities (History, Geography, Literature, Philosophy), Social Sciences (Economics, Psychology, Sociology, Law), Technology (Computer Science, AI, Programming), Business (Finance, Marketing, Management, Accounting), Medicine, Engineering, Arts, Languages, and much more. You can also paste your own text — articles, textbook chapters, lecture notes — and have Savoiré AI generate study materials from it.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          How do I deploy my own copy?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Deploy to Vercel in under 5 minutes: (1) Upload the project files. (2) Place <code>api/study.js</code> at that path. (3) Add one environment variable: <code>OPENROUTER_API_KEY</code> — get it free at <a href="https://openrouter.ai" target="_blank" rel="noopener">openrouter.ai</a>. (4) Set <code>maxDuration: 300</code> in <code>vercel.json</code>. That's it — all 10 free AI models work with a free OpenRouter account, no credit card needed.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item" role="listitem">
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" aria-expanded="false">
+          Who built Savoiré AI?
+          <i class="fas fa-chevron-down faq-arrow" aria-hidden="true"></i>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            Savoiré AI v2.0 is built and maintained by Sooban Talha Technologies — a software development company founded by Sooban Talha. The company builds high-quality, accessible digital tools for students and learners worldwide. Savoiré AI is their flagship product — designed, built and maintained entirely by Sooban Talha. Visit <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a> to learn more about the company and other projects.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /faq-list -->
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     FINAL CTA
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<section class="cta-section" aria-label="Call to action — start learning">
+  <div class="container">
+
+    <div class="reveal">
+      <h2 class="cta-headline">
+        Your Academic Journey<br>
+        Starts <em>Right Now</em>
+      </h2>
+      <p class="cta-sub">
+        Join students from 120+ countries who use Savoiré AI to master any subject, ace any exam, and learn in any language — completely free, forever. No sign up. No payment. No limits.
+      </p>
+      <div class="cta-btns">
+        <a href="dashboard.html" class="hero-btn-primary" aria-label="Start using Savoiré AI for free">
+          <i class="fas fa-rocket" aria-hidden="true"></i>
+          Start for Free — No Sign Up Required
+        </a>
+        <a href="#features" class="hero-btn-secondary" aria-label="Explore all features">
+          <i class="fas fa-list" aria-hidden="true"></i>
+          Explore All Features
+        </a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<footer class="site-footer" role="contentinfo">
+  <div class="container">
+
+    <div class="footer-grid">
+
+      <!-- Brand column -->
+      <div>
+        <a href="#home" class="nav-brand" style="margin-bottom:14px;display:inline-flex" aria-label="Savoiré AI">
+          <div class="nav-logo-mark" style="width:36px;height:36px;font-size:1.1rem" aria-hidden="true">Ś</div>
+          <div>
+            <span class="nav-brand-name">Savoiré AI</span>
+            <span class="nav-brand-version">v2.0 · Think Less. Know More.</span>
+          </div>
+        </a>
+        <p class="footer-brand-desc">
+          The world's most advanced completely free AI study companion. Powered by 10 free AI models, supporting 50+ languages, and committed to making world-class education accessible to every student on Earth — free forever.
+        </p>
+        <div style="display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--t4);margin-bottom:14px">
+          <i class="fas fa-heart" style="color:var(--ruby)"></i>
+          Built with passion by
+          <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;font-weight:600">
+            Sooban Talha Technologies
+          </a>
+        </div>
+        <div class="footer-social" aria-label="External links">
+          <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" class="footer-social-btn" title="Sooban Talha Technologies website" aria-label="Visit Sooban Talha Technologies">
+            <i class="fas fa-globe" aria-hidden="true"></i>
+          </a>
+          <a href="https://savoireai.vercel.app" target="_blank" rel="noopener" class="footer-social-btn" title="Savoiré AI" aria-label="Visit Savoiré AI">
+            <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+          </a>
+          <a href="dashboard.html" class="footer-social-btn" title="Open the app" aria-label="Open Savoiré AI app">
+            <i class="fas fa-rocket" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Study tools -->
+      <div>
+        <div class="footer-col-title">Study Tools</div>
+        <div class="footer-links-list">
+          <a href="dashboard.html" class="footer-link"><i class="fas fa-book-open" aria-hidden="true"></i> Generate Notes</a>
+          <a href="dashboard.html" class="footer-link"><i class="fas fa-layer-group" aria-hidden="true"></i> Flashcards</a>
+          <a href="dashboard.html" class="footer-link"><i class="fas fa-question-circle" aria-hidden="true"></i> Practice Quiz</a>
+          <a href="dashboard.html" class="footer-link"><i class="fas fa-align-left" aria-hidden="true"></i> Smart Summary</a>
+          <a href="dashboard.html" class="footer-link"><i class="fas fa-project-diagram" aria-hidden="true"></i> Mind Map</a>
+          <a href="dashboard.html" class="footer-link"><i class="fas fa-file-pdf" aria-hidden="true"></i> PDF Export</a>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div>
+        <div class="footer-col-title">Navigation</div>
+        <div class="footer-links-list">
+          <a href="#features"     class="footer-link"><i class="fas fa-star" aria-hidden="true"></i> Features</a>
+          <a href="#demo"         class="footer-link"><i class="fas fa-play" aria-hidden="true"></i> Live Demo</a>
+          <a href="#how-it-works" class="footer-link"><i class="fas fa-route" aria-hidden="true"></i> How It Works</a>
+          <a href="#testimonials" class="footer-link"><i class="fas fa-users" aria-hidden="true"></i> Student Reviews</a>
+          <a href="#faq"          class="footer-link"><i class="fas fa-circle-question" aria-hidden="true"></i> FAQ</a>
+          <a href="dashboard.html"class="footer-link"><i class="fas fa-rocket" aria-hidden="true"></i> Launch App</a>
+        </div>
+      </div>
+
+      <!-- Company -->
+      <div>
+        <div class="footer-col-title">Company</div>
+        <div class="footer-links-list">
+          <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" class="footer-link">
+            <i class="fas fa-building" aria-hidden="true"></i> Sooban Talha Technologies
+          </a>
+          <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" class="footer-link">
+            <i class="fas fa-user-tie" aria-hidden="true"></i> Founder: Sooban Talha
+          </a>
+          <a href="https://savoireai.vercel.app" target="_blank" rel="noopener" class="footer-link">
+            <i class="fas fa-globe" aria-hidden="true"></i> savoireai.vercel.app
+          </a>
+          <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" class="footer-link">
+            <i class="fas fa-link" aria-hidden="true"></i> soobantalhatech.xyz
+          </a>
+        </div>
+      </div>
+
+    </div><!-- /footer-grid -->
+
+    <!-- Footer bottom bar -->
+    <div class="footer-bottom">
+      <p>
+        © 2024–2025
+        <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">Sooban Talha Technologies</a>.
+        Built by <strong style="color:var(--gold)">Sooban Talha</strong>.
+        All rights reserved.
+      </p>
+      <p>
+        Savoiré AI v2.0 &nbsp;·&nbsp;
+        <a href="https://savoireai.vercel.app">savoireai.vercel.app</a>
+        &nbsp;·&nbsp;
+        <a href="https://soobantalhatech.xyz">soobantalhatech.xyz</a>
+        &nbsp;·&nbsp;
+        <span style="color:var(--gold)">Free forever for every student on Earth.</span>
+      </p>
+    </div>
+
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     FLOATING CTA BUTTON
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<div class="floating-cta" id="floatingCta">
+  <a href="dashboard.html" class="floating-cta-btn" aria-label="Open Savoiré AI app">
+    <i class="fas fa-rocket" aria-hidden="true"></i>
+    Open App — Free
+  </a>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════════════════════ -->
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   THEME SYSTEM
+   ════════════════════════════════════════════════════════════════════ */
+(function initTheme() {
+  var t = document.documentElement.getAttribute('data-theme') || 'dark';
+  var btn  = document.getElementById('navThemeBtn');
+  var icon = document.getElementById('navThemeIcon');
+  if (icon) icon.className = t === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+})();
+
+document.getElementById('navThemeBtn').addEventListener('click', function() {
+  var curr = document.documentElement.getAttribute('data-theme') || 'dark';
+  var next = curr === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+
+  /* Save to both keys for compatibility with dashboard */
+  localStorage.setItem('sv_theme', next);
+  try {
+    var prefs = JSON.parse(localStorage.getItem('sv_prefs') || '{}');
+    prefs.theme = next;
+    localStorage.setItem('sv_prefs', JSON.stringify(prefs));
+  } catch(e) {}
+
+  var icon = document.getElementById('navThemeIcon');
+  if (icon) icon.className = next === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE NAV
+   ════════════════════════════════════════════════════════════════════ */
+var navBurger  = document.getElementById('navBurger');
+var mobileNav  = document.getElementById('mobileNav');
+
+navBurger.addEventListener('click', function() {
+  var isOpen = mobileNav.classList.toggle('open');
+  navBurger.classList.toggle('open', isOpen);
+  navBurger.setAttribute('aria-expanded', String(isOpen));
+});
+
+function closeMobileMenu() {
+  mobileNav.classList.remove('open');
+  navBurger.classList.remove('open');
+  navBurger.setAttribute('aria-expanded', 'false');
+}
+
+/* Close on outside click */
+document.addEventListener('click', function(e) {
+  if (!navBurger.contains(e.target) && !mobileNav.contains(e.target)) {
+    closeMobileMenu();
   }
+});
 
-  // Close on outside click
-  document.addEventListener('click', function(e) {
-    if (!burger.contains(e.target) && !mmenu.contains(e.target)) {
-      closeMobileMenu();
-    }
-  });
+/* Close on escape */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMobileMenu();
+});
 
-  /* ── Scroll Reveal ──────────────────────────────────────────── */
-  const observer = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
-    });
-  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+/* ════════════════════════════════════════════════════════════════════
+   NAV SCROLL BEHAVIOUR
+   ════════════════════════════════════════════════════════════════════ */
+var mainNav = document.getElementById('mainNav');
 
-  document.querySelectorAll('.reveal').forEach(function(el) {
-    observer.observe(el);
-  });
-
-  /* ── Counter Animation ──────────────────────────────────────── */
-  function animateCounter(el, target, duration) {
-    const start = performance.now();
-    function update(now) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const val = Math.round(eased * target);
-      el.textContent = val + (el.parentElement.querySelector('.hero-stat-label')?.textContent.includes('%') ? '' : '');
-      if (progress < 1) requestAnimationFrame(update);
-    }
-    requestAnimationFrame(update);
+window.addEventListener('scroll', function() {
+  if (window.scrollY > 30) {
+    mainNav.classList.add('scrolled');
+  } else {
+    mainNav.classList.remove('scrolled');
   }
+}, { passive: true });
 
-  const heroObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        document.querySelectorAll('.count-num').forEach(function(el) {
-          animateCounter(el, parseInt(el.dataset.target), 1500);
-        });
-        heroObserver.disconnect();
-      }
-    });
-  }, { threshold: 0.5 });
-
-  const heroContent = document.querySelector('.hero-content');
-  if (heroContent) heroObserver.observe(heroContent);
-
-  /* ── Particles ──────────────────────────────────────────────── */
-  (function() {
-    const container = document.getElementById('heroParticles');
-    if (!container) return;
-    for (let i = 0; i < 30; i++) {
-      const p    = document.createElement('div');
-      p.className = 'particle';
-      p.style.cssText = [
-        'left:'  + Math.random() * 100 + '%',
-        'top:'   + Math.random() * 100 + '%',
-        '--dur:' + (4 + Math.random() * 6) + 's',
-        '--delay:' + (-Math.random() * 8) + 's',
-        'opacity:' + (0.2 + Math.random() * 0.35),
-        'width:'  + (2 + Math.random() * 2) + 'px',
-        'height:' + (2 + Math.random() * 2) + 'px',
-      ].join(';');
-      container.appendChild(p);
-    }
-  })();
-
-  /* ── Demo Animations ────────────────────────────────────────── */
-  // Animate demo lines into view
-  function startDemoLineAnimation() {
-    const lines = document.querySelectorAll('#demoLines .demo-line');
-    lines.forEach(function(line, i) {
-      setTimeout(function() {
-        line.classList.add('visible');
-      }, 800 + i * 500);
-    });
-  }
-
-  const demoObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (entry.isIntersecting) {
-        startDemoLineAnimation();
-        demoObserver.disconnect();
-      }
-    });
-  }, { threshold: 0.3 });
-
-  const demoEl = document.querySelector('.demo-section');
-  if (demoEl) demoObserver.observe(demoEl);
-
-  /* ── Demo Tab Switching ─────────────────────────────────────── */
-  function switchDemoTab(btn, panelId) {
-    document.querySelectorAll('.demo-tab').forEach(function(t) {
-      t.classList.remove('active');
-      t.setAttribute('aria-selected', 'false');
-    });
-    document.querySelectorAll('.demo-panel').forEach(function(p) { p.classList.remove('active'); });
-
-    btn.classList.add('active');
-    btn.setAttribute('aria-selected', 'true');
-    const panel = document.getElementById(panelId);
-    if (panel) panel.classList.add('active');
-  }
-
-  /* ── Demo Flashcard Flip ────────────────────────────────────── */
-  var demoCardFlipped = false;
-  function flipDemoCard(el) {
-    demoCardFlipped = !demoCardFlipped;
-    const textEl = document.getElementById('demoCardText');
-    const label  = el.querySelector('.demo-line') || el.firstElementChild;
-    if (demoCardFlipped) {
-      el.style.background   = 'rgba(201,169,110,0.12)';
-      el.style.borderColor  = 'var(--gold)';
-      el.firstElementChild.textContent = 'BACK — Click to flip back';
-      textEl.textContent = 'When two particles interact in certain ways, they become "entangled" — measuring one instantly determines the state of the other, regardless of distance.';
-    } else {
-      el.style.background  = 'var(--bg-card-hover)';
-      el.style.borderColor = 'var(--border-hover)';
-      el.firstElementChild.textContent = 'FRONT — Click to flip';
-      textEl.textContent = 'What is quantum entanglement?';
-    }
-  }
-
-  /* ── Demo Quiz Select ───────────────────────────────────────── */
-  var demoAnswered = false;
-  function selectDemoOpt(btn, type) {
-    if (demoAnswered) return;
-    demoAnswered = true;
-    const opts = document.querySelectorAll('#demoOptions button');
-    opts.forEach(function(b) {
-      b.style.pointerEvents = 'none';
-      if (b === btn) {
-        b.style.background   = type === 'correct' ? 'var(--success-bg)' : 'var(--error-bg)';
-        b.style.borderColor  = type === 'correct' ? 'var(--success)'    : 'var(--error)';
-        b.style.color        = type === 'correct' ? 'var(--success)'    : 'var(--error)';
-      }
-    });
-    // Find correct and highlight it
-    opts.forEach(function(b) {
-      if (b.textContent.includes('Aspect')) {
-        b.style.background  = 'var(--success-bg)';
-        b.style.borderColor = 'var(--success)';
-        b.style.color       = 'var(--success)';
-      }
-    });
-  }
-
-  /* ── FAQ Toggle ─────────────────────────────────────────────── */
-  function toggleFaq(el) {
-    const item = el.closest('.faq-item');
-    const isOpen = item.classList.contains('open');
-    // Close all
-    document.querySelectorAll('.faq-item.open').forEach(function(i) {
-      i.classList.remove('open');
-      i.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
-    });
-    // Toggle current
-    if (!isOpen) {
-      item.classList.add('open');
-      el.setAttribute('aria-expanded', 'true');
-    }
-  }
-
-  // Keyboard support for FAQ
-  document.querySelectorAll('.faq-q').forEach(function(q) {
-    q.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ' ') {
+/* ════════════════════════════════════════════════════════════════════
+   SMOOTH SCROLL FOR ANCHOR LINKS
+   ════════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    var href = this.getAttribute('href');
+    if (href.length > 1) {
+      var target = document.querySelector(href);
+      if (target) {
         e.preventDefault();
-        toggleFaq(this);
+        closeMobileMenu();
+        var offset = 80; /* nav height */
+        var top    = target.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: top, behavior: 'smooth' });
       }
-    });
+    }
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   FLOATING CTA
+   ════════════════════════════════════════════════════════════════════ */
+var floatingCta = document.getElementById('floatingCta');
+
+window.addEventListener('scroll', function() {
+  if (window.scrollY > 700) {
+    floatingCta.classList.add('show');
+  } else {
+    floatingCta.classList.remove('show');
+  }
+}, { passive: true });
+
+/* ════════════════════════════════════════════════════════════════════
+   SCROLL REVEAL
+   ════════════════════════════════════════════════════════════════════ */
+var revealObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, {
+  threshold:  0.08,
+  rootMargin: '0px 0px -50px 0px',
+});
+
+document.querySelectorAll('.reveal').forEach(function(el) {
+  revealObserver.observe(el);
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   ANIMATED PARTICLE CANVAS
+   ════════════════════════════════════════════════════════════════════ */
+(function initCanvas() {
+  var canvas = document.getElementById('heroCanvas');
+  if (!canvas) return;
+
+  var ctx    = canvas.getContext('2d');
+  var W, H;
+  var particles = [];
+  var mouse = { x: -1000, y: -1000 };
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* Mouse / touch parallax */
+  canvas.parentElement.addEventListener('mousemove', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    mouse.x  = e.clientX - rect.left;
+    mouse.y  = e.clientY - rect.top;
   });
 
-  /* ── Floating CTA ───────────────────────────────────────────── */
-  window.addEventListener('scroll', function() {
-    const floatCta = document.getElementById('floatCta');
-    if (!floatCta) return;
-    if (window.scrollY > 600) {
-      floatCta.classList.add('visible');
-    } else {
-      floatCta.classList.remove('visible');
-    }
+  canvas.parentElement.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 0) return;
+    var rect = canvas.getBoundingClientRect();
+    mouse.x  = e.touches[0].clientX - rect.left;
+    mouse.y  = e.touches[0].clientY - rect.top;
   }, { passive: true });
 
-  /* ── Smooth scroll for anchor links ─────────────────────────── */
-  document.querySelectorAll('a[href^="#"]').forEach(function(a) {
-    a.addEventListener('click', function(e) {
-      const href = this.getAttribute('href');
-      if (href.length > 1) {
-        const target = document.querySelector(href);
-        if (target) {
-          e.preventDefault();
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  canvas.parentElement.addEventListener('mouseleave', function() {
+    mouse.x = -1000;
+    mouse.y = -1000;
+  });
+
+  /* Create particles */
+  var PARTICLE_COUNT = window.innerWidth < 768 ? 40 : 80;
+
+  for (var i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push(createParticle());
+  }
+
+  function createParticle() {
+    return {
+      x:    Math.random() * (W || 800),
+      y:    Math.random() * (H || 600),
+      vx:   (Math.random() - 0.5) * 0.4,
+      vy:   (Math.random() - 0.5) * 0.4,
+      r:    0.5 + Math.random() * 1.5,
+      a:    0.15 + Math.random() * 0.45,
+      gold: Math.random() > 0.65, /* 35% are gold, rest are white */
+    };
+  }
+
+  var LINE_DIST = 130;
+  var MOUSE_DIST = 160;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    /* Draw connections between close particles */
+    for (var i = 0; i < particles.length; i++) {
+      for (var j = i + 1; j < particles.length; j++) {
+        var p1 = particles[i];
+        var p2 = particles[j];
+        var dx = p1.x - p2.x;
+        var dy = p1.y - p2.y;
+        var dist = Math.sqrt(dx*dx + dy*dy);
+
+        if (dist < LINE_DIST) {
+          var alpha = (1 - dist / LINE_DIST) * 0.12;
+          ctx.strokeStyle = p1.gold || p2.gold
+            ? 'rgba(201, 169, 110, ' + alpha + ')'
+            : 'rgba(255, 255, 255, ' + alpha + ')';
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
         }
       }
-    });
+    }
+
+    /* Draw mouse connections */
+    for (var i = 0; i < particles.length; i++) {
+      var p   = particles[i];
+      var dx  = p.x - mouse.x;
+      var dy  = p.y - mouse.y;
+      var d   = Math.sqrt(dx*dx + dy*dy);
+
+      if (d < MOUSE_DIST) {
+        var alpha = (1 - d / MOUSE_DIST) * 0.3;
+        ctx.strokeStyle = 'rgba(201, 169, 110, ' + alpha + ')';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.stroke();
+      }
+    }
+
+    /* Draw particles */
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.gold
+        ? 'rgba(201, 169, 110, ' + p.a + ')'
+        : 'rgba(240, 235, 224, ' + p.a + ')';
+      ctx.fill();
+    }
+  }
+
+  function update() {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+
+      /* Mouse repulsion */
+      var dx = p.x - mouse.x;
+      var dy = p.y - mouse.y;
+      var d  = Math.sqrt(dx*dx + dy*dy);
+
+      if (d < 80 && d > 0) {
+        var force = (80 - d) / 80 * 0.8;
+        p.vx += (dx / d) * force;
+        p.vy += (dy / d) * force;
+      }
+
+      /* Speed limit */
+      var spd = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+      if (spd > 1.5) {
+        p.vx = (p.vx / spd) * 1.5;
+        p.vy = (p.vy / spd) * 1.5;
+      }
+
+      /* Gentle friction */
+      p.vx *= 0.99;
+      p.vy *= 0.99;
+
+      p.x += p.vx;
+      p.y += p.vy;
+
+      /* Wrap around edges */
+      if (p.x < -10) p.x = W + 10;
+      if (p.x > W + 10) p.x = -10;
+      if (p.y < -10) p.y = H + 10;
+      if (p.y > H + 10) p.y = -10;
+    }
+  }
+
+  var raf;
+  function loop() {
+    update();
+    draw();
+    raf = requestAnimationFrame(loop);
+  }
+
+  /* Only animate when hero is visible */
+  var heroObs = new IntersectionObserver(function(entries) {
+    if (entries[0].isIntersecting) {
+      if (!raf) loop();
+    } else {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+    }
+  }, { threshold: 0 });
+
+  heroObs.observe(document.querySelector('.hero-section'));
+})();
+
+/* ════════════════════════════════════════════════════════════════════
+   COUNTER ANIMATION
+   ════════════════════════════════════════════════════════════════════ */
+function animateCounter(el, target, duration) {
+  if (!el) return;
+  var startTime = null;
+
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    var progress = Math.min((ts - startTime) / duration, 1);
+    /* Ease out cubic */
+    var eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(eased * target);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+
+  requestAnimationFrame(step);
+}
+
+/* Observe hero stats */
+var countersRan = false;
+var counterObs = new IntersectionObserver(function(entries) {
+  if (entries[0].isIntersecting && !countersRan) {
+    countersRan = true;
+    animateCounter(document.getElementById('countLang'),    50,  1600);
+    animateCounter(document.getElementById('countModels'),  10,  1200);
+    animateCounter(document.getElementById('countTools'),    5,  1000);
+    animateCounter(document.getElementById('countFree'),   100,  1800);
+    counterObs.disconnect();
+  }
+}, { threshold: 0.5 });
+
+var heroStats = document.querySelector('.hero-stats');
+if (heroStats) counterObs.observe(heroStats);
+
+/* ════════════════════════════════════════════════════════════════════
+   DEMO ANIMATIONS — lines appear one by one on scroll
+   ════════════════════════════════════════════════════════════════════ */
+var demoAnimated = false;
+
+function animateDemoLines() {
+  if (demoAnimated) return;
+  demoAnimated = true;
+  var lines = document.querySelectorAll('#demo-notes .demo-line');
+  lines.forEach(function(line, i) {
+    setTimeout(function() { line.classList.add('show'); }, 600 + i * 420);
+  });
+}
+
+var demoObs = new IntersectionObserver(function(entries) {
+  if (entries[0].isIntersecting) {
+    animateDemoLines();
+    demoObs.disconnect();
+  }
+}, { threshold: 0.3 });
+
+var demoWin = document.querySelector('.demo-window');
+if (demoWin) demoObs.observe(demoWin);
+
+/* ════════════════════════════════════════════════════════════════════
+   DEMO TOOL SWITCHER
+   ════════════════════════════════════════════════════════════════════ */
+function switchDemoTool(sidebarBtn, toolName) {
+  /* Hide all panels */
+  var tools = ['notes', 'flashcards', 'quiz', 'summary', 'mindmap'];
+  tools.forEach(function(t) {
+    var panel = document.getElementById('demo-' + t);
+    var tab   = document.getElementById('dt-' + t);
+    if (panel) panel.style.display = 'none';
+    if (tab)   tab.classList.remove('active');
   });
 
-  /* ── Nav background on scroll ───────────────────────────────── */
-  window.addEventListener('scroll', function() {
-    const nav = document.getElementById('landingNav');
-    if (!nav) return;
-    if (window.scrollY > 20) {
-      nav.style.borderBottomColor = 'var(--border-hover)';
-    } else {
-      nav.style.borderBottomColor = '';
+  /* Deactivate all sidebar items */
+  document.querySelectorAll('.demo-sb-item').forEach(function(item) {
+    item.classList.remove('active');
+  });
+
+  /* Activate selected */
+  var selectedPanel = document.getElementById('demo-' + toolName);
+  var selectedTab   = document.getElementById('dt-' + toolName);
+  if (selectedPanel) {
+    selectedPanel.style.display = 'flex';
+    selectedPanel.style.flexDirection = 'column';
+  }
+  if (selectedTab) selectedTab.classList.add('active');
+
+  /* Activate sidebar item */
+  var sidebarItem = document.querySelector('.demo-sb-item[data-tool="' + toolName + '"]');
+  if (sidebarItem) sidebarItem.classList.add('active');
+
+  /* Animate lines on notes panel */
+  if (toolName === 'notes') {
+    demoAnimated = false;
+    document.querySelectorAll('#demo-notes .demo-line').forEach(function(l) {
+      l.classList.remove('show');
+    });
+    setTimeout(animateDemoLines, 100);
+  }
+
+  /* Reset quiz */
+  if (toolName === 'quiz') {
+    var opts = document.querySelectorAll('#demoQuizOpts button');
+    opts.forEach(function(b) {
+      b.style.background   = '';
+      b.style.borderColor  = '';
+      b.style.color        = '';
+      b.style.pointerEvents= '';
+    });
+    quizAnswered = false;
+  }
+
+  /* Reset flashcard */
+  if (toolName === 'flashcards') {
+    fcFlipped = false;
+    var fc    = document.getElementById('demoFc');
+    var label = document.getElementById('demoFcLabel');
+    var text  = document.getElementById('demoFcText');
+    if (fc)    { fc.style.background = ''; fc.style.borderColor = ''; }
+    if (label) label.textContent = 'Question — Click to flip';
+    if (text)  text.textContent  = 'What is quantum entanglement?';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DEMO FLASHCARD FLIP
+   ════════════════════════════════════════════════════════════════════ */
+var fcFlipped = false;
+
+function flipDemoCard() {
+  fcFlipped = !fcFlipped;
+  var fc    = document.getElementById('demoFc');
+  var label = document.getElementById('demoFcLabel');
+  var text  = document.getElementById('demoFcText');
+
+  if (fcFlipped) {
+    fc.style.background  = 'rgba(201,169,110,.09)';
+    fc.style.borderColor = 'var(--gold)';
+    label.textContent = 'Answer — Click to flip back';
+    text.textContent  = 'Quantum entanglement is a phenomenon where two particles become permanently correlated — measuring one instantly determines the quantum state of the other, regardless of the physical distance separating them. This "spooky action at a distance" as Einstein called it, has been experimentally confirmed to be a fundamental feature of nature.';
+  } else {
+    fc.style.background  = '';
+    fc.style.borderColor = '';
+    label.textContent = 'Question — Click to flip';
+    text.textContent  = 'What is quantum entanglement?';
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DEMO QUIZ ANSWER SELECT
+   ════════════════════════════════════════════════════════════════════ */
+var quizAnswered = false;
+
+function selectQuizOpt(btn, type) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  var opts = document.querySelectorAll('#demoQuizOpts button');
+  opts.forEach(function(b) {
+    b.style.pointerEvents = 'none';
+    b.style.opacity       = '0.6';
+  });
+
+  /* Style selected */
+  if (type === 'right') {
+    btn.style.background   = 'rgba(66,201,138,.15)';
+    btn.style.borderColor  = 'rgba(66,201,138,.5)';
+    btn.style.color        = 'var(--em2)';
+    btn.style.opacity      = '1';
+    btn.textContent        = '✓ ' + btn.textContent;
+  } else {
+    btn.style.background   = 'rgba(239,68,68,.12)';
+    btn.style.borderColor  = 'rgba(239,68,68,.4)';
+    btn.style.color        = 'var(--ruby2)';
+    btn.style.opacity      = '1';
+    btn.textContent        = '✗ ' + btn.textContent;
+  }
+
+  /* Always highlight correct answer */
+  opts.forEach(function(b) {
+    if (b.textContent.includes('Aspect experiment')) {
+      b.style.background  = 'rgba(66,201,138,.15)';
+      b.style.borderColor = 'rgba(66,201,138,.5)';
+      b.style.color       = 'var(--em2)';
+      b.style.opacity     = '1';
+      if (!b.textContent.startsWith('✓')) b.textContent = '✓ ' + b.textContent;
     }
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   FAQ TOGGLE
+   ════════════════════════════════════════════════════════════════════ */
+function toggleFaq(el) {
+  var item   = el.closest('.faq-item');
+  var isOpen = item.classList.contains('open');
+
+  /* Close all */
+  document.querySelectorAll('.faq-item.open').forEach(function(i) {
+    i.classList.remove('open');
+    var q = i.querySelector('.faq-q');
+    if (q) q.setAttribute('aria-expanded', 'false');
+  });
+
+  /* Open this one if it was closed */
+  if (!isOpen) {
+    item.classList.add('open');
+    el.setAttribute('aria-expanded', 'true');
+  }
+}
+
+/* Keyboard support for FAQ */
+document.querySelectorAll('.faq-q').forEach(function(q) {
+  q.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleFaq(this);
+    }
+  });
+});
+
+/* ════════════════════════════════════════════════════════════════════
+   DEMO TYPING ANIMATION — cycles through topics
+   ════════════════════════════════════════════════════════════════════ */
+(function typingAnimation() {
+  var topics = [
+    'Quantum Entanglement',
+    'The French Revolution',
+    'Machine Learning Algorithms',
+    'Cell Division — Mitosis & Meiosis',
+    'Newton\'s Laws of Motion',
+    'World War II — Causes & Consequences',
+    'Organic Chemistry Reactions',
+    'DNA Replication Process',
+    'Supply and Demand Economics',
+    'Climate Change & Global Warming',
+  ];
+
+  var el         = document.getElementById('demoTypingText');
+  if (!el) return;
+
+  var topicIdx   = 0;
+  var charIdx    = 0;
+  var deleting   = false;
+  var pauseCount = 0;
+
+  function tick() {
+    var topic = topics[topicIdx];
+
+    if (!deleting) {
+      charIdx++;
+      el.textContent = topic.substring(0, charIdx);
+
+      if (charIdx === topic.length) {
+        /* Pause before deleting */
+        pauseCount++;
+        if (pauseCount < 28) {
+          setTimeout(tick, 80);
+          return;
+        }
+        deleting   = true;
+        pauseCount = 0;
+        setTimeout(tick, 80);
+        return;
+      }
+      setTimeout(tick, 55 + Math.random() * 30);
+
+    } else {
+      charIdx--;
+      el.textContent = topic.substring(0, charIdx);
+
+      if (charIdx === 0) {
+        deleting = false;
+        topicIdx = (topicIdx + 1) % topics.length;
+        setTimeout(tick, 320);
+        return;
+      }
+      setTimeout(tick, 28 + Math.random() * 15);
+    }
+  }
+
+  /* Start after a brief delay */
+  setTimeout(tick, 2200);
+})();
+
+/* ════════════════════════════════════════════════════════════════════
+   INITIAL DEMO LINE ANIMATION
+   ════════════════════════════════════════════════════════════════════ */
+(function() {
+  /* Animate first panel on load for above-fold visibility */
+  setTimeout(function() {
+    var lines = document.querySelectorAll('#demo-notes .demo-line');
+    lines.forEach(function(line, i) {
+      setTimeout(function() { line.classList.add('show'); }, i * 380);
+    });
+    demoAnimated = true;
+  }, 800);
+})();
+
+/* ════════════════════════════════════════════════════════════════════
+   MARK NAV LINK AS ACTIVE ON SCROLL
+   ════════════════════════════════════════════════════════════════════ */
+(function() {
+  var sections = ['home', 'features', 'demo', 'how-it-works', 'testimonials', 'faq'];
+  var links    = document.querySelectorAll('.nav-links .nav-link');
+
+  window.addEventListener('scroll', function() {
+    var scrollPos = window.scrollY + 100;
+
+    sections.forEach(function(id, idx) {
+      var sec = document.getElementById(id);
+      if (!sec) return;
+      var top    = sec.offsetTop;
+      var bottom = top + sec.offsetHeight;
+
+      if (scrollPos >= top && scrollPos < bottom) {
+        links.forEach(function(l) { l.style.color = ''; });
+        if (links[idx - 1]) links[idx - 1].style.color = 'var(--gold)';
+      }
+    });
   }, { passive: true });
-  </script>
+})();
+
+</script>
+
 </body>
 </html>
