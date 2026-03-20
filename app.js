@@ -951,51 +951,146 @@ class SavoireApp {
           }
         };
 
+        /* Track whether the done event was received and resolved */
+        let streamResolved = false;
+        const originalResolve = resolve;
+        const originalReject  = reject;
+        resolve = (val) => { streamResolved = true; originalResolve(val); };
+        reject  = (err) => { if (!streamResolved) originalReject(err); };
+
         const pump = async () => {
           try {
+            /* ── SSE event assembler state ──
+               SSE messages are separated by blank lines.
+               Each message can have: event: name, data: payload, id: ...
+               We accumulate fields until a blank line then dispatch. */
+            let currentEvent = '';   /* current event name (from "event:" field) */
+            let currentData  = '';   /* accumulated data (may span multiple "data:" lines) */
+
             while (true) {
               const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
+              if (done) {
+                /* Process any remaining buffered content before giving up */
+                if (lineBuffer.trim()) {
+                  processSSELine(lineBuffer.trim());
+                  /* If the last line was a data line without trailing blank, dispatch it */
+                  if (currentData) {
+                    dispatchSSEEvent(currentEvent, currentData.trim());
+                    currentData  = '';
+                    currentEvent = '';
+                  }
+                }
+                /* resolve/reject already called by dispatchSSEEvent if done event arrived */
+                /* If we get here without resolve being called, the stream ended abnormally */
+                if (!streamResolved) {
+                  reject(new Error('Stream ended without receiving final data event'));
+                }
+                return;
+              }
 
               lineBuffer += decoder.decode(value, { stream: true });
-              const lines = lineBuffer.split('\n');
-              lineBuffer  = lines.pop() || '';
+
+              /* Split on \n — SSE spec uses \n or \r\n */
+              const lines = lineBuffer.split(/\r?\n/);
+              lineBuffer  = lines.pop() || '';   /* save potentially incomplete last line */
 
               for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const raw = line.slice(6).trim();
-
-                try {
-                  const evt = JSON.parse(raw);
-
-                  if (evt.t !== undefined) {
-                    /* ── Token chunk — append + render live ── */
-                    this.streamBuffer += evt.t;
-                    charCount         += evt.t.length;
-
-                    /* Live markdown render every chunk */
-                    renderLive();
-
-                    /* Update thinking stages based on char count */
-                    this._updateStageByProgress(charCount);
-
-                  } else if (evt.topic !== undefined) {
-                    /* ── Final structured data ── */
-                    if (sfpText) {
-                      sfpText.classList.remove('live-md');
-                      sfpText.classList.add('done');
-                    }
-                    resolve(evt);
-                    return;
-                  } else if (evt.idx !== undefined) {
-                    /* Stage event from server */
-                    this._activateStage(evt.idx);
-                  }
-                } catch {
-                  /* Skip malformed SSE line */
-                }
+                processSSELine(line);
               }
             }
+
+            /* ── Process one SSE line ──
+               SSE lines are:
+                 "event: name"   → set event type for current message
+                 "data: payload" → append to current data
+                 "id: ..."       → ignored
+                 "retry: ..."    → ignored
+                 ": comment"     → heartbeat/keepalive, ignored
+                 ""              → blank line = end of message, dispatch it */
+            function processSSELine(line) {
+              /* Blank line = end of current SSE message → dispatch */
+              if (line === '') {
+                if (currentData) {
+                  dispatchSSEEvent(currentEvent, currentData.trim());
+                }
+                currentEvent = '';
+                currentData  = '';
+                return;
+              }
+
+              /* Comment / heartbeat lines */
+              if (line.startsWith(':')) return;
+
+              /* event: field */
+              if (line.startsWith('event:')) {
+                currentEvent = line.slice(6).trim();
+                return;
+              }
+
+              /* data: field — can span multiple lines, concatenate with \n */
+              if (line.startsWith('data:')) {
+                const payload = line.slice(5).trim();
+                /* OpenAI [DONE] sentinel */
+                if (payload === '[DONE]') return;
+                /* Accumulate — multiple data: lines get joined */
+                currentData = currentData ? currentData + '\n' + payload : payload;
+                return;
+              }
+
+              /* id:, retry: — ignore */
+            }
+
+            /* ── Dispatch a complete SSE event ──
+               eventName: '' (unnamed) or 'token', 'done', 'stage', 'heartbeat', 'error'
+               data:      raw string to be JSON-parsed */
+            function dispatchSSEEvent(eventName, data) {
+              if (!data) return;
+
+              let evt;
+              try { evt = JSON.parse(data); }
+              catch (e) {
+                /* JSON parse failed — log and skip */
+                console.warn('[Savoiré SSE] Failed to parse event data:', data.slice(0, 100));
+                return;
+              }
+
+              /* Route by event name first (most reliable), then by payload shape */
+              const name = eventName || '';
+
+              if (name === 'token' || (name === '' && evt.t !== undefined)) {
+                /* ── Token chunk — append to stream buffer + render live ── */
+                if (typeof evt.t !== 'string') return;
+                this.streamBuffer += evt.t;
+                charCount         += evt.t.length;
+                renderLive();
+                this._updateStageByProgress(charCount);
+                return;
+              }
+
+              if (name === 'done' || (name === '' && evt.topic !== undefined)) {
+                /* ── Final structured data — resolve the promise ── */
+                if (sfpText) {
+                  sfpText.classList.remove('live-md');
+                  sfpText.classList.add('done');
+                }
+                resolve(evt);
+                return;
+              }
+
+              if (name === 'stage' || (name === '' && evt.idx !== undefined)) {
+                /* Stage progress update */
+                if (typeof evt.idx === 'number') this._activateStage(evt.idx);
+                return;
+              }
+
+              if (name === 'error') {
+                reject(new Error(evt.message || 'Stream error from server'));
+                return;
+              }
+
+              /* heartbeat and unknown events — ignore */
+            }
+
           } catch (err) {
             if (err.name === 'AbortError') reject(err);
             else reject(err);
