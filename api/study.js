@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — VERCEL SERVERLESS BACKEND — UPGRADED v2.1
+// SAVOIRÉ AI v2.0 — api/study.js — VERCEL SERVERLESS BACKEND
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha
 //
@@ -12,16 +12,6 @@
 // 3. Set environment variable in Vercel dashboard:
 //    OPENROUTER_API_KEY = your_key_from_openrouter.ai  (free account, free models)
 //
-// ── UPGRADE v2.1 — WHAT CHANGED ────────────────────────────────────────────────────────────────────
-// ✦ ORIGINAL STRUCTURE FULLY PRESERVED — same sections, models, JSON schema, prompt format
-// ✦ Better JSON Repair   — 6-stage repair pipeline handles all model quirks flawlessly
-// ✦ Better SSE Streaming — robust line buffering, handles partial chunks, carriage returns
-// ✦ Quiz Emphasis        — AI generates richer exam-quality questions with 4 clear answer options
-//                          described in the answer text — app.js renders them as MCQ client-side
-// ✦ Improved Prompts     — each tool gets sharper, more focused emphasis for better output
-// ✦ Stronger Validation  — more lenient on answer length, better error messages
-// ✦ Same JSON schema     — { question, answer } — NO breaking changes to frontend contract
-//
 // ── LIVE OUTPUT / STREAMING ARCHITECTURE ───────────────────────────────────────────────────────────
 // This file implements TRUE Server-Sent Events (SSE) streaming so output appears
 // on the user's screen CHARACTER BY CHARACTER — exactly like ChatGPT, Claude, Gemini.
@@ -30,23 +20,22 @@
 //   Frontend sends POST { message, options: { stream: true } }
 //   → Server sets Content-Type: text/event-stream
 //   → For each token from OpenRouter: writes  event: token\ndata: {"t":"word"}\n\n
-//   → Frontend renders each token as LIVE STYLED MARKDOWN HTML in real time
+//   → Frontend appends each token to the live display in real time
 //   → When complete: writes  event: done\ndata: { full structured JSON }\n\n
 //   → Frontend hides stream overlay and renders full structured result
 //
 // This means ZERO waiting — output starts appearing within ~1 second of hitting Generate.
-// The user sees every word as it is written, STYLED with headings, bold, lists, code blocks.
+// The user sees every word as it is written, just like every major AI product.
 //
 // ── FEATURES ───────────────────────────────────────────────────────────────────────────────────────
 // ✦ True SSE Streaming   — token-by-token live output, no waiting
-// ✦ Live Markdown        — each token rendered as styled HTML (headings, bold, lists) in real time
 // ✦ Heartbeat System     — prevents proxy/CDN timeouts on long generations
 // ✦ 10 Free AI Models    — tried in sequence with smart failover
 // ✦ Double Retry Logic   — each model tried twice before giving up
 // ✦ Rate Limit Detection — 429/503 skipped immediately, no wasted time
 // ✦ Simulated Streaming  — even offline fallback streams word by word
 // ✦ Ultra-Rich Prompts   — 5 tools × 4 depths × 5 styles × 42 languages
-// ✦ 6-Stage JSON Repair  — handles messy model output, code fences, escapes, bad newlines
+// ✦ Robust JSON Parsing  — handles messy model output, code fences, escapes
 // ✦ Field Validation     — all required fields checked and filled
 // ✦ Quality Fallback     — 2000+ word offline content when all AI fails
 // ✦ Branding Enforcement — model names NEVER exposed, always "Savoiré AI"
@@ -233,19 +222,7 @@ const TOOL_MAP = {
   notes: {
     name:        'Generate Notes',
     objective:   'Generate comprehensive, deeply detailed, well-structured study notes.',
-    emphasis:    `The ultra_long_notes field is the centrepiece. It MUST be genuinely long and detailed — the student is relying on this as their primary study resource. Use rich markdown formatting throughout:
-
-MANDATORY FORMATTING:
-  • ## Section Headings — one for each major section, styled clearly
-  • **Bold text** for EVERY key term, important concept, and critical fact on first use
-  • Bullet lists (- item) for enumerations, features, types, and characteristics
-  • Numbered lists (1. item) for processes, steps, sequences, and procedures
-  • > Blockquotes for the most important definitions, laws, rules, or key statements
-  • --- Horizontal rules between every major section to aid navigation
-  • Concrete examples — at least one per section, with real names and specific detail
-  • NO empty or thin sections — every section must deliver real educational value
-
-CONTENT DEPTH: Go beyond surface facts. Explain mechanisms, causes, and effects. Include historical context where relevant. Connect concepts across sections. The notes must feel like a well-written textbook chapter that a student could study from exclusively and feel fully prepared.`,
+    emphasis:    `The ultra_long_notes field is the centrepiece. It MUST be genuinely long and detailed — the student is relying on this as their primary study resource. Use rich markdown formatting throughout: ## headings for each section, **bold** for every key term on first use, bullet lists for enumerations, numbered steps for processes, > blockquotes for important definitions or quotes, and horizontal rules --- between major sections. The notes must feel like a well-written textbook chapter.`,
     sections:    ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Advanced Aspects', 'Common Applications', 'Critical Analysis', 'Summary & Key Takeaways'],
   },
   flashcards: {
@@ -257,36 +234,13 @@ CONTENT DEPTH: Go beyond surface facts. Explain mechanisms, causes, and effects.
   quiz: {
     name:        'Build Quiz',
     objective:   'Generate challenging, varied practice questions at exam level for self-testing.',
-    emphasis:    `The practice_questions are the CORE of this tool — they must be outstanding.
-
-QUESTION QUALITY: Make each question genuinely challenging — not trivial definitions. Vary the types:
-  • Question 1: ANALYTICAL — requires reasoning about causes, mechanisms, or relationships
-  • Question 2: APPLICATION — requires applying a concept to a realistic scenario or problem
-  • Question 3: EVALUATION — requires comparing approaches, judging evidence, or weighing tradeoffs
-
-ANSWER QUALITY: Each answer MUST be minimum 200 words and follow this EXACT structure:
-  PART 1 — DIRECT ANSWER (2-3 sentences): State the correct answer clearly and unambiguously.
-  PART 2 — EXPLANATION (4-5 sentences): Explain the reasoning in depth, covering WHY the answer is correct, the underlying mechanism or principle, and how it connects to the broader topic.
-  PART 3 — EXAMPLE (3-4 sentences): Give one specific, concrete real-world example that illustrates the answer. Include names, numbers or context to make it vivid.
-  PART 4 — COMMON MISTAKES (2-3 sentences): Describe the most common wrong answer students give and explain exactly why it is incorrect. This prepares students to avoid losing marks.
-  PART 5 — EXAM TIP (1-2 sentences): Give a practical tip for how to approach this type of question in an exam setting to maximise marks.
-
-The ultra_long_notes and key_concepts should also be exam-focused — prioritise frequently examined aspects, use mark-scheme language, and include model answer phrases.`,
+    emphasis:    `The practice_questions are the core of this tool. Make them genuinely challenging — not trivial definitions. Vary the question types: one analytical question requiring reasoning, one application question requiring a scenario, one comparison/evaluation question requiring critical thinking. Each answer MUST be extremely comprehensive — minimum 200 words — covering: (1) direct answer, (2) detailed explanation with reasoning, (3) a specific concrete example, (4) real-world relevance, (5) a common exam mistake to avoid. The notes and concepts should also reflect this exam-prep focus.`,
     sections:    ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary'],
   },
   summary: {
     name:        'Smart Summary',
     objective:   'Generate a concise, punchy smart summary for fast review and revision.',
-    emphasis:    `Begin the ultra_long_notes with a 2-3 sentence **TL;DR** paragraph (clearly labelled "## TL;DR") that captures the absolute essence of the topic in plain language. Then follow with clearly labelled sections covering only the most critical points — ruthlessly cut everything non-essential.
-
-FORMATTING RULES FOR SUMMARY:
-  • Start with > blockquote containing the single most important sentence about this topic
-  • Use **bold** for every key term and critical fact
-  • Use short bullet lists rather than long paragraphs
-  • Each section should be scannable in under 30 seconds
-  • End with a "## 5 Things to Remember" section listing the 5 absolute most important takeaways
-
-The key_concepts should represent the absolute TOP 5 things a student MUST know — not general statements but specific, exam-ready facts. Key_tricks should focus purely on retention and recall strategies. Every word must earn its place.`,
+    emphasis:    `Begin the ultra_long_notes with a 2-3 sentence TL;DR paragraph that captures the absolute essence of the topic. Then follow with clearly labelled sections covering only the most critical points — cut everything non-essential. The key_concepts should represent the absolute TOP 5 things a student MUST know. Key_tricks should focus on retention and recall. The tone should be efficient and direct — every word must earn its place.`,
     sections:    ['TL;DR', 'Core Concepts', 'Key Mechanisms', 'Critical Examples', 'What to Remember'],
   },
   mindmap: {
@@ -407,16 +361,13 @@ LANGUAGE: All in ${language}
 
 [FIELD: practice_questions]
 TYPE: array of exactly 3 objects, each with "question" and "answer"
-QUESTION FORMAT: Exam-level, varied types:
-  • Q1: ANALYTICAL — requires reasoning about causes, mechanisms or relationships
-  • Q2: APPLICATION — requires applying a concept to a realistic scenario
-  • Q3: EVALUATION — requires comparing approaches or critically weighing evidence
-ANSWER FORMAT: MINIMUM 200 words each — MUST include ALL FIVE parts in this order:
-  PART 1 — DIRECT ANSWER (2-3 sentences): State the clear, unambiguous answer.
-  PART 2 — EXPLANATION (4-5 sentences): Explain in depth WHY the answer is correct, covering the underlying mechanism, principle, and how it connects to broader topic knowledge.
-  PART 3 — CONCRETE EXAMPLE (3-4 sentences): One specific real-world example with names, numbers, or context to make the answer vivid and memorable.
-  PART 4 — COMMON MISTAKE (2-3 sentences): Describe the most common wrong answer students give for this question and explain exactly why it is incorrect.
-  PART 5 — EXAM TIP (1-2 sentences): A practical tip for approaching this type of question in an exam to maximise marks.
+QUESTION FORMAT: Exam-level, varied types (analytical / application / evaluation)
+ANSWER FORMAT: MINIMUM 160 words each, covering:
+  1. Direct answer to the question (1-2 sentences)
+  2. Detailed reasoning and explanation (3-4 sentences)
+  3. A specific concrete example with detail
+  4. Real-world relevance or professional application
+  5. A common student mistake to avoid on this question
 LANGUAGE: All in ${language}
 
 [FIELD: real_world_applications]
@@ -510,13 +461,8 @@ Your ENTIRE response must be a single valid JSON object.
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 // SECTION 8 — JSON EXTRACTION & PARSING
-// 6-stage repair pipeline — handles every known model JSON error:
-//   Stage 1: Strip markdown fences and leading/trailing garbage
-//   Stage 2: Try direct parse (fast path — works ~85% of the time)
-//   Stage 3: Fix raw newlines inside string values (most common model error)
-//   Stage 4: Fix trailing commas, unquoted keys, JS comments
-//   Stage 5: Fix single quotes, escaped forward slashes
-//   Stage 6: Bracket-counting extraction as final fallback
+// Robustly extracts JSON from model output that may contain extra text,
+// markdown fences, partial content, or escape issues
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 function extractAndParseJSON(rawContent) {
@@ -526,204 +472,63 @@ function extractAndParseJSON(rawContent) {
 
   let text = rawContent.trim();
 
-  // ── Stage 1: Strip all markdown fences and surrounding garbage ──
-  // Models often wrap JSON in ```json ... ``` or ``` ... ```
-  text = text.replace(/^```(?:json|JSON|js|javascript)?\s*/im, '');
-  text = text.replace(/\s*```\s*$/im, '');
+  // Step 1: Strip markdown code fences
+  text = text.replace(/^```(?:json)?\s*/i, '');
+  text = text.replace(/\s*```\s*$/i, '');
   text = text.trim();
 
-  // Strip any leading non-JSON text before the opening brace
-  // (some models output "Here is the JSON:" before the actual JSON)
-  const firstBrace = text.indexOf('{');
-  const lastBrace  = text.lastIndexOf('}');
+  // Step 2: Find outermost JSON object boundaries
+  const startIdx = text.indexOf('{');
+  const endIdx   = text.lastIndexOf('}');
 
-  if (firstBrace === -1) {
-    throw new Error(`No JSON object opening brace found. Content preview: "${trunc(text, 200)}"`);
+  if (startIdx === -1) {
+    throw new Error(`No JSON object opening brace found. Content preview: "${trunc(text, 150)}"`);
   }
-  if (lastBrace === -1 || lastBrace <= firstBrace) {
-    throw new Error(`No valid JSON object closing brace found. Content preview: "${trunc(text, 200)}"`);
+  if (endIdx === -1 || endIdx <= startIdx) {
+    throw new Error(`No valid JSON object closing brace found. Content preview: "${trunc(text, 150)}"`);
   }
 
-  let jsonStr = text.slice(firstBrace, lastBrace + 1);
+  let jsonStr = text.slice(startIdx, endIdx + 1);
 
-  // ── Stage 2: Try direct parse — fast path, works most of the time ──
+  // Step 3: Try direct parse first
   try {
     return JSON.parse(jsonStr);
   } catch (directErr) {
-    logger.warn(`Direct JSON parse failed: ${directErr.message} — entering repair pipeline`);
+    logger.warn(`Direct JSON parse failed: ${directErr.message} — attempting auto-repair`);
   }
 
-  // ── Stage 3: Fix raw unescaped newlines/tabs inside JSON string values ──
-  // This is THE most common model error — they output literal newlines inside strings.
-  // We must be careful to only fix content INSIDE quoted strings, not structural JSON.
+  // Step 4: Attempt repairs on common model JSON errors
+
   let repaired = jsonStr;
 
-  // Use a state machine approach to fix newlines inside strings safely
-  try {
-    repaired = fixRawNewlinesInStrings(jsonStr);
-    const r3 = JSON.parse(repaired);
-    logger.ok('JSON repaired at Stage 3 (raw newlines in strings)');
-    return r3;
-  } catch (_) {
-    // Stage 3 repair didn't work alone — continue
-  }
+  // Fix 4a: Remove actual newline characters inside string values
+  // This is the most common model error — they output raw newlines inside JSON strings
+  repaired = repaired.replace(/"((?:[^"\\]|\\.)*)"/g, (match, inner) => {
+    // Replace raw newlines, tabs, carriage returns inside string values
+    const fixed = inner
+      .replace(/\r\n/g, '\\n')
+      .replace(/\r/g,   '\\r')
+      .replace(/\n/g,   '\\n')
+      .replace(/\t/g,   '\\t');
+    return `"${fixed}"`;
+  });
 
-  // ── Stage 4: Fix structural JSON errors ──
-  // 4a: Remove trailing commas before } or ]
+  // Fix 4b: Remove trailing commas before } or ]
   repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
 
-  // 4b: Fix unquoted property keys (model outputs {key: value} instead of {"key": value})
-  repaired = repaired.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*:)/g, (m, pre, key, post) => {
-    // Only quote if not already quoted
+  // Fix 4c: Fix unquoted property keys
+  repaired = repaired.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, (m, pre, key, post) => {
     return `${pre}"${key}"${post}`;
   });
 
-  // 4c: Remove JavaScript-style comments (some models add these)
-  repaired = repaired.replace(/\/\/[^\n\r]*/g, '');
-  repaired = repaired.replace(/\/\*[\s\S]*?\*\//g, '');
-
   try {
-    const r4 = JSON.parse(repaired);
-    logger.ok('JSON repaired at Stage 4 (structural fixes)');
-    return r4;
-  } catch (_) {}
-
-  // ── Stage 5: More aggressive fixes ──
-  // 5a: Fix escaped forward slashes that shouldn't be escaped
-  repaired = repaired.replace(/\\\//g, '/');
-
-  // 5b: Try to fix truncated JSON — the model might have hit token limit
-  // If the JSON is incomplete, try to close it gracefully
-  if (!repaired.trim().endsWith('}')) {
-    const openBrackets = (repaired.match(/\{/g) || []).length;
-    const closeBrackets = (repaired.match(/\}/g) || []).length;
-    const diff = openBrackets - closeBrackets;
-    if (diff > 0 && diff <= 5) {
-      // Try adding missing closing braces
-      let closed = repaired;
-      // First close any open arrays
-      const openArrays  = (closed.match(/\[/g) || []).length;
-      const closeArrays = (closed.match(/\]/g) || []).length;
-      for (let i = 0; i < openArrays - closeArrays; i++) closed += ']';
-      // Then close any open strings (check if we're inside a string)
-      // Remove trailing incomplete property/value
-      closed = closed.replace(/,\s*"[^"]*$/, '');  // remove incomplete trailing property
-      closed = closed.replace(/:\s*"[^"]*$/, ': ""'); // close incomplete string value
-      for (let i = 0; i < diff; i++) closed += '}';
-      try {
-        const r5b = JSON.parse(closed);
-        logger.ok('JSON repaired at Stage 5b (incomplete/truncated JSON)');
-        return r5b;
-      } catch (_) {}
-    }
+    return JSON.parse(repaired);
+  } catch (repairErr) {
+    throw new Error(
+      `JSON parse failed after repair attempts. Original error: ${repairErr.message}. ` +
+      `Content length: ${jsonStr.length}. First 300 chars: "${trunc(jsonStr, 300)}"`
+    );
   }
-
-  try {
-    const r5 = JSON.parse(repaired);
-    logger.ok('JSON repaired at Stage 5 (aggressive fixes)');
-    return r5;
-  } catch (_) {}
-
-  // ── Stage 6: Bracket-counting extraction ──
-  // Find the complete JSON object by counting brackets from the first {
-  try {
-    let depth = 0;
-    let inStr = false;
-    let escape = false;
-    let objStart = -1;
-    let objEnd   = -1;
-
-    for (let i = 0; i < repaired.length; i++) {
-      const ch = repaired[i];
-
-      if (escape) { escape = false; continue; }
-      if (ch === '\\' && inStr) { escape = true; continue; }
-      if (ch === '"') { inStr = !inStr; continue; }
-      if (inStr) continue;
-
-      if (ch === '{') {
-        if (depth === 0) objStart = i;
-        depth++;
-      } else if (ch === '}') {
-        depth--;
-        if (depth === 0) { objEnd = i; break; }
-      }
-    }
-
-    if (objStart !== -1 && objEnd !== -1 && objEnd > objStart) {
-      const extracted = repaired.slice(objStart, objEnd + 1);
-      const r6 = JSON.parse(extracted);
-      logger.ok('JSON repaired at Stage 6 (bracket-counting extraction)');
-      return r6;
-    }
-  } catch (_) {}
-
-  // ── All stages failed ──
-  throw new Error(
-    `JSON parse failed after 6-stage repair pipeline. ` +
-    `Original error: content malformed. ` +
-    `Content length: ${jsonStr.length} chars. ` +
-    `Preview: "${trunc(jsonStr, 400)}"`
-  );
-}
-
-// Helper: fix raw unescaped newlines inside JSON string values using a character scanner
-function fixRawNewlinesInStrings(str) {
-  let result  = '';
-  let inStr   = false;
-  let escape  = false;
-
-  for (let i = 0; i < str.length; i++) {
-    const ch   = str[i];
-    const prev = i > 0 ? str[i - 1] : '';
-
-    if (escape) {
-      result += ch;
-      escape  = false;
-      continue;
-    }
-
-    if (ch === '\\' && inStr) {
-      result += ch;
-      escape  = true;
-      continue;
-    }
-
-    if (ch === '"') {
-      inStr = !inStr;
-      result += ch;
-      continue;
-    }
-
-    if (inStr) {
-      // Fix raw newlines and tabs inside string values
-      if (ch === '\n') {
-        result += '\\n';
-        continue;
-      }
-      if (ch === '\r') {
-        // Skip \r or convert \r\n → \n
-        if (i + 1 < str.length && str[i + 1] === '\n') {
-          result += '\\n';
-          i++;  // skip the \n too since we already added \\n
-        }
-        continue;
-      }
-      if (ch === '\t') {
-        result += '\\t';
-        continue;
-      }
-      // Fix any other raw control characters
-      if (ch.charCodeAt(0) < 32) {
-        result += `\\u${ch.charCodeAt(0).toString(16).padStart(4, '0')}`;
-        continue;
-      }
-    }
-
-    result += ch;
-  }
-
-  return result;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -760,14 +565,13 @@ function validateAndEnrich(parsed, opts) {
   }
 
   // ── Validate practice_questions structure ──
-  // Keep question/answer pairs — filter only genuinely empty/missing ones
   parsed.practice_questions = parsed.practice_questions
     .filter(q => q && typeof q === 'object')
     .map(q => ({
-      question: String(q.question || q.q || q.text || q.prompt || '').trim(),
-      answer:   String(q.answer   || q.a || q.explanation || q.response || '').trim(),
+      question: String(q.question || q.q || '').trim(),
+      answer:   String(q.answer   || q.a || '').trim(),
     }))
-    .filter(q => q.question.length > 5 && q.answer.length > 20);  // lenient minimum lengths
+    .filter(q => q.question.length > 0 && q.answer.length > 0);
 
   if (parsed.practice_questions.length === 0) {
     throw new Error('All practice_questions items were invalid after filtering');
@@ -885,13 +689,6 @@ async function callModelSync(model, prompt, opts) {
 // Fires onChunk(tokenText) for every token received
 // Returns the complete structured data object when stream ends
 // This is what makes output appear live on screen like ChatGPT
-//
-// ROBUSTNESS IMPROVEMENTS v2.1:
-//   • Handles partial SSE lines (chunk boundary mid-line)
-//   • Handles \r\n line endings from some proxies
-//   • Handles multi-data-field SSE lines
-//   • Properly detects and skips heartbeat/comment lines
-//   • Better timeout handling — clears timer before throwing
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 async function callModelStream(model, prompt, opts, onChunk) {
@@ -933,8 +730,8 @@ async function callModelStream(model, prompt, opts, onChunk) {
     // ── Read the SSE stream line by line ──
     const reader      = response.body.getReader();
     const decoder     = new TextDecoder('utf-8');
-    let   lineBuffer  = '';      // incomplete line buffer (handles partial chunks)
-    let   fullContent = '';      // accumulate all tokens into complete JSON
+    let   lineBuffer  = '';      // incomplete line buffer
+    let   fullContent = '';      // accumulate all tokens
     let   tokenCount  = 0;
     let   charsEmitted = 0;
 
@@ -942,56 +739,45 @@ async function callModelStream(model, prompt, opts, onChunk) {
       const { done, value } = await reader.read();
 
       if (done) {
-        // Stream ended — process any remaining buffered content
+        // Stream ended — process any remaining buffered line
         if (lineBuffer.trim()) {
           processLine(lineBuffer.trim());
         }
         break;
       }
 
-      // Decode chunk (stream:true preserves partial characters across chunks)
+      // Decode chunk and add to line buffer
       lineBuffer += decoder.decode(value, { stream: true });
 
-      // Split on both \n and \r\n (some SSE proxies use \r\n)
-      // Keep the last potentially-incomplete line in the buffer
-      const lines = lineBuffer.split(/\r?\n/);
-      lineBuffer  = lines.pop() || '';   // last element may be incomplete — save for next chunk
+      // Process all complete lines
+      const lines = lineBuffer.split('\n');
+      lineBuffer  = lines.pop() || ''; // last element may be incomplete
 
       for (const line of lines) {
         processLine(line);
       }
     }
 
-    // ── SSE Line Processor ──
-    // Handles: data: {...}, event: name, : comment (heartbeat), [DONE]
+    // ── Line processor ──
     function processLine(line) {
       line = line.trim();
-
-      // Skip empty lines and SSE comment/heartbeat lines (start with :)
-      if (!line || line.startsWith(':')) return;
-
-      // Skip non-data lines (event:, id:, retry:)
-      if (!line.startsWith('data: ')) return;
+      if (!line || !line.startsWith('data: ')) return;
 
       const dataStr = line.slice(6).trim();
-
-      // OpenAI/OpenRouter end-of-stream marker
       if (dataStr === '[DONE]') return;
-      if (!dataStr) return;
+      if (!dataStr || dataStr === '') return;
 
       let evt;
       try { evt = JSON.parse(dataStr); }
-      catch { return; /* skip malformed SSE data — happens occasionally */ }
+      catch { return; /* skip malformed SSE data */ }
 
-      // Extract the text delta from the streaming response
       const delta = evt?.choices?.[0]?.delta?.content;
       if (delta && typeof delta === 'string' && delta.length > 0) {
         fullContent  += delta;
         charsEmitted += delta.length;
         tokenCount++;
         // ── Fire the live output callback ──
-        // This sends the token to the frontend via SSE immediately.
-        // app.js renders it as styled markdown HTML in real time.
+        // This sends the token to the frontend via SSE immediately
         onChunk(delta);
       }
     }
