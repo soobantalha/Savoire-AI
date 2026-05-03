@@ -121,6 +121,200 @@ const STAGE_MESSAGES = [
   'Finalising and formatting…',
 ];
 
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   🔴 SAVOIRÉ CLIENT-SIDE AI ENGINE
+   Calls Anthropic API directly from the browser — no backend needed.
+   Real SSE streaming → live token output exactly like ChatGPT.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── API key management ── */
+const _sv_getKey = () => {
+  const saved = localStorage.getItem('sv_anthropic_key') || '';
+  if (saved) return saved;
+  const key = window.prompt(
+    '🔑 Enter your Anthropic API key to enable live AI generation.\n\n' +
+    'Get a free key at: console.anthropic.com\n\n' +
+    'Your key stays in your browser — never sent anywhere except Anthropic.'
+  );
+  if (key && key.trim().startsWith('sk-')) {
+    localStorage.setItem('sv_anthropic_key', key.trim());
+    return key.trim();
+  }
+  return null;
+};
+
+/* ── Build the full structured JSON prompt (mirrors study.js buildPrompt) ── */
+const DEPTH_MAP = {
+  brief:         { wordRange: '400-700 words',   description: 'Concise overview, essentials only' },
+  detailed:      { wordRange: '900-1500 words',  description: 'Thorough academic explanation with examples' },
+  comprehensive: { wordRange: '2000-3500 words', description: 'University-level, exhaustive, exam-ready' },
+};
+const STYLE_MAP = {
+  simple:    { name: 'Simple',    instruction: 'Use plain English, short sentences, everyday analogies.' },
+  academic:  { name: 'Academic',  instruction: 'Use formal academic language, precise terminology, citations.' },
+  visual:    { name: 'Visual',    instruction: 'Maximise use of bullet points, tables, diagrams in text.' },
+};
+const TOOL_MAP_CLIENT = {
+  notes: {
+    name: 'Study Notes',
+    objective: 'Generate comprehensive, exam-ready study notes with detailed explanations.',
+    emphasis: 'Focus on depth, accuracy, and academic rigour. Cover all major subtopics.',
+    sections: ['Introduction', 'Core Concepts', 'Key Mechanisms', 'Detailed Analysis', 'Examples', 'Summary'],
+  },
+  flashcards: {
+    name: 'Flashcards',
+    objective: 'Generate high-quality Q&A flashcard content optimised for spaced repetition.',
+    emphasis: 'Each key_concept becomes a flashcard. Questions must be specific and clear. Answers comprehensive.',
+    sections: ['Definitions', 'Key Processes', 'Examples', 'Applications', 'Critical Points'],
+  },
+  quiz: {
+    name: 'Practice Quiz',
+    objective: 'Generate a challenging practice quiz with analytical, application and evaluation questions.',
+    emphasis: 'practice_questions are the core. Each answer: (1) direct answer (2) reasoning (3) example (4) real-world (5) exam mistake. Minimum 200 words per answer.',
+    sections: ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary'],
+  },
+  summary: {
+    name: 'Smart Summary',
+    objective: 'Generate a concise, punchy smart summary for fast review.',
+    emphasis: 'Begin with a 2-3 sentence TL;DR. Cut everything non-essential. Every word earns its place.',
+    sections: ['TL;DR', 'Core Concepts', 'Key Mechanisms', 'Critical Examples', 'What to Remember'],
+  },
+  mindmap: {
+    name: 'Mind Map',
+    objective: 'Generate content structured hierarchically for a visual mind map.',
+    emphasis: 'Use nested bullets mirroring branch structure. Key concepts = 5 main branches. Keep node text under 12 words.',
+    sections: ['Central Topic', 'Main Branches', 'Sub-Branches', 'Connections', 'Applications'],
+  },
+};
+
+function _sv_buildPrompt(input, opts) {
+  const language = (opts.language || 'English').trim();
+  const depth    = opts.depth  || 'detailed';
+  const style    = opts.style  || 'simple';
+  const tool     = opts.tool   || 'notes';
+  const depthCfg = DEPTH_MAP[depth]  || DEPTH_MAP.detailed;
+  const styleCfg = STYLE_MAP[style]  || STYLE_MAP.simple;
+  const toolCfg  = TOOL_MAP_CLIENT[tool] || TOOL_MAP_CLIENT.notes;
+  const sections = toolCfg.sections.map(s => `  ## ${s}`).join('\n');
+  const nowISO   = new Date().toISOString();
+
+  return `You are Savoiré AI, the world's most advanced AI study companion.
+
+YOUR TASK: ${toolCfg.objective}
+
+STUDENT INPUT:
+━━━━━━━━━━━━━━
+${input}
+━━━━━━━━━━━━━━
+
+OUTPUT LANGUAGE: ${language} — ALL content MUST be in ${language}.
+OUTPUT DEPTH: ${depthCfg.wordRange} — ${depthCfg.description}
+WRITING STYLE: ${styleCfg.name} — ${styleCfg.instruction}
+TOOL MODE: ${toolCfg.name} — ${toolCfg.emphasis}
+
+REQUIRED SECTIONS for ultra_long_notes:
+${sections}
+
+═══════════════════════════════════════════════════════
+MANDATORY OUTPUT — single valid JSON object, no extra text:
+{
+  "topic": "clean topic name in ${language}",
+  "ultra_long_notes": "Rich markdown — ## headings, **bold**, bullets, examples. MINIMUM ${depthCfg.wordRange}.",
+  "key_concepts": [
+    "Term 1: explanation (25-40 words) in ${language}",
+    "Term 2: explanation in ${language}",
+    "Term 3: explanation in ${language}",
+    "Term 4: explanation in ${language}",
+    "Term 5: explanation in ${language}"
+  ],
+  "key_tricks": [
+    "Memory/study trick 1 (55-75 words) in ${language}",
+    "Memory/study trick 2 in ${language}",
+    "Memory/study trick 3 in ${language}"
+  ],
+  "practice_questions": [
+    {"question": "Analytical question in ${language}", "answer": "Comprehensive answer min 160 words in ${language}"},
+    {"question": "Application question in ${language}", "answer": "Comprehensive answer min 160 words in ${language}"},
+    {"question": "Evaluation question in ${language}", "answer": "Comprehensive answer min 160 words in ${language}"}
+  ],
+  "real_world_applications": [
+    "Domain 1: specific how-it-applies explanation (45-65 words) in ${language}",
+    "Domain 2: specific application in ${language}",
+    "Domain 3: specific application in ${language}"
+  ],
+  "common_misconceptions": [
+    "Many students believe [X]. In reality, [correct explanation]. in ${language}",
+    "Misconception 2 in ${language}",
+    "Misconception 3 in ${language}"
+  ],
+  "curriculum_alignment": "Academic level and subject",
+  "study_score": 96,
+  "powered_by": "Savoiré AI by Sooban Talha Technologies",
+  "generated_at": "${nowISO}"
+}
+— NO text before { — NO text after } — NO markdown fences — valid JSON only.`;
+}
+
+/* ── JSON extractor + repair (mirrors study.js extractAndParseJSON) ── */
+function _sv_parseJSON(raw) {
+  let text = (raw || '').trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/i, '')
+    .trim();
+
+  const s = text.indexOf('{');
+  const e = text.lastIndexOf('}');
+  if (s === -1 || e <= s) throw new Error('No JSON object found in AI response');
+
+  let jsonStr = text.slice(s, e + 1);
+
+  try { return JSON.parse(jsonStr); } catch (_) {}
+
+  // Repair: escape raw newlines inside strings
+  let repaired = jsonStr.replace(/"((?:[^"\\]|\\.)*)"/g, (match, inner) => {
+    const fixed = inner.replace(/\r\n/g, '\\n').replace(/\r/g, '\\r').replace(/\n/g, '\\n').replace(/\t/g, '\\t');
+    return `"${fixed}"`;
+  });
+  // Remove trailing commas
+  repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+
+  try { return JSON.parse(repaired); }
+  catch (err) { throw new Error(`JSON parse failed: ${err.message}`); }
+}
+
+/* ── Validate & enrich parsed data (mirrors study.js validateAndEnrich) ── */
+function _sv_enrich(parsed, opts) {
+  if (!parsed || typeof parsed !== 'object') throw new Error('AI returned invalid data');
+  if (!parsed.topic) parsed.topic = opts._input || 'Study Topic';
+  if (!parsed.ultra_long_notes || parsed.ultra_long_notes.length < 100)
+    throw new Error('AI response too short — please try again');
+
+  // Ensure arrays exist
+  if (!Array.isArray(parsed.key_concepts))            parsed.key_concepts            = [];
+  if (!Array.isArray(parsed.key_tricks))              parsed.key_tricks              = [];
+  if (!Array.isArray(parsed.practice_questions))      parsed.practice_questions      = [];
+  if (!Array.isArray(parsed.real_world_applications)) parsed.real_world_applications = [];
+  if (!Array.isArray(parsed.common_misconceptions))   parsed.common_misconceptions   = [];
+
+  // Normalise practice_questions
+  parsed.practice_questions = parsed.practice_questions
+    .filter(q => q && typeof q === 'object')
+    .map(q => ({ question: String(q.question || '').trim(), answer: String(q.answer || '').trim() }))
+    .filter(q => q.question && q.answer);
+
+  // Enforce branding
+  parsed.powered_by   = 'Savoiré AI by Sooban Talha Technologies';
+  parsed.study_score  = 96;
+  parsed._language    = opts.language || 'English';
+  delete parsed._model; delete parsed.model; delete parsed.model_used;
+
+  return parsed;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   END CLIENT-SIDE AI ENGINE
+   ═══════════════════════════════════════════════════════════════════════════ */
 /* ─────────────────────────────────────────────────────────────────────────────────────────
    MAIN APPLICATION CLASS
    ───────────────────────────────────────────────────────────────────────────────────────── */
@@ -864,163 +1058,130 @@ class SavoireApp {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
-     STREAMING API CALL — SSE with live markdown rendering
+     🔴 LIVE ANTHROPIC STREAMING — Direct browser → Anthropic API
+     Real SSE token-by-token output. No backend. Exactly like ChatGPT.
      ═════════════════════════════════════════════════════════════════════════ */
   async _callAPIStream(message, opts = {}) {
     this.streamCtrl = new AbortController();
     this._showCancelBtn(true);
 
-    try {
-      return await this._streamSSE(message, opts);
-    } catch (err) {
-      if (err.name === 'AbortError' || err.message === 'AbortError') throw err;
-      console.warn('[Savoiré] SSE failed, falling back to JSON:', err.message);
-      return await this._callAPIJson(message, opts);
-    }
+    /* Get or prompt for API key */
+    const apiKey = _sv_getKey();
+    if (!apiKey) throw new Error('No Anthropic API key provided. Please refresh and enter your key.');
+
+    /* Build the exact same structured prompt as the backend */
+    opts._input = message;
+    const prompt = _sv_buildPrompt(message, opts);
+
+    return await this._streamAnthropicDirect(prompt, opts, apiKey);
   }
 
-  /* ── Server-Sent Events streaming with LIVE MARKDOWN ── */
-  async _streamSSE(message, opts) {
-    return new Promise((resolve, reject) => {
-      const body = JSON.stringify({
-        message,
-        options: { ...opts, stream: true },
-      });
+  /* ── Direct Anthropic SSE stream — live token output + JSON parse at end ── */
+  async _streamAnthropicDirect(prompt, opts, apiKey) {
+    const sfpText   = this._el('sfpText');
+    const sfpScroll = this._el('sfpScroll');
 
-      fetch(SAVOIRÉ.API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        signal: this.streamCtrl?.signal,
-      })
-      .then(async res => {
-        if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          reject(new Error(`Server error (${res.status})${text ? ': ' + text.slice(0, 120) : ''}`));
-          return;
-        }
+    this.streamBuffer = '';
+    let fullContent   = '';
+    let charCount     = 0;
+    let renderThrottle = 0;
 
-        const ct = res.headers.get('content-type') || '';
-        if (!ct.includes('text/event-stream')) {
-          /* Server returned plain JSON — simulate stream */
-          const data = await res.json();
-          if (data.error) { reject(new Error(data.error)); return; }
-          this._simulateStream(data, resolve, reject);
-          return;
-        }
+    /* Live markdown render — throttled to 20fps */
+    const renderLive = () => {
+      if (!sfpText) return;
+      const now = Date.now();
+      if (now - renderThrottle < 50) return;
+      renderThrottle = now;
+      try {
+        sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+        sfpText.classList.add('live-md');
+      } catch(e) {
+        sfpText.textContent = this.streamBuffer;
+      }
+      if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
+      if (window.innerWidth <= 768) {
+        const sfp = this._el('streamFullpage');
+        if (sfp && sfp.style.display !== 'none') sfp.scrollIntoView({ behavior:'smooth', block:'start' });
+      }
+    };
 
-        /* ── True SSE streaming with LIVE MARKDOWN rendering ── */
-        const reader      = res.body.getReader();
-        const decoder     = new TextDecoder();
-        let   lineBuffer  = '';
-        let   charCount   = 0;
-        let   renderThrottle = 0;
-
-        /* Get stream display elements */
-        const sfpText   = this._el('sfpText');
-        const sfpScroll = this._el('sfpScroll');
-
-        /* ─ LIVE MARKDOWN RENDER FUNCTION ─
-           Applies full styled markdown HTML to the stream overlay in real time.
-           Throttled to every 3 chars to prevent jank. */
-        const renderLive = () => {
-          if (!sfpText) return;
-          const now = Date.now();
-          if (now - renderThrottle < 50) return; /* throttle to 20fps */
-          renderThrottle = now;
-
-          try {
-            /* Render markdown as HTML — styles applied LIVE */
-            const html = this._renderMdLive(this.streamBuffer);
-            sfpText.innerHTML = html;
-            sfpText.classList.add('live-md');
-          } catch(e) {
-            /* Fallback to plain text if render fails */
-            sfpText.textContent = this.streamBuffer;
-          }
-
-          /* Auto-scroll */
-          if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
-
-          /* Mobile: keep visible */
-          if (window.innerWidth <= 768) {
-            const sfp = this._el('streamFullpage');
-            if (sfp && sfp.style.display !== 'none') {
-              sfp.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }
-        };
-
-        const pump = async () => {
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
-
-              lineBuffer += decoder.decode(value, { stream: true });
-              const lines = lineBuffer.split('\n');
-              lineBuffer  = lines.pop() || '';
-
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const raw = line.slice(6).trim();
-
-                try {
-                  const evt = JSON.parse(raw);
-
-                  if (evt.t !== undefined) {
-                    /* ── Token chunk — append + render live ── */
-                    this.streamBuffer += evt.t;
-                    charCount         += evt.t.length;
-
-                    /* Live markdown render every chunk */
-                    renderLive();
-
-                    /* Update thinking stages based on char count */
-                    this._updateStageByProgress(charCount);
-
-                  } else if (evt.topic !== undefined) {
-                    /* ── Final structured data ── */
-                    if (sfpText) {
-                      sfpText.classList.remove('live-md');
-                      sfpText.classList.add('done');
-                    }
-                    resolve(evt);
-                    return;
-                  } else if (evt.idx !== undefined) {
-                    /* Stage event from server */
-                    this._activateStage(evt.idx);
-                  }
-                } catch {
-                  /* Skip malformed SSE line */
-                }
-              }
-            }
-          } catch (err) {
-            if (err.name === 'AbortError') reject(err);
-            else reject(err);
-          }
-        };
-
-        pump();
-      })
-      .catch(err => {
-        if (err.name === 'AbortError') reject(err);
-        else reject(err);
-      });
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8000,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: this.streamCtrl?.signal,
     });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      const msg = errBody?.error?.message || `Anthropic API error ${res.status}`;
+      throw new Error(msg);
+    }
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   lineBuf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      lineBuf += decoder.decode(value, { stream: true });
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') continue;
+        try {
+          const evt = JSON.parse(raw);
+          if (evt.type === 'content_block_delta' && evt.delta?.text) {
+            const token = evt.delta.text;
+            fullContent       += token;
+            this.streamBuffer += token;
+            charCount         += token.length;
+            renderLive();
+            this._updateStageByProgress(charCount);
+          }
+        } catch { /* skip malformed SSE */ }
+      }
+    }
+
+    /* Finalize stream overlay */
+    if (sfpText) { sfpText.classList.remove('live-md'); sfpText.classList.add('done'); }
+
+    if (!fullContent || fullContent.length < 100)
+      throw new Error('AI returned empty response — please try again');
+
+    /* Parse the structured JSON the model returned */
+    const parsed  = _sv_parseJSON(fullContent);
+    const enriched = _sv_enrich(parsed, opts);
+
+    enriched._language = opts.language || 'English';
+    return enriched;
   }
 
-  /* ── Simulate streaming for JSON fallback — with LIVE MARKDOWN ── */
+  /* ── Fallback: simulate stream from already-fetched data ── */
   async _simulateStream(data, resolve, reject) {
     const notesText = data.ultra_long_notes || data.topic || 'Generating…';
     const sfpText   = this._el('sfpText');
     let   i         = 0;
-    const chunkSize = 6;
-    const delay     = 14;
+    const chunkSize = 8;
+    const delay     = 12;
 
     const tick = () => {
-      if (this.streamCtrl?.signal.aborted) { reject(new Error('AbortError')); return; }
+      if (this.streamCtrl?.signal?.aborted) { reject(new Error('AbortError')); return; }
       if (i >= notesText.length) {
         if (sfpText) { sfpText.classList.remove('live-md'); sfpText.classList.add('done'); }
         resolve(data);
@@ -1028,44 +1189,26 @@ class SavoireApp {
       }
       this.streamBuffer += notesText.slice(i, i + chunkSize);
       i += chunkSize;
-
       if (sfpText) {
-        try {
-          sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-          sfpText.classList.add('live-md');
-        } catch(e) {
-          sfpText.textContent = this.streamBuffer;
-        }
+        try { sfpText.innerHTML = this._renderMdLive(this.streamBuffer); sfpText.classList.add('live-md'); }
+        catch(e) { sfpText.textContent = this.streamBuffer; }
         const scroll = this._el('sfpScroll');
         if (scroll) scroll.scrollTop = scroll.scrollHeight;
       }
       this._updateStageByProgress(i);
       setTimeout(tick, delay);
     };
-
     tick();
   }
 
-  /* ── Plain JSON API call ── */
+  /* ── _callAPIJson — not used but kept for compatibility ── */
   async _callAPIJson(message, opts = {}) {
-    const res = await fetch(SAVOIRÉ.API_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ message, options: { ...opts, stream: false } }),
-      signal:  this.streamCtrl?.signal,
-    });
-    if (!res.ok) throw new Error(`Server error (${res.status}). Please try again.`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    return await this._callAPIStream(message, opts);
   }
 
   /* ── Cancel generation ── */
   _cancelGeneration() {
-    if (this.streamCtrl) {
-      this.streamCtrl.abort();
-      this.streamCtrl = null;
-    }
+    if (this.streamCtrl) { this.streamCtrl.abort(); this.streamCtrl = null; }
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
