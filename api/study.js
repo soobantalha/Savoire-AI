@@ -761,24 +761,29 @@ async function callModelStream(model, prompt, opts, onChunk) {
     // ── Line processor ──
     function processLine(line) {
       line = line.trim();
-      if (!line || !line.startsWith('data: ')) return;
+      if (!line) return;
+      
+      // Handle SSE data lines
+      if (line.startsWith('data: ')) {
+        const dataStr = line.slice(6).trim();
+        if (dataStr === '[DONE]') return;
+        if (!dataStr || dataStr === '') return;
 
-      const dataStr = line.slice(6).trim();
-      if (dataStr === '[DONE]') return;
-      if (!dataStr || dataStr === '') return;
+        let evt;
+        try { evt = JSON.parse(dataStr); }
+        catch { return; /* skip malformed SSE data */ }
 
-      let evt;
-      try { evt = JSON.parse(dataStr); }
-      catch { return; /* skip malformed SSE data */ }
-
-      const delta = evt?.choices?.[0]?.delta?.content;
-      if (delta && typeof delta === 'string' && delta.length > 0) {
-        fullContent  += delta;
-        charsEmitted += delta.length;
-        tokenCount++;
-        // ── Fire the live output callback ──
-        // This sends the token to the frontend via SSE immediately
-        onChunk(delta);
+        const delta = evt?.choices?.[0]?.delta?.content;
+        if (delta && typeof delta === 'string' && delta.length > 0) {
+          fullContent  += delta;
+          charsEmitted += delta.length;
+          tokenCount++;
+          // ── Fire the live output callback ──
+          // This sends the token to the frontend via SSE immediately
+          if (typeof onChunk === 'function') {
+            onChunk(delta);
+          }
+        }
       }
     }
 
@@ -1246,6 +1251,7 @@ module.exports = async function handler(req, res) {
     const sendSSE = (eventName, data) => {
       try {
         const serialised = typeof data === 'string' ? data : JSON.stringify(data);
+        // Write event line then data line
         res.write(`event: ${eventName}\ndata: ${serialised}\n\n`);
         if (typeof res.flush === 'function') res.flush();
       } catch (writeErr) {

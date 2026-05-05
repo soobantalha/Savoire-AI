@@ -887,6 +887,8 @@ class SavoireApp {
         options: { ...opts, stream: true },
       });
 
+      let eventType = null; // Track current event type from event: lines
+
       fetch(SAVOIRÉ.API_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -912,35 +914,28 @@ class SavoireApp {
         /* ── True SSE streaming with LIVE MARKDOWN rendering ── */
         const reader      = res.body.getReader();
         const decoder     = new TextDecoder();
-        let   lineBuffer  = '';
-        let   charCount   = 0;
+        let   buffer      = '';
+        let   fullContent = '';
         let   renderThrottle = 0;
 
         /* Get stream display elements */
         const sfpText   = this._el('sfpText');
         const sfpScroll = this._el('sfpScroll');
 
-        /* ─ LIVE MARKDOWN RENDER FUNCTION ─
-           Applies full styled markdown HTML to the stream overlay in real time.
-           Throttled to every 3 chars to prevent jank. */
+        /* LIVE MARKDOWN RENDER FUNCTION */
         const renderLive = () => {
           if (!sfpText) return;
           const now = Date.now();
-          if (now - renderThrottle < 50) return; /* throttle to 20fps */
+          if (now - renderThrottle < 35) return;
           renderThrottle = now;
 
           try {
-            /* Render markdown as HTML — styles applied LIVE */
-            const html = this._renderMdLive(this.streamBuffer);
-            sfpText.innerHTML = html;
+            sfpText.innerHTML = this._renderMdLive(fullContent);
             sfpText.classList.add('live-md');
+            if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
           } catch(e) {
-            /* Fallback to plain text if render fails */
-            sfpText.textContent = this.streamBuffer;
+            sfpText.textContent = fullContent;
           }
-
-          /* Auto-scroll */
-          if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
 
           /* Mobile: keep visible */
           if (window.innerWidth <= 768) {
@@ -951,50 +946,67 @@ class SavoireApp {
           }
         };
 
+        /* Process SSE lines */
+        const processLines = (lines) => {
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            // Handle event: lines
+            if (trimmed.startsWith('event: ')) {
+              eventType = trimmed.slice(7).trim();
+              continue;
+            }
+
+            // Handle data: lines
+            if (trimmed.startsWith('data: ')) {
+              const dataStr = trimmed.slice(6).trim();
+              if (dataStr === '[DONE]') continue;
+
+              try {
+                const evt = JSON.parse(dataStr);
+
+                // Handle token events
+                if (evt.t !== undefined) {
+                  fullContent += evt.t;
+                  renderLive();
+                  this._updateStageByProgress(fullContent.length);
+                }
+                // Handle final data (topic indicates completion)
+                else if (evt.topic !== undefined) {
+                  if (sfpText) {
+                    sfpText.classList.remove('live-md');
+                    sfpText.classList.add('done');
+                  }
+                  resolve(evt);
+                  return;
+                }
+                // Handle stage events from server
+                else if (evt.idx !== undefined) {
+                  this._activateStage(evt.idx);
+                }
+              } catch(e) {
+                // Skip malformed JSON
+              }
+            }
+          }
+        }.bind(this);
+
+        /* Read stream */
         const pump = async () => {
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
-
-              lineBuffer += decoder.decode(value, { stream: true });
-              const lines = lineBuffer.split('\n');
-              lineBuffer  = lines.pop() || '';
-
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const raw = line.slice(6).trim();
-
-                try {
-                  const evt = JSON.parse(raw);
-
-                  if (evt.t !== undefined) {
-                    /* ── Token chunk — append + render live ── */
-                    this.streamBuffer += evt.t;
-                    charCount         += evt.t.length;
-
-                    /* Live markdown render every chunk */
-                    renderLive();
-
-                    /* Update thinking stages based on char count */
-                    this._updateStageByProgress(charCount);
-
-                  } else if (evt.topic !== undefined) {
-                    /* ── Final structured data ── */
-                    if (sfpText) {
-                      sfpText.classList.remove('live-md');
-                      sfpText.classList.add('done');
-                    }
-                    resolve(evt);
-                    return;
-                  } else if (evt.idx !== undefined) {
-                    /* Stage event from server */
-                    this._activateStage(evt.idx);
-                  }
-                } catch {
-                  /* Skip malformed SSE line */
-                }
+              if (done) {
+                if (buffer) processLines([buffer]);
+                reject(new Error('Stream ended without final data'));
+                return;
               }
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+              processLines(lines);
             }
           } catch (err) {
             if (err.name === 'AbortError') reject(err);

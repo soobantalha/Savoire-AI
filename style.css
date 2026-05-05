@@ -6370,3 +6370,159 @@ kbd {
    Built by Sooban Talha Technologies
    ===================================================================== */
 
+/* ─────────────────────────────────────────────────────────────────────────────────────────────
+   LIVE STREAMING CURSOR & MARKDOWN RENDERING
+   ───────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* Blinking cursor for live streaming */
+.sfp-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background-color: var(--gold);
+  vertical-align: middle;
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  border-radius: 1px;
+}
+
+/* Live markdown styling during stream */
+.sfp-text.live-md {
+  opacity: 1;
+  transition: opacity 0.05s linear;
+}
+
+.sfp-text.live-md h1,
+.sfp-text.live-md h2,
+.sfp-text.live-md h3 {
+  margin-top: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+.sfp-text.live-md p {
+  margin-bottom: 0.5em;
+}
+
+.sfp-text.live-md ul,
+.sfp-text.live-md ol {
+  margin-left: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.sfp-text.live-md li {
+  margin-bottom: 0.2em;
+}
+
+.sfp-text.live-md strong {
+  color: var(--gold);
+}
+
+.sfp-text.live-md code {
+  background: var(--bg3);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-family: var(--fm);
+  font-size: 0.9em;
+}
+
+/* Fade out animation for stream overlay */
+.stream-fullpage-wrap.fading-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; visibility: hidden; }
+}
+
+/* Stream overlay panel adjustment when sidebar is open */
+.stream-fullpage-wrap.panel-open {
+  left: 282px;
+}
+
+@media (max-width: 768px) {
+  .stream-fullpage-wrap.panel-open {
+    left: 0;
+  }
+}
+
+/* Input shake animation for error */
+.input-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+/* Welcome overlay animations */
+.welcome-overlay.visible,
+.welcome-back-overlay.visible {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.welcome-overlay.dismissing,
+.welcome-back-overlay.dismissing {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to { opacity: 1; backdrop-filter: blur(8px); }
+}
+
+/* Progress bar indeterminate animation */
+@keyframes progressIndeterminate {
+  0%   { width: 0%; margin-left: 0%; }
+  50%  { width: 70%; margin-left: 15%; }
+  100% { width: 0%; margin-left: 100%; }
+}
+
+.ssc-progress-bar {
+  animation: progressIndeterminate 2s ease-in-out infinite;
+}
+
+/* Floating animation for logo */
+@keyframes floatAnim {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.es-mark {
+  animation: floatAnim 3.2s ease-in-out infinite;
+}
+
+/* Pulse animation for live indicator */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+.sfp-dot {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.sfp-dot:nth-child(2) { animation-delay: 0.2s; }
+.sfp-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* Card reveal animation */
+@keyframes studyReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.study-sec {
+  animation: studyReveal 0.4s ease-out both;
+}
+
+/* Scale in animation for modals */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal {
+  animation: scaleIn 0.2s ease-out;
+}
