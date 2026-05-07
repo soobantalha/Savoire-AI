@@ -64,7 +64,7 @@ const SAVOIRÉ = {
   DEVSITE:    'soobantalhatech.xyz',
   WEBSITE:    'savoireai.vercel.app',
   FOUNDER:    'Sooban Talha',
-  API_URL:    '/api/study',
+  API_URL:    '/api/study',  /* legacy — now calls OpenRouter directly via study.js */
   MAX_HISTORY: 60,
   MAX_SAVED:   120,
   NTFY_CHANNEL:'savoireai_new_users',
@@ -864,175 +864,70 @@ class SavoireApp {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
-     STREAMING API CALL — SSE with live markdown rendering
-     ═════════════════════════════════════════════════════════════════════════ */
+     LIVE AI STREAMING — Direct OpenRouter browser calls via study.js
+     Every token from the AI fires onToken() immediately — live typewriter output.
+     10 free models with automatic failover. Zero backend required.
+     ═══════════════════════════════════════════════════════════════════════════ */
   async _callAPIStream(message, opts = {}) {
     this.streamCtrl = new AbortController();
     this._showCancelBtn(true);
 
-    try {
-      return await this._streamSSE(message, opts);
-    } catch (err) {
-      if (err.name === 'AbortError' || err.message === 'AbortError') throw err;
-      console.warn('[Savoiré] SSE failed, falling back to JSON:', err.message);
-      return await this._callAPIJson(message, opts);
+    if (typeof window.SavoireEngine === 'undefined') {
+      throw new Error('study.js not loaded. Add <script src="study.js"></script> BEFORE app.js in dashboard.html.');
     }
+
+    const sfpText   = this._el('sfpText');
+    const sfpScroll = this._el('sfpScroll');
+    let   renderAt  = 0;
+
+    const onToken = (chunk) => {
+      this.streamBuffer += chunk;
+      const now = Date.now();
+      if (now - renderAt < 35) return;          /* throttle to ~28fps */
+      renderAt = now;
+
+      try {
+        if (sfpText) {
+          sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+          sfpText.classList.add('live-md');
+        }
+        if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
+      } catch(e) {
+        if (sfpText) sfpText.textContent = this.streamBuffer;
+      }
+
+      this._updateStageByProgress(this.streamBuffer.length);
+
+      if (window.innerWidth <= 768) {
+        const sfp = this._el('streamFullpage');
+        if (sfp && sfp.style.display !== 'none') {
+          sfp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    };
+
+    const result = await window.SavoireEngine.generate(
+      message,
+      { ...opts },
+      onToken,
+      this.streamCtrl.signal
+    );
+
+    if (sfpText) { sfpText.classList.remove('live-md'); sfpText.classList.add('done'); }
+    return result;
   }
 
-  /* ── Server-Sent Events streaming with LIVE MARKDOWN ── */
-  async _streamSSE(message, opts) {
-    return new Promise((resolve, reject) => {
-      const body = JSON.stringify({
-        message,
-        options: { ...opts, stream: true },
-      });
-
-      let eventType = null; // Track current event type from event: lines
-
-      fetch(SAVOIRÉ.API_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        signal: this.streamCtrl?.signal,
-      })
-      .then(async res => {
-        if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          reject(new Error(`Server error (${res.status})${text ? ': ' + text.slice(0, 120) : ''}`));
-          return;
-        }
-
-        const ct = res.headers.get('content-type') || '';
-        if (!ct.includes('text/event-stream')) {
-          /* Server returned plain JSON — simulate stream */
-          const data = await res.json();
-          if (data.error) { reject(new Error(data.error)); return; }
-          this._simulateStream(data, resolve, reject);
-          return;
-        }
-
-        /* ── True SSE streaming with LIVE MARKDOWN rendering ── */
-        const reader      = res.body.getReader();
-        const decoder     = new TextDecoder();
-        let   buffer      = '';
-        let   fullContent = '';
-        let   renderThrottle = 0;
-
-        /* Get stream display elements */
-        const sfpText   = this._el('sfpText');
-        const sfpScroll = this._el('sfpScroll');
-
-        /* LIVE MARKDOWN RENDER FUNCTION */
-        const renderLive = () => {
-          if (!sfpText) return;
-          const now = Date.now();
-          if (now - renderThrottle < 35) return;
-          renderThrottle = now;
-
-          try {
-            sfpText.innerHTML = this._renderMdLive(fullContent);
-            sfpText.classList.add('live-md');
-            if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
-          } catch(e) {
-            sfpText.textContent = fullContent;
-          }
-
-          /* Mobile: keep visible */
-          if (window.innerWidth <= 768) {
-            const sfp = this._el('streamFullpage');
-            if (sfp && sfp.style.display !== 'none') {
-              sfp.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-          }
-        };
-
-        /* Process SSE lines */
-        const processLines = (lines) => {
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
-
-            // Handle event: lines
-            if (trimmed.startsWith('event: ')) {
-              eventType = trimmed.slice(7).trim();
-              continue;
-            }
-
-            // Handle data: lines
-            if (trimmed.startsWith('data: ')) {
-              const dataStr = trimmed.slice(6).trim();
-              if (dataStr === '[DONE]') continue;
-
-              try {
-                const evt = JSON.parse(dataStr);
-
-                // Handle token events
-                if (evt.t !== undefined) {
-                  fullContent += evt.t;
-                  renderLive();
-                  this._updateStageByProgress(fullContent.length);
-                }
-                // Handle final data (topic indicates completion)
-                else if (evt.topic !== undefined) {
-                  if (sfpText) {
-                    sfpText.classList.remove('live-md');
-                    sfpText.classList.add('done');
-                  }
-                  resolve(evt);
-                  return;
-                }
-                // Handle stage events from server
-                else if (evt.idx !== undefined) {
-                  this._activateStage(evt.idx);
-                }
-              } catch(e) {
-                // Skip malformed JSON
-              }
-            }
-          }
-        }.bind(this);
-
-        /* Read stream */
-        const pump = async () => {
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) {
-                if (buffer) processLines([buffer]);
-                reject(new Error('Stream ended without final data'));
-                return;
-              }
-
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
-              processLines(lines);
-            }
-          } catch (err) {
-            if (err.name === 'AbortError') reject(err);
-            else reject(err);
-          }
-        };
-
-        pump();
-      })
-      .catch(err => {
-        if (err.name === 'AbortError') reject(err);
-        else reject(err);
-      });
-    });
-  }
-
-  /* ── Simulate streaming for JSON fallback — with LIVE MARKDOWN ── */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SIMULATE STREAM — animates offline fallback content word by word
+     ═══════════════════════════════════════════════════════════════════════════ */
   async _simulateStream(data, resolve, reject) {
     const notesText = data.ultra_long_notes || data.topic || 'Generating…';
     const sfpText   = this._el('sfpText');
     let   i         = 0;
     const chunkSize = 6;
     const delay     = 14;
-
     const tick = () => {
-      if (this.streamCtrl?.signal.aborted) { reject(new Error('AbortError')); return; }
+      if (this.streamCtrl?.signal?.aborted) { reject(new Error('AbortError')); return; }
       if (i >= notesText.length) {
         if (sfpText) { sfpText.classList.remove('live-md'); sfpText.classList.add('done'); }
         resolve(data);
@@ -1040,44 +935,26 @@ class SavoireApp {
       }
       this.streamBuffer += notesText.slice(i, i + chunkSize);
       i += chunkSize;
-
       if (sfpText) {
-        try {
-          sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-          sfpText.classList.add('live-md');
-        } catch(e) {
-          sfpText.textContent = this.streamBuffer;
-        }
+        try { sfpText.innerHTML = this._renderMdLive(this.streamBuffer); sfpText.classList.add('live-md'); }
+        catch(e) { sfpText.textContent = this.streamBuffer; }
         const scroll = this._el('sfpScroll');
         if (scroll) scroll.scrollTop = scroll.scrollHeight;
       }
       this._updateStageByProgress(i);
       setTimeout(tick, delay);
     };
-
     tick();
   }
 
-  /* ── Plain JSON API call ── */
+  /* — _callAPIJson — kept for compatibility, delegates to streaming path */
   async _callAPIJson(message, opts = {}) {
-    const res = await fetch(SAVOIRÉ.API_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ message, options: { ...opts, stream: false } }),
-      signal:  this.streamCtrl?.signal,
-    });
-    if (!res.ok) throw new Error(`Server error (${res.status}). Please try again.`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    return await this._callAPIStream(message, opts);
   }
 
   /* ── Cancel generation ── */
   _cancelGeneration() {
-    if (this.streamCtrl) {
-      this.streamCtrl.abort();
-      this.streamCtrl = null;
-    }
+    if (this.streamCtrl) { this.streamCtrl.abort(); this.streamCtrl = null; }
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
@@ -2541,14 +2418,14 @@ class SavoireApp {
         doc.text(footerLeft, ml, fy + 1);
 
         /* Right — page number in styled box */
-        const pgStr = `${pgNum} / ${pgTotal}`;
+        const ps = `${pgNum} / ${pgTotal}`;
         doc.setFillColor(...GOLD);
-        const pgW = doc.getTextWidth(pgStr) + 6;
-        doc.rect(pw - mr - pgW, fy - 1.5, pgW + 2, 5.5, 'F');
+        const psW = doc.getTextWidth(ps) + 6;
+        doc.rect(pw - mr - psW, fy - 1.5, psW + 2, 5.5, 'F');
         doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(12, 8, 2);
-        doc.text(pgStr, pw - mr + 1, fy + 2.2, { align: 'right' });
+        doc.text(ps, pw - mr + 1, fy + 2.2, { align: 'right' });
       };
 
       /* ════════════════════════════════════════════════════════════════
@@ -2860,7 +2737,7 @@ class SavoireApp {
 
       /* ── COMPREHENSIVE NOTES SECTION ── */
       if (data.ultra_long_notes) {
-        sectionHeading('Comprehensive Analysis', GOLD, CREAM, '▶');
+        sectionHeading('Comprehensive Analysis', GOLD, CREAM, '≡');
 
         const noteText = this._stripMd(data.ultra_long_notes);
         const paragraphs = noteText.split('\n\n').filter(Boolean);
@@ -3602,6 +3479,28 @@ class SavoireApp {
     }
 
     const t       = document.createElement('div');
+    t.className   = `toast ${type}`;
+    t.innerHTML   = `<i class="fas ${icon}" aria-hidden="true"></i><span>${this._esc(msg)}</span>`;
+    t.setAttribute('role', 'alert');
+    t.setAttribute('aria-live', 'polite');
+
+    t.addEventListener('click', () => {
+      t.classList.add('removing');
+      setTimeout(() => t.remove(), 300);
+    });
+
+    container.appendChild(t);
+
+    setTimeout(() => {
+      if (t.parentNode) {
+        t.classList.add('removing');
+        setTimeout(() => { if (t.parentNode) t.remove(); }, 300);
+      }
+    }, dur);
+  }
+
+  showToast(msg, type, icon, dur) {
+    const t = document.createElement('div');
     t.className   = `toast ${type}`;
     t.innerHTML   = `<i class="fas ${icon}" aria-hidden="true"></i><span>${this._esc(msg)}</span>`;
     t.setAttribute('role', 'alert');
