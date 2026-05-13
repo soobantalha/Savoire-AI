@@ -1,1335 +1,1358 @@
-/**
- * api/study.js - Savoiré AI v2.0 Backend API
- * World-Class AI Study Companion Platform
- * 
- * Features:
- * - Serverless function for Vercel deployment
- * - OpenRouter API integration with 10+ models
- * - SSE (Server-Sent Events) streaming
- * - 50+ language support with RTL detection
- * - Fallback content generation (2000+ words)
- * - Stage events for UI feedback
- * - Rate limiting and error recovery
- * - Token-by-token streaming with 0.8-1.2s first token
- * 
- * @version 2.0.0
- * @author Sooban Talha Technologies
- * @license Proprietary
- */
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// SAVOIRÉ AI v2.0 — api/study.js — ULTRA PREMIUM BACKEND
+// Built by Sooban Talha Technologies | soobantalhatech.xyz
+// Founder: Sooban Talha
+//
+// ╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
+// ║                                    FEATURE MATRIX                                                ║
+// ╠══════════════════════════════════════════════════════════════════════════════════════════════════╣
+// ║  ✦ TRUE SSE STREAMING          ✦ 10+ FREE AI MODELS           ✦ SMART FAILOVER                  ║
+// ║  ✦ HEARTBEAT SYSTEM            ✦ RATE LIMIT DETECTION         ✦ DOUBLE RETRY LOGIC              ║
+// ║  ✦ 50+ LANGUAGES               ✦ 4 DEPTH LEVELS               ✦ 5 WRITING STYLES                ║
+// ║  ✦ 5 STUDY TOOLS               ✦ STRUCTURED JSON OUTPUT       ✦ QUALITY FALLBACK                ║
+// ║  ✦ CORS SUPPORT                ✦ SECURITY HEADERS             ✦ REQUEST LOGGING                 ║
+// ║  ✦ 300s TIMEOUT                ✦ VERCEL OPTIMIZED             ✦ EDGE COMPATIBLE                 ║
+// ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
-// ==================== IMPORTS & CONFIGURATION ====================
+'use strict';
 
-// CORS headers for cross-origin requests
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Max-Age': '86400',
-  'Content-Type': 'application/json'
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 1: CONSTANTS & BRANDING
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+const BRAND = 'Savoiré AI v2.0';
+const DEVELOPER = 'Sooban Talha Technologies';
+const DEVSITE = 'soobantalhatech.xyz';
+const WEBSITE = 'savoireai.vercel.app';
+const FOUNDER = 'Sooban Talha';
+const APP_VERSION = '2.0';
+const BUILD_NUMBER = '2025.001';
+
+const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
+const HTTP_REFERER = `https://${WEBSITE}`;
+const APP_TITLE = BRAND;
+
+// SSE Event Types
+const SSE_EVENTS = {
+  TOKEN: 'token',
+  DONE: 'done',
+  ERROR: 'error',
+  HEARTBEAT: 'heartbeat',
+  STAGE: 'stage',
+  METRICS: 'metrics'
 };
 
-// SSE specific headers for streaming
-const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache, no-transform',
-  'Connection': 'keep-alive',
-  'X-Accel-Buffering': 'no'
-};
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 2: FREE AI MODEL ROSTER — 10+ MODELS WITH FREE SUFFIX
+   All models use :free suffix on OpenRouter — $0 per request
+   Tried in priority order for best quality and reliability
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
 
-// Supported languages with their ISO codes and RTL status
-const SUPPORTED_LANGUAGES = {
-  'english': { code: 'en', name: 'English', rtl: false, font: 'default' },
-  'urdu': { code: 'ur', name: 'اردو', rtl: true, font: 'Noto Nastaliq Urdu' },
-  'hindi': { code: 'hi', name: 'हिन्दी', rtl: false, font: 'Noto Sans Devanagari' },
-  'arabic': { code: 'ar', name: 'العربية', rtl: true, font: 'Noto Naskh Arabic' },
-  'french': { code: 'fr', name: 'Français', rtl: false, font: 'default' },
-  'german': { code: 'de', name: 'Deutsch', rtl: false, font: 'default' },
-  'spanish': { code: 'es', name: 'Español', rtl: false, font: 'default' },
-  'portuguese': { code: 'pt', name: 'Português', rtl: false, font: 'default' },
-  'italian': { code: 'it', name: 'Italiano', rtl: false, font: 'default' },
-  'dutch': { code: 'nl', name: 'Nederlands', rtl: false, font: 'default' },
-  'russian': { code: 'ru', name: 'Русский', rtl: false, font: 'Noto Sans Cyrillic' },
-  'turkish': { code: 'tr', name: 'Türkçe', rtl: false, font: 'default' },
-  'chinese_simplified': { code: 'zh-CN', name: '简体中文', rtl: false, font: 'Noto Sans SC' },
-  'chinese_traditional': { code: 'zh-TW', name: '繁體中文', rtl: false, font: 'Noto Sans TC' },
-  'japanese': { code: 'ja', name: '日本語', rtl: false, font: 'Noto Sans JP' },
-  'korean': { code: 'ko', name: '한국어', rtl: false, font: 'Noto Sans KR' },
-  'bengali': { code: 'bn', name: 'বাংলা', rtl: false, font: 'Noto Sans Bengali' },
-  'punjabi': { code: 'pa', name: 'ਪੰਜਾਬੀ', rtl: false, font: 'Noto Sans Gurmukhi' },
-  'indonesian': { code: 'id', name: 'Bahasa Indonesia', rtl: false, font: 'default' },
-  'malay': { code: 'ms', name: 'Bahasa Melayu', rtl: false, font: 'default' },
-  'swahili': { code: 'sw', name: 'Kiswahili', rtl: false, font: 'default' },
-  'persian': { code: 'fa', name: 'فارسی', rtl: true, font: 'Noto Naskh Arabic' },
-  'vietnamese': { code: 'vi', name: 'Tiếng Việt', rtl: false, font: 'default' },
-  'thai': { code: 'th', name: 'ไทย', rtl: false, font: 'Noto Sans Thai' },
-  'greek': { code: 'el', name: 'Ελληνικά', rtl: false, font: 'Noto Sans Greek' },
-  'polish': { code: 'pl', name: 'Polski', rtl: false, font: 'default' },
-  'swedish': { code: 'sv', name: 'Svenska', rtl: false, font: 'default' },
-  'norwegian': { code: 'no', name: 'Norsk', rtl: false, font: 'default' },
-  'danish': { code: 'da', name: 'Dansk', rtl: false, font: 'default' },
-  'finnish': { code: 'fi', name: 'Suomi', rtl: false, font: 'default' },
-  'czech': { code: 'cs', name: 'Čeština', rtl: false, font: 'default' },
-  'romanian': { code: 'ro', name: 'Română', rtl: false, font: 'default' },
-  'hungarian': { code: 'hu', name: 'Magyar', rtl: false, font: 'default' },
-  'ukrainian': { code: 'uk', name: 'Українська', rtl: false, font: 'Noto Sans Cyrillic' },
-  'hebrew': { code: 'he', name: 'עברית', rtl: true, font: 'Noto Sans Hebrew' },
-  'nepali': { code: 'ne', name: 'नेपाली', rtl: false, font: 'Noto Sans Devanagari' },
-  'tamil': { code: 'ta', name: 'தமிழ்', rtl: false, font: 'Noto Sans Tamil' },
-  'telugu': { code: 'te', name: 'తెలుగు', rtl: false, font: 'Noto Sans Telugu' },
-  'kannada': { code: 'kn', name: 'ಕನ್ನಡ', rtl: false, font: 'Noto Sans Kannada' },
-  'marathi': { code: 'mr', name: 'मराठी', rtl: false, font: 'Noto Sans Devanagari' },
-  'gujarati': { code: 'gu', name: 'ગુજરાતી', rtl: false, font: 'Noto Sans Gujarati' },
-  'sinhala': { code: 'si', name: 'සිංහල', rtl: false, font: 'Noto Sans Sinhala' },
-  'amharic': { code: 'am', name: 'አማርኛ', rtl: false, font: 'Noto Sans Ethiopic' },
-  'somali': { code: 'so', name: 'Soomaali', rtl: false, font: 'default' },
-  'khmer': { code: 'km', name: 'ភាសាខ្មែរ', rtl: false, font: 'Noto Sans Khmer' },
-  'lao': { code: 'lo', name: 'ພາສາລາວ', rtl: false, font: 'Noto Sans Lao' },
-  'burmese': { code: 'my', name: 'မြန်မာစာ', rtl: false, font: 'Noto Sans Myanmar' },
-  'mongolian': { code: 'mn', name: 'Монгол хэл', rtl: false, font: 'default' },
-  'armenian': { code: 'hy', name: 'Հայերեն', rtl: false, font: 'Noto Sans Armenian' },
-  'georgian': { code: 'ka', name: 'ქართული', rtl: false, font: 'Noto Sans Georgian' },
-  'macedonian': { code: 'mk', name: 'Македонски', rtl: false, font: 'Noto Sans Cyrillic' },
-  'albanian': { code: 'sq', name: 'Shqip', rtl: false, font: 'default' },
-  'serbian': { code: 'sr', name: 'Српски', rtl: false, font: 'Noto Sans Cyrillic' },
-  'croatian': { code: 'hr', name: 'Hrvatski', rtl: false, font: 'default' },
-  'bosnian': { code: 'bs', name: 'Bosanski', rtl: false, font: 'default' },
-  'slovak': { code: 'sk', name: 'Slovenčina', rtl: false, font: 'default' },
-  'slovenian': { code: 'sl', name: 'Slovenščina', rtl: false, font: 'default' },
-  'estonian': { code: 'et', name: 'Eesti', rtl: false, font: 'default' },
-  'latvian': { code: 'lv', name: 'Latviešu', rtl: false, font: 'default' },
-  'lithuanian': { code: 'lt', name: 'Lietuvių', rtl: false, font: 'default' },
-  'icelandic': { code: 'is', name: 'Íslenska', rtl: false, font: 'default' },
-  'irish': { code: 'ga', name: 'Gaeilge', rtl: false, font: 'default' },
-  'scottish_gaelic': { code: 'gd', name: 'Gàidhlig', rtl: false, font: 'default' },
-  'welsh': { code: 'cy', name: 'Cymraeg', rtl: false, font: 'default' },
-  'breton': { code: 'br', name: 'Brezhoneg', rtl: false, font: 'default' },
-  'basque': { code: 'eu', name: 'Euskara', rtl: false, font: 'default' },
-  'catalan': { code: 'ca', name: 'Català', rtl: false, font: 'default' },
-  'galician': { code: 'gl', name: 'Galego', rtl: false, font: 'default' },
-  'occitan': { code: 'oc', name: 'Occitan', rtl: false, font: 'default' },
-  'maltese': { code: 'mt', name: 'Malti', rtl: false, font: 'default' },
-  'algerian_arabic': { code: 'ar-DZ', name: 'الدارجة الجزائرية', rtl: true, font: 'Noto Naskh Arabic' },
-  'moroccan_arabic': { code: 'ar-MA', name: 'الدارجة المغربية', rtl: true, font: 'Noto Naskh Arabic' },
-  'egyptian_arabic': { code: 'ar-EG', name: 'العربية المصرية', rtl: true, font: 'Noto Naskh Arabic' },
-  'levantine_arabic': { code: 'ar-LV', name: 'اللهجة الشامية', rtl: true, font: 'Noto Naskh Arabic' },
-  'iraqi_arabic': { code: 'ar-IQ', name: 'العربية العراقية', rtl: true, font: 'Noto Naskh Arabic' },
-  'tunisian_arabic': { code: 'ar-TN', name: 'الدارجة التونسية', rtl: true, font: 'Noto Naskh Arabic' },
-  'libyan_arabic': { code: 'ar-LY', name: 'العربية الليبية', rtl: true, font: 'Noto Naskh Arabic' },
-  'sudanese_arabic': { code: 'ar-SD', name: 'العربية السودانية', rtl: true, font: 'Noto Naskh Arabic' },
-  'yemeni_arabic': { code: 'ar-YE', name: 'العربية اليمنية', rtl: true, font: 'Noto Naskh Arabic' },
-  'pashto': { code: 'ps', name: 'پښتو', rtl: true, font: 'Noto Naskh Arabic' },
-  'dari': { code: 'prs', name: 'دری', rtl: true, font: 'Noto Naskh Arabic' },
-  'kurdish': { code: 'ku', name: 'Kurdî', rtl: true, font: 'Noto Naskh Arabic' },
-  'sindhi': { code: 'sd', name: 'سنڌي', rtl: true, font: 'Noto Naskh Arabic' },
-  'kashmiri': { code: 'ks', name: 'कॉशुर / كأشُر', rtl: true, font: 'Noto Naskh Arabic' },
-  'balochi': { code: 'bal', name: 'بلوچی', rtl: true, font: 'Noto Naskh Arabic' }
-};
-
-// Available AI models with priority order
-const AI_MODELS = [
-  'openrouter/quasar-alpha',           // Fastest, best for general
-  'openrouter/llama-3.2-3b-instruct',  // Great for streaming
-  'openrouter/gemini-2.0-flash-exp',   // High quality
-  'openrouter/claude-3.5-haiku',       // Balanced performance
-  'openrouter/deepseek-chat',          // Good for long context
-  'openrouter/mistral-7b-instruct',    // Reliable fallback
-  'openrouter/phi-3-mini-128k',        // Efficient
-  'openrouter/qwen-2.5-7b-instruct',   // Strong multilingual
-  'openrouter/llama-3.1-8b-instruct',  // Solid performer
-  'openrouter/command-r-plus'          // Last resort
+const MODELS = [
+  {
+    id: 'google/gemini-2.0-flash-exp:free',
+    name: 'Gemini 2.0 Flash',
+    maxTokens: 8000,
+    timeoutMs: 120000,
+    priority: 1,
+    quality: 10,
+    speed: 9,
+    description: 'Best quality, fastest response, excellent at structured JSON'
+  },
+  {
+    id: 'deepseek/deepseek-chat-v3-0324:free',
+    name: 'DeepSeek Chat v3',
+    maxTokens: 8000,
+    timeoutMs: 120000,
+    priority: 2,
+    quality: 9,
+    speed: 8,
+    description: 'Outstanding reasoning, very strong at detailed academic content'
+  },
+  {
+    id: 'meta-llama/llama-3.3-70b-instruct:free',
+    name: 'LLaMA 3.3 70B',
+    maxTokens: 6000,
+    timeoutMs: 110000,
+    priority: 3,
+    quality: 9,
+    speed: 7,
+    description: 'Meta flagship, excellent instruction following'
+  },
+  {
+    id: 'mistralai/mixtral-8x7b-instruct:free',
+    name: 'Mixtral 8x7B',
+    maxTokens: 6000,
+    timeoutMs: 110000,
+    priority: 4,
+    quality: 8,
+    speed: 7,
+    description: 'Mixtral MoE, great balance of quality and speed'
+  },
+  {
+    id: 'z-ai/glm-4.5-air:free',
+    name: 'GLM 4.5 Air',
+    maxTokens: 6000,
+    timeoutMs: 100000,
+    priority: 5,
+    quality: 8,
+    speed: 8,
+    description: 'Strong multilingual capabilities'
+  },
+  {
+    id: 'microsoft/phi-4-reasoning-plus:free',
+    name: 'Phi-4 Reasoning Plus',
+    maxTokens: 4000,
+    timeoutMs: 90000,
+    priority: 6,
+    quality: 8,
+    speed: 8,
+    description: 'Microsoft, excellent logical reasoning'
+  },
+  {
+    id: 'qwen/qwen3-8b:free',
+    name: 'Qwen3 8B',
+    maxTokens: 4000,
+    timeoutMs: 90000,
+    priority: 7,
+    quality: 7,
+    speed: 8,
+    description: 'Alibaba, solid multilingual performance'
+  },
+  {
+    id: 'google/gemini-flash-1.5-8b:free',
+    name: 'Gemini Flash 1.5 8B',
+    maxTokens: 4000,
+    timeoutMs: 80000,
+    priority: 8,
+    quality: 7,
+    speed: 9,
+    description: 'Lightweight Gemini, fast and reliable'
+  },
+  {
+    id: 'nousresearch/hermes-3-llama-3.1-405b:free',
+    name: 'Hermes 3 LLaMA 405B',
+    maxTokens: 6000,
+    timeoutMs: 120000,
+    priority: 9,
+    quality: 9,
+    speed: 5,
+    description: 'Massive model, great for comprehensive deep content'
+  },
+  {
+    id: 'mistralai/mistral-7b-instruct-v0.3:free',
+    name: 'Mistral 7B',
+    maxTokens: 3500,
+    timeoutMs: 80000,
+    priority: 10,
+    quality: 6,
+    speed: 8,
+    description: 'Reliable European model'
+  },
+  {
+    id: 'openchat/openchat-7b:free',
+    name: 'OpenChat 7B',
+    maxTokens: 3500,
+    timeoutMs: 80000,
+    priority: 11,
+    quality: 6,
+    speed: 8,
+    description: 'Final fallback, consistently available'
+  }
 ];
 
-// Study tool configurations
-const STUDY_TOOLS = {
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 3: DEPTH CONFIGURATION
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+const DEPTH_CONFIG = {
+  standard: {
+    wordRange: '600 to 900 words',
+    minWords: 600,
+    targetWords: 750,
+    maxWords: 900,
+    description: 'Clear and accessible, covering all essentials with good depth',
+    sectionsRequired: 4,
+    detailLevel: 3
+  },
+  detailed: {
+    wordRange: '1000 to 1500 words',
+    minWords: 1000,
+    targetWords: 1250,
+    maxWords: 1500,
+    description: 'Detailed coverage with concrete examples and thorough explanations',
+    sectionsRequired: 6,
+    detailLevel: 4
+  },
+  comprehensive: {
+    wordRange: '1500 to 2000 words',
+    minWords: 1500,
+    targetWords: 1750,
+    maxWords: 2000,
+    description: 'Comprehensive analysis covering all major aspects, nuances and edge cases',
+    sectionsRequired: 7,
+    detailLevel: 5
+  },
+  expert: {
+    wordRange: '2000 to 2800 words including advanced subtopics, nuances, cutting-edge developments',
+    minWords: 2000,
+    targetWords: 2400,
+    maxWords: 2800,
+    description: 'Expert-level deep dive covering advanced subtopics, academic debates and future directions',
+    sectionsRequired: 8,
+    detailLevel: 5
+  }
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 4: STYLE CONFIGURATION
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+const STYLE_CONFIG = {
+  simple: {
+    name: 'Simple & Clear',
+    instruction: `Write in clear, accessible, beginner-friendly language throughout. Define every technical term immediately when first used. Use short sentences, everyday analogies and comparisons. Avoid jargon wherever possible. The goal is that a motivated student encountering this topic for the very first time should understand every sentence.`,
+    tone: 'friendly',
+    complexity: 1
+  },
+  academic: {
+    name: 'Academic & Formal',
+    instruction: `Write in formal academic language with precise scholarly terminology. Maintain a third-person objective tone. Use discipline-specific vocabulary without oversimplification. Employ citation-ready phrases and formal definitions. The style should be suitable for a university essay or academic report.`,
+    tone: 'formal',
+    complexity: 4
+  },
+  detailed: {
+    name: 'Highly Detailed',
+    instruction: `Provide exhaustive detail at every point. Include numerous concrete examples, counterexamples, edge cases, specific statistics where relevant, and thorough multi-step explanations. Never summarise where you could explain fully. Leave nothing implicit.`,
+    tone: 'explanatory',
+    complexity: 4
+  },
+  exam: {
+    name: 'Exam-Focused',
+    instruction: `Structure the entire response around exam success. Provide clear key definitions in mark-scheme language. Highlight frequently examined aspects. Explicitly state what examiners look for. Include mark-worthy phrases that score well. Flag common student mistakes.`,
+    tone: 'direct',
+    complexity: 3
+  },
+  visual: {
+    name: 'Visual & Analogy-Rich',
+    instruction: `Make every concept concrete and memorable through vivid analogies, metaphors, visual descriptions and step-by-step walkthroughs. Compare abstract ideas to everyday objects. Build mental models that students can visualise clearly. Use narrative where helpful.`,
+    tone: 'narrative',
+    complexity: 2
+  }
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 5: TOOL CONFIGURATION
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+const TOOL_CONFIG = {
   notes: {
     name: 'Generate Notes',
-    icon: '📝',
-    requiresStreaming: true,
-    promptTemplate: 'notes_prompt',
-    stageSequence: ['analysing', 'researching', 'writing', 'formatting', 'complete']
+    objective: 'Generate comprehensive, deeply detailed, well-structured study notes.',
+    emphasis: `The ultra_long_notes field is the centrepiece. It MUST be genuinely long and detailed. Use rich markdown formatting: ## headings for sections, **bold** for key terms, bullet lists, numbered lists, > blockquotes for important definitions, and --- between major sections.`,
+    sections: ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Advanced Aspects', 'Common Applications', 'Critical Analysis', 'Summary & Key Takeaways']
   },
   flashcards: {
-    name: 'Flashcards',
-    icon: '🃏',
-    requiresStreaming: true,
-    promptTemplate: 'flashcards_prompt',
-    stageSequence: ['analysing', 'extracting', 'creating_cards', 'organizing', 'complete']
+    name: 'Create Flashcards',
+    objective: 'Generate study materials optimised for interactive flashcard learning.',
+    emphasis: `The key_concepts should be formatted as perfect flashcard pairs — clear concise front side followed by colon then clear accurate back side. Each pair should stand completely alone. The practice_questions should use the same format — short memorable questions with concise answers.`,
+    sections: ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary']
   },
   quiz: {
-    name: 'Quiz',
-    icon: '📊',
-    requiresStreaming: true,
-    promptTemplate: 'quiz_prompt',
-    stageSequence: ['analysing', 'designing_questions', 'generating_answers', 'validating', 'complete']
+    name: 'Build Quiz',
+    objective: 'Generate challenging practice questions for self-testing.',
+    emphasis: `The practice_questions are the core. Make them genuinely challenging. Vary the question types: analytical, application, and evaluation. Each answer must be comprehensive — minimum 200 words — covering direct answer, detailed explanation, specific example, real-world relevance, and common mistakes.`,
+    sections: ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary']
   },
   summary: {
     name: 'Smart Summary',
-    icon: '📋',
-    requiresStreaming: true,
-    promptTemplate: 'summary_prompt',
-    stageSequence: ['analysing', 'extracting_keypoints', 'synthesizing', 'condensing', 'complete']
+    objective: 'Generate a concise, punchy smart summary for fast review.',
+    emphasis: `Begin ultra_long_notes with a 2-3 sentence TL;DR paragraph. Then follow with clearly labelled sections covering only the most critical points. The key_concepts should represent the absolute TOP 5 things a student MUST know. The tone should be efficient and direct.`,
+    sections: ['TL;DR', 'Core Concepts', 'Key Mechanisms', 'Critical Examples', 'What to Remember']
   },
   mindmap: {
-    name: 'Mind Map',
-    icon: '🗺️',
-    requiresStreaming: true,
-    promptTemplate: 'mindmap_prompt',
-    stageSequence: ['analysing', 'identifying_nodes', 'building_hierarchy', 'creating_connections', 'complete']
+    name: 'Build Mind Map',
+    objective: 'Generate content structured hierarchically for a visual mind map.',
+    emphasis: `Structure ALL content to reveal hierarchical relationships. ultra_long_notes should use nested bullet points mirroring a mind map. key_concepts represent the 5 main branches. real_world_applications represent the Applications branch. key_tricks represent Study Strategies.`,
+    sections: ['Central Topic', 'Main Branches', 'Sub-Branches', 'Connections', 'Applications']
   }
 };
 
-// Depth levels configuration
-const DEPTH_LEVELS = {
-  standard: { value: 'standard', multiplier: 1.0, description: 'Balanced coverage' },
-  detailed: { value: 'detailed', multiplier: 1.5, description: 'In-depth explanations' },
-  comprehensive: { value: 'comprehensive', multiplier: 2.0, description: 'Exhaustive coverage' },
-  expert: { value: 'expert', multiplier: 2.5, description: 'Advanced concepts' }
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 6: LANGUAGE SUPPORT — 50+ LANGUAGES
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+const SUPPORTED_LANGUAGES = [
+  'English', 'Urdu', 'Hindi', 'Arabic', 'French', 'German', 'Spanish', 'Portuguese',
+  'Italian', 'Dutch', 'Russian', 'Turkish', 'Chinese (Simplified)', 'Chinese (Traditional)',
+  'Japanese', 'Korean', 'Bengali', 'Punjabi', 'Indonesian', 'Malay', 'Swahili', 'Persian',
+  'Vietnamese', 'Thai', 'Greek', 'Polish', 'Swedish', 'Norwegian', 'Danish', 'Finnish',
+  'Czech', 'Romanian', 'Hungarian', 'Ukrainian', 'Hebrew', 'Nepali', 'Tamil', 'Telugu',
+  'Kannada', 'Marathi', 'Gujarati', 'Sinhala', 'Amharic', 'Somali', 'Burmese', 'Khmer',
+  'Lao', 'Mongolian', 'Georgian', 'Armenian', 'Albanian', 'Macedonian', 'Bulgarian',
+  'Serbian', 'Croatian', 'Bosnian', 'Slovenian', 'Slovak', 'Estonian', 'Latvian', 'Lithuanian',
+  'Icelandic', 'Irish', 'Welsh', 'Basque', 'Catalan', 'Galician', 'Maltese'
+];
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 7: UTILITY FUNCTIONS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const logger = {
+  info: (...args) => console.log(`[${new Date().toISOString()}] [${BRAND}] 📘 INFO:`, ...args),
+  success: (...args) => console.log(`[${new Date().toISOString()}] [${BRAND}] ✅ SUCCESS:`, ...args),
+  warn: (...args) => console.warn(`[${new Date().toISOString()}] [${BRAND}] ⚠️ WARN:`, ...args),
+  error: (...args) => console.error(`[${new Date().toISOString()}] [${BRAND}] ❌ ERROR:`, ...args),
+  model: (...args) => console.log(`[${new Date().toISOString()}] [MODEL] 🤖`, ...args),
+  stream: (...args) => console.log(`[${new Date().toISOString()}] [STREAM] 📡`, ...args)
 };
 
-// Style options
-const STYLE_OPTIONS = {
-  simple: { value: 'simple', description: 'Easy to understand', tone: 'friendly' },
-  academic: { value: 'academic', description: 'Formal scholarly tone', tone: 'formal' },
-  detailed: { value: 'detailed', description: 'Comprehensive explanations', tone: 'informative' },
-  exam: { value: 'exam', description: 'Exam-focused content', tone: 'structured' },
-  visual: { value: 'visual', description: 'Visually organized', tone: 'engaging' }
+const wordCount = (text) => {
+  if (!text || typeof text !== 'string') return 0;
+  return text.trim().split(/\s+/).filter(Boolean).length;
 };
 
-// ==================== UTILITY FUNCTIONS ====================
+const truncate = (str, maxLen = 100) => {
+  if (!str) return '';
+  return String(str).length > maxLen ? String(str).substring(0, maxLen) + '…' : String(str);
+};
 
-/**
- * Validates and sanitizes input text
- * @param {string} text - Raw input text
- * @returns {object} Validation result with cleaned text or error
- */
-function validateInput(text) {
-  if (!text || typeof text !== 'string') {
-    return { valid: false, error: 'No text provided' };
-  }
+const generateRequestId = () => {
+  return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+};
+
+const sanitizeInput = (input) => {
+  if (!input || typeof input !== 'string') return '';
+  return input.trim().slice(0, 15000).replace(/[<>]/g, '');
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 8: PROMPT BUILDER — ADVANCED MULTI-CONTEXT
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+function buildPrompt(input, options) {
+  const language = options.language || 'English';
+  const depth = options.depth || 'detailed';
+  const style = options.style || 'simple';
+  const tool = options.tool || 'notes';
   
-  const cleaned = text.trim();
+  const depthConfig = DEPTH_CONFIG[depth] || DEPTH_CONFIG.detailed;
+  const styleConfig = STYLE_CONFIG[style] || STYLE_CONFIG.simple;
+  const toolConfig = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
   
-  if (cleaned.length < 2) {
-    return { valid: false, error: 'Please enter at least 2 characters' };
-  }
+  const timestamp = new Date().toISOString();
+  const sectionsList = toolConfig.sections.map(s => `  ## ${s}`).join('\n');
   
-  if (cleaned.length > 15000) {
-    return { valid: false, error: 'Text too long. Maximum 15,000 characters.' };
-  }
+  return `╔════════════════════════════════════════════════════════════════════════════════════════════╗
+║                              SAVOIRÉ AI — ADVANCED STUDY GENERATOR                              ║
+╚════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+SYSTEM IDENTITY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You are ${BRAND}, the world's most advanced free AI study companion.
+Built by ${DEVELOPER} | ${DEVSITE} | Founder: ${FOUNDER}
+Version: ${APP_VERSION} | Build: ${BUILD_NUMBER}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TASK OBJECTIVE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${toolConfig.objective}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STUDENT INPUT:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Topic/Text: ${input}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OUTPUT SPECIFICATIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✧ OUTPUT LANGUAGE: ${language}
+✧ DEPTH LEVEL: ${depthConfig.wordRange} (${depthConfig.description})
+✧ WRITING STYLE: ${styleConfig.name} — ${styleConfig.instruction.substring(0, 200)}...
+✧ TOOL MODE: ${toolConfig.name} — ${toolConfig.emphasis}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+REQUIRED SECTION STRUCTURE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${sectionsList}
+Each section must be substantive — minimum 80 words per section, more is better for deeper levels.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MARKDOWN FORMATTING REQUIREMENTS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• ## headings for every major section (not ###, use ##)
+• **bold text** for EVERY key term on first use
+• Bullet lists (- item) for enumerations and lists
+• Numbered lists (1. item) for processes and sequences
+• > blockquotes for important definitions, rules or key statements
+• --- horizontal rules between major sections
+• \`code\` for technical terms, formulas, or file names
+• [links](url) for references when appropriate
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+JSON OUTPUT STRUCTURE — EXACT SPECIFICATION:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+{
+  "topic": "specific, accurate topic name in ${language} (clean, no extra text)",
   
-  // Check for harmful content patterns
-  const harmfulPatterns = [
-    /<script/i,
-    /javascript:/i,
-    /onload=/i,
-    /onerror=/i,
-    /exec\(/i,
-    /eval\(/i
-  ];
+  "curriculum_alignment": "academic level and subject (e.g., 'A-Level Biology', 'University CS')",
   
-  for (const pattern of harmfulPatterns) {
-    if (pattern.test(cleaned)) {
-      return { valid: false, error: 'Invalid characters detected' };
+  "ultra_long_notes": "FULL RICH MARKDOWN STUDY NOTES — MINIMUM ${depthConfig.wordRange}. Use proper markdown with ## headings, **bold** for key terms, bullet lists, numbered lists, > blockquotes, --- horizontal rules. This is the PRIMARY content students will read.",
+  
+  "key_concepts": [
+    "Term 1: comprehensive explanation (25-40 words) in ${language}",
+    "Term 2: comprehensive explanation (25-40 words) in ${language}",
+    "Term 3: comprehensive explanation (25-40 words) in ${language}",
+    "Term 4: comprehensive explanation (25-40 words) in ${language}",
+    "Term 5: comprehensive explanation (25-40 words) in ${language}"
+  ],
+  
+  "key_tricks": [
+    "Practical memory aid / mnemonic / study strategy (55-75 words) in ${language} — include technique name and how to apply it",
+    "Second memory trick with different approach (55-75 words) in ${language}",
+    "Third memory trick or exam strategy (55-75 words) in ${language}"
+  ],
+  
+  "practice_questions": [
+    {
+      "question": "Challenging analytical question in ${language} that requires reasoning, not just recall",
+      "answer": "COMPREHENSIVE answer (minimum 160 words) in ${language} covering: 1) Direct answer, 2) Detailed reasoning, 3) Specific concrete example, 4) Real-world relevance, 5) Common mistake to avoid"
+    },
+    {
+      "question": "Application-based question in ${language} requiring scenario analysis",
+      "answer": "COMPREHENSIVE answer (minimum 160 words) in ${language} with the same 5-part structure"
+    },
+    {
+      "question": "Evaluation or comparison question in ${language} requiring critical thinking",
+      "answer": "COMPREHENSIVE answer (minimum 160 words) in ${language} with the same 5-part structure"
     }
+  ],
+  
+  "real_world_applications": [
+    "Domain/Field 1: specific, detailed application of concept (45-65 words) in ${language} — explain HOW it applies",
+    "Domain/Field 2: specific, detailed application (45-65 words) in ${language} with concrete example",
+    "Domain/Field 3: specific, detailed application (45-65 words) in ${language} with real-world impact"
+  ],
+  
+  "common_misconceptions": [
+    "Many students believe [wrong idea]. In reality, [correct explanation with reason why the misconception is wrong] (45-65 words) in ${language}",
+    "Second misconception with clear correction (45-65 words) in ${language}",
+    "Third misconception with memorable correction (45-65 words) in ${language}"
+  ],
+  
+  "study_score": 96,
+  "powered_by": "${BRAND} by ${DEVELOPER}",
+  "generated_at": "${timestamp}"
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CRITICAL INSTRUCTIONS — READ CAREFULLY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Your ENTIRE response must be a SINGLE valid JSON object
+2. NO text before the opening { and NO text after the closing }
+3. NO markdown code fences (\`\`\`json or \`\`\`)
+4. NO comments or annotations inside the JSON
+5. All string values must use proper JSON escaping (\\n for newlines, \\" for quotes)
+6. The ultra_long_notes field ALONE must meet the word count requirement
+7. ALL content must be in ${language} — not a single word in any other language
+8. Quality over quantity — but quantity requirements are MINIMUMS, not maximums
+9. Be academically rigorous, factually accurate, and pedagogically sound
+10. Remember: This is for a REAL student studying. Make it genuinely useful.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN YOUR JSON RESPONSE NOW (remember: ONLY JSON, no other text):`;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 9: JSON EXTRACTION & PARSING — ROBUST HANDLER
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+function extractAndParseJSON(rawContent) {
+  if (!rawContent || typeof rawContent !== 'string') {
+    throw new Error('Model returned empty or non-string content');
   }
   
-  return { valid: true, cleaned };
-}
-
-/**
- * Validates language selection
- * @param {string} language - Selected language key
- * @returns {object} Language data or default (English)
- */
-function validateLanguage(language) {
-  const normalized = (language || 'english').toLowerCase().replace(/\s+/g, '_');
+  let text = rawContent.trim();
   
-  if (SUPPORTED_LANGUAGES[normalized]) {
-    return SUPPORTED_LANGUAGES[normalized];
+  // Remove markdown code fences
+  text = text.replace(/^```(?:json)?\s*/i, '');
+  text = text.replace(/\s*```\s*$/i, '');
+  text = text.trim();
+  
+  // Find JSON object boundaries
+  const startIndex = text.indexOf('{');
+  const endIndex = text.lastIndexOf('}');
+  
+  if (startIndex === -1) {
+    throw new Error(`No JSON object opening brace found. Preview: "${truncate(text, 200)}"`);
+  }
+  if (endIndex === -1 || endIndex <= startIndex) {
+    throw new Error(`No valid JSON object closing brace found. Preview: "${truncate(text, 200)}"`);
   }
   
-  // Try to find by code or partial match
-  for (const [key, data] of Object.entries(SUPPORTED_LANGUAGES)) {
-    if (data.code === normalized || key.includes(normalized) || normalized.includes(key)) {
-      return data;
-    }
-  }
+  let jsonStr = text.substring(startIndex, endIndex + 1);
   
-  // Default to English
-  return SUPPORTED_LANGUAGES.english;
-}
-
-/**
- * Validates tool selection
- * @param {string} tool - Selected tool
- * @returns {object} Tool data or default (notes)
- */
-function validateTool(tool) {
-  const normalized = (tool || 'notes').toLowerCase();
-  
-  if (STUDY_TOOLS[normalized]) {
-    return STUDY_TOOLS[normalized];
-  }
-  
-  return STUDY_TOOLS.notes;
-}
-
-/**
- * Validates depth level
- * @param {string} depth - Selected depth
- * @returns {object} Depth data or default (standard)
- */
-function validateDepth(depth) {
-  const normalized = (depth || 'standard').toLowerCase();
-  
-  if (DEPTH_LEVELS[normalized]) {
-    return DEPTH_LEVELS[normalized];
-  }
-  
-  return DEPTH_LEVELS.standard;
-}
-
-/**
- * Validates style option
- * @param {string} style - Selected style
- * @returns {object} Style data or default (detailed)
- */
-function validateStyle(style) {
-  const normalized = (style || 'detailed').toLowerCase();
-  
-  if (STYLE_OPTIONS[normalized]) {
-    return STYLE_OPTIONS[normalized];
-  }
-  
-  return STYLE_OPTIONS.detailed;
-}
-
-/**
- * Generates a unique request ID
- * @returns {string} UUID v4 like identifier
- */
-function generateRequestId() {
-  return 'req_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-}
-
-/**
- * Creates a delayed promise for heartbeat and timeout management
- * @param {number} ms - Milliseconds to delay
- * @returns {Promise} Delay promise
- */
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Sends SSE event to client
- * @param {object} res - Response object
- * @param {string} event - Event type
- * @param {object} data - Event data
- */
-function sendSSE(res, event, data) {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(data)}\n\n`);
-}
-
-/**
- * Sends heartbeat to keep connection alive
- * @param {object} res - Response object
- * @param {number} interval - Interval in ms
- * @returns {NodeJS.Timeout} Interval reference
- */
-function startHeartbeat(res, interval = 15000) {
-  const heartbeat = setInterval(() => {
-    sendSSE(res, 'heartbeat', { timestamp: Date.now() });
-  }, interval);
-  
-  return heartbeat;
-}
-
-/**
- * Sanitizes markdown content for safe display
- * @param {string} content - Raw markdown content
- * @returns {string} Sanitized content
- */
-function sanitizeMarkdown(content) {
-  if (!content) return '';
-  
-  // Remove potential XSS vectors
-  let sanitized = content
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '')
-    .replace(/<iframe/gi, '&lt;iframe')
-    .replace(/<\/iframe/gi, '&lt;/iframe&gt;');
-  
-  return sanitized;
-}
-
-/**
- * Extracts JSON from AI response text
- * @param {string} text - Raw AI response
- * @returns {object|null} Parsed JSON or null
- */
-function extractJSONFromResponse(text) {
+  // Try direct parse first
   try {
-    // Try direct parse first
-    return JSON.parse(text);
-  } catch (e) {
-    // Try to extract JSON from markdown code blocks
-    const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
-    if (jsonMatch) {
-      try {
-        return JSON.parse(jsonMatch[1]);
-      } catch (e2) {}
-    }
-    
-    // Try to extract any JSON-like structure
-    const jsonLikeMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonLikeMatch) {
-      try {
-        return JSON.parse(jsonLikeMatch[0]);
-      } catch (e3) {}
-    }
-    
-    return null;
+    return JSON.parse(jsonStr);
+  } catch (directError) {
+    logger.warn(`Direct JSON parse failed: ${directError.message} — attempting repairs`);
+  }
+  
+  // Repair common JSON issues
+  let repaired = jsonStr;
+  
+  // Fix unescaped newlines inside strings
+  repaired = repaired.replace(/"((?:[^"\\]|\\.)*)"/g, (match, inner) => {
+    const fixed = inner
+      .replace(/\r\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\n/g, '\\n')
+      .replace(/\t/g, '\\t');
+    return `"${fixed}"`;
+  });
+  
+  // Remove trailing commas
+  repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+  
+  // Fix unquoted property keys
+  repaired = repaired.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
+  
+  // Fix single quotes to double quotes
+  repaired = repaired.replace(/'/g, '"');
+  
+  try {
+    return JSON.parse(repaired);
+  } catch (repairError) {
+    throw new Error(
+      `JSON parse failed after repairs. Original error: ${repairError.message}. ` +
+      `Content length: ${jsonStr.length}. First 300 chars: "${truncate(jsonStr, 300)}"`
+    );
   }
 }
 
-/**
- * Generates high-quality fallback content (2000+ words)
- * @param {string} topic - Study topic
- * @param {string} language - Target language
- * @param {string} tool - Study tool type
- * @param {string} depth - Depth level
- * @param {string} style - Style option
- * @returns {object} Fallback content object
- */
-function generateFallbackContent(topic, language, tool, depth, style) {
-  const langData = validateLanguage(language);
-  const isRTL = langData.rtl;
-  const toolData = validateTool(tool);
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 10: DATA VALIDATION & ENRICHMENT
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+function validateAndEnrich(parsed, options) {
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Parsed result is not an object');
+  }
   
-  // Comprehensive fallback content with 2000+ words
-  const fallbackContent = {
-    notes: {
-      markdown: `# ${topic.toUpperCase()} - Comprehensive Study Notes
-
-## 📚 Introduction & Overview
-
-**${topic}** represents a fascinating area of study that intersects multiple disciplines and has profound implications for modern understanding. This comprehensive analysis will explore ${topic} from foundational concepts to advanced applications, providing you with a thorough grasp of this subject.
-
-### Why ${topic} Matters in Today's World
-
-In our rapidly evolving global landscape, understanding ${topic} has become increasingly crucial for professionals, students, and enthusiasts alike. The subject encompasses principles that influence decision-making, innovation, and critical thinking across various domains.
-
-## 🔬 Core Concepts and Fundamental Principles
-
-### 1. The Foundation of ${topic}
-
-The study of ${topic} begins with understanding its core principles. At its heart, ${topic} revolves around several key concepts that form the building blocks for deeper exploration.
-
-**Definition and Scope**
-${topic} can be defined as the systematic study of interconnected elements that influence outcomes in specific contexts. This definition, while broad, captures the essential nature of how ${topic} operates in real-world scenarios.
-
-### 2. Key Theoretical Frameworks
-
-Several theoretical frameworks have been developed to understand ${topic} more comprehensively:
-
-- **The Classical Approach**: Traditional methodologies that have stood the test of time
-- **Modern Interpretations**: Contemporary perspectives incorporating recent discoveries
-- **Integrated Models**: Hybrid approaches combining multiple theoretical viewpoints
-
-### 3. Structural Components
-
-Understanding ${topic} requires analyzing its constituent parts:
-
-| Component | Function | Importance |
-|-----------|----------|------------|
-| Primary Elements | Core building blocks | Critical |
-| Supporting Structures | Auxiliary systems | High |
-| Integration Points | Connection mechanisms | Moderate |
-| Feedback Loops | Self-regulation | Essential |
-
-## ⚙️ How ${topic} Works: Step-by-Step Process
-
-### Phase 1: Initialization and Setup
-
-The process begins with establishing the foundational parameters that guide subsequent operations. During this phase, practitioners must identify key variables and establish baseline measurements.
-
-### Phase 2: Execution and Implementation
-
-Once parameters are set, the core mechanisms of ${topic} activate. This involves:
-- Sequential processing of information
-- Simultaneous evaluation of multiple factors
-- Dynamic adjustment based on intermediate results
-
-### Phase 3: Analysis and Optimization
-
-The third phase focuses on interpreting results and making necessary adjustments. Advanced practitioners of ${topic} use sophisticated analytical tools to identify patterns and optimize outcomes.
-
-### Phase 4: Integration and Application
-
-Finally, insights gained from ${topic} are integrated into practical applications. This translation from theory to practice represents the ultimate goal of studying ${topic}.
-
-## 💡 Real-World Examples and Case Studies
-
-### Example 1: ${topic} in Technology
-
-Consider how ${topic} manifests in modern technological systems. Tech companies routinely apply principles of ${topic} to enhance user experience, optimize performance, and drive innovation.
-
-**Case Study: Industry Leader Implementation**
-A prominent technology firm recently implemented ${topic}-based strategies that resulted in:
-- 45% improvement in efficiency metrics
-- 60% reduction in error rates
-- 3x faster problem resolution times
-
-### Example 2: ${topic} in Education
-
-Educational institutions have embraced ${topic} to transform learning experiences. One university's pilot program demonstrated remarkable results:
-- Student engagement increased by 78%
-- Knowledge retention improved by 52%
-- Critical thinking scores rose by 41%
-
-### Example 3: ${topic} in Healthcare
-
-The healthcare sector provides compelling evidence of ${topic}'s importance. Hospitals implementing ${topic}-informed protocols reported:
-- 35% decrease in diagnostic errors
-- 28% improvement in patient outcomes
-- 40% reduction in operational costs
-
-## 🎯 Advanced Topics and Current Research
-
-### Emerging Trends in ${topic}
-
-Recent research has uncovered exciting developments in the field:
-
-1. **Artificial Intelligence Integration**: Machine learning algorithms are revolutionizing how we approach ${topic}, enabling predictive modeling and automated optimization.
-
-2. **Neuroscientific Insights**: Brain imaging studies reveal the neural correlates of ${topic}-related processing, opening new avenues for cognitive enhancement.
-
-3. **Quantum Computing Applications**: Early experiments suggest quantum systems may process ${topic} variables exponentially faster than classical computers.
-
-### Cutting-Edge Research Directions
-
-Leading research institutions are currently investigating:
-- Cross-disciplinary applications of ${topic} principles
-- Novel measurement techniques for ${topic} variables
-- Longitudinal studies of ${topic} impact over time
-- Cultural variations in ${topic} interpretation
-
-## ❓ Common Misconceptions About ${topic}
-
-### Misconception 1: "${topic} is Only for Experts"
-
-**Reality**: While ${topic} has complex aspects, its fundamental principles are accessible to anyone willing to learn. Many successful practitioners started with zero prior knowledge and built expertise gradually through consistent study and application.
-
-### Misconception 2: "${topic} Doesn't Change"
-
-**Reality**: The field of ${topic} is constantly evolving. New research regularly challenges established assumptions and introduces innovative methodologies. Staying current with ${topic} requires ongoing education and adaptability.
-
-### Misconception 3: "Technology Makes ${topic} Obsolete"
-
-**Reality**: Rather than replacing human understanding of ${topic}, technology enhances our ability to apply ${topic} principles effectively. The human element remains crucial for interpretation, creativity, and ethical decision-making.
-
-## 📊 Practical Applications Across Industries
-
-### Business and Management
-- Strategic planning and resource allocation
-- Performance optimization and metric analysis
-- Team coordination and workflow management
-
-### Science and Research
-- Experimental design and data interpretation
-- Hypothesis generation and testing
-- Peer review and knowledge dissemination
-
-### Arts and Humanities
-- Creative process optimization
-- Audience engagement strategies
-- Critical analysis frameworks
-
-### Public Policy
-- Evidence-based decision making
-- Stakeholder impact assessment
-- Long-term strategic planning
-
-## 🔮 Future Outlook and Predictions
-
-Experts predict several transformative developments in ${topic} over the next decade:
-
-**Short-term (1-3 years)**:
-- Wider adoption of AI-assisted ${topic} analysis
-- Improved measurement and quantification methods
-- Enhanced educational resources and training programs
-
-**Medium-term (4-7 years)**:
-- Integration of ${topic} into standard curricula
-- Development of specialized ${topic} certification programs
-- Emergence of ${topic} consulting as a distinct profession
-
-**Long-term (8-10 years)**:
-- Breakthrough applications in previously unrelated fields
-- Standardization of ${topic} metrics and benchmarks
-- Global collaboration networks for ${topic} research
-
-## 📝 Key Takeaways and Summary
-
-### What You Should Remember
-
-1. **${topic}** is a dynamic, evolving field with practical applications across virtually every domain
-2. **Mastery comes through** consistent study, practical application, and staying current with research
-3. **The future** of ${topic} promises exciting developments that will reshape how we understand and interact with the world
-
-### Actionable Next Steps
-
-To deepen your understanding of ${topic}:
-- Review the core concepts section again to solidify your foundation
-- Explore the case studies relevant to your field of interest
-- Apply ${topic} principles to a personal or professional project
-- Join online communities dedicated to ${topic} discussion
-- Set aside regular time for continued study and practice
-
-## 📚 Further Learning Resources
-
-**Books and Publications**:
-- "The Essential Guide to ${topic}" - Comprehensive textbook
-- "${topic} in Practice" - Applied case studies collection
-- "Advanced ${topic} Theory" - Graduate-level exploration
-
-**Online Resources**:
-- Interactive ${topic} simulations and exercises
-- Video lectures from leading ${topic} researchers
-- Discussion forums and study groups
-
-**Professional Development**:
-- Certification programs in ${topic}
-- Workshops and seminars
-- Research collaboration opportunities
+  // Required fields validation
+  if (!parsed.topic || typeof parsed.topic !== 'string' || parsed.topic.trim().length < 2) {
+    parsed.topic = options.topic || 'Study Material';
+  }
+  
+  if (!parsed.ultra_long_notes || typeof parsed.ultra_long_notes !== 'string') {
+    throw new Error('Missing required field: ultra_long_notes');
+  }
+  
+  const notesLength = parsed.ultra_long_notes.trim().length;
+  if (notesLength < 200) {
+    throw new Error(`ultra_long_notes too short: ${notesLength} characters (minimum 200)`);
+  }
+  
+  // Validate and fix arrays
+  if (!Array.isArray(parsed.practice_questions) || parsed.practice_questions.length === 0) {
+    parsed.practice_questions = buildFallbackQuestions(parsed.topic);
+  } else {
+    parsed.practice_questions = parsed.practice_questions
+      .filter(q => q && typeof q === 'object')
+      .map(q => ({
+        question: String(q.question || q.q || '').trim(),
+        answer: String(q.answer || q.a || '').trim()
+      }))
+      .filter(q => q.question.length > 10 && q.answer.length > 50);
+    
+    if (parsed.practice_questions.length === 0) {
+      parsed.practice_questions = buildFallbackQuestions(parsed.topic);
+    }
+  }
+  
+  if (!Array.isArray(parsed.key_concepts) || parsed.key_concepts.length === 0) {
+    parsed.key_concepts = buildFallbackConcepts(parsed.topic);
+  }
+  
+  if (!Array.isArray(parsed.key_tricks) || parsed.key_tricks.length === 0) {
+    parsed.key_tricks = buildFallbackTricks(parsed.topic);
+  }
+  
+  if (!Array.isArray(parsed.real_world_applications) || parsed.real_world_applications.length === 0) {
+    parsed.real_world_applications = buildFallbackApplications(parsed.topic);
+  }
+  
+  if (!Array.isArray(parsed.common_misconceptions) || parsed.common_misconceptions.length === 0) {
+    parsed.common_misconceptions = buildFallbackMisconceptions(parsed.topic);
+  }
+  
+  // Trim arrays to maximum lengths
+  const maxLengths = {
+    key_concepts: 5,
+    key_tricks: 3,
+    real_world_applications: 3,
+    common_misconceptions: 3,
+    practice_questions: 3
+  };
+  
+  Object.keys(maxLengths).forEach(key => {
+    if (parsed[key] && parsed[key].length > maxLengths[key]) {
+      parsed[key] = parsed[key].slice(0, maxLengths[key]);
+    }
+  });
+  
+  // Enrich with metadata
+  parsed.powered_by = `${BRAND} by ${DEVELOPER}`;
+  parsed.study_score = parsed.study_score || 96;
+  parsed.generated_at = parsed.generated_at || new Date().toISOString();
+  parsed._language = options.language || 'English';
+  parsed._version = APP_VERSION;
+  parsed._tool = options.tool || 'notes';
+  parsed._depth = options.depth || 'detailed';
+  parsed._style = options.style || 'simple';
+  
+  // Remove any model identity fields
+  delete parsed._model;
+  delete parsed.model;
+  delete parsed.model_used;
+  delete parsed.model_id;
+  delete parsed.ai_model;
+  delete parsed.openrouter_model;
+  
+  // Log quality metrics
+  const notesWC = wordCount(parsed.ultra_long_notes);
+  logger.info(`Quality check: ${notesWC} words in notes, ${parsed.key_concepts.length} concepts, ${parsed.practice_questions.length} questions`);
+  
+  return parsed;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 11: FALLBACK CONTENT BUILDERS — HIGH QUALITY OFFLINE CONTENT
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+function buildFallbackConcepts(topic) {
+  const t = topic || 'this subject';
+  return [
+    `Fundamental Definition: ${t} encompasses the core principles, theories, and frameworks that form the foundation of this field of study, establishing the vocabulary, assumptions, and analytical tools necessary for deeper understanding.`,
+    `Core Mechanisms: The primary processes driving ${t} involve systematic interactions between identifiable components that produce consistent, observable outcomes under specific conditions.`,
+    `Historical Development: ${t} evolved through successive waves of intellectual discovery, critical reappraisal, and paradigm shifts, with key contributors gradually establishing the foundational frameworks in use today.`,
+    `Practical Significance: ${t} carries substantial direct application value across multiple professional domains, enabling practitioners to solve real-world problems more effectively.`,
+    `Critical Boundaries: Complete understanding of ${t} requires explicitly recognising both its considerable explanatory power and the specific conditions where its standard frameworks have important limitations.`
+  ];
+}
+
+function buildFallbackTricks(topic) {
+  const t = topic || 'this topic';
+  return [
+    `The Feynman Technique: After studying ${t}, close your notes and try to explain the entire topic out loud as if teaching a curious 12-year-old. Every time you hesitate or use unexplained jargon, you've found a genuine gap in your understanding. Return to your source, study that specific gap, then restart the explanation. Repeat until you can explain it completely and fluently.`,
+    
+    `Spaced Repetition System: Study ${t} in focused 20-minute sessions across multiple days. Optimal spacing: Day 1 (initial learning), Day 3 (first review), Day 7 (consolidation), Day 14 (long-term retention). This exploits the spacing effect, which research consistently shows produces 2-3x better long-term retention than massed practice.`,
+    
+    `The FIVE W's Framework: Apply Who, What, When, Where, and Why systematically to every dimension of ${t}. For each concept, explicitly answer all five questions before moving on. This forces active engagement rather than passive reading and immediately reveals which specific aspects you don't fully understand yet.`
+  ];
+}
+
+function buildFallbackApplications(topic) {
+  const t = topic || 'this subject';
+  return [
+    `Healthcare & Medicine: Principles from ${t} directly inform clinical decision-making, diagnostic reasoning, and treatment protocol design. Medical professionals who deeply understand these concepts make more accurate assessments, avoid systematic errors in reasoning, and deliver measurably better patient care.`,
+    
+    `Technology & Engineering: ${t} concepts underpin critical software architecture decisions, algorithm selection, system optimisation strategies, and quality assurance processes. Engineers who understand these principles design more scalable, maintainable, and reliable systems.`,
+    
+    `Business & Management: Organisations that apply frameworks derived from ${t} systematically outperform competitors. Strategic planners use these principles to analyse competitive environments, operations managers to streamline workflows, and HR professionals to design better training programmes.`
+  ];
+}
+
+function buildFallbackMisconceptions(topic) {
+  const t = topic || 'this subject';
+  return [
+    `Many students believe ${t} can be mastered through repeated memorisation of facts and definitions. In reality, genuine mastery requires understanding underlying principles, causal relationships, and the reasoning that connects them. Memorisation without comprehension produces knowledge that collapses under exam pressure when questions are framed differently.`,
+    
+    `A widespread misconception is that ${t} is only relevant to specialists, making it optional knowledge for students pursuing other disciplines. In reality, the core reasoning patterns, analytical frameworks, and mental models that ${t} develops transfer powerfully and broadly across every field — from law to engineering to art.`,
+    
+    `Students often assume that once they understand the basic concepts of ${t}, there is little of substance left to learn. In reality, ${t} has significant depth with important nuances, active ongoing research, and genuine unresolved debates at its frontier. The difference between introductory understanding and genuine expertise is vast.`
+  ];
+}
+
+function buildFallbackQuestions(topic) {
+  const t = topic || 'this subject';
+  return [
+    {
+      question: `Explain the core principles of ${t} and describe how they interact to form a coherent theoretical framework. Provide specific examples to illustrate each principle.`,
+      answer: `The core principles of ${t} form an integrated theoretical system where each component reinforces and contextualises the others. At the foundational level, these principles establish the definitions, assumptions, and logical categories upon which all subsequent understanding must be built. Without clear grasp of these foundations, advanced concepts remain poorly anchored and are applied unreliably.\n\nThe mechanisms central to ${t} follow internally consistent patterns, and this consistency is precisely what enables systematic analysis, reliable prediction, and purposeful intervention. The framework becomes analytically powerful when we understand not just individual components in isolation but the relationships between them — how each element influences and is shaped by others through both direct and indirect pathways.\n\n**Example:** Consider how the principle of causality applies — every effect has a specific cause or set of causes that can be identified and analysed. Understanding this allows practitioners to trace problems back to their roots.\n\n**Real-world relevance:** Professionals across healthcare, engineering, and business use these principles daily to diagnose problems and design solutions.\n\n**Common mistake to avoid:** Treating the principles as isolated, independent facts to be memorised separately makes the subject harder to learn and more likely to be misapplied when real situations don't match the exact form studied.`
+    },
+    {
+      question: `Describe a realistic professional scenario where deep knowledge of ${t} would be essential. Walk through your approach step by step and explain the role of key principles at each stage.`,
+      answer: `In professional practice, ${t} becomes essential when facing complex, high-stakes decisions where errors are costly, information is incomplete, multiple stakeholders have conflicting interests, and time pressure demands efficient thinking under uncertainty.\n\n**Step 1 — Problem Identification:** Define exactly what challenge needs to be addressed, what constraints exist, and what a successful outcome looks like. This diagnostic phase is critical because most costly failures stem from solving the wrong problem.\n\n**Step 2 — Framework Selection:** Identify which specific aspects of ${t} are most applicable. A defining characteristic of genuine expertise is knowing which principles to apply in which contexts — and equally important, which to set aside.\n\n**Step 3 — Strategy Development:** Design an approach rooted in the applicable principles, decomposing the complex problem into manageable sub-problems and sequencing them appropriately.\n\n**Step 4 — Implementation with Monitoring:** Execute the strategy while actively observing what's happening and remaining prepared to adjust. Real-world application always reveals complexity that theoretical frameworks alone cannot fully anticipate.\n\n**Step 5 — Evaluation and Learning:** Compare actual outcomes against success criteria, identify what worked and why, and extract specific transferable lessons for future applications.`
+    },
+    {
+      question: `Compare two fundamentally different approaches to understanding ${t}. What are the core strengths and primary limitations of each, and how might a sophisticated practitioner integrate both?`,
+      answer: `Two fundamentally different approaches to understanding ${t} offer complementary perspectives, each with distinctive strengths and real limitations.\n\nThe **Theoretical/First-Principles Approach** emphasises conceptual understanding, formal frameworks, and the ability to reason rigorously from foundational axioms. Its principal strength is generalisability — deep theoretical understanding applies across diverse situations precisely because it's independent of any particular context. Theoretical knowledge transfers more readily to genuinely novel situations, equipping practitioners with the reasoning tools to construct new solutions rather than relying on memorised analogues. Its core limitation is that without substantial engagement with concrete applications, theoretical knowledge can remain abstract and difficult to deploy under real conditions of time pressure and uncertainty.\n\nThe **Empirical/Case-Based Approach** focuses on specific instances, observable patterns, successful and failed examples, and accumulated practical wisdom. This method produces actionable, context-sensitive knowledge grounded in verifiable reality, building the rapid intuitive judgment that characterises highly effective experts. Its limitation is that patterns reliably observed in one context may not generalise safely to substantially different settings. Without theoretical grounding, case-based knowledge becomes brittle when genuinely novel situations arise.\n\nThe most sophisticated approach deliberately integrates both — using theoretical frameworks to organise and generalise from empirical experience, while using empirical engagement to stress-test theoretical predictions and keep abstract principles anchored in reality. The most common and costly mistake is committing exclusively to one approach at the expense of the other.`
+    }
+  ];
+}
+
+function buildOfflineNotes(topic) {
+  const t = topic || 'this subject';
+  return `## Introduction to ${t}
+
+${t} represents a significant, multi-dimensional area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields. A rigorous, well-structured understanding of ${t} is not merely valuable for passing examinations — it opens doors to deeper intellectual capability, more sophisticated professional reasoning, and the capacity for continued independent learning throughout a career.
+
+This comprehensive study guide covers the complete scope of ${t}: its foundational concepts, core mechanisms, key examples, advanced aspects, real-world applications, and an integrative summary that anchors your understanding.
 
 ---
 
-*This comprehensive guide to ${topic} was generated by Savoiré AI v2.0 - Your world-class study companion. Continue exploring, questioning, and applying these principles to achieve mastery in ${topic} and beyond.*`,
-      concepts: [
-        "**Fundamental Principle**: ${topic} operates on the core principle that interconnected elements influence outcomes through feedback loops and emergent properties. Understanding this principle is essential for applying ${topic} effectively in any context.",
-        "**System Dynamics**: The dynamic nature of ${topic} means that changes in one component create ripple effects throughout the entire system. This interconnectedness requires holistic thinking rather than isolated analysis.",
-        "**Optimization Framework**: Successful application of ${topic} depends on identifying key leverage points where small changes produce significant improvements. This framework guides efficient resource allocation.",
-        "**Adaptive Mechanisms**: ${topic} incorporates adaptive mechanisms that respond to environmental changes, ensuring relevance and effectiveness across varying conditions and requirements.",
-        "**Integration Strategy**: The integration of ${topic} principles with existing knowledge and practices creates synergistic effects that amplify overall effectiveness beyond individual components."
-      ],
-      tricks: [
-        "**The 80/20 Principle in ${topic}**: Focus 80% of your effort on understanding the 20% of concepts that drive 80% of practical outcomes. Identify the core leverage points that yield maximum results with minimum input when studying ${topic}.",
-        "**Spaced Repetition for ${topic} Mastery**: Review key ${topic} concepts at increasing intervals (1 day, 3 days, 1 week, 2 weeks) to transfer knowledge from short-term to long-term memory. This technique dramatically improves retention and application ability.",
-        "**Active Recall Practice**: After studying a ${topic} concept, close your notes and explain it in your own words. Identify gaps in your understanding immediately. This active engagement strengthens neural pathways and reveals areas needing additional focus."
-      ],
-      questions: [
-        {
-          q: "How does ${topic} apply to real-world problem-solving scenarios?",
-          a: "${topic} provides a structured framework for breaking down complex problems into manageable components. Real-world applications include business strategy development, scientific research design, educational curriculum planning, and technological innovation. By applying ${topic} principles, practitioners can identify root causes rather than symptoms, predict potential outcomes of different interventions, and optimize solutions based on multiple criteria simultaneously. The systematic nature of ${topic} ensures that solutions are comprehensive, scalable, and sustainable over time."
-        },
-        {
-          q: "What distinguishes expert-level understanding of ${topic} from basic knowledge?",
-          a: "Expert-level understanding transcends memorization of facts to encompass intuitive grasp of relationships, patterns, and applications. While beginners focus on individual components, experts perceive systems holistically, anticipating emergent behaviors and subtle interactions. Experts also possess metacognitive awareness of their own ${topic} knowledge boundaries, enabling them to seek appropriate resources when facing novel challenges. Additionally, experts can transfer ${topic} principles across domains, recognizing analogous situations where similar approaches may prove effective despite surface differences."
-        },
-        {
-          q: "How is ${topic} evolving with technological advancement?",
-          a: "Technology is transforming ${topic} in several profound ways. First, computational tools enable analysis of ${topic} at unprecedented scale and complexity, revealing patterns invisible to human observation alone. Second, AI and machine learning are automating routine ${topic} applications, freeing human experts to focus on creative and strategic aspects. Third, digital collaboration platforms facilitate global ${topic} communities, accelerating knowledge sharing and innovation. Finally, emerging technologies like virtual and augmented reality provide immersive ${topic} learning experiences that enhance understanding and retention."
-        }
-      ],
-      applications: [
-        "**Corporate Strategy**: Fortune 500 companies use ${topic} frameworks to guide multi-year strategic planning, resource allocation decisions, and competitive positioning in dynamic markets.",
-        "**Medical Diagnosis**: Healthcare systems apply ${topic} principles to diagnostic protocols, treatment planning, and patient care coordination, improving outcomes while reducing costs.",
-        "**Environmental Management**: Climate scientists and conservationists employ ${topic} models to understand ecosystem dynamics, predict intervention outcomes, and develop sustainable management strategies."
-      ],
-      misconceptions: [
-        "**Reality Check**: ${topic} is NOT a rigid set of rules but rather a flexible framework adaptable to specific contexts. Rigid application without contextual consideration often leads to suboptimal results, while thoughtful adaptation enhances effectiveness.",
-        "**Clarification**: While ${topic} incorporates quantitative elements, it is NOT purely mathematical or computational. Human judgment, creativity, and ethical consideration remain essential components that cannot be fully automated or reduced to algorithms.",
-        "**Important Distinction**: ${topic} is NOT a quick fix or magic solution for all problems. Like any meaningful discipline, mastery requires sustained effort, practice, and continuous learning. Shortcuts and oversimplifications undermine potential benefits."
-      ]
-    },
-    flashcards: generateFlashcardsFallback(topic),
-    quiz: generateQuizFallback(topic),
-    summary: generateSummaryFallback(topic),
-    mindmap: generateMindmapFallback(topic)
+## Core Concepts
+
+The study of ${t} begins by establishing its fundamental conceptual infrastructure — the vocabulary, definitions, and foundational ideas upon which all subsequent understanding must be built. Without this foundation, advanced concepts lack their necessary grounding.
+
+**Theoretical Foundation:** Every developed field of knowledge has a theoretical core — a set of foundational assumptions, definitions, and logical relationships that organise its knowledge claims and give its conclusions their authority. Understanding the theoretical foundation of ${t} means understanding not just what the field claims, but why those claims are considered justified, what evidence supports them, and what reasoning connects individual facts to broader principles.
+
+**Practical Dimension:** The practical dimension of ${t} connects its abstract theoretical content to concrete real-world value. Understanding how principles manifest in practice — in professional decisions, in designed systems, in observed phenomena — transforms theoretical knowledge from inert information into usable capability.
+
+**Analytical Framework:** ${t} provides practitioners with a structured way of perceiving, decomposing, and reasoning about complex problems. This analytical framework is transferable — once internalised, it enables higher-quality thinking not just within ${t} but across many adjacent domains.
+
+**Systemic Perspective:** No component of ${t} exists in isolation. Every concept connects to others through relationships of logical dependence, causal influence, or structural analogy. Developing a systemic perspective — understanding the field as an integrated whole rather than a collection of isolated facts — is the defining characteristic of genuine expertise.
+
+---
+
+## How It Works
+
+The core processes and mechanisms central to ${t} unfold through identifiable stages that can be studied, understood, and applied systematically:
+
+**Stage 1 — Initial Conditions and Prerequisites:** Every application of ${t} begins with specific initial conditions, inputs, or prerequisite states. Accurately identifying and characterising these starting conditions is critical — misunderstanding initial conditions is a primary source of errors in both academic analysis and professional practice.
+
+**Stage 2 — Active Mechanisms and Transformations:** The defining mechanisms of ${t} transform initial conditions into outcomes through processes that follow identifiable patterns and obey describable rules. Understanding these mechanisms at a deep level — not just recognising their outputs but understanding why they produce those outputs — enables practitioners to predict behaviour, explain anomalies, and design effective interventions.
+
+**Stage 3 — Feedback and Dynamic Adjustment:** Many systems described by ${t} are not static but dynamic — they incorporate feedback loops through which outcomes influence subsequent inputs, creating adaptive or self-correcting behaviour. Understanding these feedback dynamics is essential for accurate long-term prediction.
+
+**Stage 4 — Outputs and Observable Consequences:** The ultimate products of the processes central to ${t} take observable forms — measurable quantities, categorical outcomes, behavioural changes, or structural modifications. Understanding how to correctly identify, measure, and interpret these outputs is a core practical competency.
+
+---
+
+## Key Examples
+
+**Foundational Canonical Example:** The classic demonstration cases of ${t} are valuable precisely because they isolate core mechanisms from confounding complexity, allowing underlying principles to be seen with maximum clarity. These canonical examples form the shared reference points that allow practitioners to communicate efficiently.
+
+**Complex Multi-Variable Case:** Real-world applications of ${t} rarely present themselves with the clean simplicity of textbook examples. Professional practice requires applying core principles under conditions of incomplete information, multiple interacting variables, time pressure, and genuine uncertainty.
+
+**Edge Cases and Boundary Conditions:** Understanding where the standard frameworks of ${t} break down, require modification, or produce counterintuitive results reveals the true scope and limits of the theory. These boundary cases are intellectually important and frequently appear in advanced examinations precisely because they test genuine understanding.
+
+---
+
+## Advanced Aspects
+
+**Theoretical Complications and Nuances:** As understanding deepens, the apparently simple core principles of ${t} reveal layers of complexity. Boundary conditions require careful specification. General principles require contextual modification in specific domains. Competing theoretical frameworks offer different but partially valid perspectives.
+
+**Methodological Questions:** Every field faces fundamental questions about its own methods — how knowledge is produced, how evidence is evaluated, how theories are tested and revised. Understanding the methodological foundations of ${t} enables more sophisticated engagement with its literature.
+
+**Current Frontiers and Open Questions:** ${t} is not a closed, completed body of knowledge. Active researchers continue to explore open questions, challenge established assumptions, develop new methodological tools, and discover connections to adjacent fields.
+
+**Cross-Domain Integration:** The most sophisticated practitioners of ${t} understand its connections to other fields — recognising how insights transfer across disciplinary boundaries, how developments in adjacent areas reshape understanding within ${t}, and how genuinely interdisciplinary approaches require synthesising knowledge from multiple sources.
+
+---
+
+## Common Applications
+
+${t} finds systematic application in research and academic contexts, where rigorous understanding enables better study design, more accurate data interpretation, and more reliable theoretical contribution. In professional practice, it supports higher-quality decision-making, more effective problem diagnosis, and better-designed interventions. In educational settings, it provides frameworks that help learners structure new knowledge effectively and retain it durably.
+
+---
+
+## Summary & Key Takeaways
+
+Mastering ${t} is fundamentally a project of building genuine understanding — comprehending the why behind the what, the mechanisms behind the patterns, the principles behind the applications. Surface-level familiarity with facts and procedures provides only fragile, inflexible knowledge. Deep understanding, by contrast, enables confident application to novel situations, accurate communication with other practitioners, continued independent learning, and the creative synthesis of ideas that characterises genuine expertise.
+
+**Five essential commitments for mastery:**
+1. Build strong conceptual foundations before advancing to complex applications
+2. Connect every abstract principle to concrete, specific examples
+3. Understand the limits and boundary conditions of every general rule
+4. Regularly practice applying knowledge to unfamiliar situations
+5. Engage actively with the material through explanation, teaching, and deliberate reflection`;
+}
+
+function generateOfflineFallback(input, options) {
+  const topic = input.length > 60 ? input.substring(0, 60) + '…' : input;
+  const language = options.language || 'English';
+  const tool = options.tool || 'notes';
+  
+  logger.warn(`Using offline fallback for: "${topic}", language: ${language}, tool: ${tool}`);
+  
+  const timestamp = new Date().toISOString();
+  
+  return {
+    topic: topic,
+    curriculum_alignment: 'General Academic Study',
+    ultra_long_notes: buildOfflineNotes(topic),
+    key_concepts: buildFallbackConcepts(topic),
+    key_tricks: buildFallbackTricks(topic),
+    practice_questions: buildFallbackQuestions(topic),
+    real_world_applications: buildFallbackApplications(topic),
+    common_misconceptions: buildFallbackMisconceptions(topic),
+    study_score: 96,
+    powered_by: `${BRAND} by ${DEVELOPER}`,
+    generated_at: timestamp,
+    _language: language,
+    _tool: tool,
+    _fallback: true,
+    _fallback_reason: 'All AI models temporarily unavailable — high-quality offline content generated'
   };
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 12: MODEL CALLER — STREAMING SSE
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+async function callModelStream(model, prompt, options, onChunk, onMetrics) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), model.timeoutMs);
+  const startTime = Date.now();
+  const modelName = model.id.split('/').pop().replace(':free', '');
   
-  // Add RTL support and language-specific adjustments
-  let result = fallbackContent[tool] || fallbackContent.notes;
-  
-  if (typeof result === 'object' && result.markdown) {
-    if (isRTL) {
-      result.markdown = `<div dir="rtl" style="font-family: ${langData.font}">\n${result.markdown}\n</div>`;
+  try {
+    const response = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer': HTTP_REFERER,
+        'X-Title': APP_TITLE
+      },
+      body: JSON.stringify({
+        model: model.id,
+        max_tokens: model.maxTokens,
+        temperature: 0.72,
+        top_p: 0.95,
+        frequency_penalty: 0,
+        presence_penalty: 0,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      const errorMsg = `HTTP ${response.status} from ${modelName}: ${truncate(errorText, 200)}`;
+      
+      if (response.status === 429 || response.status === 503 || response.status === 502) {
+        throw new Error(`[RATE_LIMITED] ${errorMsg}`);
+      }
+      throw new Error(errorMsg);
     }
     
-    // Replace placeholders with actual topic
-    const placeholderRegex = /\${topic}/g;
-    if (result.markdown) result.markdown = result.markdown.replace(placeholderRegex, topic);
-    if (result.concepts) result.concepts = result.concepts.map(c => c.replace(placeholderRegex, topic));
-    if (result.tricks) result.tricks = result.tricks.map(t => t.replace(placeholderRegex, topic));
-    if (result.questions) result.questions = result.questions.map(q => ({ q: q.q.replace(placeholderRegex, topic), a: q.a.replace(placeholderRegex, topic) }));
-    if (result.applications) result.applications = result.applications.map(a => a.replace(placeholderRegex, topic));
-    if (result.misconceptions) result.misconceptions = result.misconceptions.map(m => m.replace(placeholderRegex, topic));
-  }
-  
-  return result;
-}
-
-/**
- * Generates flashcards fallback content
- * @param {string} topic - Study topic
- * @returns {object} Flashcards data
- */
-function generateFlashcardsFallback(topic) {
-  return {
-    cards: [
-      {
-        front: `What is ${topic}?`,
-        back: `${topic} is a comprehensive field of study that examines the relationships, principles, and applications of interconnected elements within specific contexts. It provides frameworks for understanding complex systems and optimizing outcomes across various domains.`
-      },
-      {
-        front: `Why is ${topic} important?`,
-        back: `${topic} is crucial because it provides systematic approaches to problem-solving, decision-making, and innovation. Understanding ${topic} enables individuals and organizations to navigate complexity, identify opportunities, and achieve better results with available resources.`
-      },
-      {
-        front: `What are the core principles of ${topic}?`,
-        back: `The core principles include systems thinking (understanding interconnections), feedback loops (recognizing cause-effect cycles), emergence (how simple rules create complex patterns), adaptation (responding to environmental changes), and optimization (achieving best possible outcomes with given constraints).`
-      },
-      {
-        front: `How can I apply ${topic} in daily life?`,
-        back: `Apply ${topic} by analyzing everyday problems systematically, considering multiple perspectives before deciding, looking for patterns in recurring issues, testing small changes before large commitments, and continuously learning from outcomes to improve future approaches.`
-      },
-      {
-        front: `What's the future of ${topic} research?`,
-        back: `Future research focuses on AI integration for predictive modeling, neuroscientific understanding of ${topic}-related cognition, quantum computing applications, cross-cultural comparative studies, and development of practical tools making ${topic} principles accessible to broader audiences.`
-      }
-    ]
-  };
-}
-
-/**
- * Generates quiz fallback content
- * @param {string} topic - Study topic
- * @returns {object} Quiz data
- */
-function generateQuizFallback(topic) {
-  return {
-    questions: [
-      {
-        text: `What best defines ${topic}?`,
-        options: [
-          "A rigid set of unchangeable rules",
-          "A flexible framework for understanding systems",
-          "A purely mathematical calculation method",
-          "A quick-fix solution for all problems"
-        ],
-        correct: 1,
-        explanation: `${topic} is best understood as a flexible, adaptable framework that helps analyze and optimize complex systems. While it incorporates analytical elements, it's not rigid, purely mathematical, or a magic solution.`
-      },
-      {
-        text: `Which factor is essential for mastering ${topic}?`,
-        options: [
-          "Natural talent only",
-          "Sustained practice and continuous learning",
-          "Memorizing formulas",
-          "Avoiding real-world application"
-        ],
-        correct: 1,
-        explanation: `Mastery of ${topic} requires ongoing commitment to learning, practice, and application. While natural aptitude may help, consistent effort and real-world experience are essential for developing expertise.`
-      },
-      {
-        text: `How does technology affect ${topic}?`,
-        options: [
-          "Technology makes ${topic} completely obsolete",
-          "Technology replaces human understanding entirely",
-          "Technology enhances and extends ${topic} applications",
-          "Technology has no relationship to ${topic}"
-        ],
-        correct: 2,
-        explanation: `Technology serves as a powerful tool that enhances our ability to apply ${topic} principles, enabling analysis at greater scale and complexity while freeing humans to focus on creative and strategic aspects.`
-      },
-      {
-        text: `What distinguishes expert ${topic} practitioners?`,
-        options: [
-          "Memorizing more facts",
-          "Using more complex tools",
-          "Holistic system perception and pattern recognition",
-          "Working longer hours"
-        ],
-        correct: 2,
-        explanation: `Experts distinguish themselves through intuitive grasp of whole systems, pattern recognition across domains, and metacognitive awareness of knowledge boundaries, not merely through memorization or time spent.`
-      },
-      {
-        text: `Which best describes ${topic}'s real-world impact?`,
-        options: [
-          "Limited to academic settings",
-          "Broad applications across all industries",
-          "Only relevant for large corporations",
-          "Primarily theoretical with few practical uses"
-        ],
-        correct: 1,
-        explanation: `${topic} has demonstrated value across virtually every domain including business, healthcare, education, technology, environmental management, public policy, and many others, with both practical and strategic applications.`
-      }
-    ]
-  };
-}
-
-/**
- * Generates summary fallback content
- * @param {string} topic - Study topic
- * @returns {object} Summary data
- */
-function generateSummaryFallback(topic) {
-  return {
-    executiveSummary: `${topic} represents a comprehensive framework for understanding and optimizing complex systems across multiple domains. By mastering core principles including systems thinking, feedback loops, and adaptive mechanisms, practitioners can achieve superior outcomes in problem-solving, decision-making, and innovation. The field continues evolving with technological advances, particularly in AI integration and computational analysis, while maintaining essential human elements of creativity and ethical judgment. Future developments promise expanded applications and accessibility, making ${topic} increasingly valuable for professionals, students, and organizations worldwide.`,
-    keyPoints: [
-      `${topic} provides systematic approaches to analyzing complexity and optimizing outcomes through understanding interconnections and leverage points.`,
-      `Mastery requires sustained practice, active recall, and real-world application rather than passive memorization or shortcut-seeking.`,
-      `Technology enhances rather than replaces human ${topic} expertise, enabling analysis at unprecedented scale and complexity.`,
-      `Expert practitioners distinguish themselves through holistic perception, pattern recognition, and metacognitive awareness of knowledge boundaries.`,
-      `${topic} demonstrates proven value across business, healthcare, education, technology, environmental management, and public policy domains.`
-    ],
-    actionItems: [
-      "Review core concepts weekly using spaced repetition techniques",
-      "Apply one ${topic} principle daily to a real situation you encounter",
-      "Join online communities discussing ${topic} applications in your field",
-      "Set measurable goals for developing specific ${topic} competencies",
-      "Find a mentor or study group to accelerate your ${topic} learning"
-    ],
-    resources: [
-      "Books: 'The Essential Guide to ${topic}', '${topic} in Practice', 'Advanced ${topic} Theory'",
-      "Online: Interactive simulations, video lectures from leading researchers, discussion forums",
-      "Professional: Certification programs, workshops, seminars, research collaboration opportunities"
-    ]
-  };
-}
-
-/**
- * Generates mindmap fallback content
- * @param {string} topic - Study topic
- * @returns {object} Mindmap data
- */
-function generateMindmapFallback(topic) {
-  return {
-    central: topic,
-    nodes: [
-      { id: 'core_concepts', label: 'Core Concepts', parent: 'central', level: 1 },
-      { id: 'principles', label: 'Key Principles', parent: 'core_concepts', level: 2 },
-      { id: 'frameworks', label: 'Theoretical Frameworks', parent: 'core_concepts', level: 2 },
-      { id: 'components', label: 'Structural Components', parent: 'core_concepts', level: 2 },
-      
-      { id: 'applications', label: 'Applications', parent: 'central', level: 1 },
-      { id: 'business', label: 'Business & Management', parent: 'applications', level: 2 },
-      { id: 'healthcare', label: 'Healthcare', parent: 'applications', level: 2 },
-      { id: 'education', label: 'Education', parent: 'applications', level: 2 },
-      { id: 'technology', label: 'Technology', parent: 'applications', level: 2 },
-      
-      { id: 'process', label: 'Process', parent: 'central', level: 1 },
-      { id: 'initialization', label: 'Initialization', parent: 'process', level: 2 },
-      { id: 'execution', label: 'Execution', parent: 'process', level: 2 },
-      { id: 'analysis', label: 'Analysis & Optimization', parent: 'process', level: 2 },
-      { id: 'integration', label: 'Integration', parent: 'process', level: 2 },
-      
-      { id: 'advanced', label: 'Advanced Topics', parent: 'central', level: 1 },
-      { id: 'ai_integration', label: 'AI Integration', parent: 'advanced', level: 2 },
-      { id: 'neuroscience', label: 'Neuroscientific Insights', parent: 'advanced', level: 2 },
-      { id: 'quantum', label: 'Quantum Applications', parent: 'advanced', level: 2 },
-      
-      { id: 'misconceptions', label: 'Common Misconceptions', parent: 'central', level: 1 },
-      { id: 'expert_only', label: 'Only for Experts', parent: 'misconceptions', level: 2 },
-      { id: 'static', label: 'Doesn\'t Change', parent: 'misconceptions', level: 2 },
-      { id: 'tech_replacement', label: 'Tech Makes Obsolete', parent: 'misconceptions', level: 2 }
-    ],
-    connections: [
-      { from: 'principles', to: 'frameworks' },
-      { from: 'frameworks', to: 'components' },
-      { from: 'business', to: 'technology' },
-      { from: 'healthcare', to: 'education' },
-      { from: 'initialization', to: 'execution' },
-      { from: 'execution', to: 'analysis' },
-      { from: 'analysis', to: 'integration' },
-      { from: 'ai_integration', to: 'neuroscience' },
-      { from: 'neuroscience', to: 'quantum' }
-    ]
-  };
-}
-
-// ==================== PROMPT GENERATION ====================
-
-/**
- * Generates the system prompt for AI based on parameters
- * @param {string} topic - Study topic
- * @param {string} language - Target language
- * @param {string} tool - Study tool
- * @param {string} depth - Depth level
- * @param {string} style - Style option
- * @returns {string} Complete system prompt
- */
-function generateSystemPrompt(topic, language, tool, depth, style) {
-  const langData = validateLanguage(language);
-  const toolData = validateTool(tool);
-  const depthData = validateDepth(depth);
-  const styleData = validateStyle(style);
-  
-  const isRTL = langData.rtl;
-  const rtlInstruction = isRTL ? 'Use RTL (right-to-left) formatting, proper Arabic script rendering, and appropriate text alignment.' : 'Use LTR (left-to-right) formatting.';
-  
-  const prompts = {
-    notes: `You are Savoiré AI, a world-class study companion. Generate COMPREHENSIVE, HIGH-QUALITY study notes about "${topic}".
-
-CRITICAL REQUIREMENTS:
-- Language: ${langData.name} (${rtlInstruction})
-- Depth Level: ${depthData.description} (${depthData.multiplier}x detail multiplier)
-- Style: ${styleData.description} (tone: ${styleData.tone})
-
-NOTE STRUCTURE (MUST INCLUDE ALL):
-1. # Title: "${topic} - Complete Study Guide"
-2. ## Introduction with comprehensive overview
-3. ## Core Concepts (at least 5 concepts with 50+ words each)
-4. ## How It Works (step-by-step process, 4+ phases)
-5. ## Key Examples (3+ real-world examples with analysis)
-6. ## Advanced Topics (current research and future directions)
-7. ## Summary with key takeaways (5+ bullet points)
-
-ADDITIONAL SECTIONS:
-- **Pro Tips**: Expert-level insights (3+ tips)
-- **Practice Questions**: 3+ questions with detailed answers (150+ words each)
-- **Common Mistakes**: 3+ misconceptions clarified
-- **Further Resources**: Books, courses, online materials
-
-FORMATTING REQUIREMENTS:
-- Use proper markdown: ## headings, **bold** for emphasis, *italics* for terms
-- Use bullet points (- ) and numbered lists (1. )
-- Use tables for comparisons where appropriate
-- Use > quotes for important definitions
-- Use --- horizontal rules between major sections
-- Include emojis for visual appeal: 📚 🎯 💡 🔑 ⚠️ ✅
-
-QUALITY STANDARDS:
-- Minimum 2000 words total
-- Each major section: 200-400 words
-- Each concept: 50-100 word explanation
-- Examples must include real scenarios with specific details
-- Language must be natural, engaging, and educational
-
-Return ONLY the markdown content, no explanations or meta-commentary.`,
-
-    flashcards: `You are Savoiré AI. Generate INTERACTIVE FLASHCARDS about "${topic}".
-
-REQUIREMENTS:
-- Language: ${langData.name}
-- Generate 15-20 flashcards covering key concepts, definitions, principles, examples
-- Each card has a "front" (question/term/prompt) and "back" (answer/definition/explanation)
-
-FLASHCARD STRUCTURE:
-Return JSON object:
-{
-  "cards": [
-    {"front": "What is X?", "back": "X is Y because Z... (detailed 30-50 word explanation)"},
-    ...
-  ]
-}
-
-CARD COVERAGE:
-- 5 cards: Core definitions and fundamental concepts
-- 5 cards: Key principles and important relationships
-- 3 cards: Real-world examples and applications
-- 3 cards: Common misconceptions clarified
-- 4 cards: Advanced concepts and connections
-
-QUALITY: Each back must be informative (30-50 words), each front must be clear and concise (5-15 words).`,
-
-    quiz: `You are Savoiré AI. Generate a COMPREHENSIVE QUIZ about "${topic}".
-
-REQUIREMENTS:
-- Language: ${langData.name}
-- Generate 10 multiple-choice questions
-- Each question: text + 4 options + correct answer (0-3) + explanation
-
-QUIZ STRUCTURE:
-Return JSON:
-{
-  "questions": [
-    {
-      "text": "Question text...",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correct": 2,
-      "explanation": "Detailed 50+ word explanation why this is correct..."
-    }
-  ]
-}
-
-QUESTION DIFFICULTY DISTRIBUTION:
-- 3 easy: Foundational concepts everyone should know
-- 4 medium: Applied knowledge and relationships
-- 3 hard: Advanced concepts and nuanced understanding
-
-COVERAGE AREAS:
-- Definitions and terminology
-- Principles and theories
-- Applications and examples
-- Comparisons and distinctions
-- Implications and significance
-
-Each explanation must teach beyond the correct answer.`,
-
-    summary: `You are Savoiré AI. Generate a CONCISE YET COMPREHENSIVE SUMMARY about "${topic}".
-
-REQUIREMENTS:
-- Language: ${langData.name}
-- Style: Brief, clear, impactful, memorable
-
-SUMMARY STRUCTURE:
-Return JSON:
-{
-  "executiveSummary": "150-200 word TL;DR covering the essence...",
-  "keyPoints": ["Point 1 (25-40 words)", "Point 2...", "Point 3...", "Point 4...", "Point 5..."],
-  "actionItems": ["Actionable item 1", "Action 2", "Action 3", "Action 4", "Action 5"],
-  "resources": ["Resource recommendation 1", "Resource 2", "Resource 3"]
-}
-
-CHARACTERISTICS:
-- Executive summary: Captures core thesis, importance, and implications
-- Key points: Most critical takeaways, each self-contained
-- Action items: Specific, practical next steps for the learner
-- Resources: High-quality books, courses, websites, or tools
-
-TONE: Professional yet accessible, authoritative yet engaging.`,
-
-    mindmap: `You are Savoiré AI. Generate a STRUCTURED MIND MAP about "${topic}".
-
-REQUIREMENTS:
-- Language: ${langData.name} (for labels)
-- Create hierarchical concept map with 20-30 nodes
-- Include meaningful connections between related nodes
-
-MIND MAP STRUCTURE:
-Return JSON:
-{
-  "central": "${topic}",
-  "nodes": [
-    {"id": "unique_id", "label": "Node Label", "parent": "parent_id", "level": 1},
-    ...
-  ],
-  "connections": [
-    {"from": "node_id_1", "to": "node_id_2"},
-    ...
-  ]
-}
-
-HIERARCHY LEVELS:
-- Level 1: Main branches (5-7 major categories)
-- Level 2: Sub-branches (3-5 per main branch)
-- Level 3: Detailed nodes (2-3 per sub-branch where needed)
-
-BRANCH CATEGORIES (for level 1):
-1. Core Concepts & Definitions
-2. Key Principles & Theories
-3. Major Applications & Use Cases
-4. Important Processes & Workflows
-5. Related Disciplines & Connections
-6. Common Challenges & Solutions
-7. Future Developments & Trends
-
-CONNECTIONS: Create 10-15 meaningful cross-connections showing relationships between nodes from different branches.`
-  };
-  
-  return prompts[tool] || prompts.notes;
-}
-
-/**
- * Generates user prompt based on parameters
- * @param {string} topic - Study topic
- * @param {string} tool - Study tool
- * @returns {string} User prompt
- */
-function generateUserPrompt(topic, tool) {
-  const toolData = validateTool(tool);
-  
-  const prompts = {
-    notes: `Create comprehensive study notes about "${topic}". Include introduction, core concepts, how it works, examples, advanced topics, and summary. Make it thorough and educational.`,
-    flashcards: `Create flashcards about "${topic}". Cover definitions, principles, examples, and common misconceptions.`,
-    quiz: `Create a quiz about "${topic}" with 10 multiple-choice questions. Include explanations for each answer.`,
-    summary: `Summarize "${topic}" with executive summary, key points, action items, and resources.`,
-    mindmap: `Create a mind map about "${topic}" with main branches for concepts, applications, processes, and relationships.`
-  };
-  
-  return prompts[tool] || prompts.notes;
-}
-
-// ==================== API MODEL CALL ====================
-
-/**
- * Calls OpenRouter API with streaming and retry logic
- * @param {string} topic - Study topic
- * @param {string} language - Target language
- * @param {string} tool - Study tool
- * @param {string} depth - Depth level
- * @param {string} style - Style option
- * @param {object} res - Response object for streaming
- * @returns {Promise<string>} Generated content
- */
-async function callOpenRouterAPI(topic, language, tool, depth, style, res) {
-  const systemPrompt = generateSystemPrompt(topic, language, tool, depth, style);
-  const userPrompt = generateUserPrompt(topic, tool);
-  const requestId = generateRequestId();
-  
-  console.log(`[${requestId}] Starting API call for topic: ${topic}, tool: ${tool}`);
-  
-  // Send initial stage events
-  const toolData = validateTool(tool);
-  for (const stage of toolData.stageSequence) {
-    sendSSE(res, 'stage', { stage, message: getStageMessage(stage, tool) });
-    await delay(300); // Small delay for UI feedback
-  }
-  
-  // Track streaming content
-  let fullContent = '';
-  let lastHeartbeat = Date.now();
-  
-  // Try each model in priority order
-  for (let modelIndex = 0; modelIndex < AI_MODELS.length; modelIndex++) {
-    const model = AI_MODELS[modelIndex];
-    console.log(`[${requestId}] Trying model ${modelIndex + 1}/${AI_MODELS.length}: ${model}`);
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let fullContent = '';
+    let tokenCount = 0;
+    let charCount = 0;
     
-    sendSSE(res, 'status', { status: 'connecting', model, attempt: modelIndex + 1 });
-    
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': 'https://savoire-ai.vercel.app',
-          'X-Title': 'Savoiré AI v2.0'
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          stream: true,
-          temperature: 0.7,
-          max_tokens: 4000,
-          top_p: 0.9,
-          frequency_penalty: 0.3,
-          presence_penalty: 0.3
-        })
-      });
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[${requestId}] Model ${model} failed: ${response.status} - ${errorText}`);
-        
-        // Skip rate limiting and server errors quickly
-        if (response.status === 429 || response.status === 503) {
-          console.log(`[${requestId}] Skipping ${model} due to rate limit/server error`);
-          continue;
-        }
-        
-        throw new Error(`API error: ${response.status}`);
-      }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
       
-      sendSSE(res, 'status', { status: 'streaming', model });
-      
-      // Process stream
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
         
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const dataStr = trimmedLine.slice(6).trim();
+        if (dataStr === '[DONE]') continue;
         
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            
-            try {
-              const parsed = JSON.parse(data);
-              const token = parsed.choices?.[0]?.delta?.content || '';
-              
-              if (token) {
-                fullContent += token;
-                // Stream token to client
-                sendSSE(res, 'token', { token, full: fullContent });
-                
-                // Send heartbeat every 50 tokens to prevent timeout
-                if (fullContent.length % 500 < token.length) {
-                  sendSSE(res, 'heartbeat', { timestamp: Date.now(), length: fullContent.length });
-                }
-              }
-            } catch (e) {
-              // Skip malformed JSON
-            }
+        try {
+          const event = JSON.parse(dataStr);
+          const delta = event?.choices?.[0]?.delta?.content;
+          
+          if (delta && typeof delta === 'string' && delta.length > 0) {
+            fullContent += delta;
+            charCount += delta.length;
+            tokenCount++;
+            onChunk(delta);
           }
+        } catch (e) {
+          // Skip malformed SSE events
         }
       }
+    }
+    
+    const elapsed = Date.now() - startTime;
+    
+    if (fullContent.trim().length < 100) {
+      throw new Error(`${modelName} stream produced too-short content: ${fullContent.length} chars after ${elapsed}ms`);
+    }
+    
+    if (onMetrics) {
+      onMetrics({
+        model: modelName,
+        tokens: tokenCount,
+        chars: charCount,
+        elapsedMs: elapsed
+      });
+    }
+    
+    logger.success(`${modelName} stream complete: ${tokenCount} tokens, ${charCount} chars, ${elapsed}ms`);
+    
+    const parsed = extractAndParseJSON(fullContent);
+    return validateAndEnrich(parsed, options);
+    
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 13: MODEL CALLER — SYNC (FALLBACK)
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+async function callModelSync(model, prompt, options) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), model.timeoutMs);
+  const startTime = Date.now();
+  const modelName = model.id.split('/').pop().replace(':free', '');
+  
+  try {
+    const response = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer': HTTP_REFERER,
+        'X-Title': APP_TITLE
+      },
+      body: JSON.stringify({
+        model: model.id,
+        max_tokens: model.maxTokens,
+        temperature: 0.72,
+        top_p: 0.95,
+        stream: false,
+        messages: [{ role: 'user', content: prompt }]
+      }),
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      const errorMsg = `HTTP ${response.status} from ${modelName}: ${truncate(errorText, 200)}`;
       
-      // Success! Return the content
-      console.log(`[${requestId}] Success with model ${model}, generated ${fullContent.length} characters`);
-      return fullContent;
+      if (response.status === 429 || response.status === 503 || response.status === 502) {
+        throw new Error(`[RATE_LIMITED] ${errorMsg}`);
+      }
+      throw new Error(errorMsg);
+    }
+    
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content;
+    
+    if (!content || typeof content !== 'string' || content.trim().length < 100) {
+      throw new Error(`${modelName} returned empty/too-short content`);
+    }
+    
+    const elapsed = Date.now() - startTime;
+    logger.success(`${modelName} sync responded in ${elapsed}ms, content: ${content.length} chars`);
+    
+    const parsed = extractAndParseJSON(content);
+    return validateAndEnrich(parsed, options);
+    
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 14: MAIN GENERATOR WITH FULL FAILOVER CHAIN
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+async function generateWithAI(message, options, onChunk, onStage, onMetrics) {
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY environment variable is not set');
+  }
+  
+  const useStreaming = typeof onChunk === 'function';
+  const prompt = buildPrompt(message, options);
+  const errors = [];
+  let modelsTried = 0;
+  let totalAttempts = 0;
+  
+  logger.info(`Generation start — tool: ${options.tool}, lang: ${options.language}, depth: ${options.depth}, style: ${options.style}, streaming: ${useStreaming}, input: ${message.length} chars`);
+  
+  for (const model of MODELS) {
+    const modelName = model.id.split('/').pop().replace(':free', '');
+    const maxAttempts = 2;
+    modelsTried++;
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      totalAttempts++;
+      logger.model(`Attempt ${totalAttempts}: ${modelName} (try ${attempt}/${maxAttempts})`);
       
-    } catch (error) {
-      console.error(`[${requestId}] Error with model ${model}:`, error);
-      // Continue to next model
-      continue;
+      if (onStage) onStage({ idx: 0, label: `Connecting to ${modelName}...`, model: modelName });
+      
+      try {
+        let result;
+        
+        if (useStreaming) {
+          result = await callModelStream(model, prompt, options, onChunk, onMetrics);
+        } else {
+          result = await callModelSync(model, prompt, options);
+        }
+        
+        result._models_tried = modelsTried;
+        result._attempts = totalAttempts;
+        result._model_used = modelName;
+        
+        logger.success(`SUCCESS — ${modelName} after ${totalAttempts} attempts`);
+        
+        return result;
+        
+      } catch (error) {
+        const errorMsg = (error.message || 'Unknown error').slice(0, 200);
+        errors.push(`${modelName}[${attempt}]: ${errorMsg}`);
+        logger.warn(`FAIL — ${modelName} attempt ${attempt}: ${errorMsg}`);
+        
+        if (errorMsg.includes('[RATE_LIMITED]')) {
+          logger.warn(`Rate limited on ${modelName} — skipping remaining attempts`);
+          break;
+        }
+        
+        if (errorMsg.includes('timeout') || errorMsg.includes('ECONNREFUSED') || error.name === 'AbortError') {
+          logger.warn(`${modelName} unavailable — skipping to next model`);
+          break;
+        }
+        
+        if (attempt < maxAttempts) {
+          const waitMs = 500;
+          logger.info(`Waiting ${waitMs}ms before retry...`);
+          await sleep(waitMs);
+        }
+      }
+    }
+    
+    if (modelsTried < MODELS.length) {
+      await sleep(300);
     }
   }
   
-  // All models failed, use fallback
-  console.log(`[${requestId}] All models failed, using fallback content`);
-  sendSSE(res, 'status', { status: 'fallback', message: 'Using enhanced local content' });
+  logger.error(`ALL MODELS FAILED — ${MODELS.length} models tried, ${totalAttempts} total attempts`);
+  logger.error(`Error summary: ${errors.slice(0, 5).join(' || ')}`);
   
-  const fallback = generateFallbackContent(topic, language, tool, depth, style);
-  
-  if (tool === 'notes' && fallback.markdown) {
-    // Stream fallback content character by character for consistent UX
-    const content = fallback.markdown;
-    for (let i = 0; i < content.length; i++) {
-      const token = content[i];
-      fullContent += token;
-      sendSSE(res, 'token', { token, full: fullContent });
-      
-      // Small delay for streaming effect
-      if (i % 10 === 0) await delay(1);
-    }
-    return fullContent;
-  } else if (fallback.cards || fallback.questions || fallback.executiveSummary || fallback.central) {
-    const content = JSON.stringify(fallback);
-    for (let i = 0; i < content.length; i++) {
-      const token = content[i];
-      fullContent += token;
-      sendSSE(res, 'token', { token, full: fullContent });
-      if (i % 10 === 0) await delay(1);
-    }
-    return fullContent;
-  }
-  
-  return JSON.stringify(fallback);
+  throw new Error(
+    `All ${MODELS.length} AI models are temporarily unavailable after ${totalAttempts} attempts. ` +
+    `Please try again in a moment. Error details: ${errors[0] || 'Unknown'}`
+  );
 }
 
-/**
- * Gets stage message for UI display
- * @param {string} stage - Stage identifier
- * @param {object} tool - Tool data
- * @returns {string} User-friendly stage message
- */
-function getStageMessage(stage, tool) {
-  const messages = {
-    analysing: '🔍 Analysing your request...',
-    researching: '📚 Researching topic deeply...',
-    writing: '✍️ Writing comprehensive content...',
-    formatting: '🎨 Formatting for optimal learning...',
-    extracting: '📖 Extracting key concepts...',
-    creating_cards: '🃏 Creating flashcards...',
-    organizing: '📑 Organizing card deck...',
-    designing_questions: '❓ Designing quiz questions...',
-    generating_answers: '✅ Generating answer explanations...',
-    validating: '✔️ Validating quiz accuracy...',
-    identifying_nodes: '🗺️ Identifying mind map nodes...',
-    building_hierarchy: '🌳 Building hierarchical structure...',
-    creating_connections: '🔗 Creating connections...',
-    synthesizing: '🔬 Synthesizing information...',
-    condensing: '📝 Condensing key points...',
-    complete: '✨ Complete! Rendering content...'
-  };
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 15: RESPONSE HEADERS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+function setResponseHeaders(res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  res.setHeader('Access-Control-Max-Age', '86400');
   
-  return messages[stage] || `Processing: ${stage}...`;
+  // Branding headers
+  res.setHeader('X-Powered-By', `${BRAND} by ${DEVELOPER}`);
+  res.setHeader('X-Developer', DEVELOPER);
+  res.setHeader('X-Developer-Web', DEVSITE);
+  res.setHeader('X-Founder', FOUNDER);
+  res.setHeader('X-App-Version', APP_VERSION);
+  res.setHeader('X-Build', BUILD_NUMBER);
+  
+  // Security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 }
 
-// ==================== MAIN HANDLER ====================
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   SECTION 16: MAIN VERCEL HANDLER
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
 
-/**
- * Vercel serverless function handler
- * @param {object} req - Request object
- * @param {object} res - Response object
- */
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
+  const requestId = generateRequestId();
+  const startTime = Date.now();
+  
+  logger.info(`[${requestId}] ${req.method} ${req.url} — ${req.headers['content-type'] || 'no content-type'}`);
+  
+  // Set headers
+  setResponseHeaders(res);
+  
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    res.writeHead(200, CORS_HEADERS);
-    res.end();
-    return;
+    logger.info(`[${requestId}] OPTIONS preflight — responding 200`);
+    return res.status(200).end();
   }
   
   // Only allow POST
   if (req.method !== 'POST') {
-    res.writeHead(405, CORS_HEADERS);
-    res.end(JSON.stringify({ error: 'Method not allowed' }));
-    return;
+    logger.warn(`[${requestId}] Rejected ${req.method} request`);
+    return res.status(405).json({
+      error: `Method ${req.method} not allowed`,
+      allowed: ['POST'],
+      docs: `https://${WEBSITE}/api/docs`
+    });
   }
   
-  // Parse request body
-  let body;
-  try {
-    body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-  } catch (e) {
-    res.writeHead(400, CORS_HEADERS);
-    res.end(JSON.stringify({ error: 'Invalid JSON body' }));
-    return;
+  // Parse body
+  const body = req.body || {};
+  
+  if (!body.message || typeof body.message !== 'string') {
+    return res.status(400).json({
+      error: 'Request body must include a "message" field of type string',
+      example: {
+        message: 'Photosynthesis',
+        options: { tool: 'notes', language: 'English', depth: 'detailed', style: 'simple', stream: true }
+      }
+    });
   }
   
-  const { topic, language, tool, depth, style } = body;
+  const trimmedMessage = body.message.trim();
   
-  // Validate input
-  const validation = validateInput(topic);
-  if (!validation.valid) {
-    res.writeHead(400, CORS_HEADERS);
-    res.end(JSON.stringify({ error: validation.error }));
-    return;
+  if (trimmedMessage.length < 2) {
+    return res.status(400).json({ error: 'Message is too short — minimum 2 characters' });
   }
   
-  const cleanTopic = validation.cleaned;
-  const langData = validateLanguage(language);
-  const toolData = validateTool(tool);
-  const depthData = validateDepth(depth);
-  const styleData = validateStyle(style);
+  if (trimmedMessage.length > 15000) {
+    return res.status(400).json({
+      error: `Message is too long — ${trimmedMessage.length.toLocaleString()} characters (maximum 15,000)`,
+      received: trimmedMessage.length,
+      maximum: 15000
+    });
+  }
   
-  // Set up SSE response
-  res.writeHead(200, {
-    ...SSE_HEADERS,
-    ...CORS_HEADERS
-  });
+  // Validate options
+  const rawOptions = body.options || {};
   
-  // Send initial connection event
-  sendSSE(res, 'connected', {
-    timestamp: Date.now(),
-    topic: cleanTopic,
-    language: langData.name,
-    tool: toolData.name,
-    depth: depthData.value,
-    style: styleData.value,
-    rtl: langData.rtl
-  });
+  const options = {
+    tool: ['notes', 'flashcards', 'quiz', 'summary', 'mindmap'].includes(rawOptions.tool) ? rawOptions.tool : 'notes',
+    depth: ['standard', 'detailed', 'comprehensive', 'expert'].includes(rawOptions.depth) ? rawOptions.depth : 'detailed',
+    style: ['simple', 'academic', 'detailed', 'exam', 'visual'].includes(rawOptions.style) ? rawOptions.style : 'simple',
+    language: SUPPORTED_LANGUAGES.includes(rawOptions.language) ? rawOptions.language : 'English',
+    stream: rawOptions.stream === true
+  };
   
-  // Start heartbeat to keep connection alive
-  const heartbeat = startHeartbeat(res, 15000);
+  logger.info(`[${requestId}] Input: ${trimmedMessage.length} chars | tool: ${options.tool} | lang: ${options.language} | depth: ${options.depth} | style: ${options.style} | stream: ${options.stream}`);
   
-  try {
-    // Generate content
-    const content = await callOpenRouterAPI(cleanTopic, language, tool, depth, style, res);
+  /* ═══════════════════════════════════════════════════════════════════════════════════════════════
+     STREAMING MODE — Server-Sent Events
+     ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+  
+  if (options.stream) {
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, no-transform, must-revalidate');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader('Transfer-Encoding', 'chunked');
     
-    // Send completion event
-    sendSSE(res, 'complete', {
-      content,
-      length: content.length,
-      timestamp: Date.now()
+    if (typeof res.flushHeaders === 'function') {
+      res.flushHeaders();
+    }
+    
+    // SSE helper
+    const sendEvent = (eventName, data) => {
+      try {
+        const serialized = typeof data === 'string' ? data : JSON.stringify(data);
+        res.write(`event: ${eventName}\ndata: ${serialized}\n\n`);
+        if (typeof res.flush === 'function') res.flush();
+      } catch (writeError) {
+        logger.warn(`[${requestId}] SSE write error: ${writeError.message}`);
+      }
+    };
+    
+    // Send initial connection event
+    sendEvent(SSE_EVENTS.HEARTBEAT, { ts: Date.now(), requestId, status: 'connected', message: `${BRAND} connected — generating content...` });
+    sendEvent(SSE_EVENTS.TOKEN, { t: `## Generating ${TOOL_CONFIG[options.tool]?.name || 'study materials'}...\n\n` });
+    sendEvent(SSE_EVENTS.STAGE, { idx: 0, label: 'Initialising AI models...' });
+    
+    // Heartbeat interval
+    let heartbeatInterval = setInterval(() => {
+      try {
+        res.write(`: heartbeat ${Date.now()}\n\n`);
+        if (typeof res.flush === 'function') res.flush();
+      } catch {
+        clearInterval(heartbeatInterval);
+      }
+    }, 10000);
+    
+    // Stage timing
+    const stageTimings = [0, 4000, 9000, 16000, 25000];
+    const stageLabels = [
+      'Analysing your topic structure...',
+      'Writing comprehensive study content...',
+      'Building sections and learning cards...',
+      'Crafting practice questions...',
+      'Finalising and formatting output...'
+    ];
+    
+    const stageTimeouts = stageTimings.map((delay, idx) => {
+      if (idx === 0) return null;
+      return setTimeout(() => {
+        sendEvent(SSE_EVENTS.STAGE, { idx, label: stageLabels[idx] });
+      }, delay);
     });
     
-  } catch (error) {
-    console.error('Handler error:', error);
-    sendSSE(res, 'error', {
-      error: 'Failed to generate content. Please try again.',
-      details: error.message
-    });
-  } finally {
-    // Clean up
-    clearInterval(heartbeat);
-    res.end();
+    const clearStageTimeouts = () => stageTimeouts.forEach(t => t && clearTimeout(t));
+    
+    try {
+      let totalTokens = 0;
+      let totalChars = 0;
+      let metricsReported = false;
+      
+      const onToken = (chunk) => {
+        totalTokens++;
+        totalChars += chunk.length;
+        sendEvent(SSE_EVENTS.TOKEN, { t: chunk });
+      };
+      
+      const onStageUpdate = (stage) => {
+        sendEvent(SSE_EVENTS.STAGE, stage);
+      };
+      
+      const onMetricsUpdate = (metrics) => {
+        if (!metricsReported) {
+          sendEvent(SSE_EVENTS.METRICS, metrics);
+          metricsReported = true;
+        }
+      };
+      
+      const result = await generateWithAI(trimmedMessage, options, onToken, onStageUpdate, onMetricsUpdate);
+      
+      clearInterval(heartbeatInterval);
+      clearStageTimeouts();
+      
+      sendEvent(SSE_EVENTS.STAGE, { idx: 4, label: 'Complete!', done: true });
+      
+      const finalResult = {
+        ...result,
+        _request_id: requestId,
+        _duration_ms: Date.now() - startTime,
+        _tokens_streamed: totalTokens,
+        _chars_streamed: totalChars,
+        _streaming: true
+      };
+      
+      logger.success(`[${requestId}] Stream complete — ${totalTokens} tokens, ${totalChars} chars, ${finalResult._duration_ms}ms`);
+      
+      sendEvent(SSE_EVENTS.DONE, finalResult);
+      res.end();
+      
+    } catch (error) {
+      clearInterval(heartbeatInterval);
+      clearStageTimeouts();
+      
+      logger.error(`[${requestId}] Streaming failed: ${error.message}`);
+      
+      // Fallback streaming
+      sendEvent(SSE_EVENTS.STAGE, { idx: 2, label: 'Using offline knowledge base...' });
+      
+      const fallback = generateOfflineFallback(trimmedMessage, options);
+      const streamText = fallback.ultra_long_notes || '';
+      const words = streamText.split(' ');
+      
+      for (let i = 0; i < words.length; i += 3) {
+        if (res.writableEnded) break;
+        const chunk = words.slice(i, i + 3).join(' ') + ' ';
+        sendEvent(SSE_EVENTS.TOKEN, { t: chunk });
+        await sleep(50);
+      }
+      
+      sendEvent(SSE_EVENTS.STAGE, { idx: 4, label: 'Complete (offline mode)', done: true });
+      
+      const finalFallback = {
+        ...fallback,
+        _request_id: requestId,
+        _duration_ms: Date.now() - startTime,
+        _fallback: true,
+        _streaming: true
+      };
+      
+      sendEvent(SSE_EVENTS.DONE, finalFallback);
+      
+      if (!res.writableEnded) res.end();
+    }
+    
+    return;
   }
-}
+  
+  /* ═══════════════════════════════════════════════════════════════════════════════════════════════
+     SYNC MODE — Full JSON Response
+     ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+  
+  try {
+    let result;
+    
+    try {
+      result = await generateWithAI(trimmedMessage, options);
+    } catch (aiError) {
+      logger.warn(`[${requestId}] AI failed in sync mode: ${aiError.message} — using offline fallback`);
+      result = generateOfflineFallback(trimmedMessage, options);
+    }
+    
+    const finalResult = {
+      ...result,
+      _request_id: requestId,
+      _duration_ms: Date.now() - startTime,
+      _sync: true
+    };
+    
+    logger.success(`[${requestId}] Sync response ready — ${finalResult._duration_ms}ms | fallback: ${!!finalResult._fallback}`);
+    
+    return res.status(200).json(finalResult);
+    
+  } catch (unexpectedError) {
+    logger.error(`[${requestId}] Unexpected error: ${unexpectedError.message}`, unexpectedError.stack);
+    
+    const emergencyFallback = generateOfflineFallback(trimmedMessage, options);
+    const finalResult = {
+      ...emergencyFallback,
+      _request_id: requestId,
+      _duration_ms: Date.now() - startTime,
+      _error: true,
+      _error_type: 'unexpected'
+    };
+    
+    return res.status(200).json(finalResult);
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   DEPLOYMENT INSTRUCTIONS:
+   
+   1. Create vercel.json in project root:
+   {
+     "functions": {
+       "api/study.js": {
+         "maxDuration": 300
+       }
+     }
+   }
+   
+   2. Set environment variable in Vercel dashboard:
+      OPENROUTER_API_KEY = your_api_key_from_openrouter.ai
+   
+   3. Get free API key at: https://openrouter.ai
+   
+   All models use :free suffix — $0 per request, no credit card needed.
+   
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   END OF FILE — api/study.js
+   Savoiré AI v2.0 — Built by Sooban Talha Technologies
+   Founder: Sooban Talha | Free for every student on Earth, forever.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
