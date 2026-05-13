@@ -147,8 +147,8 @@ class SavoireApp {
   }
   
   _renderMdLive(text) {
-    if (!text) return '<span class="cursor-blink">▊</span>';
-    return this._renderMd(text) + '<span class="cursor-blink">▊</span>';
+    if (!text) return '<span class="sfp-cursor">▊</span>';
+    return this._renderMd(text) + '<span class="sfp-cursor">▊</span>';
   }
   
   _stripMd(t) {
@@ -471,9 +471,14 @@ class SavoireApp {
         const render = () => {
           if (!sfpTxt) return;
           const now = Date.now();
-          if (now - lastRender < 20) return;
+          if (now - lastRender < 16) return; // ~60fps
           lastRender = now;
-          try { sfpTxt.innerHTML = this._renderMdLive(this.streamBuffer); } catch(e) { sfpTxt.textContent = this.streamBuffer; }
+          try {
+            sfpTxt.innerHTML = this._renderMdLive(this.streamBuffer);
+          } catch(e) {
+            sfpTxt.textContent = this.streamBuffer;
+            sfpTxt.innerHTML += '<span class="sfp-cursor">▊</span>';
+          }
           if (sfpScr) sfpScr.scrollTop = sfpScr.scrollHeight;
         };
         
@@ -500,7 +505,13 @@ class SavoireApp {
           }
         }
         
-        if (sfpTxt) { sfpTxt.classList.add('done'); }
+        if (sfpTxt) {
+          sfpTxt.classList.remove('live-streaming');
+          sfpTxt.classList.add('done');
+          // Remove the cursor span
+          const cursor = sfpTxt.querySelector('.sfp-cursor');
+          if (cursor) cursor.remove();
+        }
         resolve({ topic: msg, tool: opts.tool, ultra_long_notes: full || this.streamBuffer, content: full });
       } catch(err) { reject(err); }
     });
@@ -540,14 +551,36 @@ class SavoireApp {
     const cfg = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
     if (tp) tp.textContent = topic.length > 50 ? topic.substring(0, 50) + '…' : topic;
     if (ic) ic.className = `fas ${cfg.sfpIcon}`; if (nm) nm.textContent = cfg.sfpName; if (lb) lb.textContent = cfg.sfpLabel;
-    if (txt) { txt.innerHTML = '<span class="cursor-blink">▊</span>'; txt.classList.remove('done'); }
+    if (txt) {
+      txt.innerHTML = '<span class="sfp-cursor">▊</span>';
+      txt.classList.remove('done');
+      txt.classList.add('live-streaming');
+    }
     sfp.style.display = 'flex';
+    sfp.style.opacity = '0';
+    sfp.style.transition = 'opacity 0.25s ease';
+    requestAnimationFrame(() => {
+      sfp.style.opacity = '1';
+      setTimeout(() => { sfp.style.transition = ''; }, 280);
+    });
     const es = this._el('emptyState'); const tw = this._el('thinkingWrap'); const ra = this._el('resultArea');
     if (es) es.style.display = 'none'; if (tw) tw.style.display = 'none'; if (ra) ra.style.display = 'none';
     if (window.innerWidth <= 768) sfp.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   
-  _hideStream() { const sfp = this._el('streamFullpage'); if (sfp) { sfp.style.display = 'none'; } this._expandInput(); }
+  _hideStream() {
+    const sfp = this._el('streamFullpage');
+    if (sfp) {
+      sfp.style.opacity = '0';
+      sfp.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => {
+        sfp.style.display = 'none';
+        sfp.style.opacity = '';
+        sfp.style.transition = '';
+      }, 300);
+    }
+    this._expandInput();
+  }
   
   _startThinking() {
     for (let i = 0; i < 5; i++) { const el = this._el(`ts${i}`); if (el) el.className = 'ths'; }
@@ -589,8 +622,17 @@ class SavoireApp {
     if (!area) return;
     area.innerHTML = this._buildHTML(data);
     area.style.display = 'block';
+    area.style.animation = 'fadeUp 0.4s ease';
     const tw = this._el('thinkingWrap'); if (tw) tw.style.display = 'none';
+    const es = this._el('emptyState'); if (es) es.style.display = 'none';
     if (window.innerWidth <= 768) setTimeout(() => area.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+  }
+
+  _showEmptyState() {
+    const es = this._el('emptyState');
+    const ra = this._el('resultArea');
+    if (es) es.style.display = 'flex';
+    if (ra) ra.style.display = 'none';
   }
   
   _buildHTML(data) {
