@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.status(200).end();
     return;
-  }}
+  }
   
   // ── Existing code continues... ──
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
@@ -891,18 +891,13 @@ async function generateWithAI(message, opts, onChunk) {
           break;
         }
 
-        // Wait before retry (only for attempt 1, not if we're about to give up)
-        if (attempt < maxAttempts) {
-          const waitMs = 20;
-          logger.info(`Waiting ${waitMs}ms before retry ${attempt + 1}...`);
-          await sleep(waitMs);
-        }
+        // No wait before retry — speed is priority
       }
     }
 
-    // Brief pause between models to be a good API citizen
+    // Minimal pause between models for speed
     if (modelsTried < MODELS.length) {
-      await sleep(350);
+      await sleep(50);
     }
   }
 
@@ -1468,3 +1463,4 @@ module.exports = async function handler(req, res) {
 // Savoiré AI v2.0 — Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | Free for every student on Earth, forever.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
+}

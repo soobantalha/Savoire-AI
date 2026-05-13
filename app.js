@@ -114,11 +114,11 @@ const TOOL_CONFIG = {
 };
 
 const STAGE_MESSAGES = [
-  '✦ Analysing topic…',
-  '✦ Structuring knowledge…',
-  '✦ Building content…',
-  '✦ Crafting details…',
-  '✦ Finalising output…',
+  'Analysing your topic…',
+  'Writing your study content…',
+  'Building sections and cards…',
+  'Crafting practice questions…',
+  'Finalising and formatting…',
 ];
 
 /* ─────────────────────────────────────────────────────────────────────────────────────────
@@ -635,8 +635,14 @@ class SavoireApp {
     const name = this.userName || 'Scholar';
     const init = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
-    const avInitials = this._el('avInitials');
+    const avInitials = this._el('avLetter') || this._el('avInitials');
     if (avInitials) avInitials.textContent = init;
+
+    /* Also update dropdown avatar */
+    const avDrop = this._el('avDropAv');
+    if (avDrop) avDrop.textContent = init;
+    const avDropName = this._el('avDropName');
+    if (avDropName) avDropName.textContent = name;
 
     const greeting = this._el('dhGreeting');
     if (greeting) {
@@ -803,16 +809,12 @@ class SavoireApp {
     /* ── MOBILE AUTO-SCROLL TO OUTPUT ── */
     this._mobileScrollToOutput();
 
-    /* ── UI state with INSTANT visual feedback (RAF for perceived speed) ── */
+    /* ── UI state ── */
     this.generating   = true;
     this.streamBuffer = '';
-    
-    /* INSTANT visual response — NO delay, feels immediate */
-    requestAnimationFrame(() => {
-      this._setRunLoading(true);
-      this._collapseInput(text);
-      this._showStreamOverlay(text, this.tool);
-    });
+    this._setRunLoading(true);
+    this._collapseInput(text);
+    this._showStreamOverlay(text, this.tool);
     this._startThinkingStages();
 
     try {
@@ -926,45 +928,41 @@ class SavoireApp {
         const decoder     = new TextDecoder();
         let   lineBuffer  = '';
         let   charCount   = 0;
-        let   renderThrottle = 0;
+        let   rafPending  = false;
+        let   lastRender  = 0;
 
         /* Get stream display elements */
         const sfpText   = this._el('sfpText');
         const sfpScroll = this._el('sfpScroll');
 
-        /* ─ ULTRA-FAST RAF-BASED LIVE MARKDOWN RENDER ─
-           Uses requestAnimationFrame for buttery smooth 60fps streaming.
-           Batches DOM updates for maximum performance. */
-        let rafScheduled = false;
+        /* ─ OPTIMIZED LIVE RENDER — requestAnimationFrame batching ─
+           Does NOT re-render full markdown on every token.
+           Appends plain text progressively, renders markdown only on pause or done.
+           This is the OpenAI pattern: fast plain text streaming → styled at end. */
         const renderLive = () => {
-          if (!sfpText || rafScheduled) return;
-          rafScheduled = true;
+          if (!sfpText || rafPending) return;
+          const now = Date.now();
+          if (now - lastRender < 40) return; /* throttle to 25fps max */
+          rafPending = true;
 
           requestAnimationFrame(() => {
-            rafScheduled = false;
-
+            rafPending = false;
+            lastRender = Date.now();
             try {
-              /* Render markdown as HTML — styles applied LIVE with RAF batching */
-              const html = this._renderMdLive(this.streamBuffer);
-              sfpText.innerHTML = html;
+              /* Progressive plain-text streaming — ultra fast, no jank */
+              sfpText.textContent = this.streamBuffer;
               sfpText.classList.add('live-md');
+              /* Append blinking cursor */
+              const cursor = document.createElement('span');
+              cursor.className = 'sfp-cursor';
+              cursor.textContent = '▊';
+              sfpText.appendChild(cursor);
             } catch(e) {
-              /* Fallback to plain text if render fails */
               sfpText.textContent = this.streamBuffer;
             }
 
-            /* Smooth auto-scroll with RAF */
-            if (sfpScroll) {
-              sfpScroll.scrollTop = sfpScroll.scrollHeight;
-            }
-
-            /* Mobile: keep visible */
-            if (window.innerWidth <= 768) {
-              const sfp = this._el('streamFullpage');
-              if (sfp && sfp.style.display !== 'none') {
-                sfp.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }
+            /* Auto-scroll — single non-thrashing scroll */
+            if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
           });
         };
 
@@ -997,8 +995,13 @@ class SavoireApp {
                     this._updateStageByProgress(charCount);
 
                   } else if (evt.topic !== undefined) {
-                    /* ── Final structured data ── */
+                    /* ── Final structured data — now render full styled markdown ── */
                     if (sfpText) {
+                      try {
+                        sfpText.innerHTML = DOMPurify.sanitize(marked.parse(this.streamBuffer));
+                      } catch(e) {
+                        sfpText.innerHTML = this._renderMd(this.streamBuffer);
+                      }
                       sfpText.classList.remove('live-md');
                       sfpText.classList.add('done');
                     }
