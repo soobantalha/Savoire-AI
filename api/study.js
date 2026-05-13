@@ -45,7 +45,7 @@ export default async function handler(req, res) {
 // ✦ Double Retry Logic   — each model tried twice before giving up
 // ✦ Rate Limit Detection — 429/503 skipped immediately, no wasted time
 // ✦ Simulated Streaming  — even offline fallback streams word by word
-// ✦ Ultra-Rich Prompts   — 5 tools × 4 depths × 5 styles × 42 languages
+// ✦ Ultra-Rich Prompts   — 5 tools × 4 depths × 5 styles × 50+ languages
 // ✦ Robust JSON Parsing  — handles messy model output, code fences, escapes
 // ✦ Field Validation     — all required fields checked and filled
 // ✦ Quality Fallback     — 2000+ word offline content when all AI fails
@@ -1242,11 +1242,12 @@ module.exports = async function handler(req, res) {
 
     // ── Set SSE response headers ──
     res.setHeader('Content-Type',    'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control',   'no-cache, no-store, no-transform');
+    res.setHeader('Cache-Control',   'no-cache, no-store, no-transform, must-revalidate');
     res.setHeader('Connection',      'keep-alive');
     res.setHeader('X-Accel-Buffering','no');         // Nginx: disable buffering
     res.setHeader('Transfer-Encoding','chunked');
     res.setHeader('Content-Encoding', 'identity'); 
+    res.setHeader('Cache-Control',   'private, no-cache, no-store, proxy-revalidate');
 
     // ── Flush headers immediately so browser can start reading ──
     if (typeof res.flushHeaders === 'function') {
@@ -1266,7 +1267,7 @@ module.exports = async function handler(req, res) {
 
     // ── Send immediate heartbeat so client knows connection is live ──
     sendSSE(EVT_HEARTBEAT, { ts: Date.now(), requestId, status: 'connected', message: 'Savoiré AI connected — generating…' });
-    sendSSE(EVT_TOKEN, { t: '## Analysing Your Topic\n\n' });
+    
     // ── Send initial stage event ──
     sendSSE(EVT_STAGE, { idx: 0, label: 'Analysing your topic…' });
 
@@ -1279,10 +1280,10 @@ module.exports = async function handler(req, res) {
       } catch {
         clearInterval(heartbeatInterval);
       }
-    }, 12000); // every 12 seconds
+    }, 10000); // every 10 seconds
 
     // ── Stage advancement timer — sends stage updates to animate thinking indicator ──
-    const stageTimings = [0, 4000, 9000, 16000, 25000];
+    const stageTimings = [0, 3000, 7000, 12000, 20000];
     const stageLabels  = [
       'Analysing your topic…',
       'Writing your study content…',
@@ -1302,6 +1303,7 @@ module.exports = async function handler(req, res) {
     try {
       let tokensSent = 0;
       let charsStreamed = 0;
+      let streamStarted = false;
 
       // ── Token callback — called for every token from the AI model ──
       // This is what makes text appear live on the user's screen
@@ -1309,6 +1311,12 @@ module.exports = async function handler(req, res) {
         tokensSent++;
         charsStreamed += chunk.length;
         sendSSE(EVT_TOKEN, { t: chunk });
+        
+        // Send first token immediately to show live output
+        if (!streamStarted && tokensSent === 1) {
+          streamStarted = true;
+          logger.ok(`[${requestId}] First token sent — live output started`);
+        }
       };
 
       // ── Run AI generation with streaming ──
@@ -1356,15 +1364,15 @@ module.exports = async function handler(req, res) {
       sendSSE(EVT_STAGE, { idx: 2, label: 'Generating from local knowledge…' });
 
       // Stream words in small groups for natural feel
-      for (let i = 0; i < words.length; i += 3) {
+      for (let i = 0; i < words.length; i += 2) {
         if (res.writableEnded) break;
 
-        const chunk = words.slice(i, i + 3).join(' ') + ' ';
+        const chunk = words.slice(i, i + 2).join(' ') + ' ';
         sendSSE(EVT_TOKEN, { t: chunk });
         tokensSent++;
 
         // ~40 words/second — feels natural, not too fast not too slow
-        await sleep(75);
+        await sleep(50);
       }
 
       sendSSE(EVT_STAGE, { idx: 4, label: 'Done!', done: true });
