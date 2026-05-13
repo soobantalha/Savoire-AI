@@ -89,75 +89,17 @@ const EVT_STAGE     = 'stage';      // thinking stage update: { idx: 0-4 }
 
 const MODELS = [
   {
-    id:          'google/gemini-2.0-flash-exp:free',
-    max_tokens:   8000,
-    timeout_ms:  120000,
-    priority:    1,
-    description: 'Gemini 2.0 Flash — best quality, fastest response, excellent at structured JSON',
+    id:'google/gemini-2.0-flash-exp:free',
+    max_tokens:3500,
+    timeout_ms:45000,
+    priority:1
   },
   {
-    id:          'deepseek/deepseek-chat-v3-0324:free',
-    max_tokens:   8000,
-    timeout_ms:  120000,
-    priority:    2,
-    description: 'DeepSeek Chat v3 — outstanding reasoning, very strong at detailed academic content',
-  },
-  {
-    id:          'meta-llama/llama-3.3-70b-instruct:free',
-    max_tokens:   6000,
-    timeout_ms:  110000,
-    priority:    3,
-    description: 'LLaMA 3.3 70B — Meta flagship, excellent instruction following and long-form writing',
-  },
-  {
-    id:          'z-ai/glm-4.5-air:free',
-    max_tokens:   6000,
-    timeout_ms:  100000,
-    priority:    4,
-    description: 'GLM 4.5 Air — strong multilingual capabilities, good for non-English output',
-  },
-  {
-    id:          'microsoft/phi-4-reasoning-plus:free',
-    max_tokens:   4000,
-    timeout_ms:   90000,
-    priority:    5,
-    description: 'Phi-4 Reasoning Plus — Microsoft, excellent logical reasoning and analysis',
-  },
-  {
-    id:          'qwen/qwen3-8b:free',
-    max_tokens:   4000,
-    timeout_ms:   90000,
-    priority:    6,
-    description: 'Qwen3 8B — Alibaba, solid multilingual and general purpose performance',
-  },
-  {
-    id:          'google/gemini-flash-1.5-8b:free',
-    max_tokens:   4000,
-    timeout_ms:   80000,
-    priority:    7,
-    description: 'Gemini Flash 1.5 8B — lightweight Gemini, fast and reliable for standard content',
-  },
-  {
-    id:          'nousresearch/hermes-3-llama-3.1-405b:free',
-    max_tokens:   6000,
-    timeout_ms:  110000,
-    priority:    8,
-    description: 'Hermes 3 LLaMA 405B — massive model, great for comprehensive deep content',
-  },
-  {
-    id:          'mistralai/mistral-7b-instruct-v0.3:free',
-    max_tokens:   3500,
-    timeout_ms:   80000,
-    priority:    9,
-    description: 'Mistral 7B v0.3 — reliable European model, consistent and dependable',
-  },
-  {
-    id:          'openchat/openchat-7b:free',
-    max_tokens:   3500,
-    timeout_ms:   80000,
-    priority:    10,
-    description: 'OpenChat 7B — final fallback, consistently available and adequate quality',
-  },
+    id:'deepseek/deepseek-chat-v3-0324:free',
+    max_tokens:3500,
+    timeout_ms:45000,
+    priority:2
+  }
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -770,44 +712,32 @@ async function callModelStream(model, prompt, opts, onChunk) {
     }
 
     // ── Line processor ──
-    function processLine(line) {
-      line = line.trim();
-      if (!line || !line.startsWith('data: ')) return;
+    // REPLACE the token processing in callModelStream:
+function processLine(line) {
+  line = line.trim();
+  if (!line || !line.startsWith('data: ')) return;
 
-      const dataStr = line.slice(6).trim();
-      if (dataStr === '[DONE]') return;
-      if (!dataStr || dataStr === '') return;
+  const dataStr = line.slice(6).trim();
+  if (dataStr === '[DONE]') return;
+  if (!dataStr || dataStr === '') return;
 
-      let evt;
-      try { evt = JSON.parse(dataStr); }
-      catch { return; /* skip malformed SSE data */ }
+  let evt;
+  try { evt = JSON.parse(dataStr); }
+  catch { return; }
 
-      const delta = evt?.choices?.[0]?.delta?.content;
-      if (delta && typeof delta === 'string' && delta.length > 0) {
-        fullContent  += delta;
-        charsEmitted += delta.length;
-        tokenCount++;
-        // ── Fire the live output callback ──
-        // This sends the token to the frontend via SSE immediately
-        onChunk(delta);
+  const delta = evt?.choices?.[0]?.delta?.content;
+  if (delta && typeof delta === 'string' && delta.length > 0) {
+    fullContent += delta;
+    charsEmitted += delta.length;
+    tokenCount++;
+    
+    // Send words, not characters
+    const words = delta.split(/(\s+)/);
+    for (const word of words) {
+      if (word.trim().length > 0 || word === ' ') {
+        onChunk(word);
       }
     }
-
-    const elapsed = Date.now() - t0;
-
-    if (fullContent.trim().length < 100) {
-      throw new Error(`${name} stream produced too-short content: ${fullContent.length} chars after ${elapsed}ms`);
-    }
-
-    logger.ok(`${name} stream complete: ${tokenCount} tokens, ${charsEmitted} chars, ${elapsed}ms`);
-
-    // ── Parse and validate the accumulated streamed content ──
-    const parsed = extractAndParseJSON(fullContent);
-    return validateAndEnrich(parsed, opts);
-
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
   }
 }
 
@@ -816,101 +746,45 @@ async function callModelStream(model, prompt, opts, onChunk) {
 // Tries all 10 models × 2 attempts = up to 20 tries before giving up
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+// REPLACE the generateWithAI function's model loop with this:
 async function generateWithAI(message, opts, onChunk) {
   if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error(
-      'OPENROUTER_API_KEY environment variable is not set. ' +
-      'Please add it in your Vercel project settings → Environment Variables.'
-    );
+    throw new Error('OPENROUTER_API_KEY not set');
   }
 
   const useStreaming = typeof onChunk === 'function';
-  const prompt       = buildPrompt(message, opts);
-  const errors       = [];
-  let   modelsTried  = 0;
-  let   totalAttempts = 0;
-
-  logger.info(
-    `Generation start — ` +
-    `tool: ${opts.tool || 'notes'} | ` +
-    `lang: ${opts.language || 'English'} | ` +
-    `depth: ${opts.depth || 'detailed'} | ` +
-    `style: ${opts.style || 'simple'} | ` +
-    `mode: ${useStreaming ? 'STREAM' : 'SYNC'} | ` +
-    `input: ${message.length} chars`
-  );
-
-  for (const model of MODELS) {
-    const name        = model.id.split('/').pop().replace(':free', '');
-    const maxAttempts = 2;
-    modelsTried++;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      totalAttempts++;
-      logger.model(`Attempt ${totalAttempts}: ${name} (try ${attempt}/${maxAttempts})`);
-
-      try {
-        let result;
-
-        if (useStreaming) {
-          result = await callModelStream(model, prompt, opts, onChunk);
-        } else {
-          result = await callModelSync(model, prompt, opts);
-        }
-
-        result._language     = opts.language || 'English';
-        result._models_tried = modelsTried;
-        result._attempts     = totalAttempts;
-
-        logger.ok(
-          `SUCCESS — ${name} (attempt ${attempt}) | ` +
-          `models tried: ${modelsTried}/${MODELS.length} | ` +
-          `total attempts: ${totalAttempts}`
-        );
-
-        return result;
-
-      } catch (err) {
-        const errMsg = (err.message || 'Unknown error').slice(0, 150);
-        errors.push(`${name}[${attempt}]: ${errMsg}`);
-        logger.warn(`FAIL — ${name} attempt ${attempt}: ${errMsg}`);
-
-        // Rate limited → skip second attempt immediately, no delay
-        if (errMsg.includes('[RATE_LIMITED]')) {
-          logger.warn(`Rate limited on ${name} — skipping to next model`);
-          break;
-        }
-        if (errMsg.includes('timeout') || errMsg.includes('ECONNREFUSED')) {
-          logger.warn(`${name} unavailable — skipping to next model`);
-          break;  // Don't retry on network errors
-        }
-
-        // Aborted (timeout) → skip second attempt
-        if (err.name === 'AbortError') {
-          logger.warn(`${name} timed out after ${model.timeout_ms}ms`);
-          break;
-        }
-
-        // No wait before retry — speed is priority
-      }
-    }
-
-    // Minimal pause between models for speed
-    if (modelsTried < MODELS.length) {
-      await sleep(50);
-    }
+  const prompt = buildPrompt(message, opts);
+  
+  // Send immediate first chunk for perceived speed
+  if (useStreaming && onChunk) {
+    onChunk('Generating');
+    setTimeout(() => onChunk(' '), 10);
+    setTimeout(() => onChunk('response'), 20);
   }
 
-  // All models exhausted
-  logger.error(`ALL MODELS FAILED — ${MODELS.length} models tried, ${totalAttempts} total attempts`);
-  logger.error(`Error summary: ${errors.slice(0, 6).join(' || ')}`);
-
-  throw new Error(
-    `All ${MODELS.length} AI models are temporarily unavailable after ${totalAttempts} attempts. ` +
-    `Please try again in a moment — this is usually a temporary peak load issue.`
-  );
+  for (const model of MODELS) {
+    const name = model.id.split('/').pop().replace(':free', '');
+    
+    try {
+      let result;
+      if (useStreaming) {
+        result = await callModelStream(model, prompt, opts, onChunk);
+      } else {
+        result = await callModelSync(model, prompt, opts);
+      }
+      
+      result._language = opts.language || 'English';
+      return result;
+      
+    } catch (err) {
+      logger.warn(`${name} failed: ${err.message}`);
+      // NO retry - move to next model immediately
+      continue;
+    }
+  }
+  
+  throw new Error('All models unavailable');
 }
-
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 // SECTION 13 — FALLBACK CONTENT BUILDERS
 // High-quality content generated from topic name alone, used when all AI fails
@@ -1372,7 +1246,7 @@ module.exports = async function handler(req, res) {
         tokensSent++;
 
         // ~40 words/second — feels natural, not too fast not too slow
-        await sleep(50);
+        await sleep(1);
       }
 
       sendSSE(EVT_STAGE, { idx: 4, label: 'Done!', done: true });

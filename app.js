@@ -403,12 +403,12 @@ class SavoireApp {
   }
 
   /* ── Live markdown renderer — for streaming overlay (optimized for performance) ── */
-  _renderMdLive(text) {
-    if (!text) return '<span class="sfp-cursor">▊</span>';
-    const rendered = this._renderMd(text);
-    /* Append blinking cursor at end */
-    return rendered + '<span class="sfp-cursor">▊</span>';
-  }
+  // REPLACE _renderMdLive with plain text streaming:
+_renderMdLive(text) {
+  if (!text) return '<span class="sfp-cursor">▊</span>';
+  // NO markdown parsing during stream
+  return this._esc(text) + '<span class="sfp-cursor">▊</span>';
+}
 
   _stripMd(t) {
     if (!t) return '';

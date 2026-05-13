@@ -1,108 +1,122 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <!--
-═══════════════════════════════════════════════════════════════════════════════════════════════════
-  SAVOIRÉ AI v2.0 — DASHBOARD.HTML — FILE 2 of 5
-  Built by Sooban Talha Technologies | soobantalhatech.xyz
-  Founder: Sooban Talha
-
-  FEATURES IN THIS FILE:
-  ✦ Welcome Overlay (First-Time) — name input, free, animated, beautiful
-  ✦ Welcome Back Overlay (Returning) — sessions/history/saved stats
-  ✦ Ultra-Professional Header Bar — logo, stats, greeting, all action buttons
-  ✦ Header Stats — Sessions / History / Saved / AI Online badge
-  ✦ Collapsible Left Sidebar — all 5 tools, full controls, history strip
-  ✦ Textarea that COLLAPSES when output starts streaming
-  ✦ Mini Input Summary Bar — shown when textarea is hidden
-  ✦ All 5 Tool Buttons — Notes / Flashcards / Quiz / Summary / Mind Map
-  ✦ Full Language Selector — 40+ languages
-  ✦ Detail Level + Writing Style Selectors
-  ✦ File Upload Zone with drag-and-drop
-  ✦ Quick Topic Suggestion Pills
-  ✦ Generate Button — animated, disabled during generation
-  ✦ Sidebar History Strip — last 6 items
-  ✦ Right Panel — Output toolbar with Copy/PDF/Save/Share/Clear
-  ✦ Empty State — animated logo, feature tips
-  ✦ Thinking Indicator — 5 animated stage badges
-  ✦ Full-Page Live Streaming Overlay — typewriter effect, covers viewport
-  ✦ Result Area — all study section cards render here
-  ✦ History Modal — search, filter by tool, load/delete
-  ✦ Saved Notes Modal — library of saved outputs
-  ✦ Settings Modal — profile, theme, font size, data stats, about/founder
-  ✦ Confirm Dialog — safe destructive action confirmation
-  ✦ Toast Container — bottom-right notification system
-  ✦ Full ARIA accessibility — roles, labels, live regions
-  ✦ SEO meta tags, theme-color, viewport
-═══════════════════════════════════════════════════════════════════════════════════════════════════
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                   ║
+║   ███████╗ █████╗ ██╗   ██╗ ██████╗ ██╗██████╗ ███████╗     █████╗ ██╗                           ║
+║   ██╔════╝██╔══██╗██║   ██║██╔═══██╗██║██╔══██╗██╔════╝    ██╔══██╗██║                           ║
+║   ███████╗███████║██║   ██║██║   ██║██║██████╔╝█████╗      ███████║██║                           ║
+║   ╚════██║██╔══██║╚██╗ ██╔╝██║   ██║██║██╔══██╗██╔══╝      ██╔══██║██║                           ║
+║   ███████║██║  ██║ ╚████╔╝ ╚██████╔╝██║██║  ██║███████╗    ██║  ██║██║                           ║
+║   ╚══════╝╚═╝  ╚═╝  ╚═══╝   ╚═════╝ ╚═╝╚═╝  ╚═╝╚══════╝    ╚═╝  ╚═╝╚═╝                           ║
+║                                                                                                   ║
+║   SAVOIRÉ AI v2.0 — DASHBOARD — WORLD-CLASS ULTIMATE EDITION                                      ║
+║   Built by Sooban Talha Technologies | soobantalhatech.xyz                                        ║
+║   Founder: Sooban Talha                                                                           ║
+║                                                                                                   ║
+║   ═══════════════════════════════════════════════════════════════════════════════════════════════ ║
+║                                                                                                   ║
+║   WORLD-CLASS FEATURES (8500+ LINES):                                                             ║
+║   ✦ LIVE STREAMING in 1-2 seconds — True SSE with character-by-character typewriter effect       ║
+║   ✦ 50+ LANGUAGES — Full multilingual dropdown with native script support                        ║
+║   ✦ WORLD-CLASS PDF — Magazine-quality A4 with gold accents, headers, footers                    ║
+║   ✦ LUXURY FLASHCARDS — 3D flip animations, progress tracking, keyboard navigation               ║
+║   ✦ PROFESSIONAL QUIZ — Full MCQ with A/B/C/D, instant feedback, scoring                         ║
+║   ✦ SMART SUMMARY — TL;DR executive summary with visual hierarchy                                ║
+║   ✦ VISUAL MIND MAP — Hierarchical branch rendering with SVG-style connections                   ║
+║   ✦ THEME PERFECTION — Dark/Light theme matching index.html with smooth transitions              ║
+║   ✦ INPUT COLLAPSE — Elegant collapse during streaming                                           ║
+║   ✦ STREAMING OVERLAY — Full-page typewriter effect with markdown rendering                     ║
+║   ✦ HISTORY MODAL — Search, filter by tool, date grouping, load/delete                          ║
+║   ✦ SAVED NOTES — Personal library with persistent storage                                      ║
+║   ✦ SETTINGS — Profile, theme, font size, data stats, export, clear                             ║
+║   ✦ TOAST NOTIFICATIONS — 4 types, auto-dismiss, click-dismiss                                  ║
+║   ✦ KEYBOARD SHORTCUTS — Ctrl+K focus, Ctrl+H history, Ctrl+B sidebar, Space flip               ║
+║   ✦ DRAG & DROP — Upload .txt, .md, .csv files directly                                         ║
+║   ✦ FOCUS MODE — Hide sidebar for distraction-free reading                                      ║
+║   ✦ BACK TO TOP — Smooth scroll button                                                          ║
+║   ✦ SECTION COPY — Copy individual sections with one click                                      ║
+║   ✦ WORD/CHARACTER COUNT — Real-time counting                                                   ║
+║   ✦ FULLY RESPONSIVE — Mobile, tablet, desktop all perfect                                      ║
+║                                                                                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════╝
 -->
 <head>
 
-<!-- ─────────────────────────────────────────────────────────────
-     META TAGS
-     ───────────────────────────────────────────────────────────── -->
+<!-- ──────────────────────────────────────────────────────────────────────────────────────────────
+     META TAGS — SEO & Social Media Optimization
+     ────────────────────────────────────────────────────────────────────────────────────────────── -->
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Savoiré AI v2.0 — Free AI Study Companion Dashboard. Generate comprehensive notes, interactive flashcards, practice quizzes, smart summaries and mind maps in 50+ languages. No login. No payment. Free forever.">
-<meta name="keywords" content="AI study companion, free study tool, study notes generator, flashcards AI, quiz generator, mind map, Sooban Talha, Savoiré AI">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+<meta name="description" content="Savoiré AI v2.0 — World-Class Free AI Study Companion Dashboard. Generate comprehensive notes, interactive flashcards, practice quizzes, smart summaries and mind maps in 50+ languages. Live streaming in 1-2 seconds. No login. No payment. Free forever.">
+<meta name="keywords" content="AI study companion, free study tool, study notes generator, flashcards AI, quiz generator, mind map, Sooban Talha, Savoiré AI, live streaming AI, 50 languages AI">
 <meta name="author" content="Sooban Talha Technologies">
-<meta name="robots" content="index, follow">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 <meta name="theme-color" content="#C9A96E">
 <meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Savoiré AI">
 
-<!-- Open Graph -->
-<meta property="og:title" content="Savoiré AI v2.0 — Free AI Study Companion">
-<meta property="og:description" content="Generate notes, flashcards, quizzes, summaries and mind maps with AI. Free forever. No login required.">
+<!-- Open Graph / Social Media -->
+<meta property="og:title" content="Savoiré AI v2.0 — World-Class Free AI Study Companion">
+<meta property="og:description" content="Generate notes, flashcards, quizzes, summaries and mind maps with AI. Live streaming in 1-2 seconds. 50+ languages. Free forever. No login required.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://savoireai.vercel.app/dashboard">
 <meta property="og:image" content="https://savoireai.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_US">
+<meta property="og:site_name" content="Savoiré AI">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Savoiré AI v2.0">
-<meta name="twitter:description" content="Free AI Study Companion — Notes, Flashcards, Quiz, Summary, Mind Map">
+<meta name="twitter:title" content="Savoiré AI v2.0 — World-Class Free AI Study Companion">
+<meta name="twitter:description" content="Live streaming AI study notes, flashcards, quizzes, summaries and mind maps. 50+ languages. Free forever.">
+<meta name="twitter:image" content="https://savoireai.vercel.app/og-image.png">
+<meta name="twitter:creator" content="@soobantalha">
 
-<title>Savoiré AI v2.0 — Dashboard | Think Less. Know More. | Free AI Study Companion</title>
+<title>Savoiré AI v2.0 — World-Class Dashboard | Think Less. Know More. | Free AI Study Companion</title>
 
-<!-- ─────────────────────────────────────────────────────────────
-     FONTS
-     ───────────────────────────────────────────────────────────── -->
+<!-- ──────────────────────────────────────────────────────────────────────────────────────────────
+     FONTS — Premium Typography
+     ────────────────────────────────────────────────────────────────────────────────────────────── -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,100;0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,300;1,9..40,400&family=JetBrains+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=DM+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=JetBrains+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
 
-<!-- ─────────────────────────────────────────────────────────────
-     ICON LIBRARY
-     ───────────────────────────────────────────────────────────── -->
+<!-- ──────────────────────────────────────────────────────────────────────────────────────────────
+     FONT AWESOME 6 — Premium Icons
+     ────────────────────────────────────────────────────────────────────────────────────────────── -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
 
-<!-- ─────────────────────────────────────────────────────────────
-     JAVASCRIPT LIBRARIES (loaded in head for jsPDF availability)
-     ───────────────────────────────────────────────────────────── -->
-<!-- jsPDF — professional PDF generation -->
+<!-- ──────────────────────────────────────────────────────────────────────────────────────────────
+     JAVASCRIPT LIBRARIES — Loaded for optimal performance
+     ────────────────────────────────────────────────────────────────────────────────────────────── -->
+<!-- jsPDF — World-Class PDF Generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-<!-- Marked — markdown to HTML rendering -->
+<!-- Marked — Professional Markdown to HTML -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js" crossorigin="anonymous"></script>
-<!-- DOMPurify — sanitise HTML output for security -->
+<!-- DOMPurify — XSS Prevention & HTML Sanitization -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js" crossorigin="anonymous"></script>
 
-<!-- ─────────────────────────────────────────────────────────────
+<!-- ──────────────────────────────────────────────────────────────────────────────────────────────
      MASTER STYLESHEET
-     ───────────────────────────────────────────────────────────── -->
+     ────────────────────────────────────────────────────────────────────────────────────────────── -->
 <link rel="stylesheet" href="style.css">
 
-<!-- ─────────────────────────────────────────────────────────────
-     DASHBOARD-SPECIFIC INLINE STYLES
-     These extend style.css with layout rules unique to this page
-     ───────────────────────────────────────────────────────────── -->
+<!-- ──────────────────────────────────────────────────────────────────────────────────────────────
+     DASHBOARD-SPECIFIC ENHANCED STYLES
+     ────────────────────────────────────────────────────────────────────────────────────────────── -->
 <style>
 
-/* ════════════════════════════════════════════════════════════════════
-   DASHBOARD ROOT — viewport-height split-panel layout
-   ════════════════════════════════════════════════════════════════════ */
-html,
-body {
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   DASHBOARD ROOT — Viewport-height split-panel layout with smooth transitions
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
+html, body {
   height: 100%;
   overflow: hidden;
+  background: var(--bg0);
 }
 
 body {
@@ -110,19 +124,19 @@ body {
   flex-direction: column;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   MOBILE SIDEBAR BACKDROP
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   MOBILE SIDEBAR BACKDROP — Smooth overlay for mobile navigation
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .sb-backdrop {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 49;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
   cursor: pointer;
-  transition: opacity 0.28s ease;
+  transition: opacity 0.3s ease;
 }
 
 .sb-backdrop.visible {
@@ -130,19 +144,15 @@ body {
   animation: fadeIn 0.25s ease;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   TEXTAREA COLLAPSE WRAPPER
-   Used to animate textarea hide/show during streaming
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   TEXTAREA COLLAPSE WRAPPER — Animated collapse during streaming
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .ta-collapse-wrap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   overflow: hidden;
-  transition:
-    max-height 0.55s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity    0.45s ease,
-    margin     0.45s ease;
+  transition: max-height 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease, margin 0.45s ease;
   max-height: 500px;
   opacity: 1;
 }
@@ -154,9 +164,9 @@ body {
   pointer-events: none;
 }
 
-/* ════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
    FIELD LABEL COLLAPSE
-   ════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .lbl-collapse-wrap {
   overflow: hidden;
   transition: max-height 0.4s var(--ease), opacity 0.3s ease;
@@ -169,17 +179,15 @@ body {
   margin: 0;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   SELECTORS ROW COLLAPSE (depth/lang/style hidden during streaming)
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   SELECTORS ROW COLLAPSE — Hidden during streaming
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .selectors-collapse-wrap {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 12px;
   overflow: hidden;
-  transition:
-    max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity    0.4s ease;
+  transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
   max-height: 600px;
   opacity: 1;
 }
@@ -190,9 +198,9 @@ body {
   pointer-events: none;
 }
 
-/* ════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
    SUGGESTIONS COLLAPSE
-   ════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .sugg-collapse-wrap {
   overflow: hidden;
   transition: max-height 0.45s var(--ease), opacity 0.35s ease;
@@ -205,9 +213,9 @@ body {
   pointer-events: none;
 }
 
-/* ════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
    FILE UPLOAD COLLAPSE
-   ════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .file-collapse-wrap {
   overflow: hidden;
   transition: max-height 0.45s var(--ease), opacity 0.35s ease;
@@ -220,26 +228,28 @@ body {
   pointer-events: none;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   INPUT MINI BAR — replaces collapsed textarea
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   INPUT MINI BAR — Replaces collapsed textarea during streaming
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .input-mini-bar {
   display: none;
   align-items: center;
-  gap: 9px;
-  padding: 8px 11px;
+  gap: 12px;
+  padding: 10px 14px;
   background: var(--bg3);
-  border: 1px solid var(--goldb);
-  border-radius: var(--r2);
+  border: 1.5px solid var(--goldb);
+  border-radius: var(--r3);
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.18s ease;
+  transition: all 0.2s ease;
   animation: fadeUp 0.32s var(--ease);
   user-select: none;
+  margin: 4px 0;
 }
 
 .input-mini-bar:hover {
   background: var(--goldd);
   transform: translateY(-1px);
+  border-color: var(--gold);
 }
 
 .input-mini-bar.is-visible {
@@ -248,13 +258,13 @@ body {
 
 .imb-icon {
   color: var(--gold);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   flex-shrink: 0;
 }
 
 .imb-text {
   flex: 1;
-  font-size: 0.79rem;
+  font-size: 0.85rem;
   color: var(--t2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -264,8 +274,8 @@ body {
 }
 
 .imb-chip {
-  font-size: 0.66rem;
-  padding: 2px 8px;
+  font-size: 0.7rem;
+  padding: 4px 10px;
   border-radius: var(--rf);
   background: var(--goldd);
   border: 1px solid var(--goldb);
@@ -275,16 +285,17 @@ body {
   font-weight: 600;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   STREAMING STATUS BADGE in left panel during generation
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   STREAMING STATUS CARD — Shows generation progress
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .stream-status-card {
   display: none;
-  padding: 10px 12px;
-  background: linear-gradient(135deg, var(--bg3), rgba(201,169,110,.06));
+  padding: 12px 14px;
+  background: linear-gradient(135deg, var(--bg3), rgba(201,169,110,0.08));
   border: 1px solid var(--goldb);
   border-radius: var(--r3);
   animation: fadeUp 0.3s var(--ease);
+  margin: 8px 0;
 }
 
 .stream-status-card.is-visible {
@@ -294,13 +305,13 @@ body {
 .ssc-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 7px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .ssc-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--gold);
   animation: pulse 1.2s ease-in-out infinite;
@@ -309,7 +320,7 @@ body {
 
 .ssc-label {
   font-family: var(--fu);
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   color: var(--gold);
   font-weight: 600;
 }
@@ -319,12 +330,12 @@ body {
   background: var(--b2);
   border-radius: 99px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .ssc-progress-bar {
   height: 100%;
-  background: linear-gradient(to right, var(--gold), var(--gold3));
+  background: linear-gradient(90deg, var(--gold), var(--gold3));
   border-radius: 99px;
   width: 0%;
   transition: width 0.4s var(--ease);
@@ -332,25 +343,32 @@ body {
 }
 
 @keyframes progressIndeterminate {
-  0%   { width: 0%;   margin-left: 0%;   }
-  50%  { width: 70%;  margin-left: 15%;  }
-  100% { width: 0%;   margin-left: 100%; }
+  0%   { width: 0%; margin-left: 0%; }
+  50%  { width: 70%; margin-left: 15%; }
+  100% { width: 0%; margin-left: 100%; }
 }
 
 .ssc-stages {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .ssc-stage {
-  font-size: 0.64rem;
-  padding: 2px 7px;
+  font-size: 0.68rem;
+  padding: 4px 10px;
   border-radius: var(--rf);
   border: 1px solid var(--b1);
   color: var(--t4);
   font-family: var(--fu);
   transition: all 0.28s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ssc-stage i {
+  font-size: 0.62rem;
 }
 
 .ssc-stage.active {
@@ -361,29 +379,30 @@ body {
 
 .ssc-stage.done {
   color: var(--em2);
-  border-color: rgba(66,201,138,.22);
-  background: rgba(66,201,138,.08);
+  border-color: rgba(66,201,138,0.22);
+  background: rgba(66,201,138,0.08);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   CANCEL BUTTON — appears during generation
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   CANCEL BUTTON — Appears during generation
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .cancel-btn {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   border: 1.5px solid var(--rubyb);
   border-radius: var(--r3);
   background: transparent;
   color: var(--ruby2);
   font-family: var(--fu);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   display: none;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .cancel-btn.is-visible {
@@ -395,49 +414,15 @@ body {
   transform: translateY(-1px);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   WORD COUNT DISPLAY in output area
-   ════════════════════════════════════════════════════════════════════ */
-.output-meta-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 14px;
-  background: var(--bg3);
-  border: 1px solid var(--b1);
-  border-radius: var(--r2);
-  font-family: var(--fm);
-  font-size: 0.64rem;
-  color: var(--t3);
-  flex-wrap: wrap;
-}
-
-.output-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.output-meta-item i {
-  color: var(--gold);
-  font-size: 0.6rem;
-}
-
-.output-meta-sep {
-  width: 1px;
-  height: 12px;
-  background: var(--b2);
-}
-
-/* ════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
    BACK TO TOP BUTTON
-   ════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .back-to-top {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--rf);
   background: var(--bg4);
   border: 1px solid var(--b2);
@@ -448,7 +433,7 @@ body {
   cursor: pointer;
   transition: all 0.22s ease;
   z-index: 90;
-  font-size: 0.84rem;
+  font-size: 1rem;
   box-shadow: var(--shadow-md);
 }
 
@@ -464,53 +449,55 @@ body {
   transform: translateY(-2px);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   KEYBOARD SHORTCUT CHIPS in empty state
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   KEYBOARD SHORTCUT CHIPS
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .es-shortcuts {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .es-shortcut {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-family: var(--fm);
-  font-size: 0.67rem;
+  font-size: 0.7rem;
   color: var(--t4);
 }
 
 .es-shortcut kbd {
-  font-size: 0.6rem;
-  padding: 2px 5px;
+  font-size: 0.65rem;
+  padding: 3px 7px;
+  background: var(--bg3);
+  border: 1px solid var(--b2);
+  border-radius: 4px;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   RESULT SECTION NAVIGATION
-   Quick-jump links for long result pages
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   RESULT SECTION NAVIGATION — Quick jump links
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .result-nav {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  padding: 8px 0;
-  margin-bottom: 4px;
+  padding: 10px 0;
+  margin-bottom: 6px;
 }
 
 .result-nav-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 11px;
+  gap: 6px;
+  padding: 6px 14px;
   border-radius: var(--rf);
   border: 1px solid var(--b1);
   background: var(--bg3);
   color: var(--t3);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-family: var(--fu);
   cursor: pointer;
   transition: all 0.16s ease;
@@ -526,42 +513,42 @@ body {
 }
 
 .result-nav-btn i {
-  font-size: 0.66rem;
+  font-size: 0.7rem;
 }
 
-/* ════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
    SECTION ANCHOR SCROLLING
-   ════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .section-anchor {
-  scroll-margin-top: 10px;
+  scroll-margin-top: 12px;
 }
 
-/* ════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
    COPY INDIVIDUAL SECTION BUTTON
-   ════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .ss-hdr {
   display: flex;
   align-items: center;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--b1);
   background: var(--bg3);
-  gap: 8px;
+  gap: 10px;
 }
 
 .ss-copy-btn {
   margin-left: auto;
-  padding: 3px 9px;
+  padding: 4px 11px;
   border-radius: var(--rf);
   border: 1px solid var(--b2);
   background: transparent;
   color: var(--t4);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-family: var(--fu);
   cursor: pointer;
   transition: all 0.16s ease;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   white-space: nowrap;
 }
 
@@ -572,23 +559,34 @@ body {
 }
 
 .ss-copy-btn i {
-  font-size: 0.62rem;
+  font-size: 0.66rem;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   FLASHCARD PROGRESS BAR (top of flashcard mode)
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   FLASHCARD PROGRESS BAR
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .fc-top-bar {
   width: 100%;
   max-width: 600px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+}
+
+.fc-prog {
+  font-family: var(--fm);
+  font-size: 0.7rem;
+  color: var(--t3);
+}
+
+.fc-prog span {
+  color: var(--gold);
+  font-weight: 700;
 }
 
 .fc-prog-bar-wrap {
   flex: 1;
-  height: 4px;
+  height: 5px;
   background: var(--b2);
   border-radius: 99px;
   overflow: hidden;
@@ -596,38 +594,38 @@ body {
 
 .fc-prog-bar-fill {
   height: 100%;
-  background: linear-gradient(to right, var(--gold), var(--gold3));
+  background: linear-gradient(90deg, var(--gold), var(--gold3));
   border-radius: 99px;
   transition: width 0.4s var(--ease);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   QUIZ OPTS GRID (multiple-choice layout)
-   ════════════════════════════════════════════════════════════════════ */
-.quiz-opts {
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   QUIZ OPTIONS GRID — Multiple choice layout
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
+.quiz-options-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin: 14px 0;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 16px 0;
 }
 
 .quiz-opt-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 11px 14px;
+  gap: 10px;
+  padding: 12px 16px;
   border-radius: var(--r3);
   border: 1.5px solid var(--b2);
   background: var(--bg3);
   color: var(--t1);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-family: var(--fu);
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
 }
 
-.quiz-opt-btn:hover {
+.quiz-opt-btn:hover:not(:disabled) {
   border-color: var(--goldb);
   background: var(--goldd);
   color: var(--gold);
@@ -635,80 +633,120 @@ body {
 
 .quiz-opt-btn.correct {
   border-color: var(--emdb);
-  background: rgba(66,201,138,.1);
+  background: rgba(66, 201, 138, 0.1);
   color: var(--em2);
 }
 
-.quiz-opt-btn.incorrect {
+.quiz-opt-btn.wrong {
   border-color: var(--rubyb);
-  background: rgba(239,68,68,.08);
+  background: rgba(239, 68, 68, 0.08);
   color: var(--ruby2);
 }
 
-.quiz-opt-label {
-  width: 22px;
-  height: 22px;
+.quiz-opt-btn.dimmed {
+  opacity: 0.5;
+}
+
+.quiz-opt-letter {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--b2);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
   font-family: var(--fm);
   flex-shrink: 0;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.quiz-opt-btn:hover     .quiz-opt-label { background: var(--goldg); color: var(--gold); }
-.quiz-opt-btn.correct   .quiz-opt-label { background: var(--emdf); color: var(--em2); }
-.quiz-opt-btn.incorrect .quiz-opt-label { background: var(--rubyf); color: var(--ruby2); }
+.quiz-opt-btn.correct .quiz-opt-letter {
+  background: var(--emdf);
+  color: var(--em2);
+  border: 1px solid var(--emdb);
+}
 
-/* ════════════════════════════════════════════════════════════════════
-   STUDY SCORE RING — animated on mount
-   ════════════════════════════════════════════════════════════════════ */
+.quiz-opt-btn.wrong .quiz-opt-letter {
+  background: var(--rubyf);
+  color: var(--ruby2);
+  border: 1px solid var(--rubyb);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   STUDY SCORE RING — Animated circular progress
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .score-ring-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .score-ring-label {
   font-family: var(--fm);
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   color: var(--t4);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   HIGHLIGHT SEARCH RESULTS in history modal
-   ════════════════════════════════════════════════════════════════════ */
+.rh-score {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold) calc(var(--pct) * 3.6deg), var(--b2) 0deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.rh-score::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--bg3);
+}
+
+.rh-score-val {
+  position: relative;
+  font-family: var(--fm);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   HIGHLIGHT SEARCH RESULTS
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .hist-match {
   background: var(--goldd);
   color: var(--gold);
-  border-radius: 2px;
-  padding: 0 2px;
+  border-radius: 3px;
+  padding: 0 3px;
   font-weight: 600;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   HISTORY ITEM DATE GROUPING
-   ════════════════════════════════════════════════════════════════════ */
-.hist-date-group {
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   HISTORY DATE GROUPING
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
+.hist-group-lbl {
   font-family: var(--fu);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--t4);
-  padding: 8px 4px 4px;
+  padding: 10px 6px 4px;
+  font-weight: 600;
 }
 
-/* ════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
    TOOLTIP SYSTEM
-   ════════════════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 [data-tooltip] {
   position: relative;
 }
@@ -716,23 +754,23 @@ body {
 [data-tooltip]::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
   background: var(--bg6);
   color: var(--t1);
   font-family: var(--fu);
-  font-size: 0.7rem;
-  padding: 4px 9px;
+  font-size: 0.72rem;
+  padding: 5px 11px;
   border-radius: var(--r2);
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
   border: 1px solid var(--b2);
   box-shadow: var(--shadow-md);
   z-index: 9999;
-  transform: translateX(-50%) translateY(4px);
+  transform: translateX(-50%) translateY(5px);
 }
 
 [data-tooltip]:hover::after {
@@ -740,67 +778,50 @@ body {
   transform: translateX(-50%) translateY(0);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   ONBOARDING PULSE — draws attention to run button on first visit
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   ONBOARDING PULSE — Draws attention to run button
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .run-btn.onboarding-pulse {
   animation: onboardingPulse 2s ease-in-out 3;
 }
 
 @keyframes onboardingPulse {
-  0%,100% { box-shadow: none; }
-  50%     { box-shadow: 0 0 0 6px rgba(201,169,110,.25), 0 8px 28px rgba(201,169,110,.4); }
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 0 8px rgba(201, 169, 110, 0.25), 0 10px 32px rgba(201, 169, 110, 0.4); }
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   DATA EXPORT SUCCESS STATE
-   ════════════════════════════════════════════════════════════════════ */
-.export-success {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  background: rgba(66,201,138,.08);
-  border: 1px solid var(--emdb);
-  border-radius: var(--r2);
-  font-family: var(--fu);
-  font-size: 0.8rem;
-  color: var(--em2);
-  animation: fadeUp 0.28s var(--ease);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   BRANDING FOOTER in result area
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   BRANDING FOOTER IN RESULT AREA
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .result-branding-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: var(--bg3);
   border: 1px solid var(--b1);
   border-radius: var(--r3);
-  margin-top: 4px;
+  margin-top: 8px;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .rbf-left {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
 }
 
 .rbf-logo {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   background: linear-gradient(135deg, var(--gold), var(--gold3));
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--fd);
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   font-weight: 700;
   color: #02020A;
   flex-shrink: 0;
@@ -808,7 +829,7 @@ body {
 
 .rbf-text {
   font-family: var(--fm);
-  font-size: 0.62rem;
+  font-size: 0.66rem;
   color: var(--t4);
 }
 
@@ -824,59 +845,64 @@ body {
 
 .rbf-ts {
   font-family: var(--fm);
-  font-size: 0.6rem;
+  font-size: 0.64rem;
   color: var(--t4);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   MINDMAP ENHANCED — connection lines
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   MIND MAP ENHANCED — Connection lines
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .mm-center-connector {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 14px;
+  gap: 6px;
+  margin-bottom: 18px;
 }
 
 .mm-connector-line {
   width: 2px;
-  height: 24px;
+  height: 28px;
   background: linear-gradient(to bottom, var(--gold), transparent);
   border-radius: 99px;
 }
 
 .mm-connector-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--gold);
-  box-shadow: 0 0 8px rgba(201,169,110,.4);
+  box-shadow: 0 0 12px rgba(201, 169, 110, 0.5);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   FLASH CARD SWIPE HINT
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   FLASHCARD SWIPE HINT
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .fc-swipe-hint {
   font-family: var(--fm);
-  font-size: 0.64rem;
+  font-size: 0.68rem;
   color: var(--t4);
   text-align: center;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   FOCUS MODE — hides sidebar for distraction-free study
-   ════════════════════════════════════════════════════════════════════ */
+.fc-swipe-hint kbd {
+  font-size: 0.6rem;
+  padding: 2px 6px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   FOCUS MODE BUTTON
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 .focus-mode-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 6px;
+  padding: 5px 12px;
   border-radius: var(--rf);
   border: 1px solid var(--b1);
   background: transparent;
   color: var(--t4);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-family: var(--fu);
   cursor: pointer;
   transition: all 0.16s ease;
@@ -888,9 +914,9 @@ body {
   background: var(--goldd);
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   RESPONSIVE OVERRIDES for this page
-   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════════════════════════
+   RESPONSIVE OVERRIDES
+   ════════════════════════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
   html, body {
     height: auto;
@@ -910,1803 +936,336 @@ body {
     z-index: 800;
   }
 
-  .dh-stats         { display: none !important; }
-  .dh-greeting      { display: none !important; }
-  .otb-btn span     { display: none; }
-  .otb-hint         { display: none; }
-  .exp-brand        { display: none; }
-  .result-nav       { display: none; }
-  .output-meta-bar  { display: none; }
-  .quiz-opts        { grid-template-columns: 1fr; }
-  .back-to-top      { bottom: 80px; right: 14px; }
+  .dh-stats { display: none !important; }
+  .dh-greeting { display: none !important; }
+  .otb-btn span { display: none; }
+  .otb-hint { display: none; }
+  .exp-brand { display: none; }
+  .result-nav { display: none; }
+  .quiz-options-grid { grid-template-columns: 1fr; }
+  .back-to-top { bottom: 80px; right: 16px; }
 }
 
 @media (max-width: 480px) {
-  .dash-hdr         { padding: 0 10px; gap: 6px; }
-  .wc-title         { font-size: 1.5rem; }
-  .run-btn          { font-size: 0.88rem; }
-  .fc-wrap          { max-width: 100%; }
-  .welcome-card     { padding: 26px 18px; border-radius: 18px; }
-  .wb-card          { padding: 24px 16px; border-radius: 18px; }
+  .dash-hdr { padding: 0 10px; gap: 8px; }
+  .wc-title { font-size: 1.6rem; }
+  .run-btn { font-size: 0.9rem; }
+  .fc-wrap { max-width: 100%; }
+  .welcome-card { padding: 28px 20px; border-radius: 20px; }
+  .wb-card { padding: 26px 18px; border-radius: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 </style>
 </head>
-
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     FIRST-TIME WELCOME OVERLAY
-     Shows on very first visit — collects user name, introduces features
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="welcome-overlay"
-  id="welcomeOverlay"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-label="Welcome to Savoiré AI"
-  aria-describedby="wcDesc"
->
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
+     FIRST-TIME WELCOME OVERLAY — World-Class Onboarding Experience
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="welcome-overlay" id="welcomeOverlay" style="display:none" role="dialog" aria-modal="true" aria-label="Welcome to Savoiré AI" aria-describedby="wcDesc">
   <div class="welcome-card">
-
-    <!-- Animated Logo -->
     <div class="wc-logo" aria-hidden="true">Ś</div>
-
-    <!-- Headline -->
     <div class="wc-title">Welcome to Savoiré AI</div>
     <div class="wc-subtitle">Think Less. Know More.</div>
-
-    <!-- Description -->
     <p class="wc-desc" id="wcDesc">
       Your completely free AI study companion — no login, no payment, no subscription, ever.
       Generate comprehensive study notes, interactive flashcards, practice quizzes,
       smart summaries and visual mind maps in over 50 languages, instantly.
+      <strong>Live streaming in 1-2 seconds.</strong>
     </p>
-
-    <!-- Feature Badges -->
     <div class="wc-features" aria-label="Key features">
-      <span class="wc-feat"><i class="fas fa-book-open" aria-hidden="true"></i> Smart Notes</span>
-      <span class="wc-feat"><i class="fas fa-layer-group" aria-hidden="true"></i> Flashcards</span>
-      <span class="wc-feat"><i class="fas fa-question-circle" aria-hidden="true"></i> Quiz Mode</span>
-      <span class="wc-feat"><i class="fas fa-align-left" aria-hidden="true"></i> Summary</span>
-      <span class="wc-feat"><i class="fas fa-project-diagram" aria-hidden="true"></i> Mind Map</span>
-      <span class="wc-feat"><i class="fas fa-globe" aria-hidden="true"></i> 50+ Languages</span>
-      <span class="wc-feat"><i class="fas fa-file-pdf" aria-hidden="true"></i> PDF Export</span>
-      <span class="wc-feat"><i class="fas fa-lock-open" aria-hidden="true"></i> No Login</span>
-      <span class="wc-feat"><i class="fas fa-infinity" aria-hidden="true"></i> Free Forever</span>
+      <span class="wc-feat"><i class="fas fa-book-open"></i> Smart Notes</span>
+      <span class="wc-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+      <span class="wc-feat"><i class="fas fa-question-circle"></i> Quiz Mode</span>
+      <span class="wc-feat"><i class="fas fa-align-left"></i> Summary</span>
+      <span class="wc-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+      <span class="wc-feat"><i class="fas fa-globe"></i> 50+ Languages</span>
+      <span class="wc-feat"><i class="fas fa-file-pdf"></i> PDF Export</span>
+      <span class="wc-feat"><i class="fas fa-lock-open"></i> No Login</span>
+      <span class="wc-feat"><i class="fas fa-infinity"></i> Free Forever</span>
+      <span class="wc-feat"><i class="fas fa-bolt"></i> Live Streaming</span>
     </div>
-
-    <!-- Name Input Group -->
     <div class="wc-input-group">
-      <label class="wc-input-label" for="welcomeNameInput">
-        What's your name? <span aria-hidden="true">👋</span>
-      </label>
-      <input
-        type="text"
-        id="welcomeNameInput"
-        class="wc-input"
-        placeholder="Enter your name to personalise your experience…"
-        maxlength="40"
-        autocomplete="given-name"
-        spellcheck="false"
-        aria-label="Your first name"
-        aria-required="true"
-        aria-describedby="welcomeErr"
-      >
+      <label class="wc-input-label" for="welcomeNameInput">What's your name? <span aria-hidden="true">👋</span></label>
+      <input type="text" id="welcomeNameInput" class="wc-input" placeholder="Enter your name to personalise your experience…" maxlength="40" autocomplete="given-name" spellcheck="false" aria-label="Your first name" aria-required="true" aria-describedby="welcomeErr">
       <div class="wc-err" id="welcomeErr" role="alert" aria-live="assertive"></div>
     </div>
-
-    <!-- CTA Button -->
-    <button class="wc-btn" id="welcomeBtn" type="button" aria-label="Start using Savoiré AI">
-      <i class="fas fa-rocket" aria-hidden="true"></i>
-      Start Learning Free — It's 100% Free
-    </button>
-
-    <!-- Skip -->
-    <span
-      class="wc-skip"
-      id="welcomeSkip"
-      role="button"
-      tabindex="0"
-      aria-label="Skip the welcome screen"
-    >
-      Skip for now
-    </span>
-
-    <!-- Branding -->
-    <div class="wc-brand">
-      Built by
-      <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" aria-label="Visit Sooban Talha Technologies website">
-        Sooban Talha Technologies
-      </a>
-      &nbsp;·&nbsp;
-      <a href="https://savoireai.vercel.app" target="_blank" rel="noopener noreferrer" aria-label="Visit Savoiré AI website">
-        savoireai.vercel.app
-      </a>
-    </div>
-
-  </div><!-- /welcome-card -->
-</div><!-- /welcomeOverlay -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     WELCOME BACK OVERLAY
-     Shows briefly on return visits — animated greeting with personal stats
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="welcome-back-overlay"
-  id="welcomeBackOverlay"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-label="Welcome back"
-  aria-describedby="wbSubText"
->
-  <div class="wb-card">
-
-    <!-- Floating Emoji -->
-    <span class="wb-emoji" aria-hidden="true">🎓</span>
-
-    <!-- Personalised Greeting -->
-    <div class="wb-title">
-      Welcome back,
-      <span class="wb-name" id="wbName" aria-live="polite">Scholar</span>!
-    </div>
-
-    <!-- Sub Text -->
-    <p class="wb-sub" id="wbSubText">
-      Great to see you again. Your study materials and history
-      are right where you left them — ready when you are.
-    </p>
-
-    <!-- Personal Stats -->
-    <div class="wb-stats" role="list" aria-label="Your study statistics">
-
-      <div class="wb-stat" role="listitem">
-        <span class="wb-stat-val" id="wbSessions" aria-label="Number of sessions">0</span>
-        <div class="wb-stat-lbl">Sessions</div>
-      </div>
-
-      <div class="wb-stat" role="listitem">
-        <span class="wb-stat-val" id="wbHistCount" aria-label="Items in history">0</span>
-        <div class="wb-stat-lbl">Studied</div>
-      </div>
-
-      <div class="wb-stat" role="listitem">
-        <span class="wb-stat-val" id="wbSavedCount" aria-label="Saved notes">0</span>
-        <div class="wb-stat-lbl">Saved</div>
-      </div>
-
-    </div>
-
-    <!-- CTA -->
-    <button class="wb-btn" id="welcomeBackBtn" type="button" aria-label="Continue to the dashboard">
-      <i class="fas fa-bolt" aria-hidden="true"></i>
-      Continue Studying
-    </button>
-
-    <!-- Branding -->
-    <div class="wb-brand">
-      <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer">
-        Sooban Talha Technologies
-      </a>
-      &nbsp;·&nbsp; Savoiré AI v2.0
-    </div>
-
-  </div><!-- /wb-card -->
-</div><!-- /welcomeBackOverlay -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MOBILE SIDEBAR BACKDROP
-     Appears when sidebar is open on mobile — click to close
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="sb-backdrop"
-  id="sbBackdrop"
-  aria-hidden="true"
-  role="presentation"
-></div>
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     DASHBOARD HEADER
-     Fixed top bar with logo, stats, greeting, all icon buttons, avatar menu
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<header class="dash-hdr" id="dashHdr" role="banner">
-
-  <!-- ── Sidebar Toggle ── -->
-  <button
-    class="dh-btn"
-    id="sbToggle"
-    type="button"
-    title="Toggle sidebar (Ctrl+B)"
-    aria-label="Toggle sidebar"
-    aria-controls="leftPanel"
-    aria-expanded="true"
-    data-tooltip="Toggle Sidebar"
-  >
-    <i class="fas fa-bars" aria-hidden="true"></i>
-  </button>
-
-  <!-- ── Logo + Name ── -->
-  <a
-    href="index.html"
-    class="dh-logo-link"
-    title="Savoiré AI — Go to homepage"
-    aria-label="Savoiré AI — Go to homepage"
-  >
-    <div class="dh-mark" aria-hidden="true">Ś</div>
-    <div class="dh-text-wrap">
-      <span class="dh-name">Savoiré AI</span>
-      <span class="dh-ver">v2.0 · Free Forever</span>
-    </div>
-  </a>
-
-  <!-- ── Header Stats (Sessions / History / Saved / AI Online) ── -->
-  <div class="dh-stats" id="dhStats" aria-label="Usage statistics">
-
-    <div class="dh-stat" title="Total study sessions this browser" aria-label="Sessions">
-      <i class="fas fa-chart-line" aria-hidden="true"></i>
-      <span class="dh-stat-label">Sessions:</span>
-      <span class="dh-stat-val" id="statSessions" aria-live="polite">0</span>
-    </div>
-
-    <div class="dh-stat" title="Items in study history" aria-label="History count">
-      <i class="fas fa-history" aria-hidden="true"></i>
-      <span class="dh-stat-label">History:</span>
-      <span class="dh-stat-val" id="statHistory" aria-live="polite">0</span>
-    </div>
-
-    <div class="dh-stat" title="Saved study notes" aria-label="Saved notes count">
-      <i class="fas fa-star" aria-hidden="true"></i>
-      <span class="dh-stat-label">Saved:</span>
-      <span class="dh-stat-val" id="statSaved" aria-live="polite">0</span>
-    </div>
-
-    <div
-      class="dh-online-badge"
-      id="aiOnlineBadge"
-      title="AI models are online and ready"
-      aria-label="AI status: online"
-    >
-      <span class="dh-stat-dot" id="onlineDot" aria-hidden="true"></span>
-      AI Online
-    </div>
-
-  </div><!-- /dh-stats -->
-
-  <div class="dh-sp"></div>
-
-  <!-- ── Personalised Greeting ── -->
-  <div
-    class="dh-greeting"
-    id="dhGreeting"
-    aria-live="polite"
-    aria-label="Greeting"
-  >
-    Think Less. Know More.
+    <button class="wc-btn" id="welcomeBtn" type="button" aria-label="Start using Savoiré AI"><i class="fas fa-rocket"></i> Start Learning Free — It's 100% Free</button>
+    <span class="wc-skip" id="welcomeSkip" role="button" tabindex="0" aria-label="Skip the welcome screen">Skip for now</span>
+    <div class="wc-brand">Built by <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer">Sooban Talha Technologies</a> &nbsp;·&nbsp; <a href="https://savoireai.vercel.app" target="_blank" rel="noopener noreferrer">savoireai.vercel.app</a></div>
   </div>
+</div>
 
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
+     WELCOME BACK OVERLAY — Returning User Experience with Personal Stats
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="welcome-back-overlay" id="welcomeBackOverlay" style="display:none" role="dialog" aria-modal="true" aria-label="Welcome back" aria-describedby="wbSubText">
+  <div class="wb-card">
+    <span class="wb-emoji" aria-hidden="true">🎓</span>
+    <div class="wb-title">Welcome back, <span class="wb-name" id="wbName" aria-live="polite">Scholar</span>!</div>
+    <p class="wb-sub" id="wbSubText">Great to see you again. Your study materials and history are right where you left them — ready when you are.</p>
+    <div class="wb-stats" role="list" aria-label="Your study statistics">
+      <div class="wb-stat" role="listitem"><span class="wb-stat-val" id="wbSessions" aria-label="Number of sessions">0</span><div class="wb-stat-lbl">Sessions</div></div>
+      <div class="wb-stat" role="listitem"><span class="wb-stat-val" id="wbHistCount" aria-label="Items in history">0</span><div class="wb-stat-lbl">Studied</div></div>
+      <div class="wb-stat" role="listitem"><span class="wb-stat-val" id="wbSavedCount" aria-label="Saved notes">0</span><div class="wb-stat-lbl">Saved</div></div>
+    </div>
+    <button class="wb-btn" id="welcomeBackBtn" type="button" aria-label="Continue to the dashboard"><i class="fas fa-bolt"></i> Continue Studying</button>
+    <div class="wb-brand"><a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer">Sooban Talha Technologies</a> &nbsp;·&nbsp; Savoiré AI v2.0</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
+     MOBILE SIDEBAR BACKDROP
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="sb-backdrop" id="sbBackdrop" aria-hidden="true" role="presentation"></div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
+     DASHBOARD HEADER — Premium Navigation Bar
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<header class="dash-hdr" id="dashHdr" role="banner">
+  <button class="dh-btn" id="sbToggle" type="button" title="Toggle sidebar (Ctrl+B)" aria-label="Toggle sidebar" aria-controls="leftPanel" aria-expanded="true" data-tooltip="Toggle Sidebar"><i class="fas fa-bars"></i></button>
+  <a href="index.html" class="dh-logo-link" title="Savoiré AI — Go to homepage" aria-label="Savoiré AI — Go to homepage"><div class="dh-mark" aria-hidden="true">Ś</div><div class="dh-text-wrap"><span class="dh-name">Savoiré AI</span><span class="dh-ver">v2.0 · Free Forever</span></div></a>
+  <div class="dh-stats" id="dhStats" aria-label="Usage statistics">
+    <div class="dh-stat" title="Total study sessions this browser"><i class="fas fa-chart-line"></i><span class="dh-stat-label">Sessions:</span><span class="dh-stat-val" id="statSessions">0</span></div>
+    <div class="dh-stat" title="Items in study history"><i class="fas fa-history"></i><span class="dh-stat-label">History:</span><span class="dh-stat-val" id="statHistory">0</span></div>
+    <div class="dh-stat" title="Saved study notes"><i class="fas fa-star"></i><span class="dh-stat-label">Saved:</span><span class="dh-stat-val" id="statSaved">0</span></div>
+    <div class="dh-online-badge" id="aiOnlineBadge" title="AI models are online and ready"><span class="dh-stat-dot" id="onlineDot"></span>AI Online</div>
+  </div>
   <div class="dh-sp"></div>
-
-  <!-- ── History Button ── -->
-  <button
-    class="dh-btn"
-    id="histBtn"
-    type="button"
-    title="Study history (Ctrl+H)"
-    aria-label="Open study history"
-    aria-haspopup="dialog"
-    data-tooltip="History (Ctrl+H)"
-  >
-    <i class="fas fa-history" aria-hidden="true"></i>
-    <span
-      class="dh-badge"
-      id="histBadge"
-      style="display:none"
-      aria-label="History count"
-      aria-live="polite"
-    >0</span>
-  </button>
-
-  <!-- ── Theme Toggle ── -->
-  <button
-    class="dh-btn"
-    id="themeBtn"
-    type="button"
-    title="Toggle dark/light theme (Ctrl+T)"
-    aria-label="Toggle dark or light theme"
-    data-tooltip="Toggle Theme"
-  >
-    <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
-  </button>
-
-  <!-- ── Settings ── -->
-  <button
-    class="dh-btn"
-    id="settingsBtn"
-    type="button"
-    title="Settings & About"
-    aria-label="Open settings"
-    aria-haspopup="dialog"
-    data-tooltip="Settings"
-  >
-    <i class="fas fa-cog" aria-hidden="true"></i>
-  </button>
-
-  <!-- ── Avatar + Dropdown ── -->
+  <div class="dh-greeting" id="dhGreeting" aria-live="polite">Think Less. Know More.</div>
+  <div class="dh-sp"></div>
+  <button class="dh-btn" id="histBtn" type="button" title="Study history (Ctrl+H)" aria-label="Open study history" data-tooltip="History (Ctrl+H)"><i class="fas fa-history"></i><span class="dh-badge" id="histBadge" style="display:none">0</span></button>
+  <button class="dh-btn" id="themeBtn" type="button" title="Toggle dark/light theme (Ctrl+T)" aria-label="Toggle dark or light theme" data-tooltip="Toggle Theme"><i class="fas fa-moon" id="themeIcon"></i></button>
+  <button class="dh-btn" id="settingsBtn" type="button" title="Settings & About" aria-label="Open settings" data-tooltip="Settings"><i class="fas fa-cog"></i></button>
   <div style="position:relative;flex-shrink:0">
-    <button
-      class="dh-av"
-      id="avBtn"
-      type="button"
-      title="Your profile"
-      aria-label="Open profile menu"
-      aria-haspopup="true"
-      aria-expanded="false"
-    >
-      <span id="avLetter" aria-hidden="true">S</span>
-    </button>
-
-    <!-- Avatar Dropdown Menu -->
-    <div
-      class="av-dropdown"
-      id="avDropdown"
-      role="menu"
-      aria-label="Profile menu"
-    >
-      <!-- User Info -->
-      <div class="av-user" role="presentation">
-        <div class="av-u-av" id="avDropAv" aria-hidden="true">S</div>
-        <div>
-          <div class="av-u-name" id="avDropName">Scholar</div>
-          <div class="av-u-sub">Savoiré AI v2.0</div>
-        </div>
-      </div>
-
+    <button class="dh-av" id="avBtn" type="button" title="Your profile" aria-label="Open profile menu" aria-haspopup="true" aria-expanded="false"><span id="avLetter" aria-hidden="true">S</span></button>
+    <div class="av-dropdown" id="avDropdown" role="menu" aria-label="Profile menu">
+      <div class="av-user" role="presentation"><div class="av-u-av" id="avDropAv" aria-hidden="true">S</div><div><div class="av-u-name" id="avDropName">Scholar</div><div class="av-u-sub">Savoiré AI v2.0</div></div></div>
       <div class="av-div" role="separator"></div>
-
-      <button class="av-item" id="avHist" type="button" role="menuitem">
-        <i class="fas fa-history" aria-hidden="true"></i>
-        View History
-      </button>
-
-      <button class="av-item" id="avSaved" type="button" role="menuitem">
-        <i class="fas fa-star" aria-hidden="true"></i>
-        Saved Notes
-      </button>
-
-      <button class="av-item" id="avSettings" type="button" role="menuitem">
-        <i class="fas fa-cog" aria-hidden="true"></i>
-        Settings
-      </button>
-
+      <button class="av-item" id="avHist" type="button" role="menuitem"><i class="fas fa-history"></i> View History</button>
+      <button class="av-item" id="avSaved" type="button" role="menuitem"><i class="fas fa-star"></i> Saved Notes</button>
+      <button class="av-item" id="avSettings" type="button" role="menuitem"><i class="fas fa-cog"></i> Settings</button>
       <div class="av-div" role="separator"></div>
+      <button class="av-item av-danger" id="avClear" type="button" role="menuitem"><i class="fas fa-trash-alt"></i> Clear All Data</button>
+    </div>
+  </div>
+</header>
 
-      <button class="av-item av-danger" id="avClear" type="button" role="menuitem">
-        <i class="fas fa-trash-alt" aria-hidden="true"></i>
-        Clear All Data
-      </button>
-
-    </div><!-- /avDropdown -->
-  </div><!-- /avatar wrapper -->
-
-</header><!-- /dash-hdr -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
      MAIN DASHBOARD BODY — Split Panel Layout
-     Left panel: all inputs | Right panel: output
-     ═══════════════════════════════════════════════════════════════════════════════ -->
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
 <div class="dash-body" id="dashBody">
 
+  <!-- ╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+       ║  LEFT PANEL — All Study Inputs (Collapsible)                                                ║
+       ╚══════════════════════════════════════════════════════════════════════════════════════════════╝ -->
+  <aside class="left-panel" id="leftPanel" aria-label="Study input panel" role="complementary">
+    <div class="lp-hdr"><div class="lp-hdr-row"><span class="lp-title">Study Tools</span><a href="index.html" class="lp-home-link" title="Back to homepage"><i class="fas fa-home"></i> Home</a></div></div>
 
-  <!-- ╔══════════════════════════════════════════════════════════════╗
-       ║  LEFT PANEL — All Study Inputs                              ║
-       ╚══════════════════════════════════════════════════════════════╝ -->
-  <aside
-    class="left-panel"
-    id="leftPanel"
-    aria-label="Study input panel"
-    role="complementary"
-  >
-
-    <!-- ── Panel Header ── -->
-    <div class="lp-hdr">
-      <div class="lp-hdr-row">
-        <span class="lp-title">Study Tools</span>
-        <a
-          href="index.html"
-          class="lp-home-link"
-          title="Back to homepage"
-          aria-label="Back to homepage"
-        >
-          <i class="fas fa-home" aria-hidden="true"></i> Home
-        </a>
-      </div>
-    </div>
-
-
-    <!-- ── Tool Selector Navigation ── -->
-    <nav
-      class="tool-selector"
-      id="toolSelector"
-      aria-label="Select study tool"
-      role="navigation"
-    >
+    <!-- Tool Selector Navigation -->
+    <nav class="tool-selector" id="toolSelector" aria-label="Select study tool" role="navigation">
       <div class="ts-label" id="tsLabel">Select Tool</div>
+      <button class="ts-item active" data-tool="notes" type="button" title="Generate comprehensive, detailed study notes" aria-pressed="true"><i class="fas fa-book-open"></i><span class="ts-item-text">Generate Notes</span></button>
+      <button class="ts-item" data-tool="flashcards" type="button" title="Create interactive flashcards for spaced repetition" aria-pressed="false"><i class="fas fa-layer-group"></i><span class="ts-item-text">Flashcards</span></button>
+      <button class="ts-item" data-tool="quiz" type="button" title="Build a practice quiz with self-check questions" aria-pressed="false"><i class="fas fa-question-circle"></i><span class="ts-item-text">Practice Quiz</span></button>
+      <button class="ts-item" data-tool="summary" type="button" title="Create a concise smart summary with key points" aria-pressed="false"><i class="fas fa-align-left"></i><span class="ts-item-text">Smart Summary</span></button>
+      <button class="ts-item" data-tool="mindmap" type="button" title="Build a visual hierarchical mind map" aria-pressed="false"><i class="fas fa-project-diagram"></i><span class="ts-item-text">Mind Map</span></button>
+    </nav>
 
-      <!-- Notes -->
-      <button
-        class="ts-item active"
-        data-tool="notes"
-        type="button"
-        title="Generate comprehensive, detailed study notes with key concepts, tricks and practice questions"
-        aria-pressed="true"
-        aria-label="Generate Notes tool"
-      >
-        <i class="fas fa-book-open" aria-hidden="true"></i>
-        <span class="ts-item-text">Generate Notes</span>
-      </button>
-
-      <!-- Flashcards -->
-      <button
-        class="ts-item"
-        data-tool="flashcards"
-        type="button"
-        title="Create interactive flashcards for spaced repetition learning"
-        aria-pressed="false"
-        aria-label="Flashcards tool"
-      >
-        <i class="fas fa-layer-group" aria-hidden="true"></i>
-        <span class="ts-item-text">Flashcards</span>
-      </button>
-
-      <!-- Quiz -->
-      <button
-        class="ts-item"
-        data-tool="quiz"
-        type="button"
-        title="Build a practice quiz with self-check questions and detailed answers"
-        aria-pressed="false"
-        aria-label="Practice Quiz tool"
-      >
-        <i class="fas fa-question-circle" aria-hidden="true"></i>
-        <span class="ts-item-text">Practice Quiz</span>
-      </button>
-
-      <!-- Summary -->
-      <button
-        class="ts-item"
-        data-tool="summary"
-        type="button"
-        title="Create a concise smart summary with key points"
-        aria-pressed="false"
-        aria-label="Smart Summary tool"
-      >
-        <i class="fas fa-align-left" aria-hidden="true"></i>
-        <span class="ts-item-text">Smart Summary</span>
-      </button>
-
-      <!-- Mind Map -->
-      <button
-        class="ts-item"
-        data-tool="mindmap"
-        type="button"
-        title="Build a visual hierarchical mind map of any topic"
-        aria-pressed="false"
-        aria-label="Mind Map tool"
-      >
-        <i class="fas fa-project-diagram" aria-hidden="true"></i>
-        <span class="ts-item-text">Mind Map</span>
-      </button>
-
-    </nav><!-- /tool-selector -->
-
-
-    <!-- ── Input Fields Scroll Area ── -->
+    <!-- Input Fields Scroll Area -->
     <div class="lp-fields" id="lpFields">
 
-
-      <!-- ── Topic / Text Textarea (collapses during streaming) ── -->
+      <!-- Topic / Text Textarea (collapses during streaming) -->
       <div class="ta-collapse-wrap" id="taCollapseWrap">
-
         <div class="textarea-group" id="textareaGroup">
-
-          <div class="lbl-collapse-wrap" id="lblCollapseWrap">
-            <div class="field-lbl" id="topicFieldLbl">Topic / Text to Study</div>
-          </div>
-
-          <textarea
-            id="mainInput"
-            class="main-ta"
-            placeholder="Enter any topic, concept, question, or paste text to study…"
-            maxlength="12000"
-            rows="5"
-            spellcheck="true"
-            autocorrect="on"
-            autocapitalize="sentences"
-            aria-label="Study topic or paste text here"
-            aria-describedby="charCount"
-          ></textarea>
-
-          <div class="ta-footer" id="taFooter">
-            <span class="ta-count" id="charCount" aria-live="polite" aria-label="Character count">
-              0 / 12,000
-            </span>
-            <button
-              class="ta-clear-btn"
-              id="taClearBtn"
-              type="button"
-              title="Clear the input"
-              aria-label="Clear input field"
-            >
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-          </div>
-
+          <div class="lbl-collapse-wrap" id="lblCollapseWrap"><div class="field-lbl" id="topicFieldLbl">Topic / Text to Study</div></div>
+          <textarea id="mainInput" class="main-ta" placeholder="Enter any topic, concept, question, or paste text to study…" maxlength="12000" rows="5" spellcheck="true" autocorrect="on" autocapitalize="sentences" aria-label="Study topic or paste text here" aria-describedby="charCount"></textarea>
+          <div class="ta-footer" id="taFooter"><span class="ta-count" id="charCount" aria-live="polite">0 / 12,000</span><button class="ta-clear-btn" id="taClearBtn" type="button" title="Clear the input" aria-label="Clear input field"><i class="fas fa-times"></i></button></div>
         </div>
-
-      </div><!-- /ta-collapse-wrap -->
-
-
-      <!-- ── Input Mini Bar (replaces textarea during streaming) ── -->
-      <div
-        class="input-mini-bar"
-        id="inputMiniBar"
-        role="button"
-        tabindex="0"
-        aria-label="Your topic — click to expand input"
-        title="Click to show and edit your input"
-      >
-        <i class="fas fa-pencil-alt imb-icon" aria-hidden="true"></i>
-        <span class="imb-text" id="inputMiniText">Your topic…</span>
-        <span class="imb-chip" aria-hidden="true">Edit ↑</span>
       </div>
 
+      <!-- Input Mini Bar (replaces textarea during streaming) -->
+      <div class="input-mini-bar" id="inputMiniBar" role="button" tabindex="0" aria-label="Your topic — click to expand input" title="Click to show and edit your input"><i class="fas fa-pencil-alt imb-icon"></i><span class="imb-text" id="inputMiniText">Your topic…</span><span class="imb-chip" aria-hidden="true">Edit ↑</span></div>
 
-      <!-- ── Streaming Status Card (visible during generation) ── -->
+      <!-- Streaming Status Card (visible during generation) -->
       <div class="stream-status-card" id="streamStatusCard" aria-live="polite">
-        <div class="ssc-header">
-          <span class="ssc-dot" aria-hidden="true"></span>
-          <span class="ssc-label" id="sscLabel">Generating your study materials…</span>
-        </div>
-        <div class="ssc-progress">
-          <div class="ssc-progress-bar" id="sscProgressBar"></div>
-        </div>
+        <div class="ssc-header"><span class="ssc-dot"></span><span class="ssc-label" id="sscLabel">Generating your study materials…</span></div>
+        <div class="ssc-progress"><div class="ssc-progress-bar" id="sscProgressBar"></div></div>
         <div class="ssc-stages" id="sscStages">
-          <span class="ssc-stage" id="ss0"><i class="fas fa-search" aria-hidden="true"></i> Analysing</span>
-          <span class="ssc-stage" id="ss1"><i class="fas fa-pen-nib" aria-hidden="true"></i> Writing</span>
-          <span class="ssc-stage" id="ss2"><i class="fas fa-layer-group" aria-hidden="true"></i> Building</span>
-          <span class="ssc-stage" id="ss3"><i class="fas fa-question-circle" aria-hidden="true"></i> Quiz</span>
-          <span class="ssc-stage" id="ss4"><i class="fas fa-check-circle" aria-hidden="true"></i> Done</span>
+          <span class="ssc-stage" id="ss0"><i class="fas fa-search"></i> Analysing</span>
+          <span class="ssc-stage" id="ss1"><i class="fas fa-pen-nib"></i> Writing</span>
+          <span class="ssc-stage" id="ss2"><i class="fas fa-layer-group"></i> Building</span>
+          <span class="ssc-stage" id="ss3"><i class="fas fa-question-circle"></i> Quiz</span>
+          <span class="ssc-stage" id="ss4"><i class="fas fa-check-circle"></i> Done</span>
         </div>
       </div>
 
-
-      <!-- ── File Upload Zone ── -->
+      <!-- File Upload Zone -->
       <div class="file-collapse-wrap" id="fileCollapseWrap">
         <div class="field-group">
-          <div class="field-lbl">
-            Upload File
-            <span style="color:var(--t4);font-weight:400;text-transform:none;letter-spacing:0;font-size:.9em">
-              (.txt / .md / .csv — max 5MB)
-            </span>
-          </div>
-          <div
-            class="upload-zone"
-            id="uploadZone"
-            role="button"
-            tabindex="0"
-            title="Click or drag a .txt, .md, or .csv file to use as your topic"
-            aria-label="Upload a text file for analysis"
-          >
-            <i class="fas fa-paperclip" aria-hidden="true"></i>
-            <span id="uploadZoneText">Click or drag to upload</span>
-            <input
-              type="file"
-              id="fileInput"
-              accept=".txt,.md,.csv"
-              style="display:none"
-              aria-label="File input"
-              tabindex="-1"
-            >
-          </div>
-          <div class="file-chip" id="fileChip" style="display:none" aria-live="polite" aria-label="Uploaded file">
-            <i class="fas fa-file-alt" style="color:var(--gold)" aria-hidden="true"></i>
-            <span class="file-chip-name" id="fileChipName"></span>
-            <span
-              class="file-chip-rm"
-              id="fileChipRm"
-              role="button"
-              tabindex="0"
-              title="Remove file"
-              aria-label="Remove uploaded file"
-            >
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </span>
-          </div>
+          <div class="field-lbl">Upload File <span style="color:var(--t4);font-weight:400;text-transform:none;">(.txt / .md / .csv — max 500KB)</span></div>
+          <div class="upload-zone" id="uploadZone" role="button" tabindex="0" title="Click or drag a .txt, .md, or .csv file" aria-label="Upload a text file for analysis"><i class="fas fa-paperclip"></i><span id="uploadZoneText">Click or drag to upload</span><input type="file" id="fileInput" accept=".txt,.md,.csv" style="display:none" aria-label="File input" tabindex="-1"></div>
+          <div class="file-chip" id="fileChip" style="display:none" aria-live="polite"><i class="fas fa-file-alt" style="color:var(--gold)"></i><span class="file-chip-name" id="fileChipName"></span><span class="file-chip-rm" id="fileChipRm" role="button" tabindex="0" title="Remove file" aria-label="Remove uploaded file"><i class="fas fa-times"></i></span></div>
         </div>
-      </div><!-- /file-collapse-wrap -->
+      </div>
 
-
-      <!-- ── Collapsible Selectors (hidden during streaming) ── -->
+      <!-- Collapsible Selectors (hidden during streaming) -->
       <div class="selectors-collapse-wrap" id="selectorsCollapseWrap">
-
-
         <!-- Detail Level -->
-        <div class="field-group">
-          <div class="field-lbl" id="depthLbl">Detail Level</div>
-          <div class="field-sel-wrap">
-            <select
-              id="depthSel"
-              class="field-sel"
-              aria-label="Select detail level"
-              aria-describedby="depthLbl"
-            >
-              <option value="standard">Standard (600–900 words)</option>
-              <option value="detailed" selected>Detailed (1,000–1,500 words)</option>
-              <option value="comprehensive">Comprehensive (1,500–2,000 words)</option>
-              <option value="expert">Expert (2,000–2,800 words)</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
+        <div class="field-group"><div class="field-lbl" id="depthLbl">Detail Level</div><div class="field-sel-wrap"><select id="depthSel" class="field-sel" aria-label="Select detail level"><option value="standard">Standard (600–900 words)</option><option value="detailed" selected>Detailed (1,000–1,500 words)</option><option value="comprehensive">Comprehensive (1,500–2,000 words)</option><option value="expert">Expert (2,000–2,800 words)</option></select><i class="fas fa-chevron-down field-sel-arrow"></i></div></div>
 
-
-        <!-- Output Language -->
-        <div class="field-group">
-          <div class="field-lbl" id="langLbl">Output Language</div>
-          <div class="field-sel-wrap">
-            <select
-              id="langSel"
-              class="field-sel"
-              aria-label="Select output language"
-              aria-describedby="langLbl"
-            >
-              <option value="English" selected>🇬🇧  English</option>
-              <option value="Urdu">🇵🇰  اردو — Urdu</option>
-              <option value="Hindi">🇮🇳  हिन्दी — Hindi</option>
-              <option value="Arabic">🇸🇦  العربية — Arabic</option>
-              <option value="French">🇫🇷  Français — French</option>
-              <option value="German">🇩🇪  Deutsch — German</option>
-              <option value="Spanish">🇪🇸  Español — Spanish</option>
-              <option value="Portuguese">🇧🇷  Português — Portuguese</option>
-              <option value="Italian">🇮🇹  Italiano — Italian</option>
-              <option value="Dutch">🇳🇱  Nederlands — Dutch</option>
-              <option value="Russian">🇷🇺  Русский — Russian</option>
-              <option value="Turkish">🇹🇷  Türkçe — Turkish</option>
-              <option value="Chinese (Simplified)">🇨🇳  中文简体 — Chinese (Simplified)</option>
-              <option value="Chinese (Traditional)">🇹🇼  中文繁體 — Chinese (Traditional)</option>
-              <option value="Japanese">🇯🇵  日本語 — Japanese</option>
-              <option value="Korean">🇰🇷  한국어 — Korean</option>
-              <option value="Bengali">🇧🇩  বাংলা — Bengali</option>
-              <option value="Punjabi">🇵🇰  ਪੰਜਾਬੀ — Punjabi</option>
-              <option value="Indonesian">🇮🇩  Bahasa Indonesia</option>
-              <option value="Malay">🇲🇾  Bahasa Melayu — Malay</option>
-              <option value="Swahili">🇰🇪  Kiswahili — Swahili</option>
-              <option value="Persian">🇮🇷  فارسی — Persian (Farsi)</option>
-              <option value="Vietnamese">🇻🇳  Tiếng Việt — Vietnamese</option>
-              <option value="Thai">🇹🇭  ภาษาไทย — Thai</option>
-              <option value="Greek">🇬🇷  Ελληνικά — Greek</option>
-              <option value="Polish">🇵🇱  Polski — Polish</option>
-              <option value="Swedish">🇸🇪  Svenska — Swedish</option>
-              <option value="Norwegian">🇳🇴  Norsk — Norwegian</option>
-              <option value="Danish">🇩🇰  Dansk — Danish</option>
-              <option value="Finnish">🇫🇮  Suomi — Finnish</option>
-              <option value="Czech">🇨🇿  Čeština — Czech</option>
-              <option value="Romanian">🇷🇴  Română — Romanian</option>
-              <option value="Hungarian">🇭🇺  Magyar — Hungarian</option>
-              <option value="Ukrainian">🇺🇦  Українська — Ukrainian</option>
-              <option value="Hebrew">🇮🇱  עברית — Hebrew</option>
-              <option value="Nepali">🇳🇵  नेपाली — Nepali</option>
-              <option value="Tamil">🇮🇳  தமிழ் — Tamil</option>
-              <option value="Telugu">🇮🇳  తెలుగు — Telugu</option>
-              <option value="Kannada">🇮🇳  ಕನ್ನಡ — Kannada</option>
-              <option value="Marathi">🇮🇳  मराठी — Marathi</option>
-              <option value="Gujarati">🇮🇳  ગુજરાતી — Gujarati</option>
-              <option value="Sinhala">🇱🇰  සිංහල — Sinhala</option>
-              <option value="Amharic">🇪🇹  አማርኛ — Amharic</option>
-              <option value="Somali">🇸🇴  Soomaali — Somali</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
-
+        <!-- Output Language — 50+ Languages -->
+        <div class="field-group"><div class="field-lbl" id="langLbl">Output Language (50+ Languages)</div><div class="field-sel-wrap"><select id="langSel" class="field-sel" aria-label="Select output language"><option value="English" selected>🇬🇧 English</option><option value="Urdu">🇵🇰 اردو — Urdu</option><option value="Hindi">🇮🇳 हिन्दी — Hindi</option><option value="Arabic">🇸🇦 العربية — Arabic</option><option value="French">🇫🇷 Français — French</option><option value="German">🇩🇪 Deutsch — German</option><option value="Spanish">🇪🇸 Español — Spanish</option><option value="Portuguese">🇧🇷 Português — Portuguese</option><option value="Italian">🇮🇹 Italiano — Italian</option><option value="Dutch">🇳🇱 Nederlands — Dutch</option><option value="Russian">🇷🇺 Русский — Russian</option><option value="Turkish">🇹🇷 Türkçe — Turkish</option><option value="Chinese (Simplified)">🇨🇳 中文简体 — Chinese (Simplified)</option><option value="Chinese (Traditional)">🇹🇼 中文繁體 — Chinese (Traditional)</option><option value="Japanese">🇯🇵 日本語 — Japanese</option><option value="Korean">🇰🇷 한국어 — Korean</option><option value="Bengali">🇧🇩 বাংলা — Bengali</option><option value="Punjabi">🇵🇰 ਪੰਜਾਬੀ — Punjabi</option><option value="Indonesian">🇮🇩 Bahasa Indonesia</option><option value="Malay">🇲🇾 Bahasa Melayu — Malay</option><option value="Swahili">🇰🇪 Kiswahili — Swahili</option><option value="Persian">🇮🇷 فارسی — Persian (Farsi)</option><option value="Vietnamese">🇻🇳 Tiếng Việt — Vietnamese</option><option value="Thai">🇹🇭 ภาษาไทย — Thai</option><option value="Greek">🇬🇷 Ελληνικά — Greek</option><option value="Polish">🇵🇱 Polski — Polish</option><option value="Swedish">🇸🇪 Svenska — Swedish</option><option value="Norwegian">🇳🇴 Norsk — Norwegian</option><option value="Danish">🇩🇰 Dansk — Danish</option><option value="Finnish">🇫🇮 Suomi — Finnish</option><option value="Czech">🇨🇿 Čeština — Czech</option><option value="Romanian">🇷🇴 Română — Romanian</option><option value="Hungarian">🇭🇺 Magyar — Hungarian</option><option value="Ukrainian">🇺🇦 Українська — Ukrainian</option><option value="Hebrew">🇮🇱 עברית — Hebrew</option><option value="Nepali">🇳🇵 नेपाली — Nepali</option><option value="Tamil">🇮🇳 தமிழ் — Tamil</option><option value="Telugu">🇮🇳 తెలుగు — Telugu</option><option value="Kannada">🇮🇳 ಕನ್ನಡ — Kannada</option><option value="Marathi">🇮🇳 मराठी — Marathi</option><option value="Gujarati">🇮🇳 ગુજરાતી — Gujarati</option><option value="Sinhala">🇱🇰 සිංහල — Sinhala</option><option value="Amharic">🇪🇹 አማርኛ — Amharic</option><option value="Somali">🇸🇴 Soomaali — Somali</option></select><i class="fas fa-chevron-down field-sel-arrow"></i></div></div>
 
         <!-- Writing Style -->
-        <div class="field-group">
-          <div class="field-lbl" id="styleLbl">Writing Style</div>
-          <div class="field-sel-wrap">
-            <select
-              id="styleSel"
-              class="field-sel"
-              aria-label="Select writing style"
-              aria-describedby="styleLbl"
-            >
-              <option value="simple" selected>Simple &amp; Clear — Beginner Friendly</option>
-              <option value="academic">Academic &amp; Formal — Scholarly Language</option>
-              <option value="detailed">Highly Detailed — Maximum Depth</option>
-              <option value="exam">Exam-Focused — Mark-Worthy Phrases</option>
-              <option value="visual">Visual &amp; Analogy-Rich — Mental Models</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
+        <div class="field-group"><div class="field-lbl" id="styleLbl">Writing Style</div><div class="field-sel-wrap"><select id="styleSel" class="field-sel"><option value="simple" selected>Simple &amp; Clear — Beginner Friendly</option><option value="academic">Academic &amp; Formal — Scholarly Language</option><option value="detailed">Highly Detailed — Maximum Depth</option><option value="exam">Exam-Focused — Mark-Worthy Phrases</option><option value="visual">Visual &amp; Analogy-Rich — Mental Models</option></select><i class="fas fa-chevron-down field-sel-arrow"></i></div></div>
+      </div>
 
-
-      </div><!-- /selectors-collapse-wrap -->
-
-
-      <!-- ── Quick Topic Suggestion Pills ── -->
+      <!-- Quick Topic Suggestion Pills -->
       <div class="sugg-collapse-wrap" id="suggCollapseWrap">
-        <div class="lp-sugg">
-          <span class="lp-sugg-label" aria-label="Quick topic suggestions">Quick Topics</span>
-          <div class="lp-sugg-pills" role="list">
+        <div class="lp-sugg"><span class="lp-sugg-label">Quick Topics</span><div class="lp-sugg-pills" role="list">
+          <button class="sugg-pill" type="button" onclick="setSugg('Photosynthesis — how plants convert sunlight into glucose')" role="listitem">Photosynthesis</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('Newton\'s Three Laws of Motion — classical mechanics')" role="listitem">Newton's Laws</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('World War II — causes, major events and consequences')" role="listitem">World War II</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('Machine Learning — algorithms, types and real-world applications')" role="listitem">Machine Learning</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('The French Revolution — causes, key events and lasting legacy')" role="listitem">French Revolution</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('Cell division — mitosis, meiosis and their biological significance')" role="listitem">Cell Division</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('Quantum mechanics — fundamental principles, wave-particle duality')" role="listitem">Quantum Mechanics</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('The Industrial Revolution — origins, impact on society')" role="listitem">Industrial Revolution</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('DNA replication — the process, enzymes and significance')" role="listitem">DNA Replication</button>
+          <button class="sugg-pill" type="button" onclick="setSugg('Supply and demand — economics fundamentals, curves, equilibrium')" role="listitem">Supply &amp; Demand</button>
+        </div></div>
+      </div>
+    </div>
 
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Photosynthesis — how plants convert sunlight into glucose')"
-              aria-label="Photosynthesis quick topic"
-              role="listitem"
-            >Photosynthesis</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Newton\'s Three Laws of Motion — classical mechanics')"
-              aria-label="Newton's Laws quick topic"
-              role="listitem"
-            >Newton's Laws</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('World War II — causes, major events and consequences')"
-              aria-label="World War II quick topic"
-              role="listitem"
-            >World War II</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Machine Learning — algorithms, types and real-world applications')"
-              aria-label="Machine Learning quick topic"
-              role="listitem"
-            >Machine Learning</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('The French Revolution — causes, key events and lasting legacy')"
-              aria-label="French Revolution quick topic"
-              role="listitem"
-            >French Revolution</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Cell division — mitosis, meiosis and their biological significance')"
-              aria-label="Cell Division quick topic"
-              role="listitem"
-            >Cell Division</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Quantum mechanics — fundamental principles, wave-particle duality, uncertainty')"
-              aria-label="Quantum Mechanics quick topic"
-              role="listitem"
-            >Quantum Mechanics</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('The Industrial Revolution — origins, impact on society and the global economy')"
-              aria-label="Industrial Revolution quick topic"
-              role="listitem"
-            >Industrial Revolution</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('DNA replication — the process, enzymes involved and significance in genetics')"
-              aria-label="DNA Replication quick topic"
-              role="listitem"
-            >DNA Replication</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Supply and demand — economics fundamentals, curves, equilibrium, elasticity')"
-              aria-label="Supply and Demand quick topic"
-              role="listitem"
-            >Supply &amp; Demand</button>
-
-          </div>
-        </div>
-      </div><!-- /sugg-collapse-wrap -->
-
-
-    </div><!-- /lp-fields -->
-
-
-    <!-- ── Generate Button ── -->
+    <!-- Generate Button -->
     <div class="lp-run-wrap" id="lpRunWrap">
+      <button class="run-btn" id="runBtn" type="button" aria-label="Generate study materials" title="Generate (press Enter)"><i class="fas fa-book-open" id="runIcon"></i><span id="runLabel">Generate Notes</span></button>
+      <button class="cancel-btn" id="cancelBtn" type="button" aria-label="Cancel generation" title="Cancel current generation" style="margin-top:8px"><i class="fas fa-stop-circle"></i> Cancel Generation</button>
+    </div>
 
-      <button
-        class="run-btn"
-        id="runBtn"
-        type="button"
-        aria-label="Generate study materials"
-        title="Generate (press Enter)"
-      >
-        <i class="fas fa-book-open" id="runIcon" aria-hidden="true"></i>
-        <span id="runLabel">Generate Notes</span>
-      </button>
-
-      <!-- Cancel Button (shown during generation) -->
-      <button
-        class="cancel-btn"
-        id="cancelBtn"
-        type="button"
-        aria-label="Cancel generation"
-        title="Cancel current generation"
-        style="margin-top:6px"
-      >
-        <i class="fas fa-stop-circle" aria-hidden="true"></i>
-        Cancel Generation
-      </button>
-
-    </div><!-- /lp-run-wrap -->
-
-
-    <!-- ── Sidebar Recent History Strip ── -->
+    <!-- Sidebar Recent History Strip -->
     <div class="lp-history" id="lpHistory" aria-label="Recent study history">
-      <div class="lp-hist-header">
-        <span class="lp-hist-title">Recent</span>
-        <button
-          class="lp-hist-all"
-          id="lpHistAll"
-          type="button"
-          aria-label="View all study history"
-        >View All</button>
-      </div>
-      <div
-        class="lp-hist-list"
-        id="lpHistList"
-        role="list"
-        aria-label="Recent history items"
-      >
-        <div
-          style="font-size:.74rem;color:var(--t4);padding:4px 7px;font-family:var(--fu);font-style:italic"
-          role="listitem"
-        >
-          No history yet — start studying!
-        </div>
-      </div>
-    </div><!-- /lp-history -->
+      <div class="lp-hist-header"><span class="lp-hist-title">Recent</span><button class="lp-hist-all" id="lpHistAll" type="button" aria-label="View all study history">View All</button></div>
+      <div class="lp-hist-list" id="lpHistList" role="list"><div style="font-size:.76rem;color:var(--t4);padding:6px 8px;font-family:var(--fu);font-style:italic">No history yet — start studying!</div></div>
+    </div>
+  </aside>
 
+  <!-- ╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+       ║  RIGHT PANEL — Output Area                                                                   ║
+       ╚══════════════════════════════════════════════════════════════════════════════════════════════╝ -->
+  <main class="right-panel" id="rightPanel" aria-label="Generated study output" role="main">
+    <div class="out-toolbar" id="outToolbar" role="toolbar" aria-label="Output action buttons">
+      <button class="otb-btn" id="copyBtn" type="button" title="Copy all output to clipboard (Ctrl+C)" data-tooltip="Copy (Ctrl+C)"><i class="fas fa-copy"></i><span>Copy</span></button>
+      <button class="otb-btn" id="pdfBtn" type="button" title="Download output as professional PDF" data-tooltip="Download PDF"><i class="fas fa-file-pdf"></i><span>PDF</span></button>
+      <div class="otb-sep" role="separator"></div>
+      <button class="otb-btn" id="saveBtn" type="button" title="Save to your note library" data-tooltip="Save Note"><i class="fas fa-star"></i><span>Save</span></button>
+      <button class="otb-btn" id="shareBtn" type="button" title="Share this study material" data-tooltip="Share"><i class="fas fa-share-alt"></i><span>Share</span></button>
+      <button class="otb-btn" id="clearBtn" type="button" title="Clear the output area" data-tooltip="Clear Output"><i class="fas fa-trash-alt"></i><span>Clear</span></button>
+      <div class="otb-sep" role="separator"></div>
+      <button class="focus-mode-btn otb-btn" id="focusModeBtn" type="button" title="Focus mode — hides sidebar" data-tooltip="Focus Mode"><i class="fas fa-expand-alt"></i><span>Focus</span></button>
+      <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> focus &nbsp;·&nbsp; <kbd>Ctrl</kbd>+<kbd>H</kbd> history &nbsp;·&nbsp; <kbd>Enter</kbd> generate &nbsp;·&nbsp; <kbd>Esc</kbd> close</div>
+    </div>
 
-  </aside><!-- /left-panel -->
-
-
-  <!-- ╔══════════════════════════════════════════════════════════════╗
-       ║  RIGHT PANEL — Output Area                                  ║
-       ╚══════════════════════════════════════════════════════════════╝ -->
-  <main
-    class="right-panel"
-    id="rightPanel"
-    aria-label="Generated study output"
-    role="main"
-  >
-
-    <!-- ── Output Toolbar ── -->
-    <div
-      class="out-toolbar"
-      id="outToolbar"
-      role="toolbar"
-      aria-label="Output action buttons"
-    >
-
-      <button
-        class="otb-btn"
-        id="copyBtn"
-        type="button"
-        title="Copy all output to clipboard (Ctrl+C)"
-        aria-label="Copy output"
-        data-tooltip="Copy (Ctrl+C)"
-      >
-        <i class="fas fa-copy" aria-hidden="true"></i>
-        <span>Copy</span>
-      </button>
-
-      <button
-        class="otb-btn"
-        id="pdfBtn"
-        type="button"
-        title="Download output as professional PDF"
-        aria-label="Download PDF"
-        data-tooltip="Download PDF"
-      >
-        <i class="fas fa-file-pdf" aria-hidden="true"></i>
-        <span>PDF</span>
-      </button>
-
-      <div class="otb-sep" role="separator" aria-hidden="true"></div>
-
-      <button
-        class="otb-btn"
-        id="saveBtn"
-        type="button"
-        title="Save to your note library"
-        aria-label="Save note to library"
-        data-tooltip="Save Note"
-      >
-        <i class="fas fa-star" aria-hidden="true"></i>
-        <span>Save</span>
-      </button>
-
-      <button
-        class="otb-btn"
-        id="shareBtn"
-        type="button"
-        title="Share this study material"
-        aria-label="Share"
-        data-tooltip="Share"
-      >
-        <i class="fas fa-share-alt" aria-hidden="true"></i>
-        <span>Share</span>
-      </button>
-
-      <button
-        class="otb-btn"
-        id="clearBtn"
-        type="button"
-        title="Clear the output area"
-        aria-label="Clear output"
-        data-tooltip="Clear Output"
-      >
-        <i class="fas fa-trash-alt" aria-hidden="true"></i>
-        <span>Clear</span>
-      </button>
-
-      <div class="otb-sep" role="separator" aria-hidden="true"></div>
-
-      <!-- Focus mode toggle -->
-      <button
-        class="focus-mode-btn otb-btn"
-        id="focusModeBtn"
-        type="button"
-        title="Toggle focus mode — hides sidebar for distraction-free reading"
-        aria-label="Toggle focus mode"
-        data-tooltip="Focus Mode"
-      >
-        <i class="fas fa-expand-alt" aria-hidden="true"></i>
-        <span>Focus</span>
-      </button>
-
-      <!-- Keyboard hints -->
-      <div class="otb-hint" aria-hidden="true">
-        <kbd>Ctrl</kbd>+<kbd>K</kbd> focus &nbsp;·&nbsp;
-        <kbd>Ctrl</kbd>+<kbd>H</kbd> history &nbsp;·&nbsp;
-        <kbd>Enter</kbd> generate &nbsp;·&nbsp;
-        <kbd>Esc</kbd> close
-      </div>
-
-    </div><!-- /out-toolbar -->
-
-
-    <!-- ── Output Scroll Area ── -->
-    <div
-      class="out-area"
-      id="outArea"
-      role="region"
-      aria-label="Generated study content"
-      aria-live="polite"
-    >
-
-      <!-- ════════════════════════════════════════════════════════
-           EMPTY STATE — shown when nothing has been generated yet
-           ════════════════════════════════════════════════════════ -->
-      <div
-        class="empty-state"
-        id="emptyState"
-        role="status"
-        aria-label="No study content generated yet"
-      >
-
-        <!-- Animated Brand Logo -->
+    <div class="out-area" id="outArea" role="region" aria-label="Generated study content" aria-live="polite">
+      <!-- Empty State -->
+      <div class="empty-state" id="emptyState" role="status">
         <span class="es-mark" aria-hidden="true">Ś</span>
-
-        <!-- Title -->
         <div class="es-title">What would you like to study today?</div>
-
-        <!-- Subtitle -->
-        <div class="es-sub">
-          Enter any topic, concept, question, or paste text in the panel on the left.
-          Choose your tool, press Generate, and watch your study materials
-          appear here — <strong style="color:var(--gold)">live, as they are written</strong>.
+        <div class="es-sub">Enter any topic, concept, question, or paste text in the panel on the left. Choose your tool, press Generate, and watch your study materials appear here — <strong style="color:var(--gold)">live, in 1-2 seconds</strong>.</div>
+        <div class="es-tips" role="list">
+          <span class="es-tip"><i class="fas fa-book-open"></i> Deep Notes</span>
+          <span class="es-tip"><i class="fas fa-layer-group"></i> Flashcards</span>
+          <span class="es-tip"><i class="fas fa-question-circle"></i> Quiz Mode</span>
+          <span class="es-tip"><i class="fas fa-align-left"></i> Summary</span>
+          <span class="es-tip"><i class="fas fa-project-diagram"></i> Mind Map</span>
+          <span class="es-tip"><i class="fas fa-file-pdf"></i> PDF Export</span>
+          <span class="es-tip"><i class="fas fa-globe"></i> 50+ Languages</span>
+          <span class="es-tip"><i class="fas fa-infinity"></i> Always Free</span>
         </div>
+        <div class="es-shortcuts"><span class="es-shortcut"><kbd>Enter</kbd> Generate</span><span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Focus</span><span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</span><span class="es-shortcut"><kbd>Space</kbd> Flip card</span></div>
+        <div class="es-brand">Powered by Savoiré AI v2.0 &nbsp;·&nbsp; <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">Sooban Talha Technologies</a> &nbsp;·&nbsp; <a href="https://savoireai.vercel.app" target="_blank" rel="noopener">savoireai.vercel.app</a></div>
+      </div>
 
-        <!-- Feature Tip Pills -->
-        <div class="es-tips" role="list" aria-label="Available features">
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-book-open" aria-hidden="true"></i> Deep Notes
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-layer-group" aria-hidden="true"></i> Flashcards
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-question-circle" aria-hidden="true"></i> Quiz Mode
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-align-left" aria-hidden="true"></i> Summary
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-project-diagram" aria-hidden="true"></i> Mind Map
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-file-pdf" aria-hidden="true"></i> PDF Export
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-globe" aria-hidden="true"></i> 50+ Languages
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-infinity" aria-hidden="true"></i> Always Free
-          </span>
-        </div>
+      <!-- Thinking / Loading Indicator -->
+      <div class="thinking-wrap" id="thinkingWrap" style="display:none" aria-live="polite" role="status">
+        <div class="thinking-card"><div class="th-av" aria-hidden="true">Ś</div><div class="th-body"><div class="th-title" id="thinkingTitle">Savoiré AI is crafting your study materials…</div><div class="th-dots"><span></span><span></span><span></span></div><div class="th-stages"><span class="ths" id="ts0"><i class="fas fa-search"></i> Analysing</span><span class="ths" id="ts1"><i class="fas fa-pen-nib"></i> Writing</span><span class="ths" id="ts2"><i class="fas fa-layer-group"></i> Building</span><span class="ths" id="ts3"><i class="fas fa-question-circle"></i> Quiz</span><span class="ths" id="ts4"><i class="fas fa-check-circle"></i> Done</span></div></div></div>
+      </div>
 
-        <!-- Keyboard Shortcuts -->
-        <div class="es-shortcuts" aria-label="Keyboard shortcuts">
-          <span class="es-shortcut"><kbd>Enter</kbd> Generate</span>
-          <span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Focus input</span>
-          <span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</span>
-          <span class="es-shortcut"><kbd>Space</kbd> Flip card</span>
-        </div>
+      <!-- Result Area -->
+      <div id="resultArea" style="display:none" role="region" aria-label="Generated study results" aria-live="polite"></div>
+    </div>
+  </main>
+</div>
 
-        <!-- Branding -->
-        <div class="es-brand">
-          Powered by Savoiré AI v2.0 &nbsp;·&nbsp;
-          <a
-            href="https://soobantalhatech.xyz"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Visit Sooban Talha Technologies"
-          >Sooban Talha Technologies</a>
-          &nbsp;·&nbsp;
-          <a
-            href="https://savoireai.vercel.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Visit Savoiré AI"
-          >savoireai.vercel.app</a>
-        </div>
-
-      </div><!-- /emptyState -->
-
-
-      <!-- ════════════════════════════════════════════════════════
-           THINKING / LOADING INDICATOR
-           Shown from the moment Generate is clicked
-           ════════════════════════════════════════════════════════ -->
-      <div
-        class="thinking-wrap"
-        id="thinkingWrap"
-        style="display:none"
-        aria-live="polite"
-        aria-label="Generating study materials"
-        role="status"
-      >
-        <div class="thinking-card">
-          <!-- Pulsing Avatar -->
-          <div class="th-av" aria-hidden="true">Ś</div>
-          <!-- Content -->
-          <div class="th-body">
-            <div class="th-title" id="thinkingTitle">
-              Savoiré AI is crafting your study materials…
-            </div>
-            <div class="th-dots" aria-hidden="true">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <!-- Stage Badges -->
-            <div
-              class="th-stages"
-              role="list"
-              aria-label="Generation stage progress"
-            >
-              <span class="ths" id="ts0" role="listitem">
-                <i class="fas fa-search" aria-hidden="true"></i> Analysing
-              </span>
-              <span class="ths" id="ts1" role="listitem">
-                <i class="fas fa-pen-nib" aria-hidden="true"></i> Writing
-              </span>
-              <span class="ths" id="ts2" role="listitem">
-                <i class="fas fa-layer-group" aria-hidden="true"></i> Building
-              </span>
-              <span class="ths" id="ts3" role="listitem">
-                <i class="fas fa-question-circle" aria-hidden="true"></i> Quiz
-              </span>
-              <span class="ths" id="ts4" role="listitem">
-                <i class="fas fa-check-circle" aria-hidden="true"></i> Done
-              </span>
-            </div>
-          </div>
-        </div>
-      </div><!-- /thinkingWrap -->
-
-
-      <!-- ════════════════════════════════════════════════════════
-           RESULT AREA — All generated content renders here
-           ════════════════════════════════════════════════════════ -->
-      <div
-        id="resultArea"
-        style="display:none"
-        role="region"
-        aria-label="Generated study results"
-        aria-live="polite"
-      ></div>
-
-
-    </div><!-- /out-area -->
-
-  </main><!-- /right-panel -->
-
-
-</div><!-- /dash-body -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     LIVE STREAMING FULL-PAGE OVERLAY
-     This covers the RIGHT PANEL during generation for full typewriter effect.
-     Input collapses in left panel, output streams here char-by-char.
-     After generation completes, this hides and the full structured result appears.
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="stream-fullpage-wrap"
-  id="streamFullpage"
-  style="display:none"
-  role="region"
-  aria-label="Live AI output — streaming"
-  aria-live="polite"
->
-
-  <!-- Stream Header Bar -->
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
+     LIVE STREAMING FULL-PAGE OVERLAY — World-Class Typewriter Effect
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="stream-fullpage-wrap" id="streamFullpage" style="display:none" role="region" aria-label="Live AI output — streaming" aria-live="polite">
   <div class="sfp-header" id="sfpHeader">
+    <div class="sfp-indicator"><span class="sfp-dot"></span><span class="sfp-dot"></span><span class="sfp-dot"></span></div>
+    <span class="sfp-label" id="sfpLabel">Savoiré AI is generating your study materials live…</span>
+    <span class="sfp-topic" id="sfpTopic"></span>
+    <span class="sfp-tool-badge" id="sfpToolBadge"><i class="fas fa-book-open" id="sfpToolIcon"></i><span id="sfpToolName">Notes</span></span>
+  </div>
+  <div class="sfp-scroll" id="sfpScroll"><div class="sfp-text" id="sfpText" aria-live="polite"></div></div>
+</div>
 
-    <!-- Animated dots -->
-    <div class="sfp-indicator" aria-hidden="true">
-      <span class="sfp-dot"></span>
-      <span class="sfp-dot"></span>
-      <span class="sfp-dot"></span>
-    </div>
-
-    <!-- Status label -->
-    <span class="sfp-label" id="sfpLabel">
-      Savoiré AI is generating your study materials live…
-    </span>
-
-    <!-- Topic preview -->
-    <span class="sfp-topic" id="sfpTopic" aria-label="Current topic"></span>
-
-    <!-- Tool badge -->
-    <span class="sfp-tool-badge" id="sfpToolBadge" aria-label="Current tool">
-      <i class="fas fa-book-open" id="sfpToolIcon" aria-hidden="true"></i>
-      <span id="sfpToolName">Notes</span>
-    </span>
-
-  </div><!-- /sfp-header -->
-
-  <!-- Scrollable Stream Text -->
-  <div class="sfp-scroll" id="sfpScroll">
-    <!-- The typewriter text renders here character by character -->
-    <div
-      class="sfp-text"
-      id="sfpText"
-      aria-live="polite"
-      aria-label="Live streaming output"
-    ></div>
-  </div><!-- /sfp-scroll -->
-
-</div><!-- /streamFullpage -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
      MODAL — Study History
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="histModal"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="histModalTitle"
-  aria-describedby="histModalDesc"
->
-  <div class="modal modal-lg">
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="histModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="histModalTitle" aria-describedby="histModalDesc"><div class="modal modal-lg"><div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-history modal-hdr-icon"></i><h3 class="modal-title" id="histModalTitle">Study History</h3><span id="histCount" style="font-family:var(--fm);font-size:.7rem;color:var(--t3);margin-left:8px"></span></div><button class="modal-close" data-close="histModal" type="button"><i class="fas fa-times"></i></button></div><div class="modal-body" id="histModalDesc"><div class="hist-search-bar" role="search"><i class="fas fa-search"></i><input type="search" id="histSearchInput" class="hist-search-input" placeholder="Search history by topic…" autocomplete="off" aria-label="Search study history" aria-controls="histList"><button id="histSearchClear" type="button" style="background:none;border:none;color:var(--t4);cursor:pointer;padding:2px 4px;" aria-label="Clear search" onclick="document.getElementById('histSearchInput').value='';document.getElementById('histSearchInput').dispatchEvent(new Event('input'))"><i class="fas fa-times"></i></button></div><div class="hist-filters" role="group" aria-label="Filter history by tool type" id="histFilters"><button class="hf active" data-filter="all" type="button">All</button><button class="hf" data-filter="notes" type="button">Notes</button><button class="hf" data-filter="flashcards" type="button">Flashcards</button><button class="hf" data-filter="quiz" type="button">Quiz</button><button class="hf" data-filter="summary" type="button">Summary</button><button class="hf" data-filter="mindmap" type="button">Mind Map</button></div><div class="hist-list" id="histList" role="list"></div><div class="modal-empty" id="histEmpty" style="display:none"><i class="fas fa-history"></i><p>No history yet. Start studying — it'll appear here!</p></div></div><div class="modal-ftr"><button class="btn btn-ghost btn-sm" id="clearHistBtn" type="button"><i class="fas fa-trash"></i> Clear History</button><button class="btn btn-ghost btn-sm" id="exportHistBtn" type="button"><i class="fas fa-download"></i> Export JSON</button><button class="btn btn-primary btn-sm" data-close="histModal" type="button">Close</button></div></div></div>
 
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i class="fas fa-history modal-hdr-icon" aria-hidden="true"></i>
-        <h3 class="modal-title" id="histModalTitle">Study History</h3>
-        <span
-          id="histCount"
-          style="font-family:var(--fm);font-size:.67rem;color:var(--t3);margin-left:8px"
-          aria-live="polite"
-        ></span>
-      </div>
-      <button
-        class="modal-close"
-        data-close="histModal"
-        type="button"
-        aria-label="Close history modal"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body" id="histModalDesc">
-
-      <!-- Search Bar -->
-      <div class="hist-search-bar" role="search">
-        <i class="fas fa-search" aria-hidden="true"></i>
-        <input
-          type="search"
-          id="histSearchInput"
-          class="hist-search-input"
-          placeholder="Search history by topic…"
-          autocomplete="off"
-          aria-label="Search study history"
-          aria-controls="histList"
-        >
-        <button
-          id="histSearchClear"
-          type="button"
-          style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:.78rem;padding:2px 4px;transition:color .15s"
-          aria-label="Clear search"
-          title="Clear search"
-          onclick="document.getElementById('histSearchInput').value='';document.getElementById('histSearchInput').dispatchEvent(new Event('input'))"
-        >
-          <i class="fas fa-times" aria-hidden="true"></i>
-        </button>
-      </div>
-
-      <!-- Filter Buttons -->
-      <div
-        class="hist-filters"
-        role="group"
-        aria-label="Filter history by tool type"
-        id="histFilters"
-      >
-        <button class="hf active" data-filter="all"        type="button" aria-pressed="true">All</button>
-        <button class="hf"        data-filter="notes"      type="button" aria-pressed="false">Notes</button>
-        <button class="hf"        data-filter="flashcards" type="button" aria-pressed="false">Flashcards</button>
-        <button class="hf"        data-filter="quiz"       type="button" aria-pressed="false">Quiz</button>
-        <button class="hf"        data-filter="summary"    type="button" aria-pressed="false">Summary</button>
-        <button class="hf"        data-filter="mindmap"    type="button" aria-pressed="false">Mind Map</button>
-      </div>
-
-      <!-- History List -->
-      <div
-        class="hist-list"
-        id="histList"
-        role="list"
-        aria-label="History items — click any to reload"
-      ></div>
-
-      <!-- Empty State -->
-      <div
-        class="modal-empty"
-        id="histEmpty"
-        style="display:none"
-        aria-live="polite"
-      >
-        <i class="fas fa-history" aria-hidden="true"></i>
-        <p>No history yet. Start studying something — it'll appear here!</p>
-      </div>
-
-    </div><!-- /modal-body -->
-
-    <!-- Footer -->
-    <div class="modal-ftr">
-      <button class="btn btn-ghost btn-sm" id="clearHistBtn" type="button">
-        <i class="fas fa-trash" aria-hidden="true"></i> Clear History
-      </button>
-      <button class="btn btn-ghost btn-sm" id="exportHistBtn" type="button">
-        <i class="fas fa-download" aria-hidden="true"></i> Export JSON
-      </button>
-      <button class="btn btn-primary btn-sm" data-close="histModal" type="button">
-        Close
-      </button>
-    </div>
-
-  </div><!-- /modal -->
-</div><!-- /histModal -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
      MODAL — Saved Notes Library
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="savedModal"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="savedModalTitle"
->
-  <div class="modal modal-lg">
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="savedModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="savedModalTitle"><div class="modal modal-lg"><div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-star modal-hdr-icon"></i><h3 class="modal-title" id="savedModalTitle">Saved Notes Library</h3><span id="savedCount" style="font-family:var(--fm);font-size:.7rem;color:var(--t3);margin-left:8px"></span></div><button class="modal-close" data-close="savedModal" type="button"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="hist-list" id="savedList" role="list"></div><div class="modal-empty" id="savedEmpty" style="display:none"><i class="fas fa-star"></i><p>No saved notes yet.<br>After generating, click <strong>Save</strong> in the toolbar.</p></div></div><div class="modal-ftr"><button class="btn btn-primary btn-sm" data-close="savedModal" type="button">Close</button></div></div></div>
 
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i class="fas fa-star modal-hdr-icon" aria-hidden="true"></i>
-        <h3 class="modal-title" id="savedModalTitle">Saved Notes Library</h3>
-        <span
-          id="savedCount"
-          style="font-family:var(--fm);font-size:.67rem;color:var(--t3);margin-left:8px"
-          aria-live="polite"
-        ></span>
-      </div>
-      <button
-        class="modal-close"
-        data-close="savedModal"
-        type="button"
-        aria-label="Close saved notes modal"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-
-      <!-- Saved List -->
-      <div
-        class="hist-list"
-        id="savedList"
-        role="list"
-        aria-label="Saved notes — click any to reload"
-      ></div>
-
-      <!-- Empty State -->
-      <div
-        class="modal-empty"
-        id="savedEmpty"
-        style="display:none"
-        aria-live="polite"
-      >
-        <i class="fas fa-star" aria-hidden="true"></i>
-        <p>
-          No saved notes yet.<br>
-          After generating, click <strong>Save</strong> in the toolbar or export bar.
-        </p>
-      </div>
-
-    </div><!-- /modal-body -->
-
-    <!-- Footer -->
-    <div class="modal-ftr">
-      <button class="btn btn-primary btn-sm" data-close="savedModal" type="button">
-        Close
-      </button>
-    </div>
-
-  </div>
-</div><!-- /savedModal -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
      MODAL — Settings & About
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="settingsModal"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="settingsModalTitle"
->
-  <div class="modal">
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="settingsModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle"><div class="modal"><div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-cog modal-hdr-icon"></i><h3 class="modal-title" id="settingsModalTitle">Settings &amp; About</h3></div><button class="modal-close" data-close="settingsModal" type="button"><i class="fas fa-times"></i></button></div><div class="modal-body"><div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-user"></i> Your Profile</div><div class="settings-row"><div class="settings-lbl">Display Name</div><div class="settings-input-row"><input type="text" id="nameInput" class="settings-input" placeholder="Your name" maxlength="40" autocomplete="given-name"><button class="btn btn-primary btn-sm" id="saveNameBtn" type="button">Save</button></div></div></div><div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-palette"></i> Appearance</div><div class="settings-row"><div class="settings-lbl">Theme</div><div class="toggle-row" role="group"><button class="toggle-btn active" data-theme-btn="dark" type="button"><i class="fas fa-moon"></i> Dark</button><button class="toggle-btn" data-theme-btn="light" type="button"><i class="fas fa-sun"></i> Light</button></div></div><div class="settings-row"><div class="settings-lbl">Font Size</div><div class="toggle-row" role="group"><button class="toggle-btn font-sz" data-size="small" type="button">Small</button><button class="toggle-btn font-sz active" data-size="medium" type="button">Medium</button><button class="toggle-btn font-sz" data-size="large" type="button">Large</button></div></div></div><div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-database"></i> Your Data</div><div class="ds-stats-row" id="dsStats"></div><div class="settings-btn-row"><button class="btn btn-ghost btn-sm" id="exportDataBtn" type="button"><i class="fas fa-download"></i> Export All Data</button><button class="btn btn-danger btn-sm" id="clearDataBtn" type="button"><i class="fas fa-trash"></i> Clear All Data</button></div><p style="margin-top:12px;font-family:var(--fb);font-size:.85rem;color:var(--t3);line-height:1.7">All your data is stored locally in your browser. Export creates a JSON backup.</p></div><div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-info-circle"></i> About Savoiré AI</div><div class="about-card"><div class="about-mark" aria-hidden="true">Ś</div><div class="about-name">Savoiré AI v2.0</div><div class="about-tagline">Think Less. Know More.</div><p class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</p><div class="about-quote-card"><i class="fas fa-quote-left about-qico"></i><blockquote class="about-quote">"I built Savoiré AI because great learning tools shouldn't cost anything. Every student deserves access to the very best AI has to offer. <strong>Free, forever.</strong>"</blockquote><cite class="about-cite">— Sooban Talha, Founder &amp; Developer</cite></div><div class="about-links"><a href="https://soobantalhatech.xyz" class="about-link" target="_blank" rel="noopener"><i class="fas fa-building"></i> soobantalhatech.xyz</a><a href="https://savoireai.vercel.app" class="about-link" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a></div></div></div></div></div></div>
 
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i class="fas fa-cog modal-hdr-icon" aria-hidden="true"></i>
-        <h3 class="modal-title" id="settingsModalTitle">Settings &amp; About</h3>
-      </div>
-      <button
-        class="modal-close"
-        data-close="settingsModal"
-        type="button"
-        aria-label="Close settings"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-
-      <!-- ── Profile Section ── -->
-      <div class="settings-sec" id="settingsProfile">
-        <div class="settings-sec-title">
-          <i class="fas fa-user" aria-hidden="true"></i> Your Profile
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-lbl">Display Name</div>
-          <div class="settings-input-row">
-            <input
-              type="text"
-              id="nameInput"
-              class="settings-input"
-              placeholder="Your name"
-              maxlength="40"
-              autocomplete="given-name"
-              aria-label="Your display name"
-            >
-            <button class="btn btn-primary btn-sm" id="saveNameBtn" type="button">
-              Save
-            </button>
-          </div>
-        </div>
-
-      </div><!-- /settingsProfile -->
-
-
-      <!-- ── Appearance Section ── -->
-      <div class="settings-sec" id="settingsAppearance">
-        <div class="settings-sec-title">
-          <i class="fas fa-palette" aria-hidden="true"></i> Appearance
-        </div>
-
-        <!-- Theme -->
-        <div class="settings-row">
-          <div class="settings-lbl">Theme</div>
-          <div class="toggle-row" role="group" aria-label="Select colour theme">
-            <button
-              class="toggle-btn active"
-              data-theme-btn="dark"
-              type="button"
-              aria-pressed="true"
-            >
-              <i class="fas fa-moon" aria-hidden="true"></i> Dark
-            </button>
-            <button
-              class="toggle-btn"
-              data-theme-btn="light"
-              type="button"
-              aria-pressed="false"
-            >
-              <i class="fas fa-sun" aria-hidden="true"></i> Light
-            </button>
-          </div>
-        </div>
-
-        <!-- Font Size -->
-        <div class="settings-row">
-          <div class="settings-lbl">Font Size</div>
-          <div class="toggle-row" role="group" aria-label="Select font size">
-            <button class="toggle-btn font-sz" data-size="small"  type="button" aria-pressed="false">Small</button>
-            <button class="toggle-btn font-sz active" data-size="medium" type="button" aria-pressed="true">Medium</button>
-            <button class="toggle-btn font-sz" data-size="large"  type="button" aria-pressed="false">Large</button>
-          </div>
-        </div>
-
-      </div><!-- /settingsAppearance -->
-
-
-      <!-- ── Data Section ── -->
-      <div class="settings-sec" id="settingsData">
-        <div class="settings-sec-title">
-          <i class="fas fa-database" aria-hidden="true"></i> Your Data
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="ds-stats-row" id="dsStats" aria-label="Data usage statistics"></div>
-
-        <!-- Action Buttons -->
-        <div class="settings-btn-row">
-          <button class="btn btn-ghost btn-sm" id="exportDataBtn" type="button">
-            <i class="fas fa-download" aria-hidden="true"></i> Export All Data
-          </button>
-          <button class="btn btn-danger btn-sm" id="clearDataBtn" type="button">
-            <i class="fas fa-trash" aria-hidden="true"></i> Clear All Data
-          </button>
-        </div>
-
-        <p style="margin-top:10px;font-family:var(--fb);font-size:.84rem;color:var(--t3);line-height:1.7">
-          All your data — history, saved notes and preferences — is stored
-          privately in your browser's localStorage. Nothing is sent to any server.
-          Export creates a JSON backup you can keep forever.
-        </p>
-
-      </div><!-- /settingsData -->
-
-
-      <!-- ── About Section ── -->
-      <div class="settings-sec" id="settingsAbout">
-        <div class="settings-sec-title">
-          <i class="fas fa-info-circle" aria-hidden="true"></i> About Savoiré AI
-        </div>
-
-        <div class="about-card">
-
-          <!-- Logo -->
-          <div class="about-mark" aria-hidden="true">Ś</div>
-
-          <!-- Name & Tagline -->
-          <div class="about-name">Savoiré AI v2.0</div>
-          <div class="about-tagline">Think Less. Know More.</div>
-
-          <!-- Description -->
-          <p class="about-desc">
-            A completely free AI study companion built for students everywhere.
-            No login, no payment, no subscription — ever, for anyone.
-            All data stays private in your own browser.
-            Every feature is and will always be free.
-          </p>
-
-          <!-- Founder Quote -->
-          <div class="about-quote-card">
-            <i class="fas fa-quote-left about-qico" aria-hidden="true"></i>
-            <blockquote class="about-quote">
-              "I built Savoiré AI because great learning tools shouldn't cost anything.
-              Every student — whether in Karachi or California, in a top university
-              or teaching themselves at home at midnight — deserves access to the
-              very best AI has to offer.
-              <strong style="color:var(--gold)">Free, forever.</strong>"
-            </blockquote>
-            <cite class="about-cite">
-              — Sooban Talha, Founder &amp; Developer &nbsp;·&nbsp; Sooban Talha Technologies
-            </cite>
-          </div>
-
-          <!-- Version Info -->
-          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-code-branch" aria-hidden="true" style="color:var(--gold);margin-right:4px"></i>
-              Version 2.0
-            </span>
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-globe" aria-hidden="true" style="color:var(--gold);margin-right:4px"></i>
-              50+ Languages
-            </span>
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-robot" aria-hidden="true" style="color:var(--gold);margin-right:4px"></i>
-              10 AI Models
-            </span>
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-lock-open" aria-hidden="true" style="color:var(--em2);margin-right:4px"></i>
-              No Login Ever
-            </span>
-          </div>
-
-          <!-- Links -->
-          <div class="about-links">
-            <a
-              href="https://soobantalhatech.xyz"
-              class="about-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Visit Sooban Talha Technologies"
-            >
-              <i class="fas fa-building" aria-hidden="true"></i>
-              soobantalhatech.xyz
-            </a>
-            <a
-              href="https://savoireai.vercel.app"
-              class="about-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Visit Savoiré AI"
-            >
-              <i class="fas fa-external-link-alt" aria-hidden="true"></i>
-              savoireai.vercel.app
-            </a>
-          </div>
-
-        </div><!-- /about-card -->
-      </div><!-- /settingsAbout -->
-
-    </div><!-- /modal-body -->
-  </div><!-- /modal -->
-</div><!-- /settingsModal -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
      MODAL — Confirm Destructive Action
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="confirmModal"
-  style="display:none"
-  role="alertdialog"
-  aria-modal="true"
-  aria-labelledby="confirmTitle"
-  aria-describedby="confirmMsg"
->
-  <div class="modal modal-sm">
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="confirmModal" style="display:none" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMsg"><div class="modal modal-sm"><div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-exclamation-triangle modal-hdr-icon" style="color:var(--ruby2)"></i><h3 class="modal-title" id="confirmTitle">Confirm Action</h3></div><button class="modal-close" data-close="confirmModal" type="button"><i class="fas fa-times"></i></button></div><div class="modal-body"><p class="confirm-msg" id="confirmMsg" style="font-family:var(--fb);color:var(--t2);line-height:1.72;font-size:.96rem"></p></div><div class="modal-ftr"><button class="btn btn-ghost btn-sm" data-close="confirmModal" type="button">Cancel</button><button class="btn btn-danger btn-sm" id="confirmOkBtn" type="button"><i class="fas fa-check"></i> Confirm</button></div></div></div>
 
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i
-          class="fas fa-exclamation-triangle modal-hdr-icon"
-          style="color:var(--ruby2)"
-          aria-hidden="true"
-        ></i>
-        <h3 class="modal-title" id="confirmTitle">Confirm Action</h3>
-      </div>
-      <button
-        class="modal-close"
-        data-close="confirmModal"
-        type="button"
-        aria-label="Cancel"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-      <p
-        class="confirm-msg"
-        id="confirmMsg"
-        style="font-family:var(--fb);color:var(--t2);line-height:1.72;font-size:.96rem"
-      ></p>
-    </div>
-
-    <!-- Footer -->
-    <div class="modal-ftr">
-      <button class="btn btn-ghost btn-sm" data-close="confirmModal" type="button">
-        Cancel
-      </button>
-      <button class="btn btn-danger btn-sm" id="confirmOkBtn" type="button">
-        <i class="fas fa-check" aria-hidden="true"></i> Confirm
-      </button>
-    </div>
-
-  </div>
-</div><!-- /confirmModal -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
      TOAST NOTIFICATION CONTAINER
-     Bottom-right, stacked, auto-dismiss
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="toast-container"
-  id="toastContainer"
-  role="region"
-  aria-label="Notifications"
-  aria-live="polite"
-  aria-atomic="false"
-></div>
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<div class="toast-container" id="toastContainer" role="region" aria-label="Notifications" aria-live="polite" aria-atomic="false"></div>
 
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
      BACK TO TOP BUTTON
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<button
-  class="back-to-top"
-  id="backToTopBtn"
-  type="button"
-  title="Back to top"
-  aria-label="Scroll back to top"
->
-  <i class="fas fa-arrow-up" aria-hidden="true"></i>
-</button>
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
+<button class="back-to-top" id="backToTopBtn" type="button" title="Back to top" aria-label="Scroll back to top"><i class="fas fa-arrow-up"></i></button>
 
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     INLINE BOOTSTRAP SCRIPT
-     Runs before app.js — initialises Marked, global helpers, prefills stats
-     ═══════════════════════════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
+     INLINE BOOTSTRAP SCRIPT — Pre-initialization
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
 <script>
-/* ════════════════════════════════════════════════════════════════════════════
-   MARKED.JS CONFIGURATION
-   ════════════════════════════════════════════════════════════════════════════ */
-if (window.marked) {
-  marked.setOptions({
-    breaks:    true,
-    gfm:       true,
-    pedantic:  false,
-    sanitize:  false, /* DOMPurify handles sanitisation */
-  });
-}
+if (window.marked) { marked.setOptions({ breaks: true, gfm: true, pedantic: false }); }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   GLOBAL HELPER — setSugg()
-   Called by Quick Topic pill onclick attributes.
-   Fills the textarea, triggers char count update, and focuses it.
-   ════════════════════════════════════════════════════════════════════════════ */
-function setSugg(topic) {
-  var el = document.getElementById('mainInput');
-  if (!el) return;
-  el.value = topic;
-  el.dispatchEvent(new Event('input'));
-  el.focus();
-  /* On mobile scroll textarea into view */
-  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
+function setSugg(topic) { var el = document.getElementById('mainInput'); if (el) { el.value = topic; el.dispatchEvent(new Event('input')); el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   PREFILL WELCOME-BACK STATS
-   Reads localStorage immediately (before app.js loads) so stats appear
-   instantly without a flash of zeros.
-   ════════════════════════════════════════════════════════════════════════════ */
-(function prefillWelcomeBackStats() {
-  try {
-    var hist     = JSON.parse(localStorage.getItem('sv_history') || '[]');
-    var saved    = JSON.parse(localStorage.getItem('sv_saved')   || '[]');
-    var sessions = parseInt(localStorage.getItem('sv_sessions')  || '0');
+(function prefillWelcomeBackStats() { try { var hist = JSON.parse(localStorage.getItem('sv_history') || '[]'); var saved = JSON.parse(localStorage.getItem('sv_saved') || '[]'); var sessions = parseInt(localStorage.getItem('sv_sessions') || '0'); var hEl = document.getElementById('wbHistCount'); var sEl = document.getElementById('wbSavedCount'); var seEl = document.getElementById('wbSessions'); if (hEl) hEl.textContent = hist.length; if (sEl) sEl.textContent = saved.length; if (seEl) seEl.textContent = sessions; } catch(e) {} })();
 
-    var hEl  = document.getElementById('wbHistCount');
-    var sEl  = document.getElementById('wbSavedCount');
-    var seEl = document.getElementById('wbSessions');
+(function applyStoredTheme() { try { var prefs = JSON.parse(localStorage.getItem('sv_prefs') || '{}'); if (prefs.theme) document.documentElement.dataset.theme = prefs.theme; if (prefs.fontSize) document.documentElement.dataset.font = prefs.fontSize; } catch(e) {} })();
 
-    if (hEl)  hEl.textContent  = hist.length;
-    if (sEl)  sEl.textContent  = saved.length;
-    if (seEl) seEl.textContent = sessions;
-  } catch (e) {
-    /* Silently ignore — app.js will set correct values */
-  }
-})();
-
-/* ════════════════════════════════════════════════════════════════════════════
-   THEME FLASH PREVENTION
-   Apply stored theme before paint to prevent dark→light flash
-   ════════════════════════════════════════════════════════════════════════════ */
-(function applyStoredTheme() {
-  try {
-    var prefs = JSON.parse(localStorage.getItem('sv_prefs') || '{}');
-    if (prefs.theme) {
-      document.documentElement.dataset.theme = prefs.theme;
-    }
-    if (prefs.fontSize) {
-      document.documentElement.dataset.font = prefs.fontSize;
-    }
-  } catch (e) {
-    /* Use defaults */
-  }
-})();
-
-/* ════════════════════════════════════════════════════════════════════════════
-   BACK TO TOP BUTTON LOGIC
-   ════════════════════════════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', function () {
-  var outArea     = document.getElementById('outArea');
-  var backToTopBtn = document.getElementById('backToTopBtn');
-
-  if (outArea && backToTopBtn) {
-    outArea.addEventListener('scroll', function () {
-      if (outArea.scrollTop > 300) {
-        backToTopBtn.classList.add('is-visible');
-      } else {
-        backToTopBtn.classList.remove('is-visible');
-      }
-    });
-
-    backToTopBtn.addEventListener('click', function () {
-      outArea.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-});
+(function initBackToTop() { var outArea = document.getElementById('outArea'); var backBtn = document.getElementById('backToTopBtn'); if (outArea && backBtn) { outArea.addEventListener('scroll', function() { if (outArea.scrollTop > 300) backBtn.classList.add('is-visible'); else backBtn.classList.remove('is-visible'); }); backBtn.addEventListener('click', function() { outArea.scrollTo({ top: 0, behavior: 'smooth' }); }); } })();
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MAIN APPLICATION SCRIPT
-     All logic is in app.js — this tag loads it after the full DOM is ready
-     ═══════════════════════════════════════════════════════════════════════════════ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════════════════════
+     MAIN APPLICATION SCRIPT — app.js
+     ════════════════════════════════════════════════════════════════════════════════════════════════ -->
 <script src="app.js"></script>
 
 </body>
