@@ -321,9 +321,43 @@ class SavoireApp {
   /* ── Live markdown renderer — for streaming overlay (throttled for performance) ── */
   _renderMdLive(text) {
     if (!text) return '<span class="sfp-cursor">▊</span>';
-    const rendered = this._renderMd(text);
+    
+    /* Apply FULL markdown styling during live stream */
+    let html = text;
+    
+    /* Headers with gold color */
+    html = html.replace(/^### (.+)$/gm, '<h3 style="color:var(--gold);font-family:var(--fd);font-size:1.4rem;margin:1.5rem 0 0.8rem;font-weight:600">$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2 style="color:var(--gold);font-family:var(--fd);font-size:1.7rem;margin:1.8rem 0 1rem;font-weight:700">$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1 style="color:var(--gold);font-family:var(--fd);font-size:2rem;margin:2rem 0 1.2rem;font-weight:800">$1</h1>');
+    
+    /* Bold text */
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong style="color:var(--gold);font-weight:700">$1</strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--t1);font-weight:600">$1</strong>');
+    
+    /* Italic */
+    html = html.replace(/\*(.+?)\*/g, '<em style="color:var(--gold2);font-style:italic">$1</em>');
+    
+    /* Code blocks */
+    html = html.replace(/```(\w+)?\n([\s\S]+?)```/g, '<pre style="background:var(--bg2);border:1px solid var(--b2);border-radius:8px;padding:1rem;margin:1rem 0;overflow-x:auto;font-family:var(--fm);font-size:0.9rem;line-height:1.6;color:var(--t2)"><code>$2</code></pre>');
+    
+    /* Inline code */
+    html = html.replace(/`(.+?)`/g, '<code style="background:rgba(201,169,110,0.15);color:var(--gold);padding:2px 6px;border-radius:4px;font-family:var(--fm);font-size:0.9em">$1</code>');
+    
+    /* Bullet lists */
+    html = html.replace(/^- (.+)$/gm, '<div style="display:flex;gap:0.5rem;margin:0.4rem 0;padding-left:1rem"><span style="color:var(--gold);font-weight:700">•</span><span style="color:var(--t2);line-height:1.6">$1</span></div>');
+    
+    /* Numbered lists */
+    html = html.replace(/^(\d+)\. (.+)$/gm, '<div style="display:flex;gap:0.5rem;margin:0.4rem 0;padding-left:1rem"><span style="color:var(--gold);font-weight:700;min-width:1.5rem">$1.</span><span style="color:var(--t2);line-height:1.6">$2</span></div>');
+    
+    /* Blockquotes */
+    html = html.replace(/^> (.+)$/gm, '<div style="border-left:3px solid var(--gold);padding-left:1rem;margin:1rem 0;color:var(--t3);font-style:italic">$1</div>');
+    
+    /* Line breaks */
+    html = html.replace(/\n\n/g, '<br><br>');
+    html = html.replace(/\n/g, '<br>');
+    
     /* Append blinking cursor at end */
-    return rendered + '<span class="sfp-cursor">▊</span>';
+    return html + '<span class="sfp-cursor">▊</span>';
   }
 
   _stripMd(t) {
@@ -2865,28 +2899,37 @@ class SavoireApp {
           const trimmed = para.trim();
           if (!trimmed) return;
 
-          /* Detect markdown headings */
+          /* Detect markdown headings - improved styling */
           if (/^#{1,4} /.test(trimmed)) {
             const headText = trimmed.replace(/^#+\s*/, '');
-            checkSpace(12);
-            y += 3;
-            writeText(headText, 11, true, GOLD_DARK, 0, 1.3);
-            y += 1;
+            checkSpace(16);
+            y += 4;
+            
+            /* Add subtle background for headings */
+            const headWidth = doc.getTextWidth(headText);
+            doc.setFillColor(250, 248, 245);
+            doc.roundedRect(ml, y - 2, Math.min(headWidth + 8, cw), 8, 2, 2, 'F');
+            
+            writeText(headText, 11.5, true, GOLD_DARK, 0, 1.3);
+            y += 2;
           } else if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-            checkSpace(10);
-            writeText(trimmed.replace(/\*\*/g, ''), 10.5, true, MID, 0, 1.4);
+            checkSpace(11);
             y += 1;
+            writeText(trimmed.replace(/\*\*/g, ''), 10.5, true, MID, 0, 1.45);
+            y += 1.5;
           } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
             const items = trimmed.split('\n').filter(Boolean);
             items.forEach(item => {
               bulletItem(item.replace(/^[-*]\s+/, ''), GOLD);
             });
+            y += 1;
           } else {
-            writeText(trimmed, 9.5, false, DARK, 0, 1.65);
-            y += 2.5;
+            /* Regular paragraphs with better spacing */
+            writeText(trimmed, 9.5, false, DARK, 0, 1.7);
+            y += 3.5;
           }
         });
-        y += 6;
+        y += 8;
       }
 
       /* ── KEY CONCEPTS SECTION ── */
