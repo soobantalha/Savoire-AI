@@ -1,1358 +1,910 @@
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTRA PREMIUM BACKEND
-// Built by Sooban Talha Technologies | soobantalhatech.xyz
-// Founder: Sooban Talha
-//
-// ╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
-// ║                                    FEATURE MATRIX                                                ║
-// ╠══════════════════════════════════════════════════════════════════════════════════════════════════╣
-// ║  ✦ TRUE SSE STREAMING          ✦ 10+ FREE AI MODELS           ✦ SMART FAILOVER                  ║
-// ║  ✦ HEARTBEAT SYSTEM            ✦ RATE LIMIT DETECTION         ✦ DOUBLE RETRY LOGIC              ║
-// ║  ✦ 50+ LANGUAGES               ✦ 4 DEPTH LEVELS               ✦ 5 WRITING STYLES                ║
-// ║  ✦ 5 STUDY TOOLS               ✦ STRUCTURED JSON OUTPUT       ✦ QUALITY FALLBACK                ║
-// ║  ✦ CORS SUPPORT                ✦ SECURITY HEADERS             ✦ REQUEST LOGGING                 ║
-// ║  ✦ 300s TIMEOUT                ✦ VERCEL OPTIMIZED             ✦ EDGE COMPATIBLE                 ║
-// ╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
 'use strict';
 
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 1: CONSTANTS & BRANDING
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SAVOIRÉ AI v2.0 — FAST LIVE OUTPUT
+   Built by Sooban Talha Technologies
+   ✦ INSTANT STREAMING — Characters appear in MILLISECONDS
+   ✦ NO WAITING — Start reading immediately
+   ✦ OPTIMIZED API CALLS — Fast model priority
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-const BRAND = 'Savoiré AI v2.0';
-const DEVELOPER = 'Sooban Talha Technologies';
-const DEVSITE = 'soobantalhatech.xyz';
-const WEBSITE = 'savoireai.vercel.app';
-const FOUNDER = 'Sooban Talha';
-const APP_VERSION = '2.0';
-const BUILD_NUMBER = '2025.001';
-
-const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
-const HTTP_REFERER = `https://${WEBSITE}`;
-const APP_TITLE = BRAND;
-
-// SSE Event Types
-const SSE_EVENTS = {
-  TOKEN: 'token',
-  DONE: 'done',
-  ERROR: 'error',
-  HEARTBEAT: 'heartbeat',
-  STAGE: 'stage',
-  METRICS: 'metrics'
+const SAVOIRÉ = {
+  VERSION: '2.0',
+  BRAND: 'Savoiré AI',
+  DEVELOPER: 'Sooban Talha Technologies',
+  DEVSITE: 'soobantalhatech.xyz',
+  WEBSITE: 'savoireai.vercel.app',
+  FOUNDER: 'Sooban Talha',
+  API_URL: '/api/study',
+  MAX_HISTORY: 50,
+  MAX_SAVED: 100,
 };
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 2: FREE AI MODEL ROSTER — 10+ MODELS WITH FREE SUFFIX
-   All models use :free suffix on OpenRouter — $0 per request
-   Tried in priority order for best quality and reliability
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-const MODELS = [
-  {
-    id: 'google/gemini-2.0-flash-exp:free',
-    name: 'Gemini 2.0 Flash',
-    maxTokens: 8000,
-    timeoutMs: 120000,
-    priority: 1,
-    quality: 10,
-    speed: 9,
-    description: 'Best quality, fastest response, excellent at structured JSON'
-  },
-  {
-    id: 'deepseek/deepseek-chat-v3-0324:free',
-    name: 'DeepSeek Chat v3',
-    maxTokens: 8000,
-    timeoutMs: 120000,
-    priority: 2,
-    quality: 9,
-    speed: 8,
-    description: 'Outstanding reasoning, very strong at detailed academic content'
-  },
-  {
-    id: 'meta-llama/llama-3.3-70b-instruct:free',
-    name: 'LLaMA 3.3 70B',
-    maxTokens: 6000,
-    timeoutMs: 110000,
-    priority: 3,
-    quality: 9,
-    speed: 7,
-    description: 'Meta flagship, excellent instruction following'
-  },
-  {
-    id: 'mistralai/mixtral-8x7b-instruct:free',
-    name: 'Mixtral 8x7B',
-    maxTokens: 6000,
-    timeoutMs: 110000,
-    priority: 4,
-    quality: 8,
-    speed: 7,
-    description: 'Mixtral MoE, great balance of quality and speed'
-  },
-  {
-    id: 'z-ai/glm-4.5-air:free',
-    name: 'GLM 4.5 Air',
-    maxTokens: 6000,
-    timeoutMs: 100000,
-    priority: 5,
-    quality: 8,
-    speed: 8,
-    description: 'Strong multilingual capabilities'
-  },
-  {
-    id: 'microsoft/phi-4-reasoning-plus:free',
-    name: 'Phi-4 Reasoning Plus',
-    maxTokens: 4000,
-    timeoutMs: 90000,
-    priority: 6,
-    quality: 8,
-    speed: 8,
-    description: 'Microsoft, excellent logical reasoning'
-  },
-  {
-    id: 'qwen/qwen3-8b:free',
-    name: 'Qwen3 8B',
-    maxTokens: 4000,
-    timeoutMs: 90000,
-    priority: 7,
-    quality: 7,
-    speed: 8,
-    description: 'Alibaba, solid multilingual performance'
-  },
-  {
-    id: 'google/gemini-flash-1.5-8b:free',
-    name: 'Gemini Flash 1.5 8B',
-    maxTokens: 4000,
-    timeoutMs: 80000,
-    priority: 8,
-    quality: 7,
-    speed: 9,
-    description: 'Lightweight Gemini, fast and reliable'
-  },
-  {
-    id: 'nousresearch/hermes-3-llama-3.1-405b:free',
-    name: 'Hermes 3 LLaMA 405B',
-    maxTokens: 6000,
-    timeoutMs: 120000,
-    priority: 9,
-    quality: 9,
-    speed: 5,
-    description: 'Massive model, great for comprehensive deep content'
-  },
-  {
-    id: 'mistralai/mistral-7b-instruct-v0.3:free',
-    name: 'Mistral 7B',
-    maxTokens: 3500,
-    timeoutMs: 80000,
-    priority: 10,
-    quality: 6,
-    speed: 8,
-    description: 'Reliable European model'
-  },
-  {
-    id: 'openchat/openchat-7b:free',
-    name: 'OpenChat 7B',
-    maxTokens: 3500,
-    timeoutMs: 80000,
-    priority: 11,
-    quality: 6,
-    speed: 8,
-    description: 'Final fallback, consistently available'
-  }
-];
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 3: DEPTH CONFIGURATION
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-const DEPTH_CONFIG = {
-  standard: {
-    wordRange: '600 to 900 words',
-    minWords: 600,
-    targetWords: 750,
-    maxWords: 900,
-    description: 'Clear and accessible, covering all essentials with good depth',
-    sectionsRequired: 4,
-    detailLevel: 3
-  },
-  detailed: {
-    wordRange: '1000 to 1500 words',
-    minWords: 1000,
-    targetWords: 1250,
-    maxWords: 1500,
-    description: 'Detailed coverage with concrete examples and thorough explanations',
-    sectionsRequired: 6,
-    detailLevel: 4
-  },
-  comprehensive: {
-    wordRange: '1500 to 2000 words',
-    minWords: 1500,
-    targetWords: 1750,
-    maxWords: 2000,
-    description: 'Comprehensive analysis covering all major aspects, nuances and edge cases',
-    sectionsRequired: 7,
-    detailLevel: 5
-  },
-  expert: {
-    wordRange: '2000 to 2800 words including advanced subtopics, nuances, cutting-edge developments',
-    minWords: 2000,
-    targetWords: 2400,
-    maxWords: 2800,
-    description: 'Expert-level deep dive covering advanced subtopics, academic debates and future directions',
-    sectionsRequired: 8,
-    detailLevel: 5
-  }
-};
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 4: STYLE CONFIGURATION
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-const STYLE_CONFIG = {
-  simple: {
-    name: 'Simple & Clear',
-    instruction: `Write in clear, accessible, beginner-friendly language throughout. Define every technical term immediately when first used. Use short sentences, everyday analogies and comparisons. Avoid jargon wherever possible. The goal is that a motivated student encountering this topic for the very first time should understand every sentence.`,
-    tone: 'friendly',
-    complexity: 1
-  },
-  academic: {
-    name: 'Academic & Formal',
-    instruction: `Write in formal academic language with precise scholarly terminology. Maintain a third-person objective tone. Use discipline-specific vocabulary without oversimplification. Employ citation-ready phrases and formal definitions. The style should be suitable for a university essay or academic report.`,
-    tone: 'formal',
-    complexity: 4
-  },
-  detailed: {
-    name: 'Highly Detailed',
-    instruction: `Provide exhaustive detail at every point. Include numerous concrete examples, counterexamples, edge cases, specific statistics where relevant, and thorough multi-step explanations. Never summarise where you could explain fully. Leave nothing implicit.`,
-    tone: 'explanatory',
-    complexity: 4
-  },
-  exam: {
-    name: 'Exam-Focused',
-    instruction: `Structure the entire response around exam success. Provide clear key definitions in mark-scheme language. Highlight frequently examined aspects. Explicitly state what examiners look for. Include mark-worthy phrases that score well. Flag common student mistakes.`,
-    tone: 'direct',
-    complexity: 3
-  },
-  visual: {
-    name: 'Visual & Analogy-Rich',
-    instruction: `Make every concept concrete and memorable through vivid analogies, metaphors, visual descriptions and step-by-step walkthroughs. Compare abstract ideas to everyday objects. Build mental models that students can visualise clearly. Use narrative where helpful.`,
-    tone: 'narrative',
-    complexity: 2
-  }
-};
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 5: TOOL CONFIGURATION
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
 
 const TOOL_CONFIG = {
-  notes: {
-    name: 'Generate Notes',
-    objective: 'Generate comprehensive, deeply detailed, well-structured study notes.',
-    emphasis: `The ultra_long_notes field is the centrepiece. It MUST be genuinely long and detailed. Use rich markdown formatting: ## headings for sections, **bold** for key terms, bullet lists, numbered lists, > blockquotes for important definitions, and --- between major sections.`,
-    sections: ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Advanced Aspects', 'Common Applications', 'Critical Analysis', 'Summary & Key Takeaways']
-  },
-  flashcards: {
-    name: 'Create Flashcards',
-    objective: 'Generate study materials optimised for interactive flashcard learning.',
-    emphasis: `The key_concepts should be formatted as perfect flashcard pairs — clear concise front side followed by colon then clear accurate back side. Each pair should stand completely alone. The practice_questions should use the same format — short memorable questions with concise answers.`,
-    sections: ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary']
-  },
-  quiz: {
-    name: 'Build Quiz',
-    objective: 'Generate challenging practice questions for self-testing.',
-    emphasis: `The practice_questions are the core. Make them genuinely challenging. Vary the question types: analytical, application, and evaluation. Each answer must be comprehensive — minimum 200 words — covering direct answer, detailed explanation, specific example, real-world relevance, and common mistakes.`,
-    sections: ['Introduction', 'Core Concepts', 'How It Works', 'Key Examples', 'Summary']
-  },
-  summary: {
-    name: 'Smart Summary',
-    objective: 'Generate a concise, punchy smart summary for fast review.',
-    emphasis: `Begin ultra_long_notes with a 2-3 sentence TL;DR paragraph. Then follow with clearly labelled sections covering only the most critical points. The key_concepts should represent the absolute TOP 5 things a student MUST know. The tone should be efficient and direct.`,
-    sections: ['TL;DR', 'Core Concepts', 'Key Mechanisms', 'Critical Examples', 'What to Remember']
-  },
-  mindmap: {
-    name: 'Build Mind Map',
-    objective: 'Generate content structured hierarchically for a visual mind map.',
-    emphasis: `Structure ALL content to reveal hierarchical relationships. ultra_long_notes should use nested bullet points mirroring a mind map. key_concepts represent the 5 main branches. real_world_applications represent the Applications branch. key_tricks represent Study Strategies.`,
-    sections: ['Central Topic', 'Main Branches', 'Sub-Branches', 'Connections', 'Applications']
+  notes: { icon: 'fa-book-open', label: 'Generate Notes', placeholder: 'Enter any topic for comprehensive study notes...', sfpLabel: 'Generating notes instantly...', sfpIcon: 'fa-book-open', sfpName: 'Notes' },
+  flashcards: { icon: 'fa-layer-group', label: 'Create Flashcards', placeholder: 'Enter a topic for interactive flashcards...', sfpLabel: 'Building flashcards instantly...', sfpIcon: 'fa-layer-group', sfpName: 'Flashcards' },
+  quiz: { icon: 'fa-question-circle', label: 'Build Quiz', placeholder: 'Enter a topic to generate practice quiz...', sfpLabel: 'Creating quiz instantly...', sfpIcon: 'fa-question-circle', sfpName: 'Quiz' },
+  summary: { icon: 'fa-align-left', label: 'Summarise', placeholder: 'Enter a topic for smart summary...', sfpLabel: 'Writing summary instantly...', sfpIcon: 'fa-align-left', sfpName: 'Summary' },
+  mindmap: { icon: 'fa-project-diagram', label: 'Build Mind Map', placeholder: 'Enter a topic for visual mind map...', sfpLabel: 'Building mind map instantly...', sfpIcon: 'fa-project-diagram', sfpName: 'Mind Map' },
+};
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MAIN APP CLASS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+class SavoireApp {
+  
+  constructor() {
+    this.tool = 'notes';
+    this.generating = false;
+    this.currentData = null;
+    this.userName = '';
+    this.confirmCb = null;
+    this.streamCtrl = null;
+    this.streamBuffer = '';
+    this.focusMode = false;
+    this.fcCards = [];
+    this.fcCurrent = 0;
+    this.fcFlipped = false;
+    this.quizData = [];
+    this.quizScore = 0;
+    
+    this.history = this._load('sv_history', []);
+    this.saved = this._load('sv_saved', []);
+    this.prefs = this._load('sv_prefs', {});
+    this.userName = localStorage.getItem('sv_user') || '';
+    this.sessions = parseInt(localStorage.getItem('sv_sessions') || '0');
+    this.isReturn = !!this.userName;
+    
+    this._boot();
   }
-};
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 6: LANGUAGE SUPPORT — 50+ LANGUAGES
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-const SUPPORTED_LANGUAGES = [
-  'English', 'Urdu', 'Hindi', 'Arabic', 'French', 'German', 'Spanish', 'Portuguese',
-  'Italian', 'Dutch', 'Russian', 'Turkish', 'Chinese (Simplified)', 'Chinese (Traditional)',
-  'Japanese', 'Korean', 'Bengali', 'Punjabi', 'Indonesian', 'Malay', 'Swahili', 'Persian',
-  'Vietnamese', 'Thai', 'Greek', 'Polish', 'Swedish', 'Norwegian', 'Danish', 'Finnish',
-  'Czech', 'Romanian', 'Hungarian', 'Ukrainian', 'Hebrew', 'Nepali', 'Tamil', 'Telugu',
-  'Kannada', 'Marathi', 'Gujarati', 'Sinhala', 'Amharic', 'Somali', 'Burmese', 'Khmer',
-  'Lao', 'Mongolian', 'Georgian', 'Armenian', 'Albanian', 'Macedonian', 'Bulgarian',
-  'Serbian', 'Croatian', 'Bosnian', 'Slovenian', 'Slovak', 'Estonian', 'Latvian', 'Lithuanian',
-  'Icelandic', 'Irish', 'Welsh', 'Basque', 'Catalan', 'Galician', 'Maltese'
-];
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 7: UTILITY FUNCTIONS
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const logger = {
-  info: (...args) => console.log(`[${new Date().toISOString()}] [${BRAND}] 📘 INFO:`, ...args),
-  success: (...args) => console.log(`[${new Date().toISOString()}] [${BRAND}] ✅ SUCCESS:`, ...args),
-  warn: (...args) => console.warn(`[${new Date().toISOString()}] [${BRAND}] ⚠️ WARN:`, ...args),
-  error: (...args) => console.error(`[${new Date().toISOString()}] [${BRAND}] ❌ ERROR:`, ...args),
-  model: (...args) => console.log(`[${new Date().toISOString()}] [MODEL] 🤖`, ...args),
-  stream: (...args) => console.log(`[${new Date().toISOString()}] [STREAM] 📡`, ...args)
-};
-
-const wordCount = (text) => {
-  if (!text || typeof text !== 'string') return 0;
-  return text.trim().split(/\s+/).filter(Boolean).length;
-};
-
-const truncate = (str, maxLen = 100) => {
-  if (!str) return '';
-  return String(str).length > maxLen ? String(str).substring(0, maxLen) + '…' : String(str);
-};
-
-const generateRequestId = () => {
-  return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-};
-
-const sanitizeInput = (input) => {
-  if (!input || typeof input !== 'string') return '';
-  return input.trim().slice(0, 15000).replace(/[<>]/g, '');
-};
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 8: PROMPT BUILDER — ADVANCED MULTI-CONTEXT
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-function buildPrompt(input, options) {
-  const language = options.language || 'English';
-  const depth = options.depth || 'detailed';
-  const style = options.style || 'simple';
-  const tool = options.tool || 'notes';
   
-  const depthConfig = DEPTH_CONFIG[depth] || DEPTH_CONFIG.detailed;
-  const styleConfig = STYLE_CONFIG[style] || STYLE_CONFIG.simple;
-  const toolConfig = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BOOTSTRAP
+     ═══════════════════════════════════════════════════════════════════════════ */
   
-  const timestamp = new Date().toISOString();
-  const sectionsList = toolConfig.sections.map(s => `  ## ${s}`).join('\n');
+  _boot() {
+    this._applyPrefs();
+    this._bindEvents();
+    this._initWelcome();
+    this._updateStats();
+    this._renderHistory();
+    this._updateUI();
+    
+    console.log(`%c✨ ${SAVOIRÉ.BRAND} — Fast Live Output`, 'color:#C9A96E;font-size:16px;font-weight:bold');
+    console.log(`%cBuilt by ${SAVOIRÉ.DEVELOPER}`, 'color:#C9A96E;font-size:12px');
+  }
   
-  return `╔════════════════════════════════════════════════════════════════════════════════════════════╗
-║                              SAVOIRÉ AI — ADVANCED STUDY GENERATOR                              ║
-╚════════════════════════════════════════════════════════════════════════════════════════════════╝
-
-SYSTEM IDENTITY:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-You are ${BRAND}, the world's most advanced free AI study companion.
-Built by ${DEVELOPER} | ${DEVSITE} | Founder: ${FOUNDER}
-Version: ${APP_VERSION} | Build: ${BUILD_NUMBER}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-TASK OBJECTIVE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${toolConfig.objective}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-STUDENT INPUT:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Topic/Text: ${input}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-OUTPUT SPECIFICATIONS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✧ OUTPUT LANGUAGE: ${language}
-✧ DEPTH LEVEL: ${depthConfig.wordRange} (${depthConfig.description})
-✧ WRITING STYLE: ${styleConfig.name} — ${styleConfig.instruction.substring(0, 200)}...
-✧ TOOL MODE: ${toolConfig.name} — ${toolConfig.emphasis}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-REQUIRED SECTION STRUCTURE:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${sectionsList}
-Each section must be substantive — minimum 80 words per section, more is better for deeper levels.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-MARKDOWN FORMATTING REQUIREMENTS:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• ## headings for every major section (not ###, use ##)
-• **bold text** for EVERY key term on first use
-• Bullet lists (- item) for enumerations and lists
-• Numbered lists (1. item) for processes and sequences
-• > blockquotes for important definitions, rules or key statements
-• --- horizontal rules between major sections
-• \`code\` for technical terms, formulas, or file names
-• [links](url) for references when appropriate
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-JSON OUTPUT STRUCTURE — EXACT SPECIFICATION:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-{
-  "topic": "specific, accurate topic name in ${language} (clean, no extra text)",
+  /* ═══════════════════════════════════════════════════════════════════════════
+     DOM HELPERS
+     ═══════════════════════════════════════════════════════════════════════════ */
   
-  "curriculum_alignment": "academic level and subject (e.g., 'A-Level Biology', 'University CS')",
+  _el(id) { return document.getElementById(id); }
+  _qs(sel) { return document.querySelector(sel); }
+  _qsa(sel) { return document.querySelectorAll(sel); }
+  _on(id, ev, fn) { const el = this._el(id); if (el) el.addEventListener(ev, fn); }
   
-  "ultra_long_notes": "FULL RICH MARKDOWN STUDY NOTES — MINIMUM ${depthConfig.wordRange}. Use proper markdown with ## headings, **bold** for key terms, bullet lists, numbered lists, > blockquotes, --- horizontal rules. This is the PRIMARY content students will read.",
+  _load(key, def) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+  }
   
-  "key_concepts": [
-    "Term 1: comprehensive explanation (25-40 words) in ${language}",
-    "Term 2: comprehensive explanation (25-40 words) in ${language}",
-    "Term 3: comprehensive explanation (25-40 words) in ${language}",
-    "Term 4: comprehensive explanation (25-40 words) in ${language}",
-    "Term 5: comprehensive explanation (25-40 words) in ${language}"
-  ],
+  _save(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
   
-  "key_tricks": [
-    "Practical memory aid / mnemonic / study strategy (55-75 words) in ${language} — include technique name and how to apply it",
-    "Second memory trick with different approach (55-75 words) in ${language}",
-    "Third memory trick or exam strategy (55-75 words) in ${language}"
-  ],
+  _esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
   
-  "practice_questions": [
-    {
-      "question": "Challenging analytical question in ${language} that requires reasoning, not just recall",
-      "answer": "COMPREHENSIVE answer (minimum 160 words) in ${language} covering: 1) Direct answer, 2) Detailed reasoning, 3) Specific concrete example, 4) Real-world relevance, 5) Common mistake to avoid"
-    },
-    {
-      "question": "Application-based question in ${language} requiring scenario analysis",
-      "answer": "COMPREHENSIVE answer (minimum 160 words) in ${language} with the same 5-part structure"
-    },
-    {
-      "question": "Evaluation or comparison question in ${language} requiring critical thinking",
-      "answer": "COMPREHENSIVE answer (minimum 160 words) in ${language} with the same 5-part structure"
+  _relTime(ts) {
+    if (!ts) return '';
+    const d = Date.now() - ts;
+    const m = Math.floor(d / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    if (m < 1440) return `${Math.floor(m / 60)}h ago`;
+    return `${Math.floor(m / 1440)}d ago`;
+  }
+  
+  _dateGroup(ts) {
+    if (!ts) return 'Unknown';
+    const d = Date.now() - ts;
+    const day = Math.floor(d / 86400000);
+    if (day === 0) return 'Today';
+    if (day === 1) return 'Yesterday';
+    if (day < 7) return 'This Week';
+    return 'Older';
+  }
+  
+  _genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+  _wordCount(t) { return t ? t.trim().split(/\s+/).filter(Boolean).length : 0; }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     MARKDOWN RENDERER — FAST
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  _renderMd(text) {
+    if (!text) return '';
+    if (window.marked && window.DOMPurify) {
+      try { return DOMPurify.sanitize(marked.parse(text)); } catch(e) {}
     }
-  ],
-  
-  "real_world_applications": [
-    "Domain/Field 1: specific, detailed application of concept (45-65 words) in ${language} — explain HOW it applies",
-    "Domain/Field 2: specific, detailed application (45-65 words) in ${language} with concrete example",
-    "Domain/Field 3: specific, detailed application (45-65 words) in ${language} with real-world impact"
-  ],
-  
-  "common_misconceptions": [
-    "Many students believe [wrong idea]. In reality, [correct explanation with reason why the misconception is wrong] (45-65 words) in ${language}",
-    "Second misconception with clear correction (45-65 words) in ${language}",
-    "Third misconception with memorable correction (45-65 words) in ${language}"
-  ],
-  
-  "study_score": 96,
-  "powered_by": "${BRAND} by ${DEVELOPER}",
-  "generated_at": "${timestamp}"
-}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CRITICAL INSTRUCTIONS — READ CAREFULLY:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Your ENTIRE response must be a SINGLE valid JSON object
-2. NO text before the opening { and NO text after the closing }
-3. NO markdown code fences (\`\`\`json or \`\`\`)
-4. NO comments or annotations inside the JSON
-5. All string values must use proper JSON escaping (\\n for newlines, \\" for quotes)
-6. The ultra_long_notes field ALONE must meet the word count requirement
-7. ALL content must be in ${language} — not a single word in any other language
-8. Quality over quantity — but quantity requirements are MINIMUMS, not maximums
-9. Be academically rigorous, factually accurate, and pedagogically sound
-10. Remember: This is for a REAL student studying. Make it genuinely useful.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-BEGIN YOUR JSON RESPONSE NOW (remember: ONLY JSON, no other text):`;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 9: JSON EXTRACTION & PARSING — ROBUST HANDLER
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-function extractAndParseJSON(rawContent) {
-  if (!rawContent || typeof rawContent !== 'string') {
-    throw new Error('Model returned empty or non-string content');
+    let html = String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    html = html.replace(/```[\s\S]*?```/g, m => `<pre><code>${m.slice(3, -3)}</code></pre>`);
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/^[-*•] (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/\n\n/g, '</p><p>');
+    if (!html.startsWith('<')) html = '<p>' + html + '</p>';
+    return html;
   }
   
-  let text = rawContent.trim();
-  
-  // Remove markdown code fences
-  text = text.replace(/^```(?:json)?\s*/i, '');
-  text = text.replace(/\s*```\s*$/i, '');
-  text = text.trim();
-  
-  // Find JSON object boundaries
-  const startIndex = text.indexOf('{');
-  const endIndex = text.lastIndexOf('}');
-  
-  if (startIndex === -1) {
-    throw new Error(`No JSON object opening brace found. Preview: "${truncate(text, 200)}"`);
-  }
-  if (endIndex === -1 || endIndex <= startIndex) {
-    throw new Error(`No valid JSON object closing brace found. Preview: "${truncate(text, 200)}"`);
+  _renderMdLive(text) {
+    if (!text) return '<span class="cursor-blink">▊</span>';
+    return this._renderMd(text) + '<span class="cursor-blink">▊</span>';
   }
   
-  let jsonStr = text.substring(startIndex, endIndex + 1);
-  
-  // Try direct parse first
-  try {
-    return JSON.parse(jsonStr);
-  } catch (directError) {
-    logger.warn(`Direct JSON parse failed: ${directError.message} — attempting repairs`);
+  _stripMd(t) {
+    if (!t) return '';
+    return t.replace(/#{1,6} /g, '').replace(/\*\*\*(.+?)\*\*\*/g, '$1').replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1').replace(/`(.+?)`/g, '$1').trim();
   }
   
-  // Repair common JSON issues
-  let repaired = jsonStr;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     EVENT BINDINGS
+     ═══════════════════════════════════════════════════════════════════════════ */
   
-  // Fix unescaped newlines inside strings
-  repaired = repaired.replace(/"((?:[^"\\]|\\.)*)"/g, (match, inner) => {
-    const fixed = inner
-      .replace(/\r\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\n/g, '\\n')
-      .replace(/\t/g, '\\t');
-    return `"${fixed}"`;
-  });
-  
-  // Remove trailing commas
-  repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
-  
-  // Fix unquoted property keys
-  repaired = repaired.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)(\s*:)/g, '$1"$2"$3');
-  
-  // Fix single quotes to double quotes
-  repaired = repaired.replace(/'/g, '"');
-  
-  try {
-    return JSON.parse(repaired);
-  } catch (repairError) {
-    throw new Error(
-      `JSON parse failed after repairs. Original error: ${repairError.message}. ` +
-      `Content length: ${jsonStr.length}. First 300 chars: "${truncate(jsonStr, 300)}"`
-    );
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 10: DATA VALIDATION & ENRICHMENT
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-function validateAndEnrich(parsed, options) {
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Parsed result is not an object');
-  }
-  
-  // Required fields validation
-  if (!parsed.topic || typeof parsed.topic !== 'string' || parsed.topic.trim().length < 2) {
-    parsed.topic = options.topic || 'Study Material';
-  }
-  
-  if (!parsed.ultra_long_notes || typeof parsed.ultra_long_notes !== 'string') {
-    throw new Error('Missing required field: ultra_long_notes');
-  }
-  
-  const notesLength = parsed.ultra_long_notes.trim().length;
-  if (notesLength < 200) {
-    throw new Error(`ultra_long_notes too short: ${notesLength} characters (minimum 200)`);
-  }
-  
-  // Validate and fix arrays
-  if (!Array.isArray(parsed.practice_questions) || parsed.practice_questions.length === 0) {
-    parsed.practice_questions = buildFallbackQuestions(parsed.topic);
-  } else {
-    parsed.practice_questions = parsed.practice_questions
-      .filter(q => q && typeof q === 'object')
-      .map(q => ({
-        question: String(q.question || q.q || '').trim(),
-        answer: String(q.answer || q.a || '').trim()
-      }))
-      .filter(q => q.question.length > 10 && q.answer.length > 50);
+  _bindEvents() {
+    // Welcome
+    this._on('welcomeBtn', 'click', () => this._submitWelcome());
+    this._on('welcomeNameInput', 'keydown', e => { if (e.key === 'Enter') this._submitWelcome(); });
+    this._on('welcomeSkip', 'click', () => this._skipWelcome());
+    this._on('welcomeBackBtn', 'click', () => this._dismissWelcomeBack());
     
-    if (parsed.practice_questions.length === 0) {
-      parsed.practice_questions = buildFallbackQuestions(parsed.topic);
-    }
-  }
-  
-  if (!Array.isArray(parsed.key_concepts) || parsed.key_concepts.length === 0) {
-    parsed.key_concepts = buildFallbackConcepts(parsed.topic);
-  }
-  
-  if (!Array.isArray(parsed.key_tricks) || parsed.key_tricks.length === 0) {
-    parsed.key_tricks = buildFallbackTricks(parsed.topic);
-  }
-  
-  if (!Array.isArray(parsed.real_world_applications) || parsed.real_world_applications.length === 0) {
-    parsed.real_world_applications = buildFallbackApplications(parsed.topic);
-  }
-  
-  if (!Array.isArray(parsed.common_misconceptions) || parsed.common_misconceptions.length === 0) {
-    parsed.common_misconceptions = buildFallbackMisconceptions(parsed.topic);
-  }
-  
-  // Trim arrays to maximum lengths
-  const maxLengths = {
-    key_concepts: 5,
-    key_tricks: 3,
-    real_world_applications: 3,
-    common_misconceptions: 3,
-    practice_questions: 3
-  };
-  
-  Object.keys(maxLengths).forEach(key => {
-    if (parsed[key] && parsed[key].length > maxLengths[key]) {
-      parsed[key] = parsed[key].slice(0, maxLengths[key]);
-    }
-  });
-  
-  // Enrich with metadata
-  parsed.powered_by = `${BRAND} by ${DEVELOPER}`;
-  parsed.study_score = parsed.study_score || 96;
-  parsed.generated_at = parsed.generated_at || new Date().toISOString();
-  parsed._language = options.language || 'English';
-  parsed._version = APP_VERSION;
-  parsed._tool = options.tool || 'notes';
-  parsed._depth = options.depth || 'detailed';
-  parsed._style = options.style || 'simple';
-  
-  // Remove any model identity fields
-  delete parsed._model;
-  delete parsed.model;
-  delete parsed.model_used;
-  delete parsed.model_id;
-  delete parsed.ai_model;
-  delete parsed.openrouter_model;
-  
-  // Log quality metrics
-  const notesWC = wordCount(parsed.ultra_long_notes);
-  logger.info(`Quality check: ${notesWC} words in notes, ${parsed.key_concepts.length} concepts, ${parsed.practice_questions.length} questions`);
-  
-  return parsed;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 11: FALLBACK CONTENT BUILDERS — HIGH QUALITY OFFLINE CONTENT
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-function buildFallbackConcepts(topic) {
-  const t = topic || 'this subject';
-  return [
-    `Fundamental Definition: ${t} encompasses the core principles, theories, and frameworks that form the foundation of this field of study, establishing the vocabulary, assumptions, and analytical tools necessary for deeper understanding.`,
-    `Core Mechanisms: The primary processes driving ${t} involve systematic interactions between identifiable components that produce consistent, observable outcomes under specific conditions.`,
-    `Historical Development: ${t} evolved through successive waves of intellectual discovery, critical reappraisal, and paradigm shifts, with key contributors gradually establishing the foundational frameworks in use today.`,
-    `Practical Significance: ${t} carries substantial direct application value across multiple professional domains, enabling practitioners to solve real-world problems more effectively.`,
-    `Critical Boundaries: Complete understanding of ${t} requires explicitly recognising both its considerable explanatory power and the specific conditions where its standard frameworks have important limitations.`
-  ];
-}
-
-function buildFallbackTricks(topic) {
-  const t = topic || 'this topic';
-  return [
-    `The Feynman Technique: After studying ${t}, close your notes and try to explain the entire topic out loud as if teaching a curious 12-year-old. Every time you hesitate or use unexplained jargon, you've found a genuine gap in your understanding. Return to your source, study that specific gap, then restart the explanation. Repeat until you can explain it completely and fluently.`,
+    // Header
+    this._on('sbToggle', 'click', () => this._toggleSidebar());
+    this._on('histBtn', 'click', () => this._openHistory());
+    this._on('themeBtn', 'click', () => this._toggleTheme());
+    this._on('settingsBtn', 'click', () => this._openSettings());
+    this._on('avBtn', 'click', e => { e.stopPropagation(); this._toggleDropdown(); });
+    this._on('avHist', 'click', () => { this._closeDropdown(); this._openHistory(); });
+    this._on('avSaved', 'click', () => { this._closeDropdown(); this._openSaved(); });
+    this._on('avSettings', 'click', () => { this._closeDropdown(); this._openSettings(); });
+    this._on('avClear', 'click', () => { this._closeDropdown(); this._confirm('Clear ALL data?', () => this._clearAll()); });
+    document.addEventListener('click', () => this._closeDropdown());
     
-    `Spaced Repetition System: Study ${t} in focused 20-minute sessions across multiple days. Optimal spacing: Day 1 (initial learning), Day 3 (first review), Day 7 (consolidation), Day 14 (long-term retention). This exploits the spacing effect, which research consistently shows produces 2-3x better long-term retention than massed practice.`,
-    
-    `The FIVE W's Framework: Apply Who, What, When, Where, and Why systematically to every dimension of ${t}. For each concept, explicitly answer all five questions before moving on. This forces active engagement rather than passive reading and immediately reveals which specific aspects you don't fully understand yet.`
-  ];
-}
-
-function buildFallbackApplications(topic) {
-  const t = topic || 'this subject';
-  return [
-    `Healthcare & Medicine: Principles from ${t} directly inform clinical decision-making, diagnostic reasoning, and treatment protocol design. Medical professionals who deeply understand these concepts make more accurate assessments, avoid systematic errors in reasoning, and deliver measurably better patient care.`,
-    
-    `Technology & Engineering: ${t} concepts underpin critical software architecture decisions, algorithm selection, system optimisation strategies, and quality assurance processes. Engineers who understand these principles design more scalable, maintainable, and reliable systems.`,
-    
-    `Business & Management: Organisations that apply frameworks derived from ${t} systematically outperform competitors. Strategic planners use these principles to analyse competitive environments, operations managers to streamline workflows, and HR professionals to design better training programmes.`
-  ];
-}
-
-function buildFallbackMisconceptions(topic) {
-  const t = topic || 'this subject';
-  return [
-    `Many students believe ${t} can be mastered through repeated memorisation of facts and definitions. In reality, genuine mastery requires understanding underlying principles, causal relationships, and the reasoning that connects them. Memorisation without comprehension produces knowledge that collapses under exam pressure when questions are framed differently.`,
-    
-    `A widespread misconception is that ${t} is only relevant to specialists, making it optional knowledge for students pursuing other disciplines. In reality, the core reasoning patterns, analytical frameworks, and mental models that ${t} develops transfer powerfully and broadly across every field — from law to engineering to art.`,
-    
-    `Students often assume that once they understand the basic concepts of ${t}, there is little of substance left to learn. In reality, ${t} has significant depth with important nuances, active ongoing research, and genuine unresolved debates at its frontier. The difference between introductory understanding and genuine expertise is vast.`
-  ];
-}
-
-function buildFallbackQuestions(topic) {
-  const t = topic || 'this subject';
-  return [
-    {
-      question: `Explain the core principles of ${t} and describe how they interact to form a coherent theoretical framework. Provide specific examples to illustrate each principle.`,
-      answer: `The core principles of ${t} form an integrated theoretical system where each component reinforces and contextualises the others. At the foundational level, these principles establish the definitions, assumptions, and logical categories upon which all subsequent understanding must be built. Without clear grasp of these foundations, advanced concepts remain poorly anchored and are applied unreliably.\n\nThe mechanisms central to ${t} follow internally consistent patterns, and this consistency is precisely what enables systematic analysis, reliable prediction, and purposeful intervention. The framework becomes analytically powerful when we understand not just individual components in isolation but the relationships between them — how each element influences and is shaped by others through both direct and indirect pathways.\n\n**Example:** Consider how the principle of causality applies — every effect has a specific cause or set of causes that can be identified and analysed. Understanding this allows practitioners to trace problems back to their roots.\n\n**Real-world relevance:** Professionals across healthcare, engineering, and business use these principles daily to diagnose problems and design solutions.\n\n**Common mistake to avoid:** Treating the principles as isolated, independent facts to be memorised separately makes the subject harder to learn and more likely to be misapplied when real situations don't match the exact form studied.`
-    },
-    {
-      question: `Describe a realistic professional scenario where deep knowledge of ${t} would be essential. Walk through your approach step by step and explain the role of key principles at each stage.`,
-      answer: `In professional practice, ${t} becomes essential when facing complex, high-stakes decisions where errors are costly, information is incomplete, multiple stakeholders have conflicting interests, and time pressure demands efficient thinking under uncertainty.\n\n**Step 1 — Problem Identification:** Define exactly what challenge needs to be addressed, what constraints exist, and what a successful outcome looks like. This diagnostic phase is critical because most costly failures stem from solving the wrong problem.\n\n**Step 2 — Framework Selection:** Identify which specific aspects of ${t} are most applicable. A defining characteristic of genuine expertise is knowing which principles to apply in which contexts — and equally important, which to set aside.\n\n**Step 3 — Strategy Development:** Design an approach rooted in the applicable principles, decomposing the complex problem into manageable sub-problems and sequencing them appropriately.\n\n**Step 4 — Implementation with Monitoring:** Execute the strategy while actively observing what's happening and remaining prepared to adjust. Real-world application always reveals complexity that theoretical frameworks alone cannot fully anticipate.\n\n**Step 5 — Evaluation and Learning:** Compare actual outcomes against success criteria, identify what worked and why, and extract specific transferable lessons for future applications.`
-    },
-    {
-      question: `Compare two fundamentally different approaches to understanding ${t}. What are the core strengths and primary limitations of each, and how might a sophisticated practitioner integrate both?`,
-      answer: `Two fundamentally different approaches to understanding ${t} offer complementary perspectives, each with distinctive strengths and real limitations.\n\nThe **Theoretical/First-Principles Approach** emphasises conceptual understanding, formal frameworks, and the ability to reason rigorously from foundational axioms. Its principal strength is generalisability — deep theoretical understanding applies across diverse situations precisely because it's independent of any particular context. Theoretical knowledge transfers more readily to genuinely novel situations, equipping practitioners with the reasoning tools to construct new solutions rather than relying on memorised analogues. Its core limitation is that without substantial engagement with concrete applications, theoretical knowledge can remain abstract and difficult to deploy under real conditions of time pressure and uncertainty.\n\nThe **Empirical/Case-Based Approach** focuses on specific instances, observable patterns, successful and failed examples, and accumulated practical wisdom. This method produces actionable, context-sensitive knowledge grounded in verifiable reality, building the rapid intuitive judgment that characterises highly effective experts. Its limitation is that patterns reliably observed in one context may not generalise safely to substantially different settings. Without theoretical grounding, case-based knowledge becomes brittle when genuinely novel situations arise.\n\nThe most sophisticated approach deliberately integrates both — using theoretical frameworks to organise and generalise from empirical experience, while using empirical engagement to stress-test theoretical predictions and keep abstract principles anchored in reality. The most common and costly mistake is committing exclusively to one approach at the expense of the other.`
-    }
-  ];
-}
-
-function buildOfflineNotes(topic) {
-  const t = topic || 'this subject';
-  return `## Introduction to ${t}
-
-${t} represents a significant, multi-dimensional area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields. A rigorous, well-structured understanding of ${t} is not merely valuable for passing examinations — it opens doors to deeper intellectual capability, more sophisticated professional reasoning, and the capacity for continued independent learning throughout a career.
-
-This comprehensive study guide covers the complete scope of ${t}: its foundational concepts, core mechanisms, key examples, advanced aspects, real-world applications, and an integrative summary that anchors your understanding.
-
----
-
-## Core Concepts
-
-The study of ${t} begins by establishing its fundamental conceptual infrastructure — the vocabulary, definitions, and foundational ideas upon which all subsequent understanding must be built. Without this foundation, advanced concepts lack their necessary grounding.
-
-**Theoretical Foundation:** Every developed field of knowledge has a theoretical core — a set of foundational assumptions, definitions, and logical relationships that organise its knowledge claims and give its conclusions their authority. Understanding the theoretical foundation of ${t} means understanding not just what the field claims, but why those claims are considered justified, what evidence supports them, and what reasoning connects individual facts to broader principles.
-
-**Practical Dimension:** The practical dimension of ${t} connects its abstract theoretical content to concrete real-world value. Understanding how principles manifest in practice — in professional decisions, in designed systems, in observed phenomena — transforms theoretical knowledge from inert information into usable capability.
-
-**Analytical Framework:** ${t} provides practitioners with a structured way of perceiving, decomposing, and reasoning about complex problems. This analytical framework is transferable — once internalised, it enables higher-quality thinking not just within ${t} but across many adjacent domains.
-
-**Systemic Perspective:** No component of ${t} exists in isolation. Every concept connects to others through relationships of logical dependence, causal influence, or structural analogy. Developing a systemic perspective — understanding the field as an integrated whole rather than a collection of isolated facts — is the defining characteristic of genuine expertise.
-
----
-
-## How It Works
-
-The core processes and mechanisms central to ${t} unfold through identifiable stages that can be studied, understood, and applied systematically:
-
-**Stage 1 — Initial Conditions and Prerequisites:** Every application of ${t} begins with specific initial conditions, inputs, or prerequisite states. Accurately identifying and characterising these starting conditions is critical — misunderstanding initial conditions is a primary source of errors in both academic analysis and professional practice.
-
-**Stage 2 — Active Mechanisms and Transformations:** The defining mechanisms of ${t} transform initial conditions into outcomes through processes that follow identifiable patterns and obey describable rules. Understanding these mechanisms at a deep level — not just recognising their outputs but understanding why they produce those outputs — enables practitioners to predict behaviour, explain anomalies, and design effective interventions.
-
-**Stage 3 — Feedback and Dynamic Adjustment:** Many systems described by ${t} are not static but dynamic — they incorporate feedback loops through which outcomes influence subsequent inputs, creating adaptive or self-correcting behaviour. Understanding these feedback dynamics is essential for accurate long-term prediction.
-
-**Stage 4 — Outputs and Observable Consequences:** The ultimate products of the processes central to ${t} take observable forms — measurable quantities, categorical outcomes, behavioural changes, or structural modifications. Understanding how to correctly identify, measure, and interpret these outputs is a core practical competency.
-
----
-
-## Key Examples
-
-**Foundational Canonical Example:** The classic demonstration cases of ${t} are valuable precisely because they isolate core mechanisms from confounding complexity, allowing underlying principles to be seen with maximum clarity. These canonical examples form the shared reference points that allow practitioners to communicate efficiently.
-
-**Complex Multi-Variable Case:** Real-world applications of ${t} rarely present themselves with the clean simplicity of textbook examples. Professional practice requires applying core principles under conditions of incomplete information, multiple interacting variables, time pressure, and genuine uncertainty.
-
-**Edge Cases and Boundary Conditions:** Understanding where the standard frameworks of ${t} break down, require modification, or produce counterintuitive results reveals the true scope and limits of the theory. These boundary cases are intellectually important and frequently appear in advanced examinations precisely because they test genuine understanding.
-
----
-
-## Advanced Aspects
-
-**Theoretical Complications and Nuances:** As understanding deepens, the apparently simple core principles of ${t} reveal layers of complexity. Boundary conditions require careful specification. General principles require contextual modification in specific domains. Competing theoretical frameworks offer different but partially valid perspectives.
-
-**Methodological Questions:** Every field faces fundamental questions about its own methods — how knowledge is produced, how evidence is evaluated, how theories are tested and revised. Understanding the methodological foundations of ${t} enables more sophisticated engagement with its literature.
-
-**Current Frontiers and Open Questions:** ${t} is not a closed, completed body of knowledge. Active researchers continue to explore open questions, challenge established assumptions, develop new methodological tools, and discover connections to adjacent fields.
-
-**Cross-Domain Integration:** The most sophisticated practitioners of ${t} understand its connections to other fields — recognising how insights transfer across disciplinary boundaries, how developments in adjacent areas reshape understanding within ${t}, and how genuinely interdisciplinary approaches require synthesising knowledge from multiple sources.
-
----
-
-## Common Applications
-
-${t} finds systematic application in research and academic contexts, where rigorous understanding enables better study design, more accurate data interpretation, and more reliable theoretical contribution. In professional practice, it supports higher-quality decision-making, more effective problem diagnosis, and better-designed interventions. In educational settings, it provides frameworks that help learners structure new knowledge effectively and retain it durably.
-
----
-
-## Summary & Key Takeaways
-
-Mastering ${t} is fundamentally a project of building genuine understanding — comprehending the why behind the what, the mechanisms behind the patterns, the principles behind the applications. Surface-level familiarity with facts and procedures provides only fragile, inflexible knowledge. Deep understanding, by contrast, enables confident application to novel situations, accurate communication with other practitioners, continued independent learning, and the creative synthesis of ideas that characterises genuine expertise.
-
-**Five essential commitments for mastery:**
-1. Build strong conceptual foundations before advancing to complex applications
-2. Connect every abstract principle to concrete, specific examples
-3. Understand the limits and boundary conditions of every general rule
-4. Regularly practice applying knowledge to unfamiliar situations
-5. Engage actively with the material through explanation, teaching, and deliberate reflection`;
-}
-
-function generateOfflineFallback(input, options) {
-  const topic = input.length > 60 ? input.substring(0, 60) + '…' : input;
-  const language = options.language || 'English';
-  const tool = options.tool || 'notes';
-  
-  logger.warn(`Using offline fallback for: "${topic}", language: ${language}, tool: ${tool}`);
-  
-  const timestamp = new Date().toISOString();
-  
-  return {
-    topic: topic,
-    curriculum_alignment: 'General Academic Study',
-    ultra_long_notes: buildOfflineNotes(topic),
-    key_concepts: buildFallbackConcepts(topic),
-    key_tricks: buildFallbackTricks(topic),
-    practice_questions: buildFallbackQuestions(topic),
-    real_world_applications: buildFallbackApplications(topic),
-    common_misconceptions: buildFallbackMisconceptions(topic),
-    study_score: 96,
-    powered_by: `${BRAND} by ${DEVELOPER}`,
-    generated_at: timestamp,
-    _language: language,
-    _tool: tool,
-    _fallback: true,
-    _fallback_reason: 'All AI models temporarily unavailable — high-quality offline content generated'
-  };
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 12: MODEL CALLER — STREAMING SSE
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-async function callModelStream(model, prompt, options, onChunk, onMetrics) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), model.timeoutMs);
-  const startTime = Date.now();
-  const modelName = model.id.split('/').pop().replace(':free', '');
-  
-  try {
-    const response = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': HTTP_REFERER,
-        'X-Title': APP_TITLE
-      },
-      body: JSON.stringify({
-        model: model.id,
-        max_tokens: model.maxTokens,
-        temperature: 0.72,
-        top_p: 0.95,
-        frequency_penalty: 0,
-        presence_penalty: 0,
-        stream: true,
-        messages: [{ role: 'user', content: prompt }]
-      }),
-      signal: controller.signal
+    // Tools
+    this._qsa('.ts-item').forEach(btn => {
+      btn.addEventListener('click', () => this._setTool(btn.dataset.tool));
     });
     
-    clearTimeout(timeoutId);
+    // Generate
+    this._on('runBtn', 'click', () => this._generate());
+    this._on('cancelBtn', 'click', () => this._cancel());
+    this._on('mainInput', 'input', () => this._updateCharCount());
+    this._on('mainInput', 'keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this._generate(); } });
+    this._on('taClearBtn', 'click', () => { const ta = this._el('mainInput'); if (ta) { ta.value = ''; this._updateCharCount(); ta.focus(); } });
     
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      const errorMsg = `HTTP ${response.status} from ${modelName}: ${truncate(errorText, 200)}`;
-      
-      if (response.status === 429 || response.status === 503 || response.status === 502) {
-        throw new Error(`[RATE_LIMITED] ${errorMsg}`);
-      }
-      throw new Error(errorMsg);
+    // Mini bar
+    const imb = this._el('inputMiniBar');
+    if (imb) imb.addEventListener('click', () => this._expandInput());
+    
+    // File upload
+    this._on('uploadZone', 'click', () => this._el('fileInput')?.click());
+    this._on('fileInput', 'change', e => this._handleFile(e.target.files[0]));
+    this._on('fileChipRm', 'click', () => this._removeFile());
+    
+    const dz = this._el('uploadZone');
+    if (dz) {
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+      dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); const f = e.dataTransfer?.files?.[0]; if (f) this._handleFile(f); });
     }
     
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    let fullContent = '';
-    let tokenCount = 0;
-    let charCount = 0;
+    // Output toolbar
+    this._on('copyBtn', 'click', () => this._copyResult());
+    this._on('pdfBtn', 'click', () => this._downloadPDF());
+    this._on('saveBtn', 'click', () => this._saveNote());
+    this._on('shareBtn', 'click', () => this._shareResult());
+    this._on('clearBtn', 'click', () => this._clearOutput());
+    this._on('focusModeBtn', 'click', () => this._toggleFocusMode());
+    this._on('lpHistAll', 'click', () => this._openHistory());
     
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-        
-        const dataStr = trimmedLine.slice(6).trim();
-        if (dataStr === '[DONE]') continue;
-        
-        try {
-          const event = JSON.parse(dataStr);
-          const delta = event?.choices?.[0]?.delta?.content;
-          
-          if (delta && typeof delta === 'string' && delta.length > 0) {
-            fullContent += delta;
-            charCount += delta.length;
-            tokenCount++;
-            onChunk(delta);
-          }
-        } catch (e) {
-          // Skip malformed SSE events
-        }
-      }
-    }
-    
-    const elapsed = Date.now() - startTime;
-    
-    if (fullContent.trim().length < 100) {
-      throw new Error(`${modelName} stream produced too-short content: ${fullContent.length} chars after ${elapsed}ms`);
-    }
-    
-    if (onMetrics) {
-      onMetrics({
-        model: modelName,
-        tokens: tokenCount,
-        chars: charCount,
-        elapsedMs: elapsed
+    // History modal
+    this._on('histSearchInput', 'input', e => this._filterHistory(e.target.value));
+    this._on('clearHistBtn', 'click', () => {
+      this._confirm('Clear all history?', () => {
+        this.history = [];
+        this._save('sv_history', this.history);
+        this._renderHistoryModal();
+        this._renderHistory();
+        this._updateStats();
+        this._toast('info', 'fa-trash', 'History cleared.');
       });
-    }
+    });
     
-    logger.success(`${modelName} stream complete: ${tokenCount} tokens, ${charCount} chars, ${elapsed}ms`);
+    this._qsa('.hf').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._qsa('.hf').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this._renderHistoryModal(btn.dataset.filter, this._el('histSearchInput')?.value || '');
+      });
+    });
     
-    const parsed = extractAndParseJSON(fullContent);
-    return validateAndEnrich(parsed, options);
+    // Settings
+    this._on('saveNameBtn', 'click', () => this._saveName());
+    this._on('exportDataBtn', 'click', () => this._exportData());
+    this._on('clearDataBtn', 'click', () => this._confirm('Delete ALL data?', () => this._clearAll()));
+    this._on('nameInput', 'keydown', e => { if (e.key === 'Enter') this._saveName(); });
     
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
+    this._qsa('[data-theme-btn]').forEach(btn => {
+      btn.addEventListener('click', () => this._setTheme(btn.dataset.themeBtn));
+    });
+    this._qsa('.font-sz').forEach(btn => {
+      btn.addEventListener('click', () => this._setFontSize(btn.dataset.size));
+    });
+    
+    // Modal close
+    this._qsa('[data-close]').forEach(btn => {
+      btn.addEventListener('click', () => this._closeModal(btn.dataset.close));
+    });
+    this._qsa('.modal-close').forEach(btn => {
+      const ov = btn.closest('.modal-overlay');
+      if (ov) btn.addEventListener('click', () => this._closeModal(ov.id));
+    });
+    this._qsa('.modal-overlay').forEach(ov => {
+      ov.addEventListener('click', e => { if (e.target === ov) this._closeModal(ov.id); });
+    });
+    
+    this._on('confirmOkBtn', 'click', () => {
+      this._closeModal('confirmModal');
+      if (typeof this.confirmCb === 'function') this.confirmCb();
+      this.confirmCb = null;
+    });
+    this._on('sbBackdrop', 'click', () => this._closeMobileSidebar());
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { this._closeAllModals(); return; }
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key.toLowerCase()) {
+          case 'k': e.preventDefault(); this._el('mainInput')?.focus(); break;
+          case 'h': e.preventDefault(); this._openHistory(); break;
+          case 'b': e.preventDefault(); this._toggleSidebar(); break;
+          case 's': e.preventDefault(); this._saveNote(); break;
+        }
+      }
+    });
+    
+    // Flashcard keyboard
+    document.addEventListener('keydown', e => {
+      if (!this.fcCards.length) return;
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); this._fcNav(1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); this._fcNav(-1); }
+      else if (e.key === ' ' || e.key === 'Space') { e.preventDefault(); this._fcFlip(); }
+    });
+    
+    window.addEventListener('resize', () => this._handleResize());
   }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 13: MODEL CALLER — SYNC (FALLBACK)
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-async function callModelSync(model, prompt, options) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), model.timeoutMs);
-  const startTime = Date.now();
-  const modelName = model.id.split('/').pop().replace(':free', '');
   
-  try {
-    const response = await fetch(OPENROUTER_BASE, {
+  /* ═══════════════════════════════════════════════════════════════════════════
+     WELCOME
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  _initWelcome() {
+    if (!this.userName) {
+      setTimeout(() => {
+        const ov = this._el('welcomeOverlay');
+        if (ov) { ov.style.display = 'flex'; setTimeout(() => ov.classList.add('visible'), 50); }
+      }, 500);
+    } else {
+      this.sessions++;
+      localStorage.setItem('sv_sessions', String(this.sessions));
+      if (this.sessions <= 1 || this.sessions % 3 === 0) {
+        setTimeout(() => {
+          const wb = this._el('welcomeBackOverlay');
+          if (wb) {
+            const wn = this._el('wbName');
+            if (wn) wn.textContent = this.userName;
+            wb.style.display = 'flex';
+            setTimeout(() => wb.classList.add('visible'), 50);
+          }
+        }, 600);
+      }
+    }
+  }
+  
+  _submitWelcome() {
+    const inp = this._el('welcomeNameInput');
+    const name = inp?.value?.trim();
+    if (!name || name.length < 2) { inp?.classList.add('shake'); setTimeout(() => inp?.classList.remove('shake'), 500); return; }
+    this.userName = name;
+    localStorage.setItem('sv_user', name);
+    this.sessions = 1;
+    localStorage.setItem('sv_sessions', '1');
+    this._dismissOverlay('welcomeOverlay');
+    this._updateUI();
+    this._updateStats();
+    this._toast('success', 'fa-hand-peace', `Welcome, ${name}! 🎓`);
+  }
+  
+  _skipWelcome() {
+    this.userName = 'Scholar';
+    localStorage.setItem('sv_user', 'Scholar');
+    this.sessions = 1;
+    localStorage.setItem('sv_sessions', '1');
+    this._dismissOverlay('welcomeOverlay');
+    this._updateUI();
+  }
+  
+  _dismissWelcomeBack() { this._dismissOverlay('welcomeBackOverlay'); }
+  _dismissOverlay(id) { const el = this._el(id); if (el) { el.classList.remove('visible'); setTimeout(() => { el.style.display = 'none'; }, 450); } }
+  
+  _updateUI() {
+    const name = this.userName || 'Scholar';
+    const init = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const av = this._el('avLetter'); if (av) av.textContent = init;
+    const avd = this._el('avDropAv'); if (avd) avd.textContent = init;
+    const avn = this._el('avDropName'); if (avn) avn.textContent = name;
+    const g = this._el('dhGreeting'); if (g) { const hr = new Date().getHours(); g.textContent = `${hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening'}, ${name}`; }
+  }
+  
+  _updateStats() {
+    const s = this._el('statSessions'); if (s) s.textContent = this.sessions || 0;
+    const h = this._el('statHistory'); if (h) h.textContent = this.history.length;
+    const sv = this._el('statSaved'); if (sv) sv.textContent = this.saved.length;
+    this._updateBadge();
+  }
+  
+  _updateBadge() { const b = this._el('histBadge'); if (b) { b.textContent = this.history.length; b.style.display = this.history.length ? 'flex' : 'none'; } }
+  
+  _setTool(tool) {
+    if (!TOOL_CONFIG[tool]) return;
+    this.tool = tool;
+    this._qsa('.ts-item').forEach(btn => { const a = btn.dataset.tool === tool; btn.classList.toggle('active', a); });
+    const ta = this._el('mainInput'); const cfg = TOOL_CONFIG[tool]; if (ta) ta.placeholder = cfg.placeholder;
+    const ic = this._el('runIcon'); const lb = this._el('runLabel'); if (ic) ic.className = `fas ${cfg.icon}`; if (lb) lb.textContent = cfg.label;
+    this.prefs.lastTool = tool; this._save('sv_prefs', this.prefs);
+  }
+  
+  _updateCharCount() {
+    const ta = this._el('mainInput'); const cnt = this._el('charCount'); const max = 12000;
+    if (!ta) return;
+    const len = ta.value.length;
+    if (cnt) cnt.textContent = `${len} / ${max}`;
+    if (len > max) { ta.value = ta.value.substring(0, max); this._toast('info', 'fa-info', `Limited to ${max} chars.`); }
+  }
+  
+  _handleFile(file) {
+    if (!file) return;
+    const ext = '.' + (file.name.split('.').pop() || '').toLowerCase();
+    if (!['.txt', '.md', '.csv'].includes(ext)) { this._toast('error', 'fa-times', 'Use .txt, .md or .csv'); return; }
+    if (file.size > 5000000) { this._toast('error', 'fa-times', 'Max 5MB'); return; }
+    const r = new FileReader();
+    r.onload = e => { const txt = e.target.result?.trim(); if (!txt) return; const ta = this._el('mainInput'); if (ta) { ta.value = txt.substring(0, 12000); this._updateCharCount(); ta.dispatchEvent(new Event('input')); } const ch = this._el('fileChip'); const nm = this._el('fileChipName'); if (ch) ch.style.display = 'flex'; if (nm) nm.textContent = file.name; this._toast('success', 'fa-check', `Loaded: ${file.name}`); };
+    r.readAsText(file, 'UTF-8');
+  }
+  
+  _removeFile() { const fi = this._el('fileInput'); const ch = this._el('fileChip'); if (fi) fi.value = ''; if (ch) ch.style.display = 'none'; }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     GENERATE — FAST LIVE STREAMING
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  async _generate() {
+    if (this.generating) return;
+    const ta = this._el('mainInput'); const text = ta?.value?.trim();
+    if (!text || text.length < 2) { ta?.focus(); this._toast('info', 'fa-lightbulb', 'Enter a topic to study.'); return; }
+    
+    const depth = this._el('depthSel')?.value || 'detailed';
+    const lang = this._el('langSel')?.value || 'English';
+    const style = this._el('styleSel')?.value || 'simple';
+    
+    this._mobileScroll();
+    this.generating = true;
+    this.streamBuffer = '';
+    this._setLoading(true);
+    this._collapseInput(text);
+    this._showStream(text, this.tool);
+    this._startThinking();
+    
+    try {
+      const data = await this._streamAPI(text, { depth, language: lang, style, tool: this.tool });
+      this.currentData = data;
+      this._hideStream();
+      this._renderResult(data);
+      this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now() });
+      this._updateStats();
+      this._toast('success', 'fa-check', `${TOOL_CONFIG[this.tool].sfpName} ready!`);
+      setTimeout(() => this._scrollResult(), 200);
+    } catch (err) {
+      this._hideStream();
+      this._showError(err.message || 'Generation failed. Try again.');
+      this._toast('error', 'fa-exclamation', err.message || 'Failed.');
+    } finally {
+      this.generating = false;
+      this._setLoading(false);
+      this._stopThinking();
+      this._showCancel(false);
+    }
+  }
+  
+  _mobileScroll() { if (window.innerWidth <= 768) this._el('rightPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  _scrollResult() { const ra = this._el('resultArea'); if (ra && ra.style.display !== 'none') ra.scrollIntoView({ behavior: 'smooth', block: 'start' }); const oa = this._el('outArea'); if (oa) oa.scrollTo({ top: 0 }); }
+  
+  async _streamAPI(msg, opts) {
+    this.streamCtrl = new AbortController();
+    this._showCancel(true);
+    try { return await this._sseStream(msg, opts); }
+    catch(err) { if (err.name === 'AbortError') throw err; return await this._jsonAPI(msg, opts); }
+  }
+  
+  async _sseStream(msg, opts) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const res = await fetch(SAVOIRÉ.API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg, options: { ...opts, stream: true } }),
+          signal: this.streamCtrl?.signal
+        });
+        if (!res.ok) { reject(new Error(`API error: ${res.status}`)); return; }
+        
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let full = '';
+        let lastRender = 0;
+        const sfpTxt = this._el('sfpText');
+        const sfpScr = this._el('sfpScroll');
+        
+        const render = () => {
+          if (!sfpTxt) return;
+          const now = Date.now();
+          if (now - lastRender < 20) return;
+          lastRender = now;
+          try { sfpTxt.innerHTML = this._renderMdLive(this.streamBuffer); } catch(e) { sfpTxt.textContent = this.streamBuffer; }
+          if (sfpScr) sfpScr.scrollTop = sfpScr.scrollHeight;
+        };
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const json = JSON.parse(line.substring(6).trim());
+                if (json.t) {
+                  this.streamBuffer += json.t;
+                  full += json.t;
+                  render();
+                  this._updateStageProgress(this.streamBuffer.length);
+                }
+                if (json.topic && json.ultra_long_notes) { resolve(json); return; }
+              } catch(e) {}
+            }
+          }
+        }
+        
+        if (sfpTxt) { sfpTxt.classList.add('done'); }
+        resolve({ topic: msg, tool: opts.tool, ultra_long_notes: full || this.streamBuffer, content: full });
+      } catch(err) { reject(err); }
+    });
+  }
+  
+  async _jsonAPI(msg, opts) {
+    const res = await fetch(SAVOIRÉ.API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': HTTP_REFERER,
-        'X-Title': APP_TITLE
-      },
-      body: JSON.stringify({
-        model: model.id,
-        max_tokens: model.maxTokens,
-        temperature: 0.72,
-        top_p: 0.95,
-        stream: false,
-        messages: [{ role: 'user', content: prompt }]
-      }),
-      signal: controller.signal
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, options: { ...opts, stream: false } }),
+      signal: this.streamCtrl?.signal
     });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      const errorMsg = `HTTP ${response.status} from ${modelName}: ${truncate(errorText, 200)}`;
-      
-      if (response.status === 429 || response.status === 503 || response.status === 502) {
-        throw new Error(`[RATE_LIMITED] ${errorMsg}`);
-      }
-      throw new Error(errorMsg);
-    }
-    
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
-    
-    if (!content || typeof content !== 'string' || content.trim().length < 100) {
-      throw new Error(`${modelName} returned empty/too-short content`);
-    }
-    
-    const elapsed = Date.now() - startTime;
-    logger.success(`${modelName} sync responded in ${elapsed}ms, content: ${content.length} chars`);
-    
-    const parsed = extractAndParseJSON(content);
-    return validateAndEnrich(parsed, options);
-    
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 14: MAIN GENERATOR WITH FULL FAILOVER CHAIN
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-async function generateWithAI(message, options, onChunk, onStage, onMetrics) {
-  if (!process.env.OPENROUTER_API_KEY) {
-    throw new Error('OPENROUTER_API_KEY environment variable is not set');
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data;
   }
   
-  const useStreaming = typeof onChunk === 'function';
-  const prompt = buildPrompt(message, options);
-  const errors = [];
-  let modelsTried = 0;
-  let totalAttempts = 0;
+  _cancel() { if (this.streamCtrl) { this.streamCtrl.abort(); this.streamCtrl = null; } }
   
-  logger.info(`Generation start — tool: ${options.tool}, lang: ${options.language}, depth: ${options.depth}, style: ${options.style}, streaming: ${useStreaming}, input: ${message.length} chars`);
+  _collapseInput(topic) {
+    const tw = this._el('taCollapseWrap'); const sw = this._el('selectorsCollapseWrap'); const sg = this._el('suggCollapseWrap'); const fw = this._el('fileCollapseWrap'); const mb = this._el('inputMiniBar'); const mt = this._el('inputMiniText');
+    if (tw) tw.classList.add('collapsed'); if (sw) sw.classList.add('collapsed'); if (sg) sg.classList.add('collapsed'); if (fw) fw.classList.add('collapsed');
+    if (mt) mt.textContent = topic.length > 40 ? topic.substring(0, 40) + '…' : topic;
+    if (mb) mb.classList.add('visible');
+  }
   
-  for (const model of MODELS) {
-    const modelName = model.id.split('/').pop().replace(':free', '');
-    const maxAttempts = 2;
-    modelsTried++;
-    
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      totalAttempts++;
-      logger.model(`Attempt ${totalAttempts}: ${modelName} (try ${attempt}/${maxAttempts})`);
-      
-      if (onStage) onStage({ idx: 0, label: `Connecting to ${modelName}...`, model: modelName });
-      
-      try {
-        let result;
-        
-        if (useStreaming) {
-          result = await callModelStream(model, prompt, options, onChunk, onMetrics);
-        } else {
-          result = await callModelSync(model, prompt, options);
-        }
-        
-        result._models_tried = modelsTried;
-        result._attempts = totalAttempts;
-        result._model_used = modelName;
-        
-        logger.success(`SUCCESS — ${modelName} after ${totalAttempts} attempts`);
-        
-        return result;
-        
-      } catch (error) {
-        const errorMsg = (error.message || 'Unknown error').slice(0, 200);
-        errors.push(`${modelName}[${attempt}]: ${errorMsg}`);
-        logger.warn(`FAIL — ${modelName} attempt ${attempt}: ${errorMsg}`);
-        
-        if (errorMsg.includes('[RATE_LIMITED]')) {
-          logger.warn(`Rate limited on ${modelName} — skipping remaining attempts`);
-          break;
-        }
-        
-        if (errorMsg.includes('timeout') || errorMsg.includes('ECONNREFUSED') || error.name === 'AbortError') {
-          logger.warn(`${modelName} unavailable — skipping to next model`);
-          break;
-        }
-        
-        if (attempt < maxAttempts) {
-          const waitMs = 500;
-          logger.info(`Waiting ${waitMs}ms before retry...`);
-          await sleep(waitMs);
-        }
-      }
-    }
-    
-    if (modelsTried < MODELS.length) {
-      await sleep(300);
+  _expandInput() {
+    const tw = this._el('taCollapseWrap'); const sw = this._el('selectorsCollapseWrap'); const sg = this._el('suggCollapseWrap'); const fw = this._el('fileCollapseWrap'); const mb = this._el('inputMiniBar');
+    if (tw) tw.classList.remove('collapsed'); if (sw) sw.classList.remove('collapsed'); if (sg) sg.classList.remove('collapsed'); if (fw) fw.classList.remove('collapsed'); if (mb) mb.classList.remove('visible');
+    setTimeout(() => this._el('mainInput')?.focus(), 200);
+  }
+  
+  _showStream(topic, tool) {
+    const sfp = this._el('streamFullpage'); const tp = this._el('sfpTopic'); const ic = this._el('sfpToolIcon'); const nm = this._el('sfpToolName'); const lb = this._el('sfpLabel'); const txt = this._el('sfpText');
+    if (!sfp) return;
+    const cfg = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
+    if (tp) tp.textContent = topic.length > 50 ? topic.substring(0, 50) + '…' : topic;
+    if (ic) ic.className = `fas ${cfg.sfpIcon}`; if (nm) nm.textContent = cfg.sfpName; if (lb) lb.textContent = cfg.sfpLabel;
+    if (txt) { txt.innerHTML = '<span class="cursor-blink">▊</span>'; txt.classList.remove('done'); }
+    sfp.style.display = 'flex';
+    const es = this._el('emptyState'); const tw = this._el('thinkingWrap'); const ra = this._el('resultArea');
+    if (es) es.style.display = 'none'; if (tw) tw.style.display = 'none'; if (ra) ra.style.display = 'none';
+    if (window.innerWidth <= 768) sfp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  
+  _hideStream() { const sfp = this._el('streamFullpage'); if (sfp) { sfp.style.display = 'none'; } this._expandInput(); }
+  
+  _startThinking() {
+    for (let i = 0; i < 5; i++) { const el = this._el(`ts${i}`); if (el) el.className = 'ths'; }
+    this._activateStage(0);
+    this.thinkTimer = setInterval(() => {
+      this.stageIdx = (this.stageIdx || 0) + 1;
+      if (this.stageIdx < 5) { this._doneStage(this.stageIdx - 1); this._activateStage(this.stageIdx); }
+    }, 3000);
+  }
+  
+  _activateStage(i) { const el = this._el(`ts${i}`); if (el) { el.classList.remove('done'); el.classList.add('active'); } }
+  _doneStage(i) { const el = this._el(`ts${i}`); if (el) { el.classList.remove('active'); el.classList.add('done'); } }
+  _stopThinking() { if (this.thinkTimer) { clearInterval(this.thinkTimer); this.thinkTimer = null; } for (let i = 0; i <= (this.stageIdx || 0) && i < 5; i++) this._doneStage(i); this._doneStage(4); }
+  _updateStageProgress(len) { const thresholds = [0, 300, 800, 1500, 2500]; for (let i = thresholds.length - 1; i >= 0; i--) { if (len >= thresholds[i] && (this.stageIdx || 0) < i) { this._doneStage(this.stageIdx || 0); this.stageIdx = i; this._activateStage(i); break; } } }
+  
+  _setLoading(on) {
+    const btn = this._el('runBtn'); const ic = this._el('runIcon'); const lb = this._el('runLabel');
+    if (!btn) return; btn.disabled = on;
+    if (on) { if (ic) ic.className = 'fas fa-spinner fa-pulse'; if (lb) lb.textContent = 'Generating…'; }
+    else { const cfg = TOOL_CONFIG[this.tool]; if (ic) ic.className = `fas ${cfg.icon}`; if (lb) lb.textContent = cfg.label; }
+  }
+  
+  _showCancel(show) { const btn = this._el('cancelBtn'); if (btn) btn.classList.toggle('visible', show); }
+  
+  _showError(msg) {
+    const ra = this._el('resultArea');
+    if (ra) {
+      ra.style.display = 'block';
+      ra.innerHTML = `<div class="error-card"><div class="error-hdr"><i class="fas fa-exclamation-triangle"></i> Failed</div><div class="error-body">${this._esc(msg)}</div><button class="btn btn-primary" onclick="document.getElementById('mainInput').focus()"><i class="fas fa-redo"></i> Try Again</button></div>`;
     }
   }
   
-  logger.error(`ALL MODELS FAILED — ${MODELS.length} models tried, ${totalAttempts} total attempts`);
-  logger.error(`Error summary: ${errors.slice(0, 5).join(' || ')}`);
+  /* ═══════════════════════════════════════════════════════════════════════════
+     RESULT RENDERING
+     ═══════════════════════════════════════════════════════════════════════════ */
   
-  throw new Error(
-    `All ${MODELS.length} AI models are temporarily unavailable after ${totalAttempts} attempts. ` +
-    `Please try again in a moment. Error details: ${errors[0] || 'Unknown'}`
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 15: RESPONSE HEADERS
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-function setResponseHeaders(res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
-  res.setHeader('Access-Control-Max-Age', '86400');
-  
-  // Branding headers
-  res.setHeader('X-Powered-By', `${BRAND} by ${DEVELOPER}`);
-  res.setHeader('X-Developer', DEVELOPER);
-  res.setHeader('X-Developer-Web', DEVSITE);
-  res.setHeader('X-Founder', FOUNDER);
-  res.setHeader('X-App-Version', APP_VERSION);
-  res.setHeader('X-Build', BUILD_NUMBER);
-  
-  // Security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────────────────────────
-   SECTION 16: MAIN VERCEL HANDLER
-   ───────────────────────────────────────────────────────────────────────────────────────────────── */
-
-module.exports = async function handler(req, res) {
-  const requestId = generateRequestId();
-  const startTime = Date.now();
-  
-  logger.info(`[${requestId}] ${req.method} ${req.url} — ${req.headers['content-type'] || 'no content-type'}`);
-  
-  // Set headers
-  setResponseHeaders(res);
-  
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    logger.info(`[${requestId}] OPTIONS preflight — responding 200`);
-    return res.status(200).end();
+  _renderResult(data) {
+    const area = this._el('resultArea');
+    if (!area) return;
+    area.innerHTML = this._buildHTML(data);
+    area.style.display = 'block';
+    const tw = this._el('thinkingWrap'); if (tw) tw.style.display = 'none';
+    if (window.innerWidth <= 768) setTimeout(() => area.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
   }
   
-  // Only allow POST
-  if (req.method !== 'POST') {
-    logger.warn(`[${requestId}] Rejected ${req.method} request`);
-    return res.status(405).json({
-      error: `Method ${req.method} not allowed`,
-      allowed: ['POST'],
-      docs: `https://${WEBSITE}/api/docs`
-    });
-  }
-  
-  // Parse body
-  const body = req.body || {};
-  
-  if (!body.message || typeof body.message !== 'string') {
-    return res.status(400).json({
-      error: 'Request body must include a "message" field of type string',
-      example: {
-        message: 'Photosynthesis',
-        options: { tool: 'notes', language: 'English', depth: 'detailed', style: 'simple', stream: true }
-      }
-    });
-  }
-  
-  const trimmedMessage = body.message.trim();
-  
-  if (trimmedMessage.length < 2) {
-    return res.status(400).json({ error: 'Message is too short — minimum 2 characters' });
-  }
-  
-  if (trimmedMessage.length > 15000) {
-    return res.status(400).json({
-      error: `Message is too long — ${trimmedMessage.length.toLocaleString()} characters (maximum 15,000)`,
-      received: trimmedMessage.length,
-      maximum: 15000
-    });
-  }
-  
-  // Validate options
-  const rawOptions = body.options || {};
-  
-  const options = {
-    tool: ['notes', 'flashcards', 'quiz', 'summary', 'mindmap'].includes(rawOptions.tool) ? rawOptions.tool : 'notes',
-    depth: ['standard', 'detailed', 'comprehensive', 'expert'].includes(rawOptions.depth) ? rawOptions.depth : 'detailed',
-    style: ['simple', 'academic', 'detailed', 'exam', 'visual'].includes(rawOptions.style) ? rawOptions.style : 'simple',
-    language: SUPPORTED_LANGUAGES.includes(rawOptions.language) ? rawOptions.language : 'English',
-    stream: rawOptions.stream === true
-  };
-  
-  logger.info(`[${requestId}] Input: ${trimmedMessage.length} chars | tool: ${options.tool} | lang: ${options.language} | depth: ${options.depth} | style: ${options.style} | stream: ${options.stream}`);
-  
-  /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-     STREAMING MODE — Server-Sent Events
-     ═══════════════════════════════════════════════════════════════════════════════════════════════ */
-  
-  if (options.stream) {
-    // Set SSE headers
-    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
-    res.setHeader('Cache-Control', 'no-cache, no-store, no-transform, must-revalidate');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-    res.setHeader('Transfer-Encoding', 'chunked');
+  _buildHTML(data) {
+    const topic = this._esc(data.topic || 'Study Material');
+    const score = data.study_score || 96;
+    const wc = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
+    const lang = data._language || 'English';
     
-    if (typeof res.flushHeaders === 'function') {
-      res.flushHeaders();
+    const header = `<div class="result-hdr"><div><div class="rh-topic">${topic}</div><div class="rh-meta"><span><i class="fas fa-calendar"></i> ${new Date().toLocaleDateString()}</span><span><i class="fas fa-globe"></i> ${lang}</span><span><i class="fas fa-file-word"></i> ~${wc} words</span><span><i class="fas fa-star"></i> Score: ${score}/100</span></div><div class="rh-powered">${SAVOIRÉ.BRAND} · <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a></div></div><div class="rh-score">${score}</div></div>`;
+    
+    let body = '';
+    switch (this.tool) {
+      case 'flashcards': body = this._buildFC(data); break;
+      case 'quiz': body = this._buildQuiz(data); break;
+      case 'summary': body = this._buildSummary(data); break;
+      case 'mindmap': body = this._buildMindMap(data); break;
+      default: body = this._buildNotes(data); break;
     }
     
-    // SSE helper
-    const sendEvent = (eventName, data) => {
-      try {
-        const serialized = typeof data === 'string' ? data : JSON.stringify(data);
-        res.write(`event: ${eventName}\ndata: ${serialized}\n\n`);
-        if (typeof res.flush === 'function') res.flush();
-      } catch (writeError) {
-        logger.warn(`[${requestId}] SSE write error: ${writeError.message}`);
-      }
-    };
+    const bar = `<div class="export-bar"><button class="exp-btn" onclick="window._app._copyResult()"><i class="fas fa-copy"></i> Copy</button><button class="exp-btn" onclick="window._app._downloadPDF()"><i class="fas fa-file-pdf"></i> PDF</button><button class="exp-btn" onclick="window._app._saveNote()"><i class="fas fa-star"></i> Save</button><button class="exp-btn" onclick="window._app._shareResult()"><i class="fas fa-share"></i> Share</button></div>`;
+    const footer = `<div class="result-footer"><div class="rbf-logo">Ś</div><div><a href="https://${SAVOIRÉ.WEBSITE}" target="_blank">${SAVOIRÉ.BRAND}</a> · ${SAVOIRÉ.DEVELOPER} · Free forever</div><div>${new Date().toLocaleString()}</div></div>`;
     
-    // Send initial connection event
-    sendEvent(SSE_EVENTS.HEARTBEAT, { ts: Date.now(), requestId, status: 'connected', message: `${BRAND} connected — generating content...` });
-    sendEvent(SSE_EVENTS.TOKEN, { t: `## Generating ${TOOL_CONFIG[options.tool]?.name || 'study materials'}...\n\n` });
-    sendEvent(SSE_EVENTS.STAGE, { idx: 0, label: 'Initialising AI models...' });
-    
-    // Heartbeat interval
-    let heartbeatInterval = setInterval(() => {
-      try {
-        res.write(`: heartbeat ${Date.now()}\n\n`);
-        if (typeof res.flush === 'function') res.flush();
-      } catch {
-        clearInterval(heartbeatInterval);
-      }
-    }, 10000);
-    
-    // Stage timing
-    const stageTimings = [0, 4000, 9000, 16000, 25000];
-    const stageLabels = [
-      'Analysing your topic structure...',
-      'Writing comprehensive study content...',
-      'Building sections and learning cards...',
-      'Crafting practice questions...',
-      'Finalising and formatting output...'
-    ];
-    
-    const stageTimeouts = stageTimings.map((delay, idx) => {
-      if (idx === 0) return null;
-      return setTimeout(() => {
-        sendEvent(SSE_EVENTS.STAGE, { idx, label: stageLabels[idx] });
-      }, delay);
-    });
-    
-    const clearStageTimeouts = () => stageTimeouts.forEach(t => t && clearTimeout(t));
-    
+    return `<div class="result-wrap">${header}${body}${bar}${footer}</div>`;
+  }
+  
+  _buildNotes(data) {
+    let h = '';
+    if (data.ultra_long_notes) h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-book"></i> Study Notes</div><button class="ss-copy" onclick="window._app._copyText(${JSON.stringify(this._stripMd(data.ultra_long_notes))})"><i class="fas fa-copy"></i></button></div><div class="ss-body md-content">${this._renderMd(data.ultra_long_notes)}</div></div>`;
+    if (data.key_concepts?.length) { const cards = data.key_concepts.map((c, i) => `<div class="concept-card"><div class="cn">${i+1}</div><div>${this._esc(c)}</div></div>`).join(''); h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-lightbulb"></i> Key Concepts</div></div><div class="ss-body"><div class="concepts-g">${cards}</div></div></div>`; }
+    if (data.key_tricks?.length) { const items = data.key_tricks.map((t, i) => `<div class="trick-item"><div class="ti"><i class="fas fa-magic"></i></div><div>${this._esc(t)}</div></div>`).join(''); h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-magic"></i> Study Tricks</div></div><div class="ss-body"><div class="tricks-l">${items}</div></div></div>`; }
+    if (data.practice_questions?.length) { const qs = data.practice_questions.map((qa, i) => `<div class="qa-card"><div class="qa-head" onclick="this.nextElementSibling.classList.toggle('show')"><div class="qn">${i+1}</div><div>${this._esc(qa.question)}</div><button class="qa-btn">Answer</button></div><div class="qa-ans"><div class="md-content">${this._renderMd(qa.answer)}</div></div></div>`).join(''); h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-pen"></i> Practice Q&A</div></div><div class="ss-body"><div class="qa-l">${qs}</div></div></div>`; }
+    if (data.real_world_applications?.length) { const items = data.real_world_applications.map((a, i) => `<div class="list-item"><i class="fas fa-globe"></i><div><strong>App ${i+1}:</strong> ${this._esc(a)}</div></div>`).join(''); h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-globe"></i> Real-World Applications</div></div><div class="ss-body"><div class="items-l">${items}</div></div></div>`; }
+    return h;
+  }
+  
+  _buildFC(data) {
+    const cards = [];
+    (data.key_concepts || []).forEach(c => { const p = c.split(':'); cards.push({ q: (p[0] || c).trim(), a: p.slice(1).join(':').trim() || c }); });
+    (data.practice_questions || []).forEach(q => cards.push({ q: q.question, a: q.answer }));
+    if (!cards.length) return this._buildNotes(data);
+    this.fcCards = cards; this.fcCurrent = 0; this.fcFlipped = false;
+    const total = cards.length;
+    return `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-layer-group"></i> Flashcards (${total})</div></div><div class="ss-body"><div class="fc-c"><div class="fc-prog">Card <span id="fcCur">1</span>/${total} <span id="fcPct">${(1/total*100).toFixed(0)}</span>%</div><div class="fc-wrap" onclick="window._app._fcFlip()"><div class="flashcard" id="fcCard"><div class="fc-front"><div class="fc-lbl">Question</div><div class="fc-cont" id="fcFront">${this._esc(cards[0].q)}</div></div><div class="fc-back"><div class="fc-lbl">Answer</div><div class="fc-cont" id="fcBack">${this._renderMd(cards[0].a)}</div></div></div></div><div class="fc-btns"><button onclick="window._app._fcNav(-1)"><i class="fas fa-arrow-left"></i> Prev</button><button class="primary" onclick="window._app._fcFlip()"><i class="fas fa-sync"></i> Flip</button><button onclick="window._app._fcNav(1)">Next <i class="fas fa-arrow-right"></i></button></div><div class="fc-btns"><button onclick="window._app._fcShuffle()"><i class="fas fa-random"></i> Shuffle</button><button onclick="window._app._fcRestart()"><i class="fas fa-redo"></i> Restart</button></div></div></div></div>`;
+  }
+  
+  _fcFlip() { const c = this._el('fcCard'); if (c) { this.fcFlipped = !this.fcFlipped; c.classList.toggle('flipped', this.fcFlipped); } }
+  _fcNav(d) { if (!this.fcCards.length) return; this.fcCurrent = Math.max(0, Math.min(this.fcCards.length - 1, this.fcCurrent + d)); this.fcFlipped = false; const c = this._el('fcCard'); if (c) c.classList.remove('flipped'); const crd = this.fcCards[this.fcCurrent]; const f = this._el('fcFront'); const b = this._el('fcBack'); const cur = this._el('fcCur'); const pct = this._el('fcPct'); if (f) f.textContent = crd.q; if (b) b.innerHTML = this._renderMd(crd.a); if (cur) cur.textContent = this.fcCurrent + 1; if (pct) pct.textContent = Math.round((this.fcCurrent + 1) / this.fcCards.length * 100); }
+  _fcShuffle() { for (let i = this.fcCards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [this.fcCards[i], this.fcCards[j]] = [this.fcCards[j], this.fcCards[i]]; } this.fcCurrent = 0; this._fcNav(0); this._toast('info', 'fa-random', 'Shuffled!'); }
+  _fcRestart() { this.fcCurrent = 0; this._fcNav(0); }
+  
+  _buildQuiz(data) {
+    const qs = data.practice_questions || [];
+    if (!qs.length) return this._buildNotes(data);
+    this.quizData = qs.map((q, idx) => { const opts = this._genOptions(q, data, idx); return { ...q, options: opts, correctIdx: opts.findIndex(o => o.correct), answered: false, correct: false, selected: -1 }; });
+    this.quizScore = 0;
+    return `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-question-circle"></i> Quiz (${qs.length})</div><div class="quiz-score">⭐ <span id="qsScore">0</span>/${qs.length}</div></div><div class="ss-body" id="quizBody">${this._renderQ(0)}</div></div>`;
+  }
+  
+  _genOptions(qa, data, idx) {
+    const correct = qa.answer || '';
+    const short = this._stripMd(correct).split('.')[0].trim().substring(0, 100);
+    const dist = [`This is incorrect because...`, `A common misunderstanding...`, `This describes a different concept...`];
+    const opts = [{ text: short, correct: true }, { text: dist[0], correct: false }, { text: dist[1], correct: false }, { text: dist[2], correct: false }];
+    for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
+    return opts;
+  }
+  
+  _renderQ(idx) {
+    if (idx >= this.quizData.length) return this._renderResults();
+    const q = this.quizData[idx];
+    const letters = ['A', 'B', 'C', 'D'];
+    const opts = q.options.map((o, i) => `<button class="quiz-opt" onclick="window._app._selectOpt(${idx}, ${i})" ${q.answered ? 'disabled' : ''}><span class="qol">${letters[i]}</span><span>${this._esc(o.text)}</span></button>`).join('');
+    return `<div><div class="quiz-q"><span>Q${idx+1}/${this.quizData.length}</span><span>${this._esc(q.question)}</span></div><div class="quiz-opts">${opts}</div><div id="qaArea${idx}" class="qa-area"></div><div id="qnNav${idx}" class="qn-nav"></div></div>`;
+  }
+  
+  _selectOpt(qIdx, oIdx) {
+    const q = this.quizData[qIdx];
+    if (q.answered) return;
+    q.answered = true; q.selected = oIdx; q.correct = q.options[oIdx].correct;
+    if (q.correct) { this.quizScore++; this._toast('success', 'fa-check', '✓ Correct!'); }
+    else { this._toast('info', 'fa-book', '✗ Not quite. Check explanation.'); }
+    const score = this._el('qsScore'); if (score) score.textContent = this.quizScore;
+    const optsDiv = this._el(`quizOpts_${qIdx}`); if (optsDiv) { const btns = optsDiv.querySelectorAll('.quiz-opt'); btns.forEach((b, i) => { b.disabled = true; if (q.options[i].correct) b.classList.add('correct'); else if (i === oIdx && !q.options[i].correct) b.classList.add('wrong'); }); }
+    const ansDiv = this._el(`qaArea${qIdx}`); if (ansDiv) { ansDiv.innerHTML = `<div class="quiz-exp ${q.correct ? 'correct' : 'incorrect'}"><strong>${q.correct ? '✓ Correct!' : '✗ Incorrect'}</strong><div class="md-content">${this._renderMd(q.answer)}</div></div>`; ansDiv.style.display = 'block'; }
+    const navDiv = this._el(`qnNav${qIdx}`); if (navDiv) { navDiv.innerHTML = `<button class="quiz-next" onclick="window._app._nextQ(${qIdx})">${qIdx+1 < this.quizData.length ? 'Next →' : '🏆 See Results'}</button>`; navDiv.style.display = 'flex'; }
+  }
+  
+  _nextQ(curr) { this.quizIdx = curr + 1; const body = this._el('quizBody'); if (body) { if (this.quizIdx >= this.quizData.length) body.innerHTML = this._renderResults(); else body.innerHTML = this._renderQ(this.quizIdx); body.scrollIntoView({ behavior: 'smooth' }); } }
+  
+  _renderResults() {
+    const total = this.quizData.length; const score = this.quizScore; const pct = Math.round(score/total*100);
+    const grade = pct >= 80 ? '🏆 Excellent!' : pct >= 60 ? '🎓 Good!' : pct >= 40 ? '📚 Keep going!' : '💪 More practice needed';
+    const review = this.quizData.map((q, i) => `<div class="review-item ${q.correct ? 'correct' : 'wrong'}"><span>Q${i+1}</span><span>${this._esc(q.question.substring(0, 60))}</span><span>${q.correct ? '✓' : '✗'}</span></div>`).join('');
+    return `<div class="quiz-res"><div class="qr-score"><div>${pct}%</div><div>${grade}</div><div>${score}/${total} correct</div></div><div class="qr-btns"><button class="btn" onclick="window._app._restartQuiz()"><i class="fas fa-redo"></i> Try Again</button><button class="btn" onclick="window._app._toggleReview()"><i class="fas fa-eye"></i> Review</button></div><div id="quizReview" class="quiz-review" style="display:none">${review}</div></div>`;
+  }
+  
+  _toggleReview() { const r = this._el('quizReview'); if (r) r.style.display = r.style.display === 'none' ? 'block' : 'none'; }
+  _restartQuiz() { this.quizScore = 0; this.quizData = this.quizData.map(q => ({ ...q, answered: false, correct: false, selected: -1 })); const body = this._el('quizBody'); if (body) body.innerHTML = this._renderQ(0); const sc = this._el('qsScore'); if (sc) sc.textContent = '0'; }
+  
+  _buildSummary(data) {
+    let h = '';
+    if (data.ultra_long_notes) {
+      const tldr = data.ultra_long_notes.split(/\n{2,}/).slice(0, 2).join('\n\n');
+      h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-bolt"></i> TL;DR</div></div><div class="ss-body md-content">${this._renderMd(tldr)}</div></div>`;
+      h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-book"></i> Full Summary</div></div><div class="ss-body md-content">${this._renderMd(data.ultra_long_notes)}</div></div>`;
+    }
+    if (data.key_concepts?.length) { const pts = data.key_concepts.map((c, i) => `<div class="kp"><span class="kpn">${i+1}</span><span>${this._esc(c)}</span></div>`).join(''); h += `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-list"></i> Key Points</div></div><div class="ss-body"><div class="kps">${pts}</div></div></div>`; }
+    return h;
+  }
+  
+  _buildMindMap(data) {
+    const topic = data.topic || 'Topic';
+    const branches = [{ title: 'Core Concepts', items: data.key_concepts || [], icon: 'fa-lightbulb' }, { title: 'Study Tricks', items: data.key_tricks || [], icon: 'fa-magic' }, { title: 'Applications', items: data.real_world_applications || [], icon: 'fa-globe' }].filter(b => b.items.length);
+    const html = `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-project-diagram"></i> Mind Map</div></div><div class="ss-body"><div class="mm-root">${this._esc(topic)}</div><div class="mm-branches">${branches.map(b => `<div class="mm-branch"><div class="mm-hdr"><i class="fas ${b.icon}"></i> ${b.title}</div>${b.items.map(i => `<div class="mm-node">• ${this._esc(i)}</div>`).join('')}</div>`).join('')}</div></div></div>`;
+    if (data.ultra_long_notes) return html + `<div class="study-sec"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-book"></i> Details</div></div><div class="ss-body md-content">${this._renderMd(data.ultra_long_notes)}</div></div>`;
+    return html;
+  }
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     PDF EXPORT
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  _downloadPDF() {
+    const data = this.currentData;
+    if (!data) { this._toast('info', 'fa-info', 'Generate content first.'); return; }
+    if (!window.jspdf?.jsPDF) { this._toast('error', 'fa-times', 'PDF library not loaded.'); return; }
+    this._toast('info', 'fa-spinner fa-pulse', 'Generating PDF...');
     try {
-      let totalTokens = 0;
-      let totalChars = 0;
-      let metricsReported = false;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pageW = 210, pageH = 297, l = 15, r = 15, t = 35, b = 20, cw = pageW - l - r;
+      let y = t, page = 1;
       
-      const onToken = (chunk) => {
-        totalTokens++;
-        totalChars += chunk.length;
-        sendEvent(SSE_EVENTS.TOKEN, { t: chunk });
+      const addPage = () => { doc.addPage(); page++; y = t; this._drawHeader(doc, pageW, l, r); };
+      const check = (need) => { if (y + need > pageH - b) addPage(); };
+      const txt = (text, size, bold, color, indent = 0, lh = 1.5) => {
+        if (!text) return;
+        const lines = doc.splitTextToSize(this._stripMd(String(text)), cw - indent);
+        doc.setFontSize(size); doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setTextColor(color[0], color[1], color[2]);
+        lines.forEach(line => { check(size * 0.352 * lh + 2); doc.text(line, l + indent, y); y += size * 0.352 * lh; });
       };
       
-      const onStageUpdate = (stage) => {
-        sendEvent(SSE_EVENTS.STAGE, stage);
-      };
+      this._drawHeader(doc, pageW, l, r);
+      doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(201, 169, 110);
+      const title = this._stripMd(data.topic || 'Study Notes');
+      const tlines = doc.splitTextToSize(title, cw);
+      tlines.forEach(line => { check(10); doc.text(line, l + (cw - doc.getTextWidth(line)) / 2, y); y += 8; });
+      y += 8;
+      txt(`${TOOL_CONFIG[this.tool]?.sfpName || 'Notes'} · ${new Date().toLocaleDateString()} · ${this._wordCount(this._stripMd(data.ultra_long_notes || ''))} words`, 9, false, [100, 100, 100]);
+      y += 6;
+      doc.setDrawColor(201, 169, 110); doc.line(l, y, pageW - r, y); y += 8;
       
-      const onMetricsUpdate = (metrics) => {
-        if (!metricsReported) {
-          sendEvent(SSE_EVENTS.METRICS, metrics);
-          metricsReported = true;
-        }
-      };
+      if (data.ultra_long_notes) { txt(data.ultra_long_notes, 10, false, [30, 30, 30], 0, 1.6); y += 6; }
       
-      const result = await generateWithAI(trimmedMessage, options, onToken, onStageUpdate, onMetricsUpdate);
-      
-      clearInterval(heartbeatInterval);
-      clearStageTimeouts();
-      
-      sendEvent(SSE_EVENTS.STAGE, { idx: 4, label: 'Complete!', done: true });
-      
-      const finalResult = {
-        ...result,
-        _request_id: requestId,
-        _duration_ms: Date.now() - startTime,
-        _tokens_streamed: totalTokens,
-        _chars_streamed: totalChars,
-        _streaming: true
-      };
-      
-      logger.success(`[${requestId}] Stream complete — ${totalTokens} tokens, ${totalChars} chars, ${finalResult._duration_ms}ms`);
-      
-      sendEvent(SSE_EVENTS.DONE, finalResult);
-      res.end();
-      
-    } catch (error) {
-      clearInterval(heartbeatInterval);
-      clearStageTimeouts();
-      
-      logger.error(`[${requestId}] Streaming failed: ${error.message}`);
-      
-      // Fallback streaming
-      sendEvent(SSE_EVENTS.STAGE, { idx: 2, label: 'Using offline knowledge base...' });
-      
-      const fallback = generateOfflineFallback(trimmedMessage, options);
-      const streamText = fallback.ultra_long_notes || '';
-      const words = streamText.split(' ');
-      
-      for (let i = 0; i < words.length; i += 3) {
-        if (res.writableEnded) break;
-        const chunk = words.slice(i, i + 3).join(' ') + ' ';
-        sendEvent(SSE_EVENTS.TOKEN, { t: chunk });
-        await sleep(50);
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let p = 1; p <= totalPages; p++) {
+        doc.setPage(p);
+        doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(150, 150, 150);
+        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVELOPER}`, l, pageH - 8);
+        doc.text(`${p} / ${totalPages}`, pageW - r, pageH - 8, { align: 'right' });
       }
       
-      sendEvent(SSE_EVENTS.STAGE, { idx: 4, label: 'Complete (offline mode)', done: true });
-      
-      const finalFallback = {
-        ...fallback,
-        _request_id: requestId,
-        _duration_ms: Date.now() - startTime,
-        _fallback: true,
-        _streaming: true
-      };
-      
-      sendEvent(SSE_EVENTS.DONE, finalFallback);
-      
-      if (!res.writableEnded) res.end();
-    }
-    
-    return;
+      const fname = `SavoireAI_${title.replace(/[^a-z0-9]/gi, '_').slice(0, 30)}.pdf`;
+      doc.save(fname);
+      this._toast('success', 'fa-file-pdf', 'PDF saved!');
+    } catch(e) { this._toast('error', 'fa-times', 'PDF failed.'); }
   }
   
-  /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-     SYNC MODE — Full JSON Response
-     ═══════════════════════════════════════════════════════════════════════════════════════════════ */
-  
-  try {
-    let result;
-    
-    try {
-      result = await generateWithAI(trimmedMessage, options);
-    } catch (aiError) {
-      logger.warn(`[${requestId}] AI failed in sync mode: ${aiError.message} — using offline fallback`);
-      result = generateOfflineFallback(trimmedMessage, options);
-    }
-    
-    const finalResult = {
-      ...result,
-      _request_id: requestId,
-      _duration_ms: Date.now() - startTime,
-      _sync: true
-    };
-    
-    logger.success(`[${requestId}] Sync response ready — ${finalResult._duration_ms}ms | fallback: ${!!finalResult._fallback}`);
-    
-    return res.status(200).json(finalResult);
-    
-  } catch (unexpectedError) {
-    logger.error(`[${requestId}] Unexpected error: ${unexpectedError.message}`, unexpectedError.stack);
-    
-    const emergencyFallback = generateOfflineFallback(trimmedMessage, options);
-    const finalResult = {
-      ...emergencyFallback,
-      _request_id: requestId,
-      _duration_ms: Date.now() - startTime,
-      _error: true,
-      _error_type: 'unexpected'
-    };
-    
-    return res.status(200).json(finalResult);
+  _drawHeader(doc, w, l, r) {
+    doc.setFillColor(10, 8, 6); doc.rect(0, 0, w, 30, 'F');
+    doc.setFillColor(201, 169, 110); doc.rect(0, 0, w, 4, 'F');
+    doc.setFontSize(12); doc.setFont('helvetica', 'bold'); doc.setTextColor(201, 169, 110);
+    doc.text('SAVOIRÉ AI', l, 18);
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(160, 130, 80);
+    doc.text('Think Less. Know More.', l, 25);
+    doc.setFontSize(8); doc.setTextColor(201, 169, 110);
+    doc.text('savoireai.vercel.app', w - r, 18, { align: 'right' });
   }
-};
+  
+  /* ═══════════════════════════════════════════════════════════════════════════
+     UTILITIES
+     ═══════════════════════════════════════════════════════════════════════════ */
+  
+  _copyResult() {
+    const data = this.currentData;
+    if (!data) { this._toast('info', 'fa-info', 'Nothing to copy.'); return; }
+    let text = `# ${data.topic || 'Study Notes'}\n\n`;
+    if (data.ultra_long_notes) text += this._stripMd(data.ultra_long_notes) + '\n\n';
+    if (data.key_concepts?.length) { text += '## Key Concepts\n' + data.key_concepts.map((c, i) => `${i+1}. ${c}`).join('\n') + '\n\n'; }
+    navigator.clipboard.writeText(text).then(() => this._toast('success', 'fa-check', 'Copied!')).catch(() => this._toast('error', 'fa-times', 'Copy failed.'));
+  }
+  
+  _copyText(t) { navigator.clipboard.writeText(t).then(() => this._toast('success', 'fa-check', 'Copied!')).catch(() => this._toast('error', 'fa-times', 'Failed')); }
+  
+  _saveNote() {
+    const data = this.currentData;
+    if (!data) { this._toast('info', 'fa-info', 'Nothing to save.'); return; }
+    if (this.saved.find(s => s.topic === data.topic && s.tool === this.tool)) { this._toast('info', 'fa-star', 'Already saved!'); return; }
+    if (this.saved.length >= SAVOIRÉ.MAX_SAVED) { this._toast('error', 'fa-archive', `Max ${SAVOIRÉ.MAX_SAVED} notes.`); return; }
+    this.saved.unshift({ id: this._genId(), topic: data.topic || 'Untitled', tool: this.tool, data, savedAt: Date.now() });
+    this._save('sv_saved', this.saved);
+    this._updateStats();
+    this._toast('success', 'fa-star', 'Saved to library!');
+  }
+  
+  _shareResult() {
+    const data = this.currentData;
+    if (!data) { this._toast('info', 'fa-info', 'Nothing to share.'); return; }
+    const sd = { title: `${data.topic || 'Notes'} — Savoiré AI`, text: `Study notes on "${data.topic}"`, url: `https://${SAVOIRÉ.WEBSITE}` };
+    if (navigator.share) navigator.share(sd).catch(() => this._fallbackShare(sd));
+    else this._fallbackShare(sd);
+  }
+  
+  _fallbackShare(sd) { navigator.clipboard.writeText(sd.url).then(() => this._toast('success', 'fa-link', 'Link copied!')); }
+  
+  _clearOutput() {
+    if (!this.currentData) return;
+    this._confirm('Clear output?', () => { this.currentData = null; this._el('resultArea').style.display = 'none'; this._el('emptyState').style.display = 'flex'; this.fcCards = []; this.quizData = []; this._toast('info', 'fa-trash', 'Cleared.'); });
+  }
+  
+  _addHistory(item) {
+    this.history = this.history.filter(h => !(h.topic === item.topic && h.tool === item.tool));
+    this.history.unshift(item);
+    if (this.history.length > SAVOIRÉ.MAX_HISTORY) this.history.pop();
+    this._save('sv_history', this.history);
+    this._renderHistory();
+    this._updateBadge();
+  }
+  
+  _renderHistory() {
+    const list = this._el('lpHistList');
+    if (!list) return;
+    if (!this.history.length) { list.innerHTML = '<div class="empty-hist">No history yet</div>'; return; }
+    const icons = { notes:'fa-book', flashcards:'fa-layer-group', quiz:'fa-question', summary:'fa-align-left', mindmap:'fa-project-diagram' };
+    list.innerHTML = this.history.slice(0, 6).map(h => `<div class="hist-item" onclick="window._app._loadHistory('${h.id}')"><i class="fas ${icons[h.tool] || 'fa-book'}"></i><span>${this._esc(h.topic.substring(0, 30))}</span><span class="time">${this._relTime(h.ts)}</span></div>`).join('');
+  }
+  
+  _openHistory() { this._renderHistoryModal(); this._openModal('histModal'); }
+  _filterHistory(q) { const f = this._qs('.hf.active')?.dataset?.filter || 'all'; this._renderHistoryModal(f, q); }
+  
+  _renderHistoryModal(f = 'all', q = '') {
+    const list = this._el('histList'); const empty = this._el('histEmpty');
+    if (!list) return;
+    let filtered = this.history;
+    if (f !== 'all') filtered = filtered.filter(h => h.tool === f);
+    if (q) filtered = filtered.filter(h => h.topic.toLowerCase().includes(q.toLowerCase()));
+    if (!filtered.length) { list.innerHTML = ''; if (empty) empty.style.display = 'flex'; return; }
+    if (empty) empty.style.display = 'none';
+    const groups = {};
+    filtered.forEach(h => { const g = this._dateGroup(h.ts); if (!groups[g]) groups[g] = []; groups[g].push(h); });
+    const icons = { notes:'fa-book', flashcards:'fa-layer-group', quiz:'fa-question', summary:'fa-align-left', mindmap:'fa-project-diagram' };
+    const hl = (t, s) => { if (!s) return this._esc(t); const re = new RegExp(`(${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'); return this._esc(t).replace(re, '<mark>$1</mark>'); };
+    list.innerHTML = Object.entries(groups).map(([g, items]) => `<div class="hist-group">${g}</div>${items.map(h => `<div class="hist-item" onclick="window._app._loadHistory('${h.id}')"><div class="hist-icon"><i class="fas ${icons[h.tool] || 'fa-book'}"></i></div><div><div class="hist-title">${hl(h.topic, q)}</div><div class="hist-meta"><span>${h.tool}</span><span>${this._relTime(h.ts)}</span></div></div><button class="hist-del" onclick="event.stopPropagation();window._app._delHistory('${h.id}')"><i class="fas fa-trash"></i></button></div>`).join('')}`).join('');
+  }
+  
+  _loadHistory(id) { const h = this.history.find(x => x.id === id); if (h?.data) { this._closeModal('histModal'); this.currentData = h.data; this.tool = h.tool || 'notes'; this._setTool(this.tool); this._renderResult(h.data); this._toast('info', 'fa-history', `Loaded: ${h.topic.substring(0, 40)}`); } }
+  _delHistory(id) { this.history = this.history.filter(x => x.id !== id); this._save('sv_history', this.history); this._updateBadge(); this._renderHistory(); this._updateStats(); this._renderHistoryModal(this._qs('.hf.active')?.dataset?.filter || 'all', this._el('histSearchInput')?.value || ''); }
+  
+  _openSaved() { this._renderSaved(); this._openModal('savedModal'); }
+  _renderSaved() { const list = this._el('savedList'); const empty = this._el('savedEmpty'); if (!list) return; if (!this.saved.length) { list.innerHTML = ''; if (empty) empty.style.display = 'flex'; return; } if (empty) empty.style.display = 'none'; const icons = { notes:'fa-book', flashcards:'fa-layer-group', quiz:'fa-question', summary:'fa-align-left', mindmap:'fa-project-diagram' }; list.innerHTML = this.saved.map(s => `<div class="hist-item" onclick="window._app._loadSaved('${s.id}')"><div class="hist-icon"><i class="fas ${icons[s.tool] || 'fa-star'}"></i></div><div><div class="hist-title">${this._esc(s.topic.substring(0, 70))}</div><div class="hist-meta"><span>${s.tool}</span><span>Saved ${this._relTime(s.savedAt)}</span></div></div><button class="hist-del" onclick="event.stopPropagation();window._app._delSaved('${s.id}')"><i class="fas fa-trash"></i></button></div>`).join(''); }
+  _loadSaved(id) { const s = this.saved.find(x => x.id === id); if (s?.data) { this._closeModal('savedModal'); this.currentData = s.data; this.tool = s.tool || 'notes'; this._setTool(this.tool); this._renderResult(s.data); this._toast('success', 'fa-star', `Loaded: ${s.topic.substring(0, 40)}`); } }
+  _delSaved(id) { this.saved = this.saved.filter(x => x.id !== id); this._save('sv_saved', this.saved); this._updateStats(); this._renderSaved(); }
+  
+  _openSettings() { const ni = this._el('nameInput'); if (ni) ni.value = this.userName; this._openModal('settingsModal'); }
+  _saveName() { const inp = this._el('nameInput'); const n = inp?.value?.trim(); if (!n || n.length < 2) { this._toast('error', 'fa-times', 'Name too short'); return; } this.userName = n; localStorage.setItem('sv_user', n); this._updateUI(); this._toast('success', 'fa-check', 'Name updated!'); }
+  _exportData() { const obj = { exported: new Date().toISOString(), app: SAVOIRÉ.BRAND, userName: this.userName, sessions: this.sessions, history: this.history, saved: this.saved }; const b = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `savoire-backup-${Date.now()}.json`; a.click(); URL.revokeObjectURL(a.href); this._toast('success', 'fa-download', 'Exported!'); }
+  _clearAll() { Object.keys(localStorage).filter(k => k.startsWith('sv_')).forEach(k => localStorage.removeItem(k)); this._toast('info', 'fa-trash', 'Cleared. Reloading...'); setTimeout(() => location.reload(), 1500); }
+  
+  _toggleTheme() { const cur = document.documentElement.dataset.theme || 'dark'; this._setTheme(cur === 'dark' ? 'light' : 'dark'); }
+  _setTheme(t) { document.documentElement.dataset.theme = t; const ic = this._el('themeIcon'); if (ic) ic.className = t === 'dark' ? 'fas fa-moon' : 'fas fa-sun'; this._qsa('[data-theme-btn]').forEach(b => { b.classList.toggle('active', b.dataset.themeBtn === t); }); this.prefs.theme = t; this._save('sv_prefs', this.prefs); }
+  _setFontSize(s) { document.documentElement.dataset.font = s; this._qsa('.font-sz').forEach(b => { b.classList.toggle('active', b.dataset.size === s); }); this.prefs.fontSize = s; this._save('sv_prefs', this.prefs); }
+  _applyPrefs() { if (this.prefs.theme) this._setTheme(this.prefs.theme); if (this.prefs.fontSize) this._setFontSize(this.prefs.fontSize); if (this.prefs.lastTool) this._setTool(this.prefs.lastTool); }
+  
+  _toggleSidebar() { const lp = this._el('leftPanel'); if (!lp) return; if (window.innerWidth <= 768) { const o = lp.classList.toggle('mobile-open'); this._el('sbBackdrop')?.classList.toggle('visible', o); } else { lp.classList.toggle('collapsed'); const sfp = this._el('streamFullpage'); if (sfp) sfp.classList.toggle('panel-open', !lp.classList.contains('collapsed')); } }
+  _closeMobileSidebar() { const lp = this._el('leftPanel'); if (lp) lp.classList.remove('mobile-open'); this._el('sbBackdrop')?.classList.remove('visible'); }
+  _handleResize() { if (window.innerWidth > 768) this._closeMobileSidebar(); }
+  
+  _toggleFocusMode() {
+    this.focusMode = !this.focusMode;
+    const lp = this._el('leftPanel'); const btn = this._el('focusModeBtn');
+    if (this.focusMode) { if (lp) lp.classList.add('collapsed'); if (btn) btn.innerHTML = '<i class="fas fa-compress-alt"></i> Exit Focus'; this._toast('info', 'fa-expand', 'Focus mode on'); }
+    else { if (lp) lp.classList.remove('collapsed'); if (btn) btn.innerHTML = '<i class="fas fa-expand-alt"></i> Focus'; }
+  }
+  
+  _openModal(id) { const m = this._el(id); if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; setTimeout(() => m.querySelector('input, button')?.focus(), 100); } }
+  _closeModal(id) { const m = this._el(id); if (m) { m.style.display = 'none'; if (!this._qs('.modal-overlay[style*="flex"]')) document.body.style.overflow = ''; } }
+  _closeAllModals() { this._qsa('.modal-overlay').forEach(m => m.style.display = 'none'); document.body.style.overflow = ''; this._closeDropdown(); }
+  _confirm(msg, cb) { const me = this._el('confirmMsg'); if (me) me.textContent = msg; this.confirmCb = cb; this._openModal('confirmModal'); }
+  _toggleDropdown() { const dd = this._el('avDropdown'); if (dd) dd.classList.toggle('open'); }
+  _closeDropdown() { const dd = this._el('avDropdown'); if (dd) dd.classList.remove('open'); }
+  
+  _toast(type, icon, msg, dur = 4000) {
+    const c = this._el('toastContainer');
+    if (!c) return;
+    while (c.children.length >= 3) c.removeChild(c.firstChild);
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fas ${icon}"></i><span>${this._esc(msg)}</span>`;
+    t.addEventListener('click', () => { t.classList.add('remove'); setTimeout(() => t.remove(), 300); });
+    c.appendChild(t);
+    setTimeout(() => { if (t.parentNode) { t.classList.add('remove'); setTimeout(() => t.remove(), 300); } }, dur);
+  }
+}
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   DEPLOYMENT INSTRUCTIONS:
-   
-   1. Create vercel.json in project root:
-   {
-     "functions": {
-       "api/study.js": {
-         "maxDuration": 300
-       }
-     }
-   }
-   
-   2. Set environment variable in Vercel dashboard:
-      OPENROUTER_API_KEY = your_api_key_from_openrouter.ai
-   
-   3. Get free API key at: https://openrouter.ai
-   
-   All models use :free suffix — $0 per request, no credit card needed.
-   
-   ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   END OF FILE — api/study.js
-   Savoiré AI v2.0 — Built by Sooban Talha Technologies
-   Founder: Sooban Talha | Free for every student on Earth, forever.
-   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+window.addEventListener('DOMContentLoaded', () => {
+  window._app = new SavoireApp();
+  window.setSugg = (topic) => { const ta = document.getElementById('mainInput'); if (ta) { ta.value = topic; ta.dispatchEvent(new Event('input')); ta.focus(); } };
+  console.log('%c⚡ Savoiré AI — Fast Live Output Ready', 'color:#C9A96E;font-size:14px;font-weight:bold');
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   END
+   ═══════════════════════════════════════════════════════════════════════════ */
