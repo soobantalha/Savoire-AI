@@ -2623,7 +2623,8 @@ footer {
   background: var(--goldd);
 }
 
-.input-mini-bar.visible {
+.input-mini-bar.visible,
+.input-mini-bar.is-visible {
   display: flex;
 }
 
@@ -3324,16 +3325,140 @@ kbd {
 /* The live streaming text — typewriter effect */
 .sfp-text {
   font-family: var(--fb);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--t1);
-  line-height: 1.92;
+  line-height: 1.88;
   white-space: pre-wrap;
   word-break: break-word;
   min-height: 100px;
 }
 
-/* Blinking cursor after text while streaming */
-.sfp-text::after {
+/* ── LIVE MARKDOWN MODE — remove pre-wrap so HTML renders correctly ── */
+.sfp-text.live-md {
+  white-space: normal;
+}
+
+/* Live markdown element styles inside streaming overlay */
+.sfp-text.live-md h1,
+.sfp-text.live-md h2 {
+  font-family: var(--fd);
+  color: var(--gold);
+  font-weight: 700;
+  margin: 1.1em 0 0.45em;
+  line-height: 1.25;
+  border-bottom: 1px solid var(--goldb);
+  padding-bottom: 5px;
+}
+.sfp-text.live-md h1 { font-size: 1.35rem; }
+.sfp-text.live-md h2 { font-size: 1.18rem; }
+.sfp-text.live-md h3 {
+  font-family: var(--fd);
+  color: var(--gold2);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin: 0.9em 0 0.3em;
+}
+.sfp-text.live-md h4 {
+  font-family: var(--fu);
+  color: var(--t2);
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin: 0.7em 0 0.25em;
+}
+.sfp-text.live-md p {
+  margin: 0.5em 0;
+  color: var(--t1);
+}
+.sfp-text.live-md strong {
+  color: var(--gold2);
+  font-weight: 700;
+}
+.sfp-text.live-md em {
+  color: var(--t2);
+  font-style: italic;
+}
+.sfp-text.live-md ul,
+.sfp-text.live-md ol {
+  margin: 0.4em 0 0.4em 1.4em;
+  padding: 0;
+}
+.sfp-text.live-md li {
+  margin: 0.22em 0;
+  color: var(--t1);
+  line-height: 1.7;
+}
+.sfp-text.live-md li::marker {
+  color: var(--gold);
+}
+.sfp-text.live-md blockquote {
+  border-left: 3px solid var(--gold);
+  background: rgba(201,169,110,.07);
+  margin: 0.6em 0;
+  padding: 6px 14px;
+  border-radius: 0 var(--r2) var(--r2) 0;
+  color: var(--t2);
+  font-style: italic;
+}
+.sfp-text.live-md code {
+  font-family: var(--fm);
+  background: var(--bg4);
+  border: 1px solid var(--b2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.88em;
+  color: var(--gold2);
+}
+.sfp-text.live-md pre {
+  background: var(--bg4);
+  border: 1px solid var(--b2);
+  border-radius: var(--r3);
+  padding: 10px 14px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+.sfp-text.live-md pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--t1);
+}
+.sfp-text.live-md hr {
+  border: none;
+  border-top: 1px solid var(--b2);
+  margin: 1em 0;
+}
+.sfp-text.live-md table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.6em 0;
+  font-size: 0.88rem;
+}
+.sfp-text.live-md th {
+  background: var(--bg4);
+  color: var(--gold);
+  font-weight: 600;
+  padding: 6px 10px;
+  text-align: left;
+  border: 1px solid var(--b2);
+}
+.sfp-text.live-md td {
+  padding: 5px 10px;
+  border: 1px solid var(--b2);
+  color: var(--t2);
+}
+
+/* Blinking cursor span (injected via JS) */
+.sfp-cursor {
+  display: inline-block;
+  color: var(--gold);
+  animation: blink 0.7s step-end infinite;
+  font-size: 1.05rem;
+  margin-left: 1px;
+  vertical-align: baseline;
+}
+
+/* ::after pseudo cursor — only shown in plain-text mode (no live-md) */
+.sfp-text:not(.live-md)::after {
   content: '▌';
   color: var(--gold);
   animation: blink 0.8s step-end infinite;
@@ -3341,9 +3466,11 @@ kbd {
   margin-left: 2px;
 }
 
-/* Remove cursor when done */
+/* Remove pseudo cursor when live-md or done */
+.sfp-text.live-md::after,
 .sfp-text.done::after {
   display: none;
+  content: none;
 }
 
 
@@ -6369,4 +6496,3 @@ kbd {
    SAVOIRÉ AI v2.0 — LANDING PAGE STYLES (Extracted from master CSS)
    Built by Sooban Talha Technologies
    ===================================================================== */
-

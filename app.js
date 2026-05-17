@@ -734,7 +734,7 @@ class SavoireApp {
     const allowed = ['.txt', '.md', '.csv', '.text', '.markdown'];
     const ext     = '.' + (file.name.split('.').pop() || '').toLowerCase();
 
-    if (!allowed.includes(ext) && file.type !== 'text/plain') {
+    if (!allowed.includes(ext) && !['text/plain', 'text/csv', 'text/markdown'].includes(file.type)) {
       this._toast('error', 'fa-times', `File type not supported. Use .txt, .md or .csv`);
       return;
     }

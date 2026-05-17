@@ -1,14 +1,3 @@
-export default async function handler(req, res) {
-  // ── CORS preflight handler ──
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    res.status(200).end();
-    return;
-  }}
-  
-  // ── Existing code continues... ──
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // SAVOIRÉ AI v2.0 — api/study.js — VERCEL SERVERLESS BACKEND
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
