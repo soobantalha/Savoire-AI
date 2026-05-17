@@ -1,5 +1,5 @@
 // Ultra-Advanced Gold Theme AI Assistant
-class GoldSavoireAI {
+class GoldSavoiré AI {
     constructor() {
         this.initializeApp();
         this.bindEvents();
@@ -584,7 +584,7 @@ class GoldSavoireAI {
         }
 
         // Save the PDF
-        doc.save(`SavoireAI_Premium_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+        doc.save(`Savoiré AI_Premium_${topic.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
     }
 
     showThinking() {
@@ -673,7 +673,7 @@ class GoldSavoireAI {
 }
 
 // Initialize the app
-const goldAI = new GoldSavoireAI();
+const goldAI = new GoldSavoiré AI();
 
 // Make available globally
 window.goldAI = goldAI;
