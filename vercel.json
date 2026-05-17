@@ -1,24 +1,53 @@
 {
   "version": 2,
   "name": "savoire-ai",
-  "builds": [
-    { "src": "api/study.js", "use": "@vercel/node" },
-    { "src": "api/sheets.js", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/api/study", "dest": "/api/study.js" },
-    { "src": "/api/sheets", "dest": "/api/sheets.js" },
-    { "src": "/public/(.*)", "dest": "/public/$1" },
-    { "src": "/(.*)", "dest": "/dashboard.html" }
+  "buildCommand": null,
+  "outputDirectory": null,
+  "rewrites": [
+    {
+      "source": "/api/study",
+      "destination": "/api/study.js"
+    },
+    {
+      "source": "/api/sheets",
+      "destination": "/api/sheets.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/dashboard.html"
+    }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        }
       ]
     }
-  ]
+  ],
+  "functions": {
+    "api/study.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    },
+    "api/sheets.js": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  }
 }
