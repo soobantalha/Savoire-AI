@@ -4,6 +4,11 @@ const GOOGLE_SHEETS_WEBHOOK = process.env.GOOGLE_SHEETS_WEBHOOK || '';
 class UserManager {
   static async saveUser(userData) {
     try {
+      if (!GOOGLE_SHEETS_WEBHOOK) {
+        console.log('No Google Sheets webhook configured, using local only');
+        return { success: true, local: true };
+      }
+      
       const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -20,23 +25,31 @@ class UserManager {
       });
       return await response.json();
     } catch (error) {
-      console.error('Sheets saveUser error:', error);
-      return { success: false, error: error.message };
+      console.error('Sheets saveUser error:', error.message);
+      return { success: false, error: error.message, local: true };
     }
   }
 
   static async getUser(userName) {
     try {
+      if (!GOOGLE_SHEETS_WEBHOOK) {
+        return null;
+      }
+      
       const response = await fetch(`${GOOGLE_SHEETS_WEBHOOK}?action=getUser&name=${encodeURIComponent(userName)}`);
       return await response.json();
     } catch (error) {
-      console.error('Sheets getUser error:', error);
+      console.error('Sheets getUser error:', error.message);
       return null;
     }
   }
 
   static async updateStreak(userName, streak) {
     try {
+      if (!GOOGLE_SHEETS_WEBHOOK) {
+        return { success: true, local: true };
+      }
+      
       const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,8 +60,8 @@ class UserManager {
       });
       return await response.json();
     } catch (error) {
-      console.error('Sheets updateStreak error:', error);
-      return { success: false };
+      console.error('Sheets updateStreak error:', error.message);
+      return { success: false, local: true };
     }
   }
 }
@@ -56,6 +69,11 @@ class UserManager {
 class SessionManager {
   static async saveSession(sessionData) {
     try {
+      if (!GOOGLE_SHEETS_WEBHOOK) {
+        console.log('Session saved locally');
+        return { success: true, local: true };
+      }
+      
       const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -75,17 +93,21 @@ class SessionManager {
       });
       return await response.json();
     } catch (error) {
-      console.error('Sheets saveSession error:', error);
-      return { success: false };
+      console.error('Sheets saveSession error:', error.message);
+      return { success: false, local: true };
     }
   }
 
   static async getSessions(userName, limit = 50) {
     try {
+      if (!GOOGLE_SHEETS_WEBHOOK) {
+        return [];
+      }
+      
       const response = await fetch(`${GOOGLE_SHEETS_WEBHOOK}?action=getSessions&name=${encodeURIComponent(userName)}&limit=${limit}`);
       return await response.json();
     } catch (error) {
-      console.error('Sheets getSessions error:', error);
+      console.error('Sheets getSessions error:', error.message);
       return [];
     }
   }
@@ -109,6 +131,10 @@ class StreakTracker {
 class Analytics {
   static async trackEvent(eventData) {
     try {
+      if (!GOOGLE_SHEETS_WEBHOOK) {
+        return { success: true, local: true };
+      }
+      
       const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,50 +150,63 @@ class Analytics {
       });
       return await response.json();
     } catch (error) {
-      console.error('Analytics trackEvent error:', error);
-      return { success: false };
+      console.error('Analytics trackEvent error:', error.message);
+      return { success: false, local: true };
     }
   }
 }
 
 // Vercel Serverless Handler
 module.exports = async (req, res) => {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  const { action } = req.method === 'GET' ? req.query : req.body;
+  const { action } = req.method === 'GET' ? req.query : (req.body || {});
+
+  if (!action) {
+    return res.status(400).json({ error: 'Missing action parameter' });
+  }
 
   try {
     let result;
     switch (action) {
       case 'saveUser':
-        result = await UserManager.saveUser(req.body.data);
+        result = await UserManager.saveUser(req.body?.data || {});
         break;
       case 'getUser':
-        result = await UserManager.getUser(req.query.name);
+        result = await UserManager.getUser(req.query?.name || '');
         break;
       case 'updateStreak':
-        result = await UserManager.updateStreak(req.body.data.name, req.body.data.streak);
+        result = await UserManager.updateStreak(
+          req.body?.data?.name || '',
+          req.body?.data?.streak || 0
+        );
         break;
       case 'saveSession':
-        result = await SessionManager.saveSession(req.body.data);
+        result = await SessionManager.saveSession(req.body?.data || {});
         break;
       case 'getSessions':
-        result = await SessionManager.getSessions(req.query.name, req.query.limit);
+        result = await SessionManager.getSessions(
+          req.query?.name || '',
+          parseInt(req.query?.limit) || 50
+        );
         break;
       case 'trackEvent':
-        result = await Analytics.trackEvent(req.body.data);
+        result = await Analytics.trackEvent(req.body?.data || {});
         break;
       default:
-        return res.status(400).json({ error: 'Invalid action' });
+        return res.status(400).json({ error: `Invalid action: ${action}` });
     }
     return res.status(200).json(result);
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    console.error('API Error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
