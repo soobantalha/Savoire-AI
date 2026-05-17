@@ -127,6 +127,14 @@ const STAGE_MESSAGES = [
 class SavoireApp {
 
   constructor() {
+      fetch('/api/study', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      message: 'ping', 
+      options: { stream: false } 
+    })
+  }).catch(() => {});
     /* ── State ── */
     this.tool          = 'notes';
     this.generating    = false;

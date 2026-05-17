@@ -1,3 +1,14 @@
+export default async function handler(req, res) {
+  // ── CORS preflight handler ──
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(200).end();
+    return;
+  }}
+  
+  // ── Existing code continues... ──
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // SAVOIRÉ AI v2.0 — api/study.js — VERCEL SERVERLESS BACKEND
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
@@ -869,6 +880,10 @@ async function generateWithAI(message, opts, onChunk) {
           logger.warn(`Rate limited on ${name} — skipping to next model`);
           break;
         }
+        if (errMsg.includes('timeout') || errMsg.includes('ECONNREFUSED')) {
+          logger.warn(`${name} unavailable — skipping to next model`);
+          break;  // Don't retry on network errors
+        }
 
         // Aborted (timeout) → skip second attempt
         if (err.name === 'AbortError') {
@@ -878,7 +893,7 @@ async function generateWithAI(message, opts, onChunk) {
 
         // Wait before retry (only for attempt 1, not if we're about to give up)
         if (attempt < maxAttempts) {
-          const waitMs = 1200;
+          const waitMs = 20;
           logger.info(`Waiting ${waitMs}ms before retry ${attempt + 1}...`);
           await sleep(waitMs);
         }
@@ -1236,6 +1251,7 @@ module.exports = async function handler(req, res) {
     res.setHeader('Connection',      'keep-alive');
     res.setHeader('X-Accel-Buffering','no');         // Nginx: disable buffering
     res.setHeader('Transfer-Encoding','chunked');
+    res.setHeader('Content-Encoding', 'identity'); 
 
     // ── Flush headers immediately so browser can start reading ──
     if (typeof res.flushHeaders === 'function') {
@@ -1255,7 +1271,7 @@ module.exports = async function handler(req, res) {
 
     // ── Send immediate heartbeat so client knows connection is live ──
     sendSSE(EVT_HEARTBEAT, { ts: Date.now(), requestId, status: 'connected', message: 'Savoiré AI connected — generating…' });
-
+    sendSSE(EVT_TOKEN, { t: '## Analysing Your Topic\n\n' });
     // ── Send initial stage event ──
     sendSSE(EVT_STAGE, { idx: 0, label: 'Analysing your topic…' });
 
