@@ -3,550 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savoire AI v2.1 | Dark Luxury Premium Study Platform</title>
-    <meta name="description" content="Savoire AI v2.1 - Ultra-luxury AI-powered study platform. 10 premium tools for academic excellence.">
+    <title>Savoiré AI - by Sooban Talha Technologies</title>
     
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Advanced AI-powered assistant with ultra-detailed responses">
     
-    <link rel="stylesheet" href="style.css">
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="LOGO.png">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-    <!-- Custom Cursor -->
-    <div class="custom-cursor" id="customCursor"></div>
-    <div class="custom-cursor-dot" id="customCursorDot"></div>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+    <div class="floating-elements"></div>
     
-    <!-- Page Loader -->
-    <div class="page-loader" id="pageLoader">
-        <div class="loader-content">
-            <div class="loader-logo">SAVOIRE</div>
-            <div class="loader-line"></div>
-        </div>
-    </div>
-    
-    <!-- Noise Overlay -->
-    <div class="noise-overlay"></div>
-    
-    <!-- Ambient Light Orbs -->
-    <div class="ambient-orb ambient-orb-1"></div>
-    <div class="ambient-orb ambient-orb-2"></div>
-    
-    <!-- Main Container -->
-    <div class="main-container">
-        
-        <!-- Navigation -->
-        <nav class="nav-luxury">
-            <a href="/" class="nav-brand">
-                SAVOIRE AI <span class="nav-brand-version">v2.1</span>
-            </a>
-            <ul class="nav-links">
-                <li><a href="#tools" class="nav-link">Tools</a></li>
-                <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="https://soobantalhatech.xyz" class="nav-link" target="_blank">Developer</a></li>
-            </ul>
-        </nav>
-        
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="hero-eyebrow">Dark Luxury Premium • Academic Excellence</div>
-            <h1 class="hero-title">
-                Study With<br>
-                <span class="hero-title-gold">Intelligence</span>
-            </h1>
-            <p class="hero-subtitle">
-                An ultra-luxury AI study platform with 10 premium tools designed for academic mastery. 
-                Powered by advanced AI, wrapped in dark elegance.
-            </p>
-            <div class="hero-divider"></div>
-        </section>
-        
-        <!-- Tools Section -->
-        <section class="tools-section" id="tools">
-            <div class="section-header">
-                <div class="section-label">10 Premium Tools</div>
-                <h2 class="section-title">Your Academic Arsenal</h2>
-            </div>
-            
-            <div class="tools-grid">
-                <!-- Tool 1 -->
-                <div class="tool-card" onclick="openTool(1)" data-tool="1">
-                    <div class="tool-card-number">TOOL 01</div>
-                    <div class="tool-card-icon">📝</div>
-                    <h3 class="tool-card-title">Smart Lecture Transcriber</h3>
-                    <p class="tool-card-desc">Convert raw lecture transcripts into beautifully structured study notes with key takeaways and exam tips.</p>
-                    <span class="tool-card-arrow">→</span>
+    <!-- Minimal Header -->
+    <header class="modern-header">
+        <div class="header-container">
+            <div class="logo-area">
+                <div class="logo-wrapper">
+                    <div class="logo-background animated-logo">
+                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
+                    </div>
                 </div>
-                
-                <!-- Tool 2 -->
-                <div class="tool-card" onclick="openTool(2)" data-tool="2">
-                    <div class="tool-card-number">TOOL 02</div>
-                    <div class="tool-card-icon">🔍</div>
-                    <h3 class="tool-card-title">Key Concept Extractor</h3>
-                    <p class="tool-card-desc">Automatically identify definitions, formulas, dates, and exam-likely concepts from your notes.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 3 -->
-                <div class="tool-card" onclick="openTool(3)" data-tool="3">
-                    <div class="tool-card-number">TOOL 03</div>
-                    <div class="tool-card-icon">🃏</div>
-                    <h3 class="tool-card-title">Flashcard Factory</h3>
-                    <p class="tool-card-desc">Generate scientifically-designed flashcards for active recall and spaced repetition study.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 4 -->
-                <div class="tool-card" onclick="openTool(4)" data-tool="4">
-                    <div class="tool-card-number">TOOL 04</div>
-                    <div class="tool-card-icon">📚</div>
-                    <h3 class="tool-card-title">Mock Exam Generator</h3>
-                    <p class="tool-card-desc">Create complete practice exams with multiple choice, short answer, and essay questions.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 5 -->
-                <div class="tool-card" onclick="openTool(5)" data-tool="5">
-                    <div class="tool-card-number">TOOL 05</div>
-                    <div class="tool-card-icon">📖</div>
-                    <h3 class="tool-card-title">Study Guide Generator</h3>
-                    <p class="tool-card-desc">Transform any material into comprehensive study guides with concept maps and revision sheets.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 6 -->
-                <div class="tool-card" onclick="openTool(6)" data-tool="6">
-                    <div class="tool-card-number">TOOL 06</div>
-                    <div class="tool-card-icon">📕</div>
-                    <h3 class="tool-card-title">Chapter Summarizer</h3>
-                    <p class="tool-card-desc">Summarize entire textbook chapters in minutes with key points and visual tables.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 7 -->
-                <div class="tool-card" onclick="openTool(7)" data-tool="7">
-                    <div class="tool-card-number">TOOL 07</div>
-                    <div class="tool-card-icon">🔢</div>
-                    <h3 class="tool-card-title">Math Problem Solver</h3>
-                    <p class="tool-card-desc">Solve complex math problems with detailed step-by-step explanations and verification.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 8 -->
-                <div class="tool-card" onclick="openTool(8)" data-tool="8">
-                    <div class="tool-card-number">TOOL 08</div>
-                    <div class="tool-card-icon">✍️</div>
-                    <h3 class="tool-card-title">Essay Outliner</h3>
-                    <p class="tool-card-desc">Generate complete essay outlines with strong thesis statements and paragraph structures.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 9 -->
-                <div class="tool-card" onclick="openTool(9)" data-tool="9">
-                    <div class="tool-card-number">TOOL 09</div>
-                    <div class="tool-card-icon">📄</div>
-                    <h3 class="tool-card-title">Research Paper Analyzer</h3>
-                    <p class="tool-card-desc">Analyze research papers and extract methodology, findings, and critical evaluations.</p>
-                    <span class="tool-card-arrow">→</span>
-                </div>
-                
-                <!-- Tool 10 -->
-                <div class="tool-card" onclick="openTool(10)" data-tool="10">
-                    <div class="tool-card-number">TOOL 10</div>
-                    <div class="tool-card-icon">📅</div>
-                    <h3 class="tool-card-title">Study Plan Generator</h3>
-                    <p class="tool-card-desc">Create personalized study schedules with daily routines and revision phases.</p>
-                    <span class="tool-card-arrow">→</span>
+                <div class="brand-text">
+                    <h1 class="animated-text">Savoiré AI</h1>
+                    <div class="brand-tagline">by Sooban Talha Technologies</div>
                 </div>
             </div>
-        </section>
-        
-        <!-- Footer -->
-        <footer class="footer-luxury" id="about">
-            <div class="footer-grid">
-                <div>
-                    <div class="footer-brand-name">SAVOIRE AI</div>
-                    <div class="footer-brand-version">VERSION 2.1 — DARK LUXURY PREMIUM</div>
-                    <p class="footer-brand-desc">
-                        An ultra-luxury AI-powered study platform engineered for academic excellence. 
-                        Ten premium tools, one elegant interface.
-                    </p>
-                </div>
-                <div>
-                    <div class="footer-heading">Quick Links</div>
-                    <ul class="footer-links">
-                        <li><a href="#tools" class="footer-link">All Tools</a></li>
-                        <li><a href="#" class="footer-link">Documentation</a></li>
-                        <li><a href="#" class="footer-link">API Access</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <div class="footer-heading">Developer</div>
-                    <ul class="footer-links">
-                        <li><a href="https://soobantalhatech.xyz" class="footer-link" target="_blank">Sooban Talha Technologies</a></li>
-                        <li><span class="footer-link">Founder: Sooban Talha</span></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <span class="footer-copyright">© 2026 SAVOIRE AI. ALL RIGHTS RESERVED.</span>
-                <span class="footer-founder">FOUNDED BY SOOBAN TALHA</span>
-            </div>
-        </footer>
-    </div>
-    
-    <!-- Tool Modal -->
-    <div class="tool-modal-overlay" id="toolModal">
-        <div class="tool-modal" id="toolModalContent">
-            <!-- Dynamically filled by JavaScript -->
-        </div>
-    </div>
-    
-    <script>
-        // ═══════════════════════════════════════════════════════════════
-        // Savoire AI v2.1 - Dark Luxury Premium JavaScript
-        // ═══════════════════════════════════════════════════════════════
-        
-        // Custom Cursor
-        const cursor = document.getElementById('customCursor');
-        const cursorDot = document.getElementById('customCursorDot');
-        
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX - 10 + 'px';
-            cursor.style.top = e.clientY - 10 + 'px';
-            cursorDot.style.left = e.clientX - 2 + 'px';
-            cursorDot.style.top = e.clientY - 2 + 'px';
-        });
-        
-        // Cursor hover effect on links and buttons
-        document.addEventListener('mouseover', (e) => {
-            if (e.target.closest('a, button, .tool-card, .btn-generate')) {
-                cursor.style.transform = 'scale(1.8)';
-                cursor.style.borderColor = 'rgba(198, 169, 98, 0.8)';
-            }
-        });
-        
-        document.addEventListener('mouseout', (e) => {
-            if (e.target.closest('a, button, .tool-card, .btn-generate')) {
-                cursor.style.transform = 'scale(1)';
-                cursor.style.borderColor = 'rgba(198, 169, 98, 1)';
-            }
-        });
-        
-        // Page Loader
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                document.getElementById('pageLoader').classList.add('hidden');
-            }, 2000);
-        });
-        
-        // Tool Configurations
-        const toolConfigs = {
-            1: {
-                title: 'Smart Lecture Transcriber',
-                subtitle: 'Convert raw transcripts into structured study notes',
-                fields: [
-                    { type: 'textarea', id: 'transcript', label: 'Paste Lecture Transcript', placeholder: 'Paste your raw lecture transcript here...' }
-                ],
-                endpoint: '/api/study/tool1',
-                payload: (data) => ({ transcript: data.transcript })
-            },
-            2: {
-                title: 'Key Concept Extractor',
-                subtitle: 'Extract definitions, formulas, and key concepts',
-                fields: [
-                    { type: 'textarea', id: 'notes', label: 'Paste Your Notes', placeholder: 'Paste your study notes here...' }
-                ],
-                endpoint: '/api/study/tool2',
-                payload: (data) => ({ notes: data.notes })
-            },
-            3: {
-                title: 'Flashcard Factory',
-                subtitle: 'Generate Anki-compatible flashcards',
-                fields: [
-                    { type: 'textarea', id: 'notes', label: 'Paste Study Material', placeholder: 'Paste your notes or textbook content...' },
-                    { type: 'select', id: 'count', label: 'Number of Flashcards', options: ['10', '15', '20', '25', '30'] }
-                ],
-                endpoint: '/api/study/tool3',
-                payload: (data) => ({ notes: data.notes, count: parseInt(data.count) || 15 })
-            },
-            4: {
-                title: 'Mock Exam Generator',
-                subtitle: 'Create complete practice examinations',
-                fields: [
-                    { type: 'textarea', id: 'notes', label: 'Paste Study Material', placeholder: 'Paste the content to test...' },
-                    { type: 'select', id: 'difficulty', label: 'Difficulty Level', options: ['easy', 'medium', 'hard'] }
-                ],
-                endpoint: '/api/study/tool4',
-                payload: (data) => ({ notes: data.notes, difficulty: data.difficulty || 'medium' })
-            },
-            5: {
-                title: 'Study Guide Generator',
-                subtitle: 'Create comprehensive study guides',
-                fields: [
-                    { type: 'input', id: 'subject', label: 'Subject Name', placeholder: 'e.g., Biology, History, Physics...' },
-                    { type: 'textarea', id: 'notes', label: 'Paste Study Material', placeholder: 'Paste your notes or textbook content...' }
-                ],
-                endpoint: '/api/study/tool5',
-                payload: (data) => ({ notes: data.notes, subject: data.subject })
-            },
-            6: {
-                title: 'Textbook Chapter Summarizer',
-                subtitle: 'Summarize chapters in minutes',
-                fields: [
-                    { type: 'textarea', id: 'chapter', label: 'Paste Chapter Content', placeholder: 'Paste the entire chapter text...' }
-                ],
-                endpoint: '/api/study/tool6',
-                payload: (data) => ({ chapter: data.chapter })
-            },
-            7: {
-                title: 'Math Problem Solver',
-                subtitle: 'Step-by-step math solutions',
-                fields: [
-                    { type: 'textarea', id: 'problem', label: 'Enter Math Problem', placeholder: 'Type or paste your math problem here...' }
-                ],
-                endpoint: '/api/study/tool7',
-                payload: (data) => ({ problem: data.problem })
-            },
-            8: {
-                title: 'Essay Outliner',
-                subtitle: 'Generate structured essay outlines',
-                fields: [
-                    { type: 'input', id: 'topic', label: 'Essay Topic', placeholder: 'Enter your essay topic or question...' },
-                    { type: 'select', id: 'essay_type', label: 'Essay Type', options: ['argumentative', 'expository', 'narrative', 'descriptive', 'compare-contrast', 'cause-effect'] }
-                ],
-                endpoint: '/api/study/tool8',
-                payload: (data) => ({ topic: data.topic, essay_type: data.essay_type || 'argumentative' })
-            },
-            9: {
-                title: 'Research Paper Analyzer',
-                subtitle: 'Analyze academic research papers',
-                fields: [
-                    { type: 'textarea', id: 'paper', label: 'Paste Research Paper', placeholder: 'Paste the paper abstract or full text...' }
-                ],
-                endpoint: '/api/study/tool9',
-                payload: (data) => ({ paper: data.paper })
-            },
-            10: {
-                title: 'Study Plan Generator',
-                subtitle: 'Personalized study schedules',
-                fields: [
-                    { type: 'textarea', id: 'subjects', label: 'Subjects to Study', placeholder: 'List your subjects and topics...' },
-                    { type: 'input', id: 'exam_date', label: 'Exam Date', placeholder: 'e.g., December 15, 2026' },
-                    { type: 'select', id: 'hours_per_day', label: 'Hours Per Day', options: ['2', '3', '4', '5', '6', '8', '10'] }
-                ],
-                endpoint: '/api/study/tool10',
-                payload: (data) => ({ subjects: data.subjects, exam_date: data.exam_date, hours_per_day: parseInt(data.hours_per_day) || 4 })
-            }
-        };
-        
-        // Open Tool Modal
-        function openTool(toolNumber) {
-            const config = toolConfigs[toolNumber];
-            const modal = document.getElementById('toolModal');
-            const content = document.getElementById('toolModalContent');
-            
-            let fieldsHTML = '';
-            config.fields.forEach(field => {
-                if (field.type === 'textarea') {
-                    fieldsHTML += `
-                        <div class="form-group">
-                            <label class="form-label">${field.label}</label>
-                            <textarea class="form-textarea" id="field_${field.id}" placeholder="${field.placeholder}"></textarea>
-                        </div>
-                    `;
-                } else if (field.type === 'input') {
-                    fieldsHTML += `
-                        <div class="form-group">
-                            <label class="form-label">${field.label}</label>
-                            <input class="form-input" id="field_${field.id}" placeholder="${field.placeholder}">
-                        </div>
-                    `;
-                } else if (field.type === 'select') {
-                    let optionsHTML = field.options.map(opt => `<option value="${opt}">${opt.toUpperCase()}</option>`).join('');
-                    fieldsHTML += `
-                        <div class="form-group">
-                            <label class="form-label">${field.label}</label>
-                            <select class="form-select" id="field_${field.id}">
-                                ${optionsHTML}
-                            </select>
-                        </div>
-                    `;
-                }
-            });
-            
-            content.innerHTML = `
-                <button class="modal-close" onclick="closeTool()">✕</button>
-                <h2 class="modal-title">${config.title}</h2>
-                <p class="modal-subtitle">${config.subtitle}</p>
-                <div class="modal-divider"></div>
-                ${fieldsHTML}
-                <button class="btn-generate" onclick="generateOutput(${toolNumber})" id="btnGenerate">
-                    Generate
+            <div class="header-actions">
+                <button class="icon-btn theme-toggle glow">
+                    <i class="fas fa-moon"></i>
                 </button>
-                <div class="output-container" id="outputContainer">
-                    <span style="color: var(--platinum-dark); font-style: italic;">Your generated content will appear here word by word...</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Chat Area -->
+    <main class="modern-chat">
+        <div class="chat-container">
+            <!-- Welcome Area -->
+            <div class="welcome-area" id="welcomeArea">
+                <div class="welcome-center">
+                    <div class="welcome-logo">
+                        <div class="logo-background large animated-logo">
+                            <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
+                        </div>
+                    </div>
+                    <h1 class="welcome-title slide-in">Welcome to Savoiré AI</h1>
+                    <p class="welcome-subtitle fade-in">Experience the ultimate smart companion for students, bringing you advanced questions, tricks, detailed notes, PDF Generation and endless features designed to make learning faster, easier, and smarter – with even more powerful tools coming soon.</p>
+                    
+                    <!-- Quick Suggestions -->
+                    <div class="suggestions-grid">
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain quantum computing in detail with key concepts and examples">
+                            <i class="fas fa-star bounce"></i>
+                            Quantum Computing
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Provide detailed analysis of artificial intelligence with key concepts">
+                            <i class="fas fa-brain bounce"></i>
+                            AI Analysis
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Explain machine learning algorithms with practical examples">
+                            <i class="fas fa-cogs bounce"></i>
+                            Machine Learning
+                        </div>
+                        <div class="suggestion-chip animated-btn" data-prompt="Give me comprehensive details about neural networks">
+                            <i class="fas fa-network-wired bounce"></i>
+                            Neural Networks
+                        </div>
+                    </div>
+
+                    <!-- Brand Footer -->
+                    <div class="brand-footer">
+                        <div class="production-credit pulse">by Sooban Talha Technologies</div>
+                        <div class="feature-tags">
+                            <span class="feature-tag glow">Advanced AI </span>
+                            <span class="feature-tag glow">Fast Responses</span>
+                            <span class="feature-tag glow">PDF Generation</span>
+                        </div>
+                    </div>
                 </div>
-            `;
-            
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        // Close Tool Modal
-        function closeTool() {
-            const modal = document.getElementById('toolModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-        
-        // Close on overlay click
-        document.getElementById('toolModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeTool();
-            }
-        });
-        
-        // Close on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeTool();
-            }
-        });
-        
-        // Generate Output with Word-by-Word Streaming
-        async function generateOutput(toolNumber) {
-            const config = toolConfigs[toolNumber];
-            const btnGenerate = document.getElementById('btnGenerate');
-            const outputContainer = document.getElementById('outputContainer');
-            
-            // Collect form data
-            const formData = {};
-            config.fields.forEach(field => {
-                const element = document.getElementById(`field_${field.id}`);
-                if (element) {
-                    formData[field.id] = element.value;
-                }
-            });
-            
-            // Validate
-            const mainField = config.fields[0];
-            const mainValue = formData[mainField.id];
-            if (!mainValue || mainValue.trim() === '') {
-                outputContainer.innerHTML = '<span style="color: #c0392b;">Please enter some content to generate.</span>';
-                return;
-            }
-            
-            // Disable button and show loading
-            btnGenerate.disabled = true;
-            btnGenerate.textContent = 'Generating...';
-            outputContainer.innerHTML = '';
-            outputContainer.classList.add('loading');
-            
-            try {
-                const payload = config.payload(formData);
-                
-                const response = await fetch(config.endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-                let fullOutput = '';
-                
-                outputContainer.classList.remove('loading');
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    buffer += decoder.decode(value, { stream: true });
-                    
-                    // Process SSE events
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-                    
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                
-                                if (data.done) {
-                                    // Add copy button when done
-                                    if (data.full_text) {
-                                        fullOutput = data.full_text;
-                                    }
-                                } else if (data.word) {
-                                    // Append word with animation
-                                    const wordSpan = document.createElement('span');
-                                    wordSpan.className = 'output-word';
-                                    wordSpan.textContent = data.word + ' ';
-                                    outputContainer.appendChild(wordSpan);
-                                    fullOutput += data.word + ' ';
-                                    
-                                    // Auto-scroll
-                                    outputContainer.scrollTop = outputContainer.scrollHeight;
-                                } else if (data.accumulated) {
-                                    // Update entire content
-                                    outputContainer.textContent = data.accumulated;
-                                    fullOutput = data.accumulated;
-                                }
-                            } catch (e) {
-                                console.error('Parse error:', e);
-                            }
-                        }
-                    }
-                }
-                
-                // Add copy button
-                if (fullOutput) {
-                    const copyBtn = document.createElement('button');
-                    copyBtn.className = 'btn-copy';
-                    copyBtn.textContent = 'Copy';
-                    copyBtn.onclick = () => {
-                        navigator.clipboard.writeText(fullOutput).then(() => {
-                            copyBtn.textContent = 'Copied!';
-                            setTimeout(() => { copyBtn.textContent = 'Copy'; }, 2000);
-                        });
-                    };
-                    outputContainer.style.position = 'relative';
-                    outputContainer.appendChild(copyBtn);
-                }
-                
-            } catch (error) {
-                outputContainer.innerHTML = `<span style="color: #c0392b;">Error: ${error.message}. Please try again.</span>`;
-                console.error('Generation error:', error);
-            } finally {
-                btnGenerate.disabled = false;
-                btnGenerate.textContent = 'Generate';
-                outputContainer.classList.remove('loading');
-            }
-        }
-        
-        // Smooth scroll for navigation
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-        
-        console.log('%c Savoire AI v2.1 %c Dark Luxury Premium ',
-            'background: #000; color: #C6A962; padding: 10px; font-size: 20px; font-family: serif;',
-            'background: #C6A962; color: #000; padding: 10px; font-size: 12px;');
-        console.log('%c Developed by Sooban Talha Technologies %c soobantalhatech.xyz ',
-            'color: #B0B0B0;',
-            'color: #C6A962;');
-        console.log('%c Founder: Sooban Talha', 'color: #C6A962; font-style: italic;');
-    </script>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="messages-container" id="messagesContainer" style="display: none;">
+                <div class="messages-scroll" id="chatMessages">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div class="thinking-indicator" id="thinkingIndicator" style="display: none;">
+                <div class="thinking-avatar">
+                    <div class="logo-background small pulse">
+                        <img src="LOGO.png" alt="Savoiré AI" class="logo-img" onerror="this.style.display='none'">
+                    </div>
+                </div>
+                <div class="thinking-content">
+                    <div class="typing-animation">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <span class="thinking-text">Toppers don’t rush, they wait for clarity — your clarity is loading 📘🚀...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div class="text-input-container glow-border">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Ask anything for fast, detailed answers..."
+                            rows="1"
+                        ></textarea>
+                        <div class="input-actions">
+                            <button class="send-button pulse animated-btn" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-actions">
+                    <button class="footer-btn animated-btn" id="clearChat">
+                        <i class="fas fa-trash"></i>
+                        Clear chat
+                    </button>
+                    <div class="production-watermark fade-in">
+                      • Powered by Sooban Talha Technologies
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="scripts/app.js"></script>
 </body>
 </html>
