@@ -2,204 +2,278 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <meta name="description" content="Savoiré AI - Think Less, Know More. World-class AI-powered study platform">
-    <meta name="keywords" content="Savoiré AI, AI study, flashcards, quiz, mind map, study notes, AI learning, Sooban Talha">
-    <meta name="author" content="Sooban Talha">
-    <meta name="theme-color" content="#020202">
-    <title>Savoiré AI — Think Less, Know More</title>
-    <link rel="icon" type="image/png" href="favicon.ico">
-    <link rel="apple-touch-icon" href="LOGO.png">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Savoiré AI - Think Less, Know More. World-class AI-powered study platform.">
+    <meta name="theme-color" content="#020008">
+    <title>Savoiré AI | Think Less, Know More</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.ico">
 </head>
 <body>
-
-<!-- Custom Cursor -->
-<div class="cursor-dot" id="cursorDot"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-
-<!-- Background Effects -->
-<div class="bg-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-    <div class="orb orb-4"></div>
-</div>
-<div class="grid-bg"></div>
-
-<div class="dashboard">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="logo-section">
-            <div class="logo">
-                <div class="logo-icon">⚡</div>
+    <!-- Custom Cursor -->
+    <div id="savoire-cursor"></div>
+    <div id="savoire-cursor-dot"></div>
+    
+    <!-- Background -->
+    <canvas id="bg-canvas"></canvas>
+    <div class="bg-grid"></div>
+    <div class="bg-noise"></div>
+    
+    <!-- Ambient Orbs -->
+    <div class="ambient-orb ambient-orb-1"></div>
+    <div class="ambient-orb ambient-orb-2"></div>
+    <div class="ambient-orb ambient-orb-3"></div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+    
+    <!-- Welcome Popup -->
+    <div id="welcome-popup-overlay" style="display:none;">
+        <div id="welcome-popup">
+            <h1 id="welcome-popup-title">✨ Welcome to Savoiré AI</h1>
+            <p id="welcome-popup-tagline">Think Less, Know More</p>
+            <input type="text" id="welcome-name-input" placeholder="Enter your name" maxlength="30" autocomplete="off">
+            <button id="welcome-continue-btn">Continue →</button>
+            <p class="welcome-privacy">🔒 Stored locally · Never shared</p>
+        </div>
+    </div>
+    
+    <!-- Settings Overlay -->
+    <div id="settings-overlay"></div>
+    
+    <!-- Settings Panel -->
+    <div id="settings-panel">
+        <button id="settings-close-btn">✕</button>
+        <h2 style="margin-bottom:20px;">⚙️ Settings</h2>
+        
+        <div class="settings-section">
+            <div class="settings-section-title">Display</div>
+            <div class="setting-row">
+                <span class="setting-label">Streaming Output</span>
+                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">Animations</span>
+                <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">Font Size</span>
+                <select style="background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--pearl); padding:6px 12px; border-radius:8px;">
+                    <option>Small</option>
+                    <option selected>Medium</option>
+                    <option>Large</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="settings-section">
+            <div class="settings-section-title">About</div>
+            <p style="color:rgba(245,240,255,0.6); font-size:0.85rem;">
+                Savoiré AI v2.1<br>
+                By Sooban Talha Technologies<br>
+                Free Forever ✨
+            </p>
+        </div>
+    </div>
+    
+    <!-- History Overlay -->
+    <div id="history-overlay"></div>
+    
+    <!-- History Panel -->
+    <div id="history-panel">
+        <button style="width:36px;height:36px;border-radius:50%;border:1px solid var(--glass-border);background:transparent;color:var(--pearl);cursor:pointer;font-size:1.2rem;margin-bottom:25px;" onclick="document.getElementById('history-panel').classList.remove('open'); document.getElementById('history-overlay').classList.remove('open');">✕</button>
+        <h2 style="margin-bottom:20px;">📜 History</h2>
+        <div id="history-list"></div>
+    </div>
+    
+    <!-- Main App -->
+    <div id="savoire-app">
+        <!-- Header -->
+        <header id="savoire-header" class="glass-card shimmer-border">
+            <div id="savoire-logo-container">
+                <img id="savoire-logo" src="LOGO.png" alt="Savoiré AI Logo" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+                <div id="logo-fallback" style="display:none; width:45px; height:45px; border-radius:12px; background:linear-gradient(135deg, #00e5ff, #8b5cf6); align-items:center; justify-content:center; font-size:1.5rem;">
+                    ✨
+                </div>
                 <div>
-                    <div class="logo-text">Savoiré AI</div>
-                    <div class="logo-tagline">Think Less, Know More</div>
+                    <div id="savoire-brand">Savoiré AI</div>
+                    <div id="savoire-tagline">Think Less, Know More</div>
                 </div>
-            </div>
-            <button class="new-session-btn" id="newSessionBtn">
-                <span>✨</span> New Session
-            </button>
-        </div>
-        
-        <div class="history-section">
-            <div class="section-title">RECENT SESSIONS</div>
-            <div class="history-list" id="historyList">
-                <div class="empty-history">
-                    <div class="empty-icon">📂</div>
-                    <div>No sessions yet</div>
-                    <div class="empty-text">Start learning today!</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="user-section">
-            <div class="streak-widget" id="streakWidget">
-                <div class="streak-header">
-                    <span class="streak-icon">🔥</span>
-                    <span class="streak-count" id="streakCount">0</span>
-                </div>
-                <div class="streak-message" id="streakMessage">Start your streak today!</div>
             </div>
             
-            <div class="profile-card" id="profileCard">
-                <div class="avatar" id="userAvatar">?</div>
-                <div class="user-details">
-                    <div class="user-name" id="userName">Guest</div>
-                    <div class="user-role">Savoiré Scholar</div>
+            <div id="savoire-header-actions">
+                <div id="streak-display">
+                    <span id="streak-fire">🔥</span>
+                    <span id="streak-count">0</span>
                 </div>
-                <button class="settings-icon" id="settingsBtn">⚙️</button>
+                <button class="header-icon-btn" id="history-btn" title="History">📜</button>
+                <button class="header-icon-btn" id="settings-btn" title="Settings">⚙️</button>
+                <button id="savoire-profile-btn">
+                    <div id="savoire-profile-avatar">?</div>
+                    <span id="savoire-profile-name">User</span>
+                </button>
+            </div>
+        </header>
+        
+        <!-- 5-Step Wizard -->
+        <div id="wizard-container" class="glass-card">
+            <div id="wizard-steps-indicator">
+                <div class="wizard-step-dot active"></div>
+                <div class="wizard-step-dot"></div>
+                <div class="wizard-step-dot"></div>
+                <div class="wizard-step-dot"></div>
+                <div class="wizard-step-dot"></div>
+            </div>
+            <div id="wizard-step-label">Step 1/5: Select Tool</div>
+            
+            <!-- Step 1: Tool Selection -->
+            <div id="wizard-step-1">
+                <div id="tool-selection-grid">
+                    <div class="tool-card" data-tool="notes">
+                        <span class="tool-card-icon">📖</span>
+                        <div class="tool-card-name">Notes</div>
+                        <div class="tool-card-desc">Structured notes</div>
+                    </div>
+                    <div class="tool-card" data-tool="flash">
+                        <span class="tool-card-icon">🃏</span>
+                        <div class="tool-card-name">Flash</div>
+                        <div class="tool-card-desc">3D flip cards</div>
+                    </div>
+                    <div class="tool-card" data-tool="quiz">
+                        <span class="tool-card-icon">❓</span>
+                        <div class="tool-card-name">Quiz</div>
+                        <div class="tool-card-desc">MCQ with scoring</div>
+                    </div>
+                    <div class="tool-card" data-tool="summ">
+                        <span class="tool-card-icon">📋</span>
+                        <div class="tool-card-name">Summ</div>
+                        <div class="tool-card-desc">TL;DR summary</div>
+                    </div>
+                    <div class="tool-card" data-tool="mind">
+                        <span class="tool-card-icon">🗺️</span>
+                        <div class="tool-card-name">Mind</div>
+                        <div class="tool-card-desc">Mind map</div>
+                    </div>
+                    <div class="tool-card" data-tool="prac">
+                        <span class="tool-card-icon">🎯</span>
+                        <div class="tool-card-name">Prac</div>
+                        <div class="tool-card-desc">Practice Q&A</div>
+                    </div>
+                    <div class="tool-card" data-tool="tips">
+                        <span class="tool-card-icon">💡</span>
+                        <div class="tool-card-name">Tips</div>
+                        <div class="tool-card-desc">Study strategies</div>
+                    </div>
+                    <div class="tool-card" data-tool="pdf">
+                        <span class="tool-card-icon">📄</span>
+                        <div class="tool-card-name">PDF</div>
+                        <div class="tool-card-desc">Download PDF</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Topic Input -->
+            <div id="wizard-step-2">
+                <div id="topic-input-container">
+                    <input type="text" id="topic-input" placeholder="What do you want to learn? (e.g., Quantum Physics, World War II, Machine Learning...)" autocomplete="off">
+                    <button id="topic-submit-btn">→</button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Depth Selection -->
+            <div id="wizard-step-3">
+                <div id="depth-selection-container">
+                    <div class="depth-option" data-depth="1">
+                        <span class="depth-emoji">📖</span>
+                        <div class="depth-name">Overview</div>
+                        <div class="depth-desc">Brief summary</div>
+                    </div>
+                    <div class="depth-option" data-depth="2">
+                        <span class="depth-emoji">📚</span>
+                        <div class="depth-name">Basic</div>
+                        <div class="depth-desc">Core concepts</div>
+                    </div>
+                    <div class="depth-option selected" data-depth="3">
+                        <span class="depth-emoji">🎯</span>
+                        <div class="depth-name">Standard</div>
+                        <div class="depth-desc">Recommended</div>
+                    </div>
+                    <div class="depth-option" data-depth="4">
+                        <span class="depth-emoji">🔬</span>
+                        <div class="depth-name">Advanced</div>
+                        <div class="depth-desc">In-depth analysis</div>
+                    </div>
+                    <div class="depth-option" data-depth="5">
+                        <span class="depth-emoji">🏆</span>
+                        <div class="depth-name">Expert</div>
+                        <div class="depth-desc">Research level</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 4: Language Selection -->
+            <div id="wizard-step-4">
+                <input type="text" id="language-search" placeholder="🔍 Search languages..." autocomplete="off">
+                <div id="language-grid"></div>
+            </div>
+            
+            <!-- Step 5: Confirm & Generate -->
+            <div id="wizard-step-5">
+                <div id="confirm-summary"></div>
+                <button id="generate-btn">✨ Generate Content</button>
+                <p style="margin-top:10px; font-size:0.75rem; color:rgba(245,240,255,0.4);">
+                    Press Ctrl+Enter to generate
+                </p>
             </div>
         </div>
-    </aside>
+        
+        <!-- Output Container -->
+        <div id="output-container" style="display:none;">
+            <div id="output-header">
+                <div>
+                    <div id="output-topic-display"></div>
+                    <div id="output-meta"></div>
+                </div>
+                <div id="output-actions">
+                    <button class="output-action-btn" id="copy-btn">📋 Copy</button>
+                    <button class="output-action-btn" id="download-pdf-btn">📄 PDF</button>
+                    <button class="output-action-btn" id="new-search-btn">🔄 New</button>
+                </div>
+            </div>
+            
+            <!-- Streaming Output Box -->
+            <div id="streaming-output-box" class="glass-card shimmer-border">
+                <div id="streaming-content">
+                    <span class="streaming-cursor"></span>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div id="progress-container">
+                <div id="progress-bar-outer">
+                    <div id="progress-bar-inner"></div>
+                </div>
+                <div id="progress-stats">Words: 0 | Time: 0.0s | Progress: 0%</div>
+            </div>
+            
+            <!-- Special Tool Containers -->
+            <div id="flashcard-container"></div>
+            <div id="quiz-container"></div>
+            <div id="mindmap-container"></div>
+        </div>
+    </div>
     
-    <button class="toggle-sidebar" id="toggleSidebar">‹</button>
-    
-    <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-        <div class="top-bar">
-            <div class="welcome">
-                <h1>Welcome back, <span id="welcomeName">Learner</span>!</h1>
-                <p>Ready to master something new today?</p>
-            </div>
-            <a href="index.html" class="home-link">🏠 Home</a>
-        </div>
-        
-        <!-- Welcome Screen -->
-        <div class="welcome-screen" id="welcomeScreen">
-            <div class="welcome-orb">🧠</div>
-            <h1 class="welcome-title">What will you <span>master today?</span></h1>
-            <p class="welcome-subtitle">Choose a topic, select your tool, and let Savoiré AI craft personalized study material — streamed live, just for you.</p>
-            
-            <div class="tools-grid">
-                <div class="tool-card" data-tool="notes">
-                    <div class="tool-icon">📖</div>
-                    <div class="tool-name">AI Study Notes</div>
-                    <div class="tool-desc">Comprehensive structured notes</div>
-                </div>
-                <div class="tool-card" data-tool="flashcards">
-                    <div class="tool-icon">🃏</div>
-                    <div class="tool-name">3D Flashcards</div>
-                    <div class="tool-desc">Interactive flip cards</div>
-                </div>
-                <div class="tool-card" data-tool="quiz">
-                    <div class="tool-icon">❓</div>
-                    <div class="tool-name">MCQ Quiz</div>
-                    <div class="tool-desc">Multiple choice questions</div>
-                </div>
-                <div class="tool-card" data-tool="summary">
-                    <div class="tool-icon">📋</div>
-                    <div class="tool-name">Smart Summary</div>
-                    <div class="tool-desc">TL;DR key points</div>
-                </div>
-                <div class="tool-card" data-tool="mindmap">
-                    <div class="tool-icon">🗺️</div>
-                    <div class="tool-name">Mind Map</div>
-                    <div class="tool-desc">Visual branch visualization</div>
-                </div>
-                <div class="tool-card" data-tool="practice">
-                    <div class="tool-icon">🎯</div>
-                    <div class="tool-name">Practice Questions</div>
-                    <div class="tool-desc">Open-ended with answers</div>
-                </div>
-                <div class="tool-card" data-tool="tips">
-                    <div class="tool-icon">💡</div>
-                    <div class="tool-name">Tips & Tricks</div>
-                    <div class="tool-desc">Expert strategies</div>
-                </div>
-                <div class="tool-card" data-tool="pdf">
-                    <div class="tool-icon">📄</div>
-                    <div class="tool-name">PDF Export</div>
-                    <div class="tool-desc">Download study material</div>
-                </div>
-            </div>
-            
-            <button class="begin-session-btn" id="beginSessionBtn">
-                <span>✨</span> BEGIN SESSION
-            </button>
-            
-            <div class="featured-topics">
-                <span class="featured-label">Popular:</span>
-                <span class="topic-chip" data-topic="Quantum Physics">Quantum Physics</span>
-                <span class="topic-chip" data-topic="Machine Learning">Machine Learning</span>
-                <span class="topic-chip" data-topic="JavaScript">JavaScript</span>
-                <span class="topic-chip" data-topic="World War II">World War II</span>
-                <span class="topic-chip" data-topic="Photosynthesis">Photosynthesis</span>
-            </div>
-        </div>
-        
-        <!-- Output Screen -->
-        <div class="output-screen" id="outputScreen"></div>
-    </main>
-</div>
-
-<!-- Wizard Modal -->
-<div class="modal-overlay" id="wizardModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>✨ Generate Study Material</h2>
-            <button class="close-modal" id="closeWizardBtn">✕</button>
-        </div>
-        <div class="modal-body" id="wizardBody"></div>
-        <div class="modal-footer">
-            <button class="btn-secondary" id="wizardBack" style="display: none;">← Back</button>
-            <button class="btn-primary" id="wizardNext">Next →</button>
-        </div>
-    </div>
-</div>
-
-<!-- Settings Modal -->
-<div class="modal-overlay" id="settingsModal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>⚙️ Settings</h2>
-            <button class="close-modal" id="closeSettingsBtn">✕</button>
-        </div>
-        <div class="modal-body" id="settingsBody"></div>
-        <div class="modal-footer">
-            <button class="btn-secondary" id="clearDataBtn">Clear All Data</button>
-            <button class="btn-primary" id="saveSettingsBtn">Save Changes</button>
-        </div>
-    </div>
-</div>
-
-<!-- Name Popup -->
-<div class="modal-overlay" id="nameModal">
-    <div class="modal-content name-popup-content">
-        <h2>✨ Savoiré AI</h2>
-        <p>Think Less, Know More</p>
-        <input type="text" class="name-input" id="nameInput" placeholder="Enter your name">
-        <button class="btn-primary" id="submitNameBtn">Continue →</button>
-        <p class="privacy-note">Free forever • No email required</p>
-    </div>
-</div>
-
-<!-- Notification Container -->
-<div id="notificationContainer" class="notification-container"></div>
-
-<script src="public/app.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/public/app.js"></script>
 </body>
 </html>
