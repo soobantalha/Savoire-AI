@@ -51,7 +51,7 @@
       "memory": 1024,
       "maxDuration": 60
     },
-    "api/sheet.js": {
+    "api/sheets.js": {
       "memory": 512,
       "maxDuration": 30
     }
