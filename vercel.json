@@ -1,8 +1,6 @@
 {
   "version": 2,
   "name": "savoire-ai",
-  "buildCommand": null,
-  "outputDirectory": null,
   "rewrites": [
     {
       "source": "/api/study",
@@ -11,6 +9,18 @@
     {
       "source": "/api/sheets",
       "destination": "/api/sheets.js"
+    },
+    {
+      "source": "/public/:path*",
+      "destination": "/public/:path*"
+    },
+    {
+      "source": "/style.css",
+      "destination": "/style.css"
+    },
+    {
+      "source": "/(favicon.ico|LOGO.png|CEO.png)",
+      "destination": "/$1"
     },
     {
       "source": "/(.*)",
@@ -32,10 +42,6 @@
         {
           "key": "Access-Control-Allow-Headers",
           "value": "Content-Type, Authorization"
-        },
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
         }
       ]
     }
@@ -45,7 +51,7 @@
       "memory": 1024,
       "maxDuration": 60
     },
-    "api/sheets.js": {
+    "api/sheet.js": {
       "memory": 512,
       "maxDuration": 30
     }

@@ -464,6 +464,7 @@ async function generateContent() {
   
   try {
     const response = await fetch('/api/study', {
+        
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
