@@ -4,11 +4,12 @@
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
-   UPGRADE v2.2 — ADDITIONS (original code 100% preserved):
-   ✦ Streak system for user engagement
-   ✦ Google Sheets user tracking
-   ✦ Generate Wizard Card (step-by-step generation)
-   ✦ All original functionality remains EXACTLY THE SAME
+   UPGRADE v2.2 — FIXED:
+   ✦ Tool selector clicks working
+   ✦ Language selector working
+   ✦ Wizard with file upload
+   ✦ Streak system working
+   ✦ Google Sheets tracking
 ═══════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────────────────────────────────
@@ -104,10 +105,10 @@ class SavoireApp {
     this.streamBuffer  = '';
     this.focusMode     = false;
 
-    /* ── NEW v2.2: Streak System ── */
+    /* ── Streak System ── */
     this.streak = this._load('sv_streak', { count: 0, lastDate: null, totalSessions: 0 });
 
-    /* ── NEW v2.2: Wizard State ── */
+    /* ── Wizard State ── */
     this.wizardStep = 0;
     this.wizardData = {
       tool: 'notes',
@@ -116,6 +117,7 @@ class SavoireApp {
       depth: 'detailed',
       style: 'simple'
     };
+    this.wizardFile = null;
 
     /* ── Flashcard state ── */
     this.fcCards   = [];
@@ -137,13 +139,12 @@ class SavoireApp {
 
     /* ── Boot ── */
     this._boot();
-    /* ── NEW v2.2: Update streak display ── */
     this._updateStreakDisplay();
     this._checkAndUpdateStreak();
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
-     NEW v2.2: STREAK SYSTEM METHODS
+     STREAK SYSTEM METHODS
      ═════════════════════════════════════════════════════════════════════════ */
   
   _updateStreakDisplay() {
@@ -219,17 +220,18 @@ class SavoireApp {
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
-     NEW v2.2: WIZARD GENERATION CARD METHODS
+     WIZARD GENERATION METHODS (with File Upload)
      ═════════════════════════════════════════════════════════════════════════ */
   
   _openWizard() {
     this.wizardData = {
       tool: this.tool,
-      topic: this._el('mainInput')?.value || '',
+      topic: '',
       language: this._el('langSel')?.value || 'English',
       depth: this._el('depthSel')?.value || 'detailed',
       style: this._el('styleSel')?.value || 'simple'
     };
+    this.wizardFile = null;
     this.wizardStep = 0;
     this._renderWizardStep();
     this._openModal('wizardModal');
@@ -278,15 +280,19 @@ class SavoireApp {
       switch (this.wizardStep) {
         case 0:
           body.innerHTML = this._renderWizardToolStep();
+          this._bindWizardToolClicks();
           break;
         case 1:
           body.innerHTML = this._renderWizardTopicStep();
+          this._bindWizardTopicEvents();
           break;
         case 2:
           body.innerHTML = this._renderWizardLanguageStep();
+          this._bindWizardLanguageClicks();
           break;
         case 3:
           body.innerHTML = this._renderWizardDepthStyleStep();
+          this._bindWizardDepthStyleClicks();
           break;
         case 4:
           body.innerHTML = this._renderWizardReviewStep();
@@ -336,11 +342,32 @@ class SavoireApp {
     `;
   }
   
+  _bindWizardToolClicks() {
+    document.querySelectorAll('.wizard-tool-card').forEach(card => {
+      card.onclick = () => {
+        const tool = card.dataset.tool;
+        if (tool) {
+          this.wizardData.tool = tool;
+          this._renderWizardStep();
+        }
+      };
+    });
+  }
+  
   _renderWizardTopicStep() {
+    const fileName = this.wizardFile ? this.wizardFile.name : '';
     return `
       <div class="wizard-topic-area">
         <label class="wizard-label">What would you like to study?</label>
         <textarea class="wizard-topic-input" id="wizardTopicInput" placeholder="Enter any topic, concept, question, or paste text to study..." rows="4">${this._esc(this.wizardData.topic)}</textarea>
+        
+        <div class="wizard-file-zone" id="wizardFileZone">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <span>Click or drag to upload .txt, .md, or .csv file</span>
+          <input type="file" id="wizardFileInput" accept=".txt,.md,.csv" style="display:none">
+          <div class="wizard-file-name" id="wizardFileName">${fileName ? `📄 ${fileName}` : ''}</div>
+        </div>
+        
         <div class="wizard-suggestions">
           <div class="wizard-sugg-label">Quick suggestions:</div>
           <div class="wizard-sugg-pills">
@@ -355,11 +382,94 @@ class SavoireApp {
     `;
   }
   
+  _bindWizardTopicEvents() {
+    const topicInput = this._el('wizardTopicInput');
+    if (topicInput) {
+      topicInput.oninput = (e) => {
+        this.wizardData.topic = e.target.value;
+      };
+    }
+    
+    const fileZone = this._el('wizardFileZone');
+    const fileInput = this._el('wizardFileInput');
+    
+    if (fileZone && fileInput) {
+      fileZone.onclick = () => fileInput.click();
+      
+      fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const ext = '.' + file.name.split('.').pop().toLowerCase();
+          if (['.txt', '.md', '.csv'].includes(ext) && file.size <= 200000) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const content = ev.target.result;
+              if (topicInput) {
+                topicInput.value = content;
+                this.wizardData.topic = content;
+              }
+              const fileNameDiv = this._el('wizardFileName');
+              if (fileNameDiv) fileNameDiv.textContent = `📄 ${file.name}`;
+              this.wizardFile = file;
+            };
+            reader.readAsText(file, 'UTF-8');
+          } else {
+            this._toast('error', 'fa-times', 'File must be .txt, .md, or .csv and under 200KB');
+          }
+        }
+      };
+      
+      fileZone.ondragover = (e) => {
+        e.preventDefault();
+        fileZone.style.borderColor = 'var(--gold)';
+      };
+      
+      fileZone.ondragleave = () => {
+        fileZone.style.borderColor = '';
+      };
+      
+      fileZone.ondrop = (e) => {
+        e.preventDefault();
+        fileZone.style.borderColor = '';
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          const ext = '.' + file.name.split('.').pop().toLowerCase();
+          if (['.txt', '.md', '.csv'].includes(ext) && file.size <= 200000) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              const content = ev.target.result;
+              if (topicInput) {
+                topicInput.value = content;
+                this.wizardData.topic = content;
+              }
+              const fileNameDiv = this._el('wizardFileName');
+              if (fileNameDiv) fileNameDiv.textContent = `📄 ${file.name}`;
+              this.wizardFile = file;
+            };
+            reader.readAsText(file, 'UTF-8');
+          } else {
+            this._toast('error', 'fa-times', 'File must be .txt, .md, or .csv and under 200KB');
+          }
+        }
+      };
+    }
+    
+    document.querySelectorAll('.wizard-sugg-pill').forEach(btn => {
+      btn.onclick = () => {
+        const topic = btn.dataset.topic;
+        if (topic && topicInput) {
+          topicInput.value = topic;
+          this.wizardData.topic = topic;
+        }
+      };
+    });
+  }
+  
   _renderWizardLanguageStep() {
     const languages = [
       'English', 'Urdu', 'Hindi', 'Arabic', 'French', 'German', 'Spanish', 
       'Portuguese', 'Italian', 'Dutch', 'Russian', 'Turkish', 'Chinese (Simplified)',
-      'Japanese', 'Korean', 'Bengali', 'Swahili', 'Persian'
+      'Japanese', 'Korean', 'Bengali', 'Swahili', 'Persian', 'Vietnamese', 'Thai'
     ];
     
     return `
@@ -372,6 +482,18 @@ class SavoireApp {
         `).join('')}
       </div>
     `;
+  }
+  
+  _bindWizardLanguageClicks() {
+    document.querySelectorAll('.wizard-language-card').forEach(card => {
+      card.onclick = () => {
+        const lang = card.dataset.lang;
+        if (lang) {
+          this.wizardData.language = lang;
+          this._renderWizardStep();
+        }
+      };
+    });
   }
   
   _renderWizardDepthStyleStep() {
@@ -418,6 +540,28 @@ class SavoireApp {
     `;
   }
   
+  _bindWizardDepthStyleClicks() {
+    document.querySelectorAll('.wizard-depth-card').forEach(card => {
+      card.onclick = () => {
+        const depth = card.dataset.depth;
+        if (depth) {
+          this.wizardData.depth = depth;
+          this._renderWizardStep();
+        }
+      };
+    });
+    
+    document.querySelectorAll('.wizard-style-card').forEach(card => {
+      card.onclick = () => {
+        const style = card.dataset.style;
+        if (style) {
+          this.wizardData.style = style;
+          this._renderWizardStep();
+        }
+      };
+    });
+  }
+  
   _renderWizardReviewStep() {
     const toolConfig = TOOL_CONFIG[this.wizardData.tool];
     return `
@@ -433,7 +577,7 @@ class SavoireApp {
           <div class="wizard-review-icon"><i class="fas fa-pencil-alt"></i></div>
           <div class="wizard-review-content">
             <div class="wizard-review-label">Topic</div>
-            <div class="wizard-review-value">${this._esc(this.wizardData.topic || 'Not specified')}</div>
+            <div class="wizard-review-value">${this._esc(this.wizardData.topic.substring(0, 100)) || 'Not specified'}</div>
           </div>
         </div>
         <div class="wizard-review-item">
@@ -460,12 +604,8 @@ class SavoireApp {
   
   _validateWizardStep() {
     if (this.wizardStep === 1) {
-      const topicInput = this._el('wizardTopicInput');
-      if (topicInput) {
-        this.wizardData.topic = topicInput.value.trim();
-      }
       if (!this.wizardData.topic || this.wizardData.topic.length < 2) {
-        this._toast('error', 'fa-exclamation-circle', 'Please enter a topic (at least 2 characters)');
+        this._toast('error', 'fa-exclamation-circle', 'Please enter a topic (at least 2 characters) or upload a file');
         return false;
       }
     }
@@ -508,7 +648,6 @@ class SavoireApp {
     this._renderSbHistory();
     this._updateUserUI();
 
-    /* Console branding */
     console.log(
       `%c✨ ${SAVOIRÉ.BRAND} — Think Less. Know More.`,
       'color:#C9A96E;font-size:16px;font-weight:bold;font-family:Georgia,serif'
@@ -597,60 +736,43 @@ class SavoireApp {
         return DOMPurify.sanitize(marked.parse(text));
       } catch(e) { /* fall through */ }
     }
-    /* Robust fallback markdown parser */
     let html = String(text)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    /* Code blocks first */
     html = html.replace(/```[\s\S]*?```/g, m => {
       const inner = m.slice(3, -3).replace(/^\w+\n/, '');
       return `<pre><code>${inner}</code></pre>`;
     });
 
-    /* Inline code */
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
 
-    /* Headings */
     html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.+)$/gm,  '<h3>$1</h3>');
     html = html.replace(/^## (.+)$/gm,   '<h2>$1</h2>');
     html = html.replace(/^# (.+)$/gm,    '<h1>$1</h1>');
 
-    /* Bold and italic */
     html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
     html = html.replace(/\*\*(.+?)\*\*/g,      '<strong>$1</strong>');
     html = html.replace(/\*(.+?)\*/g,           '<em>$1</em>');
     html = html.replace(/__(.+?)__/g,           '<strong>$1</strong>');
     html = html.replace(/_(.+?)_/g,             '<em>$1</em>');
 
-    /* Blockquote */
     html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-
-    /* Horizontal rule */
     html = html.replace(/^---+$/gm, '<hr>');
-
-    /* Unordered lists */
     html = html.replace(/^[-*•] (.+)$/gm, '<li>$1</li>');
     html = html.replace(/(<li>[\s\S]+?<\/li>)(?!\s*<li>)/g, '<ul>$1</ul>');
-
-    /* Ordered lists */
     html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-
-    /* Paragraphs */
     html = html.replace(/\n\n/g, '</p><p>');
     html = html.replace(/\n/g,   '<br>');
 
-    /* Wrap in paragraphs if not already wrapped */
     if (!html.startsWith('<')) html = '<p>' + html + '</p>';
 
     return html;
   }
 
-  /* ── Live markdown renderer — for streaming overlay (throttled for performance) ── */
   _renderMdLive(text) {
     if (!text) return '<span class="sfp-cursor">▊</span>';
     const rendered = this._renderMd(text);
-    /* Append blinking cursor at end */
     return rendered + '<span class="sfp-cursor">▊</span>';
   }
 
@@ -674,24 +796,21 @@ class SavoireApp {
      ═════════════════════════════════════════════════════════════════════════ */
   _bindAll() {
 
-    /* ── Welcome ── */
     this._on('welcomeBtn',        'click',   () => this._submitWelcome());
     this._on('welcomeNameInput',  'keydown', e  => { if (e.key === 'Enter') this._submitWelcome(); });
     this._on('welcomeSkip',       'click',   () => this._skipWelcome());
     this._on('welcomeSkip',       'keydown', e  => { if (e.key === 'Enter' || e.key === ' ') this._skipWelcome(); });
     this._on('welcomeBackBtn',    'click',   () => this._dismissWelcomeBack());
 
-    /* ── Header buttons ── */
     this._on('sbToggle',          'click',   () => this._toggleSidebar());
     this._on('histBtn',           'click',   () => this._openHistModal());
     this._on('themeBtn',          'click',   () => this._toggleTheme());
     this._on('settingsBtn',       'click',   () => this._openSettingsModal());
     this._on('avBtn',             'click',   e  => { e.stopPropagation(); this._toggleDropdown(); });
 
-    /* ── NEW v2.2: Wizard Button ── */
+    /* ── Wizard Button ── */
     this._on('wizardBtn',         'click',   () => this._openWizard());
 
-    /* ── Avatar dropdown ── */
     this._on('avHist',            'click',   () => { this._closeDropdown(); this._openHistModal(); });
     this._on('avSaved',           'click',   () => { this._closeDropdown(); this._openSavedModal(); });
     this._on('avSettings',        'click',   () => { this._closeDropdown(); this._openSettingsModal(); });
@@ -700,19 +819,21 @@ class SavoireApp {
       this._confirm('Clear ALL data? History, saved notes and preferences will be permanently deleted.', () => this._clearAllData());
     });
 
-    /* Close dropdown on outside click */
     document.addEventListener('click', () => this._closeDropdown());
 
-    /* ── Tool selector ── */
+    /* ── Tool selector (FIXED) ── */
     this._qsa('.ts-item').forEach(btn => {
-      btn.addEventListener('click', () => this._setTool(btn.dataset.tool));
+      btn.addEventListener('click', () => {
+        const tool = btn.dataset.tool;
+        if (tool) {
+          this._setTool(tool);
+        }
+      });
     });
 
-    /* ── Generate button ── */
     this._on('runBtn',   'click', () => this._send());
     this._on('cancelBtn','click', () => this._cancelGeneration());
 
-    /* ── Textarea ── */
     this._on('mainInput', 'input',   () => this._updateCharCount());
     this._on('mainInput', 'keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -725,21 +846,18 @@ class SavoireApp {
       if (el) { el.value = ''; this._updateCharCount(); el.focus(); }
     });
 
-    /* ── Input mini bar (expand collapsed input) ── */
     const imb = this._el('inputMiniBar');
     if (imb) {
       imb.addEventListener('click',   () => this._expandInput());
       imb.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') this._expandInput(); });
     }
 
-    /* ── File upload ── */
     this._on('uploadZone', 'click',   () => this._el('fileInput')?.click());
     this._on('uploadZone', 'keydown', e => { if (e.key === 'Enter' || e.key === ' ') this._el('fileInput')?.click(); });
     this._on('fileInput',  'change',  e => this._handleFile(e.target.files[0]));
     this._on('fileChipRm', 'click',   () => this._removeFile());
     this._on('fileChipRm', 'keydown', e => { if (e.key === 'Enter') this._removeFile(); });
 
-    /* Drag & drop on upload zone */
     const dz = this._el('uploadZone');
     if (dz) {
       dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
@@ -752,7 +870,6 @@ class SavoireApp {
       });
     }
 
-    /* ── Output toolbar ── */
     this._on('copyBtn',       'click', () => this._copyResult());
     this._on('pdfBtn',        'click', () => this._downloadPDF());
     this._on('saveBtn',       'click', () => this._saveNote());
@@ -760,10 +877,8 @@ class SavoireApp {
     this._on('clearBtn',      'click', () => this._clearOutput());
     this._on('focusModeBtn',  'click', () => this._toggleFocusMode());
 
-    /* ── Sidebar history strip ── */
     this._on('lpHistAll', 'click', () => this._openHistModal());
 
-    /* ── History modal ── */
     this._on('histSearchInput', 'input', e => this._filterHist(e.target.value));
     this._on('clearHistBtn',    'click', () => {
       this._confirm('Clear all study history? This cannot be undone.', () => {
@@ -777,7 +892,6 @@ class SavoireApp {
     });
     this._on('exportHistBtn', 'click', () => this._exportDataJson());
 
-    /* History filter buttons */
     this._qsa('.hf').forEach(btn => {
       btn.addEventListener('click', () => {
         this._qsa('.hf').forEach(b => {
@@ -790,7 +904,6 @@ class SavoireApp {
       });
     });
 
-    /* ── Settings modal ── */
     this._on('saveNameBtn',   'click', () => this._saveName());
     this._on('exportDataBtn', 'click', () => this._exportDataJson());
     this._on('clearDataBtn',  'click', () => {
@@ -805,7 +918,6 @@ class SavoireApp {
       btn.addEventListener('click', () => this._setFontSize(btn.dataset.size));
     });
 
-    /* ── Modal close buttons ── */
     this._qsa('[data-close]').forEach(btn => {
       btn.addEventListener('click', () => this._closeModal(btn.dataset.close));
     });
@@ -819,29 +931,23 @@ class SavoireApp {
       });
     });
 
-    /* ── Confirm dialog ── */
     this._on('confirmOkBtn', 'click', () => {
       this._closeModal('confirmModal');
       if (typeof this.confirmCb === 'function') this.confirmCb();
       this.confirmCb = null;
     });
 
-    /* ── Mobile sidebar backdrop ── */
     this._on('sbBackdrop', 'click', () => this._closeMobileSidebar());
 
-    /* ── Keyboard shortcuts ── */
     document.addEventListener('keydown', e => {
-      /* Escape — close modals / overlays */
       if (e.key === 'Escape') {
         this._closeAllModals();
         return;
       }
 
-      /* Don't fire shortcuts when typing in input/textarea */
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
 
-      /* Ctrl / Cmd shortcuts */
       if (e.ctrlKey || e.metaKey) {
         switch (e.key.toLowerCase()) {
           case 'k': e.preventDefault(); this._el('mainInput')?.focus(); break;
@@ -853,7 +959,6 @@ class SavoireApp {
       }
     });
 
-    /* ── Flashcard keyboard navigation ── */
     document.addEventListener('keydown', e => {
       if (!this.fcCards.length) return;
       const tag = document.activeElement?.tagName?.toLowerCase();
@@ -868,7 +973,6 @@ class SavoireApp {
       }
     });
 
-    /* ── Window resize ── */
     window.addEventListener('resize', () => this._handleResize(), { passive: true });
   }
 
@@ -879,7 +983,6 @@ class SavoireApp {
     const hasUser = !!this.userName;
 
     if (!hasUser) {
-      /* First time — show welcome overlay */
       setTimeout(() => {
         const ov = this._el('welcomeOverlay');
         if (ov) {
@@ -890,11 +993,9 @@ class SavoireApp {
         }
       }, 500);
     } else {
-      /* Returning user — increment session */
       this.sessions++;
       localStorage.setItem('sv_sessions', String(this.sessions));
 
-      /* Show welcome back every 3rd session or first return */
       if (this.sessions <= 1 || this.sessions % 3 === 0) {
         setTimeout(() => {
           const wb = this._el('welcomeBackOverlay');
@@ -923,7 +1024,6 @@ class SavoireApp {
     this.sessions = 1;
     localStorage.setItem('sv_sessions', '1');
 
-    /* Notify via ntfy.sh (fire and forget) */
     try {
       fetch(`https://ntfy.sh/${SAVOIRÉ.NTFY_CHANNEL}`, {
         method:  'POST',
@@ -959,9 +1059,6 @@ class SavoireApp {
     setTimeout(() => { el.style.display = 'none'; el.classList.remove('dismissing'); }, 450);
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────────────────────
-     USER UI — avatar initials, greeting
-     ───────────────────────────────────────────────────────────────────────────────────────── */
   _updateUserUI() {
     const name = this.userName || 'Scholar';
     const init = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -977,9 +1074,6 @@ class SavoireApp {
     }
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────────────────────
-     HEADER STATS
-     ───────────────────────────────────────────────────────────────────────────────────────── */
   _updateHeaderStats() {
     const sess = this._el('statSessions');
     const hist = this._el('statHistory');
@@ -1000,39 +1094,29 @@ class SavoireApp {
     }
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────────────────────
-     TOOL SELECTOR
-     ───────────────────────────────────────────────────────────────────────────────────────── */
   _setTool(tool) {
     if (!TOOL_CONFIG[tool]) return;
     this.tool = tool;
 
-    /* Update active state on tool buttons */
     this._qsa('.ts-item').forEach(btn => {
       const isActive = btn.dataset.tool === tool;
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-pressed', String(isActive));
     });
 
-    /* Update textarea placeholder */
     const ta  = this._el('mainInput');
     const cfg = TOOL_CONFIG[tool];
     if (ta) ta.placeholder = cfg.placeholder;
 
-    /* Update run button */
     const icon = this._el('runIcon');
     const lbl  = this._el('runLabel');
     if (icon) icon.className = `fas ${cfg.icon}`;
     if (lbl)  lbl.textContent = cfg.label;
 
-    /* Save pref */
     this.prefs.lastTool = tool;
     this._save('sv_prefs', this.prefs);
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────────────────────
-     CHARACTER COUNT
-     ───────────────────────────────────────────────────────────────────────────────────────── */
   _updateCharCount() {
     const ta  = this._el('mainInput');
     const cnt = this._el('charCount');
@@ -1042,23 +1126,18 @@ class SavoireApp {
     const len = ta.value.length;
     if (cnt) cnt.textContent = `${len} / ${max}`;
 
-    /* Warning state at 80% */
     if (len >= max * 0.8) {
       cnt?.classList.add('warning');
     } else {
       cnt?.classList.remove('warning');
     }
 
-    /* Trim if over limit */
     if (len > max) {
       ta.value = ta.value.substring(0, max);
       this._toast('info', 'fa-info-circle', `Input limited to ${max} characters.`);
     }
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────────────────────
-     FILE UPLOAD
-     ───────────────────────────────────────────────────────────────────────────────────────── */
   _handleFile(file) {
     if (!file) return;
 
@@ -1087,7 +1166,6 @@ class SavoireApp {
         ta.dispatchEvent(new Event('input'));
       }
 
-      /* Show chip */
       const chip = this._el('fileChip');
       const name = this._el('fileChipName');
       const dz   = this._el('uploadZone');
@@ -1110,9 +1188,6 @@ class SavoireApp {
     if (dz)   dz.classList.remove('has-file');
   }
 
-  /* ─────────────────────────────────────────────────────────────────────────────────────────
-     GENERATE — main entry point
-     ───────────────────────────────────────────────────────────────────────────────────────── */
   async _send() {
     if (this.generating) return;
 
@@ -1131,10 +1206,8 @@ class SavoireApp {
     const lang  = this._el('langSel')?.value   || 'English';
     const style = this._el('styleSel')?.value  || 'simple';
 
-    /* ── MOBILE AUTO-SCROLL TO OUTPUT ── */
     this._mobileScrollToOutput();
 
-    /* ── UI state ── */
     this.generating   = true;
     this.streamBuffer = '';
     this._setRunLoading(true);
@@ -1146,7 +1219,6 @@ class SavoireApp {
       const data = await this._callAPIStream(text, { depth, language: lang, style, tool: this.tool });
       this.currentData = data;
 
-      /* Hide stream overlay and render full structured result */
       this._hideStreamOverlay();
       this._renderResult(data);
       this._addToHistory({
@@ -1159,7 +1231,6 @@ class SavoireApp {
       this._updateHeaderStats();
       this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.tool].sfpName} ready!`);
 
-      /* Scroll result into view */
       setTimeout(() => this._scrollToResult(), 200);
 
     } catch (err) {
@@ -1180,7 +1251,6 @@ class SavoireApp {
     }
   }
 
-  /* ── Mobile scroll to output area ── */
   _mobileScrollToOutput() {
     if (window.innerWidth > 768) return;
     const rightPanel = this._el('rightPanel');
@@ -1189,7 +1259,6 @@ class SavoireApp {
     }
   }
 
-  /* ── Scroll to result after generation ── */
   _scrollToResult() {
     const resultArea = this._el('resultArea');
     if (resultArea && resultArea.style.display !== 'none') {
@@ -1202,9 +1271,6 @@ class SavoireApp {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     STREAMING API CALL — SSE with live markdown rendering
-     ═════════════════════════════════════════════════════════════════════════ */
   async _callAPIStream(message, opts = {}) {
     this.streamCtrl = new AbortController();
     this._showCancelBtn(true);
@@ -1218,7 +1284,6 @@ class SavoireApp {
     }
   }
 
-  /* ── Server-Sent Events streaming with LIVE MARKDOWN ── */
   async _streamSSE(message, opts) {
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({
@@ -1244,47 +1309,37 @@ class SavoireApp {
 
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('text/event-stream')) {
-          /* Server returned plain JSON — simulate stream */
           const data = await res.json();
           if (data.error) { reject(new Error(data.error)); return; }
           this._simulateStream(data, resolve, reject);
           return;
         }
 
-        /* ── True SSE streaming with LIVE MARKDOWN rendering ── */
         const reader      = res.body.getReader();
         const decoder     = new TextDecoder();
         let   lineBuffer  = '';
         let   charCount   = 0;
         let   renderThrottle = 0;
 
-        /* Get stream display elements */
         const sfpText   = this._el('sfpText');
         const sfpScroll = this._el('sfpScroll');
 
-        /* ─ LIVE MARKDOWN RENDER FUNCTION ─
-           Applies full styled markdown HTML to the stream overlay in real time.
-           Throttled to every 3 chars to prevent jank. */
         const renderLive = () => {
           if (!sfpText) return;
           const now = Date.now();
-          if (now - renderThrottle < 50) return; /* throttle to 20fps */
+          if (now - renderThrottle < 50) return;
           renderThrottle = now;
 
           try {
-            /* Render markdown as HTML — styles applied LIVE */
             const html = this._renderMdLive(this.streamBuffer);
             sfpText.innerHTML = html;
             sfpText.classList.add('live-md');
           } catch(e) {
-            /* Fallback to plain text if render fails */
             sfpText.textContent = this.streamBuffer;
           }
 
-          /* Auto-scroll */
           if (sfpScroll) sfpScroll.scrollTop = sfpScroll.scrollHeight;
 
-          /* Mobile: keep visible */
           if (window.innerWidth <= 768) {
             const sfp = this._el('streamFullpage');
             if (sfp && sfp.style.display !== 'none') {
@@ -1311,18 +1366,12 @@ class SavoireApp {
                   const evt = JSON.parse(raw);
 
                   if (evt.t !== undefined) {
-                    /* ── Token chunk — append + render live ── */
                     this.streamBuffer += evt.t;
                     charCount         += evt.t.length;
-
-                    /* Live markdown render every chunk */
                     renderLive();
-
-                    /* Update thinking stages based on char count */
                     this._updateStageByProgress(charCount);
 
                   } else if (evt.topic !== undefined) {
-                    /* ── Final structured data ── */
                     if (sfpText) {
                       sfpText.classList.remove('live-md');
                       sfpText.classList.add('done');
@@ -1330,7 +1379,6 @@ class SavoireApp {
                     resolve(evt);
                     return;
                   } else if (evt.idx !== undefined) {
-                    /* Stage event from server */
                     this._activateStage(evt.idx);
                   }
                 } catch {
@@ -1353,7 +1401,6 @@ class SavoireApp {
     });
   }
 
-  /* ── Simulate streaming for JSON fallback — with LIVE MARKDOWN ── */
   async _simulateStream(data, resolve, reject) {
     const notesText = data.ultra_long_notes || data.topic || 'Generating…';
     const sfpText   = this._el('sfpText');
@@ -1388,7 +1435,6 @@ class SavoireApp {
     tick();
   }
 
-  /* ── Plain JSON API call ── */
   async _callAPIJson(message, opts = {}) {
     const res = await fetch(SAVOIRÉ.API_URL, {
       method:  'POST',
@@ -1408,7 +1454,6 @@ class SavoireApp {
     return data;
   }
 
-  /* ── Cancel generation ── */
   _cancelGeneration() {
     if (this.streamCtrl) {
       this.streamCtrl.abort();
@@ -1416,9 +1461,6 @@ class SavoireApp {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     INPUT COLLAPSE / EXPAND
-     ═════════════════════════════════════════════════════════════════════════ */
   _collapseInput(topic) {
     const taWrap        = this._el('taCollapseWrap');
     const selectorsWrap = this._el('selectorsCollapseWrap');
@@ -1461,9 +1503,6 @@ class SavoireApp {
     this._showCancelBtn(false);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     STREAMING OVERLAY — shows LIVE STYLED MARKDOWN
-     ═════════════════════════════════════════════════════════════════════════ */
   _showStreamOverlay(topic, tool) {
     const sfp      = this._el('streamFullpage');
     const sfpTopic = this._el('sfpTopic');
@@ -1480,14 +1519,12 @@ class SavoireApp {
     if (sfpName)   sfpName.textContent  = cfg.sfpName;
     if (sfpLabel)  sfpLabel.textContent = cfg.sfpLabel;
 
-    /* Reset stream text — apply md-content class for LIVE styled rendering */
     if (sfpText) {
       sfpText.innerHTML = '<span class="sfp-cursor">▊</span>';
       sfpText.classList.remove('done');
       sfpText.classList.add('live-md');
     }
 
-    /* Adjust left position based on sidebar state */
     const lp = this._el('leftPanel');
     if (lp && !lp.classList.contains('collapsed')) {
       sfp.classList.add('panel-open');
@@ -1497,7 +1534,6 @@ class SavoireApp {
 
     sfp.style.display = 'flex';
 
-    /* Hide main output panels */
     const emptyState   = this._el('emptyState');
     const thinkingWrap = this._el('thinkingWrap');
     const resultArea   = this._el('resultArea');
@@ -1522,9 +1558,6 @@ class SavoireApp {
     this._restoreInput();
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     THINKING STAGES
-     ═════════════════════════════════════════════════════════════════════════ */
   _startThinkingStages() {
     this.stageIdx = 0;
     for (let i = 0; i < 5; i++) {
@@ -1576,9 +1609,6 @@ class SavoireApp {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     UI STATE MANAGEMENT
-     ═════════════════════════════════════════════════════════════════════════ */
   _showState(state, errorMsg) {
     const empty    = this._el('emptyState');
     const thinking = this._el('thinkingWrap');
@@ -1660,9 +1690,6 @@ class SavoireApp {
     if (oa) setTimeout(() => { oa.scrollTop = 0; }, 100);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     RESULT RENDERING — builds full structured HTML from AI data
-     ═════════════════════════════════════════════════════════════════════════ */
   _renderResult(data) {
     const area = this._el('resultArea');
     if (!area) return;
@@ -1670,7 +1697,6 @@ class SavoireApp {
     area.innerHTML = this._buildResultHTML(data);
     this._showState('result');
 
-    /* Mobile: scroll to result */
     if (window.innerWidth <= 768) {
       setTimeout(() => {
         area.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1686,7 +1712,6 @@ class SavoireApp {
     const wc    = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
     const lang  = data._language || 'English';
 
-    /* ── Result Header ── */
     const header = `
       <div class="result-hdr">
         <div class="rh-left">
@@ -1729,7 +1754,6 @@ class SavoireApp {
         </div>
       </div>`;
 
-    /* ── Section navigation ── */
     const navItems = this._buildNavItems(data);
     const nav = navItems.length > 2 ? `
       <div class="result-nav" aria-label="Jump to section">
@@ -1739,7 +1763,6 @@ class SavoireApp {
           </a>`).join('')}
       </div>` : '';
 
-    /* ── Tool-specific body ── */
     let body = '';
     switch (this.tool) {
       case 'flashcards': body = this._buildFcHTML(data);      break;
@@ -1749,7 +1772,6 @@ class SavoireApp {
       default:           body = this._buildNotesHTML(data);   break;
     }
 
-    /* ── Export bar ── */
     const exportBar = `
       <div class="export-bar">
         <button class="exp-btn pdf"   onclick="window._app._downloadPDF()"   title="Download as professional PDF">
@@ -1770,7 +1792,6 @@ class SavoireApp {
         </span>
       </div>`;
 
-    /* ── Branding footer ── */
     const brandingFooter = `
       <div class="result-branding-footer">
         <div class="rbf-left">
@@ -1789,7 +1810,6 @@ class SavoireApp {
     return `<div class="result-wrap">${header}${nav}${body}${exportBar}${brandingFooter}</div>`;
   }
 
-  /* ── Section nav builder ── */
   _buildNavItems(data) {
     const items = [];
     if (data.ultra_long_notes)                  items.push({ id:'sec-notes',    label:'Notes',         icon:'fas fa-book-open' });
@@ -1801,13 +1821,9 @@ class SavoireApp {
     return items;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     NOTES HTML — Full structured study notes layout
-     ═════════════════════════════════════════════════════════════════════════ */
   _buildNotesHTML(data) {
     let h = '';
 
-    /* ── Comprehensive Notes ── */
     if (data.ultra_long_notes) {
       h += `
         <div class="study-sec section-anchor" id="sec-notes">
@@ -1826,7 +1842,6 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Key Concepts Grid ── */
     if (data.key_concepts?.length) {
       const cards = data.key_concepts.map((c, i) => `
         <div class="concept-card">
@@ -1848,7 +1863,6 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Study Tricks ── */
     if (data.key_tricks?.length) {
       const ICONS = ['fas fa-magic', 'fas fa-star', 'fas fa-bolt', 'fas fa-key', 'fas fa-brain'];
       const items = data.key_tricks.map((t, i) => `
@@ -1873,7 +1887,6 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Practice Questions ── */
     if (data.practice_questions?.length) {
       const qs = data.practice_questions.map((qa, i) => `
         <div class="qa-card">
@@ -1882,7 +1895,6 @@ class SavoireApp {
             onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.qa-toggle').classList.toggle('open');"
             role="button"
             tabindex="0"
-            aria-label="Question ${i+1}: ${(qa.question || '').substring(0,60)}"
             onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
           >
             <div class="qa-num" aria-hidden="true">${i + 1}</div>
@@ -1911,7 +1923,6 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Real-World Applications ── */
     if (data.real_world_applications?.length) {
       const items = data.real_world_applications.map((a, i) => `
         <div class="list-item app">
@@ -1936,7 +1947,6 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Common Misconceptions ── */
     if (data.common_misconceptions?.length) {
       const items = data.common_misconceptions.map((m, i) => `
         <div class="list-item misc">
@@ -1965,9 +1975,6 @@ class SavoireApp {
       </div>`;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     FLASHCARDS HTML — 3D flip cards with progress — WORLD CLASS
-     ═════════════════════════════════════════════════════════════════════════ */
   _buildFcHTML(data) {
     const cards = [];
     (data.key_concepts || []).forEach(c => {
@@ -2003,8 +2010,6 @@ class SavoireApp {
         </div>
         <div class="ss-body">
           <div class="fc-mode">
-
-            <!-- Progress bar + counter -->
             <div class="fc-top-bar">
               <div class="fc-prog">
                 Card <span id="fcCur">1</span> of <span id="fcTot">${total}</span>
@@ -2016,91 +2021,52 @@ class SavoireApp {
                 <span id="fcPct">${(1/total*100).toFixed(0)}</span>%
               </div>
             </div>
-
-            <!-- 3D Card -->
             <div
               class="fc-wrap"
               onclick="window._app._fcFlip()"
               title="Click to flip (or press Space)"
               role="button"
               tabindex="0"
-              aria-label="Flashcard — click or press Space to flip"
               onkeydown="if(event.key===' '){event.preventDefault();window._app._fcFlip();}"
             >
               <div class="flashcard" id="theCard">
                 <div class="fc-face fc-front">
-                  <div class="fc-lbl">
-                    <i class="fas fa-question-circle"></i> Question / Concept
-                  </div>
+                  <div class="fc-lbl"><i class="fas fa-question-circle"></i> Question / Concept</div>
                   <div class="fc-content" id="fcFront">${this._esc(first.q)}</div>
-                  <div class="fc-hint" aria-hidden="true">
-                    <i class="fas fa-hand-pointer"></i> Click to flip · <kbd>Space</kbd>
-                  </div>
+                  <div class="fc-hint"><i class="fas fa-hand-pointer"></i> Click to flip · <kbd>Space</kbd></div>
                 </div>
                 <div class="fc-face fc-back">
-                  <div class="fc-lbl">
-                    <i class="fas fa-lightbulb"></i> Answer / Explanation
-                  </div>
+                  <div class="fc-lbl"><i class="fas fa-lightbulb"></i> Answer / Explanation</div>
                   <div class="fc-content" id="fcBack">${this._renderMd(first.a)}</div>
-                  <div class="fc-hint" aria-hidden="true">
-                    <i class="fas fa-check-circle" style="color:var(--em2)"></i> Got it? Use arrows to continue
-                  </div>
+                  <div class="fc-hint"><i class="fas fa-check-circle" style="color:var(--em2)"></i> Got it? Use arrows to continue</div>
                 </div>
               </div>
             </div>
-
-            <!-- Controls -->
             <div class="fc-controls">
-              <button
-                class="fc-btn"
-                id="fcPrev"
-                onclick="window._app._fcNav(-1)"
-                ${total <= 1 ? 'disabled' : ''}
-                aria-label="Previous card"
-              >
+              <button class="fc-btn" id="fcPrev" onclick="window._app._fcNav(-1)" ${total <= 1 ? 'disabled' : ''}>
                 <i class="fas fa-arrow-left"></i> Prev
               </button>
-              <button
-                class="fc-btn primary"
-                onclick="window._app._fcFlip()"
-                aria-label="Flip card"
-              >
+              <button class="fc-btn primary" onclick="window._app._fcFlip()">
                 <i class="fas fa-sync-alt"></i> Flip
               </button>
-              <button
-                class="fc-btn"
-                id="fcNext"
-                onclick="window._app._fcNav(1)"
-                ${total <= 1 ? 'disabled' : ''}
-                aria-label="Next card"
-              >
+              <button class="fc-btn" id="fcNext" onclick="window._app._fcNav(1)" ${total <= 1 ? 'disabled' : ''}>
                 Next <i class="fas fa-arrow-right"></i>
               </button>
             </div>
-
-            <!-- Shuffle + Restart -->
             <div class="fc-controls" style="margin-top:-6px">
-              <button class="fc-btn" onclick="window._app._fcShuffle()" aria-label="Shuffle cards">
-                <i class="fas fa-random"></i> Shuffle
-              </button>
-              <button class="fc-btn" onclick="window._app._fcRestart()" aria-label="Restart from beginning">
-                <i class="fas fa-redo"></i> Restart
-              </button>
+              <button class="fc-btn" onclick="window._app._fcShuffle()"><i class="fas fa-random"></i> Shuffle</button>
+              <button class="fc-btn" onclick="window._app._fcRestart()"><i class="fas fa-redo"></i> Restart</button>
             </div>
-
-            <!-- Keyboard hint -->
             <div class="fc-swipe-hint fc-kb">
               <kbd>Space</kbd> flip &nbsp;·&nbsp;
               <kbd>←</kbd><kbd>→</kbd> navigate &nbsp;·&nbsp;
               ${total} cards total
             </div>
-
           </div>
         </div>
       </div>`;
   }
 
-  /* ── Flashcard flip ── */
   _fcFlip() {
     const fc = this._el('theCard');
     if (!fc) return;
@@ -2108,7 +2074,6 @@ class SavoireApp {
     fc.classList.toggle('flipped', this.fcFlipped);
   }
 
-  /* ── Flashcard navigate ── */
   _fcNav(dir) {
     if (!this.fcCards.length) return;
     this.fcCurrent = Math.max(0, Math.min(this.fcCards.length - 1, this.fcCurrent + dir));
@@ -2138,7 +2103,6 @@ class SavoireApp {
     if (next) next.disabled = this.fcCurrent === this.fcCards.length - 1;
   }
 
-  /* ── Shuffle deck ── */
   _fcShuffle() {
     for (let i = this.fcCards.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -2150,23 +2114,17 @@ class SavoireApp {
     this._toast('info', 'fa-random', 'Cards shuffled!');
   }
 
-  /* ── Restart deck ── */
   _fcRestart() {
     this.fcCurrent = 0;
     this.fcFlipped = false;
     this._fcNav(0);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     QUIZ HTML — WORLD-CLASS MCQ with A/B/C/D options, animations, scoring
-     ═════════════════════════════════════════════════════════════════════════ */
   _buildQuizHTML(data) {
     const qs = data.practice_questions || [];
     if (!qs.length) return this._buildNotesHTML(data);
 
-    /* Build quiz data with MCQ options */
     this.quizData = qs.map((q, idx) => {
-      /* Generate MCQ options from the question */
       const options = this._generateMCQOptions(q, data, idx);
       return {
         ...q,
@@ -2202,28 +2160,20 @@ class SavoireApp {
       </div>`;
   }
 
-  /* ── Generate MCQ options for a question ── */
   _generateMCQOptions(qa, data, idx) {
     const correctAnswer = qa.answer || '';
-
-    /* Try to extract options if answer contains A) B) C) D) format */
     const mcqMatch = qa.question.match(/\(A\)|\(B\)|\(C\)|\(D\)|^A\.|^B\.|^C\.|^D\./im);
     if (mcqMatch) {
-      /* Question already has MCQ format */
       return this._parseMCQFromText(qa.question, qa.answer);
     }
 
-    /* Generate plausible distractors from available content */
     const allConcepts = [
       ...(data.key_concepts || []),
       ...(data.practice_questions || []).filter((_, i) => i !== idx).map(q => q.answer),
       ...(data.real_world_applications || []),
     ].filter(Boolean).map(c => this._stripMd(c).split('.')[0].trim()).filter(c => c.length > 5 && c.length < 120);
 
-    /* Build correct option */
     const correctShort = this._stripMd(correctAnswer).split('.')[0].trim().substring(0, 120);
-
-    /* Pick 3 distractors different from correct */
     const distractors = [];
     const used = new Set([correctShort.toLowerCase()]);
 
@@ -2235,7 +2185,6 @@ class SavoireApp {
       }
     }
 
-    /* Pad with generic distractors if needed */
     const genericFallbacks = [
       'This is not directly related to the topic',
       'This represents an incorrect application of the concept',
@@ -2248,13 +2197,11 @@ class SavoireApp {
       distractors.push(genericFallbacks[fbIdx++ % genericFallbacks.length]);
     }
 
-    /* Shuffle all 4 options */
     const allOptions = [
       { text: correctShort, isCorrect: true },
       ...distractors.slice(0, 3).map(d => ({ text: d, isCorrect: false })),
     ];
 
-    /* Fisher-Yates shuffle */
     for (let i = allOptions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]];
@@ -2263,7 +2210,6 @@ class SavoireApp {
     return allOptions;
   }
 
-  /* ── Parse MCQ from text that already has options ── */
   _parseMCQFromText(questionText, answerText) {
     const optRegex = /(?:\(([A-D])\)|^([A-D])[.)]\s*)(.+?)(?=\n|$)/gim;
     const options  = [];
@@ -2272,7 +2218,6 @@ class SavoireApp {
     while ((match = optRegex.exec(questionText)) !== null) {
       const letter = (match[1] || match[2]).toUpperCase();
       const text   = match[3].trim();
-      /* Check if this letter appears in the answer */
       const isCorrect = answerText.toUpperCase().includes(letter) ||
                         answerText.toLowerCase().includes(text.toLowerCase().substring(0, 20));
       options.push({ text, isCorrect, letter });
@@ -2280,7 +2225,6 @@ class SavoireApp {
 
     if (options.length === 4) return options;
 
-    /* Fallback */
     return [
       { text: this._stripMd(answerText).substring(0, 100), isCorrect: true },
       { text: 'This is not correct', isCorrect: false },
@@ -2289,7 +2233,6 @@ class SavoireApp {
     ];
   }
 
-  /* ── Render a single quiz question with MCQ options ── */
   _renderQuizQ(idx) {
     if (idx >= this.quizData.length) {
       return this._renderQuizResult();
@@ -2313,8 +2256,6 @@ class SavoireApp {
 
     return `
       <div class="quiz-q-card" id="quizCard_${idx}">
-
-        <!-- Progress bar -->
         <div class="quiz-top-bar">
           <div class="quiz-progress-track">
             <div class="quiz-progress-fill" style="width:${progress}%" id="quizProgFill"></div>
@@ -2324,37 +2265,24 @@ class SavoireApp {
             <span class="quiz-diff-badge">Practice Mode</span>
           </div>
         </div>
-
-        <!-- Question text -->
         <div class="quiz-question-wrap">
           <div class="quiz-question-num">${idx + 1}</div>
           <div class="quiz-question-text">${this._esc(q.question)}</div>
         </div>
-
-        <!-- MCQ Options -->
         <div class="quiz-options-grid" id="quizOpts_${idx}">
           ${optionsHtml}
         </div>
-
-        <!-- Answer reveal area -->
         <div class="quiz-answer-area" id="quizAnswerArea_${idx}" style="display:none"></div>
-
-        <!-- Navigation (show after answering) -->
         <div class="quiz-nav-area" id="quizNav_${idx}" style="display:none">
-          <button
-            class="quiz-nav-btn primary"
-            onclick="window._app._quizAdvance(${idx})"
-          >
+          <button class="quiz-nav-btn primary" onclick="window._app._quizAdvance(${idx})">
             ${idx + 1 < this.quizData.length
               ? '<i class="fas fa-arrow-right"></i> Next Question'
               : '<i class="fas fa-flag-checkered"></i> See Results'}
           </button>
         </div>
-
       </div>`;
   }
 
-  /* ── Handle option selection ── */
   _quizSelectOption(questionIdx, optionIdx) {
     const q = this.quizData[questionIdx];
     if (q.answered) return;
@@ -2370,11 +2298,9 @@ class SavoireApp {
       this._toast('info', 'fa-book-open', '✗ Not quite — check the answer below 📖', 2000);
     }
 
-    /* Update score */
     const scoreNum = this._el('quizScoreNum');
     if (scoreNum) scoreNum.textContent = this.quizScore;
 
-    /* Style all options */
     const optsContainer = this._el(`quizOpts_${questionIdx}`);
     if (optsContainer) {
       const optBtns = optsContainer.querySelectorAll('.quiz-opt-btn');
@@ -2383,19 +2309,15 @@ class SavoireApp {
         btn.classList.remove('selected', 'correct', 'wrong', 'revealed');
 
         if (q.options[oi].isCorrect) {
-          /* Mark correct answer green */
           btn.classList.add('correct');
         } else if (oi === optionIdx && !q.options[oi].isCorrect) {
-          /* Mark wrong selection red */
           btn.classList.add('wrong');
         } else {
-          /* Dim others */
           btn.classList.add('dimmed');
         }
       });
     }
 
-    /* Show answer explanation */
     const ansArea = this._el(`quizAnswerArea_${questionIdx}`);
     if (ansArea) {
       ansArea.style.display = 'block';
@@ -2411,32 +2333,26 @@ class SavoireApp {
             <div class="quiz-exp-text md-content">${this._renderMd(q.answer)}</div>
           </div>
         </div>`;
-      /* Smooth scroll to answer */
       setTimeout(() => ansArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
     }
 
-    /* Show navigation */
     const navArea = this._el(`quizNav_${questionIdx}`);
     if (navArea) navArea.style.display = 'flex';
   }
 
-  /* ── Advance to next question ── */
   _quizAdvance(currentIdx) {
     this.quizIdx = currentIdx + 1;
     const qb     = this._el('quizBody');
     if (!qb) return;
 
     if (this.quizIdx >= this.quizData.length) {
-      /* Show results */
       qb.innerHTML = this._renderQuizResult();
     } else {
-      /* Next question */
       qb.innerHTML = this._renderQuizQ(this.quizIdx);
       qb.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
-  /* ── Quiz final result ── */
   _renderQuizResult() {
     const total  = this.quizData.length;
     const score  = this.quizScore;
@@ -2447,17 +2363,13 @@ class SavoireApp {
                  : pct >= 40 ? { emoji: '💪', text: 'Keep Studying!',      color: 'var(--amber)' }
                  : { emoji: '📖', text: 'More Practice Needed', color: 'var(--ruby2)' };
 
-    /* Build review of all answers */
     const reviewHtml = this.quizData.map((q, i) => {
-      const letters = ['A', 'B', 'C', 'D'];
       const selOpt  = q.selectedIdx >= 0 ? q.options[q.selectedIdx] : null;
       const corrOpt = q.options.find(o => o.isCorrect);
       return `
         <div class="quiz-review-item ${q.correct ? 'correct' : 'incorrect'}">
           <div class="quiz-review-hdr">
-            <span class="quiz-review-icon">
-              <i class="fas ${q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-            </span>
+            <span class="quiz-review-icon"><i class="fas ${q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i></span>
             <span class="quiz-review-num">Q${i + 1}</span>
             <span class="quiz-review-q">${this._esc(q.question)}</span>
           </div>
@@ -2475,8 +2387,6 @@ class SavoireApp {
 
     return `
       <div class="quiz-result-wrap">
-
-        <!-- Score circle -->
         <div class="quiz-result-score-wrap">
           <div class="quiz-result-emoji">${grade.emoji}</div>
           <div class="quiz-result-big-score" style="color:${grade.color}">
@@ -2485,51 +2395,33 @@ class SavoireApp {
           <div class="quiz-result-pct">${pct}% Correct</div>
           <div class="quiz-result-grade" style="color:${grade.color}">${grade.text}</div>
         </div>
-
-        <!-- Stats row -->
         <div class="quiz-result-stats">
           <div class="quiz-result-stat correct">
             <div class="quiz-result-stat-val">${score}</div>
-            <div class="quiz-result-stat-lbl">
-              <i class="fas fa-check-circle"></i> Correct
-            </div>
+            <div class="quiz-result-stat-lbl"><i class="fas fa-check-circle"></i> Correct</div>
           </div>
           <div class="quiz-result-stat wrong">
             <div class="quiz-result-stat-val">${total - score}</div>
-            <div class="quiz-result-stat-lbl">
-              <i class="fas fa-times-circle"></i> Incorrect
-            </div>
+            <div class="quiz-result-stat-lbl"><i class="fas fa-times-circle"></i> Incorrect</div>
           </div>
           <div class="quiz-result-stat total">
             <div class="quiz-result-stat-val">${total}</div>
-            <div class="quiz-result-stat-lbl">
-              <i class="fas fa-list-ol"></i> Total
-            </div>
+            <div class="quiz-result-stat-lbl"><i class="fas fa-list-ol"></i> Total</div>
           </div>
         </div>
-
-        <!-- Action buttons -->
         <div class="quiz-result-actions">
-          <button class="fc-btn primary" onclick="window._app._quizRestart()">
-            <i class="fas fa-redo"></i> Try Again
-          </button>
-          <button class="fc-btn" onclick="window._app._quizToggleReview()">
-            <i class="fas fa-eye"></i> <span id="quizReviewToggleLabel">Show Review</span>
-          </button>
+          <button class="fc-btn primary" onclick="window._app._quizRestart()"><i class="fas fa-redo"></i> Try Again</button>
+          <button class="fc-btn" onclick="window._app._quizToggleReview()"><i class="fas fa-eye"></i> <span id="quizReviewToggleLabel">Show Review</span></button>
         </div>
-
-        <!-- Review section (hidden by default) -->
         <div id="quizReviewSection" style="display:none;margin-top:20px">
           <div style="font-family:var(--fu);font-size:0.75rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--b2)">
             <i class="fas fa-list-check"></i> &nbsp; Full Answer Review
           </div>
           <div class="quiz-review-list">${reviewHtml}</div>
         </div>
-
       </div>`;
   }
 
-  /* ── Toggle review section ── */
   _quizToggleReview() {
     const section = this._el('quizReviewSection');
     const label   = this._el('quizReviewToggleLabel');
@@ -2550,15 +2442,10 @@ class SavoireApp {
     if (scoreNum) scoreNum.textContent = '0';
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     SUMMARY HTML — WORLD-CLASS visual with TL;DR, key points, timeline
-     ═════════════════════════════════════════════════════════════════════════ */
   _buildSummaryHTML(data) {
     let h = '';
 
-    /* ── TL;DR Executive Summary ── */
     if (data.ultra_long_notes) {
-      /* Extract first 2-3 paragraphs as executive summary */
       const raw    = data.ultra_long_notes;
       const paras  = raw.split(/\n{2,}/).filter(p => p.trim() && !p.trim().startsWith('#')).slice(0, 3);
       const tldr   = paras.join('\n\n');
@@ -2566,34 +2453,22 @@ class SavoireApp {
       h += `
         <div class="study-sec section-anchor" id="sec-tldr">
           <div class="ss-hdr">
-            <div class="ss-title">
-              <i class="fas fa-bolt"></i>
-              TL;DR — Executive Summary
-            </div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(tldr))})">
-              <i class="fas fa-copy"></i> Copy
-            </button>
+            <div class="ss-title"><i class="fas fa-bolt"></i> TL;DR — Executive Summary</div>
+            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(tldr))})"><i class="fas fa-copy"></i> Copy</button>
           </div>
           <div class="ss-body">
             <div class="summary-tldr-box">
-              <div class="summary-tldr-icon" aria-hidden="true">
-                <i class="fas fa-align-left"></i>
-              </div>
-              <div class="summary-tldr-content md-content">
-                ${this._renderMd(tldr)}
-              </div>
+              <div class="summary-tldr-icon"><i class="fas fa-align-left"></i></div>
+              <div class="summary-tldr-content md-content">${this._renderMd(tldr)}</div>
             </div>
           </div>
         </div>`;
 
-      /* ── Full notes ── */
       h += `
         <div class="study-sec section-anchor" id="sec-notes">
           <div class="ss-hdr">
             <div class="ss-title"><i class="fas fa-book-open"></i> Full Summary Notes</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(raw))})">
-              <i class="fas fa-copy"></i> Copy
-            </button>
+            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(raw))})"><i class="fas fa-copy"></i> Copy</button>
           </div>
           <div class="ss-body">
             <div class="md-content">${this._renderMd(raw)}</div>
@@ -2601,7 +2476,6 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Key Points at a Glance ── */
     if (data.key_concepts?.length) {
       const items = data.key_concepts.map((c, i) => `
         <div class="summary-point">
@@ -2613,9 +2487,7 @@ class SavoireApp {
         <div class="study-sec section-anchor" id="sec-concepts">
           <div class="ss-hdr">
             <div class="ss-title"><i class="fas fa-list-check"></i> Key Points at a Glance</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_concepts.join('\n'))})">
-              <i class="fas fa-copy"></i> Copy
-            </button>
+            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_concepts.join('\n'))})"><i class="fas fa-copy"></i> Copy</button>
           </div>
           <div class="ss-body">
             <div class="summary-points-list">${items}</div>
@@ -2623,12 +2495,11 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Memory Tricks ── */
     if (data.key_tricks?.length) {
       const ICONS = ['fas fa-magic', 'fas fa-star', 'fas fa-bolt', 'fas fa-brain', 'fas fa-key'];
       const items = data.key_tricks.map((t, i) => `
         <div class="trick-item">
-          <div class="trick-icon"><i class="${ICONS[i % ICONS.length]}" aria-hidden="true"></i></div>
+          <div class="trick-icon"><i class="${ICONS[i % ICONS.length]}"></i></div>
           <div class="trick-text">${this._esc(t)}</div>
         </div>`).join('');
 
@@ -2643,22 +2514,13 @@ class SavoireApp {
         </div>`;
     }
 
-    /* ── Quick Practice ── */
     if (data.practice_questions?.length) {
       const qs = data.practice_questions.slice(0, 3).map((qa, i) => `
         <div class="qa-card">
-          <div
-            class="qa-head"
-            onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.qa-toggle').classList.toggle('open');"
-            role="button"
-            tabindex="0"
-            onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
-          >
+          <div class="qa-head" onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.qa-toggle').classList.toggle('open');">
             <div class="qa-num">${i + 1}</div>
             <div class="qa-q">${this._esc(qa.question)}</div>
-            <button class="qa-toggle" tabindex="-1">
-              <i class="fas fa-chevron-down"></i> Answer
-            </button>
+            <button class="qa-toggle" tabindex="-1"><i class="fas fa-chevron-down"></i> Answer</button>
           </div>
           <div class="qa-answer">
             <div class="qa-albl"><i class="fas fa-check-circle"></i> Answer</div>
@@ -2680,9 +2542,6 @@ class SavoireApp {
     return h || this._buildNotesHTML(data);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     MIND MAP HTML — Visual hierarchical layout
-     ═════════════════════════════════════════════════════════════════════════ */
   _buildMindmapHTML(data) {
     const topic = data.topic || 'Topic';
 
@@ -2696,14 +2555,14 @@ class SavoireApp {
     const branchHtml = branches.map(b => `
       <div class="mm-branch mm-branch--${b.colorClass}">
         <div class="mm-branch-hdr" style="color:${b.color}">
-          <i class="fas ${b.icon}" aria-hidden="true"></i>
+          <i class="fas ${b.icon}"></i>
           ${this._esc(b.label)}
           <span class="mm-branch-count">${b.items.length}</span>
         </div>
         <div class="mm-nodes-list">
           ${b.items.map(item => `
             <div class="mm-node mm-node--${b.colorClass}">
-              <span class="mm-node-dot" style="background:${b.color}" aria-hidden="true"></span>
+              <span class="mm-node-dot" style="background:${b.color}"></span>
               <span class="mm-node-text">${this._esc(item)}</span>
             </div>`).join('')}
         </div>
@@ -2725,28 +2584,17 @@ class SavoireApp {
           <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map</div>
         </div>
         <div class="ss-body">
-
-          <!-- Central topic node -->
           <div class="mm-center-connector">
-            <div class="mm-root">
-              <i class="fas fa-brain" style="margin-right:8px;opacity:0.7"></i>
-              ${this._esc(topic)}
-            </div>
-            <div class="mm-connector-dot" aria-hidden="true"></div>
-            <div class="mm-connector-line" aria-hidden="true"></div>
+            <div class="mm-root"><i class="fas fa-brain" style="margin-right:8px;opacity:0.7"></i> ${this._esc(topic)}</div>
+            <div class="mm-connector-dot"></div>
+            <div class="mm-connector-line"></div>
           </div>
-
-          <!-- Branches -->
           <div class="mm-branches">${branchHtml}</div>
-
         </div>
       </div>
       ${notesSection}`;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     ULTRA-PROFESSIONAL PDF — Magazine-quality multi-page A4
-     ═════════════════════════════════════════════════════════════════════════ */
   _downloadPDF() {
     const data = this.currentData;
     if (!data) {
@@ -2764,24 +2612,21 @@ class SavoireApp {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
 
-      /* ── Page dimensions ── */
-      const pw  = 210;   /* Page width mm */
-      const ph  = 297;   /* Page height mm */
-      const ml  = 16;    /* Margin left */
-      const mr  = 16;    /* Margin right */
-      const mt  = 38;    /* Margin top (after header) */
-      const mb  = 22;    /* Margin bottom (before footer) */
+      const pw  = 210;
+      const ph  = 297;
+      const ml  = 16;
+      const mr  = 16;
+      const mt  = 38;
+      const mb  = 22;
       const cw  = pw - ml - mr;
       let   y   = mt;
       let   pageNum = 1;
 
-      /* ── COLOR PALETTE ── */
       const GOLD      = [201, 169, 110];
       const GOLD_DARK = [140, 92, 24];
       const GOLD_BG   = [252, 244, 228];
       const DARK      = [18, 12, 4];
       const MID       = [55, 48, 38];
-      const LIGHT     = [100, 88, 72];
       const FAINT     = [155, 140, 118];
       const GREEN     = [38, 140, 88];
       const GREEN_BG  = [236, 252, 244];
@@ -2790,47 +2635,29 @@ class SavoireApp {
       const BLUE      = [50, 100, 200];
       const BLUE_BG   = [236, 244, 254];
       const CREAM     = [250, 246, 238];
-      const CREAM2    = [244, 240, 232];
       const WHITE     = [255, 255, 255];
-      const BLACK     = [0,   0,   0];
       const DIVIDER   = [220, 210, 190];
       const AMBER     = [180, 100, 20];
       const AMBER_BG  = [252, 244, 228];
 
-      /* ════════════════════════════════════════════════════════════════
-         DRAW PAGE HEADER — elegant with decorative elements
-         ════════════════════════════════════════════════════════════════ */
       const drawPageHeader = () => {
-        /* Full-width dark header band */
         doc.setFillColor(12, 10, 6);
         doc.rect(0, 0, pw, 28, 'F');
-
-        /* Gold decorative top stripe */
         doc.setFillColor(...GOLD);
         doc.rect(0, 0, pw, 4, 'F');
-
-        /* Left gold accent bar (vertical) */
         doc.setFillColor(...GOLD);
         doc.rect(ml, 8, 3, 16, 'F');
-
-        /* Brand name */
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...GOLD);
         doc.text('SAVOIRÉ AI', ml + 7, 16);
-
-        /* Version tag */
         doc.setFontSize(6.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(160, 130, 80);
         doc.text('v2.2', ml + 7 + doc.getTextWidth('SAVOIRÉ AI') + 2, 16);
-
-        /* Tagline */
         doc.setFontSize(7);
         doc.setTextColor(120, 100, 70);
         doc.text('Think Less. Know More.', ml + 7, 21);
-
-        /* Right side — website + dev */
         doc.setFontSize(7.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...GOLD);
@@ -2839,44 +2666,28 @@ class SavoireApp {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(130, 105, 65);
         doc.text('Sooban Talha Technologies · soobantalhatech.xyz', pw - mr, 21, { align: 'right' });
-
-        /* Bottom hairline */
         doc.setDrawColor(...GOLD);
         doc.setLineWidth(0.6);
         doc.line(0, 28, pw, 28);
-
-        /* Subtle gold band below header */
         doc.setFillColor(255, 250, 238);
         doc.rect(0, 28, pw, 6, 'F');
         doc.setFillColor(...GOLD);
         doc.rect(0, 33.5, pw, 0.5, 'F');
-
         y = mt;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         DRAW PAGE FOOTER
-         ════════════════════════════════════════════════════════════════ */
       const drawPageFooter = (pgNum, pgTotal) => {
         const fy = ph - 12;
-
-        /* Footer background */
         doc.setFillColor(245, 240, 230);
         doc.rect(0, fy - 3, pw, 15, 'F');
-
-        /* Top footer line */
         doc.setDrawColor(...GOLD);
         doc.setLineWidth(0.5);
         doc.line(0, fy - 3, pw, fy - 3);
-
-        /* Left footer text */
         doc.setFontSize(6.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...FAINT);
         const footerLeft = `${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVELOPER} · Generated ${new Date().toLocaleString()}`;
         doc.text(footerLeft, ml, fy + 1);
-
-        /* Right — page number in styled box */
         const pgStr = `${pgNum} / ${pgTotal}`;
         doc.setFillColor(...GOLD);
         const pgW = doc.getTextWidth(pgStr) + 6;
@@ -2887,9 +2698,6 @@ class SavoireApp {
         doc.text(pgStr, pw - mr + 1, fy + 2.2, { align: 'right' });
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         CHECK PAGE SPACE
-         ════════════════════════════════════════════════════════════════ */
       const checkSpace = (needed = 14) => {
         if (y + needed > ph - mb) {
           doc.addPage();
@@ -2899,9 +2707,6 @@ class SavoireApp {
         }
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         WRITE WRAPPED TEXT — returns height used
-         ════════════════════════════════════════════════════════════════ */
       const writeText = (text, fontSize, bold, color, indent = 0, lineH = 1.6) => {
         if (!text) return 0;
         const clean = this._stripMd(String(text));
@@ -2921,61 +2726,38 @@ class SavoireApp {
         return used;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         SECTION HEADING — with full-width background + left accent + icon
-         ════════════════════════════════════════════════════════════════ */
       const sectionHeading = (title, accentColor = GOLD, bgColor = CREAM, iconChar = '▶') => {
         checkSpace(22);
         y += 4;
-
-        /* Background band */
         doc.setFillColor(...bgColor);
         doc.rect(ml - 2, y - 5.5, cw + 4, 12, 'F');
-
-        /* Left thick accent bar */
         doc.setFillColor(...accentColor);
         doc.rect(ml - 2, y - 5.5, 4.5, 12, 'F');
-
-        /* Icon/bullet */
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...WHITE);
         doc.text(iconChar, ml - 0.5, y + 1, { align: 'center' });
-
-        /* Title */
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...DARK);
         doc.text(title.toUpperCase(), ml + 7, y + 1);
-
         y += 9;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         ANSWER / EXPLANATION BOX — green themed
-         ════════════════════════════════════════════════════════════════ */
       const answerBox = (text, label = 'ANSWER', color = GREEN, bgColor = GREEN_BG) => {
         const clean  = this._stripMd(String(text || ''));
         const lines  = doc.splitTextToSize(clean, cw - 14);
         const boxH   = lines.length * 4.8 + 12;
         checkSpace(boxH + 5);
-
-        /* Box background */
         doc.setFillColor(...bgColor);
         doc.roundedRect(ml, y - 3, cw, boxH, 2, 2, 'F');
-
-        /* Left accent */
         doc.setFillColor(...color);
         doc.rect(ml, y - 3, 3, boxH, 'F');
-
-        /* Label */
         doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...color);
         doc.text(label, ml + 7, y + 2);
         y += 6;
-
-        /* Text */
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...MID);
@@ -2987,24 +2769,17 @@ class SavoireApp {
         y += 4;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         NUMBERED BADGE ITEM — for key concepts
-         ════════════════════════════════════════════════════════════════ */
       const numberedItem = (num, text, color = GOLD) => {
         const clean = this._stripMd(String(text || ''));
         const lines = doc.splitTextToSize(clean, cw - 16);
         const itemH = lines.length * 4.8 + 8;
         checkSpace(itemH);
-
-        /* Number badge */
         doc.setFillColor(...color);
         doc.circle(ml + 5, y + 0.5, 4, 'F');
         doc.setFontSize(7.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...WHITE);
         doc.text(String(num), ml + 5, y + 1.8, { align: 'center' });
-
-        /* Text */
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...DARK);
@@ -3017,35 +2792,24 @@ class SavoireApp {
         y = lineY + 2;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         TRICK CARD — gold bordered callout box
-         ════════════════════════════════════════════════════════════════ */
       const trickCard = (num, text) => {
         const clean = this._stripMd(String(text || ''));
         const lines = doc.splitTextToSize(clean, cw - 18);
         const boxH  = lines.length * 4.8 + 14;
         checkSpace(boxH + 4);
-
-        /* Outer box */
         doc.setFillColor(...GOLD_BG);
         doc.roundedRect(ml, y - 2, cw, boxH, 3, 3, 'F');
         doc.setDrawColor(...GOLD);
         doc.setLineWidth(0.5);
         doc.roundedRect(ml, y - 2, cw, boxH, 3, 3, 'S');
-
-        /* Star icon */
         doc.setFontSize(9);
         doc.setTextColor(...GOLD_DARK);
         doc.text('★', ml + 5, y + 4);
-
-        /* Trick label */
         doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...GOLD_DARK);
         doc.text(`MEMORY TRICK ${num}`, ml + 12, y + 4);
         y += 8;
-
-        /* Text */
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(...MID);
@@ -3057,29 +2821,20 @@ class SavoireApp {
         y += 5;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         QUESTION CARD — for practice questions
-         ════════════════════════════════════════════════════════════════ */
       const questionCard = (num, question, answer) => {
         const qClean = this._stripMd(String(question || ''));
         const aClean = this._stripMd(String(answer || ''));
         const qLines = doc.splitTextToSize(`Q${num}: ${qClean}`, cw - 10);
         const qH     = qLines.length * 4.8 + 10;
         checkSpace(qH + 4);
-
-        /* Question background */
         doc.setFillColor(248, 244, 236);
         doc.roundedRect(ml, y - 3, cw, qH, 2, 2, 'F');
         doc.setFillColor(...GOLD);
         doc.rect(ml, y - 3, 4, qH, 'F');
-
-        /* Q number */
         doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...WHITE);
         doc.text('Q', ml + 2, y + 1.5, { align: 'center' });
-
-        /* Question text */
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...DARK);
@@ -3090,26 +2845,17 @@ class SavoireApp {
           qLineY += 4.8;
         });
         y = qLineY + 2;
-
-        /* Answer box */
         answerBox(aClean);
         y += 2;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         BULLET ITEM — with colored bullet
-         ════════════════════════════════════════════════════════════════ */
       const bulletItem = (text, bulletColor = GOLD, indent = 10) => {
         const clean = this._stripMd(String(text || ''));
         const lines = doc.splitTextToSize(clean, cw - indent - 4);
         const itemH = lines.length * 4.6;
         checkSpace(itemH + 3);
-
-        /* Bullet circle */
         doc.setFillColor(...bulletColor);
         doc.circle(ml + indent - 3, y - 0.5, 1.2, 'F');
-
-        /* Text */
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...DARK);
@@ -3122,9 +2868,6 @@ class SavoireApp {
         y = lineY + 1.5;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         DIVIDER LINE
-         ════════════════════════════════════════════════════════════════ */
       const divider = () => {
         checkSpace(8);
         doc.setDrawColor(...DIVIDER);
@@ -3133,23 +2876,13 @@ class SavoireApp {
         y += 6;
       };
 
-      /* ════════════════════════════════════════════════════════════════
-         START DOCUMENT — Title page
-         ════════════════════════════════════════════════════════════════ */
       drawPageHeader();
 
-      /* ── Title Block ── */
       checkSpace(50);
-
-      /* Decorative background for title */
       doc.setFillColor(...CREAM);
       doc.roundedRect(ml - 2, y - 4, cw + 4, 42, 3, 3, 'F');
-
-      /* Gold top border on title block */
       doc.setFillColor(...GOLD);
       doc.roundedRect(ml - 2, y - 4, cw + 4, 3.5, 2, 2, 'F');
-
-      /* Topic title */
       doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...DARK);
@@ -3160,8 +2893,6 @@ class SavoireApp {
         titleY += 9;
       });
       y = Math.max(titleY, y + 14);
-
-      /* Tool badge */
       const toolName = TOOL_CONFIG[this.tool]?.sfpName || 'Study Notes';
       const toolW    = doc.getTextWidth(toolName) + 10;
       doc.setFillColor(...GOLD);
@@ -3171,41 +2902,31 @@ class SavoireApp {
       doc.setTextColor(12, 8, 2);
       doc.text(toolName.toUpperCase(), ml + 4 + toolW / 2, y + 4.2, { align: 'center' });
       y += 10;
-
-      /* Metadata row */
       const metaItems = [
-        { icon: '📚', label: data.curriculum_alignment || 'General Study' },
-        { icon: '🌐', label: data._language || 'English' },
-        { icon: '⭐', label: `Score: ${data.study_score || 96}/100` },
-        { icon: '📝', label: `${this._wordCount(this._stripMd(data.ultra_long_notes || '')).toLocaleString()} words` },
-        { icon: '📅', label: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) },
+        { label: data.curriculum_alignment || 'General Study' },
+        { label: data._language || 'English' },
+        { label: `Score: ${data.study_score || 96}/100` },
+        { label: `${this._wordCount(this._stripMd(data.ultra_long_notes || '')).toLocaleString()} words` },
+        { label: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) },
       ];
-
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...LIGHT);
       const metaStr = metaItems.map(m => `${m.label}`).join('   ·   ');
       doc.text(metaStr, ml + 4, y);
       y += 6;
-
-      /* Gold divider */
       doc.setDrawColor(...GOLD);
       doc.setLineWidth(0.8);
       doc.line(ml, y, pw - mr, y);
       y += 10;
 
-      /* ── COMPREHENSIVE NOTES SECTION ── */
       if (data.ultra_long_notes) {
         sectionHeading('Comprehensive Analysis', GOLD, CREAM, '▶');
-
         const noteText = this._stripMd(data.ultra_long_notes);
         const paragraphs = noteText.split('\n\n').filter(Boolean);
-
         paragraphs.forEach(para => {
           const trimmed = para.trim();
           if (!trimmed) return;
-
-          /* Detect markdown headings */
           if (/^#{1,4} /.test(trimmed)) {
             const headText = trimmed.replace(/^#+\s*/, '');
             checkSpace(12);
@@ -3229,92 +2950,71 @@ class SavoireApp {
         y += 6;
       }
 
-      /* ── KEY CONCEPTS SECTION ── */
       if (data.key_concepts?.length) {
         sectionHeading('Key Concepts', GOLD, CREAM, '●');
-
         data.key_concepts.forEach((c, i) => {
           numberedItem(i + 1, c, GOLD);
         });
         y += 5;
       }
 
-      /* ── STUDY TRICKS SECTION ── */
       if (data.key_tricks?.length) {
         sectionHeading('Study Tricks & Memory Aids', AMBER, AMBER_BG, '★');
-
         data.key_tricks.forEach((t, i) => {
           trickCard(i + 1, t);
         });
         y += 4;
       }
 
-      /* ── PRACTICE QUESTIONS SECTION ── */
       if (data.practice_questions?.length) {
         sectionHeading('Practice Questions & Answers', GREEN, GREEN_BG, '?');
-
         data.practice_questions.forEach((qa, i) => {
           questionCard(i + 1, qa.question, qa.answer);
         });
         y += 3;
       }
 
-      /* ── REAL-WORLD APPLICATIONS SECTION ── */
       if (data.real_world_applications?.length) {
         sectionHeading('Real-World Applications', BLUE, BLUE_BG, '◆');
-
         data.real_world_applications.forEach((a, i) => {
           bulletItem(`Application ${i + 1}: ${a}`, BLUE);
         });
         y += 5;
       }
 
-      /* ── COMMON MISCONCEPTIONS SECTION ── */
       if (data.common_misconceptions?.length) {
         sectionHeading('Common Misconceptions to Avoid', RED, RED_BG, '!');
-
         data.common_misconceptions.forEach((m, i) => {
           bulletItem(`Misconception ${i + 1}: ${m}`, RED);
         });
         y += 5;
       }
 
-      /* ── FINAL BRANDING PAGE ── */
       checkSpace(32);
       y += 8;
       divider();
-
-      /* Final branding box */
       doc.setFillColor(18, 12, 4);
       doc.roundedRect(ml - 2, y - 2, cw + 4, 22, 3, 3, 'F');
-
       doc.setFillColor(...GOLD);
       doc.rect(ml - 2, y - 2, 4, 22, 'F');
-
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...GOLD);
       doc.text('SAVOIRÉ AI v2.2', ml + 8, y + 5);
-
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(160, 135, 90);
       doc.text('Think Less. Know More. — Free for every student on Earth.', ml + 8, y + 10.5);
-
       doc.setFontSize(7.5);
       doc.setTextColor(120, 100, 68);
       doc.text(`${SAVOIRÉ.DEVELOPER}  ·  ${SAVOIRÉ.DEVSITE}  ·  Founder: ${SAVOIRÉ.FOUNDER}`, ml + 8, y + 16);
 
-      /* ════════════════════════════════════════════════════════════════
-         APPLY FOOTERS TO ALL PAGES
-         ════════════════════════════════════════════════════════════════ */
       const totalPages = doc.internal.getNumberOfPages();
       for (let p = 1; p <= totalPages; p++) {
         doc.setPage(p);
         drawPageFooter(p, totalPages);
       }
 
-      /* ── SAVE FILE ── */
       const safeTopic = (data.topic || 'Notes')
         .replace(/[^a-zA-Z0-9\s]/g, '')
         .replace(/\s+/g, '_')
@@ -3330,9 +3030,6 @@ class SavoireApp {
     }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     COPY TO CLIPBOARD
-     ═════════════════════════════════════════════════════════════════════════ */
   _copyResult() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Nothing to copy yet.'); return; }
@@ -3369,7 +3066,6 @@ class SavoireApp {
     navigator.clipboard.writeText(text)
       .then(() => this._toast('success', 'fa-check', `Copied ${this._wordCount(text).toLocaleString()} words to clipboard!`))
       .catch(() => {
-        /* Fallback */
         const ta = document.createElement('textarea');
         ta.value = text;
         document.body.appendChild(ta);
@@ -3386,14 +3082,10 @@ class SavoireApp {
       .catch(() => this._toast('error', 'fa-times', 'Copy failed.'));
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     SAVE NOTE
-     ═════════════════════════════════════════════════════════════════════════ */
   _saveNote() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Nothing to save yet.'); return; }
 
-    /* Check if already saved */
     const existing = this.saved.find(s => s.topic === data.topic && s.tool === this.tool);
     if (existing) {
       this._toast('info', 'fa-star', 'Already saved! View in Saved Notes.'); return;
@@ -3417,9 +3109,6 @@ class SavoireApp {
     this._toast('success', 'fa-star', `Saved: "${note.topic.substring(0, 40)}"!`);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     SHARE
-     ═════════════════════════════════════════════════════════════════════════ */
   _shareResult() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Nothing to share yet.'); return; }
@@ -3444,9 +3133,6 @@ class SavoireApp {
       .catch(() => this._toast('info', 'fa-info-circle', `Share: ${url}`));
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     CLEAR OUTPUT
-     ═════════════════════════════════════════════════════════════════════════ */
   _clearOutput() {
     if (!this.currentData) return;
     this._confirm('Clear the current output? You can always regenerate it.', () => {
@@ -3458,13 +3144,8 @@ class SavoireApp {
     });
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     HISTORY
-     ═════════════════════════════════════════════════════════════════════════ */
   _addToHistory(item) {
-    /* Remove duplicate topic for same tool */
     this.history = this.history.filter(h => !(h.topic === item.topic && h.tool === item.tool));
-
     this.history.unshift(item);
     if (this.history.length > SAVOIRÉ.MAX_HISTORY) {
       this.history = this.history.slice(0, SAVOIRÉ.MAX_HISTORY);
@@ -3487,14 +3168,7 @@ class SavoireApp {
     const items = this.history.slice(0, 6);
 
     list.innerHTML = items.map(h => `
-      <div
-        class="lp-hist-item"
-        onclick="window._app._loadHistoryItem('${h.id}')"
-        role="listitem"
-        tabindex="0"
-        onkeydown="if(event.key==='Enter')window._app._loadHistoryItem('${h.id}')"
-        title="${this._esc((h.topic || '').substring(0, 80))}"
-      >
+      <div class="lp-hist-item" onclick="window._app._loadHistoryItem('${h.id}')" title="${this._esc((h.topic || '').substring(0, 80))}">
         <i class="fas ${ICONS[h.tool] || 'fa-book'} lp-hist-icon"></i>
         <div class="lp-hist-topic">${this._esc((h.topic || '').substring(0, 32))}</div>
         <div class="lp-hist-time">${this._relTime(h.ts)}</div>
@@ -3529,7 +3203,6 @@ class SavoireApp {
     }
     if (empty) empty.style.display = 'none';
 
-    /* Group by date */
     const groups = {};
     filtered.forEach(h => {
       const g = this._dateGroup(h.ts);
@@ -3537,7 +3210,6 @@ class SavoireApp {
       groups[g].push(h);
     });
 
-    /* Highlight query in text */
     const hl = (text, q) => {
       if (!q) return this._esc(text || '');
       const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
@@ -3549,33 +3221,13 @@ class SavoireApp {
       ${items.map(h => {
         const topicHl = hl((h.topic || '').substring(0, 90), query);
         return `
-          <div
-            class="hist-item"
-            onclick="window._app._loadHistory('${h.id}')"
-            role="listitem"
-            tabindex="0"
-            onkeydown="if(event.key==='Enter')window._app._loadHistory('${h.id}')"
-            aria-label="Load: ${this._esc((h.topic || '').substring(0, 50))}"
-          >
-            <div class="hist-tool-av">
-              <i class="fas ${ICONS[h.tool] || 'fa-book'}"></i>
-            </div>
+          <div class="hist-item" onclick="window._app._loadHistory('${h.id}')">
+            <div class="hist-tool-av"><i class="fas ${ICONS[h.tool] || 'fa-book'}"></i></div>
             <div class="hist-info">
               <div class="hist-topic">${topicHl}</div>
-              <div class="hist-meta">
-                <span class="hist-tag">${h.tool}</span>
-                <span class="hist-time">${this._relTime(h.ts)}</span>
-              </div>
+              <div class="hist-meta"><span class="hist-tag">${h.tool}</span><span class="hist-time">${this._relTime(h.ts)}</span></div>
             </div>
-            <div class="hist-acts">
-              <button
-                class="hist-del"
-                onclick="event.stopPropagation();window._app._deleteHistory('${h.id}')"
-                title="Delete"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
+            <div class="hist-acts"><button class="hist-del" onclick="event.stopPropagation();window._app._deleteHistory('${h.id}')"><i class="fas fa-trash"></i></button></div>
           </div>`;
       }).join('')}`).join('');
   }
@@ -3607,9 +3259,6 @@ class SavoireApp {
     );
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     SAVED NOTES
-     ═════════════════════════════════════════════════════════════════════════ */
   _openSavedModal() {
     this._renderSavedModal();
     this._openModal('savedModal');
@@ -3633,32 +3282,13 @@ class SavoireApp {
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram' };
 
     list.innerHTML = this.saved.map(s => `
-      <div
-        class="hist-item"
-        onclick="window._app._loadSaved('${s.id}')"
-        role="listitem"
-        tabindex="0"
-        onkeydown="if(event.key==='Enter')window._app._loadSaved('${s.id}')"
-      >
-        <div class="hist-tool-av">
-          <i class="fas ${ICONS[s.tool] || 'fa-star'}"></i>
-        </div>
+      <div class="hist-item" onclick="window._app._loadSaved('${s.id}')">
+        <div class="hist-tool-av"><i class="fas ${ICONS[s.tool] || 'fa-star'}"></i></div>
         <div class="hist-info">
           <div class="hist-topic">${this._esc((s.topic || '').substring(0, 90))}</div>
-          <div class="hist-meta">
-            <span class="hist-tag">${s.tool}</span>
-            <span class="hist-time">Saved ${this._relTime(s.savedAt)}</span>
-          </div>
+          <div class="hist-meta"><span class="hist-tag">${s.tool}</span><span class="hist-time">Saved ${this._relTime(s.savedAt)}</span></div>
         </div>
-        <div class="hist-acts">
-          <button
-            class="hist-del"
-            onclick="event.stopPropagation();window._app._deleteSaved('${s.id}')"
-            title="Delete"
-          >
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
+        <div class="hist-acts"><button class="hist-del" onclick="event.stopPropagation();window._app._deleteSaved('${s.id}')"><i class="fas fa-trash"></i></button></div>
       </div>`).join('');
   }
 
@@ -3680,9 +3310,6 @@ class SavoireApp {
     this._renderSavedModal();
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     SETTINGS
-     ═════════════════════════════════════════════════════════════════════════ */
   _openSettingsModal() {
     const ni = this._el('nameInput');
     if (ni) ni.value = this.userName;
@@ -3699,7 +3326,6 @@ class SavoireApp {
       b.setAttribute('aria-pressed', String(b.dataset.size === fs));
     });
 
-    /* Render stats */
     const ds = this._el('dsStats');
     if (ds) {
       const histSize  = JSON.stringify(this.history).length;
@@ -3708,30 +3334,12 @@ class SavoireApp {
       const wordsGen  = this.history.reduce((a, h) => a + this._wordCount(this._stripMd(h.data?.ultra_long_notes || '')), 0);
 
       ds.innerHTML = `
-        <div class="ds-stat">
-          <span class="ds-val">${this.history.length}</span>
-          <div class="ds-lbl">History Items</div>
-        </div>
-        <div class="ds-stat">
-          <span class="ds-val">${this.saved.length}</span>
-          <div class="ds-lbl">Saved Notes</div>
-        </div>
-        <div class="ds-stat">
-          <span class="ds-val">${this.sessions}</span>
-          <div class="ds-lbl">Sessions</div>
-        </div>
-        <div class="ds-stat">
-          <span class="ds-val">${totalKB}KB</span>
-          <div class="ds-lbl">Storage Used</div>
-        </div>
-        <div class="ds-stat">
-          <span class="ds-val">${wordsGen.toLocaleString()}</span>
-          <div class="ds-lbl">Words Generated</div>
-        </div>
-        <div class="ds-stat">
-          <span class="ds-val" style="font-size:.8rem">${this.history[0] ? this._relTime(this.history[0].ts) : '—'}</span>
-          <div class="ds-lbl">Last Study</div>
-        </div>`;
+        <div class="ds-stat"><span class="ds-val">${this.history.length}</span><div class="ds-lbl">History Items</div></div>
+        <div class="ds-stat"><span class="ds-val">${this.saved.length}</span><div class="ds-lbl">Saved Notes</div></div>
+        <div class="ds-stat"><span class="ds-val">${this.sessions}</span><div class="ds-lbl">Sessions</div></div>
+        <div class="ds-stat"><span class="ds-val">${totalKB}KB</span><div class="ds-lbl">Storage Used</div></div>
+        <div class="ds-stat"><span class="ds-val">${wordsGen.toLocaleString()}</span><div class="ds-lbl">Words Generated</div></div>
+        <div class="ds-stat"><span class="ds-val" style="font-size:.8rem">${this.history[0] ? this._relTime(this.history[0].ts) : '—'}</span><div class="ds-lbl">Last Study</div></div>`;
     }
 
     this._openModal('settingsModal');
@@ -3784,9 +3392,6 @@ class SavoireApp {
     setTimeout(() => window.location.reload(), 1300);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     THEME
-     ═════════════════════════════════════════════════════════════════════════ */
   _toggleTheme() {
     const cur = document.documentElement.dataset.theme || 'dark';
     this._setTheme(cur === 'dark' ? 'light' : 'dark');
@@ -3820,9 +3425,6 @@ class SavoireApp {
     if (this.prefs.lastTool) this._setTool(this.prefs.lastTool);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     SIDEBAR
-     ═════════════════════════════════════════════════════════════════════════ */
   _toggleSidebar() {
     const lp = this._el('leftPanel');
     if (!lp) return;
@@ -3851,9 +3453,6 @@ class SavoireApp {
     if (window.innerWidth > 768) this._closeMobileSidebar();
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     FOCUS MODE
-     ═════════════════════════════════════════════════════════════════════════ */
   _toggleFocusMode() {
     this.focusMode = !this.focusMode;
     const lp  = this._el('leftPanel');
@@ -3862,22 +3461,19 @@ class SavoireApp {
     if (this.focusMode) {
       if (lp)  lp.classList.add('collapsed');
       if (btn) {
-        btn.innerHTML = '<i class="fas fa-compress-alt" aria-hidden="true"></i><span>Exit Focus</span>';
+        btn.innerHTML = '<i class="fas fa-compress-alt"></i><span>Exit Focus</span>';
         btn.title     = 'Exit focus mode';
       }
       this._toast('info', 'fa-expand-alt', 'Focus mode on — sidebar hidden.');
     } else {
       if (lp)  lp.classList.remove('collapsed');
       if (btn) {
-        btn.innerHTML = '<i class="fas fa-expand-alt" aria-hidden="true"></i><span>Focus</span>';
+        btn.innerHTML = '<i class="fas fa-expand-alt"></i><span>Focus</span>';
         btn.title     = 'Toggle focus mode';
       }
     }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     MODALS
-     ═════════════════════════════════════════════════════════════════════════ */
   _openModal(id) {
     const el = this._el(id);
     if (!el) return;
@@ -3925,21 +3521,17 @@ class SavoireApp {
     this._el('avBtn')?.setAttribute('aria-expanded', 'false');
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════════
-     TOAST NOTIFICATION SYSTEM
-     ═════════════════════════════════════════════════════════════════════════ */
   _toast(type, icon, msg, dur = 4200) {
     const container = this._el('toastContainer');
     if (!container) return;
 
-    /* Max 4 toasts */
     while (container.children.length >= 4) {
       container.removeChild(container.firstChild);
     }
 
     const t       = document.createElement('div');
     t.className   = `toast ${type}`;
-    t.innerHTML   = `<i class="fas ${icon}" aria-hidden="true"></i><span>${this._esc(msg)}</span>`;
+    t.innerHTML   = `<i class="fas ${icon}"></i><span>${this._esc(msg)}</span>`;
     t.setAttribute('role', 'alert');
     t.setAttribute('aria-live', 'polite');
 
@@ -3958,19 +3550,12 @@ class SavoireApp {
     }, dur);
   }
 
-} /* end class SavoireApp */
+}
 
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   INITIALISATION
-   ═══════════════════════════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded', () => {
-
-  /* Boot the app */
   window._app = new SavoireApp();
   window._sav = window._app;
 
-  /* Global helpers for suggestion pill onclick attributes */
   window.setSugg = (topic) => {
     const el = document.getElementById('mainInput');
     if (!el) return;
@@ -3980,14 +3565,7 @@ window.addEventListener('DOMContentLoaded', () => {
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
-  /* Console welcome */
   console.log('%c📚 Welcome to Savoiré AI v2.2', 'color:#C9A96E;font-size:14px;font-weight:bold');
   console.log('%cBuilt by Sooban Talha Technologies | soobantalhatech.xyz', 'color:#756D63;font-size:11px');
   console.log('%cUpgraded: Streak System · Wizard Cards · Google Sheets Tracking', 'color:#42C98A;font-size:10px');
 });
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   END OF FILE — app.js v2.2
-   Savoiré AI v2.2 — Built by Sooban Talha Technologies | soobantalhatech.xyz
-   Founder: Sooban Talha | Free for every student on Earth, forever.
-   ═══════════════════════════════════════════════════════════════════════════════ */
