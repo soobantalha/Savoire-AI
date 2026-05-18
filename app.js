@@ -1,23 +1,24 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.2 — app.js — FULLY UPGRADED — FILE 3 of 5
+   SAVOIRÉ AI v2.0 — app.js — FULLY UPGRADED
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
-   UPGRADE v2.2 — FIXED:
-   ✦ Tool selector clicks working
-   ✦ Language selector working
-   ✦ Wizard with file upload
-   ✦ Streak system working
-   ✦ Google Sheets tracking
+   v2.0 FINAL — ALL FIXES:
+   ✦ Mobile responsive sidebar (75% width with toggle)
+   ✦ Logo image support (logo.png)
+   ✦ Wizard mode button beautifully styled
+   ✦ All tools streaming working
+   ✦ Google Sheets tracking with IST timezone
+   ✦ PDF generation with professional styling
 ═══════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────────────────────────────────
    CONSTANTS & CONFIGURATION
    ───────────────────────────────────────────────────────────────────────────────────────── */
 const SAVOIRÉ = {
-  VERSION:    '2.2',
-  BRAND:      'Savoiré AI v2.2',
+  VERSION:    '2.0',
+  BRAND:      'Savoiré AI v2.0',
   DEVELOPER:  'Sooban Talha Technologies',
   DEVSITE:    'soobantalhatech.xyz',
   WEBSITE:    'savoireai.vercel.app',
@@ -359,7 +360,7 @@ class SavoireApp {
     return `
       <div class="wizard-topic-area">
         <label class="wizard-label">What would you like to study?</label>
-        <textarea class="wizard-topic-input" id="wizardTopicInput" placeholder="Enter any topic, concept, question, or paste text to study..." rows="4">${this._esc(this.wizardData.topic)}</textarea>
+        <textarea class="wizard-topic-input" id="wizardTopicInput" placeholder="Enter any topic, concept, question, or paste text to study..." rows="5">${this._esc(this.wizardData.topic)}</textarea>
         
         <div class="wizard-file-zone" id="wizardFileZone">
           <i class="fas fa-cloud-upload-alt"></i>
@@ -498,10 +499,10 @@ class SavoireApp {
   
   _renderWizardDepthStyleStep() {
     const depths = [
-      { value: 'standard', label: 'Standard', desc: '500–750 words', icon: 'fa-flag' },
-      { value: 'detailed', label: 'Detailed', desc: '900–1300 words', icon: 'fa-chart-line' },
-      { value: 'comprehensive', label: 'Comprehensive', desc: '1300–1800 words', icon: 'fa-chart-simple' },
-      { value: 'expert', label: 'Expert', desc: '1800–2400 words', icon: 'fa-crown' }
+      { value: 'standard', label: 'Standard', desc: '600–900 words', icon: 'fa-flag' },
+      { value: 'detailed', label: 'Detailed', desc: '1000–1500 words', icon: 'fa-chart-line' },
+      { value: 'comprehensive', label: 'Comprehensive', desc: '1500–2200 words', icon: 'fa-chart-simple' },
+      { value: 'expert', label: 'Expert', desc: '2200–3000 words', icon: 'fa-crown' }
     ];
     
     const styles = [
@@ -821,7 +822,7 @@ class SavoireApp {
 
     document.addEventListener('click', () => this._closeDropdown());
 
-    /* ── Tool selector (FIXED) ── */
+    /* ── Tool selector ── */
     this._qsa('.ts-item').forEach(btn => {
       btn.addEventListener('click', () => {
         const tool = btn.dataset.tool;
@@ -1598,7 +1599,7 @@ class SavoireApp {
   }
 
   _updateStageByProgress(charCount) {
-    const thresholds = [0, 400, 1000, 2000, 3500];
+    const thresholds = [0, 500, 1200, 2200, 3500];
     for (let i = thresholds.length - 1; i >= 0; i--) {
       if (charCount >= thresholds[i] && this.stageIdx < i) {
         this._doneStage(this.stageIdx);
@@ -1795,7 +1796,7 @@ class SavoireApp {
     const brandingFooter = `
       <div class="result-branding-footer">
         <div class="rbf-left">
-          <div class="rbf-logo" aria-hidden="true">Ś</div>
+          <div class="rbf-logo"><img src="logo.png" alt="Savoiré AI" style="width:22px;height:22px;border-radius:4px"></div>
           <div class="rbf-text">
             <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank" rel="noopener">${SAVOIRÉ.BRAND}</a>
             &nbsp;·&nbsp;
@@ -2654,7 +2655,7 @@ class SavoireApp {
         doc.setFontSize(6.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(160, 130, 80);
-        doc.text('v2.2', ml + 7 + doc.getTextWidth('SAVOIRÉ AI') + 2, 16);
+        doc.text('v2.0', ml + 7 + doc.getTextWidth('SAVOIRÉ AI') + 2, 16);
         doc.setFontSize(7);
         doc.setTextColor(120, 100, 70);
         doc.text('Think Less. Know More.', ml + 7, 21);
@@ -3000,7 +3001,7 @@ class SavoireApp {
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...GOLD);
-      doc.text('SAVOIRÉ AI v2.2', ml + 8, y + 5);
+      doc.text('SAVOIRÉ AI v2.0', ml + 8, y + 5);
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(160, 135, 90);
@@ -3430,10 +3431,18 @@ class SavoireApp {
     if (!lp) return;
 
     if (window.innerWidth <= 768) {
+      // Mobile: toggle 75% width sidebar
       const isOpen = lp.classList.toggle('mobile-open');
       this._el('sbBackdrop')?.classList.toggle('visible', isOpen);
       this._el('sbToggle')?.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) {
+        lp.style.width = '75%';
+        lp.style.transform = 'translateX(0)';
+      } else {
+        lp.style.transform = 'translateX(-100%)';
+      }
     } else {
+      // Desktop: full collapse
       const isCollapsed = lp.classList.toggle('collapsed');
       this._el('sbToggle')?.setAttribute('aria-expanded', String(!isCollapsed));
       const sfp = this._el('streamFullpage');
@@ -3445,12 +3454,17 @@ class SavoireApp {
     const lp = this._el('leftPanel');
     if (!lp) return;
     lp.classList.remove('mobile-open');
+    lp.style.transform = '';
     this._el('sbBackdrop')?.classList.remove('visible');
     this._el('sbToggle')?.setAttribute('aria-expanded', 'false');
   }
 
   _handleResize() {
-    if (window.innerWidth > 768) this._closeMobileSidebar();
+    if (window.innerWidth > 768) {
+      this._closeMobileSidebar();
+      const lp = this._el('leftPanel');
+      if (lp) lp.style.transform = '';
+    }
   }
 
   _toggleFocusMode() {
@@ -3565,7 +3579,7 @@ window.addEventListener('DOMContentLoaded', () => {
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
 
-  console.log('%c📚 Welcome to Savoiré AI v2.2', 'color:#C9A96E;font-size:14px;font-weight:bold');
+  console.log('%c📚 Welcome to Savoiré AI v2.0', 'color:#C9A96E;font-size:14px;font-weight:bold');
   console.log('%cBuilt by Sooban Talha Technologies | soobantalhatech.xyz', 'color:#756D63;font-size:11px');
-  console.log('%cUpgraded: Streak System · Wizard Cards · Google Sheets Tracking', 'color:#42C98A;font-size:10px');
+  console.log('%cFinal Version: Stream lined · Mobile Ready · Google Sheets Integrated', 'color:#42C98A;font-size:10px');
 });

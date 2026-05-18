@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.2 — api/study.js — INSTANT STREAMING BACKEND
+// SAVOIRÉ AI v2.0 — api/study.js — INSTANT STREAMING BACKEND
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
@@ -9,12 +9,12 @@
 // SECTION 1 — CONSTANTS & BRANDING
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-const BRAND       = 'Savoiré AI v2.2';
+const BRAND       = 'Savoiré AI v2.0';
 const DEVELOPER   = 'Sooban Talha Technologies';
 const DEVSITE     = 'soobantalhatech.xyz';
 const WEBSITE     = 'savoireai.vercel.app';
 const FOUNDER     = 'Sooban Talha';
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.0';
 
 const OPENROUTER_BASE = 'https://openrouter.ai/api/v1/chat/completions';
 const HTTP_REFERER    = `https://${WEBSITE}`;
@@ -26,46 +26,49 @@ const APP_TITLE       = BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// TIMEZONE HELPER - Pakistan Standard Time (UTC+5)
+// TIMEZONE HELPER - Indian Standard Time (IST - UTC+5:30)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-function getPakistanTime() {
+function getIndianTime() {
   const now = new Date();
-  // Pakistan is UTC+5 (no daylight saving)
-  const pakistanOffset = 5 * 60 * 60 * 1000;
-  const pakistanTime = new Date(now.getTime() + pakistanOffset);
-  return pakistanTime.toISOString().replace('Z', '+05:00');
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
+  return new Date(utcTime + istOffset);
 }
 
-function getPakistanDate() {
-  const now = new Date();
-  const pakistanOffset = 5 * 60 * 60 * 1000;
-  const pakistanTime = new Date(now.getTime() + pakistanOffset);
-  return pakistanTime.toISOString().split('T')[0];
+function getIndianDateTime() {
+  const istTime = getIndianTime();
+  const year = istTime.getFullYear();
+  const month = String(istTime.getMonth() + 1).padStart(2, '0');
+  const day = String(istTime.getDate()).padStart(2, '0');
+  const hours = String(istTime.getHours()).padStart(2, '0');
+  const minutes = String(istTime.getMinutes()).padStart(2, '0');
+  const seconds = String(istTime.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL ROSTER
+// SECTION 2 — MODEL ROSTER (Increased tokens for better output)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3000, timeout_ms: 28000 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 2500, timeout_ms: 22000 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 3000, timeout_ms: 28000 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 2500, timeout_ms: 25000 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 2500, timeout_ms: 22000 },
-  { id: 'qwen/qwen3-8b:free',                      max_tokens: 2000, timeout_ms: 18000 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2000, timeout_ms: 18000 },
-  { id: 'openchat/openchat-7b:free',               max_tokens: 2000, timeout_ms: 18000 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 4000, timeout_ms: 35000 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 30000 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 4000, timeout_ms: 35000 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 30000 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 30000 },
+  { id: 'qwen/qwen3-8b:free',                      max_tokens: 3000, timeout_ms: 25000 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3000, timeout_ms: 25000 },
+  { id: 'openchat/openchat-7b:free',               max_tokens: 3000, timeout_ms: 25000 },
 ];
 
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 2500, timeout_ms: 22000 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 2500, timeout_ms: 18000 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 2500, timeout_ms: 22000 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 2000, timeout_ms: 20000 },
-  { id: 'qwen/qwen3-8b:free',                      max_tokens: 2000, timeout_ms: 16000 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2000, timeout_ms: 16000 },
-  { id: 'openchat/openchat-7b:free',               max_tokens: 2000, timeout_ms: 16000 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 30000 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3000, timeout_ms: 25000 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 3500, timeout_ms: 30000 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3000, timeout_ms: 25000 },
+  { id: 'qwen/qwen3-8b:free',                      max_tokens: 2500, timeout_ms: 22000 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 22000 },
+  { id: 'openchat/openchat-7b:free',               max_tokens: 2500, timeout_ms: 22000 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -73,10 +76,10 @@ const MODELS_CARDS = [
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
-  standard:      { wordRange: '500–750 words',   minChars: 600  },
-  detailed:      { wordRange: '900–1300 words',  minChars: 900  },
-  comprehensive: { wordRange: '1300–1800 words', minChars: 1300 },
-  expert:        { wordRange: '1800–2400 words', minChars: 1800 },
+  standard:      { wordRange: '600–900 words',   minChars: 700  },
+  detailed:      { wordRange: '1000–1500 words',  minChars: 1100  },
+  comprehensive: { wordRange: '1500–2200 words', minChars: 1600 },
+  expert:        { wordRange: '2200–3000 words', minChars: 2300 },
 };
 
 const STYLE_MAP = {
@@ -102,16 +105,16 @@ const TOOL_MAP = {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const log = {
-  info:  (...a) => console.log  (`[${getPakistanTime()}] [${BRAND}] INFO  `, ...a),
-  ok:    (...a) => console.log  (`[${getPakistanTime()}] [${BRAND}] OK    `, ...a),
-  warn:  (...a) => console.warn (`[${getPakistanTime()}] [${BRAND}] WARN  `, ...a),
-  error: (...a) => console.error(`[${getPakistanTime()}] [${BRAND}] ERROR `, ...a),
+  info:  (...a) => console.log  (`[${getIndianDateTime()}] [${BRAND}] INFO  `, ...a),
+  ok:    (...a) => console.log  (`[${getIndianDateTime()}] [${BRAND}] OK    `, ...a),
+  warn:  (...a) => console.warn (`[${getIndianDateTime()}] [${BRAND}] WARN  `, ...a),
+  error: (...a) => console.error(`[${getIndianDateTime()}] [${BRAND}] ERROR `, ...a),
 };
 
 const trunc = (s, n = 100) => !s ? '' : (String(s).length > n ? String(s).slice(0, n) + '…' : String(s));
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// PRIVATE USER TRACKING - Sends data to YOUR private Google Sheet only (Pakistan Time)
+// PRIVATE USER TRACKING - Sends data to YOUR private Google Sheet only (IST Timezone)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
 async function sendToGoogleSheets(userName, streak, lastActive, sessions, topic = '', tool = '') {
@@ -121,21 +124,16 @@ async function sendToGoogleSheets(userName, streak, lastActive, sessions, topic 
   }
   
   try {
-    const pakistanTime = getPakistanTime();
-    const pakistanDate = getPakistanDate();
+    const indianTime = getIndianDateTime();
     
     const response = await fetch(GOOGLE_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        timestamp: pakistanTime,
-        date: pakistanDate,
         userName: userName || 'anonymous',
         streak: streak || 0,
-        lastActive: lastActive || pakistanTime,
-        sessions: sessions || 1,
-        topic: topic || '',
-        tool: tool || ''
+        lastActive: lastActive || indianTime,
+        sessions: sessions || 1
       })
     });
     log.ok(`📊 User data sent to private Google Sheet: ${userName} | Streak: ${streak} | Sessions: ${sessions}`);
@@ -152,7 +150,7 @@ async function sendToGoogleSheets(userName, streak, lastActive, sessions, topic 
 
 function generateToolFallback(topic, opts, tool) {
   const t = (topic || 'this topic').trim();
-  const now = getPakistanTime();
+  const now = getIndianDateTime();
   const lang = opts.language || 'English';
   
   switch (tool) {
@@ -197,14 +195,14 @@ function generateFlashcardFallback(t, lang, now) {
   concepts.forEach((c, i) => {
     const parts = c.split(':');
     flashcards.push({
-      front: (parts[0] || c).substring(0, 100).trim(),
-      back: (parts.slice(1).join(':') || c).substring(0, 300).trim()
+      front: (parts[0] || c).substring(0, 120).trim(),
+      back: (parts.slice(1).join(':') || c).substring(0, 400).trim()
     });
   });
   questions.forEach((q, i) => {
     flashcards.push({
-      front: q.question.substring(0, 150),
-      back: q.answer.substring(0, 400)
+      front: q.question.substring(0, 180),
+      back: q.answer.substring(0, 500)
     });
   });
   
@@ -234,7 +232,7 @@ function generateQuizFallback(t, lang, now) {
   const quizQuestions = questions.map((q, idx) => ({
     id: idx + 1,
     question: q.question,
-    correctAnswer: q.answer.split('.')[0].substring(0, 120),
+    correctAnswer: q.answer.split('.')[0].substring(0, 150),
     explanation: q.answer,
     options: generateMCQOptions(q.answer, t)
   }));
@@ -321,7 +319,7 @@ function generateSummaryFallback(t, lang, now) {
 }
 
 function generateMCQOptions(correctAnswer, topic) {
-  const correct = correctAnswer.split('.')[0].substring(0, 100);
+  const correct = correctAnswer.split('.')[0].substring(0, 120);
   const wrongOptions = [
     `This is a common misunderstanding about ${topic}`,
     `This describes a different but related concept`,
@@ -338,52 +336,52 @@ function generateMCQOptions(correctAnswer, topic) {
 
 function generateKeyConcepts(t) {
   return [
-    `Core Definition: ${t} refers to the fundamental principles and frameworks forming its theoretical and practical foundation.`,
-    `Primary Mechanisms: The main processes of ${t} involve systematic interactions between identifiable components.`,
-    `Historical Development: ${t} evolved through successive waves of intellectual discovery.`,
-    `Practical Significance: ${t} carries direct application value across professional domains.`,
-    `Critical Boundaries: Complete understanding of ${t} requires recognising both its power and limitations.`,
+    `Core Definition: ${t} refers to the fundamental principles and frameworks forming its theoretical and practical foundation within its academic domain.`,
+    `Primary Mechanisms: The main processes of ${t} involve systematic interactions between identifiable components producing consistent, observable outcomes.`,
+    `Historical Development: ${t} evolved through successive waves of intellectual discovery, with key contributors establishing foundational frameworks still in use today.`,
+    `Practical Significance: ${t} carries direct application value across professional domains, enabling practitioners to make higher-quality decisions and achieve better outcomes.`,
+    `Critical Boundaries: Complete understanding of ${t} requires recognising both its considerable explanatory power and the specific conditions where its frameworks have important limitations.`,
   ];
 }
 
 function generateKeyTricks(t) {
   return [
-    `FEYNMAN TECHNIQUE for ${t}: Explain it out loud as if teaching a 12-year-old. Every point where you hesitate reveals what you don't understand.`,
-    `ACTIVE RECALL for ${t}: Close your notes and write everything you know on a blank page. Compare to notes.`,
-    `SPACED REPETITION for ${t}: Study across multiple sessions: Day 1, Day 3, Day 7, Day 14, Day 30.`,
+    `FEYNMAN TECHNIQUE for ${t}: Explain it out loud as if teaching a 12-year-old with no background in the subject. Every point where you hesitate or become vague reveals exactly what you do not yet understand — go back to your notes only for those specific gaps, then try again.`,
+    `ACTIVE RECALL for ${t}: Close all your notes and write everything you know on a blank page. Compare to your notes. The gaps between what you wrote and your notes are precisely what needs further study — this beats re-reading by a factor of 3 for long-term retention.`,
+    `SPACED REPETITION for ${t}: Study across multiple sessions rather than one marathon. Optimal spacing: Day 1 (learn), Day 3 (first review), Day 7 (consolidation), Day 14 (long-term retention), Day 30 (mastery check). Space beats massed practice consistently.`,
   ];
 }
 
 function generatePracticeQuestions(t) {
   return [
     {
-      question: `Explain the core principles of ${t} and describe how they form a coherent framework.`,
-      answer: `${t} is grounded in foundational principles that together define its scope, methods and applications. These principles establish the basic concepts and relationships.`,
+      question: `Explain the core principles of ${t} and describe how they form a coherent theoretical framework.`,
+      answer: `${t} is grounded in foundational principles that together define its scope, methods and applications. These principles establish the basic concepts, the relationships between them, and the reasoning connecting observations to broader theoretical claims. A complete understanding requires knowing not just what the field asserts but why those assertions are justified — what evidence supports them and what logic connects facts to conclusions. The analytical framework ${t} provides transfers broadly, improving thinking in adjacent domains. Practical mastery means being able to apply these principles in novel situations, not just recall them when questions match the textbook format exactly.`,
     },
     {
-      question: `Describe a realistic scenario where deep knowledge of ${t} is essential.`,
-      answer: `Knowledge of ${t} provides the analytical framework to decompose problems, identify variables, evaluate alternatives systematically, and anticipate consequences.`,
+      question: `Describe a realistic professional scenario where deep knowledge of ${t} is essential.`,
+      answer: `Consider a practitioner who must make a high-stakes decision under uncertainty — designing a critical system, solving an unexpected problem, or evaluating competing options with incomplete information. Knowledge of ${t} provides the analytical framework to decompose the problem, identify relevant variables, evaluate alternatives systematically, and anticipate second-order consequences. Without this foundation, decisions default to intuition and heuristics alone, which consistently produce worse outcomes than structured analytical approaches. The practitioner with deep ${t} knowledge can also explain their reasoning clearly to stakeholders, identify when assumptions break down, and adapt their approach when circumstances change unexpectedly.`,
     },
     {
-      question: `What are the most common misconceptions about ${t}?`,
-      answer: `The most pervasive misconception is that surface familiarity with ${t} constitutes genuine understanding. Genuine understanding requires grasping causal relationships.`,
+      question: `What are the most common misconceptions about ${t} and why do they persist?`,
+      answer: `The most pervasive misconception is that surface familiarity with ${t} constitutes genuine understanding. Students who can define terms and recall facts often discover — under exam pressure or in professional practice — that their knowledge collapses when questions are framed differently. Genuine understanding requires grasping causal relationships, the reasoning behind claims, and the conditions under which standard frameworks break down. A second misconception is that ${t} is only relevant to specialists. In reality its core reasoning patterns transfer broadly across disciplines. A third is underestimating its depth — most students find only after sustained study how much genuine complexity underlies apparently simple concepts.`,
     },
   ];
 }
 
 function generateApplications(t) {
   return [
-    `Healthcare & Medicine: Principles from ${t} inform clinical decision-making and treatment design.`,
-    `Technology & Engineering: ${t} concepts underpin critical design decisions in software and systems.`,
-    `Business & Strategy: Organisations that apply frameworks from ${t} make better decisions under uncertainty.`,
+    `Healthcare & Medicine: Principles from ${t} directly inform clinical decision-making, diagnostic reasoning, and treatment protocol design, enabling practitioners to make more accurate assessments and deliver measurably better patient outcomes.`,
+    `Technology & Engineering: ${t} concepts underpin critical design decisions in software architecture, system engineering, and product development — helping teams build more scalable, maintainable, and reliable solutions.`,
+    `Business & Strategy: Organisations that apply frameworks from ${t} systematically outperform those that do not, making better decisions under uncertainty and identifying opportunities that competitors without this grounding consistently miss.`,
   ];
 }
 
 function generateMisconceptions(t) {
   return [
-    `Many students believe ${t} can be mastered through memorisation. In reality, genuine mastery requires understanding underlying principles.`,
-    `A widespread misconception is that ${t} is only relevant to specialists. In reality, its reasoning patterns transfer broadly.`,
-    `Students often assume that once they understand the basics, little remains to learn. In reality ${t} has significant depth.`,
+    `Many students believe ${t} can be mastered through repeated memorisation of facts and definitions. In reality, genuine mastery requires understanding the underlying principles and causal relationships — surface recall collapses under novel exam questions and real professional situations.`,
+    `A widespread misconception is that ${t} is only relevant to specialists in that specific field. In reality, its core reasoning patterns and analytical frameworks transfer powerfully and broadly, providing unexpected intellectual advantages across many professional domains.`,
+    `Students often assume that once they understand the basics of ${t}, little of substance remains to learn. In reality ${t} has significant depth with important nuances, active ongoing research, and genuine unresolved debates — the difference between introductory and expert understanding is vast.`,
   ];
 }
 
@@ -429,7 +427,7 @@ Begin directly with the first ## heading. Write in ${lang} only.`;
 
 function buildCardsPrompt(input, opts) {
   const lang = opts.language || 'English';
-  const now  = getPakistanTime();
+  const now  = getIndianDateTime();
 
   return `You are ${BRAND} by ${DEVELOPER}.
 Generate study cards for: "${input}"
@@ -441,31 +439,31 @@ Output ONLY a valid JSON object. No text before or after. No markdown fences.
   "topic": "clean topic name in ${lang}",
   "curriculum_alignment": "e.g. A-Level Biology",
   "key_concepts": [
-    "Term 1: explanation 20-35 words in ${lang}",
-    "Term 2: explanation 20-35 words in ${lang}",
-    "Term 3: explanation 20-35 words in ${lang}",
-    "Term 4: explanation 20-35 words in ${lang}",
-    "Term 5: explanation 20-35 words in ${lang}"
+    "Term 1: explanation 25-40 words in ${lang}",
+    "Term 2: explanation 25-40 words in ${lang}",
+    "Term 3: explanation 25-40 words in ${lang}",
+    "Term 4: explanation 25-40 words in ${lang}",
+    "Term 5: explanation 25-40 words in ${lang}"
   ],
   "key_tricks": [
-    "Study trick 1 — 40-60 words in ${lang}",
-    "Study trick 2 — 40-60 words in ${lang}",
-    "Study trick 3 — 40-60 words in ${lang}"
+    "Study trick 1 — 50-70 words in ${lang}",
+    "Study trick 2 — 50-70 words in ${lang}",
+    "Study trick 3 — 50-70 words in ${lang}"
   ],
   "practice_questions": [
-    {"question": "analytical question in ${lang}", "answer": "thorough answer 100+ words in ${lang}"},
-    {"question": "application question in ${lang}", "answer": "thorough answer 100+ words in ${lang}"},
-    {"question": "evaluation question in ${lang}", "answer": "thorough answer 100+ words in ${lang}"}
+    {"question": "analytical question in ${lang}", "answer": "thorough answer 120+ words in ${lang}"},
+    {"question": "application question in ${lang}", "answer": "thorough answer 120+ words in ${lang}"},
+    {"question": "evaluation question in ${lang}", "answer": "thorough answer 120+ words in ${lang}"}
   ],
   "real_world_applications": [
-    "Field: specific application 35-50 words in ${lang}",
-    "Field: specific application 35-50 words in ${lang}",
-    "Field: specific application 35-50 words in ${lang}"
+    "Field: specific application 40-60 words in ${lang}",
+    "Field: specific application 40-60 words in ${lang}",
+    "Field: specific application 40-60 words in ${lang}"
   ],
   "common_misconceptions": [
-    "Many students believe [wrong]. In reality [correct]. 35-50 words in ${lang}",
-    "Many students believe [wrong]. In reality [correct]. 35-50 words in ${lang}",
-    "Many students believe [wrong]. In reality [correct]. 35-50 words in ${lang}"
+    "Many students believe [wrong]. In reality [correct]. 40-60 words in ${lang}",
+    "Many students believe [wrong]. In reality [correct]. 40-60 words in ${lang}",
+    "Many students believe [wrong]. In reality [correct]. 40-60 words in ${lang}"
   ],
   "study_score": 96,
   "powered_by": "${BRAND} by ${DEVELOPER}",
@@ -500,7 +498,7 @@ async function streamNotes(prompt, onChunk) {
         body: JSON.stringify({
           model:       model.id,
           max_tokens:  model.max_tokens,
-          temperature: 0.68,
+          temperature: 0.7,
           stream:      true,
           messages:    [{ role: 'user', content: prompt }],
         }),
@@ -546,7 +544,7 @@ async function streamNotes(prompt, onChunk) {
         }
       }
 
-      if (full.trim().length < 60) {
+      if (full.trim().length < 100) {
         lastErr = `${name} returned too-short content (${full.length} chars)`;
         log.warn(lastErr);
         continue;
@@ -616,7 +614,7 @@ async function fetchCards(prompt) {
       const data    = await res.json();
       const content = data?.choices?.[0]?.message?.content?.trim();
 
-      if (!content || content.length < 80) {
+      if (!content || content.length < 120) {
         lastErr = `${name} returned empty content`;
         log.warn(lastErr);
         continue;
@@ -673,7 +671,7 @@ async function fetchCards(prompt) {
 
 function fallbackCards(topic, opts) {
   const t   = (topic || 'this topic').trim();
-  const now = getPakistanTime();
+  const now = getIndianDateTime();
   return {
     topic: t,
     curriculum_alignment: 'General Academic Study',
@@ -698,7 +696,7 @@ function offlineNotes(t) {
   const T = t || 'This Topic';
   return `## Introduction to ${T}
 
-**${T}** is a significant area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields.
+**${T}** is a significant area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields. A rigorous understanding of ${T} is valuable both for examinations and for building genuine professional capability.
 
 ---
 
@@ -712,45 +710,50 @@ The study of ${T} begins with its fundamental conceptual infrastructure — the 
 
 **Analytical Framework:** ${T} provides a structured way of perceiving and reasoning about complex problems.
 
+**Systemic Perspective:** No component of ${T} exists in isolation. Every concept connects to others through relationships of logical dependence, causal influence, or structural analogy.
+
 ---
 
 ## How It Works
 
 The core processes of ${T} unfold through identifiable stages:
 
-**Stage 1 — Initial Conditions:** Every application begins with specific prerequisites.
+**Stage 1 — Initial Conditions:** Every application begins with specific prerequisites. Accurately identifying these is critical — misunderstanding initial conditions is a primary source of errors.
 
-**Stage 2 — Active Mechanisms:** The defining mechanisms transform inputs into outputs.
+**Stage 2 — Active Mechanisms:** The defining mechanisms transform inputs into outputs through processes that follow identifiable patterns and describable rules. Understanding *why* these mechanisms produce their outputs — not just *what* they produce — enables prediction, explanation of anomalies, and effective intervention design.
 
-**Stage 3 — Feedback and Adjustment:** Many systems incorporate feedback loops.
+**Stage 3 — Feedback and Adjustment:** Many systems incorporate feedback loops through which outcomes influence subsequent inputs, creating adaptive or self-correcting behaviour.
 
-**Stage 4 — Observable Outputs:** The ultimate products take measurable forms.
+**Stage 4 — Observable Outputs:** The ultimate products take measurable forms — quantities, categorical outcomes, behavioural changes, or structural modifications.
 
 ---
 
 ## Key Examples
 
-Concrete examples ground abstract principles in reality. Understanding examples in ${T} means understanding *why* each example works.
+Concrete examples ground abstract principles in reality. Understanding examples in ${T} means understanding *why* each example works the way it does and *what general principle* it illustrates — not memorising the example as an isolated fact.
+
+Strong examples in ${T} typically demonstrate: how the core mechanism operates in a controlled setting, how complications arise in realistic conditions, and how practitioners navigate those complications in professional practice.
 
 ---
 
 ## Advanced Aspects
 
-At an advanced level, ${T} reveals important nuances:
+At an advanced level, ${T} reveals important nuances that introductory treatments necessarily simplify:
 
-- **Boundary conditions** — where standard frameworks break down
-- **Historical debates** — why current frameworks were accepted
-- **Ongoing research** — the frontier of current knowledge
+- **Boundary conditions** — where standard frameworks break down and require modification
+- **Historical debates** — why current frameworks were accepted over alternatives
+- **Ongoing research** — the frontier of current knowledge and open questions
 - **Interdisciplinary connections** — how ${T} relates to adjacent fields
 
 ---
 
 ## Summary & Key Takeaways
 
-- **Core principle:** ${T} rests on foundational concepts
+- **Core principle:** ${T} rests on foundational concepts connecting theory to practice through systematic reasoning
 - **Key skill:** Analytical framework transferable to adjacent domains
 - **Common trap:** Surface familiarity mistaken for genuine understanding
-- **Study strategy:** Active recall and spaced repetition
+- **Study strategy:** Active recall and spaced repetition outperform passive re-reading every time
+- **Remember:** The depth of ${T} rewards sustained engagement — there is always more to understand
 
 *— Generated by ${BRAND} | ${DEVELOPER} | ${DEVSITE}*`;
 }
@@ -783,7 +786,7 @@ function mergeCards(raw, notes, topic, opts) {
     common_misconceptions:   arr(src.common_misconceptions,   fb.common_misconceptions),
     study_score:             96,
     powered_by:              `${BRAND} by ${DEVELOPER}`,
-    generated_at:            src.generated_at || getPakistanTime(),
+    generated_at:            src.generated_at || getIndianDateTime(),
     _version:                APP_VERSION,
   };
 }
@@ -839,7 +842,7 @@ module.exports = async function handler(req, res) {
   // Handle ping / warmup
   if (message === 'ping' || message === '' || message === 'track') {
     if (message === 'track' && userName) {
-      await sendToGoogleSheets(userName, userStreak, getPakistanTime(), userSessions, '', '');
+      await sendToGoogleSheets(userName, userStreak, getIndianDateTime(), userSessions, '', '');
     }
     return res.status(200).json({ status: 'ok', service: BRAND, ts: Date.now() });
   }
@@ -966,9 +969,9 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 4, label: 'Done!', done: true });
       sse('done', final);
 
-      // Send user data to PRIVATE Google Sheet (Pakistan Time)
+      // Send user data to PRIVATE Google Sheet (IST Timezone)
       if (userName) {
-        await sendToGoogleSheets(userName, userStreak, getPakistanTime(), userSessions, userTopic, opts.tool);
+        await sendToGoogleSheets(userName, userStreak, getIndianDateTime(), userSessions, userTopic, opts.tool);
       }
 
       log.ok(`[${rid}] Complete — ${final._duration_ms}ms | p1:${p1ok} p2:${!!cardsRaw}`);
@@ -1015,7 +1018,7 @@ module.exports = async function handler(req, res) {
           },
           body: JSON.stringify({
             model: model.id, max_tokens: model.max_tokens,
-            temperature: 0.68, stream: false,
+            temperature: 0.7, stream: false,
             messages: [{ role: 'user', content: notesPrompt }],
           }),
           signal: ctrl.signal,
@@ -1024,7 +1027,7 @@ module.exports = async function handler(req, res) {
         if (!r.ok) continue;
         const d = await r.json();
         const c = d?.choices?.[0]?.message?.content?.trim();
-        if (c && c.length > 60) { notes = c; log.ok(`Sync notes: ${name}`); break; }
+        if (c && c.length > 100) { notes = c; log.ok(`Sync notes: ${name}`); break; }
       } catch { clearTimeout(timer); continue; }
     }
 
@@ -1048,7 +1051,7 @@ module.exports = async function handler(req, res) {
 
     // Send user data to private Google Sheet
     if (userName) {
-      await sendToGoogleSheets(userName, userStreak, getPakistanTime(), userSessions, userTopic, opts.tool);
+      await sendToGoogleSheets(userName, userStreak, getIndianDateTime(), userSessions, userTopic, opts.tool);
     }
 
     log.ok(`[${rid}] Sync complete — ${final._duration_ms}ms`);
@@ -1065,7 +1068,7 @@ module.exports = async function handler(req, res) {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// END OF FILE — api/study.js v2.2
+// END OF FILE — api/study.js v2.0
 // Savoiré AI — Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | Free for every student on Earth, forever.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
