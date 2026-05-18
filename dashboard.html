@@ -7,9 +7,9 @@
   Founder: Sooban Talha
 
   UPGRADE v2.2 — ADDITIONS:
-  ✦ Wizard Modal (Step-by-step generation flow)
+  ✦ Wizard Modal (Step-by-step generation flow with file upload)
   ✦ Streak Display in Header
-  ✦ All original functionality preserved exactly as was
+  ✦ Simplified Sidebar (no input fields - all via Wizard)
 ═══════════════════════════════════════════════════════════════════════════════════════════════════
 -->
 <head>
@@ -935,6 +935,50 @@ body {
   color: var(--gold);
 }
 
+/* Wizard CTA Button */
+.wizard-cta-wrap {
+  padding: 16px 12px;
+  margin: 8px 0;
+}
+
+.wizard-cta-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--gold3));
+  border: none;
+  border-radius: var(--r3);
+  color: #02020A;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.wizard-cta-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.2));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.wizard-cta-btn:hover::before { opacity: 1; }
+.wizard-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(201,169,110,.4);
+}
+
+.wizard-cta-btn i { font-size: 1.4rem; }
+.wizard-cta-btn span { font-size: 1rem; }
+.wizard-cta-btn small { font-size: 0.65rem; opacity: 0.8; }
+
 /* Tool Selection Grid */
 .wizard-tool-grid {
   display: grid;
@@ -951,6 +995,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  text-align: center;
 }
 
 .wizard-tool-card:hover {
@@ -966,14 +1011,14 @@ body {
 .wizard-tool-icon {
   width: 48px;
   height: 48px;
-  border-radius: var(--r2);
+  margin: 0 auto 12px;
   background: var(--goldd);
+  border-radius: var(--r2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
   color: var(--gold);
-  margin-bottom: 12px;
 }
 
 .wizard-tool-name {
@@ -996,7 +1041,7 @@ body {
   font-size: 1rem;
 }
 
-/* Topic Input */
+/* Topic Input with File Upload */
 .wizard-topic-area {
   margin-top: 16px;
 }
@@ -1028,6 +1073,40 @@ body {
 .wizard-topic-input:focus {
   outline: none;
   border-color: var(--gold);
+}
+
+.wizard-file-zone {
+  margin-top: 16px;
+  padding: 16px;
+  border: 2px dashed var(--b2);
+  border-radius: var(--r3);
+  background: var(--bg3);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wizard-file-zone:hover {
+  border-color: var(--goldb);
+  background: var(--goldd);
+}
+
+.wizard-file-zone i {
+  font-size: 1.2rem;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.wizard-file-zone span {
+  font-size: 0.8rem;
+  color: var(--t3);
+}
+
+.wizard-file-name {
+  font-size: 0.7rem;
+  color: var(--gold);
+  margin-top: 8px;
+  word-break: break-all;
 }
 
 .wizard-suggestions {
@@ -1332,7 +1411,6 @@ body {
 @media (max-width: 480px) {
   .dash-hdr         { padding: 0 10px; gap: 6px; }
   .wc-title         { font-size: 1.5rem; }
-  .run-btn          { font-size: 0.88rem; }
   .fc-wrap          { max-width: 100%; }
   .welcome-card     { padding: 26px 18px; border-radius: 18px; }
   .wb-card          { padding: 24px 16px; border-radius: 18px; }
@@ -1403,15 +1481,15 @@ body {
 
     <!-- Feature Badges -->
     <div class="wc-features" aria-label="Key features">
-      <span class="wc-feat"><i class="fas fa-book-open" aria-hidden="true"></i> Smart Notes</span>
-      <span class="wc-feat"><i class="fas fa-layer-group" aria-hidden="true"></i> Flashcards</span>
-      <span class="wc-feat"><i class="fas fa-question-circle" aria-hidden="true"></i> Quiz Mode</span>
-      <span class="wc-feat"><i class="fas fa-align-left" aria-hidden="true"></i> Summary</span>
-      <span class="wc-feat"><i class="fas fa-project-diagram" aria-hidden="true"></i> Mind Map</span>
-      <span class="wc-feat"><i class="fas fa-globe" aria-hidden="true"></i> 50+ Languages</span>
-      <span class="wc-feat"><i class="fas fa-file-pdf" aria-hidden="true"></i> PDF Export</span>
-      <span class="wc-feat"><i class="fas fa-lock-open" aria-hidden="true"></i> No Login</span>
-      <span class="wc-feat"><i class="fas fa-infinity" aria-hidden="true"></i> Free Forever</span>
+      <span class="wc-feat"><i class="fas fa-book-open"></i> Smart Notes</span>
+      <span class="wc-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+      <span class="wc-feat"><i class="fas fa-question-circle"></i> Quiz Mode</span>
+      <span class="wc-feat"><i class="fas fa-align-left"></i> Summary</span>
+      <span class="wc-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+      <span class="wc-feat"><i class="fas fa-globe"></i> 50+ Languages</span>
+      <span class="wc-feat"><i class="fas fa-file-pdf"></i> PDF Export</span>
+      <span class="wc-feat"><i class="fas fa-lock-open"></i> No Login</span>
+      <span class="wc-feat"><i class="fas fa-infinity"></i> Free Forever</span>
     </div>
 
     <!-- Name Input Group -->
@@ -1686,18 +1764,6 @@ body {
     <i class="fas fa-cog" aria-hidden="true"></i>
   </button>
 
-  <!-- ── NEW v2.2: Wizard Button ── -->
-  <button
-    class="dh-btn"
-    id="wizardBtn"
-    type="button"
-    title="Step-by-step generation wizard"
-    aria-label="Open generation wizard"
-    data-tooltip="Wizard Mode"
-  >
-    <i class="fas fa-magic" aria-hidden="true"></i>
-  </button>
-
   <!-- ── Avatar + Dropdown ── -->
   <div style="position:relative;flex-shrink:0">
     <button
@@ -1760,18 +1826,18 @@ body {
 
 <!-- ═══════════════════════════════════════════════════════════════════════════════
      MAIN DASHBOARD BODY — Split Panel Layout
-     Left panel: all inputs | Right panel: output
+     Left panel: Tool selector + Wizard + History | Right panel: Output
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <div class="dash-body" id="dashBody">
 
 
   <!-- ╔══════════════════════════════════════════════════════════════╗
-       ║  LEFT PANEL — All Study Inputs                              ║
+       ║  LEFT PANEL — Simplified (No input fields)                  ║
        ╚══════════════════════════════════════════════════════════════╝ -->
   <aside
     class="left-panel"
     id="leftPanel"
-    aria-label="Study input panel"
+    aria-label="Study tools"
     role="complementary"
   >
 
@@ -1800,67 +1866,27 @@ body {
     >
       <div class="ts-label" id="tsLabel">Select Tool</div>
 
-      <!-- Notes -->
-      <button
-        class="ts-item active"
-        data-tool="notes"
-        type="button"
-        title="Generate comprehensive, detailed study notes with key concepts, tricks and practice questions"
-        aria-pressed="true"
-        aria-label="Generate Notes tool"
-      >
+      <button class="ts-item active" data-tool="notes" type="button">
         <i class="fas fa-book-open" aria-hidden="true"></i>
         <span class="ts-item-text">Generate Notes</span>
       </button>
 
-      <!-- Flashcards -->
-      <button
-        class="ts-item"
-        data-tool="flashcards"
-        type="button"
-        title="Create interactive flashcards for spaced repetition learning"
-        aria-pressed="false"
-        aria-label="Flashcards tool"
-      >
+      <button class="ts-item" data-tool="flashcards" type="button">
         <i class="fas fa-layer-group" aria-hidden="true"></i>
         <span class="ts-item-text">Flashcards</span>
       </button>
 
-      <!-- Quiz -->
-      <button
-        class="ts-item"
-        data-tool="quiz"
-        type="button"
-        title="Build a practice quiz with self-check questions and detailed answers"
-        aria-pressed="false"
-        aria-label="Practice Quiz tool"
-      >
+      <button class="ts-item" data-tool="quiz" type="button">
         <i class="fas fa-question-circle" aria-hidden="true"></i>
         <span class="ts-item-text">Practice Quiz</span>
       </button>
 
-      <!-- Summary -->
-      <button
-        class="ts-item"
-        data-tool="summary"
-        type="button"
-        title="Create a concise smart summary with key points"
-        aria-pressed="false"
-        aria-label="Smart Summary tool"
-      >
+      <button class="ts-item" data-tool="summary" type="button">
         <i class="fas fa-align-left" aria-hidden="true"></i>
         <span class="ts-item-text">Smart Summary</span>
       </button>
 
-      <!-- Mind Map -->
-      <button
-        class="ts-item"
-        data-tool="mindmap"
-        type="button"
-        title="Build a visual hierarchical mind map of any topic"
-        aria-pressed="false"
-        aria-label="Mind Map tool"
-      >
+      <button class="ts-item" data-tool="mindmap" type="button">
         <i class="fas fa-project-diagram" aria-hidden="true"></i>
         <span class="ts-item-text">Mind Map</span>
       </button>
@@ -1868,362 +1894,14 @@ body {
     </nav><!-- /tool-selector -->
 
 
-    <!-- ── Input Fields Scroll Area ── -->
-    <div class="lp-fields" id="lpFields">
-
-
-      <!-- ── Topic / Text Textarea (collapses during streaming) ── -->
-      <div class="ta-collapse-wrap" id="taCollapseWrap">
-
-        <div class="textarea-group" id="textareaGroup">
-
-          <div class="lbl-collapse-wrap" id="lblCollapseWrap">
-            <div class="field-lbl" id="topicFieldLbl">Topic / Text to Study</div>
-          </div>
-
-          <textarea
-            id="mainInput"
-            class="main-ta"
-            placeholder="Enter any topic, concept, question, or paste text to study…"
-            maxlength="12000"
-            rows="5"
-            spellcheck="true"
-            autocorrect="on"
-            autocapitalize="sentences"
-            aria-label="Study topic or paste text here"
-            aria-describedby="charCount"
-          ></textarea>
-
-          <div class="ta-footer" id="taFooter">
-            <span class="ta-count" id="charCount" aria-live="polite" aria-label="Character count">
-              0 / 12,000
-            </span>
-            <button
-              class="ta-clear-btn"
-              id="taClearBtn"
-              type="button"
-              title="Clear the input"
-              aria-label="Clear input field"
-            >
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-          </div>
-
-        </div>
-
-      </div><!-- /ta-collapse-wrap -->
-
-
-      <!-- ── Input Mini Bar (replaces textarea during streaming) ── -->
-      <div
-        class="input-mini-bar"
-        id="inputMiniBar"
-        role="button"
-        tabindex="0"
-        aria-label="Your topic — click to expand input"
-        title="Click to show and edit your input"
-      >
-        <i class="fas fa-pencil-alt imb-icon" aria-hidden="true"></i>
-        <span class="imb-text" id="inputMiniText">Your topic…</span>
-        <span class="imb-chip" aria-hidden="true">Edit ↑</span>
-      </div>
-
-
-      <!-- ── Streaming Status Card (visible during generation) ── -->
-      <div class="stream-status-card" id="streamStatusCard" aria-live="polite">
-        <div class="ssc-header">
-          <span class="ssc-dot" aria-hidden="true"></span>
-          <span class="ssc-label" id="sscLabel">Generating your study materials…</span>
-        </div>
-        <div class="ssc-progress">
-          <div class="ssc-progress-bar" id="sscProgressBar"></div>
-        </div>
-        <div class="ssc-stages" id="sscStages">
-          <span class="ssc-stage" id="ss0"><i class="fas fa-search" aria-hidden="true"></i> Analysing</span>
-          <span class="ssc-stage" id="ss1"><i class="fas fa-pen-nib" aria-hidden="true"></i> Writing</span>
-          <span class="ssc-stage" id="ss2"><i class="fas fa-layer-group" aria-hidden="true"></i> Building</span>
-          <span class="ssc-stage" id="ss3"><i class="fas fa-question-circle" aria-hidden="true"></i> Quiz</span>
-          <span class="ssc-stage" id="ss4"><i class="fas fa-check-circle" aria-hidden="true"></i> Done</span>
-        </div>
-      </div>
-
-
-      <!-- ── File Upload Zone ── -->
-      <div class="file-collapse-wrap" id="fileCollapseWrap">
-        <div class="field-group">
-          <div class="field-lbl">
-            Upload File
-            <span style="color:var(--t4);font-weight:400;text-transform:none;letter-spacing:0;font-size:.9em">
-              (.txt / .md / .csv — max 5MB)
-            </span>
-          </div>
-          <div
-            class="upload-zone"
-            id="uploadZone"
-            role="button"
-            tabindex="0"
-            title="Click or drag a .txt, .md, or .csv file to use as your topic"
-            aria-label="Upload a text file for analysis"
-          >
-            <i class="fas fa-paperclip" aria-hidden="true"></i>
-            <span id="uploadZoneText">Click or drag to upload</span>
-            <input
-              type="file"
-              id="fileInput"
-              accept=".txt,.md,.csv"
-              style="display:none"
-              aria-label="File input"
-              tabindex="-1"
-            >
-          </div>
-          <div class="file-chip" id="fileChip" style="display:none" aria-live="polite" aria-label="Uploaded file">
-            <i class="fas fa-file-alt" style="color:var(--gold)" aria-hidden="true"></i>
-            <span class="file-chip-name" id="fileChipName"></span>
-            <span
-              class="file-chip-rm"
-              id="fileChipRm"
-              role="button"
-              tabindex="0"
-              title="Remove file"
-              aria-label="Remove uploaded file"
-            >
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </span>
-          </div>
-        </div>
-      </div><!-- /file-collapse-wrap -->
-
-
-      <!-- ── Collapsible Selectors (hidden during streaming) ── -->
-      <div class="selectors-collapse-wrap" id="selectorsCollapseWrap">
-
-
-        <!-- Detail Level -->
-        <div class="field-group">
-          <div class="field-lbl" id="depthLbl">Detail Level</div>
-          <div class="field-sel-wrap">
-            <select
-              id="depthSel"
-              class="field-sel"
-              aria-label="Select detail level"
-              aria-describedby="depthLbl"
-            >
-              <option value="standard">Standard (600–900 words)</option>
-              <option value="detailed" selected>Detailed (1,000–1,500 words)</option>
-              <option value="comprehensive">Comprehensive (1,500–2,000 words)</option>
-              <option value="expert">Expert (2,000–2,800 words)</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
-
-
-        <!-- Output Language -->
-        <div class="field-group">
-          <div class="field-lbl" id="langLbl">Output Language</div>
-          <div class="field-sel-wrap">
-            <select
-              id="langSel"
-              class="field-sel"
-              aria-label="Select output language"
-              aria-describedby="langLbl"
-            >
-              <option value="English" selected>🇬🇧  English</option>
-              <option value="Urdu">🇵🇰  اردو — Urdu</option>
-              <option value="Hindi">🇮🇳  हिन्दी — Hindi</option>
-              <option value="Arabic">🇸🇦  العربية — Arabic</option>
-              <option value="French">🇫🇷  Français — French</option>
-              <option value="German">🇩🇪  Deutsch — German</option>
-              <option value="Spanish">🇪🇸  Español — Spanish</option>
-              <option value="Portuguese">🇧🇷  Português — Portuguese</option>
-              <option value="Italian">🇮🇹  Italiano — Italian</option>
-              <option value="Dutch">🇳🇱  Nederlands — Dutch</option>
-              <option value="Russian">🇷🇺  Русский — Russian</option>
-              <option value="Turkish">🇹🇷  Türkçe — Turkish</option>
-              <option value="Chinese (Simplified)">🇨🇳  中文简体 — Chinese (Simplified)</option>
-              <option value="Chinese (Traditional)">🇹🇼  中文繁體 — Chinese (Traditional)</option>
-              <option value="Japanese">🇯🇵  日本語 — Japanese</option>
-              <option value="Korean">🇰🇷  한국어 — Korean</option>
-              <option value="Bengali">🇧🇩  বাংলা — Bengali</option>
-              <option value="Punjabi">🇵🇰  ਪੰਜਾਬੀ — Punjabi</option>
-              <option value="Indonesian">🇮🇩  Bahasa Indonesia</option>
-              <option value="Malay">🇲🇾  Bahasa Melayu — Malay</option>
-              <option value="Swahili">🇰🇪  Kiswahili — Swahili</option>
-              <option value="Persian">🇮🇷  فارسی — Persian (Farsi)</option>
-              <option value="Vietnamese">🇻🇳  Tiếng Việt — Vietnamese</option>
-              <option value="Thai">🇹🇭  ภาษาไทย — Thai</option>
-              <option value="Greek">🇬🇷  Ελληνικά — Greek</option>
-              <option value="Polish">🇵🇱  Polski — Polish</option>
-              <option value="Swedish">🇸🇪  Svenska — Swedish</option>
-              <option value="Norwegian">🇳🇴  Norsk — Norwegian</option>
-              <option value="Danish">🇩🇰  Dansk — Danish</option>
-              <option value="Finnish">🇫🇮  Suomi — Finnish</option>
-              <option value="Czech">🇨🇿  Čeština — Czech</option>
-              <option value="Romanian">🇷🇴  Română — Romanian</option>
-              <option value="Hungarian">🇭🇺  Magyar — Hungarian</option>
-              <option value="Ukrainian">🇺🇦  Українська — Ukrainian</option>
-              <option value="Hebrew">🇮🇱  עברית — Hebrew</option>
-              <option value="Nepali">🇳🇵  नेपाली — Nepali</option>
-              <option value="Tamil">🇮🇳  தமிழ் — Tamil</option>
-              <option value="Telugu">🇮🇳  తెలుగు — Telugu</option>
-              <option value="Kannada">🇮🇳  ಕನ್ನಡ — Kannada</option>
-              <option value="Marathi">🇮🇳  मराठी — Marathi</option>
-              <option value="Gujarati">🇮🇳  ગુજરાતી — Gujarati</option>
-              <option value="Sinhala">🇱🇰  සිංහල — Sinhala</option>
-              <option value="Amharic">🇪🇹  አማርኛ — Amharic</option>
-              <option value="Somali">🇸🇴  Soomaali — Somali</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
-
-
-        <!-- Writing Style -->
-        <div class="field-group">
-          <div class="field-lbl" id="styleLbl">Writing Style</div>
-          <div class="field-sel-wrap">
-            <select
-              id="styleSel"
-              class="field-sel"
-              aria-label="Select writing style"
-              aria-describedby="styleLbl"
-            >
-              <option value="simple" selected>Simple &amp; Clear — Beginner Friendly</option>
-              <option value="academic">Academic &amp; Formal — Scholarly Language</option>
-              <option value="detailed">Highly Detailed — Maximum Depth</option>
-              <option value="exam">Exam-Focused — Mark-Worthy Phrases</option>
-              <option value="visual">Visual &amp; Analogy-Rich — Mental Models</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
-
-
-      </div><!-- /selectors-collapse-wrap -->
-
-
-      <!-- ── Quick Topic Suggestion Pills ── -->
-      <div class="sugg-collapse-wrap" id="suggCollapseWrap">
-        <div class="lp-sugg">
-          <span class="lp-sugg-label" aria-label="Quick topic suggestions">Quick Topics</span>
-          <div class="lp-sugg-pills" role="list">
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Photosynthesis — how plants convert sunlight into glucose')"
-              aria-label="Photosynthesis quick topic"
-              role="listitem"
-            >Photosynthesis</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Newton\'s Three Laws of Motion — classical mechanics')"
-              aria-label="Newton's Laws quick topic"
-              role="listitem"
-            >Newton's Laws</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('World War II — causes, major events and consequences')"
-              aria-label="World War II quick topic"
-              role="listitem"
-            >World War II</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Machine Learning — algorithms, types and real-world applications')"
-              aria-label="Machine Learning quick topic"
-              role="listitem"
-            >Machine Learning</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('The French Revolution — causes, key events and lasting legacy')"
-              aria-label="French Revolution quick topic"
-              role="listitem"
-            >French Revolution</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Cell division — mitosis, meiosis and their biological significance')"
-              aria-label="Cell Division quick topic"
-              role="listitem"
-            >Cell Division</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Quantum mechanics — fundamental principles, wave-particle duality, uncertainty')"
-              aria-label="Quantum Mechanics quick topic"
-              role="listitem"
-            >Quantum Mechanics</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('The Industrial Revolution — origins, impact on society and the global economy')"
-              aria-label="Industrial Revolution quick topic"
-              role="listitem"
-            >Industrial Revolution</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('DNA replication — the process, enzymes involved and significance in genetics')"
-              aria-label="DNA Replication quick topic"
-              role="listitem"
-            >DNA Replication</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Supply and demand — economics fundamentals, curves, equilibrium, elasticity')"
-              aria-label="Supply and Demand quick topic"
-              role="listitem"
-            >Supply &amp; Demand</button>
-
-          </div>
-        </div>
-      </div><!-- /sugg-collapse-wrap -->
-
-
-    </div><!-- /lp-fields -->
-
-
-    <!-- ── Generate Button ── -->
-    <div class="lp-run-wrap" id="lpRunWrap">
-
-      <button
-        class="run-btn"
-        id="runBtn"
-        type="button"
-        aria-label="Generate study materials"
-        title="Generate (press Enter)"
-      >
-        <i class="fas fa-book-open" id="runIcon" aria-hidden="true"></i>
-        <span id="runLabel">Generate Notes</span>
+    <!-- ── WIZARD CTA BUTTON (Main Generation Button) ── -->
+    <div class="wizard-cta-wrap">
+      <button class="wizard-cta-btn" id="wizardBtn" type="button">
+        <i class="fas fa-magic" aria-hidden="true"></i>
+        <span>✨ Wizard Mode</span>
+        <small>Step-by-step generation</small>
       </button>
-
-      <!-- Cancel Button (shown during generation) -->
-      <button
-        class="cancel-btn"
-        id="cancelBtn"
-        type="button"
-        aria-label="Cancel generation"
-        title="Cancel current generation"
-        style="margin-top:6px"
-      >
-        <i class="fas fa-stop-circle" aria-hidden="true"></i>
-        Cancel Generation
-      </button>
-
-    </div><!-- /lp-run-wrap -->
+    </div>
 
 
     <!-- ── Sidebar Recent History Strip ── -->
@@ -2389,42 +2067,31 @@ body {
 
         <!-- Subtitle -->
         <div class="es-sub">
-          Enter any topic, concept, question, or paste text in the panel on the left.
-          Choose your tool, press Generate, and watch your study materials
-          appear here — <strong style="color:var(--gold)">live, as they are written</strong>.
+          Click the <strong style="color:var(--gold)">✨ Wizard Mode</strong> button in the sidebar.
+          Follow the step-by-step guide to generate your study materials.
         </div>
 
         <!-- Feature Tip Pills -->
         <div class="es-tips" role="list" aria-label="Available features">
           <span class="es-tip" role="listitem">
-            <i class="fas fa-book-open" aria-hidden="true"></i> Deep Notes
+            <i class="fas fa-magic"></i> Click Wizard Mode
           </span>
           <span class="es-tip" role="listitem">
-            <i class="fas fa-layer-group" aria-hidden="true"></i> Flashcards
+            <i class="fas fa-layer-group"></i> Choose Tool
           </span>
           <span class="es-tip" role="listitem">
-            <i class="fas fa-question-circle" aria-hidden="true"></i> Quiz Mode
+            <i class="fas fa-pencil-alt"></i> Enter Topic
           </span>
           <span class="es-tip" role="listitem">
-            <i class="fas fa-align-left" aria-hidden="true"></i> Summary
+            <i class="fas fa-globe"></i> Select Language
           </span>
           <span class="es-tip" role="listitem">
-            <i class="fas fa-project-diagram" aria-hidden="true"></i> Mind Map
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-file-pdf" aria-hidden="true"></i> PDF Export
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-globe" aria-hidden="true"></i> 50+ Languages
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-infinity" aria-hidden="true"></i> Always Free
+            <i class="fas fa-rocket"></i> Generate!
           </span>
         </div>
 
         <!-- Keyboard Shortcuts -->
         <div class="es-shortcuts" aria-label="Keyboard shortcuts">
-          <span class="es-shortcut"><kbd>Enter</kbd> Generate</span>
           <span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Focus input</span>
           <span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</span>
           <span class="es-shortcut"><kbd>Space</kbd> Flip card</span>
@@ -2526,8 +2193,6 @@ body {
 <!-- ═══════════════════════════════════════════════════════════════════════════════
      LIVE STREAMING FULL-PAGE OVERLAY
      This covers the RIGHT PANEL during generation for full typewriter effect.
-     Input collapses in left panel, output streams here char-by-char.
-     After generation completes, this hides and the full structured result appears.
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <div
   class="stream-fullpage-wrap"
@@ -2579,7 +2244,7 @@ body {
 
 
 <!-- ═══════════════════════════════════════════════════════════════════════════════
-     NEW v2.2: WIZARD GENERATION MODAL (Step-by-step card flow)
+     NEW v2.2: WIZARD GENERATION MODAL (Step-by-step card flow with File Upload)
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <div
   class="modal-overlay"
@@ -3130,14 +2795,12 @@ if (window.marked) {
     breaks:    true,
     gfm:       true,
     pedantic:  false,
-    sanitize:  false, /* DOMPurify handles sanitisation */
+    sanitize:  false,
   });
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
    GLOBAL HELPER — setSugg()
-   Called by Quick Topic pill onclick attributes.
-   Fills the textarea, triggers char count update, and focuses it.
    ════════════════════════════════════════════════════════════════════════════ */
 function setSugg(topic) {
   var el = document.getElementById('mainInput');
@@ -3145,14 +2808,11 @@ function setSugg(topic) {
   el.value = topic;
   el.dispatchEvent(new Event('input'));
   el.focus();
-  /* On mobile scroll textarea into view */
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
    PREFILL WELCOME-BACK STATS
-   Reads localStorage immediately (before app.js loads) so stats appear
-   instantly without a flash of zeros.
    ════════════════════════════════════════════════════════════════════════════ */
 (function prefillWelcomeBackStats() {
   try {
@@ -3170,14 +2830,11 @@ function setSugg(topic) {
     if (sEl)  sEl.textContent  = saved.length;
     if (seEl) seEl.textContent = sessions;
     if (stEl) stEl.textContent = streak.count || 0;
-  } catch (e) {
-    /* Silently ignore — app.js will set correct values */
-  }
+  } catch (e) {}
 })();
 
 /* ════════════════════════════════════════════════════════════════════════════
    THEME FLASH PREVENTION
-   Apply stored theme before paint to prevent dark→light flash
    ════════════════════════════════════════════════════════════════════════════ */
 (function applyStoredTheme() {
   try {
@@ -3188,9 +2845,7 @@ function setSugg(topic) {
     if (prefs.fontSize) {
       document.documentElement.dataset.font = prefs.fontSize;
     }
-  } catch (e) {
-    /* Use defaults */
-  }
+  } catch (e) {}
 })();
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -3213,12 +2868,21 @@ document.addEventListener('DOMContentLoaded', function () {
       outArea.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
+  
+  /* Wizard Modal close handler */
+  var wizardModal = document.getElementById('wizardModal');
+  if (wizardModal) {
+    wizardModal.addEventListener('click', function(e) {
+      if (e.target === wizardModal) {
+        wizardModal.style.display = 'none';
+      }
+    });
+  }
 });
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════════════════════
      MAIN APPLICATION SCRIPT
-     All logic is in app.js — this tag loads it after the full DOM is ready
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <script src="app.js"></script>
 

@@ -3,13 +3,6 @@
 // SAVOIRÉ AI v2.2 — api/study.js — INSTANT STREAMING BACKEND
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha
-//
-// ── ARCHITECTURE v2.2: TWO-PHASE INSTANT STREAMING ──────────────────────────────────────────────
-//
-// v2.2 ADDITIONS (Original code 100% preserved):
-//   + Google Sheets webhook integration (PRIVATE - only you can access data)
-//   + User tracking (name, streak, lastUsed, sessions)
-//   + Tool-specific fallback generation (flashcards, quiz, mindmap, summary, notes)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -32,12 +25,28 @@ const APP_TITLE       = BRAND;
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// TIMEZONE HELPER - Pakistan Standard Time (UTC+5)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+function getPakistanTime() {
+  const now = new Date();
+  // Pakistan is UTC+5 (no daylight saving)
+  const pakistanOffset = 5 * 60 * 60 * 1000;
+  const pakistanTime = new Date(now.getTime() + pakistanOffset);
+  return pakistanTime.toISOString().replace('Z', '+05:00');
+}
+
+function getPakistanDate() {
+  const now = new Date();
+  const pakistanOffset = 5 * 60 * 60 * 1000;
+  const pakistanTime = new Date(now.getTime() + pakistanOffset);
+  return pakistanTime.toISOString().split('T')[0];
+}
+
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 // SECTION 2 — MODEL ROSTER
-// Shorter timeouts → faster fallover → faster first tokens
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-// Phase 1: streaming markdown notes — prioritise fastest first-token models
 const MODELS_STREAM = [
   { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3000, timeout_ms: 28000 },
   { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 2500, timeout_ms: 22000 },
@@ -49,7 +58,6 @@ const MODELS_STREAM = [
   { id: 'openchat/openchat-7b:free',               max_tokens: 2000, timeout_ms: 18000 },
 ];
 
-// Phase 2: structured JSON cards — smaller prompt, non-streaming, faster
 const MODELS_CARDS = [
   { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 2500, timeout_ms: 22000 },
   { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 2500, timeout_ms: 18000 },
@@ -94,36 +102,43 @@ const TOOL_MAP = {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const log = {
-  info:  (...a) => console.log  (`[${new Date().toISOString()}] [${BRAND}] INFO  `, ...a),
-  ok:    (...a) => console.log  (`[${new Date().toISOString()}] [${BRAND}] OK    `, ...a),
-  warn:  (...a) => console.warn (`[${new Date().toISOString()}] [${BRAND}] WARN  `, ...a),
-  error: (...a) => console.error(`[${new Date().toISOString()}] [${BRAND}] ERROR `, ...a),
+  info:  (...a) => console.log  (`[${getPakistanTime()}] [${BRAND}] INFO  `, ...a),
+  ok:    (...a) => console.log  (`[${getPakistanTime()}] [${BRAND}] OK    `, ...a),
+  warn:  (...a) => console.warn (`[${getPakistanTime()}] [${BRAND}] WARN  `, ...a),
+  error: (...a) => console.error(`[${getPakistanTime()}] [${BRAND}] ERROR `, ...a),
 };
 
 const trunc = (s, n = 100) => !s ? '' : (String(s).length > n ? String(s).slice(0, n) + '…' : String(s));
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// PRIVATE USER TRACKING - Sends data to YOUR private Google Sheet only
+// PRIVATE USER TRACKING - Sends data to YOUR private Google Sheet only (Pakistan Time)
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
-async function sendToGoogleSheets(userName, streak, lastUsed, sessions) {
+async function sendToGoogleSheets(userName, streak, lastActive, sessions, topic = '', tool = '') {
   if (!GOOGLE_WEBHOOK_URL) {
     log.warn('Google Sheets webhook not configured - skipping tracking');
     return false;
   }
   
   try {
+    const pakistanTime = getPakistanTime();
+    const pakistanDate = getPakistanDate();
+    
     const response = await fetch(GOOGLE_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        timestamp: pakistanTime,
+        date: pakistanDate,
         userName: userName || 'anonymous',
         streak: streak || 0,
-        lastUsed: lastUsed || new Date().toISOString(),
-        sessions: sessions || 1
+        lastActive: lastActive || pakistanTime,
+        sessions: sessions || 1,
+        topic: topic || '',
+        tool: tool || ''
       })
     });
-    log.ok(`User data sent to private Google Sheet: ${userName}`);
+    log.ok(`📊 User data sent to private Google Sheet: ${userName} | Streak: ${streak} | Sessions: ${sessions}`);
     return response.ok;
   } catch (err) {
     log.warn(`Failed to send to Google Sheets: ${err.message}`);
@@ -137,7 +152,7 @@ async function sendToGoogleSheets(userName, streak, lastUsed, sessions) {
 
 function generateToolFallback(topic, opts, tool) {
   const t = (topic || 'this topic').trim();
-  const now = new Date().toISOString();
+  const now = getPakistanTime();
   const lang = opts.language || 'English';
   
   switch (tool) {
@@ -323,52 +338,52 @@ function generateMCQOptions(correctAnswer, topic) {
 
 function generateKeyConcepts(t) {
   return [
-    `Core Definition: ${t} refers to the fundamental principles and frameworks forming its theoretical and practical foundation within its academic domain.`,
-    `Primary Mechanisms: The main processes of ${t} involve systematic interactions between identifiable components producing consistent, observable outcomes.`,
-    `Historical Development: ${t} evolved through successive waves of intellectual discovery, with key contributors establishing foundational frameworks still in use today.`,
-    `Practical Significance: ${t} carries direct application value across professional domains, enabling practitioners to make higher-quality decisions.`,
-    `Critical Boundaries: Complete understanding of ${t} requires recognising both its considerable explanatory power and its important limitations.`,
+    `Core Definition: ${t} refers to the fundamental principles and frameworks forming its theoretical and practical foundation.`,
+    `Primary Mechanisms: The main processes of ${t} involve systematic interactions between identifiable components.`,
+    `Historical Development: ${t} evolved through successive waves of intellectual discovery.`,
+    `Practical Significance: ${t} carries direct application value across professional domains.`,
+    `Critical Boundaries: Complete understanding of ${t} requires recognising both its power and limitations.`,
   ];
 }
 
 function generateKeyTricks(t) {
   return [
-    `FEYNMAN TECHNIQUE for ${t}: Explain it out loud as if teaching a 12-year-old. Every point where you hesitate reveals what you don't understand — go back only for those gaps.`,
-    `ACTIVE RECALL for ${t}: Close your notes and write everything you know on a blank page. Compare to notes. The gaps are precisely what needs further study.`,
-    `SPACED REPETITION for ${t}: Study across multiple sessions: Day 1 (learn), Day 3 (review), Day 7 (consolidate), Day 14 (retention), Day 30 (mastery).`,
+    `FEYNMAN TECHNIQUE for ${t}: Explain it out loud as if teaching a 12-year-old. Every point where you hesitate reveals what you don't understand.`,
+    `ACTIVE RECALL for ${t}: Close your notes and write everything you know on a blank page. Compare to notes.`,
+    `SPACED REPETITION for ${t}: Study across multiple sessions: Day 1, Day 3, Day 7, Day 14, Day 30.`,
   ];
 }
 
 function generatePracticeQuestions(t) {
   return [
     {
-      question: `Explain the core principles of ${t} and describe how they form a coherent theoretical framework.`,
-      answer: `${t} is grounded in foundational principles that together define its scope, methods and applications. These principles establish the basic concepts, the relationships between them, and the reasoning connecting observations to broader theoretical claims. Complete understanding requires knowing not just what the field asserts but why those assertions are justified.`,
+      question: `Explain the core principles of ${t} and describe how they form a coherent framework.`,
+      answer: `${t} is grounded in foundational principles that together define its scope, methods and applications. These principles establish the basic concepts and relationships.`,
     },
     {
       question: `Describe a realistic scenario where deep knowledge of ${t} is essential.`,
-      answer: `Consider a practitioner who must make a high-stakes decision under uncertainty. Knowledge of ${t} provides the analytical framework to decompose the problem, identify relevant variables, evaluate alternatives systematically, and anticipate second-order consequences.`,
+      answer: `Knowledge of ${t} provides the analytical framework to decompose problems, identify variables, evaluate alternatives systematically, and anticipate consequences.`,
     },
     {
-      question: `What are the most common misconceptions about ${t} and why do they persist?`,
-      answer: `The most pervasive misconception is that surface familiarity with ${t} constitutes genuine understanding. Students who can define terms often discover their knowledge collapses under exam pressure. Genuine understanding requires grasping causal relationships and the reasoning behind claims.`,
+      question: `What are the most common misconceptions about ${t}?`,
+      answer: `The most pervasive misconception is that surface familiarity with ${t} constitutes genuine understanding. Genuine understanding requires grasping causal relationships.`,
     },
   ];
 }
 
 function generateApplications(t) {
   return [
-    `Healthcare & Medicine: Principles from ${t} directly inform clinical decision-making, diagnostic reasoning, and treatment protocol design.`,
-    `Technology & Engineering: ${t} concepts underpin critical design decisions in software architecture, system engineering, and product development.`,
-    `Business & Strategy: Organisations that apply frameworks from ${t} systematically make better decisions under uncertainty and identify opportunities others miss.`,
+    `Healthcare & Medicine: Principles from ${t} inform clinical decision-making and treatment design.`,
+    `Technology & Engineering: ${t} concepts underpin critical design decisions in software and systems.`,
+    `Business & Strategy: Organisations that apply frameworks from ${t} make better decisions under uncertainty.`,
   ];
 }
 
 function generateMisconceptions(t) {
   return [
-    `Many students believe ${t} can be mastered through memorisation. In reality, genuine mastery requires understanding underlying principles — surface recall collapses under novel questions.`,
-    `A widespread misconception is that ${t} is only relevant to specialists. In reality, its reasoning patterns transfer broadly across many professional domains.`,
-    `Students often assume that once they understand the basics, little remains to learn. In reality ${t} has significant depth with important nuances and ongoing research.`,
+    `Many students believe ${t} can be mastered through memorisation. In reality, genuine mastery requires understanding underlying principles.`,
+    `A widespread misconception is that ${t} is only relevant to specialists. In reality, its reasoning patterns transfer broadly.`,
+    `Students often assume that once they understand the basics, little remains to learn. In reality ${t} has significant depth.`,
   ];
 }
 
@@ -414,7 +429,7 @@ Begin directly with the first ## heading. Write in ${lang} only.`;
 
 function buildCardsPrompt(input, opts) {
   const lang = opts.language || 'English';
-  const now  = new Date().toISOString();
+  const now  = getPakistanTime();
 
   return `You are ${BRAND} by ${DEVELOPER}.
 Generate study cards for: "${input}"
@@ -658,46 +673,15 @@ async function fetchCards(prompt) {
 
 function fallbackCards(topic, opts) {
   const t   = (topic || 'this topic').trim();
-  const now = new Date().toISOString();
+  const now = getPakistanTime();
   return {
     topic: t,
     curriculum_alignment: 'General Academic Study',
-    key_concepts: [
-      `Core Definition: ${t} refers to the fundamental principles and frameworks forming its theoretical and practical foundation within its academic domain.`,
-      `Primary Mechanisms: The main processes of ${t} involve systematic interactions between identifiable components producing consistent, observable outcomes.`,
-      `Historical Development: ${t} evolved through successive waves of intellectual discovery, with key contributors establishing foundational frameworks still in use today.`,
-      `Practical Significance: ${t} carries direct application value across professional domains, enabling practitioners to make higher-quality decisions and achieve better outcomes.`,
-      `Critical Boundaries: Complete understanding of ${t} requires recognising both its considerable explanatory power and the specific conditions where its frameworks have important limitations.`,
-    ],
-    key_tricks: [
-      `FEYNMAN TECHNIQUE for ${t}: Explain it out loud as if teaching a 12-year-old with no background in the subject. Every point where you hesitate or become vague reveals exactly what you do not yet understand — go back to your notes only for those specific gaps, then try again.`,
-      `ACTIVE RECALL for ${t}: Close all your notes and write everything you know on a blank page. Compare to your notes. The gaps between what you wrote and your notes are precisely what needs further study — this beats re-reading by a factor of 3 for long-term retention.`,
-      `SPACED REPETITION for ${t}: Study across multiple sessions rather than one marathon. Optimal spacing: Day 1 (learn), Day 3 (first review), Day 7 (consolidation), Day 14 (long-term retention), Day 30 (mastery check). Space beats massed practice consistently.`,
-    ],
-    practice_questions: [
-      {
-        question: `Explain the core principles of ${t} and describe how they form a coherent theoretical framework.`,
-        answer: `${t} is grounded in foundational principles that together define its scope, methods and applications. These principles establish the basic concepts, the relationships between them, and the reasoning connecting observations to broader theoretical claims. A complete understanding requires knowing not just what the field asserts but why those assertions are justified — what evidence supports them and what logic connects facts to conclusions. The analytical framework ${t} provides transfers broadly, improving thinking in adjacent domains. Practical mastery means being able to apply these principles in novel situations, not just recall them when questions match the textbook format exactly.`,
-      },
-      {
-        question: `Describe a realistic professional scenario where deep knowledge of ${t} is essential.`,
-        answer: `Consider a practitioner who must make a high-stakes decision under uncertainty — designing a critical system, solving an unexpected problem, or evaluating competing options with incomplete information. Knowledge of ${t} provides the analytical framework to decompose the problem, identify relevant variables, evaluate alternatives systematically, and anticipate second-order consequences. Without this foundation, decisions default to intuition and heuristics alone, which consistently produce worse outcomes than structured analytical approaches. The practitioner with deep ${t} knowledge can also explain their reasoning clearly to stakeholders, identify when assumptions break down, and adapt their approach when circumstances change unexpectedly.`,
-      },
-      {
-        question: `What are the most common misconceptions about ${t} and why do they persist?`,
-        answer: `The most pervasive misconception is that surface familiarity with ${t} constitutes genuine understanding. Students who can define terms and recall facts often discover — under exam pressure or in professional practice — that their knowledge collapses when questions are framed differently. Genuine understanding requires grasping causal relationships, the reasoning behind claims, and the conditions under which standard frameworks break down. A second misconception is that ${t} is only relevant to specialists. In reality its core reasoning patterns transfer broadly across disciplines. A third is underestimating its depth — most students find only after sustained study how much genuine complexity underlies apparently simple concepts.`,
-      },
-    ],
-    real_world_applications: [
-      `Healthcare & Medicine: Principles from ${t} directly inform clinical decision-making, diagnostic reasoning, and treatment protocol design, enabling practitioners to make more accurate assessments and deliver measurably better patient outcomes.`,
-      `Technology & Engineering: ${t} concepts underpin critical design decisions in software architecture, system engineering, and product development — helping teams build more scalable, maintainable, and reliable solutions.`,
-      `Business & Strategy: Organisations that apply frameworks from ${t} systematically outperform those that do not, making better decisions under uncertainty and identifying opportunities that competitors without this grounding consistently miss.`,
-    ],
-    common_misconceptions: [
-      `Many students believe ${t} can be mastered through repeated memorisation of facts and definitions. In reality, genuine mastery requires understanding the underlying principles and causal relationships — surface recall collapses under novel exam questions and real professional situations.`,
-      `A widespread misconception is that ${t} is only relevant to specialists in that specific field. In reality, its core reasoning patterns and analytical frameworks transfer powerfully and broadly, providing unexpected intellectual advantages across many professional domains.`,
-      `Students often assume that once they understand the basics of ${t}, little of substance remains to learn. In reality ${t} has significant depth with important nuances, active ongoing research, and genuine unresolved debates — the difference between introductory and expert understanding is vast.`,
-    ],
+    key_concepts: generateKeyConcepts(t),
+    key_tricks: generateKeyTricks(t),
+    practice_questions: generatePracticeQuestions(t),
+    real_world_applications: generateApplications(t),
+    common_misconceptions: generateMisconceptions(t),
     study_score:   96,
     powered_by:    `${BRAND} by ${DEVELOPER}`,
     generated_at:  now,
@@ -714,7 +698,7 @@ function offlineNotes(t) {
   const T = t || 'This Topic';
   return `## Introduction to ${T}
 
-**${T}** is a significant area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields. A rigorous understanding of ${T} is valuable both for examinations and for building genuine professional capability.
+**${T}** is a significant area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields.
 
 ---
 
@@ -722,13 +706,11 @@ function offlineNotes(t) {
 
 The study of ${T} begins with its fundamental conceptual infrastructure — the vocabulary, definitions and foundational ideas upon which all subsequent understanding must be built.
 
-**Theoretical Foundation:** Every developed field has a theoretical core — foundational assumptions, definitions and logical relationships that organise its knowledge claims. Understanding ${T} means knowing not just what it claims, but why those claims are considered justified.
+**Theoretical Foundation:** Every developed field has a theoretical core — foundational assumptions, definitions and logical relationships that organise its knowledge claims.
 
-**Practical Dimension:** The practical dimension connects abstract theory to concrete real-world value. Theory and practice in ${T} are not separate domains but different aspects of a unified whole.
+**Practical Dimension:** The practical dimension connects abstract theory to concrete real-world value.
 
-**Analytical Framework:** ${T} provides a structured way of perceiving and reasoning about complex problems — a transferable mental toolkit that improves thinking in many adjacent domains.
-
-**Systemic Perspective:** No component of ${T} exists in isolation. Every concept connects to others through relationships of logical dependence, causal influence, or structural analogy. Genuine expertise means understanding the field as an integrated whole, not a collection of isolated facts.
+**Analytical Framework:** ${T} provides a structured way of perceiving and reasoning about complex problems.
 
 ---
 
@@ -736,42 +718,39 @@ The study of ${T} begins with its fundamental conceptual infrastructure — the 
 
 The core processes of ${T} unfold through identifiable stages:
 
-**Stage 1 — Initial Conditions:** Every application begins with specific prerequisites. Accurately identifying these is critical — misunderstanding initial conditions is a primary source of errors.
+**Stage 1 — Initial Conditions:** Every application begins with specific prerequisites.
 
-**Stage 2 — Active Mechanisms:** The defining mechanisms transform inputs into outputs through processes that follow identifiable patterns and describable rules. Understanding *why* these mechanisms produce their outputs — not just *what* they produce — enables prediction, explanation of anomalies, and effective intervention design.
+**Stage 2 — Active Mechanisms:** The defining mechanisms transform inputs into outputs.
 
-**Stage 3 — Feedback and Adjustment:** Many systems in ${T} incorporate feedback loops through which outcomes influence subsequent inputs, creating adaptive or self-correcting behaviour.
+**Stage 3 — Feedback and Adjustment:** Many systems incorporate feedback loops.
 
-**Stage 4 — Observable Outputs:** The ultimate products take measurable forms — quantities, categorical outcomes, behavioural changes, or structural modifications.
+**Stage 4 — Observable Outputs:** The ultimate products take measurable forms.
 
 ---
 
 ## Key Examples
 
-Concrete examples ground abstract principles in reality. Understanding examples in ${T} means understanding *why* each example works the way it does and *what general principle* it illustrates — not memorising the example as an isolated fact.
-
-Strong examples in ${T} typically demonstrate: how the core mechanism operates in a controlled setting, how complications arise in realistic conditions, and how practitioners navigate those complications in professional practice.
+Concrete examples ground abstract principles in reality. Understanding examples in ${T} means understanding *why* each example works.
 
 ---
 
 ## Advanced Aspects
 
-At an advanced level, ${T} reveals important nuances that introductory treatments necessarily simplify:
+At an advanced level, ${T} reveals important nuances:
 
-- **Boundary conditions** — where standard frameworks break down and require modification
-- **Historical debates** — why current frameworks were accepted over alternatives
-- **Ongoing research** — the frontier of current knowledge and open questions
+- **Boundary conditions** — where standard frameworks break down
+- **Historical debates** — why current frameworks were accepted
+- **Ongoing research** — the frontier of current knowledge
 - **Interdisciplinary connections** — how ${T} relates to adjacent fields
 
 ---
 
 ## Summary & Key Takeaways
 
-- **Core principle:** ${T} rests on foundational concepts connecting theory to practice through systematic reasoning
+- **Core principle:** ${T} rests on foundational concepts
 - **Key skill:** Analytical framework transferable to adjacent domains
 - **Common trap:** Surface familiarity mistaken for genuine understanding
-- **Study strategy:** Active recall and spaced repetition outperform passive re-reading every time
-- **Remember:** The depth of ${T} rewards sustained engagement — there is always more to understand
+- **Study strategy:** Active recall and spaced repetition
 
 *— Generated by ${BRAND} | ${DEVELOPER} | ${DEVSITE}*`;
 }
@@ -804,7 +783,7 @@ function mergeCards(raw, notes, topic, opts) {
     common_misconceptions:   arr(src.common_misconceptions,   fb.common_misconceptions),
     study_score:             96,
     powered_by:              `${BRAND} by ${DEVELOPER}`,
-    generated_at:            src.generated_at || new Date().toISOString(),
+    generated_at:            src.generated_at || getPakistanTime(),
     _version:                APP_VERSION,
   };
 }
@@ -853,9 +832,15 @@ module.exports = async function handler(req, res) {
   const body    = req.body || {};
   const message = typeof body.message === 'string' ? body.message.trim() : '';
   const userName = typeof body.userName === 'string' ? body.userName.trim() : '';
+  const userStreak = typeof body.streak === 'number' ? body.streak : 1;
+  const userSessions = typeof body.sessions === 'number' ? body.sessions : 1;
+  const userTopic = message.substring(0, 200);
 
   // Handle ping / warmup
-  if (message === 'ping' || message === '') {
+  if (message === 'ping' || message === '' || message === 'track') {
+    if (message === 'track' && userName) {
+      await sendToGoogleSheets(userName, userStreak, getPakistanTime(), userSessions, '', '');
+    }
     return res.status(200).json({ status: 'ok', service: BRAND, ts: Date.now() });
   }
 
@@ -871,12 +856,12 @@ module.exports = async function handler(req, res) {
     stream:   raw.stream === true,
   };
 
-  log.info(`[${rid}] tool:${opts.tool} lang:${opts.language} depth:${opts.depth} stream:${opts.stream} msg:${message.length}c`);
+  log.info(`[${rid}] tool:${opts.tool} lang:${opts.language} depth:${opts.depth} stream:${opts.stream} msg:${message.length}c user:${userName || 'anonymous'}`);
 
   if (!process.env.OPENROUTER_API_KEY) {
-  log.error('Savoire AI Model ERROR!!');
-  return res.status(500).json({ error: 'AI service is temporarily unavailable. Please try again in a few minutes.' });
-}
+    log.error('OPENROUTER_API_KEY not set!');
+    return res.status(500).json({ error: 'AI service is temporarily unavailable. Please try again in a few minutes.' });
+  }
 
   // ════════════════════════════════════════════════════════════════════════════════════════════════
   //  STREAMING MODE — Two-phase instant output
@@ -931,10 +916,6 @@ module.exports = async function handler(req, res) {
     let p1ok  = false;
 
     try {
-      // ══════════════════════════════════════════════════════════════════════
-      // PHASE 1 — Stream plain markdown notes directly to client
-      // ══════════════════════════════════════════════════════════════════════
-
       const notesPrompt = buildNotesPrompt(message, opts);
 
       try {
@@ -955,10 +936,6 @@ module.exports = async function handler(req, res) {
 
       sse('stage', { idx: 3, label: 'Generating study cards…' });
 
-      // ══════════════════════════════════════════════════════════════════════
-      // PHASE 2 — Fetch structured JSON cards (non-streaming, fast)
-      // ══════════════════════════════════════════════════════════════════════
-
       const cardsPrompt = buildCardsPrompt(message, opts);
       let   cardsRaw    = null;
 
@@ -972,12 +949,10 @@ module.exports = async function handler(req, res) {
       clearInterval(ping);
       clearStages();
 
-      // ── Build final result (with tool-specific fallback if needed) ──
       let final;
       if (cardsRaw) {
         final = mergeCards(cardsRaw, notes, message, opts);
       } else {
-        // Use tool-specific fallback generation
         final = generateToolFallback(message, opts, opts.tool);
         final.ultra_long_notes = notes || offlineNotes(message);
       }
@@ -991,14 +966,9 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 4, label: 'Done!', done: true });
       sse('done', final);
 
-      // ══════════════════════════════════════════════════════════════════════
-      // Send user data to PRIVATE Google Sheet (only you can access)
-      // ══════════════════════════════════════════════════════════════════════
+      // Send user data to PRIVATE Google Sheet (Pakistan Time)
       if (userName) {
-        // Calculate streak (would be passed from frontend or calculated here)
-        const streak = body.streak || 1;
-        const sessions = body.sessions || 1;
-        await sendToGoogleSheets(userName, streak, new Date().toISOString(), sessions);
+        await sendToGoogleSheets(userName, userStreak, getPakistanTime(), userSessions, userTopic, opts.tool);
       }
 
       log.ok(`[${rid}] Complete — ${final._duration_ms}ms | p1:${p1ok} p2:${!!cardsRaw}`);
@@ -1078,9 +1048,7 @@ module.exports = async function handler(req, res) {
 
     // Send user data to private Google Sheet
     if (userName) {
-      const streak = body.streak || 1;
-      const sessions = body.sessions || 1;
-      await sendToGoogleSheets(userName, streak, new Date().toISOString(), sessions);
+      await sendToGoogleSheets(userName, userStreak, getPakistanTime(), userSessions, userTopic, opts.tool);
     }
 
     log.ok(`[${rid}] Sync complete — ${final._duration_ms}ms`);
