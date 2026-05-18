@@ -1,65 +1,22 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.0 — app.js — FULLY UPGRADED — FILE 3 of 5
+   SAVOIRÉ AI v2.2 — app.js — FULLY UPGRADED — FILE 3 of 5
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
-   UPGRADE v2.1 — FIXED ISSUES:
-   ✦ LIVE MARKDOWN RENDERING — Styles apply in real-time during streaming (innerHTML + DOMPurify)
-   ✦ WORLD-CLASS QUIZ — Full MCQ with A/B/C/D options, real-time feedback, animations
-   ✦ WORLD-CLASS SUMMARY — Beautiful TL;DR, key points, visual hierarchy
-   ✦ WORLD-CLASS PDF — Magazine-quality multi-page A4 with decorative elements
-   ✦ WORLD-CLASS FLASHCARDS — Smooth 3D flip, progress, shuffle, keyboard nav
-   ✦ WORLD-CLASS MIND MAP — Visual SVG-style hierarchical branches
-   ✦ LIVE STREAM STYLES — Markdown rendered live with full CSS styling
-   ✦ STREAMING OVERLAY — Shows formatted HTML live, not plain text
-   ✦ ALL TOOLS 100% ACCURATE — Production-grade, world-class platform
-
-   FEATURES:
-   ✦ Live Streaming — real-time token-by-token typewriter output via SSE
-   ✦ Live Markdown — styles applied character by character during stream
-   ✦ Mobile Auto-Scroll — on Generate click, screen scrolls to output instantly
-   ✦ Input Collapse — textarea + selectors collapse beautifully when streaming
-   ✦ Full-Page Stream Overlay — formatted markdown live during generation
-   ✦ All 5 Tools — Notes / Flashcards / Quiz / Summary / Mind Map fully working
-   ✦ Welcome First-Time — name input, free, animated, beautiful
-   ✦ Welcome Back — returning user greeting with stats
-   ✦ Header Stats — sessions / history / saved / AI online updated live
-   ✦ History — save, load, delete, search, filter by tool, date groups
-   ✦ Saved Notes — personal library, load back, delete
-   ✦ Settings — name, theme, font size, data stats, export, clear
-   ✦ Ultra-Professional PDF — multi-page A4, gold headers, footers, page numbers
-   ✦ Copy to Clipboard — full formatted text
-   ✦ Share — Web Share API with fallback
-   ✦ Keyboard Shortcuts — Ctrl+K, Ctrl+H, Ctrl+T, Ctrl+B, Escape, Enter
-   ✦ Drag & Drop File Upload — .txt / .md / .csv
-   ✦ Focus Mode — hides sidebar for distraction-free reading
-   ✦ Back to top on output scroll
-   ✦ Toast Notification System — 4 types, auto-dismiss, click-dismiss
-   ✦ Markdown Rendering — marked.js + DOMPurify sanitisation
-   ✦ Flashcard 3D Flip — keyboard navigation, progress bar
-   ✦ Quiz Mode — MCQ with options A/B/C/D, self-check, score tracking, restart
-   ✦ Mind Map — hierarchical branch rendering
-   ✦ Summary — TL;DR + key points with visual hierarchy
-   ✦ Responsive — mobile, tablet, desktop, all working perfectly
-   ✦ Auto-Theme Flash Prevention — reads prefs before paint
-   ✦ Preferences Persistence — theme, font, last tool, name
-   ✦ Fallback Mode — works offline with quality fallback content
-   ✦ Cancel Generation — abort mid-stream
-   ✦ Word/Character count on output
-   ✦ Section anchor navigation in long results
-   ✦ Copy individual sections
-   ✦ Export all data as JSON
-   ✦ Branding footer in every result
-   ✦ Sooban Talha Technologies links everywhere
+   UPGRADE v2.2 — ADDITIONS (original code 100% preserved):
+   ✦ Streak system for user engagement
+   ✦ Google Sheets user tracking
+   ✦ Generate Wizard Card (step-by-step generation)
+   ✦ All original functionality remains EXACTLY THE SAME
 ═══════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────────────────────────────────
    CONSTANTS & CONFIGURATION
    ───────────────────────────────────────────────────────────────────────────────────────── */
 const SAVOIRÉ = {
-  VERSION:    '2.0',
-  BRAND:      'Savoiré AI v2.0',
+  VERSION:    '2.2',
+  BRAND:      'Savoiré AI v2.2',
   DEVELOPER:  'Sooban Talha Technologies',
   DEVSITE:    'soobantalhatech.xyz',
   WEBSITE:    'savoireai.vercel.app',
@@ -147,6 +104,19 @@ class SavoireApp {
     this.streamBuffer  = '';
     this.focusMode     = false;
 
+    /* ── NEW v2.2: Streak System ── */
+    this.streak = this._load('sv_streak', { count: 0, lastDate: null, totalSessions: 0 });
+
+    /* ── NEW v2.2: Wizard State ── */
+    this.wizardStep = 0;
+    this.wizardData = {
+      tool: 'notes',
+      topic: '',
+      language: 'English',
+      depth: 'detailed',
+      style: 'simple'
+    };
+
     /* ── Flashcard state ── */
     this.fcCards   = [];
     this.fcCurrent = 0;
@@ -167,6 +137,364 @@ class SavoireApp {
 
     /* ── Boot ── */
     this._boot();
+    /* ── NEW v2.2: Update streak display ── */
+    this._updateStreakDisplay();
+    this._checkAndUpdateStreak();
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     NEW v2.2: STREAK SYSTEM METHODS
+     ═════════════════════════════════════════════════════════════════════════ */
+  
+  _updateStreakDisplay() {
+    const streakEl = this._el('streakCount');
+    if (streakEl) {
+      streakEl.textContent = this.streak.count;
+    }
+  }
+  
+  _checkAndUpdateStreak() {
+    const today = new Date().toISOString().split('T')[0];
+    const lastDate = this.streak.lastDate;
+    
+    if (!lastDate) {
+      this.streak.count = 1;
+      this.streak.lastDate = today;
+      this.streak.totalSessions = (this.streak.totalSessions || 0) + 1;
+      this._save('sv_streak', this.streak);
+      this._updateStreakDisplay();
+      this._trackUserActivity();
+      return;
+    }
+    
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    if (lastDate === today) {
+      return;
+    } else if (lastDate === yesterdayStr) {
+      this.streak.count++;
+      this.streak.lastDate = today;
+      this.streak.totalSessions = (this.streak.totalSessions || 0) + 1;
+      this._save('sv_streak', this.streak);
+      this._updateStreakDisplay();
+      
+      if (this.streak.count === 7) {
+        this._toast('success', 'fa-fire', '🔥 7-day streak! You\'re on fire! Keep studying!');
+      } else if (this.streak.count === 30) {
+        this._toast('success', 'fa-crown', '👑 30-day streak! You\'re a study champion!');
+      } else if (this.streak.count % 5 === 0 && this.streak.count > 0) {
+        this._toast('success', 'fa-fire', `🔥 ${this.streak.count}-day streak! Amazing dedication!`);
+      }
+    } else {
+      if (this.streak.count > 0) {
+        this._toast('info', 'fa-fire-extinguisher', `Your ${this.streak.count}-day streak ended. Start a new one today!`);
+      }
+      this.streak.count = 1;
+      this.streak.lastDate = today;
+      this.streak.totalSessions = (this.streak.totalSessions || 0) + 1;
+      this._save('sv_streak', this.streak);
+      this._updateStreakDisplay();
+    }
+    
+    this._trackUserActivity();
+  }
+  
+  async _trackUserActivity() {
+    try {
+      await fetch('/api/study', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'track',
+          userName: this.userName,
+          streak: this.streak.count,
+          sessions: this.streak.totalSessions
+        })
+      });
+    } catch (err) {
+      // Silent fail
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     NEW v2.2: WIZARD GENERATION CARD METHODS
+     ═════════════════════════════════════════════════════════════════════════ */
+  
+  _openWizard() {
+    this.wizardData = {
+      tool: this.tool,
+      topic: this._el('mainInput')?.value || '',
+      language: this._el('langSel')?.value || 'English',
+      depth: this._el('depthSel')?.value || 'detailed',
+      style: this._el('styleSel')?.value || 'simple'
+    };
+    this.wizardStep = 0;
+    this._renderWizardStep();
+    this._openModal('wizardModal');
+  }
+  
+  _renderWizardStep() {
+    const container = this._el('wizardContent');
+    if (!container) return;
+    
+    const steps = [
+      { name: 'Tool', icon: 'fa-magic' },
+      { name: 'Topic', icon: 'fa-pencil-alt' },
+      { name: 'Language', icon: 'fa-globe' },
+      { name: 'Depth & Style', icon: 'fa-sliders-h' },
+      { name: 'Review', icon: 'fa-check-circle' }
+    ];
+    
+    const stepIndicator = `
+      <div class="wizard-steps">
+        ${steps.map((step, idx) => `
+          <div class="wizard-step ${idx === this.wizardStep ? 'active' : (idx < this.wizardStep ? 'completed' : '')}">
+            <div class="wizard-step-circle">
+              ${idx < this.wizardStep ? '<i class="fas fa-check"></i>' : (idx + 1)}
+            </div>
+            <div class="wizard-step-label">${step.name}</div>
+            <i class="fas ${step.icon} wizard-step-icon"></i>
+          </div>
+          ${idx < steps.length - 1 ? '<div class="wizard-step-line"></div>' : ''}
+        `).join('')}
+      </div>
+      <div class="wizard-body" id="wizardBody"></div>
+      <div class="wizard-footer">
+        <button class="wizard-btn wizard-btn-secondary" id="wizardPrevBtn" ${this.wizardStep === 0 ? 'disabled' : ''}>
+          <i class="fas fa-arrow-left"></i> Back
+        </button>
+        <button class="wizard-btn wizard-btn-primary" id="wizardNextBtn">
+          ${this.wizardStep === steps.length - 1 ? '<i class="fas fa-rocket"></i> Generate' : 'Next <i class="fas fa-arrow-right"></i>'}
+        </button>
+      </div>
+    `;
+    
+    container.innerHTML = stepIndicator;
+    
+    const body = this._el('wizardBody');
+    if (body) {
+      switch (this.wizardStep) {
+        case 0:
+          body.innerHTML = this._renderWizardToolStep();
+          break;
+        case 1:
+          body.innerHTML = this._renderWizardTopicStep();
+          break;
+        case 2:
+          body.innerHTML = this._renderWizardLanguageStep();
+          break;
+        case 3:
+          body.innerHTML = this._renderWizardDepthStyleStep();
+          break;
+        case 4:
+          body.innerHTML = this._renderWizardReviewStep();
+          break;
+      }
+    }
+    
+    const prevBtn = this._el('wizardPrevBtn');
+    const nextBtn = this._el('wizardNextBtn');
+    
+    if (prevBtn) {
+      prevBtn.onclick = () => {
+        if (this.wizardStep > 0) {
+          this.wizardStep--;
+          this._renderWizardStep();
+        }
+      };
+    }
+    
+    if (nextBtn) {
+      nextBtn.onclick = () => {
+        if (this.wizardStep < steps.length - 1) {
+          if (this._validateWizardStep()) {
+            this.wizardStep++;
+            this._renderWizardStep();
+          }
+        } else {
+          this._closeModal('wizardModal');
+          this._sendWithWizardData();
+        }
+      };
+    }
+  }
+  
+  _renderWizardToolStep() {
+    return `
+      <div class="wizard-tool-grid">
+        ${Object.entries(TOOL_CONFIG).map(([key, config]) => `
+          <div class="wizard-tool-card ${this.wizardData.tool === key ? 'selected' : ''}" data-tool="${key}">
+            <div class="wizard-tool-icon"><i class="fas ${config.icon}"></i></div>
+            <div class="wizard-tool-name">${config.label}</div>
+            <div class="wizard-tool-desc">${config.sfpLabel || 'Generate study materials'}</div>
+            ${this.wizardData.tool === key ? '<div class="wizard-tool-check"><i class="fas fa-check-circle"></i></div>' : ''}
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  _renderWizardTopicStep() {
+    return `
+      <div class="wizard-topic-area">
+        <label class="wizard-label">What would you like to study?</label>
+        <textarea class="wizard-topic-input" id="wizardTopicInput" placeholder="Enter any topic, concept, question, or paste text to study..." rows="4">${this._esc(this.wizardData.topic)}</textarea>
+        <div class="wizard-suggestions">
+          <div class="wizard-sugg-label">Quick suggestions:</div>
+          <div class="wizard-sugg-pills">
+            <button class="wizard-sugg-pill" data-topic="Photosynthesis - how plants convert sunlight into glucose">Photosynthesis</button>
+            <button class="wizard-sugg-pill" data-topic="Newton's Three Laws of Motion">Newton's Laws</button>
+            <button class="wizard-sugg-pill" data-topic="World War II - causes, major events and consequences">World War II</button>
+            <button class="wizard-sugg-pill" data-topic="Machine Learning algorithms and applications">Machine Learning</button>
+            <button class="wizard-sugg-pill" data-topic="The French Revolution - causes and legacy">French Revolution</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  _renderWizardLanguageStep() {
+    const languages = [
+      'English', 'Urdu', 'Hindi', 'Arabic', 'French', 'German', 'Spanish', 
+      'Portuguese', 'Italian', 'Dutch', 'Russian', 'Turkish', 'Chinese (Simplified)',
+      'Japanese', 'Korean', 'Bengali', 'Swahili', 'Persian'
+    ];
+    
+    return `
+      <div class="wizard-language-grid">
+        ${languages.map(lang => `
+          <div class="wizard-language-card ${this.wizardData.language === lang ? 'selected' : ''}" data-lang="${lang}">
+            <i class="fas fa-language"></i>
+            <span>${lang}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  _renderWizardDepthStyleStep() {
+    const depths = [
+      { value: 'standard', label: 'Standard', desc: '500–750 words', icon: 'fa-flag' },
+      { value: 'detailed', label: 'Detailed', desc: '900–1300 words', icon: 'fa-chart-line' },
+      { value: 'comprehensive', label: 'Comprehensive', desc: '1300–1800 words', icon: 'fa-chart-simple' },
+      { value: 'expert', label: 'Expert', desc: '1800–2400 words', icon: 'fa-crown' }
+    ];
+    
+    const styles = [
+      { value: 'simple', label: 'Simple & Clear', desc: 'Beginner-friendly', icon: 'fa-smile' },
+      { value: 'academic', label: 'Academic', desc: 'Scholarly tone', icon: 'fa-graduation-cap' },
+      { value: 'detailed', label: 'Highly Detailed', desc: 'Exhaustive detail', icon: 'fa-list-check' },
+      { value: 'exam', label: 'Exam-Focused', desc: 'Mark-worthy', icon: 'fa-file-excel' },
+      { value: 'visual', label: 'Visual', desc: 'Analogies', icon: 'fa-eye' }
+    ];
+    
+    return `
+      <div class="wizard-depth-section">
+        <label class="wizard-label">Detail Level</label>
+        <div class="wizard-depth-grid">
+          ${depths.map(d => `
+            <div class="wizard-depth-card ${this.wizardData.depth === d.value ? 'selected' : ''}" data-depth="${d.value}">
+              <i class="fas ${d.icon}"></i>
+              <div class="wizard-depth-name">${d.label}</div>
+              <div class="wizard-depth-desc">${d.desc}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="wizard-style-section">
+        <label class="wizard-label">Writing Style</label>
+        <div class="wizard-style-grid">
+          ${styles.map(s => `
+            <div class="wizard-style-card ${this.wizardData.style === s.value ? 'selected' : ''}" data-style="${s.value}">
+              <i class="fas ${s.icon}"></i>
+              <div class="wizard-style-name">${s.label}</div>
+              <div class="wizard-style-desc">${s.desc}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  _renderWizardReviewStep() {
+    const toolConfig = TOOL_CONFIG[this.wizardData.tool];
+    return `
+      <div class="wizard-review-card">
+        <div class="wizard-review-item">
+          <div class="wizard-review-icon"><i class="fas fa-magic"></i></div>
+          <div class="wizard-review-content">
+            <div class="wizard-review-label">Tool</div>
+            <div class="wizard-review-value">${toolConfig?.label || 'Notes'}</div>
+          </div>
+        </div>
+        <div class="wizard-review-item">
+          <div class="wizard-review-icon"><i class="fas fa-pencil-alt"></i></div>
+          <div class="wizard-review-content">
+            <div class="wizard-review-label">Topic</div>
+            <div class="wizard-review-value">${this._esc(this.wizardData.topic || 'Not specified')}</div>
+          </div>
+        </div>
+        <div class="wizard-review-item">
+          <div class="wizard-review-icon"><i class="fas fa-globe"></i></div>
+          <div class="wizard-review-content">
+            <div class="wizard-review-label">Language</div>
+            <div class="wizard-review-value">${this._esc(this.wizardData.language)}</div>
+          </div>
+        </div>
+        <div class="wizard-review-item">
+          <div class="wizard-review-icon"><i class="fas fa-sliders-h"></i></div>
+          <div class="wizard-review-content">
+            <div class="wizard-review-label">Depth & Style</div>
+            <div class="wizard-review-value">${this.wizardData.depth} · ${this.wizardData.style}</div>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-review-warning">
+        <i class="fas fa-info-circle"></i>
+        Generation typically takes 20-30 seconds. Content will stream live to your screen.
+      </div>
+    `;
+  }
+  
+  _validateWizardStep() {
+    if (this.wizardStep === 1) {
+      const topicInput = this._el('wizardTopicInput');
+      if (topicInput) {
+        this.wizardData.topic = topicInput.value.trim();
+      }
+      if (!this.wizardData.topic || this.wizardData.topic.length < 2) {
+        this._toast('error', 'fa-exclamation-circle', 'Please enter a topic (at least 2 characters)');
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  async _sendWithWizardData() {
+    if (this.generating) return;
+    
+    const text = this.wizardData.topic;
+    if (!text || text.length < 2) {
+      this._toast('info', 'fa-lightbulb', 'Please enter a topic or question to study.');
+      return;
+    }
+    
+    const depthSel = this._el('depthSel');
+    const langSel = this._el('langSel');
+    const styleSel = this._el('styleSel');
+    
+    if (depthSel) depthSel.value = this.wizardData.depth;
+    if (langSel) langSel.value = this.wizardData.language;
+    if (styleSel) styleSel.value = this.wizardData.style;
+    this._setTool(this.wizardData.tool);
+    
+    const ta = this._el('mainInput');
+    if (ta) ta.value = text;
+    
+    this._checkAndUpdateStreak();
+    await this._send();
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
@@ -359,6 +687,9 @@ class SavoireApp {
     this._on('themeBtn',          'click',   () => this._toggleTheme());
     this._on('settingsBtn',       'click',   () => this._openSettingsModal());
     this._on('avBtn',             'click',   e  => { e.stopPropagation(); this._toggleDropdown(); });
+
+    /* ── NEW v2.2: Wizard Button ── */
+    this._on('wizardBtn',         'click',   () => this._openWizard());
 
     /* ── Avatar dropdown ── */
     this._on('avHist',            'click',   () => { this._closeDropdown(); this._openHistModal(); });
@@ -892,6 +1223,9 @@ class SavoireApp {
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({
         message,
+        userName: this.userName,
+        streak: this.streak.count,
+        sessions: this.streak.totalSessions,
         options: { ...opts, stream: true },
       });
 
@@ -1059,7 +1393,13 @@ class SavoireApp {
     const res = await fetch(SAVOIRÉ.API_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ message, options: { ...opts, stream: false } }),
+      body:    JSON.stringify({ 
+        message, 
+        userName: this.userName,
+        streak: this.streak.count,
+        sessions: this.streak.totalSessions,
+        options: { ...opts, stream: false } 
+      }),
       signal:  this.streamCtrl?.signal,
     });
     if (!res.ok) throw new Error(`Server error (${res.status}). Please try again.`);
@@ -2483,7 +2823,7 @@ class SavoireApp {
         doc.setFontSize(6.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(160, 130, 80);
-        doc.text('v2.0', ml + 7 + doc.getTextWidth('SAVOIRÉ AI') + 2, 16);
+        doc.text('v2.2', ml + 7 + doc.getTextWidth('SAVOIRÉ AI') + 2, 16);
 
         /* Tagline */
         doc.setFontSize(7);
@@ -2954,7 +3294,7 @@ class SavoireApp {
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...GOLD);
-      doc.text('SAVOIRÉ AI v2.0', ml + 8, y + 5);
+      doc.text('SAVOIRÉ AI v2.2', ml + 8, y + 5);
 
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
@@ -3641,13 +3981,13 @@ window.addEventListener('DOMContentLoaded', () => {
   };
 
   /* Console welcome */
-  console.log('%c📚 Welcome to Savoiré AI v2.0', 'color:#C9A96E;font-size:14px;font-weight:bold');
+  console.log('%c📚 Welcome to Savoiré AI v2.2', 'color:#C9A96E;font-size:14px;font-weight:bold');
   console.log('%cBuilt by Sooban Talha Technologies | soobantalhatech.xyz', 'color:#756D63;font-size:11px');
-  console.log('%cUpgraded: Live markdown rendering · World-class quiz · Premium PDF', 'color:#42C98A;font-size:10px');
+  console.log('%cUpgraded: Streak System · Wizard Cards · Google Sheets Tracking', 'color:#42C98A;font-size:10px');
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   END OF FILE — app.js v2.
-   Savoiré AI v2.0 — Built by Sooban Talha Technologies | soobantalhatech.xyz
+   END OF FILE — app.js v2.2
+   Savoiré AI v2.2 — Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha | Free for every student on Earth, forever.
    ═══════════════════════════════════════════════════════════════════════════════ */
