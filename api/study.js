@@ -21,54 +21,35 @@ const HTTP_REFERER    = `https://${WEBSITE}`;
 const APP_TITLE       = BRAND;
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// PRIVATE GOOGLE SHEETS WEBHOOK (Only you can access the data)
+// PRIVATE GOOGLE SHEETS WEBHOOK
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// TIMEZONE HELPER - Indian Standard Time (IST - UTC+5:30)
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
-function getIndianTime() {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-  return new Date(utcTime + istOffset);
-}
-
-function getIndianDateTime() {
-  const istTime = getIndianTime();
-  const year = istTime.getFullYear();
-  const month = String(istTime.getMonth() + 1).padStart(2, '0');
-  const day = String(istTime.getDate()).padStart(2, '0');
-  const hours = String(istTime.getHours()).padStart(2, '0');
-  const minutes = String(istTime.getMinutes()).padStart(2, '0');
-  const seconds = String(istTime.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL ROSTER (Increased tokens for better output)
+// SECTION 2 — MODEL ROSTER (Increased tokens for better output, faster timeouts)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+// Phase 1: streaming markdown notes — prioritise fastest first-token models
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 4000, timeout_ms: 35000 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 30000 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 4000, timeout_ms: 35000 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 30000 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 30000 },
-  { id: 'qwen/qwen3-8b:free',                      max_tokens: 3000, timeout_ms: 25000 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3000, timeout_ms: 25000 },
-  { id: 'openchat/openchat-7b:free',               max_tokens: 3000, timeout_ms: 25000 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 5000, timeout_ms: 35000 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4500, timeout_ms: 30000 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 5000, timeout_ms: 35000 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 30000 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 4000, timeout_ms: 28000 },
+  { id: 'qwen/qwen3-8b:free',                      max_tokens: 3500, timeout_ms: 25000 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3500, timeout_ms: 25000 },
+  { id: 'openchat/openchat-7b:free',               max_tokens: 3500, timeout_ms: 25000 },
 ];
 
+// Phase 2: structured JSON cards — smaller prompt, non-streaming, faster
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 30000 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3000, timeout_ms: 25000 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 3500, timeout_ms: 30000 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3000, timeout_ms: 25000 },
-  { id: 'qwen/qwen3-8b:free',                      max_tokens: 2500, timeout_ms: 22000 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 22000 },
-  { id: 'openchat/openchat-7b:free',               max_tokens: 2500, timeout_ms: 22000 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 4000, timeout_ms: 30000 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 25000 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',      max_tokens: 4000, timeout_ms: 30000 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 25000 },
+  { id: 'qwen/qwen3-8b:free',                      max_tokens: 3000, timeout_ms: 22000 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3000, timeout_ms: 22000 },
+  { id: 'openchat/openchat-7b:free',               max_tokens: 3000, timeout_ms: 22000 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -79,7 +60,7 @@ const DEPTH_MAP = {
   standard:      { wordRange: '600–900 words',   minChars: 700  },
   detailed:      { wordRange: '1000–1500 words',  minChars: 1100  },
   comprehensive: { wordRange: '1500–2200 words', minChars: 1600 },
-  expert:        { wordRange: '2200–3000 words', minChars: 2300 },
+  expert:        { wordRange: '2200–3500 words', minChars: 2300 },
 };
 
 const STYLE_MAP = {
@@ -105,16 +86,16 @@ const TOOL_MAP = {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const log = {
-  info:  (...a) => console.log  (`[${getIndianDateTime()}] [${BRAND}] INFO  `, ...a),
-  ok:    (...a) => console.log  (`[${getIndianDateTime()}] [${BRAND}] OK    `, ...a),
-  warn:  (...a) => console.warn (`[${getIndianDateTime()}] [${BRAND}] WARN  `, ...a),
-  error: (...a) => console.error(`[${getIndianDateTime()}] [${BRAND}] ERROR `, ...a),
+  info:  (...a) => console.log  (`[${new Date().toISOString()}] [${BRAND}] INFO  `, ...a),
+  ok:    (...a) => console.log  (`[${new Date().toISOString()}] [${BRAND}] OK    `, ...a),
+  warn:  (...a) => console.warn (`[${new Date().toISOString()}] [${BRAND}] WARN  `, ...a),
+  error: (...a) => console.error(`[${new Date().toISOString()}] [${BRAND}] ERROR `, ...a),
 };
 
 const trunc = (s, n = 100) => !s ? '' : (String(s).length > n ? String(s).slice(0, n) + '…' : String(s));
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// PRIVATE USER TRACKING - Sends data to YOUR private Google Sheet only (IST Timezone)
+// GOOGLE SHEETS TRACKING
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
 async function sendToGoogleSheets(userName, streak, lastActive, sessions, topic = '', tool = '') {
@@ -124,19 +105,19 @@ async function sendToGoogleSheets(userName, streak, lastActive, sessions, topic 
   }
   
   try {
-    const indianTime = getIndianDateTime();
-    
     const response = await fetch(GOOGLE_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userName: userName || 'anonymous',
         streak: streak || 0,
-        lastActive: lastActive || indianTime,
-        sessions: sessions || 1
+        lastActive: lastActive || new Date().toISOString(),
+        sessions: sessions || 1,
+        topic: topic || '',
+        tool: tool || ''
       })
     });
-    log.ok(`📊 User data sent to private Google Sheet: ${userName} | Streak: ${streak} | Sessions: ${sessions}`);
+    log.ok(`📊 User data sent to Google Sheet: ${userName} | Streak: ${streak} | Sessions: ${sessions}`);
     return response.ok;
   } catch (err) {
     log.warn(`Failed to send to Google Sheets: ${err.message}`);
@@ -150,7 +131,7 @@ async function sendToGoogleSheets(userName, streak, lastActive, sessions, topic 
 
 function generateToolFallback(topic, opts, tool) {
   const t = (topic || 'this topic').trim();
-  const now = getIndianDateTime();
+  const now = new Date().toISOString();
   const lang = opts.language || 'English';
   
   switch (tool) {
@@ -195,14 +176,14 @@ function generateFlashcardFallback(t, lang, now) {
   concepts.forEach((c, i) => {
     const parts = c.split(':');
     flashcards.push({
-      front: (parts[0] || c).substring(0, 120).trim(),
-      back: (parts.slice(1).join(':') || c).substring(0, 400).trim()
+      front: (parts[0] || c).substring(0, 150).trim(),
+      back: (parts.slice(1).join(':') || c).substring(0, 500).trim()
     });
   });
   questions.forEach((q, i) => {
     flashcards.push({
-      front: q.question.substring(0, 180),
-      back: q.answer.substring(0, 500)
+      front: q.question.substring(0, 200),
+      back: q.answer.substring(0, 600)
     });
   });
   
@@ -232,7 +213,7 @@ function generateQuizFallback(t, lang, now) {
   const quizQuestions = questions.map((q, idx) => ({
     id: idx + 1,
     question: q.question,
-    correctAnswer: q.answer.split('.')[0].substring(0, 150),
+    correctAnswer: q.answer.split('.')[0].substring(0, 180),
     explanation: q.answer,
     options: generateMCQOptions(q.answer, t)
   }));
@@ -275,7 +256,7 @@ function generateMindmapFallback(t, lang, now) {
     mindmap: {
       central: t,
       branches: [
-        { name: 'Core Concepts', items: concepts.slice(0, 4) },
+        { name: 'Core Concepts', items: concepts.slice(0, 5) },
         { name: 'Applications', items: apps.slice(0, 3) },
         { name: 'Study Methods', items: tricks.slice(0, 3) },
         { name: 'Common Issues', items: misconceptions.slice(0, 3) }
@@ -319,7 +300,7 @@ function generateSummaryFallback(t, lang, now) {
 }
 
 function generateMCQOptions(correctAnswer, topic) {
-  const correct = correctAnswer.split('.')[0].substring(0, 120);
+  const correct = correctAnswer.split('.')[0].substring(0, 150);
   const wrongOptions = [
     `This is a common misunderstanding about ${topic}`,
     `This describes a different but related concept`,
@@ -403,19 +384,23 @@ TASK: ${tool.objective}
 TOPIC: ${input}
 LANGUAGE: ${lang}
 Write EVERYTHING — every word, every heading, every bullet — in ${lang} only.
-LENGTH: ${depth.wordRange}
+LENGTH: ${depth.wordRange} (be thorough and detailed)
 STYLE: ${style}
 
 Write comprehensive study notes in rich markdown. Use these sections:
 ${sections}
 
-FORMATTING:
-- ## for each section heading
-- **bold** for key terms on first use
-- - bullet points for lists
+FORMATTING REQUIREMENTS:
+- ## for each section heading (bold, well-spaced)
+- **bold** for key terms on first use (very important)
+- - bullet points for lists (use proper indentation)
 - > blockquotes for definitions or key statements
 - --- horizontal rule between major sections
-- Concrete examples in every section
+- **Concrete examples in every section** (real-world examples)
+- Use numbered lists where appropriate
+- Add a "Key Takeaways" box at the end
+
+LENGTH REQUIREMENT: Write at least ${depth.minChars} characters. Be thorough.
 
 START WRITING IMMEDIATELY. No preamble. No meta-commentary.
 Begin directly with the first ## heading. Write in ${lang} only.`;
@@ -427,43 +412,45 @@ Begin directly with the first ## heading. Write in ${lang} only.`;
 
 function buildCardsPrompt(input, opts) {
   const lang = opts.language || 'English';
-  const now  = getIndianDateTime();
+  const now  = new Date().toISOString();
+  const tool = opts.tool || 'notes';
 
   return `You are ${BRAND} by ${DEVELOPER}.
 Generate study cards for: "${input}"
 Language: ${lang}
+Tool: ${tool}
 
 Output ONLY a valid JSON object. No text before or after. No markdown fences.
 
 {
   "topic": "clean topic name in ${lang}",
-  "curriculum_alignment": "e.g. A-Level Biology",
+  "curriculum_alignment": "e.g. A-Level Biology, Grade 12 Physics, University Level",
   "key_concepts": [
-    "Term 1: explanation 25-40 words in ${lang}",
-    "Term 2: explanation 25-40 words in ${lang}",
-    "Term 3: explanation 25-40 words in ${lang}",
-    "Term 4: explanation 25-40 words in ${lang}",
-    "Term 5: explanation 25-40 words in ${lang}"
+    "Term 1: detailed explanation 30-50 words in ${lang}",
+    "Term 2: detailed explanation 30-50 words in ${lang}",
+    "Term 3: detailed explanation 30-50 words in ${lang}",
+    "Term 4: detailed explanation 30-50 words in ${lang}",
+    "Term 5: detailed explanation 30-50 words in ${lang}"
   ],
   "key_tricks": [
-    "Study trick 1 — 50-70 words in ${lang}",
-    "Study trick 2 — 50-70 words in ${lang}",
-    "Study trick 3 — 50-70 words in ${lang}"
+    "Memory trick 1 — 60-80 words in ${lang} with step-by-step technique",
+    "Memory trick 2 — 60-80 words in ${lang} with step-by-step technique",
+    "Memory trick 3 — 60-80 words in ${lang} with step-by-step technique"
   ],
   "practice_questions": [
-    {"question": "analytical question in ${lang}", "answer": "thorough answer 120+ words in ${lang}"},
-    {"question": "application question in ${lang}", "answer": "thorough answer 120+ words in ${lang}"},
-    {"question": "evaluation question in ${lang}", "answer": "thorough answer 120+ words in ${lang}"}
+    {"question": "analytical question in ${lang} (75-100 words)", "answer": "thorough answer 150+ words in ${lang} with explanation"},
+    {"question": "application question in ${lang} (75-100 words)", "answer": "thorough answer 150+ words in ${lang} with explanation"},
+    {"question": "evaluation question in ${lang} (75-100 words)", "answer": "thorough answer 150+ words in ${lang} with explanation"}
   ],
   "real_world_applications": [
-    "Field: specific application 40-60 words in ${lang}",
-    "Field: specific application 40-60 words in ${lang}",
-    "Field: specific application 40-60 words in ${lang}"
+    "Industry/Field 1: specific real-world application 50-70 words in ${lang}",
+    "Industry/Field 2: specific real-world application 50-70 words in ${lang}",
+    "Industry/Field 3: specific real-world application 50-70 words in ${lang}"
   ],
   "common_misconceptions": [
-    "Many students believe [wrong]. In reality [correct]. 40-60 words in ${lang}",
-    "Many students believe [wrong]. In reality [correct]. 40-60 words in ${lang}",
-    "Many students believe [wrong]. In reality [correct]. 40-60 words in ${lang}"
+    "Many students believe [common wrong belief]. In reality [correct explanation]. 50-70 words in ${lang}",
+    "Many students believe [common wrong belief]. In reality [correct explanation]. 50-70 words in ${lang}",
+    "Many students believe [common wrong belief]. In reality [correct explanation]. 50-70 words in ${lang}"
   ],
   "study_score": 96,
   "powered_by": "${BRAND} by ${DEVELOPER}",
@@ -498,7 +485,7 @@ async function streamNotes(prompt, onChunk) {
         body: JSON.stringify({
           model:       model.id,
           max_tokens:  model.max_tokens,
-          temperature: 0.7,
+          temperature: 0.75,
           stream:      true,
           messages:    [{ role: 'user', content: prompt }],
         }),
@@ -544,7 +531,7 @@ async function streamNotes(prompt, onChunk) {
         }
       }
 
-      if (full.trim().length < 100) {
+      if (full.trim().length < 150) {
         lastErr = `${name} returned too-short content (${full.length} chars)`;
         log.warn(lastErr);
         continue;
@@ -594,7 +581,7 @@ async function fetchCards(prompt) {
         body: JSON.stringify({
           model:       model.id,
           max_tokens:  model.max_tokens,
-          temperature: 0.5,
+          temperature: 0.55,
           stream:      false,
           messages:    [{ role: 'user', content: prompt }],
         }),
@@ -614,7 +601,7 @@ async function fetchCards(prompt) {
       const data    = await res.json();
       const content = data?.choices?.[0]?.message?.content?.trim();
 
-      if (!content || content.length < 120) {
+      if (!content || content.length < 200) {
         lastErr = `${name} returned empty content`;
         log.warn(lastErr);
         continue;
@@ -671,7 +658,7 @@ async function fetchCards(prompt) {
 
 function fallbackCards(topic, opts) {
   const t   = (topic || 'this topic').trim();
-  const now = getIndianDateTime();
+  const now = new Date().toISOString();
   return {
     topic: t,
     curriculum_alignment: 'General Academic Study',
@@ -710,50 +697,45 @@ The study of ${T} begins with its fundamental conceptual infrastructure — the 
 
 **Analytical Framework:** ${T} provides a structured way of perceiving and reasoning about complex problems.
 
-**Systemic Perspective:** No component of ${T} exists in isolation. Every concept connects to others through relationships of logical dependence, causal influence, or structural analogy.
-
 ---
 
 ## How It Works
 
 The core processes of ${T} unfold through identifiable stages:
 
-**Stage 1 — Initial Conditions:** Every application begins with specific prerequisites. Accurately identifying these is critical — misunderstanding initial conditions is a primary source of errors.
+**Stage 1 — Initial Conditions:** Every application begins with specific prerequisites.
 
-**Stage 2 — Active Mechanisms:** The defining mechanisms transform inputs into outputs through processes that follow identifiable patterns and describable rules. Understanding *why* these mechanisms produce their outputs — not just *what* they produce — enables prediction, explanation of anomalies, and effective intervention design.
+**Stage 2 — Active Mechanisms:** The defining mechanisms transform inputs into outputs.
 
-**Stage 3 — Feedback and Adjustment:** Many systems incorporate feedback loops through which outcomes influence subsequent inputs, creating adaptive or self-correcting behaviour.
+**Stage 3 — Feedback and Adjustment:** Many systems incorporate feedback loops.
 
-**Stage 4 — Observable Outputs:** The ultimate products take measurable forms — quantities, categorical outcomes, behavioural changes, or structural modifications.
+**Stage 4 — Observable Outputs:** The ultimate products take measurable forms.
 
 ---
 
 ## Key Examples
 
-Concrete examples ground abstract principles in reality. Understanding examples in ${T} means understanding *why* each example works the way it does and *what general principle* it illustrates — not memorising the example as an isolated fact.
-
-Strong examples in ${T} typically demonstrate: how the core mechanism operates in a controlled setting, how complications arise in realistic conditions, and how practitioners navigate those complications in professional practice.
+Concrete examples ground abstract principles in reality. Understanding examples in ${T} means understanding *why* each example works.
 
 ---
 
 ## Advanced Aspects
 
-At an advanced level, ${T} reveals important nuances that introductory treatments necessarily simplify:
+At an advanced level, ${T} reveals important nuances:
 
-- **Boundary conditions** — where standard frameworks break down and require modification
-- **Historical debates** — why current frameworks were accepted over alternatives
-- **Ongoing research** — the frontier of current knowledge and open questions
+- **Boundary conditions** — where standard frameworks break down
+- **Historical debates** — why current frameworks were accepted
+- **Ongoing research** — the frontier of current knowledge
 - **Interdisciplinary connections** — how ${T} relates to adjacent fields
 
 ---
 
 ## Summary & Key Takeaways
 
-- **Core principle:** ${T} rests on foundational concepts connecting theory to practice through systematic reasoning
+- **Core principle:** ${T} rests on foundational concepts
 - **Key skill:** Analytical framework transferable to adjacent domains
 - **Common trap:** Surface familiarity mistaken for genuine understanding
-- **Study strategy:** Active recall and spaced repetition outperform passive re-reading every time
-- **Remember:** The depth of ${T} rewards sustained engagement — there is always more to understand
+- **Study strategy:** Active recall and spaced repetition
 
 *— Generated by ${BRAND} | ${DEVELOPER} | ${DEVSITE}*`;
 }
@@ -786,7 +768,7 @@ function mergeCards(raw, notes, topic, opts) {
     common_misconceptions:   arr(src.common_misconceptions,   fb.common_misconceptions),
     study_score:             96,
     powered_by:              `${BRAND} by ${DEVELOPER}`,
-    generated_at:            src.generated_at || getIndianDateTime(),
+    generated_at:            src.generated_at || new Date().toISOString(),
     _version:                APP_VERSION,
   };
 }
@@ -839,10 +821,10 @@ module.exports = async function handler(req, res) {
   const userSessions = typeof body.sessions === 'number' ? body.sessions : 1;
   const userTopic = message.substring(0, 200);
 
-  // Handle ping / warmup
+  // Handle ping / warmup / track
   if (message === 'ping' || message === '' || message === 'track') {
     if (message === 'track' && userName) {
-      await sendToGoogleSheets(userName, userStreak, getIndianDateTime(), userSessions, '', '');
+      await sendToGoogleSheets(userName, userStreak, new Date().toISOString(), userSessions, '', '');
     }
     return res.status(200).json({ status: 'ok', service: BRAND, ts: Date.now() });
   }
@@ -904,9 +886,9 @@ module.exports = async function handler(req, res) {
 
     // ── Stage schedule ──
     const stages = [
-      setTimeout(() => sse('stage', { idx: 1, label: 'Writing your study content…' }), 2500),
-      setTimeout(() => sse('stage', { idx: 2, label: 'Building sections…'          }), 7000),
-      setTimeout(() => sse('stage', { idx: 3, label: 'Generating study cards…'     }), 13000),
+      setTimeout(() => sse('stage', { idx: 1, label: 'Writing your study content…' }), 2000),
+      setTimeout(() => sse('stage', { idx: 2, label: 'Building sections…'          }), 6000),
+      setTimeout(() => sse('stage', { idx: 3, label: 'Generating study cards…'     }), 12000),
     ];
     const clearStages = () => stages.forEach(clearTimeout);
 
@@ -929,10 +911,10 @@ module.exports = async function handler(req, res) {
         log.warn(`[${rid}] Phase 1 failed: ${p1err.message} — streaming offline fallback`);
         const fb    = offlineNotes(message);
         const words = fb.split(' ');
-        for (let i = 0; i < words.length; i += 5) {
+        for (let i = 0; i < words.length; i += 4) {
           if (res.writableEnded) break;
-          sse('token', { t: words.slice(i, i + 5).join(' ') + ' ' });
-          await sleep(35);
+          sse('token', { t: words.slice(i, i + 4).join(' ') + ' ' });
+          await sleep(30);
         }
         notes = fb;
       }
@@ -969,9 +951,9 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 4, label: 'Done!', done: true });
       sse('done', final);
 
-      // Send user data to PRIVATE Google Sheet (IST Timezone)
+      // Send user data to Google Sheet
       if (userName) {
-        await sendToGoogleSheets(userName, userStreak, getIndianDateTime(), userSessions, userTopic, opts.tool);
+        await sendToGoogleSheets(userName, userStreak, new Date().toISOString(), userSessions, userTopic, opts.tool);
       }
 
       log.ok(`[${rid}] Complete — ${final._duration_ms}ms | p1:${p1ok} p2:${!!cardsRaw}`);
@@ -1018,7 +1000,7 @@ module.exports = async function handler(req, res) {
           },
           body: JSON.stringify({
             model: model.id, max_tokens: model.max_tokens,
-            temperature: 0.7, stream: false,
+            temperature: 0.75, stream: false,
             messages: [{ role: 'user', content: notesPrompt }],
           }),
           signal: ctrl.signal,
@@ -1027,7 +1009,7 @@ module.exports = async function handler(req, res) {
         if (!r.ok) continue;
         const d = await r.json();
         const c = d?.choices?.[0]?.message?.content?.trim();
-        if (c && c.length > 100) { notes = c; log.ok(`Sync notes: ${name}`); break; }
+        if (c && c.length > 150) { notes = c; log.ok(`Sync notes: ${name}`); break; }
       } catch { clearTimeout(timer); continue; }
     }
 
@@ -1049,9 +1031,8 @@ module.exports = async function handler(req, res) {
     final._request_id  = rid;
     final.powered_by   = `${BRAND} by ${DEVELOPER}`;
 
-    // Send user data to private Google Sheet
     if (userName) {
-      await sendToGoogleSheets(userName, userStreak, getIndianDateTime(), userSessions, userTopic, opts.tool);
+      await sendToGoogleSheets(userName, userStreak, new Date().toISOString(), userSessions, userTopic, opts.tool);
     }
 
     log.ok(`[${rid}] Sync complete — ${final._duration_ms}ms`);

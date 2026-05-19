@@ -1,16 +1,16 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.0 — app.js — FULLY UPGRADED
+   SAVOIRÉ AI v2.0 — app.js — COMPLETE FIXED
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
-   v2.0 FINAL — ALL FIXES:
-   ✦ Mobile responsive sidebar (75% width with toggle)
-   ✦ Logo image support (logo.png)
-   ✦ Wizard mode button beautifully styled
-   ✦ All tools streaming working
-   ✦ Google Sheets tracking with IST timezone
-   ✦ PDF generation with professional styling
+   FIXES:
+   ✦ Simplified sidebar (only history, user profile, streak, saved notes)
+   ✦ Wizard button in MAIN AREA (not sidebar)
+   ✦ Mobile sidebar hide/show toggle
+   ✦ All 5 tools live streaming working
+   ✦ Professional PDF generation
+   ✦ Google Sheets tracking
 ═══════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ─────────────────────────────────────────────────────────────────────────────────────────
@@ -228,9 +228,9 @@ class SavoireApp {
     this.wizardData = {
       tool: this.tool,
       topic: '',
-      language: this._el('langSel')?.value || 'English',
-      depth: this._el('depthSel')?.value || 'detailed',
-      style: this._el('styleSel')?.value || 'simple'
+      language: 'English',
+      depth: 'detailed',
+      style: 'simple'
     };
     this.wizardFile = null;
     this.wizardStep = 0;
@@ -502,7 +502,7 @@ class SavoireApp {
       { value: 'standard', label: 'Standard', desc: '600–900 words', icon: 'fa-flag' },
       { value: 'detailed', label: 'Detailed', desc: '1000–1500 words', icon: 'fa-chart-line' },
       { value: 'comprehensive', label: 'Comprehensive', desc: '1500–2200 words', icon: 'fa-chart-simple' },
-      { value: 'expert', label: 'Expert', desc: '2200–3000 words', icon: 'fa-crown' }
+      { value: 'expert', label: 'Expert', desc: '2200–3500 words', icon: 'fa-crown' }
     ];
     
     const styles = [
@@ -622,20 +622,56 @@ class SavoireApp {
       return;
     }
     
-    const depthSel = this._el('depthSel');
-    const langSel = this._el('langSel');
-    const styleSel = this._el('styleSel');
-    
-    if (depthSel) depthSel.value = this.wizardData.depth;
-    if (langSel) langSel.value = this.wizardData.language;
-    if (styleSel) styleSel.value = this.wizardData.style;
     this._setTool(this.wizardData.tool);
     
     const ta = this._el('mainInput');
     if (ta) ta.value = text;
     
     this._checkAndUpdateStreak();
-    await this._send();
+    
+    // Directly call send instead of using hidden fields
+    this.generating = true;
+    this.streamBuffer = '';
+    this._setRunLoading(true);
+    this._showStreamOverlay(text, this.wizardData.tool);
+    this._startThinkingStages();
+    
+    try {
+      const data = await this._callAPIStream(text, { 
+        depth: this.wizardData.depth, 
+        language: this.wizardData.language, 
+        style: this.wizardData.style, 
+        tool: this.wizardData.tool 
+      });
+      this.currentData = data;
+      this._hideStreamOverlay();
+      this._renderResult(data);
+      this._addToHistory({
+        id:    this._genId(),
+        topic: data.topic || text,
+        tool:  this.wizardData.tool,
+        data,
+        ts:    Date.now(),
+      });
+      this._updateHeaderStats();
+      this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.wizardData.tool].sfpName} ready!`);
+      setTimeout(() => this._scrollToResult(), 200);
+    } catch (err) {
+      if (err.name === 'AbortError' || err.message === 'AbortError') {
+        this._toast('info', 'fa-stop-circle', 'Generation cancelled.');
+        this._hideStreamOverlay();
+        this._showState('empty');
+      } else {
+        this._hideStreamOverlay();
+        this._showState('error', err.message || 'Something went wrong. Please try again.');
+        this._toast('error', 'fa-exclamation-circle', err.message || 'Generation failed.');
+      }
+    } finally {
+      this.generating = false;
+      this._setRunLoading(false);
+      this._stopThinkingStages();
+      this._showCancelBtn(false);
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════════════════════
@@ -809,7 +845,7 @@ class SavoireApp {
     this._on('settingsBtn',       'click',   () => this._openSettingsModal());
     this._on('avBtn',             'click',   e  => { e.stopPropagation(); this._toggleDropdown(); });
 
-    /* ── Wizard Button ── */
+    /* ── Wizard Button in Main Area ── */
     this._on('wizardBtn',         'click',   () => this._openWizard());
 
     this._on('avHist',            'click',   () => { this._closeDropdown(); this._openHistModal(); });
@@ -1212,7 +1248,6 @@ class SavoireApp {
     this.generating   = true;
     this.streamBuffer = '';
     this._setRunLoading(true);
-    this._collapseInput(text);
     this._showStreamOverlay(text, this.tool);
     this._startThinkingStages();
 
@@ -1718,93 +1753,47 @@ class SavoireApp {
         <div class="rh-left">
           <div class="rh-topic">${topic}</div>
           <div class="rh-meta">
-            <div class="rh-mi">
-              <i class="fas fa-graduation-cap"></i>
-              ${this._esc(data.curriculum_alignment || 'General Study')}
-            </div>
-            <div class="rh-mi">
-              <i class="fas fa-calendar-alt"></i>
-              ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}
-            </div>
-            <div class="rh-mi">
-              <i class="fas fa-globe"></i>
-              ${this._esc(lang)}
-            </div>
-            <div class="rh-mi">
-              <i class="fas fa-file-word"></i>
-              ~${wc.toLocaleString()} words
-            </div>
-            <div class="rh-mi">
-              <i class="fas fa-star" style="color:var(--gold)"></i>
-              Score: ${score}/100
-            </div>
+            <div class="rh-mi"><i class="fas fa-graduation-cap"></i> ${this._esc(data.curriculum_alignment || 'General Study')}</div>
+            <div class="rh-mi"><i class="fas fa-calendar-alt"></i> ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</div>
+            <div class="rh-mi"><i class="fas fa-globe"></i> ${this._esc(lang)}</div>
+            <div class="rh-mi"><i class="fas fa-file-word"></i> ~${wc.toLocaleString()} words</div>
+            <div class="rh-mi"><i class="fas fa-star" style="color:var(--gold)"></i> Score: ${score}/100</div>
           </div>
-          <div class="rh-powered">
-            Powered by <strong>${SAVOIRÉ.BRAND}</strong>
-            &nbsp;·&nbsp;
-            <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank" rel="noopener">${SAVOIRÉ.DEVELOPER}</a>
-            &nbsp;·&nbsp;
-            <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank" rel="noopener">${SAVOIRÉ.WEBSITE}</a>
-          </div>
+          <div class="rh-powered">Powered by <strong>${SAVOIRÉ.BRAND}</strong> · <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> · <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank">${SAVOIRÉ.WEBSITE}</a></div>
         </div>
         <div class="score-ring-wrap">
-          <div class="rh-score" style="--pct:${pct}" title="Study score ${score}/100">
-            <div class="rh-score-val">${score}</div>
-          </div>
+          <div class="rh-score" style="--pct:${pct}"><div class="rh-score-val">${score}</div></div>
           <div class="score-ring-label">Score</div>
         </div>
       </div>`;
 
     const navItems = this._buildNavItems(data);
     const nav = navItems.length > 2 ? `
-      <div class="result-nav" aria-label="Jump to section">
-        ${navItems.map(item => `
-          <a href="#${item.id}" class="result-nav-btn" title="Jump to ${item.label}">
-            <i class="${item.icon}"></i> ${item.label}
-          </a>`).join('')}
+      <div class="result-nav">
+        ${navItems.map(item => `<a href="#${item.id}" class="result-nav-btn"><i class="${item.icon}"></i> ${item.label}</a>`).join('')}
       </div>` : '';
 
     let body = '';
     switch (this.tool) {
-      case 'flashcards': body = this._buildFcHTML(data);      break;
-      case 'quiz':       body = this._buildQuizHTML(data);    break;
-      case 'summary':    body = this._buildSummaryHTML(data); break;
-      case 'mindmap':    body = this._buildMindmapHTML(data); break;
-      default:           body = this._buildNotesHTML(data);   break;
+      case 'flashcards': body = this._buildFcHTML(data); break;
+      case 'quiz': body = this._buildQuizHTML(data); break;
+      case 'summary': body = this._buildSummaryHTML(data); break;
+      case 'mindmap': body = this._buildMindmapHTML(data); break;
+      default: body = this._buildNotesHTML(data); break;
     }
 
     const exportBar = `
       <div class="export-bar">
-        <button class="exp-btn pdf"   onclick="window._app._downloadPDF()"   title="Download as professional PDF">
-          <i class="fas fa-file-pdf"></i><span>Download PDF</span>
-        </button>
-        <button class="exp-btn copy"  onclick="window._app._copyResult()"    title="Copy all text">
-          <i class="fas fa-copy"></i><span>Copy Text</span>
-        </button>
-        <button class="exp-btn save"  onclick="window._app._saveNote()"      title="Save to library">
-          <i class="fas fa-star"></i><span>Save Note</span>
-        </button>
-        <button class="exp-btn share" onclick="window._app._shareResult()"   title="Share">
-          <i class="fas fa-share-alt"></i><span>Share</span>
-        </button>
-        <span class="exp-brand">
-          ${SAVOIRÉ.BRAND} &nbsp;·&nbsp;
-          <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank" rel="noopener">${SAVOIRÉ.DEVELOPER}</a>
-        </span>
+        <button class="exp-btn pdf" onclick="window._app._downloadPDF()"><i class="fas fa-file-pdf"></i><span>Download PDF</span></button>
+        <button class="exp-btn copy" onclick="window._app._copyResult()"><i class="fas fa-copy"></i><span>Copy Text</span></button>
+        <button class="exp-btn save" onclick="window._app._saveNote()"><i class="fas fa-star"></i><span>Save Note</span></button>
+        <button class="exp-btn share" onclick="window._app._shareResult()"><i class="fas fa-share-alt"></i><span>Share</span></button>
+        <span class="exp-brand">${SAVOIRÉ.BRAND} · <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a></span>
       </div>`;
 
     const brandingFooter = `
       <div class="result-branding-footer">
-        <div class="rbf-left">
-          <div class="rbf-logo"><img src="logo.png" alt="Savoiré AI" style="width:22px;height:22px;border-radius:4px"></div>
-          <div class="rbf-text">
-            <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank" rel="noopener">${SAVOIRÉ.BRAND}</a>
-            &nbsp;·&nbsp;
-            <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank" rel="noopener">${SAVOIRÉ.DEVELOPER}</a>
-            &nbsp;·&nbsp; Founder: ${SAVOIRÉ.FOUNDER}
-            &nbsp;·&nbsp; Free forever for every student on Earth.
-          </div>
-        </div>
+        <div class="rbf-left"><div class="rbf-logo">Ś</div><div class="rbf-text"><a href="https://${SAVOIRÉ.WEBSITE}" target="_blank">${SAVOIRÉ.BRAND}</a> · <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> · Founder: ${SAVOIRÉ.FOUNDER} · Free forever for every student on Earth.</div></div>
         <div class="rbf-ts">${new Date().toLocaleString()}</div>
       </div>`;
 
@@ -1813,12 +1802,12 @@ class SavoireApp {
 
   _buildNavItems(data) {
     const items = [];
-    if (data.ultra_long_notes)                  items.push({ id:'sec-notes',    label:'Notes',         icon:'fas fa-book-open' });
-    if (data.key_concepts?.length)              items.push({ id:'sec-concepts', label:'Concepts',      icon:'fas fa-lightbulb' });
-    if (data.key_tricks?.length)                items.push({ id:'sec-tricks',   label:'Tricks',        icon:'fas fa-magic' });
-    if (data.practice_questions?.length)        items.push({ id:'sec-qa',       label:'Questions',     icon:'fas fa-pen-alt' });
-    if (data.real_world_applications?.length)   items.push({ id:'sec-apps',     label:'Applications',  icon:'fas fa-globe' });
-    if (data.common_misconceptions?.length)     items.push({ id:'sec-misc',     label:'Misconceptions',icon:'fas fa-exclamation-triangle' });
+    if (data.ultra_long_notes) items.push({ id:'sec-notes', label:'Notes', icon:'fas fa-book-open' });
+    if (data.key_concepts?.length) items.push({ id:'sec-concepts', label:'Concepts', icon:'fas fa-lightbulb' });
+    if (data.key_tricks?.length) items.push({ id:'sec-tricks', label:'Tricks', icon:'fas fa-magic' });
+    if (data.practice_questions?.length) items.push({ id:'sec-qa', label:'Questions', icon:'fas fa-pen-alt' });
+    if (data.real_world_applications?.length) items.push({ id:'sec-apps', label:'Applications', icon:'fas fa-globe' });
+    if (data.common_misconceptions?.length) items.push({ id:'sec-misc', label:'Misconceptions', icon:'fas fa-exclamation-triangle' });
     return items;
   }
 
@@ -1828,162 +1817,72 @@ class SavoireApp {
     if (data.ultra_long_notes) {
       h += `
         <div class="study-sec section-anchor" id="sec-notes">
-          <div class="ss-hdr">
-            <div class="ss-title">
-              <i class="fas fa-book-open"></i>
-              Comprehensive Analysis
-            </div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(data.ultra_long_notes))})">
-              <i class="fas fa-copy"></i> Copy
-            </button>
-          </div>
-          <div class="ss-body">
-            <div class="md-content">${this._renderMd(data.ultra_long_notes)}</div>
-          </div>
+          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Comprehensive Analysis</div><button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(data.ultra_long_notes))})"><i class="fas fa-copy"></i> Copy</button></div>
+          <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
         </div>`;
     }
 
     if (data.key_concepts?.length) {
       const cards = data.key_concepts.map((c, i) => `
-        <div class="concept-card">
-          <div class="concept-num" aria-hidden="true">${i + 1}</div>
-          <div class="concept-text">${this._esc(c)}</div>
-        </div>`).join('');
-
+        <div class="concept-card"><div class="concept-num">${i + 1}</div><div class="concept-text">${this._esc(c)}</div></div>`).join('');
       h += `
         <div class="study-sec section-anchor" id="sec-concepts">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-lightbulb"></i> Key Concepts</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_concepts.join('\n'))})">
-              <i class="fas fa-copy"></i> Copy
-            </button>
-          </div>
-          <div class="ss-body">
-            <div class="concepts-grid">${cards}</div>
-          </div>
+          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-lightbulb"></i> Key Concepts</div><button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_concepts.join('\n'))})"><i class="fas fa-copy"></i> Copy</button></div>
+          <div class="ss-body"><div class="concepts-grid">${cards}</div></div>
         </div>`;
     }
 
     if (data.key_tricks?.length) {
-      const ICONS = ['fas fa-magic', 'fas fa-star', 'fas fa-bolt', 'fas fa-key', 'fas fa-brain'];
       const items = data.key_tricks.map((t, i) => `
-        <div class="trick-item">
-          <div class="trick-icon">
-            <i class="${ICONS[i % ICONS.length]}" aria-hidden="true"></i>
-          </div>
-          <div class="trick-text">${this._esc(t)}</div>
-        </div>`).join('');
-
+        <div class="trick-item"><div class="trick-icon"><i class="fas fa-magic"></i></div><div class="trick-text">${this._esc(t)}</div></div>`).join('');
       h += `
         <div class="study-sec section-anchor" id="sec-tricks">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-magic"></i> Study Tricks &amp; Memory Aids</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_tricks.join('\n'))})">
-              <i class="fas fa-copy"></i> Copy
-            </button>
-          </div>
-          <div class="ss-body">
-            <div class="tricks-list">${items}</div>
-          </div>
+          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-magic"></i> Study Tricks & Memory Aids</div><button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_tricks.join('\n'))})"><i class="fas fa-copy"></i> Copy</button></div>
+          <div class="ss-body"><div class="tricks-list">${items}</div></div>
         </div>`;
     }
 
     if (data.practice_questions?.length) {
       const qs = data.practice_questions.map((qa, i) => `
         <div class="qa-card">
-          <div
-            class="qa-head"
-            onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.qa-toggle').classList.toggle('open');"
-            role="button"
-            tabindex="0"
-            onkeydown="if(event.key==='Enter'||event.key===' ')this.click()"
-          >
-            <div class="qa-num" aria-hidden="true">${i + 1}</div>
-            <div class="qa-q">${this._esc(qa.question)}</div>
-            <button class="qa-toggle" tabindex="-1" aria-hidden="true">
-              <i class="fas fa-chevron-down"></i> Answer
-            </button>
-          </div>
-          <div class="qa-answer">
-            <div class="qa-albl">
-              <i class="fas fa-check-circle" aria-hidden="true"></i>
-              Answer &amp; Explanation
-            </div>
-            <div class="qa-answer-inner">${this._renderMd(qa.answer)}</div>
-          </div>
+          <div class="qa-head" onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.qa-toggle').classList.toggle('open');"><div class="qa-num">${i + 1}</div><div class="qa-q">${this._esc(qa.question)}</div><button class="qa-toggle"><i class="fas fa-chevron-down"></i> Answer</button></div>
+          <div class="qa-answer"><div class="qa-albl"><i class="fas fa-check-circle"></i> Answer & Explanation</div><div class="qa-answer-inner">${this._renderMd(qa.answer)}</div></div>
         </div>`).join('');
-
       h += `
         <div class="study-sec section-anchor" id="sec-qa">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-pen-alt"></i> Practice Questions &amp; Answers</div>
-          </div>
-          <div class="ss-body">
-            <div class="qa-list">${qs}</div>
-          </div>
+          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-pen-alt"></i> Practice Questions & Answers</div></div>
+          <div class="ss-body"><div class="qa-list">${qs}</div></div>
         </div>`;
     }
 
     if (data.real_world_applications?.length) {
       const items = data.real_world_applications.map((a, i) => `
-        <div class="list-item app">
-          <i class="fas fa-globe li-ico" style="color:var(--em2)" aria-hidden="true"></i>
-          <div class="li-text">
-            <strong style="color:var(--em2)">Application ${i+1}:</strong>
-            ${this._esc(a)}
-          </div>
-        </div>`).join('');
-
+        <div class="list-item app"><i class="fas fa-globe li-ico" style="color:var(--em2)"></i><div class="li-text"><strong>Application ${i+1}:</strong> ${this._esc(a)}</div></div>`).join('');
       h += `
         <div class="study-sec section-anchor" id="sec-apps">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-globe"></i> Real-World Applications</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.real_world_applications.join('\n'))})">
-              <i class="fas fa-copy"></i> Copy
-            </button>
-          </div>
-          <div class="ss-body">
-            <div class="items-list">${items}</div>
-          </div>
+          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-globe"></i> Real-World Applications</div><button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.real_world_applications.join('\n'))})"><i class="fas fa-copy"></i> Copy</button></div>
+          <div class="ss-body"><div class="items-list">${items}</div></div>
         </div>`;
     }
 
     if (data.common_misconceptions?.length) {
       const items = data.common_misconceptions.map((m, i) => `
-        <div class="list-item misc">
-          <i class="fas fa-exclamation-triangle li-ico" style="color:var(--ruby2)" aria-hidden="true"></i>
-          <div class="li-text">
-            <strong style="color:var(--ruby2)">Misconception ${i+1}:</strong>
-            ${this._esc(m)}
-          </div>
-        </div>`).join('');
-
+        <div class="list-item misc"><i class="fas fa-exclamation-triangle li-ico" style="color:var(--ruby2)"></i><div class="li-text"><strong>Misconception ${i+1}:</strong> ${this._esc(m)}</div></div>`).join('');
       h += `
         <div class="study-sec section-anchor" id="sec-misc">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-exclamation-triangle"></i> Common Misconceptions</div>
-          </div>
-          <div class="ss-body">
-            <div class="items-list">${items}</div>
-          </div>
+          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-exclamation-triangle"></i> Common Misconceptions</div></div>
+          <div class="ss-body"><div class="items-list">${items}</div></div>
         </div>`;
     }
 
-    return h || `
-      <div style="padding:24px;color:var(--t3);font-family:var(--fb);font-size:1rem;line-height:1.7">
-        Study materials generated.
-        ${data._fallback ? ' (Running in offline fallback mode — check your API key on Vercel.)' : ''}
-      </div>`;
+    return h || `<div style="padding:24px;color:var(--t3);font-family:var(--fb);font-size:1rem;line-height:1.7">Study materials generated.${data._fallback ? ' (Running in offline fallback mode)' : ''}</div>`;
   }
 
   _buildFcHTML(data) {
     const cards = [];
     (data.key_concepts || []).forEach(c => {
       const parts = c.split(':');
-      cards.push({
-        q: (parts[0] || c).trim(),
-        a: parts.slice(1).join(':').trim() || c,
-      });
+      cards.push({ q: (parts[0] || c).trim(), a: parts.slice(1).join(':').trim() || c });
     });
     (data.practice_questions || []).forEach(qa => {
       cards.push({ q: qa.question, a: qa.answer });
@@ -1991,78 +1890,27 @@ class SavoireApp {
 
     if (!cards.length) return this._buildNotesHTML(data);
 
-    this.fcCards   = cards;
+    this.fcCards = cards;
     this.fcCurrent = 0;
     this.fcFlipped = false;
-
     const total = cards.length;
     const first = cards[0];
 
     return `
       <div class="study-sec">
-        <div class="ss-hdr">
-          <div class="ss-title">
-            <i class="fas fa-layer-group"></i>
-            Interactive Flashcards
-            <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px">
-              (${total} cards)
-            </span>
-          </div>
-        </div>
+        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-layer-group"></i> Interactive Flashcards <span style="color:var(--t3);font-weight:400;margin-left:4px">(${total} cards)</span></div></div>
         <div class="ss-body">
           <div class="fc-mode">
-            <div class="fc-top-bar">
-              <div class="fc-prog">
-                Card <span id="fcCur">1</span> of <span id="fcTot">${total}</span>
-              </div>
-              <div class="fc-prog-bar-wrap">
-                <div class="fc-prog-bar-fill" id="fcProgBar" style="width:${(1/total*100).toFixed(1)}%"></div>
-              </div>
-              <div class="fc-prog" style="min-width:50px;text-align:right">
-                <span id="fcPct">${(1/total*100).toFixed(0)}</span>%
-              </div>
-            </div>
-            <div
-              class="fc-wrap"
-              onclick="window._app._fcFlip()"
-              title="Click to flip (or press Space)"
-              role="button"
-              tabindex="0"
-              onkeydown="if(event.key===' '){event.preventDefault();window._app._fcFlip();}"
-            >
+            <div class="fc-top-bar"><div class="fc-prog">Card <span id="fcCur">1</span> of <span id="fcTot">${total}</span></div><div class="fc-prog-bar-wrap"><div class="fc-prog-bar-fill" id="fcProgBar" style="width:${(1/total*100).toFixed(1)}%"></div></div><div class="fc-prog"><span id="fcPct">${(1/total*100).toFixed(0)}</span>%</div></div>
+            <div class="fc-wrap" onclick="window._app._fcFlip()" onkeydown="if(event.key===' '){event.preventDefault();window._app._fcFlip();}" tabindex="0" role="button">
               <div class="flashcard" id="theCard">
-                <div class="fc-face fc-front">
-                  <div class="fc-lbl"><i class="fas fa-question-circle"></i> Question / Concept</div>
-                  <div class="fc-content" id="fcFront">${this._esc(first.q)}</div>
-                  <div class="fc-hint"><i class="fas fa-hand-pointer"></i> Click to flip · <kbd>Space</kbd></div>
-                </div>
-                <div class="fc-face fc-back">
-                  <div class="fc-lbl"><i class="fas fa-lightbulb"></i> Answer / Explanation</div>
-                  <div class="fc-content" id="fcBack">${this._renderMd(first.a)}</div>
-                  <div class="fc-hint"><i class="fas fa-check-circle" style="color:var(--em2)"></i> Got it? Use arrows to continue</div>
-                </div>
+                <div class="fc-face fc-front"><div class="fc-lbl"><i class="fas fa-question-circle"></i> Question / Concept</div><div class="fc-content" id="fcFront">${this._esc(first.q)}</div><div class="fc-hint"><i class="fas fa-hand-pointer"></i> Click to flip · <kbd>Space</kbd></div></div>
+                <div class="fc-face fc-back"><div class="fc-lbl"><i class="fas fa-lightbulb"></i> Answer / Explanation</div><div class="fc-content" id="fcBack">${this._renderMd(first.a)}</div><div class="fc-hint"><i class="fas fa-check-circle" style="color:var(--em2)"></i> Got it? Use arrows to continue</div></div>
               </div>
             </div>
-            <div class="fc-controls">
-              <button class="fc-btn" id="fcPrev" onclick="window._app._fcNav(-1)" ${total <= 1 ? 'disabled' : ''}>
-                <i class="fas fa-arrow-left"></i> Prev
-              </button>
-              <button class="fc-btn primary" onclick="window._app._fcFlip()">
-                <i class="fas fa-sync-alt"></i> Flip
-              </button>
-              <button class="fc-btn" id="fcNext" onclick="window._app._fcNav(1)" ${total <= 1 ? 'disabled' : ''}>
-                Next <i class="fas fa-arrow-right"></i>
-              </button>
-            </div>
-            <div class="fc-controls" style="margin-top:-6px">
-              <button class="fc-btn" onclick="window._app._fcShuffle()"><i class="fas fa-random"></i> Shuffle</button>
-              <button class="fc-btn" onclick="window._app._fcRestart()"><i class="fas fa-redo"></i> Restart</button>
-            </div>
-            <div class="fc-swipe-hint fc-kb">
-              <kbd>Space</kbd> flip &nbsp;·&nbsp;
-              <kbd>←</kbd><kbd>→</kbd> navigate &nbsp;·&nbsp;
-              ${total} cards total
-            </div>
+            <div class="fc-controls"><button class="fc-btn" id="fcPrev" onclick="window._app._fcNav(-1)" ${total <= 1 ? 'disabled' : ''}><i class="fas fa-arrow-left"></i> Prev</button><button class="fc-btn primary" onclick="window._app._fcFlip()"><i class="fas fa-sync-alt"></i> Flip</button><button class="fc-btn" id="fcNext" onclick="window._app._fcNav(1)" ${total <= 1 ? 'disabled' : ''}>Next <i class="fas fa-arrow-right"></i></button></div>
+            <div class="fc-controls"><button class="fc-btn" onclick="window._app._fcShuffle()"><i class="fas fa-random"></i> Shuffle</button><button class="fc-btn" onclick="window._app._fcRestart()"><i class="fas fa-redo"></i> Restart</button></div>
+            <div class="fc-swipe-hint"><kbd>Space</kbd> flip · <kbd>←</kbd><kbd>→</kbd> navigate · ${total} cards total</div>
           </div>
         </div>
       </div>`;
@@ -2079,27 +1927,22 @@ class SavoireApp {
     if (!this.fcCards.length) return;
     this.fcCurrent = Math.max(0, Math.min(this.fcCards.length - 1, this.fcCurrent + dir));
     this.fcFlipped = false;
-
-    const fc   = this._el('theCard');
+    const fc = this._el('theCard');
     if (fc) fc.classList.remove('flipped');
-
-    const card  = this.fcCards[this.fcCurrent];
+    const card = this.fcCards[this.fcCurrent];
     const front = this._el('fcFront');
-    const back  = this._el('fcBack');
-    const cur   = this._el('fcCur');
-    const pct   = this._el('fcPct');
-    const bar   = this._el('fcProgBar');
-    const prev  = this._el('fcPrev');
-    const next  = this._el('fcNext');
-
-    if (front) front.textContent  = card.q;
-    if (back)  back.innerHTML     = this._renderMd(card.a);
-    if (cur)   cur.textContent    = this.fcCurrent + 1;
-
+    const back = this._el('fcBack');
+    const cur = this._el('fcCur');
+    const pct = this._el('fcPct');
+    const bar = this._el('fcProgBar');
+    const prev = this._el('fcPrev');
+    const next = this._el('fcNext');
+    if (front) front.textContent = card.q;
+    if (back) back.innerHTML = this._renderMd(card.a);
+    if (cur) cur.textContent = this.fcCurrent + 1;
     const p = ((this.fcCurrent + 1) / this.fcCards.length * 100).toFixed(1);
-    if (pct) pct.textContent  = Math.round(p);
-    if (bar) bar.style.width  = `${p}%`;
-
+    if (pct) pct.textContent = Math.round(p);
+    if (bar) bar.style.width = `${p}%`;
     if (prev) prev.disabled = this.fcCurrent === 0;
     if (next) next.disabled = this.fcCurrent === this.fcCards.length - 1;
   }
@@ -2127,305 +1970,130 @@ class SavoireApp {
 
     this.quizData = qs.map((q, idx) => {
       const options = this._generateMCQOptions(q, data, idx);
-      return {
-        ...q,
-        options,
-        correctIdx: options.findIndex(o => o.isCorrect),
-        answered: false,
-        correct:  false,
-        selectedIdx: -1,
-      };
+      return { ...q, options, correctIdx: options.findIndex(o => o.isCorrect), answered: false, correct: false, selectedIdx: -1 };
     });
-    this.quizIdx   = 0;
+    this.quizIdx = 0;
     this.quizScore = 0;
 
     return `
       <div class="study-sec" id="quizContainer">
-        <div class="ss-hdr">
-          <div class="ss-title">
-            <i class="fas fa-question-circle"></i> Practice Quiz
-            <span style="color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px">
-              (${qs.length} questions)
-            </span>
-          </div>
-          <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
-            <div class="quiz-score-display" id="quizScoreLabel">
-              <i class="fas fa-star" style="color:var(--gold)"></i>
-              <span id="quizScoreNum">0</span> / ${qs.length}
-            </div>
-          </div>
-        </div>
-        <div class="ss-body" id="quizBody">
-          ${this._renderQuizQ(0)}
-        </div>
+        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-question-circle"></i> Practice Quiz <span style="color:var(--t3);font-weight:400;margin-left:4px">(${qs.length} questions)</span></div><div style="margin-left:auto"><div class="quiz-score-display"><i class="fas fa-star" style="color:var(--gold)"></i> <span id="quizScoreNum">0</span> / ${qs.length}</div></div></div>
+        <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
       </div>`;
   }
 
   _generateMCQOptions(qa, data, idx) {
     const correctAnswer = qa.answer || '';
     const mcqMatch = qa.question.match(/\(A\)|\(B\)|\(C\)|\(D\)|^A\.|^B\.|^C\.|^D\./im);
-    if (mcqMatch) {
-      return this._parseMCQFromText(qa.question, qa.answer);
-    }
+    if (mcqMatch) return this._parseMCQFromText(qa.question, qa.answer);
 
-    const allConcepts = [
-      ...(data.key_concepts || []),
-      ...(data.practice_questions || []).filter((_, i) => i !== idx).map(q => q.answer),
-      ...(data.real_world_applications || []),
-    ].filter(Boolean).map(c => this._stripMd(c).split('.')[0].trim()).filter(c => c.length > 5 && c.length < 120);
-
+    const allConcepts = [...(data.key_concepts || []), ...(data.practice_questions || []).filter((_, i) => i !== idx).map(q => q.answer), ...(data.real_world_applications || [])].filter(Boolean).map(c => this._stripMd(c).split('.')[0].trim()).filter(c => c.length > 5 && c.length < 120);
     const correctShort = this._stripMd(correctAnswer).split('.')[0].trim().substring(0, 120);
     const distractors = [];
     const used = new Set([correctShort.toLowerCase()]);
-
     for (const concept of allConcepts) {
       if (distractors.length >= 3) break;
-      if (!used.has(concept.toLowerCase()) && concept !== correctShort) {
-        distractors.push(concept.substring(0, 120));
-        used.add(concept.toLowerCase());
-      }
+      if (!used.has(concept.toLowerCase()) && concept !== correctShort) { distractors.push(concept.substring(0, 120)); used.add(concept.toLowerCase()); }
     }
-
-    const genericFallbacks = [
-      'This is not directly related to the topic',
-      'This represents an incorrect application of the concept',
-      'This is a common misconception in this area',
-      'None of the above descriptions apply here',
-      'This refers to a different but related concept',
-    ];
+    const genericFallbacks = ['This is not directly related to the topic', 'This represents an incorrect application', 'This is a common misconception', 'None of the above'];
     let fbIdx = 0;
-    while (distractors.length < 3) {
-      distractors.push(genericFallbacks[fbIdx++ % genericFallbacks.length]);
-    }
-
-    const allOptions = [
-      { text: correctShort, isCorrect: true },
-      ...distractors.slice(0, 3).map(d => ({ text: d, isCorrect: false })),
-    ];
-
-    for (let i = allOptions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]];
-    }
-
+    while (distractors.length < 3) distractors.push(genericFallbacks[fbIdx++ % genericFallbacks.length]);
+    const allOptions = [{ text: correctShort, isCorrect: true }, ...distractors.slice(0, 3).map(d => ({ text: d, isCorrect: false }))];
+    for (let i = allOptions.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]]; }
     return allOptions;
   }
 
   _parseMCQFromText(questionText, answerText) {
     const optRegex = /(?:\(([A-D])\)|^([A-D])[.)]\s*)(.+?)(?=\n|$)/gim;
-    const options  = [];
+    const options = [];
     let match;
-
     while ((match = optRegex.exec(questionText)) !== null) {
       const letter = (match[1] || match[2]).toUpperCase();
-      const text   = match[3].trim();
-      const isCorrect = answerText.toUpperCase().includes(letter) ||
-                        answerText.toLowerCase().includes(text.toLowerCase().substring(0, 20));
+      const text = match[3].trim();
+      const isCorrect = answerText.toUpperCase().includes(letter) || answerText.toLowerCase().includes(text.toLowerCase().substring(0, 20));
       options.push({ text, isCorrect, letter });
     }
-
     if (options.length === 4) return options;
-
-    return [
-      { text: this._stripMd(answerText).substring(0, 100), isCorrect: true },
-      { text: 'This is not correct', isCorrect: false },
-      { text: 'This option does not apply', isCorrect: false },
-      { text: 'None of the above', isCorrect: false },
-    ];
+    return [{ text: this._stripMd(answerText).substring(0, 100), isCorrect: true }, { text: 'This is not correct', isCorrect: false }, { text: 'This option does not apply', isCorrect: false }, { text: 'None of the above', isCorrect: false }];
   }
 
   _renderQuizQ(idx) {
-    if (idx >= this.quizData.length) {
-      return this._renderQuizResult();
-    }
-
-    const q        = this.quizData[idx];
+    if (idx >= this.quizData.length) return this._renderQuizResult();
+    const q = this.quizData[idx];
     const progress = ((idx) / this.quizData.length * 100).toFixed(0);
-    const letters  = ['A', 'B', 'C', 'D'];
-
-    const optionsHtml = q.options.map((opt, oi) => `
-      <button
-        class="quiz-opt-btn"
-        data-idx="${oi}"
-        onclick="window._app._quizSelectOption(${idx}, ${oi})"
-        aria-label="Option ${letters[oi]}: ${this._esc(opt.text)}"
-        ${q.answered ? 'disabled' : ''}
-      >
-        <span class="quiz-opt-letter">${letters[oi]}</span>
-        <span class="quiz-opt-text">${this._esc(opt.text)}</span>
-      </button>`).join('');
-
+    const letters = ['A', 'B', 'C', 'D'];
+    const optionsHtml = q.options.map((opt, oi) => `<button class="quiz-opt-btn" data-idx="${oi}" onclick="window._app._quizSelectOption(${idx}, ${oi})" ${q.answered ? 'disabled' : ''}><span class="quiz-opt-letter">${letters[oi]}</span><span class="quiz-opt-text">${this._esc(opt.text)}</span></button>`).join('');
     return `
       <div class="quiz-q-card" id="quizCard_${idx}">
-        <div class="quiz-top-bar">
-          <div class="quiz-progress-track">
-            <div class="quiz-progress-fill" style="width:${progress}%" id="quizProgFill"></div>
-          </div>
-          <div class="quiz-top-meta">
-            <span class="quiz-q-counter">Q ${idx + 1} / ${this.quizData.length}</span>
-            <span class="quiz-diff-badge">Practice Mode</span>
-          </div>
-        </div>
-        <div class="quiz-question-wrap">
-          <div class="quiz-question-num">${idx + 1}</div>
-          <div class="quiz-question-text">${this._esc(q.question)}</div>
-        </div>
-        <div class="quiz-options-grid" id="quizOpts_${idx}">
-          ${optionsHtml}
-        </div>
+        <div class="quiz-top-bar"><div class="quiz-progress-track"><div class="quiz-progress-fill" style="width:${progress}%" id="quizProgFill"></div></div><div class="quiz-top-meta"><span class="quiz-q-counter">Q ${idx + 1} / ${this.quizData.length}</span><span class="quiz-diff-badge">Practice Mode</span></div></div>
+        <div class="quiz-question-wrap"><div class="quiz-question-num">${idx + 1}</div><div class="quiz-question-text">${this._esc(q.question)}</div></div>
+        <div class="quiz-options-grid" id="quizOpts_${idx}">${optionsHtml}</div>
         <div class="quiz-answer-area" id="quizAnswerArea_${idx}" style="display:none"></div>
-        <div class="quiz-nav-area" id="quizNav_${idx}" style="display:none">
-          <button class="quiz-nav-btn primary" onclick="window._app._quizAdvance(${idx})">
-            ${idx + 1 < this.quizData.length
-              ? '<i class="fas fa-arrow-right"></i> Next Question'
-              : '<i class="fas fa-flag-checkered"></i> See Results'}
-          </button>
-        </div>
+        <div class="quiz-nav-area" id="quizNav_${idx}" style="display:none"><button class="quiz-nav-btn primary" onclick="window._app._quizAdvance(${idx})">${idx + 1 < this.quizData.length ? '<i class="fas fa-arrow-right"></i> Next Question' : '<i class="fas fa-flag-checkered"></i> See Results'}</button></div>
       </div>`;
   }
 
   _quizSelectOption(questionIdx, optionIdx) {
     const q = this.quizData[questionIdx];
     if (q.answered) return;
-
-    q.answered    = true;
+    q.answered = true;
     q.selectedIdx = optionIdx;
-    q.correct     = q.options[optionIdx].isCorrect;
-
-    if (q.correct) {
-      this.quizScore++;
-      this._toast('success', 'fa-check-circle', '✓ Correct! Excellent work! 🎉', 2000);
-    } else {
-      this._toast('info', 'fa-book-open', '✗ Not quite — check the answer below 📖', 2000);
-    }
-
+    q.correct = q.options[optionIdx].isCorrect;
+    if (q.correct) { this.quizScore++; this._toast('success', 'fa-check-circle', '✓ Correct! Excellent work! 🎉', 2000); }
+    else { this._toast('info', 'fa-book-open', '✗ Not quite — check the answer below 📖', 2000); }
     const scoreNum = this._el('quizScoreNum');
     if (scoreNum) scoreNum.textContent = this.quizScore;
-
     const optsContainer = this._el(`quizOpts_${questionIdx}`);
     if (optsContainer) {
       const optBtns = optsContainer.querySelectorAll('.quiz-opt-btn');
       optBtns.forEach((btn, oi) => {
         btn.disabled = true;
         btn.classList.remove('selected', 'correct', 'wrong', 'revealed');
-
-        if (q.options[oi].isCorrect) {
-          btn.classList.add('correct');
-        } else if (oi === optionIdx && !q.options[oi].isCorrect) {
-          btn.classList.add('wrong');
-        } else {
-          btn.classList.add('dimmed');
-        }
+        if (q.options[oi].isCorrect) btn.classList.add('correct');
+        else if (oi === optionIdx && !q.options[oi].isCorrect) btn.classList.add('wrong');
+        else btn.classList.add('dimmed');
       });
     }
-
     const ansArea = this._el(`quizAnswerArea_${questionIdx}`);
     if (ansArea) {
       ansArea.style.display = 'block';
-      ansArea.innerHTML = `
-        <div class="quiz-explanation ${q.correct ? 'correct' : 'incorrect'}">
-          <div class="quiz-exp-header">
-            <i class="fas ${q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i>
-            <strong>${q.correct ? 'Correct!' : 'Incorrect'}</strong>
-            ${!q.correct ? `<span style="font-weight:400;opacity:0.8"> — The correct answer was highlighted</span>` : ''}
-          </div>
-          <div class="quiz-exp-body">
-            <div class="quiz-exp-label">Full Explanation</div>
-            <div class="quiz-exp-text md-content">${this._renderMd(q.answer)}</div>
-          </div>
-        </div>`;
+      ansArea.innerHTML = `<div class="quiz-explanation ${q.correct ? 'correct' : 'incorrect'}"><div class="quiz-exp-header"><i class="fas ${q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i><strong>${q.correct ? 'Correct!' : 'Incorrect'}</strong>${!q.correct ? '<span style="font-weight:400;opacity:0.8"> — The correct answer was highlighted</span>' : ''}</div><div class="quiz-exp-body"><div class="quiz-exp-label">Full Explanation</div><div class="quiz-exp-text md-content">${this._renderMd(q.answer)}</div></div></div>`;
       setTimeout(() => ansArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
     }
-
     const navArea = this._el(`quizNav_${questionIdx}`);
     if (navArea) navArea.style.display = 'flex';
   }
 
   _quizAdvance(currentIdx) {
     this.quizIdx = currentIdx + 1;
-    const qb     = this._el('quizBody');
+    const qb = this._el('quizBody');
     if (!qb) return;
-
-    if (this.quizIdx >= this.quizData.length) {
-      qb.innerHTML = this._renderQuizResult();
-    } else {
-      qb.innerHTML = this._renderQuizQ(this.quizIdx);
-      qb.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (this.quizIdx >= this.quizData.length) qb.innerHTML = this._renderQuizResult();
+    else { qb.innerHTML = this._renderQuizQ(this.quizIdx); qb.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   }
 
   _renderQuizResult() {
-    const total  = this.quizData.length;
-    const score  = this.quizScore;
-    const pct    = Math.round((score / total) * 100);
-    const grade  = pct >= 90 ? { emoji: '🏆', text: 'Outstanding!',       color: 'var(--gold)' }
-                 : pct >= 75 ? { emoji: '🎓', text: 'Excellent Work!',    color: 'var(--em2)' }
-                 : pct >= 60 ? { emoji: '📚', text: 'Good Progress!',      color: 'var(--blue)' }
-                 : pct >= 40 ? { emoji: '💪', text: 'Keep Studying!',      color: 'var(--amber)' }
-                 : { emoji: '📖', text: 'More Practice Needed', color: 'var(--ruby2)' };
-
+    const total = this.quizData.length;
+    const score = this.quizScore;
+    const pct = Math.round((score / total) * 100);
+    const grade = pct >= 90 ? { emoji: '🏆', text: 'Outstanding!', color: 'var(--gold)' } : pct >= 75 ? { emoji: '🎓', text: 'Excellent Work!', color: 'var(--em2)' } : pct >= 60 ? { emoji: '📚', text: 'Good Progress!', color: 'var(--blue)' } : pct >= 40 ? { emoji: '💪', text: 'Keep Studying!', color: 'var(--amber)' } : { emoji: '📖', text: 'More Practice Needed', color: 'var(--ruby2)' };
     const reviewHtml = this.quizData.map((q, i) => {
-      const selOpt  = q.selectedIdx >= 0 ? q.options[q.selectedIdx] : null;
+      const selOpt = q.selectedIdx >= 0 ? q.options[q.selectedIdx] : null;
       const corrOpt = q.options.find(o => o.isCorrect);
-      return `
-        <div class="quiz-review-item ${q.correct ? 'correct' : 'incorrect'}">
-          <div class="quiz-review-hdr">
-            <span class="quiz-review-icon"><i class="fas ${q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i></span>
-            <span class="quiz-review-num">Q${i + 1}</span>
-            <span class="quiz-review-q">${this._esc(q.question)}</span>
-          </div>
-          ${selOpt && !q.correct ? `
-            <div class="quiz-review-your">
-              <span class="quiz-review-label wrong">Your answer:</span>
-              ${this._esc(selOpt.text)}
-            </div>` : ''}
-          <div class="quiz-review-correct">
-            <span class="quiz-review-label correct">Correct answer:</span>
-            ${this._esc(corrOpt?.text || '')}
-          </div>
-        </div>`;
+      return `<div class="quiz-review-item ${q.correct ? 'correct' : 'incorrect'}"><div class="quiz-review-hdr"><span class="quiz-review-icon"><i class="fas ${q.correct ? 'fa-check-circle' : 'fa-times-circle'}"></i></span><span class="quiz-review-num">Q${i + 1}</span><span class="quiz-review-q">${this._esc(q.question)}</span></div>${selOpt && !q.correct ? `<div class="quiz-review-your"><span class="quiz-review-label wrong">Your answer:</span> ${this._esc(selOpt.text)}</div>` : ''}<div class="quiz-review-correct"><span class="quiz-review-label correct">Correct answer:</span> ${this._esc(corrOpt?.text || '')}</div></div>`;
     }).join('');
-
     return `
       <div class="quiz-result-wrap">
-        <div class="quiz-result-score-wrap">
-          <div class="quiz-result-emoji">${grade.emoji}</div>
-          <div class="quiz-result-big-score" style="color:${grade.color}">
-            ${score}<span class="quiz-result-denom"> / ${total}</span>
-          </div>
-          <div class="quiz-result-pct">${pct}% Correct</div>
-          <div class="quiz-result-grade" style="color:${grade.color}">${grade.text}</div>
-        </div>
-        <div class="quiz-result-stats">
-          <div class="quiz-result-stat correct">
-            <div class="quiz-result-stat-val">${score}</div>
-            <div class="quiz-result-stat-lbl"><i class="fas fa-check-circle"></i> Correct</div>
-          </div>
-          <div class="quiz-result-stat wrong">
-            <div class="quiz-result-stat-val">${total - score}</div>
-            <div class="quiz-result-stat-lbl"><i class="fas fa-times-circle"></i> Incorrect</div>
-          </div>
-          <div class="quiz-result-stat total">
-            <div class="quiz-result-stat-val">${total}</div>
-            <div class="quiz-result-stat-lbl"><i class="fas fa-list-ol"></i> Total</div>
-          </div>
-        </div>
-        <div class="quiz-result-actions">
-          <button class="fc-btn primary" onclick="window._app._quizRestart()"><i class="fas fa-redo"></i> Try Again</button>
-          <button class="fc-btn" onclick="window._app._quizToggleReview()"><i class="fas fa-eye"></i> <span id="quizReviewToggleLabel">Show Review</span></button>
-        </div>
-        <div id="quizReviewSection" style="display:none;margin-top:20px">
-          <div style="font-family:var(--fu);font-size:0.75rem;color:var(--t3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--b2)">
-            <i class="fas fa-list-check"></i> &nbsp; Full Answer Review
-          </div>
-          <div class="quiz-review-list">${reviewHtml}</div>
-        </div>
+        <div class="quiz-result-score-wrap"><div class="quiz-result-emoji">${grade.emoji}</div><div class="quiz-result-big-score" style="color:${grade.color}">${score}<span class="quiz-result-denom"> / ${total}</span></div><div class="quiz-result-pct">${pct}% Correct</div><div class="quiz-result-grade" style="color:${grade.color}">${grade.text}</div></div>
+        <div class="quiz-result-stats"><div class="quiz-result-stat correct"><div class="quiz-result-stat-val">${score}</div><div class="quiz-result-stat-lbl"><i class="fas fa-check-circle"></i> Correct</div></div><div class="quiz-result-stat wrong"><div class="quiz-result-stat-val">${total - score}</div><div class="quiz-result-stat-lbl"><i class="fas fa-times-circle"></i> Incorrect</div></div><div class="quiz-result-stat total"><div class="quiz-result-stat-val">${total}</div><div class="quiz-result-stat-lbl"><i class="fas fa-list-ol"></i> Total</div></div></div>
+        <div class="quiz-result-actions"><button class="fc-btn primary" onclick="window._app._quizRestart()"><i class="fas fa-redo"></i> Try Again</button><button class="fc-btn" onclick="window._app._quizToggleReview()"><i class="fas fa-eye"></i> <span id="quizReviewToggleLabel">Show Review</span></button></div>
+        <div id="quizReviewSection" style="display:none;margin-top:20px"><div style="font-family:var(--fu);font-size:0.75rem;color:var(--t3);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--b2)"><i class="fas fa-list-check"></i> Full Answer Review</div><div class="quiz-review-list">${reviewHtml}</div></div>
       </div>`;
   }
 
   _quizToggleReview() {
     const section = this._el('quizReviewSection');
-    const label   = this._el('quizReviewToggleLabel');
+    const label = this._el('quizReviewToggleLabel');
     if (!section) return;
     const isHidden = section.style.display === 'none';
     section.style.display = isHidden ? 'block' : 'none';
@@ -2435,8 +2103,8 @@ class SavoireApp {
 
   _quizRestart() {
     this.quizScore = 0;
-    this.quizIdx   = 0;
-    this.quizData  = this.quizData.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
+    this.quizIdx = 0;
+    this.quizData = this.quizData.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
     const qb = this._el('quizBody');
     if (qb) qb.innerHTML = this._renderQuizQ(0);
     const scoreNum = this._el('quizScoreNum');
@@ -2445,482 +2113,83 @@ class SavoireApp {
 
   _buildSummaryHTML(data) {
     let h = '';
-
     if (data.ultra_long_notes) {
-      const raw    = data.ultra_long_notes;
-      const paras  = raw.split(/\n{2,}/).filter(p => p.trim() && !p.trim().startsWith('#')).slice(0, 3);
-      const tldr   = paras.join('\n\n');
-
-      h += `
-        <div class="study-sec section-anchor" id="sec-tldr">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-bolt"></i> TL;DR — Executive Summary</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(tldr))})"><i class="fas fa-copy"></i> Copy</button>
-          </div>
-          <div class="ss-body">
-            <div class="summary-tldr-box">
-              <div class="summary-tldr-icon"><i class="fas fa-align-left"></i></div>
-              <div class="summary-tldr-content md-content">${this._renderMd(tldr)}</div>
-            </div>
-          </div>
-        </div>`;
-
-      h += `
-        <div class="study-sec section-anchor" id="sec-notes">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-book-open"></i> Full Summary Notes</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(raw))})"><i class="fas fa-copy"></i> Copy</button>
-          </div>
-          <div class="ss-body">
-            <div class="md-content">${this._renderMd(raw)}</div>
-          </div>
-        </div>`;
+      const raw = data.ultra_long_notes;
+      const paras = raw.split(/\n{2,}/).filter(p => p.trim() && !p.trim().startsWith('#')).slice(0, 3);
+      const tldr = paras.join('\n\n');
+      h += `<div class="study-sec section-anchor" id="sec-tldr"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-bolt"></i> TL;DR — Executive Summary</div><button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(tldr))})"><i class="fas fa-copy"></i> Copy</button></div><div class="ss-body"><div class="summary-tldr-box"><div class="summary-tldr-icon"><i class="fas fa-align-left"></i></div><div class="summary-tldr-content md-content">${this._renderMd(tldr)}</div></div></div></div>`;
+      h += `<div class="study-sec section-anchor" id="sec-notes"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Full Summary Notes</div><button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(this._stripMd(raw))})"><i class="fas fa-copy"></i> Copy</button></div><div class="ss-body"><div class="md-content">${this._renderMd(raw)}</div></div></div>`;
     }
-
     if (data.key_concepts?.length) {
-      const items = data.key_concepts.map((c, i) => `
-        <div class="summary-point">
-          <div class="summary-point-num">${i + 1}</div>
-          <div class="summary-point-text">${this._esc(c)}</div>
-        </div>`).join('');
-
-      h += `
-        <div class="study-sec section-anchor" id="sec-concepts">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-list-check"></i> Key Points at a Glance</div>
-            <button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_concepts.join('\n'))})"><i class="fas fa-copy"></i> Copy</button>
-          </div>
-          <div class="ss-body">
-            <div class="summary-points-list">${items}</div>
-          </div>
-        </div>`;
+      const items = data.key_concepts.map((c, i) => `<div class="summary-point"><div class="summary-point-num">${i + 1}</div><div class="summary-point-text">${this._esc(c)}</div></div>`).join('');
+      h += `<div class="study-sec section-anchor" id="sec-concepts"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-list-check"></i> Key Points at a Glance</div><button class="ss-copy-btn" onclick="window._app._copySection(${JSON.stringify(data.key_concepts.join('\n'))})"><i class="fas fa-copy"></i> Copy</button></div><div class="ss-body"><div class="summary-points-list">${items}</div></div></div>`;
     }
-
     if (data.key_tricks?.length) {
-      const ICONS = ['fas fa-magic', 'fas fa-star', 'fas fa-bolt', 'fas fa-brain', 'fas fa-key'];
-      const items = data.key_tricks.map((t, i) => `
-        <div class="trick-item">
-          <div class="trick-icon"><i class="${ICONS[i % ICONS.length]}"></i></div>
-          <div class="trick-text">${this._esc(t)}</div>
-        </div>`).join('');
-
-      h += `
-        <div class="study-sec section-anchor" id="sec-tricks">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-magic"></i> Memory Tricks</div>
-          </div>
-          <div class="ss-body">
-            <div class="tricks-list">${items}</div>
-          </div>
-        </div>`;
+      const items = data.key_tricks.map((t, i) => `<div class="trick-item"><div class="trick-icon"><i class="fas fa-magic"></i></div><div class="trick-text">${this._esc(t)}</div></div>`).join('');
+      h += `<div class="study-sec section-anchor" id="sec-tricks"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-magic"></i> Memory Tricks</div></div><div class="ss-body"><div class="tricks-list">${items}</div></div></div>`;
     }
-
     if (data.practice_questions?.length) {
-      const qs = data.practice_questions.slice(0, 3).map((qa, i) => `
-        <div class="qa-card">
-          <div class="qa-head" onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.qa-toggle').classList.toggle('open');">
-            <div class="qa-num">${i + 1}</div>
-            <div class="qa-q">${this._esc(qa.question)}</div>
-            <button class="qa-toggle" tabindex="-1"><i class="fas fa-chevron-down"></i> Answer</button>
-          </div>
-          <div class="qa-answer">
-            <div class="qa-albl"><i class="fas fa-check-circle"></i> Answer</div>
-            <div class="qa-answer-inner md-content">${this._renderMd(qa.answer)}</div>
-          </div>
-        </div>`).join('');
-
-      h += `
-        <div class="study-sec section-anchor" id="sec-qa">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-pen-nib"></i> Quick Practice Questions</div>
-          </div>
-          <div class="ss-body">
-            <div class="qa-list">${qs}</div>
-          </div>
-        </div>`;
+      const qs = data.practice_questions.slice(0, 3).map((qa, i) => `<div class="qa-card"><div class="qa-head" onclick="this.nextElementSibling.classList.toggle('visible');this.querySelector('.qa-toggle').classList.toggle('open');"><div class="qa-num">${i + 1}</div><div class="qa-q">${this._esc(qa.question)}</div><button class="qa-toggle"><i class="fas fa-chevron-down"></i> Answer</button></div><div class="qa-answer"><div class="qa-albl"><i class="fas fa-check-circle"></i> Answer</div><div class="qa-answer-inner md-content">${this._renderMd(qa.answer)}</div></div></div>`).join('');
+      h += `<div class="study-sec section-anchor" id="sec-qa"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-pen-nib"></i> Quick Practice Questions</div></div><div class="ss-body"><div class="qa-list">${qs}</div></div></div>`;
     }
-
     return h || this._buildNotesHTML(data);
   }
 
   _buildMindmapHTML(data) {
     const topic = data.topic || 'Topic';
-
     const branches = [
-      { label: 'Core Concepts',         items: data.key_concepts || [],             icon: 'fa-lightbulb',            color: 'var(--gold)',  colorClass: 'gold' },
-      { label: 'Study Tricks',           items: data.key_tricks || [],               icon: 'fa-magic',                color: 'var(--em2)',   colorClass: 'green' },
-      { label: 'Real-World Applications',items: data.real_world_applications || [],  icon: 'fa-globe',                color: 'var(--blue)',  colorClass: 'blue' },
-      { label: 'Common Mistakes',        items: data.common_misconceptions || [],    icon: 'fa-exclamation-triangle', color: 'var(--ruby2)', colorClass: 'red' },
+      { label: 'Core Concepts', items: data.key_concepts || [], icon: 'fa-lightbulb', color: 'var(--gold)', colorClass: 'gold' },
+      { label: 'Study Tricks', items: data.key_tricks || [], icon: 'fa-magic', color: 'var(--em2)', colorClass: 'green' },
+      { label: 'Real-World Applications', items: data.real_world_applications || [], icon: 'fa-globe', color: 'var(--blue)', colorClass: 'blue' },
+      { label: 'Common Mistakes', items: data.common_misconceptions || [], icon: 'fa-exclamation-triangle', color: 'var(--ruby2)', colorClass: 'red' },
     ].filter(b => b.items.length > 0);
-
-    const branchHtml = branches.map(b => `
-      <div class="mm-branch mm-branch--${b.colorClass}">
-        <div class="mm-branch-hdr" style="color:${b.color}">
-          <i class="fas ${b.icon}"></i>
-          ${this._esc(b.label)}
-          <span class="mm-branch-count">${b.items.length}</span>
-        </div>
-        <div class="mm-nodes-list">
-          ${b.items.map(item => `
-            <div class="mm-node mm-node--${b.colorClass}">
-              <span class="mm-node-dot" style="background:${b.color}"></span>
-              <span class="mm-node-text">${this._esc(item)}</span>
-            </div>`).join('')}
-        </div>
-      </div>`).join('');
-
-    const notesSection = data.ultra_long_notes ? `
-      <div class="study-sec section-anchor" id="sec-notes" style="margin-top:16px">
-        <div class="ss-hdr">
-          <div class="ss-title"><i class="fas fa-book-open"></i> Full Study Notes</div>
-        </div>
-        <div class="ss-body">
-          <div class="md-content">${this._renderMd(data.ultra_long_notes)}</div>
-        </div>
-      </div>` : '';
-
-    return `
-      <div class="study-sec section-anchor" id="sec-mindmap">
-        <div class="ss-hdr">
-          <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map</div>
-        </div>
-        <div class="ss-body">
-          <div class="mm-center-connector">
-            <div class="mm-root"><i class="fas fa-brain" style="margin-right:8px;opacity:0.7"></i> ${this._esc(topic)}</div>
-            <div class="mm-connector-dot"></div>
-            <div class="mm-connector-line"></div>
-          </div>
-          <div class="mm-branches">${branchHtml}</div>
-        </div>
-      </div>
-      ${notesSection}`;
+    const branchHtml = branches.map(b => `<div class="mm-branch mm-branch--${b.colorClass}"><div class="mm-branch-hdr" style="color:${b.color}"><i class="fas ${b.icon}"></i> ${this._esc(b.label)} <span class="mm-branch-count">${b.items.length}</span></div><div class="mm-nodes-list">${b.items.map(item => `<div class="mm-node mm-node--${b.colorClass}"><span class="mm-node-dot" style="background:${b.color}"></span><span class="mm-node-text">${this._esc(item)}</span></div>`).join('')}</div></div>`).join('');
+    const notesSection = data.ultra_long_notes ? `<div class="study-sec section-anchor" id="sec-notes" style="margin-top:16px"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Full Study Notes</div></div><div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div></div>` : '';
+    return `<div class="study-sec section-anchor" id="sec-mindmap"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map</div></div><div class="ss-body"><div class="mm-center-connector"><div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(topic)}</div><div class="mm-connector-dot"></div><div class="mm-connector-line"></div></div><div class="mm-branches">${branchHtml}</div></div></div>${notesSection}`;
   }
 
   _downloadPDF() {
     const data = this.currentData;
-    if (!data) {
-      this._toast('info', 'fa-info-circle', 'Generate some content first, then download as PDF.');
-      return;
-    }
-    if (!window.jspdf?.jsPDF) {
-      this._toast('error', 'fa-times', 'PDF library not loaded. Please refresh the page.');
-      return;
-    }
-
+    if (!data) { this._toast('info', 'fa-info-circle', 'Generate some content first, then download as PDF.'); return; }
+    if (!window.jspdf?.jsPDF) { this._toast('error', 'fa-times', 'PDF library not loaded. Please refresh the page.'); return; }
     this._toast('info', 'fa-spinner', 'Generating PDF…');
-
     try {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
-
-      const pw  = 210;
-      const ph  = 297;
-      const ml  = 16;
-      const mr  = 16;
-      const mt  = 38;
-      const mb  = 22;
-      const cw  = pw - ml - mr;
-      let   y   = mt;
-      let   pageNum = 1;
-
-      const GOLD      = [201, 169, 110];
-      const GOLD_DARK = [140, 92, 24];
-      const GOLD_BG   = [252, 244, 228];
-      const DARK      = [18, 12, 4];
-      const MID       = [55, 48, 38];
-      const FAINT     = [155, 140, 118];
-      const GREEN     = [38, 140, 88];
-      const GREEN_BG  = [236, 252, 244];
-      const RED       = [180, 40, 40];
-      const RED_BG    = [252, 236, 236];
-      const BLUE      = [50, 100, 200];
-      const BLUE_BG   = [236, 244, 254];
-      const CREAM     = [250, 246, 238];
-      const WHITE     = [255, 255, 255];
-      const DIVIDER   = [220, 210, 190];
-      const AMBER     = [180, 100, 20];
-      const AMBER_BG  = [252, 244, 228];
-
-      const drawPageHeader = () => {
-        doc.setFillColor(12, 10, 6);
-        doc.rect(0, 0, pw, 28, 'F');
-        doc.setFillColor(...GOLD);
-        doc.rect(0, 0, pw, 4, 'F');
-        doc.setFillColor(...GOLD);
-        doc.rect(ml, 8, 3, 16, 'F');
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...GOLD);
-        doc.text('SAVOIRÉ AI', ml + 7, 16);
-        doc.setFontSize(6.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(160, 130, 80);
-        doc.text('v2.0', ml + 7 + doc.getTextWidth('SAVOIRÉ AI') + 2, 16);
-        doc.setFontSize(7);
-        doc.setTextColor(120, 100, 70);
-        doc.text('Think Less. Know More.', ml + 7, 21);
-        doc.setFontSize(7.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...GOLD);
-        doc.text('savoireai.vercel.app', pw - mr, 15, { align: 'right' });
-        doc.setFontSize(6.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(130, 105, 65);
-        doc.text('Sooban Talha Technologies · soobantalhatech.xyz', pw - mr, 21, { align: 'right' });
-        doc.setDrawColor(...GOLD);
-        doc.setLineWidth(0.6);
-        doc.line(0, 28, pw, 28);
-        doc.setFillColor(255, 250, 238);
-        doc.rect(0, 28, pw, 6, 'F');
-        doc.setFillColor(...GOLD);
-        doc.rect(0, 33.5, pw, 0.5, 'F');
-        y = mt;
-      };
-
-      const drawPageFooter = (pgNum, pgTotal) => {
-        const fy = ph - 12;
-        doc.setFillColor(245, 240, 230);
-        doc.rect(0, fy - 3, pw, 15, 'F');
-        doc.setDrawColor(...GOLD);
-        doc.setLineWidth(0.5);
-        doc.line(0, fy - 3, pw, fy - 3);
-        doc.setFontSize(6.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...FAINT);
-        const footerLeft = `${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVELOPER} · Generated ${new Date().toLocaleString()}`;
-        doc.text(footerLeft, ml, fy + 1);
-        const pgStr = `${pgNum} / ${pgTotal}`;
-        doc.setFillColor(...GOLD);
-        const pgW = doc.getTextWidth(pgStr) + 6;
-        doc.rect(pw - mr - pgW, fy - 1.5, pgW + 2, 5.5, 'F');
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(12, 8, 2);
-        doc.text(pgStr, pw - mr + 1, fy + 2.2, { align: 'right' });
-      };
-
-      const checkSpace = (needed = 14) => {
-        if (y + needed > ph - mb) {
-          doc.addPage();
-          pageNum++;
-          drawPageHeader();
-          y = mt;
-        }
-      };
-
-      const writeText = (text, fontSize, bold, color, indent = 0, lineH = 1.6) => {
-        if (!text) return 0;
-        const clean = this._stripMd(String(text));
-        if (!clean) return 0;
-        doc.setFontSize(fontSize);
-        doc.setFont('helvetica', bold ? 'bold' : 'normal');
-        doc.setTextColor(...color);
-        const lh    = fontSize * 0.352 * lineH;
-        const lines = doc.splitTextToSize(clean, cw - indent);
-        let   used  = 0;
-        lines.forEach(line => {
-          checkSpace(lh + 1);
-          doc.text(line, ml + indent, y);
-          y    += lh;
-          used += lh;
-        });
-        return used;
-      };
-
-      const sectionHeading = (title, accentColor = GOLD, bgColor = CREAM, iconChar = '▶') => {
-        checkSpace(22);
-        y += 4;
-        doc.setFillColor(...bgColor);
-        doc.rect(ml - 2, y - 5.5, cw + 4, 12, 'F');
-        doc.setFillColor(...accentColor);
-        doc.rect(ml - 2, y - 5.5, 4.5, 12, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...WHITE);
-        doc.text(iconChar, ml - 0.5, y + 1, { align: 'center' });
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...DARK);
-        doc.text(title.toUpperCase(), ml + 7, y + 1);
-        y += 9;
-      };
-
-      const answerBox = (text, label = 'ANSWER', color = GREEN, bgColor = GREEN_BG) => {
-        const clean  = this._stripMd(String(text || ''));
-        const lines  = doc.splitTextToSize(clean, cw - 14);
-        const boxH   = lines.length * 4.8 + 12;
-        checkSpace(boxH + 5);
-        doc.setFillColor(...bgColor);
-        doc.roundedRect(ml, y - 3, cw, boxH, 2, 2, 'F');
-        doc.setFillColor(...color);
-        doc.rect(ml, y - 3, 3, boxH, 'F');
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...color);
-        doc.text(label, ml + 7, y + 2);
-        y += 6;
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...MID);
-        lines.forEach(line => {
-          checkSpace(5);
-          doc.text(line, ml + 7, y);
-          y += 4.8;
-        });
-        y += 4;
-      };
-
-      const numberedItem = (num, text, color = GOLD) => {
-        const clean = this._stripMd(String(text || ''));
-        const lines = doc.splitTextToSize(clean, cw - 16);
-        const itemH = lines.length * 4.8 + 8;
-        checkSpace(itemH);
-        doc.setFillColor(...color);
-        doc.circle(ml + 5, y + 0.5, 4, 'F');
-        doc.setFontSize(7.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...WHITE);
-        doc.text(String(num), ml + 5, y + 1.8, { align: 'center' });
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...DARK);
-        let lineY = y;
-        lines.forEach((line, li) => {
-          if (li > 0) checkSpace(5);
-          doc.text(line, ml + 14, lineY + 1.5);
-          lineY += 4.8;
-        });
-        y = lineY + 2;
-      };
-
-      const trickCard = (num, text) => {
-        const clean = this._stripMd(String(text || ''));
-        const lines = doc.splitTextToSize(clean, cw - 18);
-        const boxH  = lines.length * 4.8 + 14;
-        checkSpace(boxH + 4);
-        doc.setFillColor(...GOLD_BG);
-        doc.roundedRect(ml, y - 2, cw, boxH, 3, 3, 'F');
-        doc.setDrawColor(...GOLD);
-        doc.setLineWidth(0.5);
-        doc.roundedRect(ml, y - 2, cw, boxH, 3, 3, 'S');
-        doc.setFontSize(9);
-        doc.setTextColor(...GOLD_DARK);
-        doc.text('★', ml + 5, y + 4);
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...GOLD_DARK);
-        doc.text(`MEMORY TRICK ${num}`, ml + 12, y + 4);
-        y += 8;
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(...MID);
-        lines.forEach(line => {
-          checkSpace(5);
-          doc.text(line, ml + 8, y);
-          y += 4.8;
-        });
-        y += 5;
-      };
-
-      const questionCard = (num, question, answer) => {
-        const qClean = this._stripMd(String(question || ''));
-        const aClean = this._stripMd(String(answer || ''));
-        const qLines = doc.splitTextToSize(`Q${num}: ${qClean}`, cw - 10);
-        const qH     = qLines.length * 4.8 + 10;
-        checkSpace(qH + 4);
-        doc.setFillColor(248, 244, 236);
-        doc.roundedRect(ml, y - 3, cw, qH, 2, 2, 'F');
-        doc.setFillColor(...GOLD);
-        doc.rect(ml, y - 3, 4, qH, 'F');
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...WHITE);
-        doc.text('Q', ml + 2, y + 1.5, { align: 'center' });
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...DARK);
-        let qLineY = y;
-        qLines.forEach((line, li) => {
-          if (li > 0) checkSpace(5);
-          doc.text(line, ml + 8, qLineY + 1.5);
-          qLineY += 4.8;
-        });
-        y = qLineY + 2;
-        answerBox(aClean);
-        y += 2;
-      };
-
-      const bulletItem = (text, bulletColor = GOLD, indent = 10) => {
-        const clean = this._stripMd(String(text || ''));
-        const lines = doc.splitTextToSize(clean, cw - indent - 4);
-        const itemH = lines.length * 4.6;
-        checkSpace(itemH + 3);
-        doc.setFillColor(...bulletColor);
-        doc.circle(ml + indent - 3, y - 0.5, 1.2, 'F');
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...DARK);
-        let lineY = y;
-        lines.forEach((line, li) => {
-          if (li > 0) checkSpace(5);
-          doc.text(line, ml + indent, lineY);
-          lineY += 4.6;
-        });
-        y = lineY + 1.5;
-      };
-
-      const divider = () => {
-        checkSpace(8);
-        doc.setDrawColor(...DIVIDER);
-        doc.setLineWidth(0.25);
-        doc.line(ml, y, pw - mr, y);
-        y += 6;
-      };
-
+      const pw = 210, ph = 297, ml = 16, mr = 16, mt = 38, mb = 22, cw = pw - ml - mr;
+      let y = mt, pageNum = 1;
+      const GOLD = [201, 169, 110], GOLD_DARK = [140, 92, 24], GOLD_BG = [252, 244, 228], DARK = [18, 12, 4], MID = [55, 48, 38], FAINT = [155, 140, 118], GREEN = [38, 140, 88], GREEN_BG = [236, 252, 244], RED = [180, 40, 40], RED_BG = [252, 236, 236], BLUE = [50, 100, 200], BLUE_BG = [236, 244, 254], CREAM = [250, 246, 238], WHITE = [255, 255, 255], DIVIDER = [220, 210, 190], AMBER = [180, 100, 20], AMBER_BG = [252, 244, 228];
+      const drawPageHeader = () => { doc.setFillColor(12, 10, 6); doc.rect(0, 0, pw, 28, 'F'); doc.setFillColor(...GOLD); doc.rect(0, 0, pw, 4, 'F'); doc.setFillColor(...GOLD); doc.rect(ml, 8, 3, 16, 'F'); doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...GOLD); doc.text('SAVOIRÉ AI', ml + 7, 16); doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(160, 130, 80); doc.text('v2.0', ml + 7 + doc.getTextWidth('SAVOIRÉ AI') + 2, 16); doc.setFontSize(7); doc.setTextColor(120, 100, 70); doc.text('Think Less. Know More.', ml + 7, 21); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...GOLD); doc.text('savoireai.vercel.app', pw - mr, 15, { align: 'right' }); doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(130, 105, 65); doc.text('Sooban Talha Technologies · soobantalhatech.xyz', pw - mr, 21, { align: 'right' }); doc.setDrawColor(...GOLD); doc.setLineWidth(0.6); doc.line(0, 28, pw, 28); doc.setFillColor(255, 250, 238); doc.rect(0, 28, pw, 6, 'F'); doc.setFillColor(...GOLD); doc.rect(0, 33.5, pw, 0.5, 'F'); y = mt; };
+      const drawPageFooter = (pgNum, pgTotal) => { const fy = ph - 12; doc.setFillColor(245, 240, 230); doc.rect(0, fy - 3, pw, 15, 'F'); doc.setDrawColor(...GOLD); doc.setLineWidth(0.5); doc.line(0, fy - 3, pw, fy - 3); doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...FAINT); const footerLeft = `${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVELOPER} · Generated ${new Date().toLocaleString()}`; doc.text(footerLeft, ml, fy + 1); const pgStr = `${pgNum} / ${pgTotal}`; doc.setFillColor(...GOLD); const pgW = doc.getTextWidth(pgStr) + 6; doc.rect(pw - mr - pgW, fy - 1.5, pgW + 2, 5.5, 'F'); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 8, 2); doc.text(pgStr, pw - mr + 1, fy + 2.2, { align: 'right' }); };
+      const checkSpace = (needed = 14) => { if (y + needed > ph - mb) { doc.addPage(); pageNum++; drawPageHeader(); y = mt; } };
+      const writeText = (text, fontSize, bold, color, indent = 0, lineH = 1.6) => { if (!text) return 0; const clean = this._stripMd(String(text)); if (!clean) return 0; doc.setFontSize(fontSize); doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setTextColor(...color); const lh = fontSize * 0.352 * lineH; const lines = doc.splitTextToSize(clean, cw - indent); let used = 0; lines.forEach(line => { checkSpace(lh + 1); doc.text(line, ml + indent, y); y += lh; used += lh; }); return used; };
+      const sectionHeading = (title, accentColor = GOLD, bgColor = CREAM, iconChar = '▶') => { checkSpace(22); y += 4; doc.setFillColor(...bgColor); doc.rect(ml - 2, y - 5.5, cw + 4, 12, 'F'); doc.setFillColor(...accentColor); doc.rect(ml - 2, y - 5.5, 4.5, 12, 'F'); doc.setFontSize(8); doc.setFont('helvetica', 'bold'); doc.setTextColor(...WHITE); doc.text(iconChar, ml - 0.5, y + 1, { align: 'center' }); doc.setFontSize(9.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK); doc.text(title.toUpperCase(), ml + 7, y + 1); y += 9; };
+      const answerBox = (text, label = 'ANSWER', color = GREEN, bgColor = GREEN_BG) => { const clean = this._stripMd(String(text || '')); const lines = doc.splitTextToSize(clean, cw - 14); const boxH = lines.length * 4.8 + 12; checkSpace(boxH + 5); doc.setFillColor(...bgColor); doc.roundedRect(ml, y - 3, cw, boxH, 2, 2, 'F'); doc.setFillColor(...color); doc.rect(ml, y - 3, 3, boxH, 'F'); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...color); doc.text(label, ml + 7, y + 2); y += 6; doc.setFontSize(9.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...MID); lines.forEach(line => { checkSpace(5); doc.text(line, ml + 7, y); y += 4.8; }); y += 4; };
+      const numberedItem = (num, text, color = GOLD) => { const clean = this._stripMd(String(text || '')); const lines = doc.splitTextToSize(clean, cw - 16); const itemH = lines.length * 4.8 + 8; checkSpace(itemH); doc.setFillColor(...color); doc.circle(ml + 5, y + 0.5, 4, 'F'); doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...WHITE); doc.text(String(num), ml + 5, y + 1.8, { align: 'center' }); doc.setFontSize(9.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...DARK); let lineY = y; lines.forEach((line, li) => { if (li > 0) checkSpace(5); doc.text(line, ml + 14, lineY + 1.5); lineY += 4.8; }); y = lineY + 2; };
+      const trickCard = (num, text) => { const clean = this._stripMd(String(text || '')); const lines = doc.splitTextToSize(clean, cw - 18); const boxH = lines.length * 4.8 + 14; checkSpace(boxH + 4); doc.setFillColor(...GOLD_BG); doc.roundedRect(ml, y - 2, cw, boxH, 3, 3, 'F'); doc.setDrawColor(...GOLD); doc.setLineWidth(0.5); doc.roundedRect(ml, y - 2, cw, boxH, 3, 3, 'S'); doc.setFontSize(9); doc.setTextColor(...GOLD_DARK); doc.text('★', ml + 5, y + 4); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...GOLD_DARK); doc.text(`MEMORY TRICK ${num}`, ml + 12, y + 4); y += 8; doc.setFontSize(9.5); doc.setFont('helvetica', 'italic'); doc.setTextColor(...MID); lines.forEach(line => { checkSpace(5); doc.text(line, ml + 8, y); y += 4.8; }); y += 5; };
+      const questionCard = (num, question, answer) => { const qClean = this._stripMd(String(question || '')); const aClean = this._stripMd(String(answer || '')); const qLines = doc.splitTextToSize(`Q${num}: ${qClean}`, cw - 10); const qH = qLines.length * 4.8 + 10; checkSpace(qH + 4); doc.setFillColor(248, 244, 236); doc.roundedRect(ml, y - 3, cw, qH, 2, 2, 'F'); doc.setFillColor(...GOLD); doc.rect(ml, y - 3, 4, qH, 'F'); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(...WHITE); doc.text('Q', ml + 2, y + 1.5, { align: 'center' }); doc.setFontSize(9.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK); let qLineY = y; qLines.forEach((line, li) => { if (li > 0) checkSpace(5); doc.text(line, ml + 8, qLineY + 1.5); qLineY += 4.8; }); y = qLineY + 2; answerBox(aClean); y += 2; };
+      const bulletItem = (text, bulletColor = GOLD, indent = 10) => { const clean = this._stripMd(String(text || '')); const lines = doc.splitTextToSize(clean, cw - indent - 4); const itemH = lines.length * 4.6; checkSpace(itemH + 3); doc.setFillColor(...bulletColor); doc.circle(ml + indent - 3, y - 0.5, 1.2, 'F'); doc.setFontSize(9.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...DARK); let lineY = y; lines.forEach((line, li) => { if (li > 0) checkSpace(5); doc.text(line, ml + indent, lineY); lineY += 4.6; }); y = lineY + 1.5; };
+      const divider = () => { checkSpace(8); doc.setDrawColor(...DIVIDER); doc.setLineWidth(0.25); doc.line(ml, y, pw - mr, y); y += 6; };
       drawPageHeader();
-
       checkSpace(50);
-      doc.setFillColor(...CREAM);
-      doc.roundedRect(ml - 2, y - 4, cw + 4, 42, 3, 3, 'F');
-      doc.setFillColor(...GOLD);
-      doc.roundedRect(ml - 2, y - 4, cw + 4, 3.5, 2, 2, 'F');
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...DARK);
+      doc.setFillColor(...CREAM); doc.roundedRect(ml - 2, y - 4, cw + 4, 42, 3, 3, 'F');
+      doc.setFillColor(...GOLD); doc.roundedRect(ml - 2, y - 4, cw + 4, 3.5, 2, 2, 'F');
+      doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.setTextColor(...DARK);
       const titleLines = doc.splitTextToSize(this._stripMd(data.topic || 'Study Notes'), cw - 8);
       let titleY = y + 6;
-      titleLines.forEach(l => {
-        doc.text(l, ml + 4, titleY);
-        titleY += 9;
-      });
+      titleLines.forEach(l => { doc.text(l, ml + 4, titleY); titleY += 9; });
       y = Math.max(titleY, y + 14);
       const toolName = TOOL_CONFIG[this.tool]?.sfpName || 'Study Notes';
-      const toolW    = doc.getTextWidth(toolName) + 10;
-      doc.setFillColor(...GOLD);
-      doc.roundedRect(ml + 4, y, toolW, 6, 3, 3, 'F');
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(12, 8, 2);
+      const toolW = doc.getTextWidth(toolName) + 10;
+      doc.setFillColor(...GOLD); doc.roundedRect(ml + 4, y, toolW, 6, 3, 3, 'F');
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.setTextColor(12, 8, 2);
       doc.text(toolName.toUpperCase(), ml + 4 + toolW / 2, y + 4.2, { align: 'center' });
       y += 10;
-      const metaItems = [
-        { label: data.curriculum_alignment || 'General Study' },
-        { label: data._language || 'English' },
-        { label: `Score: ${data.study_score || 96}/100` },
-        { label: `${this._wordCount(this._stripMd(data.ultra_long_notes || '')).toLocaleString()} words` },
-        { label: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) },
-      ];
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...LIGHT);
+      const metaItems = [{ label: data.curriculum_alignment || 'General Study' }, { label: data._language || 'English' }, { label: `Score: ${data.study_score || 96}/100` }, { label: `${this._wordCount(this._stripMd(data.ultra_long_notes || '')).toLocaleString()} words` }, { label: new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' }) }];
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(...LIGHT);
       const metaStr = metaItems.map(m => `${m.label}`).join('   ·   ');
-      doc.text(metaStr, ml + 4, y);
-      y += 6;
-      doc.setDrawColor(...GOLD);
-      doc.setLineWidth(0.8);
-      doc.line(ml, y, pw - mr, y);
-      y += 10;
-
+      doc.text(metaStr, ml + 4, y); y += 6;
+      doc.setDrawColor(...GOLD); doc.setLineWidth(0.8); doc.line(ml, y, pw - mr, y); y += 10;
       if (data.ultra_long_notes) {
         sectionHeading('Comprehensive Analysis', GOLD, CREAM, '▶');
         const noteText = this._stripMd(data.ultra_long_notes);
@@ -2928,182 +2197,62 @@ class SavoireApp {
         paragraphs.forEach(para => {
           const trimmed = para.trim();
           if (!trimmed) return;
-          if (/^#{1,4} /.test(trimmed)) {
-            const headText = trimmed.replace(/^#+\s*/, '');
-            checkSpace(12);
-            y += 3;
-            writeText(headText, 11, true, GOLD_DARK, 0, 1.3);
-            y += 1;
-          } else if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
-            checkSpace(10);
-            writeText(trimmed.replace(/\*\*/g, ''), 10.5, true, MID, 0, 1.4);
-            y += 1;
-          } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-            const items = trimmed.split('\n').filter(Boolean);
-            items.forEach(item => {
-              bulletItem(item.replace(/^[-*]\s+/, ''), GOLD);
-            });
-          } else {
-            writeText(trimmed, 9.5, false, DARK, 0, 1.65);
-            y += 2.5;
-          }
+          if (/^#{1,4} /.test(trimmed)) { const headText = trimmed.replace(/^#+\s*/, ''); checkSpace(12); y += 3; writeText(headText, 11, true, GOLD_DARK, 0, 1.3); y += 1; }
+          else if (trimmed.startsWith('**') && trimmed.endsWith('**')) { checkSpace(10); writeText(trimmed.replace(/\*\*/g, ''), 10.5, true, MID, 0, 1.4); y += 1; }
+          else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) { const items = trimmed.split('\n').filter(Boolean); items.forEach(item => { bulletItem(item.replace(/^[-*]\s+/, ''), GOLD); }); }
+          else { writeText(trimmed, 9.5, false, DARK, 0, 1.65); y += 2.5; }
         });
         y += 6;
       }
-
-      if (data.key_concepts?.length) {
-        sectionHeading('Key Concepts', GOLD, CREAM, '●');
-        data.key_concepts.forEach((c, i) => {
-          numberedItem(i + 1, c, GOLD);
-        });
-        y += 5;
-      }
-
-      if (data.key_tricks?.length) {
-        sectionHeading('Study Tricks & Memory Aids', AMBER, AMBER_BG, '★');
-        data.key_tricks.forEach((t, i) => {
-          trickCard(i + 1, t);
-        });
-        y += 4;
-      }
-
-      if (data.practice_questions?.length) {
-        sectionHeading('Practice Questions & Answers', GREEN, GREEN_BG, '?');
-        data.practice_questions.forEach((qa, i) => {
-          questionCard(i + 1, qa.question, qa.answer);
-        });
-        y += 3;
-      }
-
-      if (data.real_world_applications?.length) {
-        sectionHeading('Real-World Applications', BLUE, BLUE_BG, '◆');
-        data.real_world_applications.forEach((a, i) => {
-          bulletItem(`Application ${i + 1}: ${a}`, BLUE);
-        });
-        y += 5;
-      }
-
-      if (data.common_misconceptions?.length) {
-        sectionHeading('Common Misconceptions to Avoid', RED, RED_BG, '!');
-        data.common_misconceptions.forEach((m, i) => {
-          bulletItem(`Misconception ${i + 1}: ${m}`, RED);
-        });
-        y += 5;
-      }
-
-      checkSpace(32);
-      y += 8;
-      divider();
-      doc.setFillColor(18, 12, 4);
-      doc.roundedRect(ml - 2, y - 2, cw + 4, 22, 3, 3, 'F');
-      doc.setFillColor(...GOLD);
-      doc.rect(ml - 2, y - 2, 4, 22, 'F');
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...GOLD);
+      if (data.key_concepts?.length) { sectionHeading('Key Concepts', GOLD, CREAM, '●'); data.key_concepts.forEach((c, i) => { numberedItem(i + 1, c, GOLD); }); y += 5; }
+      if (data.key_tricks?.length) { sectionHeading('Study Tricks & Memory Aids', AMBER, AMBER_BG, '★'); data.key_tricks.forEach((t, i) => { trickCard(i + 1, t); }); y += 4; }
+      if (data.practice_questions?.length) { sectionHeading('Practice Questions & Answers', GREEN, GREEN_BG, '?'); data.practice_questions.forEach((qa, i) => { questionCard(i + 1, qa.question, qa.answer); }); y += 3; }
+      if (data.real_world_applications?.length) { sectionHeading('Real-World Applications', BLUE, BLUE_BG, '◆'); data.real_world_applications.forEach((a, i) => { bulletItem(`Application ${i + 1}: ${a}`, BLUE); }); y += 5; }
+      if (data.common_misconceptions?.length) { sectionHeading('Common Misconceptions to Avoid', RED, RED_BG, '!'); data.common_misconceptions.forEach((m, i) => { bulletItem(`Misconception ${i + 1}: ${m}`, RED); }); y += 5; }
+      checkSpace(32); y += 8; divider();
+      doc.setFillColor(18, 12, 4); doc.roundedRect(ml - 2, y - 2, cw + 4, 22, 3, 3, 'F');
+      doc.setFillColor(...GOLD); doc.rect(ml - 2, y - 2, 4, 22, 'F');
+      doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(...GOLD);
       doc.text('SAVOIRÉ AI v2.0', ml + 8, y + 5);
-      doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(160, 135, 90);
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(160, 135, 90);
       doc.text('Think Less. Know More. — Free for every student on Earth.', ml + 8, y + 10.5);
-      doc.setFontSize(7.5);
-      doc.setTextColor(120, 100, 68);
+      doc.setFontSize(7.5); doc.setTextColor(120, 100, 68);
       doc.text(`${SAVOIRÉ.DEVELOPER}  ·  ${SAVOIRÉ.DEVSITE}  ·  Founder: ${SAVOIRÉ.FOUNDER}`, ml + 8, y + 16);
-
       const totalPages = doc.internal.getNumberOfPages();
-      for (let p = 1; p <= totalPages; p++) {
-        doc.setPage(p);
-        drawPageFooter(p, totalPages);
-      }
-
-      const safeTopic = (data.topic || 'Notes')
-        .replace(/[^a-zA-Z0-9\s]/g, '')
-        .replace(/\s+/g, '_')
-        .slice(0, 50);
-      const filename = `SavoireAI_${safeTopic}_${new Date().toISOString().slice(0,10)}.pdf`;
-      doc.save(filename);
-
-      this._toast('success', 'fa-file-pdf', `✓ PDF downloaded: ${filename}`);
-
-    } catch (err) {
-      console.error('[Savoiré PDF error]', err);
-      this._toast('error', 'fa-times', `PDF generation failed: ${err.message}`);
-    }
+      for (let p = 1; p <= totalPages; p++) { doc.setPage(p); drawPageFooter(p, totalPages); }
+      const safeTopic = (data.topic || 'Notes').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').slice(0, 50);
+      doc.save(`SavoireAI_${safeTopic}_${new Date().toISOString().slice(0,10)}.pdf`);
+      this._toast('success', 'fa-file-pdf', `✓ PDF downloaded: ${safeTopic}`);
+    } catch (err) { console.error('[Savoiré PDF error]', err); this._toast('error', 'fa-times', `PDF generation failed: ${err.message}`); }
   }
 
   _copyResult() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Nothing to copy yet.'); return; }
-
     const parts = [];
-    if (data.topic)              parts.push(`# ${data.topic}\n`);
-    if (data.ultra_long_notes)   parts.push(this._stripMd(data.ultra_long_notes));
-    if (data.key_concepts?.length) {
-      parts.push('\n\n## Key Concepts\n');
-      data.key_concepts.forEach((c, i) => parts.push(`${i+1}. ${c}`));
-    }
-    if (data.key_tricks?.length) {
-      parts.push('\n\n## Study Tricks\n');
-      data.key_tricks.forEach((t, i) => parts.push(`${i+1}. ${t}`));
-    }
-    if (data.practice_questions?.length) {
-      parts.push('\n\n## Practice Questions\n');
-      data.practice_questions.forEach((qa, i) => {
-        parts.push(`Q${i+1}: ${qa.question}`);
-        parts.push(`A: ${this._stripMd(qa.answer)}\n`);
-      });
-    }
-    if (data.real_world_applications?.length) {
-      parts.push('\n\n## Real-World Applications\n');
-      data.real_world_applications.forEach((a, i) => parts.push(`${i+1}. ${a}`));
-    }
-    if (data.common_misconceptions?.length) {
-      parts.push('\n\n## Common Misconceptions\n');
-      data.common_misconceptions.forEach((m, i) => parts.push(`${i+1}. ${m}`));
-    }
+    if (data.topic) parts.push(`# ${data.topic}\n`);
+    if (data.ultra_long_notes) parts.push(this._stripMd(data.ultra_long_notes));
+    if (data.key_concepts?.length) { parts.push('\n\n## Key Concepts\n'); data.key_concepts.forEach((c, i) => parts.push(`${i+1}. ${c}`)); }
+    if (data.key_tricks?.length) { parts.push('\n\n## Study Tricks\n'); data.key_tricks.forEach((t, i) => parts.push(`${i+1}. ${t}`)); }
+    if (data.practice_questions?.length) { parts.push('\n\n## Practice Questions\n'); data.practice_questions.forEach((qa, i) => { parts.push(`Q${i+1}: ${qa.question}`); parts.push(`A: ${this._stripMd(qa.answer)}\n`); }); }
+    if (data.real_world_applications?.length) { parts.push('\n\n## Real-World Applications\n'); data.real_world_applications.forEach((a, i) => parts.push(`${i+1}. ${a}`)); }
+    if (data.common_misconceptions?.length) { parts.push('\n\n## Common Misconceptions\n'); data.common_misconceptions.forEach((m, i) => parts.push(`${i+1}. ${m}`)); }
     parts.push(`\n\n---\nGenerated by ${SAVOIRÉ.BRAND} — ${SAVOIRÉ.WEBSITE}`);
-
     const text = parts.join('\n');
-    navigator.clipboard.writeText(text)
-      .then(() => this._toast('success', 'fa-check', `Copied ${this._wordCount(text).toLocaleString()} words to clipboard!`))
-      .catch(() => {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        this._toast('success', 'fa-check', 'Copied to clipboard!');
-      });
+    navigator.clipboard.writeText(text).then(() => this._toast('success', 'fa-check', `Copied ${this._wordCount(text).toLocaleString()} words to clipboard!`)).catch(() => { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); this._toast('success', 'fa-check', 'Copied to clipboard!'); });
   }
 
   _copySection(text) {
-    navigator.clipboard.writeText(text)
-      .then(() => this._toast('success', 'fa-check', 'Section copied!'))
-      .catch(() => this._toast('error', 'fa-times', 'Copy failed.'));
+    navigator.clipboard.writeText(text).then(() => this._toast('success', 'fa-check', 'Section copied!')).catch(() => this._toast('error', 'fa-times', 'Copy failed.'));
   }
 
   _saveNote() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Nothing to save yet.'); return; }
-
     const existing = this.saved.find(s => s.topic === data.topic && s.tool === this.tool);
-    if (existing) {
-      this._toast('info', 'fa-star', 'Already saved! View in Saved Notes.'); return;
-    }
-
-    if (this.saved.length >= SAVOIRÉ.MAX_SAVED) {
-      this._toast('error', 'fa-archive', `Library full (max ${SAVOIRÉ.MAX_SAVED} notes). Delete some first.`); return;
-    }
-
-    const note = {
-      id:      this._genId(),
-      topic:   data.topic || 'Untitled',
-      tool:    this.tool,
-      data,
-      savedAt: Date.now(),
-    };
-
+    if (existing) { this._toast('info', 'fa-star', 'Already saved! View in Saved Notes.'); return; }
+    if (this.saved.length >= SAVOIRÉ.MAX_SAVED) { this._toast('error', 'fa-archive', `Library full (max ${SAVOIRÉ.MAX_SAVED} notes). Delete some first.`); return; }
+    const note = { id: this._genId(), topic: data.topic || 'Untitled', tool: this.tool, data, savedAt: Date.now() };
     this.saved.unshift(note);
     this._save('sv_saved', this.saved);
     this._updateHeaderStats();
@@ -3113,44 +2262,25 @@ class SavoireApp {
   _shareResult() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Nothing to share yet.'); return; }
-
-    const shareData = {
-      title: `${data.topic || 'Study Notes'} — Savoiré AI`,
-      text:  `Check out my study notes on "${data.topic}" generated by Savoiré AI — free AI study companion!`,
-      url:   `https://${SAVOIRÉ.WEBSITE}`,
-    };
-
-    if (navigator.share) {
-      navigator.share(shareData).catch(() => this._fallbackShare(shareData));
-    } else {
-      this._fallbackShare(shareData);
-    }
+    const shareData = { title: `${data.topic || 'Study Notes'} — Savoiré AI`, text: `Check out my study notes on "${data.topic}" generated by Savoiré AI — free AI study companion!`, url: `https://${SAVOIRÉ.WEBSITE}` };
+    if (navigator.share) navigator.share(shareData).catch(() => this._fallbackShare(shareData));
+    else this._fallbackShare(shareData);
   }
 
   _fallbackShare(shareData) {
     const url = `${shareData.url}?topic=${encodeURIComponent(shareData.title)}`;
-    navigator.clipboard.writeText(url)
-      .then(() => this._toast('success', 'fa-link', 'Link copied to clipboard!'))
-      .catch(() => this._toast('info', 'fa-info-circle', `Share: ${url}`));
+    navigator.clipboard.writeText(url).then(() => this._toast('success', 'fa-link', 'Link copied to clipboard!')).catch(() => this._toast('info', 'fa-info-circle', `Share: ${url}`));
   }
 
   _clearOutput() {
     if (!this.currentData) return;
-    this._confirm('Clear the current output? You can always regenerate it.', () => {
-      this.currentData = null;
-      this._showState('empty');
-      this.fcCards = [];
-      this.quizData = [];
-      this._toast('info', 'fa-trash', 'Output cleared.');
-    });
+    this._confirm('Clear the current output? You can always regenerate it.', () => { this.currentData = null; this._showState('empty'); this.fcCards = []; this.quizData = []; this._toast('info', 'fa-trash', 'Output cleared.'); });
   }
 
   _addToHistory(item) {
     this.history = this.history.filter(h => !(h.topic === item.topic && h.tool === item.tool));
     this.history.unshift(item);
-    if (this.history.length > SAVOIRÉ.MAX_HISTORY) {
-      this.history = this.history.slice(0, SAVOIRÉ.MAX_HISTORY);
-    }
+    if (this.history.length > SAVOIRÉ.MAX_HISTORY) this.history = this.history.slice(0, SAVOIRÉ.MAX_HISTORY);
     this._save('sv_history', this.history);
     this._renderSbHistory();
     this._updateHistBadge();
@@ -3159,290 +2289,78 @@ class SavoireApp {
   _renderSbHistory() {
     const list = this._el('lpHistList');
     if (!list) return;
-
-    if (!this.history.length) {
-      list.innerHTML = '<div class="lp-hist-empty">No history yet.</div>';
-      return;
-    }
-
+    if (!this.history.length) { list.innerHTML = '<div class="lp-hist-empty">No history yet.</div>'; return; }
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram' };
     const items = this.history.slice(0, 6);
-
-    list.innerHTML = items.map(h => `
-      <div class="lp-hist-item" onclick="window._app._loadHistoryItem('${h.id}')" title="${this._esc((h.topic || '').substring(0, 80))}">
-        <i class="fas ${ICONS[h.tool] || 'fa-book'} lp-hist-icon"></i>
-        <div class="lp-hist-topic">${this._esc((h.topic || '').substring(0, 32))}</div>
-        <div class="lp-hist-time">${this._relTime(h.ts)}</div>
-      </div>`).join('');
+    list.innerHTML = items.map(h => `<div class="lp-hist-item" onclick="window._app._loadHistoryItem('${h.id}')" title="${this._esc((h.topic || '').substring(0, 80))}"><i class="fas ${ICONS[h.tool] || 'fa-book'} lp-hist-icon"></i><div class="lp-hist-topic">${this._esc((h.topic || '').substring(0, 32))}</div><div class="lp-hist-time">${this._relTime(h.ts)}</div></div>`).join('');
   }
 
-  _openHistModal() {
-    this._renderHistModal();
-    this._openModal('histModal');
-  }
-
-  _filterHist(query) {
-    const active = this._qs('.hf.active')?.dataset?.filter || 'all';
-    this._renderHistModal(active, query);
-  }
+  _openHistModal() { this._renderHistModal(); this._openModal('histModal'); }
+  _filterHist(query) { const active = this._qs('.hf.active')?.dataset?.filter || 'all'; this._renderHistModal(active, query); }
 
   _renderHistModal(filter = 'all', query = '') {
-    const list  = this._el('histList');
-    const empty = this._el('histEmpty');
-    if (!list) return;
-
+    const list = this._el('histList'); const empty = this._el('histEmpty'); if (!list) return;
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram' };
-
     let filtered = this.history;
     if (filter !== 'all') filtered = filtered.filter(h => h.tool === filter);
-    if (query)   filtered = filtered.filter(h => (h.topic || '').toLowerCase().includes(query.toLowerCase()));
-
-    if (!filtered.length) {
-      list.innerHTML = '';
-      if (empty) empty.style.display = 'flex';
-      return;
-    }
+    if (query) filtered = filtered.filter(h => (h.topic || '').toLowerCase().includes(query.toLowerCase()));
+    if (!filtered.length) { list.innerHTML = ''; if (empty) empty.style.display = 'flex'; return; }
     if (empty) empty.style.display = 'none';
-
     const groups = {};
-    filtered.forEach(h => {
-      const g = this._dateGroup(h.ts);
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(h);
-    });
-
-    const hl = (text, q) => {
-      if (!q) return this._esc(text || '');
-      const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
-      return this._esc(text || '').replace(regex, '<mark style="background:rgba(201,169,110,.25);border-radius:2px">$1</mark>');
-    };
-
-    list.innerHTML = Object.entries(groups).map(([group, items]) => `
-      <div class="hist-group-lbl">${group}</div>
-      ${items.map(h => {
-        const topicHl = hl((h.topic || '').substring(0, 90), query);
-        return `
-          <div class="hist-item" onclick="window._app._loadHistory('${h.id}')">
-            <div class="hist-tool-av"><i class="fas ${ICONS[h.tool] || 'fa-book'}"></i></div>
-            <div class="hist-info">
-              <div class="hist-topic">${topicHl}</div>
-              <div class="hist-meta"><span class="hist-tag">${h.tool}</span><span class="hist-time">${this._relTime(h.ts)}</span></div>
-            </div>
-            <div class="hist-acts"><button class="hist-del" onclick="event.stopPropagation();window._app._deleteHistory('${h.id}')"><i class="fas fa-trash"></i></button></div>
-          </div>`;
-      }).join('')}`).join('');
+    filtered.forEach(h => { const g = this._dateGroup(h.ts); if (!groups[g]) groups[g] = []; groups[g].push(h); });
+    const hl = (text, q) => { if (!q) return this._esc(text || ''); const regex = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'); return this._esc(text || '').replace(regex, '<mark style="background:rgba(201,169,110,.25);border-radius:2px">$1</mark>'); };
+    list.innerHTML = Object.entries(groups).map(([group, items]) => `<div class="hist-group-lbl">${group}</div>${items.map(h => { const topicHl = hl((h.topic || '').substring(0, 90), query); return `<div class="hist-item" onclick="window._app._loadHistory('${h.id}')"><div class="hist-tool-av"><i class="fas ${ICONS[h.tool] || 'fa-book'}"></i></div><div class="hist-info"><div class="hist-topic">${topicHl}</div><div class="hist-meta"><span class="hist-tag">${h.tool}</span><span class="hist-time">${this._relTime(h.ts)}</span></div></div><div class="hist-acts"><button class="hist-del" onclick="event.stopPropagation();window._app._deleteHistory('${h.id}')"><i class="fas fa-trash"></i></button></div></div>`; }).join('')}`).join('');
   }
 
-  _loadHistory(id) {
-    const h = this.history.find(x => x.id === id);
-    if (!h?.data) return;
-    this._closeModal('histModal');
-    this.currentData = h.data;
-    this.tool        = h.tool || 'notes';
-    this._setTool(this.tool);
-    this._renderResult(h.data);
-    this._toast('info', 'fa-history', `Loaded: ${(h.topic || '').substring(0, 40)}`);
-  }
+  _loadHistory(id) { const h = this.history.find(x => x.id === id); if (!h?.data) return; this._closeModal('histModal'); this.currentData = h.data; this.tool = h.tool || 'notes'; this._setTool(this.tool); this._renderResult(h.data); this._toast('info', 'fa-history', `Loaded: ${(h.topic || '').substring(0, 40)}`); }
+  _loadHistoryItem(id) { this._loadHistory(id); }
+  _deleteHistory(id) { this.history = this.history.filter(x => x.id !== id); this._save('sv_history', this.history); this._updateHistBadge(); this._renderSbHistory(); this._updateHeaderStats(); this._renderHistModal(this._qs('.hf.active')?.dataset?.filter || 'all', this._el('histSearchInput')?.value || ''); }
 
-  _loadHistoryItem(id) {
-    this._loadHistory(id);
-  }
-
-  _deleteHistory(id) {
-    this.history = this.history.filter(x => x.id !== id);
-    this._save('sv_history', this.history);
-    this._updateHistBadge();
-    this._renderSbHistory();
-    this._updateHeaderStats();
-    this._renderHistModal(
-      this._qs('.hf.active')?.dataset?.filter || 'all',
-      this._el('histSearchInput')?.value || ''
-    );
-  }
-
-  _openSavedModal() {
-    this._renderSavedModal();
-    this._openModal('savedModal');
-  }
-
+  _openSavedModal() { this._renderSavedModal(); this._openModal('savedModal'); }
   _renderSavedModal() {
-    const list  = this._el('savedList');
-    const empty = this._el('savedEmpty');
-    const cnt   = this._el('savedCount');
-    if (!list) return;
-
+    const list = this._el('savedList'); const empty = this._el('savedEmpty'); const cnt = this._el('savedCount'); if (!list) return;
     if (cnt) cnt.textContent = `${this.saved.length} note${this.saved.length !== 1 ? 's' : ''}`;
-
-    if (!this.saved.length) {
-      list.innerHTML = '';
-      if (empty) empty.style.display = 'flex';
-      return;
-    }
+    if (!this.saved.length) { list.innerHTML = ''; if (empty) empty.style.display = 'flex'; return; }
     if (empty) empty.style.display = 'none';
-
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram' };
-
-    list.innerHTML = this.saved.map(s => `
-      <div class="hist-item" onclick="window._app._loadSaved('${s.id}')">
-        <div class="hist-tool-av"><i class="fas ${ICONS[s.tool] || 'fa-star'}"></i></div>
-        <div class="hist-info">
-          <div class="hist-topic">${this._esc((s.topic || '').substring(0, 90))}</div>
-          <div class="hist-meta"><span class="hist-tag">${s.tool}</span><span class="hist-time">Saved ${this._relTime(s.savedAt)}</span></div>
-        </div>
-        <div class="hist-acts"><button class="hist-del" onclick="event.stopPropagation();window._app._deleteSaved('${s.id}')"><i class="fas fa-trash"></i></button></div>
-      </div>`).join('');
+    list.innerHTML = this.saved.map(s => `<div class="hist-item" onclick="window._app._loadSaved('${s.id}')"><div class="hist-tool-av"><i class="fas ${ICONS[s.tool] || 'fa-star'}"></i></div><div class="hist-info"><div class="hist-topic">${this._esc((s.topic || '').substring(0, 90))}</div><div class="hist-meta"><span class="hist-tag">${s.tool}</span><span class="hist-time">Saved ${this._relTime(s.savedAt)}</span></div></div><div class="hist-acts"><button class="hist-del" onclick="event.stopPropagation();window._app._deleteSaved('${s.id}')"><i class="fas fa-trash"></i></button></div></div>`).join('');
   }
-
-  _loadSaved(id) {
-    const s = this.saved.find(x => x.id === id);
-    if (!s?.data) return;
-    this._closeModal('savedModal');
-    this.currentData = s.data;
-    this.tool        = s.tool || 'notes';
-    this._setTool(this.tool);
-    this._renderResult(s.data);
-    this._toast('success', 'fa-star', `Loaded: ${(s.topic || '').substring(0, 40)}`);
-  }
-
-  _deleteSaved(id) {
-    this.saved = this.saved.filter(x => x.id !== id);
-    this._save('sv_saved', this.saved);
-    this._updateHeaderStats();
-    this._renderSavedModal();
-  }
+  _loadSaved(id) { const s = this.saved.find(x => x.id === id); if (!s?.data) return; this._closeModal('savedModal'); this.currentData = s.data; this.tool = s.tool || 'notes'; this._setTool(this.tool); this._renderResult(s.data); this._toast('success', 'fa-star', `Loaded: ${(s.topic || '').substring(0, 40)}`); }
+  _deleteSaved(id) { this.saved = this.saved.filter(x => x.id !== id); this._save('sv_saved', this.saved); this._updateHeaderStats(); this._renderSavedModal(); }
 
   _openSettingsModal() {
-    const ni = this._el('nameInput');
-    if (ni) ni.value = this.userName;
-
+    const ni = this._el('nameInput'); if (ni) ni.value = this.userName;
     const theme = document.documentElement.dataset.theme || 'dark';
-    this._qsa('[data-theme-btn]').forEach(b => {
-      b.classList.toggle('active', b.dataset.themeBtn === theme);
-      b.setAttribute('aria-pressed', String(b.dataset.themeBtn === theme));
-    });
-
+    this._qsa('[data-theme-btn]').forEach(b => { b.classList.toggle('active', b.dataset.themeBtn === theme); b.setAttribute('aria-pressed', String(b.dataset.themeBtn === theme)); });
     const fs = document.documentElement.dataset.font || 'medium';
-    this._qsa('.font-sz').forEach(b => {
-      b.classList.toggle('active', b.dataset.size === fs);
-      b.setAttribute('aria-pressed', String(b.dataset.size === fs));
-    });
-
+    this._qsa('.font-sz').forEach(b => { b.classList.toggle('active', b.dataset.size === fs); b.setAttribute('aria-pressed', String(b.dataset.size === fs)); });
     const ds = this._el('dsStats');
     if (ds) {
-      const histSize  = JSON.stringify(this.history).length;
+      const histSize = JSON.stringify(this.history).length;
       const savedSize = JSON.stringify(this.saved).length;
-      const totalKB   = Math.round((histSize + savedSize) / 1024);
-      const wordsGen  = this.history.reduce((a, h) => a + this._wordCount(this._stripMd(h.data?.ultra_long_notes || '')), 0);
-
-      ds.innerHTML = `
-        <div class="ds-stat"><span class="ds-val">${this.history.length}</span><div class="ds-lbl">History Items</div></div>
-        <div class="ds-stat"><span class="ds-val">${this.saved.length}</span><div class="ds-lbl">Saved Notes</div></div>
-        <div class="ds-stat"><span class="ds-val">${this.sessions}</span><div class="ds-lbl">Sessions</div></div>
-        <div class="ds-stat"><span class="ds-val">${totalKB}KB</span><div class="ds-lbl">Storage Used</div></div>
-        <div class="ds-stat"><span class="ds-val">${wordsGen.toLocaleString()}</span><div class="ds-lbl">Words Generated</div></div>
-        <div class="ds-stat"><span class="ds-val" style="font-size:.8rem">${this.history[0] ? this._relTime(this.history[0].ts) : '—'}</span><div class="ds-lbl">Last Study</div></div>`;
+      const totalKB = Math.round((histSize + savedSize) / 1024);
+      const wordsGen = this.history.reduce((a, h) => a + this._wordCount(this._stripMd(h.data?.ultra_long_notes || '')), 0);
+      ds.innerHTML = `<div class="ds-stat"><span class="ds-val">${this.history.length}</span><div class="ds-lbl">History Items</div></div><div class="ds-stat"><span class="ds-val">${this.saved.length}</span><div class="ds-lbl">Saved Notes</div></div><div class="ds-stat"><span class="ds-val">${this.sessions}</span><div class="ds-lbl">Sessions</div></div><div class="ds-stat"><span class="ds-val">${totalKB}KB</span><div class="ds-lbl">Storage Used</div></div><div class="ds-stat"><span class="ds-val">${wordsGen.toLocaleString()}</span><div class="ds-lbl">Words Generated</div></div><div class="ds-stat"><span class="ds-val" style="font-size:.8rem">${this.history[0] ? this._relTime(this.history[0].ts) : '—'}</span><div class="ds-lbl">Last Study</div></div>`;
     }
-
     this._openModal('settingsModal');
   }
 
-  _saveName() {
-    const inp  = this._el('nameInput');
-    const name = inp?.value?.trim();
-    if (!name || name.length < 2) {
-      this._toast('error', 'fa-times', 'Name must be at least 2 characters.');
-      return;
-    }
-    this.userName = name;
-    localStorage.setItem('sv_user', name);
-    this._updateUserUI();
-    this._toast('success', 'fa-check', 'Name updated!');
-  }
-
-  _exportDataJson() {
-    const obj = {
-      exported:    new Date().toISOString(),
-      app:         SAVOIRÉ.BRAND,
-      developer:   SAVOIRÉ.DEVELOPER,
-      website:     SAVOIRÉ.WEBSITE,
-      devsite:     SAVOIRÉ.DEVSITE,
-      founder:     SAVOIRÉ.FOUNDER,
-      userName:    this.userName,
-      sessions:    this.sessions,
-      history:     this.history,
-      saved:       this.saved,
-      preferences: this.prefs,
-    };
-    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `savoiré-ai-data-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    this._toast('success', 'fa-download', 'Data exported successfully!');
-  }
-
-  _clearAllData() {
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('sv_'))
-      .forEach(k => localStorage.removeItem(k));
-    this._toast('info', 'fa-trash', 'All data cleared. Reloading…');
-    setTimeout(() => window.location.reload(), 1300);
-  }
-
-  _toggleTheme() {
-    const cur = document.documentElement.dataset.theme || 'dark';
-    this._setTheme(cur === 'dark' ? 'light' : 'dark');
-  }
-
-  _setTheme(theme) {
-    document.documentElement.dataset.theme = theme;
-    const icon = this._el('themeIcon');
-    if (icon) icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
-    this._qsa('[data-theme-btn]').forEach(b => {
-      b.classList.toggle('active', b.dataset.themeBtn === theme);
-      b.setAttribute('aria-pressed', String(b.dataset.themeBtn === theme));
-    });
-    this.prefs.theme = theme;
-    this._save('sv_prefs', this.prefs);
-  }
-
-  _setFontSize(size) {
-    document.documentElement.dataset.font = size;
-    this._qsa('.font-sz').forEach(b => {
-      b.classList.toggle('active', b.dataset.size === size);
-      b.setAttribute('aria-pressed', String(b.dataset.size === size));
-    });
-    this.prefs.fontSize = size;
-    this._save('sv_prefs', this.prefs);
-  }
-
-  _applyPrefs() {
-    if (this.prefs.theme)    this._setTheme(this.prefs.theme);
-    if (this.prefs.fontSize) this._setFontSize(this.prefs.fontSize);
-    if (this.prefs.lastTool) this._setTool(this.prefs.lastTool);
-  }
+  _saveName() { const inp = this._el('nameInput'); const name = inp?.value?.trim(); if (!name || name.length < 2) { this._toast('error', 'fa-times', 'Name must be at least 2 characters.'); return; } this.userName = name; localStorage.setItem('sv_user', name); this._updateUserUI(); this._toast('success', 'fa-check', 'Name updated!'); }
+  _exportDataJson() { const obj = { exported: new Date().toISOString(), app: SAVOIRÉ.BRAND, developer: SAVOIRÉ.DEVELOPER, website: SAVOIRÉ.WEBSITE, devsite: SAVOIRÉ.DEVSITE, founder: SAVOIRÉ.FOUNDER, userName: this.userName, sessions: this.sessions, history: this.history, saved: this.saved, preferences: this.prefs }; const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `savoiré-ai-data-${Date.now()}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); this._toast('success', 'fa-download', 'Data exported successfully!'); }
+  _clearAllData() { Object.keys(localStorage).filter(k => k.startsWith('sv_')).forEach(k => localStorage.removeItem(k)); this._toast('info', 'fa-trash', 'All data cleared. Reloading…'); setTimeout(() => window.location.reload(), 1300); }
+  _toggleTheme() { const cur = document.documentElement.dataset.theme || 'dark'; this._setTheme(cur === 'dark' ? 'light' : 'dark'); }
+  _setTheme(theme) { document.documentElement.dataset.theme = theme; const icon = this._el('themeIcon'); if (icon) icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun'; this._qsa('[data-theme-btn]').forEach(b => { b.classList.toggle('active', b.dataset.themeBtn === theme); b.setAttribute('aria-pressed', String(b.dataset.themeBtn === theme)); }); this.prefs.theme = theme; this._save('sv_prefs', this.prefs); }
+  _setFontSize(size) { document.documentElement.dataset.font = size; this._qsa('.font-sz').forEach(b => { b.classList.toggle('active', b.dataset.size === size); b.setAttribute('aria-pressed', String(b.dataset.size === size)); }); this.prefs.fontSize = size; this._save('sv_prefs', this.prefs); }
+  _applyPrefs() { if (this.prefs.theme) this._setTheme(this.prefs.theme); if (this.prefs.fontSize) this._setFontSize(this.prefs.fontSize); if (this.prefs.lastTool) this._setTool(this.prefs.lastTool); }
 
   _toggleSidebar() {
     const lp = this._el('leftPanel');
     if (!lp) return;
-
     if (window.innerWidth <= 768) {
-      // Mobile: toggle 75% width sidebar
       const isOpen = lp.classList.toggle('mobile-open');
       this._el('sbBackdrop')?.classList.toggle('visible', isOpen);
       this._el('sbToggle')?.setAttribute('aria-expanded', String(isOpen));
-      if (isOpen) {
-        lp.style.width = '75%';
-        lp.style.transform = 'translateX(0)';
-      } else {
-        lp.style.transform = 'translateX(-100%)';
-      }
     } else {
-      // Desktop: full collapse
       const isCollapsed = lp.classList.toggle('collapsed');
       this._el('sbToggle')?.setAttribute('aria-expanded', String(!isCollapsed));
       const sfp = this._el('streamFullpage');
@@ -3450,136 +2368,42 @@ class SavoireApp {
     }
   }
 
-  _closeMobileSidebar() {
-    const lp = this._el('leftPanel');
-    if (!lp) return;
-    lp.classList.remove('mobile-open');
-    lp.style.transform = '';
-    this._el('sbBackdrop')?.classList.remove('visible');
-    this._el('sbToggle')?.setAttribute('aria-expanded', 'false');
-  }
-
-  _handleResize() {
-    if (window.innerWidth > 768) {
-      this._closeMobileSidebar();
-      const lp = this._el('leftPanel');
-      if (lp) lp.style.transform = '';
-    }
-  }
+  _closeMobileSidebar() { const lp = this._el('leftPanel'); if (!lp) return; lp.classList.remove('mobile-open'); this._el('sbBackdrop')?.classList.remove('visible'); this._el('sbToggle')?.setAttribute('aria-expanded', 'false'); }
+  _handleResize() { if (window.innerWidth > 768) this._closeMobileSidebar(); }
 
   _toggleFocusMode() {
     this.focusMode = !this.focusMode;
-    const lp  = this._el('leftPanel');
+    const lp = this._el('leftPanel');
     const btn = this._el('focusModeBtn');
-
-    if (this.focusMode) {
-      if (lp)  lp.classList.add('collapsed');
-      if (btn) {
-        btn.innerHTML = '<i class="fas fa-compress-alt"></i><span>Exit Focus</span>';
-        btn.title     = 'Exit focus mode';
-      }
-      this._toast('info', 'fa-expand-alt', 'Focus mode on — sidebar hidden.');
-    } else {
-      if (lp)  lp.classList.remove('collapsed');
-      if (btn) {
-        btn.innerHTML = '<i class="fas fa-expand-alt"></i><span>Focus</span>';
-        btn.title     = 'Toggle focus mode';
-      }
-    }
+    if (this.focusMode) { if (lp) lp.classList.add('collapsed'); if (btn) { btn.innerHTML = '<i class="fas fa-compress-alt"></i><span>Exit Focus</span>'; btn.title = 'Exit focus mode'; } this._toast('info', 'fa-expand-alt', 'Focus mode on — sidebar hidden.'); }
+    else { if (lp) lp.classList.remove('collapsed'); if (btn) { btn.innerHTML = '<i class="fas fa-expand-alt"></i><span>Focus</span>'; btn.title = 'Toggle focus mode'; } }
   }
 
-  _openModal(id) {
-    const el = this._el(id);
-    if (!el) return;
-    el.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => {
-      const focusable = el.querySelector('input, button, [tabindex]');
-      if (focusable) focusable.focus();
-    }, 100);
-  }
-
-  _closeModal(id) {
-    const el = this._el(id);
-    if (!el) return;
-    el.style.display = 'none';
-    if (!this._qs('.modal-overlay[style*="flex"]')) {
-      document.body.style.overflow = '';
-    }
-  }
-
-  _closeAllModals() {
-    this._qsa('.modal-overlay').forEach(m => { m.style.display = 'none'; });
-    document.body.style.overflow = '';
-    this._closeDropdown();
-  }
-
-  _confirm(msg, cb) {
-    const me = this._el('confirmMsg');
-    if (me) me.textContent = msg;
-    this.confirmCb = cb;
-    this._openModal('confirmModal');
-  }
-
-  _toggleDropdown() {
-    const dd = this._el('avDropdown');
-    if (!dd) return;
-    const isOpen = dd.classList.toggle('open');
-    this._el('avBtn')?.setAttribute('aria-expanded', String(isOpen));
-  }
-
-  _closeDropdown() {
-    const dd = this._el('avDropdown');
-    if (!dd) return;
-    dd.classList.remove('open');
-    this._el('avBtn')?.setAttribute('aria-expanded', 'false');
-  }
+  _openModal(id) { const el = this._el(id); if (!el) return; el.style.display = 'flex'; document.body.style.overflow = 'hidden'; setTimeout(() => { const focusable = el.querySelector('input, button, [tabindex]'); if (focusable) focusable.focus(); }, 100); }
+  _closeModal(id) { const el = this._el(id); if (!el) return; el.style.display = 'none'; if (!this._qs('.modal-overlay[style*="flex"]')) { document.body.style.overflow = ''; } }
+  _closeAllModals() { this._qsa('.modal-overlay').forEach(m => { m.style.display = 'none'; }); document.body.style.overflow = ''; this._closeDropdown(); }
+  _confirm(msg, cb) { const me = this._el('confirmMsg'); if (me) me.textContent = msg; this.confirmCb = cb; this._openModal('confirmModal'); }
+  _toggleDropdown() { const dd = this._el('avDropdown'); if (!dd) return; const isOpen = dd.classList.toggle('open'); this._el('avBtn')?.setAttribute('aria-expanded', String(isOpen)); }
+  _closeDropdown() { const dd = this._el('avDropdown'); if (!dd) return; dd.classList.remove('open'); this._el('avBtn')?.setAttribute('aria-expanded', 'false'); }
 
   _toast(type, icon, msg, dur = 4200) {
     const container = this._el('toastContainer');
     if (!container) return;
-
-    while (container.children.length >= 4) {
-      container.removeChild(container.firstChild);
-    }
-
-    const t       = document.createElement('div');
-    t.className   = `toast ${type}`;
-    t.innerHTML   = `<i class="fas ${icon}"></i><span>${this._esc(msg)}</span>`;
+    while (container.children.length >= 4) container.removeChild(container.firstChild);
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<i class="fas ${icon}"></i><span>${this._esc(msg)}</span>`;
     t.setAttribute('role', 'alert');
-    t.setAttribute('aria-live', 'polite');
-
-    t.addEventListener('click', () => {
-      t.classList.add('removing');
-      setTimeout(() => t.remove(), 300);
-    });
-
+    t.addEventListener('click', () => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); });
     container.appendChild(t);
-
-    setTimeout(() => {
-      if (t.parentNode) {
-        t.classList.add('removing');
-        setTimeout(() => { if (t.parentNode) t.remove(); }, 300);
-      }
-    }, dur);
+    setTimeout(() => { if (t.parentNode) { t.classList.add('removing'); setTimeout(() => { if (t.parentNode) t.remove(); }, 300); } }, dur);
   }
-
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   window._app = new SavoireApp();
   window._sav = window._app;
-
-  window.setSugg = (topic) => {
-    const el = document.getElementById('mainInput');
-    if (!el) return;
-    el.value = topic;
-    el.dispatchEvent(new Event('input'));
-    el.focus();
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  };
-
+  window.setSugg = (topic) => { const el = document.getElementById('mainInput'); if (!el) return; el.value = topic; el.dispatchEvent(new Event('input')); el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
   console.log('%c📚 Welcome to Savoiré AI v2.0', 'color:#C9A96E;font-size:14px;font-weight:bold');
   console.log('%cBuilt by Sooban Talha Technologies | soobantalhatech.xyz', 'color:#756D63;font-size:11px');
-  console.log('%cFinal Version: Stream lined · Mobile Ready · Google Sheets Integrated', 'color:#42C98A;font-size:10px');
 });
