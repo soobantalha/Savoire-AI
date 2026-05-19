@@ -2398,7 +2398,7 @@ class SavoireApp {
     container.appendChild(t);
     setTimeout(() => { if (t.parentNode) { t.classList.add('removing'); setTimeout(() => { if (t.parentNode) t.remove(); }, 300); } }, dur);
   }
-}
+}f
 
 window.addEventListener('DOMContentLoaded', () => {
   window._app = new SavoireApp();
