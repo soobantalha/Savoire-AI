@@ -2,87 +2,52 @@
 <html lang="en" data-theme="dark">
 <!--
 ═══════════════════════════════════════════════════════════════════════════════════════════════════
-  SAVOIRÉ AI v2.0 — DASHBOARD.HTML — FILE 2 of 5
+  SAVOIRÉ AI v2.0 — DASHBOARD.HTML — COMPLETE FILE
   Built by Sooban Talha Technologies | soobantalhatech.xyz
   Founder: Sooban Talha
 
-  UPGRADE v2.0 — ADDITIONS (original code 100% preserved):
-  ✦ Wizard Modal (Step-by-step generation flow with file upload)
-  ✦ Streak Display in Header
-  ✦ Wizard CTA Button in Sidebar
-  ✦ Mobile responsive fixes
+  FEATURES:
+  ✦ Simplified Sidebar (History, User Profile, Streak, Saved Notes)
+  ✦ Wizard Button in MAIN AREA (not sidebar)
+  ✦ Mobile sidebar hide/show with toggle
+  ✦ All original functionality preserved
 ═══════════════════════════════════════════════════════════════════════════════════════════════════
 -->
 <head>
 
-<!-- ─────────────────────────────────────────────────────────────
-     META TAGS
-     ───────────────────────────────────────────────────────────── -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="description" content="Savoiré AI v2.0 — Free AI Study Companion Dashboard. Generate comprehensive notes, interactive flashcards, practice quizzes, smart summaries and mind maps in 50+ languages. No login. No payment. Free forever.">
-<meta name="keywords" content="AI study companion, free study tool, study notes generator, flashcards AI, quiz generator, mind map, Sooban Talha, Savoiré AI">
+<meta name="description" content="Savoiré AI v2.0 — Free AI Study Companion Dashboard">
 <meta name="author" content="Sooban Talha Technologies">
-<meta name="robots" content="index, follow">
 <meta name="theme-color" content="#C9A96E">
-<meta name="color-scheme" content="dark light">
 
-<!-- Open Graph -->
-<meta property="og:title" content="Savoiré AI v2.0 — Free AI Study Companion">
-<meta property="og:description" content="Generate notes, flashcards, quizzes, summaries and mind maps with AI. Free forever. No login required.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://savoireai.vercel.app/dashboard">
-<meta property="og:image" content="https://savoireai.vercel.app/og-image.png">
+<title>Savoiré AI v2.0 — Dashboard | Think Less. Know More.</title>
 
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Savoiré AI v2.0">
-<meta name="twitter:description" content="Free AI Study Companion — Notes, Flashcards, Quiz, Summary, Mind Map">
-
-<title>Savoiré AI v2.0 — Dashboard | Think Less. Know More. | Free AI Study Companion</title>
-
-<!-- ─────────────────────────────────────────────────────────────
-     FONTS
-     ───────────────────────────────────────────────────────────── -->
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,100;0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,300;1,9..40,400&family=JetBrains+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- ─────────────────────────────────────────────────────────────
-     ICON LIBRARY
-     ───────────────────────────────────────────────────────────── -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<!-- ─────────────────────────────────────────────────────────────
-     JAVASCRIPT LIBRARIES (loaded in head for jsPDF availability)
-     ───────────────────────────────────────────────────────────── -->
-<!-- jsPDF — professional PDF generation -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-<!-- Marked — markdown to HTML rendering -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js" crossorigin="anonymous"></script>
-<!-- DOMPurify — sanitise HTML output for security -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js" crossorigin="anonymous"></script>
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
-<!-- ─────────────────────────────────────────────────────────────
-     MASTER STYLESHEET
-     ───────────────────────────────────────────────────────────── -->
+<!-- Master Stylesheet -->
 <link rel="stylesheet" href="style.css">
 
-<!-- ─────────────────────────────────────────────────────────────
-     DASHBOARD-SPECIFIC INLINE STYLES
-     These extend style.css with layout rules unique to this page
-     ───────────────────────────────────────────────────────────── -->
 <style>
 
 /* ════════════════════════════════════════════════════════════════════
-   DASHBOARD ROOT — viewport-height split-panel layout
+   DASHBOARD ROOT
    ════════════════════════════════════════════════════════════════════ */
-html,
-body {
+html, body {
   height: 100%;
   overflow: hidden;
 }
-
 body {
   display: flex;
   flex-direction: column;
@@ -98,109 +63,60 @@ body {
   background: rgba(0, 0, 0, 0.65);
   z-index: 49;
   backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
   cursor: pointer;
-  transition: opacity 0.28s ease;
 }
-
-.sb-backdrop.visible {
-  display: block;
-  animation: fadeIn 0.25s ease;
-}
+.sb-backdrop.visible { display: block; animation: fadeIn 0.25s ease; }
 
 /* ════════════════════════════════════════════════════════════════════
    TEXTAREA COLLAPSE WRAPPER
-   Used to animate textarea hide/show during streaming
    ════════════════════════════════════════════════════════════════════ */
 .ta-collapse-wrap {
   display: flex;
   flex-direction: column;
   gap: 4px;
   overflow: hidden;
-  transition:
-    max-height 0.55s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity    0.45s ease,
-    margin     0.45s ease;
+  transition: max-height 0.55s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s ease;
   max-height: 500px;
   opacity: 1;
 }
-
 .ta-collapse-wrap.is-collapsed {
   max-height: 0 !important;
   opacity: 0 !important;
-  margin-bottom: 0 !important;
   pointer-events: none;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   FIELD LABEL COLLAPSE
-   ════════════════════════════════════════════════════════════════════ */
 .lbl-collapse-wrap {
   overflow: hidden;
   transition: max-height 0.4s var(--ease), opacity 0.3s ease;
   max-height: 50px;
 }
+.lbl-collapse-wrap.is-collapsed { max-height: 0; opacity: 0; }
 
-.lbl-collapse-wrap.is-collapsed {
-  max-height: 0;
-  opacity: 0;
-  margin: 0;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   SELECTORS ROW COLLAPSE (depth/lang/style hidden during streaming)
-   ════════════════════════════════════════════════════════════════════ */
 .selectors-collapse-wrap {
   display: flex;
   flex-direction: column;
   gap: 9px;
   overflow: hidden;
-  transition:
-    max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity    0.4s ease;
+  transition: max-height 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
   max-height: 600px;
   opacity: 1;
 }
+.selectors-collapse-wrap.is-collapsed { max-height: 0 !important; opacity: 0 !important; pointer-events: none; }
 
-.selectors-collapse-wrap.is-collapsed {
-  max-height: 0 !important;
-  opacity: 0 !important;
-  pointer-events: none;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   SUGGESTIONS COLLAPSE
-   ════════════════════════════════════════════════════════════════════ */
 .sugg-collapse-wrap {
   overflow: hidden;
   transition: max-height 0.45s var(--ease), opacity 0.35s ease;
   max-height: 200px;
 }
+.sugg-collapse-wrap.is-collapsed { max-height: 0; opacity: 0; pointer-events: none; }
 
-.sugg-collapse-wrap.is-collapsed {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   FILE UPLOAD COLLAPSE
-   ════════════════════════════════════════════════════════════════════ */
 .file-collapse-wrap {
   overflow: hidden;
   transition: max-height 0.45s var(--ease), opacity 0.35s ease;
   max-height: 120px;
 }
+.file-collapse-wrap.is-collapsed { max-height: 0; opacity: 0; pointer-events: none; }
 
-.file-collapse-wrap.is-collapsed {
-  max-height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   INPUT MINI BAR — replaces collapsed textarea
-   ════════════════════════════════════════════════════════════════════ */
 .input-mini-bar {
   display: none;
   align-items: center;
@@ -210,142 +126,39 @@ body {
   border: 1px solid var(--goldb);
   border-radius: var(--r2);
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.18s ease;
-  animation: fadeUp 0.32s var(--ease);
-  user-select: none;
+  transition: background 0.18s ease;
 }
+.input-mini-bar.is-visible { display: flex; }
+.imb-icon { color: var(--gold); font-size: 0.8rem; }
+.imb-text { flex: 1; font-size: 0.79rem; color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imb-chip { font-size: 0.66rem; padding: 2px 8px; border-radius: var(--rf); background: var(--goldd); color: var(--gold); }
 
-.input-mini-bar:hover {
-  background: var(--goldd);
-  transform: translateY(-1px);
-}
-
-.input-mini-bar.is-visible {
-  display: flex;
-}
-
-.imb-icon {
-  color: var(--gold);
-  font-size: 0.8rem;
-  flex-shrink: 0;
-}
-
-.imb-text {
-  flex: 1;
-  font-size: 0.79rem;
-  color: var(--t2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--fu);
-  font-style: italic;
-}
-
-.imb-chip {
-  font-size: 0.66rem;
-  padding: 2px 8px;
-  border-radius: var(--rf);
-  background: var(--goldd);
-  border: 1px solid var(--goldb);
-  color: var(--gold);
-  font-family: var(--fu);
-  flex-shrink: 0;
-  font-weight: 600;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   STREAMING STATUS BADGE in left panel during generation
-   ════════════════════════════════════════════════════════════════════ */
 .stream-status-card {
   display: none;
   padding: 10px 12px;
   background: linear-gradient(135deg, var(--bg3), rgba(201,169,110,.06));
   border: 1px solid var(--goldb);
   border-radius: var(--r3);
-  animation: fadeUp 0.3s var(--ease);
 }
+.stream-status-card.is-visible { display: block; }
 
-.stream-status-card.is-visible {
-  display: block;
-}
-
-.ssc-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 7px;
-}
-
-.ssc-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--gold);
-  animation: pulse 1.2s ease-in-out infinite;
-  flex-shrink: 0;
-}
-
-.ssc-label {
-  font-family: var(--fu);
-  font-size: 0.76rem;
-  color: var(--gold);
-  font-weight: 600;
-}
-
-.ssc-progress {
-  height: 3px;
-  background: var(--b2);
-  border-radius: 99px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.ssc-progress-bar {
-  height: 100%;
-  background: linear-gradient(to right, var(--gold), var(--gold3));
-  border-radius: 99px;
-  width: 0%;
-  transition: width 0.4s var(--ease);
-  animation: progressIndeterminate 2s ease-in-out infinite;
-}
+.ssc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.ssc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: pulse 1.2s infinite; }
+.ssc-label { font-family: var(--fu); font-size: 0.76rem; color: var(--gold); font-weight: 600; }
+.ssc-progress { height: 3px; background: var(--b2); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+.ssc-progress-bar { height: 100%; background: linear-gradient(to right, var(--gold), var(--gold3)); width: 0%; animation: progressIndeterminate 2s infinite; }
 
 @keyframes progressIndeterminate {
-  0%   { width: 0%;   margin-left: 0%;   }
-  50%  { width: 70%;  margin-left: 15%;  }
-  100% { width: 0%;   margin-left: 100%; }
+  0% { width: 0%; margin-left: 0%; }
+  50% { width: 70%; margin-left: 15%; }
+  100% { width: 0%; margin-left: 100%; }
 }
 
-.ssc-stages {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
+.ssc-stages { display: flex; gap: 4px; flex-wrap: wrap; }
+.ssc-stage { font-size: 0.64rem; padding: 2px 7px; border-radius: var(--rf); border: 1px solid var(--b1); color: var(--t4); transition: all 0.28s ease; }
+.ssc-stage.active { color: var(--gold); border-color: var(--goldb); background: var(--goldd); }
+.ssc-stage.done { color: var(--em2); border-color: rgba(66,201,138,.22); background: rgba(66,201,138,.08); }
 
-.ssc-stage {
-  font-size: 0.64rem;
-  padding: 2px 7px;
-  border-radius: var(--rf);
-  border: 1px solid var(--b1);
-  color: var(--t4);
-  font-family: var(--fu);
-  transition: all 0.28s ease;
-}
-
-.ssc-stage.active {
-  color: var(--gold);
-  border-color: var(--goldb);
-  background: var(--goldd);
-}
-
-.ssc-stage.done {
-  color: var(--em2);
-  border-color: rgba(66,201,138,.22);
-  background: rgba(66,201,138,.08);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   CANCEL BUTTON — appears during generation
-   ════════════════════════════════════════════════════════════════════ */
 .cancel-btn {
   width: 100%;
   padding: 8px;
@@ -353,63 +166,17 @@ body {
   border-radius: var(--r3);
   background: transparent;
   color: var(--ruby2);
-  font-family: var(--fu);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: none;
   align-items: center;
   justify-content: center;
   gap: 6px;
 }
+.cancel-btn.is-visible { display: flex; }
+.cancel-btn:hover { background: var(--rubyf); transform: translateY(-1px); }
 
-.cancel-btn.is-visible {
-  display: flex;
-}
-
-.cancel-btn:hover {
-  background: var(--rubyf);
-  transform: translateY(-1px);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   WORD COUNT DISPLAY in output area
-   ════════════════════════════════════════════════════════════════════ */
-.output-meta-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 14px;
-  background: var(--bg3);
-  border: 1px solid var(--b1);
-  border-radius: var(--r2);
-  font-family: var(--fm);
-  font-size: 0.64rem;
-  color: var(--t3);
-  flex-wrap: wrap;
-}
-
-.output-meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.output-meta-item i {
-  color: var(--gold);
-  font-size: 0.6rem;
-}
-
-.output-meta-sep {
-  width: 1px;
-  height: 12px;
-  background: var(--b2);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   BACK TO TOP BUTTON
-   ════════════════════════════════════════════════════════════════════ */
 .back-to-top {
   position: fixed;
   bottom: 24px;
@@ -424,923 +191,146 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.22s ease;
   z-index: 90;
-  font-size: 0.84rem;
-  box-shadow: var(--shadow-md);
 }
+.back-to-top.is-visible { display: flex; animation: fadeIn 0.25s ease; }
+.back-to-top:hover { border-color: var(--goldb); color: var(--gold); background: var(--goldd); transform: translateY(-2px); }
 
-.back-to-top.is-visible {
-  display: flex;
-  animation: fadeIn 0.25s ease;
-}
+.es-shortcuts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+.es-shortcut { display: flex; align-items: center; gap: 5px; font-family: var(--fm); font-size: 0.67rem; color: var(--t4); }
+.es-shortcut kbd { font-size: 0.6rem; padding: 2px 5px; background: var(--bg3); border-radius: 4px; }
 
-.back-to-top:hover {
-  border-color: var(--goldb);
-  color: var(--gold);
-  background: var(--goldd);
-  transform: translateY(-2px);
-}
+.result-nav { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 0; margin-bottom: 4px; }
+.result-nav-btn { display: flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: var(--rf); border: 1px solid var(--b1); background: var(--bg3); color: var(--t3); font-size: 0.72rem; cursor: pointer; }
+.result-nav-btn:hover { border-color: var(--goldb); color: var(--gold); background: var(--goldd); }
 
-/* ════════════════════════════════════════════════════════════════════
-   KEYBOARD SHORTCUT CHIPS in empty state
-   ════════════════════════════════════════════════════════════════════ */
-.es-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 10px;
-}
+.section-anchor { scroll-margin-top: 10px; }
 
-.es-shortcut {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--fm);
-  font-size: 0.67rem;
-  color: var(--t4);
-}
+.ss-hdr { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--b1); background: var(--bg3); gap: 8px; }
+.ss-copy-btn { margin-left: auto; padding: 3px 9px; border-radius: var(--rf); border: 1px solid var(--b2); background: transparent; color: var(--t4); font-size: 0.66rem; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.ss-copy-btn:hover { border-color: var(--goldb); color: var(--gold); background: var(--goldd); }
 
-.es-shortcut kbd {
-  font-size: 0.6rem;
-  padding: 2px 5px;
-}
+.fc-top-bar { width: 100%; max-width: 600px; display: flex; align-items: center; gap: 12px; }
+.fc-prog-bar-wrap { flex: 1; height: 4px; background: var(--b2); border-radius: 99px; overflow: hidden; }
+.fc-prog-bar-fill { height: 100%; background: linear-gradient(to right, var(--gold), var(--gold3)); transition: width 0.4s var(--ease); }
 
-/* ════════════════════════════════════════════════════════════════════
-   RESULT SECTION NAVIGATION
-   Quick-jump links for long result pages
-   ════════════════════════════════════════════════════════════════════ */
-.result-nav {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding: 8px 0;
-  margin-bottom: 4px;
-}
+.quiz-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 14px 0; }
+.quiz-opt-btn { display: flex; align-items: center; gap: 8px; padding: 11px 14px; border-radius: var(--r3); border: 1.5px solid var(--b2); background: var(--bg3); color: var(--t1); font-size: 0.88rem; cursor: pointer; text-align: left; }
+.quiz-opt-btn:hover { border-color: var(--goldb); background: var(--goldd); color: var(--gold); }
+.quiz-opt-btn.correct { border-color: var(--emdb); background: rgba(66,201,138,.1); color: var(--em2); }
+.quiz-opt-letter { width: 22px; height: 22px; border-radius: 50%; background: var(--b2); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; }
 
-.result-nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 11px;
-  border-radius: var(--rf);
-  border: 1px solid var(--b1);
-  background: var(--bg3);
-  color: var(--t3);
-  font-size: 0.72rem;
-  font-family: var(--fu);
-  cursor: pointer;
-  transition: all 0.16s ease;
-  text-decoration: none;
-  white-space: nowrap;
-}
+.score-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+.rh-score { width: 50px; height: 50px; border-radius: 50%; background: conic-gradient(var(--gold) calc(var(--pct, 96) * 3.6deg), var(--b1) 0deg); display: flex; align-items: center; justify-content: center; position: relative; }
+.rh-score::before { content: ''; position: absolute; inset: 6px; border-radius: 50%; background: var(--bg3); }
+.rh-score-val { position: relative; font-family: var(--fm); font-size: 0.72rem; font-weight: 700; color: var(--gold); }
 
-.result-nav-btn:hover {
-  border-color: var(--goldb);
-  color: var(--gold);
-  background: var(--goldd);
-  text-decoration: none;
-}
+.result-branding-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--b1); border-radius: var(--r3); margin-top: 4px; flex-wrap: wrap; gap: 8px; }
+.rbf-left { display: flex; align-items: center; gap: 7px; }
+.rbf-logo { width: 22px; height: 22px; border-radius: 4px; background: linear-gradient(135deg, var(--gold), var(--gold3)); display: flex; align-items: center; justify-content: center; font-family: var(--fd); font-size: 0.7rem; font-weight: 700; color: #02020A; }
 
-.result-nav-btn i {
-  font-size: 0.66rem;
-}
+.mm-center-connector { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 14px; }
+.mm-connector-line { width: 2px; height: 24px; background: linear-gradient(to bottom, var(--gold), transparent); border-radius: 99px; }
+.mm-connector-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px rgba(201,169,110,.4); }
 
-/* ════════════════════════════════════════════════════════════════════
-   SECTION ANCHOR SCROLLING
-   ════════════════════════════════════════════════════════════════════ */
-.section-anchor {
-  scroll-margin-top: 10px;
-}
+.fc-swipe-hint { font-family: var(--fm); font-size: 0.64rem; color: var(--t4); text-align: center; }
 
-/* ════════════════════════════════════════════════════════════════════
-   COPY INDIVIDUAL SECTION BUTTON
-   ════════════════════════════════════════════════════════════════════ */
-.ss-hdr {
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--b1);
-  background: var(--bg3);
-  gap: 8px;
-}
+.focus-mode-btn { display: flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--rf); border: 1px solid var(--b1); background: transparent; color: var(--t4); font-size: 0.68rem; cursor: pointer; }
+.focus-mode-btn:hover { border-color: var(--goldb); color: var(--gold); background: var(--goldd); }
 
-.ss-copy-btn {
-  margin-left: auto;
-  padding: 3px 9px;
-  border-radius: var(--rf);
-  border: 1px solid var(--b2);
-  background: transparent;
-  color: var(--t4);
-  font-size: 0.66rem;
-  font-family: var(--fu);
-  cursor: pointer;
-  transition: all 0.16s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
+/* WIZARD MODAL STYLES */
+.wizard-steps { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; }
+.wizard-step { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; }
+.wizard-step-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--bg3); border: 2px solid var(--b2); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--t2); margin-bottom: 8px; transition: all 0.3s ease; }
+.wizard-step.active .wizard-step-circle { border-color: var(--gold); background: var(--goldd); color: var(--gold); }
+.wizard-step.completed .wizard-step-circle { background: var(--em2); border-color: var(--em2); color: #02020A; }
+.wizard-step-line { flex: 1; height: 2px; background: var(--b2); margin: 0 8px; }
+.wizard-step-label { font-size: 0.7rem; color: var(--t3); text-transform: uppercase; }
+.wizard-step-icon { font-size: 0.6rem; margin-top: 4px; color: var(--t4); }
+.wizard-step.active .wizard-step-icon { color: var(--gold); }
 
-.ss-copy-btn:hover {
-  border-color: var(--goldb);
-  color: var(--gold);
-  background: var(--goldd);
-}
-
-.ss-copy-btn i {
-  font-size: 0.62rem;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   FLASHCARD PROGRESS BAR (top of flashcard mode)
-   ════════════════════════════════════════════════════════════════════ */
-.fc-top-bar {
-  width: 100%;
-  max-width: 600px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.fc-prog-bar-wrap {
-  flex: 1;
-  height: 4px;
-  background: var(--b2);
-  border-radius: 99px;
-  overflow: hidden;
-}
-
-.fc-prog-bar-fill {
-  height: 100%;
-  background: linear-gradient(to right, var(--gold), var(--gold3));
-  border-radius: 99px;
-  transition: width 0.4s var(--ease);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   QUIZ OPTS GRID (multiple-choice layout)
-   ════════════════════════════════════════════════════════════════════ */
-.quiz-opts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-  margin: 14px 0;
-}
-
-.quiz-opt-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 11px 14px;
-  border-radius: var(--r3);
-  border: 1.5px solid var(--b2);
-  background: var(--bg3);
-  color: var(--t1);
-  font-size: 0.88rem;
-  font-family: var(--fu);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-}
-
-.quiz-opt-btn:hover {
-  border-color: var(--goldb);
-  background: var(--goldd);
-  color: var(--gold);
-}
-
-.quiz-opt-btn.correct {
-  border-color: var(--emdb);
-  background: rgba(66,201,138,.1);
-  color: var(--em2);
-}
-
-.quiz-opt-btn.incorrect {
-  border-color: var(--rubyb);
-  background: rgba(239,68,68,.08);
-  color: var(--ruby2);
-}
-
-.quiz-opt-label {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--b2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 700;
-  font-family: var(--fm);
-  flex-shrink: 0;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.quiz-opt-btn:hover     .quiz-opt-label { background: var(--goldg); color: var(--gold); }
-.quiz-opt-btn.correct   .quiz-opt-label { background: var(--emdf); color: var(--em2); }
-.quiz-opt-btn.incorrect .quiz-opt-label { background: var(--rubyf); color: var(--ruby2); }
-
-/* ════════════════════════════════════════════════════════════════════
-   STUDY SCORE RING — animated on mount
-   ════════════════════════════════════════════════════════════════════ */
-.score-ring-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.score-ring-label {
-  font-family: var(--fm);
-  font-size: 0.58rem;
-  color: var(--t4);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   HIGHLIGHT SEARCH RESULTS in history modal
-   ════════════════════════════════════════════════════════════════════ */
-.hist-match {
-  background: var(--goldd);
-  color: var(--gold);
-  border-radius: 2px;
-  padding: 0 2px;
-  font-weight: 600;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   HISTORY ITEM DATE GROUPING
-   ════════════════════════════════════════════════════════════════════ */
-.hist-date-group {
-  font-family: var(--fu);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--t4);
-  padding: 8px 4px 4px;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   TOOLTIP SYSTEM
-   ════════════════════════════════════════════════════════════════════ */
-[data-tooltip] {
-  position: relative;
-}
-
-[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg6);
-  color: var(--t1);
-  font-family: var(--fu);
-  font-size: 0.7rem;
-  padding: 4px 9px;
-  border-radius: var(--r2);
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.18s ease, transform 0.18s ease;
-  border: 1px solid var(--b2);
-  box-shadow: var(--shadow-md);
-  z-index: 9999;
-  transform: translateX(-50%) translateY(4px);
-}
-
-[data-tooltip]:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   ONBOARDING PULSE — draws attention to run button on first visit
-   ════════════════════════════════════════════════════════════════════ */
-.run-btn.onboarding-pulse {
-  animation: onboardingPulse 2s ease-in-out 3;
-}
-
-@keyframes onboardingPulse {
-  0%,100% { box-shadow: none; }
-  50%     { box-shadow: 0 0 0 6px rgba(201,169,110,.25), 0 8px 28px rgba(201,169,110,.4); }
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   DATA EXPORT SUCCESS STATE
-   ════════════════════════════════════════════════════════════════════ */
-.export-success {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
-  background: rgba(66,201,138,.08);
-  border: 1px solid var(--emdb);
-  border-radius: var(--r2);
-  font-family: var(--fu);
-  font-size: 0.8rem;
-  color: var(--em2);
-  animation: fadeUp 0.28s var(--ease);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   BRANDING FOOTER in result area
-   ════════════════════════════════════════════════════════════════════ */
-.result-branding-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--bg3);
-  border: 1px solid var(--b1);
-  border-radius: var(--r3);
-  margin-top: 4px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.rbf-left {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.rbf-logo {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  background: linear-gradient(135deg, var(--gold), var(--gold3));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--fd);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #02020A;
-  flex-shrink: 0;
-}
-
-.rbf-text {
-  font-family: var(--fm);
-  font-size: 0.62rem;
-  color: var(--t4);
-}
-
-.rbf-text a {
-  color: var(--gold);
-  text-decoration: none;
-}
-
-.rbf-text a:hover {
-  color: var(--gold2);
-  text-decoration: none;
-}
-
-.rbf-ts {
-  font-family: var(--fm);
-  font-size: 0.6rem;
-  color: var(--t4);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   MINDMAP ENHANCED — connection lines
-   ════════════════════════════════════════════════════════════════════ */
-.mm-center-connector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 14px;
-}
-
-.mm-connector-line {
-  width: 2px;
-  height: 24px;
-  background: linear-gradient(to bottom, var(--gold), transparent);
-  border-radius: 99px;
-}
-
-.mm-connector-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 8px rgba(201,169,110,.4);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   FLASH CARD SWIPE HINT
-   ════════════════════════════════════════════════════════════════════ */
-.fc-swipe-hint {
-  font-family: var(--fm);
-  font-size: 0.64rem;
-  color: var(--t4);
-  text-align: center;
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   FOCUS MODE — hides sidebar for distraction-free study
-   ════════════════════════════════════════════════════════════════════ */
-.focus-mode-btn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: var(--rf);
-  border: 1px solid var(--b1);
-  background: transparent;
-  color: var(--t4);
-  font-size: 0.68rem;
-  font-family: var(--fu);
-  cursor: pointer;
-  transition: all 0.16s ease;
-}
-
-.focus-mode-btn:hover {
-  border-color: var(--goldb);
-  color: var(--gold);
-  background: var(--goldd);
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   NEW v2.2: WIZARD MODAL STYLES
-   ════════════════════════════════════════════════════════════════════ */
-.wizard-steps {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-}
-
-.wizard-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  position: relative;
-}
-
-.wizard-step-circle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--bg3);
-  border: 2px solid var(--b2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: var(--t2);
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
-}
-
-.wizard-step.active .wizard-step-circle {
-  border-color: var(--gold);
-  background: var(--goldd);
-  color: var(--gold);
-}
-
-.wizard-step.completed .wizard-step-circle {
-  background: var(--em2);
-  border-color: var(--em2);
-  color: #02020A;
-}
-
-.wizard-step-line {
-  flex: 1;
-  height: 2px;
-  background: var(--b2);
-  margin: 0 8px;
-}
-
-.wizard-step-label {
-  font-size: 0.7rem;
-  color: var(--t3);
-  font-family: var(--fu);
-  text-transform: uppercase;
-}
-
-.wizard-step-icon {
-  font-size: 0.6rem;
-  margin-top: 4px;
-  color: var(--t4);
-}
-
-.wizard-step.active .wizard-step-icon {
-  color: var(--gold);
-}
-
-/* Wizard CTA Button */
-.wizard-cta-wrap {
-  padding: 16px 12px;
-  margin: 8px 0;
-}
-
+.wizard-cta-wrap { padding: 0; margin: 0; }
 .wizard-cta-btn {
   width: 100%;
-  padding: 16px;
+  padding: 18px 24px;
   background: linear-gradient(135deg, var(--gold), var(--gold3));
   border: none;
   border-radius: var(--r3);
   color: #02020A;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(201,169,110,.3);
 }
-
-.wizard-cta-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.2));
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
+.wizard-cta-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,.2)); opacity: 0; transition: opacity 0.3s; }
 .wizard-cta-btn:hover::before { opacity: 1; }
-.wizard-cta-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(201,169,110,.4);
-}
+.wizard-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(201,169,110,.5); }
+.wizard-cta-btn i { font-size: 1.6rem; }
+.wizard-cta-btn small { font-size: 0.7rem; opacity: 0.8; font-weight: normal; }
 
-.wizard-cta-btn i { font-size: 1.4rem; }
-.wizard-cta-btn span { font-size: 1rem; }
-.wizard-cta-btn small { font-size: 0.65rem; opacity: 0.8; }
+.wizard-tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+.wizard-tool-card { padding: 16px; border: 1.5px solid var(--b2); border-radius: var(--r3); background: var(--bg3); cursor: pointer; transition: all 0.2s ease; position: relative; text-align: center; }
+.wizard-tool-card:hover { border-color: var(--goldb); transform: translateY(-2px); }
+.wizard-tool-card.selected { border-color: var(--gold); background: var(--goldd); }
+.wizard-tool-icon { width: 48px; height: 48px; margin: 0 auto 12px; background: var(--goldd); border-radius: var(--r2); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--gold); }
+.wizard-tool-name { font-weight: 600; color: var(--t1); margin-bottom: 6px; }
+.wizard-tool-desc { font-size: 0.74rem; color: var(--t3); line-height: 1.5; }
+.wizard-tool-check { position: absolute; top: 8px; right: 8px; color: var(--em2); font-size: 1rem; }
 
-/* Tool Selection Grid */
-.wizard-tool-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-}
+.wizard-topic-area { margin-top: 16px; }
+.wizard-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--t2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+.wizard-topic-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--b2); border-radius: var(--r2); background: var(--bg3); color: var(--t1); font-size: 0.9rem; resize: vertical; }
+.wizard-topic-input:focus { outline: none; border-color: var(--gold); }
 
-.wizard-tool-card {
-  padding: 16px;
-  border: 1.5px solid var(--b2);
-  border-radius: var(--r3);
-  background: var(--bg3);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  text-align: center;
-}
+.wizard-file-zone { margin-top: 16px; padding: 16px; border: 2px dashed var(--b2); border-radius: var(--r3); background: var(--bg3); text-align: center; cursor: pointer; transition: all 0.2s ease; }
+.wizard-file-zone:hover { border-color: var(--goldb); background: var(--goldd); }
+.wizard-file-zone i { font-size: 1.2rem; color: var(--gold); margin-bottom: 8px; }
+.wizard-file-name { font-size: 0.7rem; color: var(--gold); margin-top: 8px; }
 
-.wizard-tool-card:hover {
-  border-color: var(--goldb);
-  transform: translateY(-2px);
-}
+.wizard-suggestions { margin-top: 12px; }
+.wizard-sugg-label { font-size: 0.7rem; color: var(--t4); margin-bottom: 8px; }
+.wizard-sugg-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.wizard-sugg-pill { padding: 4px 10px; border-radius: var(--rf); border: 1px solid var(--b2); background: transparent; font-size: 0.7rem; color: var(--t3); cursor: pointer; transition: all 0.15s ease; }
+.wizard-sugg-pill:hover { border-color: var(--goldb); background: var(--goldd); color: var(--gold); }
 
-.wizard-tool-card.selected {
-  border-color: var(--gold);
-  background: var(--goldd);
-}
+.wizard-language-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 16px; max-height: 300px; overflow-y: auto; }
+.wizard-language-card { padding: 10px; border: 1.5px solid var(--b2); border-radius: var(--r2); background: var(--bg3); cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.wizard-language-card:hover { border-color: var(--goldb); }
+.wizard-language-card.selected { border-color: var(--gold); background: var(--goldd); }
+.wizard-language-card i { color: var(--gold); }
 
-.wizard-tool-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 12px;
-  background: var(--goldd);
-  border-radius: var(--r2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: var(--gold);
-}
+.wizard-depth-section, .wizard-style-section { margin-bottom: 20px; }
+.wizard-depth-grid, .wizard-style-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 8px; }
+.wizard-depth-card, .wizard-style-card { padding: 12px; border: 1.5px solid var(--b2); border-radius: var(--r2); background: var(--bg3); cursor: pointer; text-align: center; }
+.wizard-depth-card:hover, .wizard-style-card:hover { border-color: var(--goldb); }
+.wizard-depth-card.selected, .wizard-style-card.selected { border-color: var(--gold); background: var(--goldd); }
+.wizard-depth-card i, .wizard-style-card i { font-size: 1rem; color: var(--gold); margin-bottom: 6px; }
+.wizard-depth-name, .wizard-style-name { font-weight: 600; font-size: 0.8rem; color: var(--t1); margin-bottom: 4px; }
+.wizard-depth-desc, .wizard-style-desc { font-size: 0.65rem; color: var(--t3); }
 
-.wizard-tool-name {
-  font-weight: 600;
-  color: var(--t1);
-  margin-bottom: 6px;
-}
+.wizard-review-card { background: var(--bg3); border: 1px solid var(--goldb); border-radius: var(--r3); padding: 16px; margin-bottom: 16px; }
+.wizard-review-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--b1); }
+.wizard-review-item:last-child { border-bottom: none; }
+.wizard-review-icon { width: 32px; color: var(--gold); font-size: 1rem; }
+.wizard-review-label { font-size: 0.65rem; color: var(--t4); text-transform: uppercase; }
+.wizard-review-value { font-size: 0.85rem; color: var(--t1); font-weight: 500; }
+.wizard-review-warning { padding: 10px; background: var(--amberd); border: 1px solid var(--amberb); border-radius: var(--r2); font-size: 0.75rem; color: var(--amber); display: flex; align-items: center; gap: 8px; }
 
-.wizard-tool-desc {
-  font-size: 0.74rem;
-  color: var(--t3);
-  line-height: 1.5;
-}
+.wizard-footer { display: flex; justify-content: space-between; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--b1); }
+.wizard-btn { padding: 10px 24px; border-radius: var(--rf); font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.wizard-btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold3)); color: #02020A; border: none; }
+.wizard-btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shg); }
+.wizard-btn-secondary { background: transparent; border: 1.5px solid var(--b2); color: var(--t2); }
+.wizard-btn-secondary:hover { border-color: var(--goldb); color: var(--gold); }
+.wizard-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.wizard-tool-check {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  color: var(--em2);
-  font-size: 1rem;
-}
-
-/* Topic Input with File Upload */
-.wizard-topic-area {
-  margin-top: 16px;
-}
-
-.wizard-label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--t2);
-  margin-bottom: 8px;
-  font-family: var(--fu);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.wizard-topic-input {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1.5px solid var(--b2);
-  border-radius: var(--r2);
-  background: var(--bg3);
-  color: var(--t1);
-  font-family: var(--fu);
-  font-size: 0.9rem;
-  resize: vertical;
-  transition: border-color 0.2s ease;
-}
-
-.wizard-topic-input:focus {
-  outline: none;
-  border-color: var(--gold);
-}
-
-.wizard-file-zone {
-  margin-top: 16px;
-  padding: 16px;
-  border: 2px dashed var(--b2);
-  border-radius: var(--r3);
-  background: var(--bg3);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.wizard-file-zone:hover {
-  border-color: var(--goldb);
-  background: var(--goldd);
-}
-
-.wizard-file-zone i {
-  font-size: 1.2rem;
-  color: var(--gold);
-  margin-bottom: 8px;
-}
-
-.wizard-file-zone span {
-  font-size: 0.8rem;
-  color: var(--t3);
-}
-
-.wizard-file-name {
-  font-size: 0.7rem;
-  color: var(--gold);
-  margin-top: 8px;
-  word-break: break-all;
-}
-
-.wizard-suggestions {
-  margin-top: 12px;
-}
-
-.wizard-sugg-label {
-  font-size: 0.7rem;
-  color: var(--t4);
-  margin-bottom: 8px;
-}
-
-.wizard-sugg-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.wizard-sugg-pill {
-  padding: 4px 10px;
-  border-radius: var(--rf);
-  border: 1px solid var(--b2);
-  background: transparent;
-  font-size: 0.7rem;
-  color: var(--t3);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.wizard-sugg-pill:hover {
-  border-color: var(--goldb);
-  background: var(--goldd);
-  color: var(--gold);
-}
-
-/* Language Grid */
-.wizard-language-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 8px;
-  margin-top: 16px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.wizard-language-card {
-  padding: 10px;
-  border: 1.5px solid var(--b2);
-  border-radius: var(--r2);
-  background: var(--bg3);
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.wizard-language-card:hover {
-  border-color: var(--goldb);
-}
-
-.wizard-language-card.selected {
-  border-color: var(--gold);
-  background: var(--goldd);
-}
-
-.wizard-language-card i {
-  color: var(--gold);
-}
-
-/* Depth & Style Grids */
-.wizard-depth-section,
-.wizard-style-section {
-  margin-bottom: 20px;
-}
-
-.wizard-depth-grid,
-.wizard-style-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.wizard-depth-card,
-.wizard-style-card {
-  padding: 12px;
-  border: 1.5px solid var(--b2);
-  border-radius: var(--r2);
-  background: var(--bg3);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.wizard-depth-card:hover,
-.wizard-style-card:hover {
-  border-color: var(--goldb);
-}
-
-.wizard-depth-card.selected,
-.wizard-style-card.selected {
-  border-color: var(--gold);
-  background: var(--goldd);
-}
-
-.wizard-depth-card i,
-.wizard-style-card i {
-  font-size: 1rem;
-  color: var(--gold);
-  margin-bottom: 6px;
-}
-
-.wizard-depth-name,
-.wizard-style-name {
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: var(--t1);
-  margin-bottom: 4px;
-}
-
-.wizard-depth-desc,
-.wizard-style-desc {
-  font-size: 0.65rem;
-  color: var(--t3);
-}
-
-/* Review Step */
-.wizard-review-card {
-  background: var(--bg3);
-  border: 1px solid var(--goldb);
-  border-radius: var(--r3);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.wizard-review-item {
-  display: flex;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--b1);
-}
-
-.wizard-review-item:last-child {
-  border-bottom: none;
-}
-
-.wizard-review-icon {
-  width: 32px;
-  color: var(--gold);
-  font-size: 1rem;
-}
-
-.wizard-review-content {
-  flex: 1;
-}
-
-.wizard-review-label {
-  font-size: 0.65rem;
-  color: var(--t4);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.wizard-review-value {
-  font-size: 0.85rem;
-  color: var(--t1);
-  font-weight: 500;
-}
-
-.wizard-review-warning {
-  padding: 10px;
-  background: var(--amberd);
-  border: 1px solid var(--amberb);
-  border-radius: var(--r2);
-  font-size: 0.75rem;
-  color: var(--amber);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Wizard Footer */
-.wizard-footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid var(--b1);
-}
-
-.wizard-btn {
-  padding: 10px 24px;
-  border-radius: var(--rf);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.wizard-btn-primary {
-  background: linear-gradient(135deg, var(--gold), var(--gold3));
-  color: #02020A;
-  border: none;
-}
-
-.wizard-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shg);
-}
-
-.wizard-btn-secondary {
-  background: transparent;
-  border: 1.5px solid var(--b2);
-  color: var(--t2);
-}
-
-.wizard-btn-secondary:hover {
-  border-color: var(--goldb);
-  color: var(--gold);
-}
-
-.wizard-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* NEW v2.2: Streak Display in Header */
 .dh-streak {
   display: flex;
   align-items: center;
@@ -1354,109 +344,493 @@ body {
   color: var(--gold);
   margin-left: 8px;
 }
+.dh-streak-count { font-weight: 700; font-size: 0.75rem; }
 
-.dh-streak i {
-  font-size: 0.65rem;
+/* Header Styles */
+.dash-hdr {
+  flex-shrink: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--b2);
+  z-index: 100;
 }
+.dh-logo-link { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+.dh-mark { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--gold), var(--gold3)); display: flex; align-items: center; justify-content: center; font-family: var(--fd); font-size: 1.1rem; font-weight: 700; color: #02020A; }
+.dh-text-wrap { display: flex; flex-direction: column; line-height: 1.1; }
+.dh-name { font-family: var(--fd); font-size: 0.92rem; font-weight: 600; color: var(--gold); }
+.dh-ver { font-family: var(--fm); font-size: 0.57rem; color: var(--t3); }
+.dh-sp { flex: 1; }
+.dh-greeting { font-family: var(--fb); font-size: 0.88rem; color: var(--t2); font-style: italic; }
+.dh-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--b2);
+  border-radius: 8px;
+  background: var(--bg3);
+  color: var(--t2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.dh-btn:hover { border-color: var(--goldb); color: var(--gold); background: var(--goldd); }
+.dh-badge { position: absolute; top: -4px; right: -4px; min-width: 16px; height: 16px; border-radius: 99px; background: var(--gold); color: #02020A; font-size: 0.54rem; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+.dh-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold3)); border: 2px solid var(--goldb); display: flex; align-items: center; justify-content: center; font-family: var(--fd); font-size: 0.88rem; font-weight: 700; color: #02020A; cursor: pointer; }
 
-.dh-streak-count {
+/* Left Panel - Simplified Sidebar */
+.left-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--bg1);
+  border-right: 1px solid var(--b2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.32s ease, transform 0.32s ease;
+  z-index: 50;
+}
+.left-panel.collapsed { width: 0; opacity: 0; pointer-events: none; }
+
+.lp-hdr { padding: 12px 12px 8px; border-bottom: 1px solid var(--b1); }
+.lp-hdr-row { display: flex; align-items: center; justify-content: space-between; }
+.lp-title { font-family: var(--fu); font-size: 0.67rem; font-weight: 600; letter-spacing: 0.11em; text-transform: uppercase; color: var(--t3); }
+.lp-home-link { font-size: 0.7rem; color: var(--gold); display: flex; align-items: center; gap: 4px; text-decoration: none; }
+
+/* User Profile in Sidebar */
+.sidebar-user {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--b1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sidebar-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fd);
+  font-size: 1.2rem;
   font-weight: 700;
-  font-size: 0.75rem;
+  color: #02020A;
+  flex-shrink: 0;
+}
+.sidebar-user-info { flex: 1; }
+.sidebar-user-name { font-weight: 600; color: var(--t1); margin-bottom: 2px; }
+.sidebar-user-streak { font-size: 0.7rem; color: var(--gold); display: flex; align-items: center; gap: 4px; }
+.sidebar-user-streak i { font-size: 0.6rem; }
+
+/* Sidebar Stats */
+.sidebar-stats {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  border-bottom: 1px solid var(--b1);
+}
+.sidebar-stat {
+  background: var(--bg3);
+  border-radius: var(--r2);
+  padding: 8px;
+  text-align: center;
+}
+.sidebar-stat-value { font-family: var(--fd); font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+.sidebar-stat-label { font-size: 0.6rem; color: var(--t4); margin-top: 2px; }
+
+/* Saved Notes Button in Sidebar */
+.sidebar-saved-btn {
+  margin: 8px 12px;
+  padding: 10px;
+  border-radius: var(--r2);
+  border: 1px solid var(--b2);
+  background: var(--bg3);
+  color: var(--t2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.sidebar-saved-btn:hover { border-color: var(--goldb); color: var(--gold); background: var(--goldd); }
+
+/* History List in Sidebar */
+.lp-history { flex: 1; overflow-y: auto; padding: 8px; }
+.lp-hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; padding: 0 4px; }
+.lp-hist-title { font-family: var(--fu); font-size: 0.61rem; font-weight: 600; letter-spacing: 0.11em; text-transform: uppercase; color: var(--t4); }
+.lp-hist-all { font-size: 0.68rem; color: var(--gold); cursor: pointer; background: none; border: none; }
+.lp-hist-list { display: flex; flex-direction: column; gap: 2px; }
+.lp-hist-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.lp-hist-item:hover { background: var(--bg3); }
+.lp-hist-icon { width: 20px; height: 20px; border-radius: 4px; background: var(--bg4); display: flex; align-items: center; justify-content: center; font-size: 0.64rem; color: var(--gold); }
+.lp-hist-topic { flex: 1; font-size: 0.76rem; color: var(--t1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp-hist-time { font-family: var(--fm); font-size: 0.57rem; color: var(--t4); }
+
+/* Right Panel */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg0);
 }
 
-/* Mobile Responsive Additions */
-@media (max-width: 768px) {
-  .dh-streak {
-    padding: 2px 6px;
-    margin-left: 4px;
-    font-size: 0.6rem;
-  }
-  .dh-streak-count {
-    font-size: 0.65rem;
-  }
-  .wizard-cta-btn {
-    padding: 12px;
-  }
-  .wizard-cta-btn i {
-    font-size: 1.2rem;
-  }
-  .wizard-cta-btn span {
-    font-size: 0.9rem;
-  }
-  .wizard-cta-btn small {
-    font-size: 0.55rem;
-  }
+.out-toolbar {
+  flex-shrink: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 14px;
+  background: var(--bg1);
+  border-bottom: 1px solid var(--b1);
+}
+.otb-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--b1);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--t3);
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+.otb-btn:hover { border-color: var(--b2); color: var(--t2); background: var(--bg3); }
+.otb-sep { width: 1px; height: 18px; background: var(--b1); margin: 0 2px; }
+
+.out-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 22px;
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   RESPONSIVE OVERRIDES for this page
-   ════════════════════════════════════════════════════════════════════ */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+  gap: 14px;
+  min-height: 380px;
+}
+.es-mark { font-family: var(--fd); font-size: 4rem; font-weight: 700; background: linear-gradient(135deg, var(--gold), var(--gold3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: block; }
+.es-title { font-family: var(--fd); font-size: 1.32rem; font-weight: 600; color: var(--t2); }
+.es-sub { font-family: var(--fb); font-size: 0.94rem; color: var(--t3); line-height: 1.72; max-width: 350px; }
+.es-tips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 6px; }
+.es-tip { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 99px; background: var(--bg3); border: 1px solid var(--b1); font-size: 0.74rem; color: var(--t3); }
+.es-tip i { color: var(--gold); }
+
+/* Wizard CTA in Empty State */
+.empty-wizard-cta {
+  margin-top: 20px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, var(--gold), var(--gold3));
+  border: none;
+  border-radius: 99px;
+  color: #02020A;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+.empty-wizard-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,169,110,.4); }
+.empty-wizard-cta i { font-size: 1.2rem; }
+
+/* Thinking Indicator */
+.thinking-wrap { padding: 4px 0; }
+.thinking-card { display: flex; gap: 14px; background: var(--bg3); border: 1px solid var(--goldb); border-radius: 16px; padding: 14px 16px; }
+.th-av { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold3)); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; color: #02020A; }
+.th-title { font-size: 0.84rem; color: var(--gold); margin-bottom: 6px; }
+.th-dots { display: flex; gap: 5px; margin-bottom: 8px; }
+.th-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); animation: dotBounce 1.2s infinite; }
+.th-stages { display: flex; gap: 5px; flex-wrap: wrap; }
+.ths { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 99px; border: 1px solid var(--b1); font-size: 0.67rem; color: var(--t4); }
+.ths.active { color: var(--gold); border-color: var(--goldb); background: rgba(201,169,110,.12); }
+.ths.done { color: var(--em2); border-color: rgba(66,201,138,.22); background: rgba(66,201,138,.08); }
+
+/* Result Area */
+.result-hdr {
+  background: linear-gradient(135deg, var(--bg3) 0%, rgba(201,169,110,.05) 100%);
+  border: 1px solid var(--goldb);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.rh-left { flex: 1; }
+.rh-topic { font-family: var(--fd); font-size: 1.32rem; font-weight: 700; color: var(--t1); margin-bottom: 8px; }
+.rh-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 5px; }
+.rh-mi { display: flex; align-items: center; gap: 5px; font-family: var(--fm); font-size: 0.65rem; color: var(--t3); }
+.rh-mi i { color: var(--gold); font-size: 0.61rem; }
+.rh-powered { font-family: var(--fm); font-size: 0.61rem; color: var(--t4); }
+.rh-powered a { color: var(--gold); }
+
+.study-sec {
+  background: var(--bg2);
+  border: 1px solid var(--b2);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.ss-title { font-family: var(--fu); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 7px; }
+.ss-body { padding: 14px 16px; }
+
+.md-content { font-family: var(--fb); font-size: 1rem; line-height: 1.87; color: var(--t1); }
+.md-content h2 { font-family: var(--fd); font-size: 1.3rem; font-weight: 600; margin: 1em 0 0.5em; border-bottom: 1px solid var(--b1); padding-bottom: 0.3em; }
+.md-content h3 { font-family: var(--fu); font-size: 0.99rem; font-weight: 600; color: var(--gold); margin: 0.9em 0 0.36em; }
+.md-content p { margin-bottom: 0.84em; }
+.md-content ul, .md-content ol { margin: 0.44em 0 0.84em 1.44em; }
+.md-content li::marker { color: var(--gold); }
+.md-content blockquote { border-left: 3px solid var(--gold); padding: 10px 14px; margin: 13px 0; background: rgba(201,169,110,.06); border-radius: 0 8px 8px 0; font-style: italic; }
+
+.concepts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.concept-card { background: var(--bg3); border: 1px solid var(--b2); border-radius: 12px; padding: 13px; position: relative; }
+.concept-card:hover { border-color: var(--goldb); transform: translateY(-2px); }
+.concept-num { font-family: var(--fd); font-size: 2.9rem; font-weight: 900; color: var(--gold); opacity: 0.1; position: absolute; top: -6px; right: 5px; pointer-events: none; }
+.concept-text { font-family: var(--fb); font-size: 0.93rem; color: var(--t1); line-height: 1.63; position: relative; z-index: 1; }
+
+.tricks-list { display: flex; flex-direction: column; gap: 9px; }
+.trick-item { display: flex; align-items: flex-start; gap: 11px; background: var(--bg3); border: 1px solid var(--b2); border-left: 3px solid var(--gold); border-radius: 12px; padding: 12px; }
+.trick-icon { width: 27px; height: 27px; border-radius: 50%; background: rgba(201,169,110,.12); display: flex; align-items: center; justify-content: center; font-size: 0.78rem; color: var(--gold); }
+.trick-text { font-family: var(--fb); font-size: 0.94rem; color: var(--t1); line-height: 1.67; }
+
+.qa-list { display: flex; flex-direction: column; gap: 10px; }
+.qa-card { background: var(--bg3); border: 1px solid var(--b2); border-radius: 12px; overflow: hidden; }
+.qa-head { display: flex; align-items: flex-start; gap: 10px; padding: 12px; cursor: pointer; }
+.qa-num { width: 26px; height: 26px; border-radius: 50%; background: rgba(201,169,110,.12); display: flex; align-items: center; justify-content: center; font-family: var(--fd); font-size: 0.82rem; font-weight: 700; color: var(--gold); }
+.qa-q { flex: 1; font-family: var(--fb); font-size: 0.98rem; font-weight: 500; color: var(--t1); line-height: 1.54; }
+.qa-toggle { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--goldb); background: rgba(201,169,110,.12); color: var(--gold); font-size: 0.7rem; cursor: pointer; }
+.qa-answer { display: none; padding: 0 12px 12px; }
+.qa-answer.visible { display: block; animation: fadeUp 0.22s ease; }
+.qa-answer-inner { background: rgba(66,201,138,.07); border: 1px solid rgba(66,201,138,.16); border-radius: 8px; padding: 13px; }
+
+.export-bar { display: flex; align-items: center; gap: 8px; padding: 12px 0 4px; border-top: 1px solid var(--b1); margin-top: 10px; flex-wrap: wrap; }
+.exp-btn { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--b2); background: var(--bg3); color: var(--t2); font-size: 0.78rem; cursor: pointer; }
+.exp-btn:hover { border-color: var(--b3); color: var(--t1); background: var(--bg4); }
+
+.fc-mode { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.fc-wrap { width: 100%; max-width: 600px; perspective: 1200px; cursor: pointer; }
+.flashcard { width: 100%; aspect-ratio: 16 / 9; position: relative; transform-style: preserve-3d; transition: transform 0.68s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+.flashcard.flipped { transform: rotateY(180deg); }
+.fc-face { position: absolute; inset: 0; border-radius: 16px; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; text-align: center; }
+.fc-front { background: linear-gradient(135deg, var(--bg3) 0%, rgba(201,169,110,.06) 100%); border: 2px solid var(--goldb); }
+.fc-back { background: linear-gradient(135deg, var(--bg3) 0%, rgba(66,201,138,.08) 100%); border: 2px solid rgba(66,201,138,.3); transform: rotateY(180deg); }
+.fc-lbl { font-family: var(--fu); font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; margin-bottom: 14px; }
+.fc-front .fc-lbl { color: var(--gold); }
+.fc-back .fc-lbl { color: var(--em2); }
+.fc-content { font-family: var(--fb); font-size: 1.06rem; color: var(--t1); line-height: 1.67; }
+.fc-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.fc-btn { display: flex; align-items: center; gap: 5px; padding: 7px 16px; border-radius: 99px; border: 1px solid var(--b2); background: var(--bg3); color: var(--t2); font-size: 0.8rem; cursor: pointer; }
+.fc-btn.primary { background: var(--gold); color: #02020A; border-color: transparent; }
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.74);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--b2);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 542px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-lg { max-width: 684px; }
+.modal-hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--b1); }
+.modal-title { font-family: var(--fd); font-size: 1.06rem; font-weight: 600; color: var(--t1); }
+.modal-close { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--b2); background: transparent; color: var(--t3); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.modal-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.modal-ftr { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 13px 20px; border-top: 1px solid var(--b1); }
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-items: flex-end;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--bg4);
+  border: 1px solid var(--b2);
+  font-family: var(--fu);
+  font-size: 0.83rem;
+  color: var(--t1);
+  cursor: pointer;
+  animation: slideInRight 0.26s ease;
+  max-width: 344px;
+}
+.toast.success { border-color: rgba(66,201,138,.38); }
+.toast.success i { color: var(--em2); }
+.toast.error { border-color: rgba(239,68,68,.38); }
+.toast.error i { color: var(--ruby2); }
+.toast.info { border-color: var(--goldb); }
+.toast.info i { color: var(--gold); }
+
+/* Avatar Dropdown */
+.av-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 204px;
+  background: var(--bg4);
+  border: 1px solid var(--b2);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.4);
+  z-index: 500;
+  overflow: hidden;
+}
+.av-dropdown.open { display: block; animation: fadeDown 0.18s ease; }
+.av-user { display: flex; align-items: center; gap: 10px; padding: 13px; border-bottom: 1px solid var(--b1); }
+.av-u-av { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold3)); color: #02020A; display: flex; align-items: center; justify-content: center; font-family: var(--fd); font-size: 0.9rem; font-weight: 700; }
+.av-u-name { font-weight: 600; font-size: 0.87rem; color: var(--t1); }
+.av-u-sub { font-size: 0.68rem; color: var(--gold); font-family: var(--fm); }
+.av-div { height: 1px; background: var(--b1); margin: 3px 0; }
+.av-item { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 13px; background: none; border: none; color: var(--t2); font-size: 0.83rem; text-align: left; cursor: pointer; transition: all 0.15s ease; }
+.av-item:hover { background: var(--bg5); color: var(--t1); }
+.av-item i { width: 14px; text-align: center; color: var(--t3); }
+.av-danger:hover { color: var(--ruby2); background: var(--rubyf); }
+
+/* Welcome Overlay */
+.welcome-overlay, .welcome-back-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 2, 10, 0.95);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(8px);
+}
+.welcome-card, .wb-card {
+  background: var(--bg2);
+  border: 1px solid var(--goldb);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 480px;
+  padding: 40px;
+  text-align: center;
+  animation: scaleIn 0.4s ease;
+}
+.wc-logo { width: 70px; height: 70px; border-radius: 18px; background: linear-gradient(135deg, var(--gold), var(--gold3)); margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-family: var(--fd); font-size: 2.2rem; font-weight: 700; color: #02020A; }
+.wc-title { font-family: var(--fd); font-size: 1.6rem; font-weight: 700; margin-bottom: 8px; }
+.wc-subtitle { font-family: var(--fb); font-style: italic; color: var(--gold); margin-bottom: 16px; }
+.wc-features { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 24px; }
+.wc-feat { padding: 5px 12px; border-radius: 99px; background: var(--goldd); border: 1px solid var(--goldb); font-size: 0.72rem; color: var(--gold); }
+.wc-input { width: 100%; padding: 12px 16px; border: 1.5px solid var(--b2); border-radius: 12px; background: var(--bg3); color: var(--t1); font-size: 0.95rem; margin-top: 8px; }
+.wc-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--gold3)); border: none; border-radius: 99px; color: #02020A; font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 16px; }
+.wc-skip { font-size: 0.8rem; color: var(--t3); cursor: pointer; display: inline-block; margin-top: 12px; }
+.wb-stats { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
+.wb-stat { background: var(--bg3); border-radius: 12px; padding: 12px 16px; text-align: center; flex: 1; }
+.wb-stat-val { font-family: var(--fd); font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+.wb-stat-lbl { font-size: 0.65rem; color: var(--t3); }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes dotBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
-  html, body {
-    height: auto;
-    overflow: auto;
+  html, body { height: auto; overflow: auto; }
+  body { display: block; }
+  .dash-body { flex-direction: column; overflow: visible; }
+  .left-panel {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    bottom: 0;
+    width: 75% !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    border-right: none;
+    box-shadow: 2px 0 20px rgba(0,0,0,0.3);
   }
-
-  body {
-    display: block;
-  }
-
-  .stream-fullpage-wrap {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: 56px !important;
-    bottom: 0 !important;
-    z-index: 800;
-  }
-
-  .dh-stats         { display: none !important; }
-  .dh-greeting      { display: none !important; }
-  .otb-btn span     { display: none; }
-  .otb-hint         { display: none; }
-  .exp-brand        { display: none; }
-  .result-nav       { display: none; }
-  .output-meta-bar  { display: none; }
-  .quiz-opts        { grid-template-columns: 1fr; }
-  .back-to-top      { bottom: 80px; right: 14px; }
-  
-  /* Mobile wizard adjustments */
-  .wizard-tool-grid {
-    grid-template-columns: 1fr;
-  }
-  .wizard-depth-grid,
-  .wizard-style-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .wizard-language-grid {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  }
+  .left-panel.mobile-open { transform: translateX(0); }
+  .right-panel { width: 100%; min-height: 100vh; }
+  .stream-fullpage-wrap { position: fixed !important; left: 0 !important; top: 56px !important; bottom: 0 !important; z-index: 800; }
+  .sfp-scroll { padding: 22px 18px; }
+  .dh-stats { display: none; }
+  .dh-greeting { display: none; }
+  .otb-btn span { display: none; }
+  .exp-brand { display: none; }
+  .result-nav { display: none; }
+  .concepts-grid { grid-template-columns: 1fr; }
+  .result-hdr { flex-direction: column; }
+  .quiz-opts { grid-template-columns: 1fr; }
+  .wizard-tool-grid { grid-template-columns: 1fr; }
+  .wizard-depth-grid, .wizard-style-grid { grid-template-columns: 1fr 1fr; }
+  .modal { max-width: 100%; border-radius: 16px 16px 0 0; max-height: 85vh; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
 }
 
 @media (max-width: 480px) {
-  .dash-hdr         { padding: 0 10px; gap: 6px; }
-  .wc-title         { font-size: 1.5rem; }
-  .run-btn          { font-size: 0.88rem; }
-  .fc-wrap          { max-width: 100%; }
-  .welcome-card     { padding: 26px 18px; border-radius: 18px; }
-  .wb-card          { padding: 24px 16px; border-radius: 18px; }
-  
-  .wizard-depth-grid,
-  .wizard-style-grid {
-    grid-template-columns: 1fr;
-  }
-  .wizard-steps {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .wizard-step-line {
-    display: none;
-  }
+  .dash-hdr { padding: 0 10px; gap: 6px; }
+  .out-area { padding: 13px 14px; }
+  .rh-topic { font-size: 1.12rem; }
+  .sfp-text { font-size: 0.96rem; }
+  .wizard-depth-grid, .wizard-style-grid { grid-template-columns: 1fr; }
+  .wizard-steps { flex-wrap: wrap; gap: 8px; }
+  .wizard-step-line { display: none; }
+  .dh-streak { padding: 2px 6px; font-size: 0.6rem; }
+  .dh-streak-count { font-size: 0.65rem; }
+  .wizard-cta-btn { padding: 14px; }
+  .wizard-cta-btn i { font-size: 1.3rem; }
 }
-
 </style>
 </head>
-
 <body>
 
 <!-- Theme flash prevention -->
@@ -1476,1860 +850,310 @@ body {
 })();
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     FIRST-TIME WELCOME OVERLAY
-     Shows on very first visit — collects user name, introduces features
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="welcome-overlay"
-  id="welcomeOverlay"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-label="Welcome to Savoiré AI"
-  aria-describedby="wcDesc"
->
+<!-- Welcome Overlay -->
+<div class="welcome-overlay" id="welcomeOverlay" style="display:none">
   <div class="welcome-card">
-
-    <!-- Animated Logo -->
-    <div class="wc-logo" aria-hidden="true">Ś</div>
-
-    <!-- Headline -->
+    <div class="wc-logo">Ś</div>
     <div class="wc-title">Welcome to Savoiré AI</div>
     <div class="wc-subtitle">Think Less. Know More.</div>
-
-    <!-- Description -->
-    <p class="wc-desc" id="wcDesc">
-      Your completely free AI study companion — no login, no payment, no subscription, ever.
-      Generate comprehensive study notes, interactive flashcards, practice quizzes,
-      smart summaries and visual mind maps in over 50 languages, instantly.
-    </p>
-
-    <!-- Feature Badges -->
-    <div class="wc-features" aria-label="Key features">
-      <span class="wc-feat"><i class="fas fa-book-open" aria-hidden="true"></i> Smart Notes</span>
-      <span class="wc-feat"><i class="fas fa-layer-group" aria-hidden="true"></i> Flashcards</span>
-      <span class="wc-feat"><i class="fas fa-question-circle" aria-hidden="true"></i> Quiz Mode</span>
-      <span class="wc-feat"><i class="fas fa-align-left" aria-hidden="true"></i> Summary</span>
-      <span class="wc-feat"><i class="fas fa-project-diagram" aria-hidden="true"></i> Mind Map</span>
-      <span class="wc-feat"><i class="fas fa-globe" aria-hidden="true"></i> 50+ Languages</span>
-      <span class="wc-feat"><i class="fas fa-file-pdf" aria-hidden="true"></i> PDF Export</span>
-      <span class="wc-feat"><i class="fas fa-lock-open" aria-hidden="true"></i> No Login</span>
-      <span class="wc-feat"><i class="fas fa-infinity" aria-hidden="true"></i> Free Forever</span>
+    <p class="wc-desc">Your completely free AI study companion — no login, no payment, no subscription, ever.</p>
+    <div class="wc-features">
+      <span class="wc-feat"><i class="fas fa-book-open"></i> Smart Notes</span>
+      <span class="wc-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+      <span class="wc-feat"><i class="fas fa-question-circle"></i> Quiz Mode</span>
+      <span class="wc-feat"><i class="fas fa-align-left"></i> Summary</span>
+      <span class="wc-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
     </div>
-
-    <!-- Name Input Group -->
     <div class="wc-input-group">
-      <label class="wc-input-label" for="welcomeNameInput">
-        What's your name? <span aria-hidden="true">👋</span>
-      </label>
-      <input
-        type="text"
-        id="welcomeNameInput"
-        class="wc-input"
-        placeholder="Enter your name to personalise your experience…"
-        maxlength="40"
-        autocomplete="given-name"
-        spellcheck="false"
-        aria-label="Your first name"
-        aria-required="true"
-        aria-describedby="welcomeErr"
-      >
-      <div class="wc-err" id="welcomeErr" role="alert" aria-live="assertive"></div>
+      <label class="wc-input-label">What's your name? <span>👋</span></label>
+      <input type="text" id="welcomeNameInput" class="wc-input" placeholder="Enter your name..." maxlength="40">
+      <div class="wc-err" id="welcomeErr"></div>
     </div>
+    <button class="wc-btn" id="welcomeBtn" type="button"><i class="fas fa-rocket"></i> Start Learning Free</button>
+    <div class="wc-brand">Built by <a href="https://soobantalhatech.xyz" target="_blank">Sooban Talha Technologies</a></div>
+  </div>
+</div>
 
-    <!-- CTA Button -->
-    <button class="wc-btn" id="welcomeBtn" type="button" aria-label="Start using Savoiré AI">
-      <i class="fas fa-rocket" aria-hidden="true"></i>
-      Start Learning Free — It's 100% Free
-    </button>
-
-    <!-- Skip -->
-    <span
-      class="wc-skip"
-      id="welcomeSkip"
-      role="button"
-      tabindex="0"
-      aria-label="Skip the welcome screen"
-    >
-      Skip for now
-    </span>
-
-    <!-- Branding -->
-    <div class="wc-brand">
-      Built by
-      <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer" aria-label="Visit Sooban Talha Technologies website">
-        Sooban Talha Technologies
-      </a>
-      &nbsp;·&nbsp;
-      <a href="https://savoireai.vercel.app" target="_blank" rel="noopener noreferrer" aria-label="Visit Savoiré AI website">
-        savoireai.vercel.app
-      </a>
-    </div>
-
-  </div><!-- /welcome-card -->
-</div><!-- /welcomeOverlay -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     WELCOME BACK OVERLAY
-     Shows briefly on return visits — animated greeting with personal stats
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="welcome-back-overlay"
-  id="welcomeBackOverlay"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-label="Welcome back"
-  aria-describedby="wbSubText"
->
+<!-- Welcome Back Overlay -->
+<div class="welcome-back-overlay" id="welcomeBackOverlay" style="display:none">
   <div class="wb-card">
-
-    <!-- Floating Emoji -->
-    <span class="wb-emoji" aria-hidden="true">🎓</span>
-
-    <!-- Personalised Greeting -->
-    <div class="wb-title">
-      Welcome back,
-      <span class="wb-name" id="wbName" aria-live="polite">Scholar</span>!
+    <span class="wb-emoji">🎓</span>
+    <div class="wb-title">Welcome back, <span class="wb-name" id="wbName">Scholar</span>!</div>
+    <p class="wb-sub">Great to see you again. Ready to continue studying?</p>
+    <div class="wb-stats">
+      <div class="wb-stat"><span class="wb-stat-val" id="wbSessions">0</span><div class="wb-stat-lbl">Sessions</div></div>
+      <div class="wb-stat"><span class="wb-stat-val" id="wbHistCount">0</span><div class="wb-stat-lbl">Studied</div></div>
+      <div class="wb-stat"><span class="wb-stat-val" id="wbSavedCount">0</span><div class="wb-stat-lbl">Saved</div></div>
+      <div class="wb-stat"><span class="wb-stat-val" id="wbStreak">0</span><div class="wb-stat-lbl"><i class="fas fa-fire"></i> Day Streak</div></div>
     </div>
+    <button class="wb-btn" id="welcomeBackBtn" type="button"><i class="fas fa-bolt"></i> Continue Studying</button>
+  </div>
+</div>
 
-    <!-- Sub Text -->
-    <p class="wb-sub" id="wbSubText">
-      Great to see you again. Your study materials and history
-      are right where you left them — ready when you are.
-    </p>
+<!-- Mobile Sidebar Backdrop -->
+<div class="sb-backdrop" id="sbBackdrop"></div>
 
-    <!-- Personal Stats -->
-    <div class="wb-stats" role="list" aria-label="Your study statistics">
-
-      <div class="wb-stat" role="listitem">
-        <span class="wb-stat-val" id="wbSessions" aria-label="Number of sessions">0</span>
-        <div class="wb-stat-lbl">Sessions</div>
-      </div>
-
-      <div class="wb-stat" role="listitem">
-        <span class="wb-stat-val" id="wbHistCount" aria-label="Items in history">0</span>
-        <div class="wb-stat-lbl">Studied</div>
-      </div>
-
-      <div class="wb-stat" role="listitem">
-        <span class="wb-stat-val" id="wbSavedCount" aria-label="Saved notes">0</span>
-        <div class="wb-stat-lbl">Saved</div>
-      </div>
-
-      <!-- NEW v2.2: Streak Display in Welcome Back -->
-      <div class="wb-stat" role="listitem">
-        <span class="wb-stat-val" id="wbStreak">0</span>
-        <div class="wb-stat-lbl"><i class="fas fa-fire" style="font-size:0.7rem"></i> Day Streak</div>
-      </div>
-
-    </div>
-
-    <!-- CTA -->
-    <button class="wb-btn" id="welcomeBackBtn" type="button" aria-label="Continue to the dashboard">
-      <i class="fas fa-bolt" aria-hidden="true"></i>
-      Continue Studying
-    </button>
-
-    <!-- Branding -->
-    <div class="wb-brand">
-      <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener noreferrer">
-        Sooban Talha Technologies
-      </a>
-      &nbsp;·&nbsp; Savoiré AI v2.0
-    </div>
-
-  </div><!-- /wb-card -->
-</div><!-- /welcomeBackOverlay -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MOBILE SIDEBAR BACKDROP
-     Appears when sidebar is open on mobile — click to close
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="sb-backdrop"
-  id="sbBackdrop"
-  aria-hidden="true"
-  role="presentation"
-></div>
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     DASHBOARD HEADER
-     Fixed top bar with logo, stats, greeting, all icon buttons, avatar menu
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<header class="dash-hdr" id="dashHdr" role="banner">
-
-  <!-- ── Sidebar Toggle ── -->
-  <button
-    class="dh-btn"
-    id="sbToggle"
-    type="button"
-    title="Toggle sidebar (Ctrl+B)"
-    aria-label="Toggle sidebar"
-    aria-controls="leftPanel"
-    aria-expanded="true"
-    data-tooltip="Toggle Sidebar"
-  >
-    <i class="fas fa-bars" aria-hidden="true"></i>
-  </button>
-
-  <!-- ── Logo + Name ── -->
-  <a
-    href="index.html"
-    class="dh-logo-link"
-    title="Savoiré AI — Go to homepage"
-    aria-label="Savoiré AI — Go to homepage"
-  >
-    <div class="dh-mark" aria-hidden="true">Ś</div>
-    <div class="dh-text-wrap">
-      <span class="dh-name">Savoiré AI</span>
-      <span class="dh-ver">v2.0 · Free Forever</span>
-    </div>
+<!-- Dashboard Header -->
+<header class="dash-hdr" id="dashHdr">
+  <button class="dh-btn" id="sbToggle" type="button"><i class="fas fa-bars"></i></button>
+  <a href="index.html" class="dh-logo-link">
+    <div class="dh-mark">Ś</div>
+    <div class="dh-text-wrap"><span class="dh-name">Savoiré AI</span><span class="dh-ver">v2.0 · Free Forever</span></div>
   </a>
-
-  <!-- ── Header Stats (Sessions / History / Saved / AI Online) ── -->
-  <div class="dh-stats" id="dhStats" aria-label="Usage statistics">
-
-    <div class="dh-stat" title="Total study sessions this browser" aria-label="Sessions">
-      <i class="fas fa-chart-line" aria-hidden="true"></i>
-      <span class="dh-stat-label">Sessions:</span>
-      <span class="dh-stat-val" id="statSessions" aria-live="polite">0</span>
-    </div>
-
-    <div class="dh-stat" title="Items in study history" aria-label="History count">
-      <i class="fas fa-history" aria-hidden="true"></i>
-      <span class="dh-stat-label">History:</span>
-      <span class="dh-stat-val" id="statHistory" aria-live="polite">0</span>
-    </div>
-
-    <div class="dh-stat" title="Saved study notes" aria-label="Saved notes count">
-      <i class="fas fa-star" aria-hidden="true"></i>
-      <span class="dh-stat-label">Saved:</span>
-      <span class="dh-stat-val" id="statSaved" aria-live="polite">0</span>
-    </div>
-
-    <div
-      class="dh-online-badge"
-      id="aiOnlineBadge"
-      title="AI models are online and ready"
-      aria-label="AI status: online"
-    >
-      <span class="dh-stat-dot" id="onlineDot" aria-hidden="true"></span>
-      AI Online
-    </div>
-
-  </div><!-- /dh-stats -->
-
   <div class="dh-sp"></div>
-
-  <!-- ── Personalised Greeting ── -->
-  <div
-    class="dh-greeting"
-    id="dhGreeting"
-    aria-live="polite"
-    aria-label="Greeting"
-  >
-    Think Less. Know More.
+  <div class="dh-streak"><i class="fas fa-fire"></i><span class="dh-streak-count" id="streakCount">0</span><span>day streak</span></div>
+  <button class="dh-btn" id="histBtn" type="button"><i class="fas fa-history"></i><span class="dh-badge" id="histBadge" style="display:none">0</span></button>
+  <button class="dh-btn" id="themeBtn" type="button"><i class="fas fa-moon" id="themeIcon"></i></button>
+  <button class="dh-btn" id="settingsBtn" type="button"><i class="fas fa-cog"></i></button>
+  <div style="position:relative">
+    <button class="dh-av" id="avBtn" type="button"><span id="avLetter">S</span></button>
+    <div class="av-dropdown" id="avDropdown">
+      <div class="av-user"><div class="av-u-av" id="avDropAv">S</div><div><div class="av-u-name" id="avDropName">Scholar</div><div class="av-u-sub">Savoiré AI v2.0</div></div></div>
+      <div class="av-div"></div>
+      <button class="av-item" id="avHist" type="button"><i class="fas fa-history"></i> View History</button>
+      <button class="av-item" id="avSaved" type="button"><i class="fas fa-star"></i> Saved Notes</button>
+      <button class="av-item" id="avSettings" type="button"><i class="fas fa-cog"></i> Settings</button>
+      <div class="av-div"></div>
+      <button class="av-item av-danger" id="avClear" type="button"><i class="fas fa-trash-alt"></i> Clear All Data</button>
+    </div>
   </div>
+</header>
 
-  <div class="dh-sp"></div>
-
-  <!-- ── NEW v2.2: Streak Display ── -->
-  <div class="dh-streak" id="dhStreak" title="Your current study streak">
-    <i class="fas fa-fire" aria-hidden="true"></i>
-    <span class="dh-streak-count" id="streakCount">0</span>
-    <span>day streak</span>
-  </div>
-
-  <!-- ── History Button ── -->
-  <button
-    class="dh-btn"
-    id="histBtn"
-    type="button"
-    title="Study history (Ctrl+H)"
-    aria-label="Open study history"
-    aria-haspopup="dialog"
-    data-tooltip="History (Ctrl+H)"
-  >
-    <i class="fas fa-history" aria-hidden="true"></i>
-    <span
-      class="dh-badge"
-      id="histBadge"
-      style="display:none"
-      aria-label="History count"
-      aria-live="polite"
-    >0</span>
-  </button>
-
-  <!-- ── Theme Toggle ── -->
-  <button
-    class="dh-btn"
-    id="themeBtn"
-    type="button"
-    title="Toggle dark/light theme (Ctrl+T)"
-    aria-label="Toggle dark or light theme"
-    data-tooltip="Toggle Theme"
-  >
-    <i class="fas fa-moon" id="themeIcon" aria-hidden="true"></i>
-  </button>
-
-  <!-- ── Settings ── -->
-  <button
-    class="dh-btn"
-    id="settingsBtn"
-    type="button"
-    title="Settings & About"
-    aria-label="Open settings"
-    aria-haspopup="dialog"
-    data-tooltip="Settings"
-  >
-    <i class="fas fa-cog" aria-hidden="true"></i>
-  </button>
-
-  <!-- ── NEW v2.2: Wizard Button in Header ── -->
-  <button
-    class="dh-btn"
-    id="wizardBtn"
-    type="button"
-    title="Step-by-step generation wizard"
-    aria-label="Open generation wizard"
-    data-tooltip="Wizard Mode"
-  >
-    <i class="fas fa-magic" aria-hidden="true"></i>
-  </button>
-
-  <!-- ── Avatar + Dropdown ── -->
-  <div style="position:relative;flex-shrink:0">
-    <button
-      class="dh-av"
-      id="avBtn"
-      type="button"
-      title="Your profile"
-      aria-label="Open profile menu"
-      aria-haspopup="true"
-      aria-expanded="false"
-    >
-      <span id="avLetter" aria-hidden="true">S</span>
-    </button>
-
-    <!-- Avatar Dropdown Menu -->
-    <div
-      class="av-dropdown"
-      id="avDropdown"
-      role="menu"
-      aria-label="Profile menu"
-    >
-      <!-- User Info -->
-      <div class="av-user" role="presentation">
-        <div class="av-u-av" id="avDropAv" aria-hidden="true">S</div>
-        <div>
-          <div class="av-u-name" id="avDropName">Scholar</div>
-          <div class="av-u-sub">Savoiré AI v2.0</div>
-        </div>
-      </div>
-
-      <div class="av-div" role="separator"></div>
-
-      <button class="av-item" id="avHist" type="button" role="menuitem">
-        <i class="fas fa-history" aria-hidden="true"></i>
-        View History
-      </button>
-
-      <button class="av-item" id="avSaved" type="button" role="menuitem">
-        <i class="fas fa-star" aria-hidden="true"></i>
-        Saved Notes
-      </button>
-
-      <button class="av-item" id="avSettings" type="button" role="menuitem">
-        <i class="fas fa-cog" aria-hidden="true"></i>
-        Settings
-      </button>
-
-      <div class="av-div" role="separator"></div>
-
-      <button class="av-item av-danger" id="avClear" type="button" role="menuitem">
-        <i class="fas fa-trash-alt" aria-hidden="true"></i>
-        Clear All Data
-      </button>
-
-    </div><!-- /avDropdown -->
-  </div><!-- /avatar wrapper -->
-
-</header><!-- /dash-hdr -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MAIN DASHBOARD BODY — Split Panel Layout
-     Left panel: all inputs | Right panel: output
-     ═══════════════════════════════════════════════════════════════════════════════ -->
+<!-- Main Dashboard Body -->
 <div class="dash-body" id="dashBody">
 
-
-  <!-- ╔══════════════════════════════════════════════════════════════╗
-       ║  LEFT PANEL — All Study Inputs                              ║
-       ╚══════════════════════════════════════════════════════════════╝ -->
-  <aside
-    class="left-panel"
-    id="leftPanel"
-    aria-label="Study input panel"
-    role="complementary"
-  >
-
-    <!-- ── Panel Header ── -->
+  <!-- LEFT PANEL - Simplified Sidebar (No Input Fields) -->
+  <aside class="left-panel" id="leftPanel">
     <div class="lp-hdr">
       <div class="lp-hdr-row">
-        <span class="lp-title">Study Tools</span>
-        <a
-          href="index.html"
-          class="lp-home-link"
-          title="Back to homepage"
-          aria-label="Back to homepage"
-        >
-          <i class="fas fa-home" aria-hidden="true"></i> Home
-        </a>
+        <span class="lp-title">Menu</span>
+        <a href="index.html" class="lp-home-link"><i class="fas fa-home"></i> Home</a>
       </div>
     </div>
 
-
-    <!-- ── Tool Selector Navigation ── -->
-    <nav
-      class="tool-selector"
-      id="toolSelector"
-      aria-label="Select study tool"
-      role="navigation"
-    >
-      <div class="ts-label" id="tsLabel">Select Tool</div>
-
-      <!-- Notes -->
-      <button
-        class="ts-item active"
-        data-tool="notes"
-        type="button"
-        title="Generate comprehensive, detailed study notes with key concepts, tricks and practice questions"
-        aria-pressed="true"
-        aria-label="Generate Notes tool"
-      >
-        <i class="fas fa-book-open" aria-hidden="true"></i>
-        <span class="ts-item-text">Generate Notes</span>
-      </button>
-
-      <!-- Flashcards -->
-      <button
-        class="ts-item"
-        data-tool="flashcards"
-        type="button"
-        title="Create interactive flashcards for spaced repetition learning"
-        aria-pressed="false"
-        aria-label="Flashcards tool"
-      >
-        <i class="fas fa-layer-group" aria-hidden="true"></i>
-        <span class="ts-item-text">Flashcards</span>
-      </button>
-
-      <!-- Quiz -->
-      <button
-        class="ts-item"
-        data-tool="quiz"
-        type="button"
-        title="Build a practice quiz with self-check questions and detailed answers"
-        aria-pressed="false"
-        aria-label="Practice Quiz tool"
-      >
-        <i class="fas fa-question-circle" aria-hidden="true"></i>
-        <span class="ts-item-text">Practice Quiz</span>
-      </button>
-
-      <!-- Summary -->
-      <button
-        class="ts-item"
-        data-tool="summary"
-        type="button"
-        title="Create a concise smart summary with key points"
-        aria-pressed="false"
-        aria-label="Smart Summary tool"
-      >
-        <i class="fas fa-align-left" aria-hidden="true"></i>
-        <span class="ts-item-text">Smart Summary</span>
-      </button>
-
-      <!-- Mind Map -->
-      <button
-        class="ts-item"
-        data-tool="mindmap"
-        type="button"
-        title="Build a visual hierarchical mind map of any topic"
-        aria-pressed="false"
-        aria-label="Mind Map tool"
-      >
-        <i class="fas fa-project-diagram" aria-hidden="true"></i>
-        <span class="ts-item-text">Mind Map</span>
-      </button>
-
-    </nav><!-- /tool-selector -->
-
-
-    <!-- ── Input Fields Scroll Area ── -->
-    <div class="lp-fields" id="lpFields">
-
-
-      <!-- ── Topic / Text Textarea (collapses during streaming) ── -->
-      <div class="ta-collapse-wrap" id="taCollapseWrap">
-
-        <div class="textarea-group" id="textareaGroup">
-
-          <div class="lbl-collapse-wrap" id="lblCollapseWrap">
-            <div class="field-lbl" id="topicFieldLbl">Topic / Text to Study</div>
-          </div>
-
-          <textarea
-            id="mainInput"
-            class="main-ta"
-            placeholder="Enter any topic, concept, question, or paste text to study…"
-            maxlength="12000"
-            rows="5"
-            spellcheck="true"
-            autocorrect="on"
-            autocapitalize="sentences"
-            aria-label="Study topic or paste text here"
-            aria-describedby="charCount"
-          ></textarea>
-
-          <div class="ta-footer" id="taFooter">
-            <span class="ta-count" id="charCount" aria-live="polite" aria-label="Character count">
-              0 / 12,000
-            </span>
-            <button
-              class="ta-clear-btn"
-              id="taClearBtn"
-              type="button"
-              title="Clear the input"
-              aria-label="Clear input field"
-            >
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-          </div>
-
-        </div>
-
-      </div><!-- /ta-collapse-wrap -->
-
-
-      <!-- ── Input Mini Bar (replaces textarea during streaming) ── -->
-      <div
-        class="input-mini-bar"
-        id="inputMiniBar"
-        role="button"
-        tabindex="0"
-        aria-label="Your topic — click to expand input"
-        title="Click to show and edit your input"
-      >
-        <i class="fas fa-pencil-alt imb-icon" aria-hidden="true"></i>
-        <span class="imb-text" id="inputMiniText">Your topic…</span>
-        <span class="imb-chip" aria-hidden="true">Edit ↑</span>
+    <!-- User Profile -->
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" id="sidebarAvatar">S</div>
+      <div class="sidebar-user-info">
+        <div class="sidebar-user-name" id="sidebarUserName">Scholar</div>
+        <div class="sidebar-user-streak"><i class="fas fa-fire"></i> <span id="sidebarStreak">0</span> day streak</div>
       </div>
+    </div>
 
+    <!-- Stats -->
+    <div class="sidebar-stats">
+      <div class="sidebar-stat"><div class="sidebar-stat-value" id="sidebarSessions">0</div><div class="sidebar-stat-label">Sessions</div></div>
+      <div class="sidebar-stat"><div class="sidebar-stat-value" id="sidebarHistory">0</div><div class="sidebar-stat-label">History</div></div>
+    </div>
 
-      <!-- ── Streaming Status Card (visible during generation) ── -->
-      <div class="stream-status-card" id="streamStatusCard" aria-live="polite">
-        <div class="ssc-header">
-          <span class="ssc-dot" aria-hidden="true"></span>
-          <span class="ssc-label" id="sscLabel">Generating your study materials…</span>
-        </div>
-        <div class="ssc-progress">
-          <div class="ssc-progress-bar" id="sscProgressBar"></div>
-        </div>
-        <div class="ssc-stages" id="sscStages">
-          <span class="ssc-stage" id="ss0"><i class="fas fa-search" aria-hidden="true"></i> Analysing</span>
-          <span class="ssc-stage" id="ss1"><i class="fas fa-pen-nib" aria-hidden="true"></i> Writing</span>
-          <span class="ssc-stage" id="ss2"><i class="fas fa-layer-group" aria-hidden="true"></i> Building</span>
-          <span class="ssc-stage" id="ss3"><i class="fas fa-question-circle" aria-hidden="true"></i> Quiz</span>
-          <span class="ssc-stage" id="ss4"><i class="fas fa-check-circle" aria-hidden="true"></i> Done</span>
-        </div>
-      </div>
+    <!-- Saved Notes Button -->
+    <button class="sidebar-saved-btn" id="sidebarSavedBtn" type="button"><i class="fas fa-star"></i> Saved Notes (<span id="sidebarSavedCount">0</span>)</button>
 
-
-      <!-- ── File Upload Zone ── -->
-      <div class="file-collapse-wrap" id="fileCollapseWrap">
-        <div class="field-group">
-          <div class="field-lbl">
-            Upload File
-            <span style="color:var(--t4);font-weight:400;text-transform:none;letter-spacing:0;font-size:.9em">
-              (.txt / .md / .csv — max 5MB)
-            </span>
-          </div>
-          <div
-            class="upload-zone"
-            id="uploadZone"
-            role="button"
-            tabindex="0"
-            title="Click or drag a .txt, .md, or .csv file to use as your topic"
-            aria-label="Upload a text file for analysis"
-          >
-            <i class="fas fa-paperclip" aria-hidden="true"></i>
-            <span id="uploadZoneText">Click or drag to upload</span>
-            <input
-              type="file"
-              id="fileInput"
-              accept=".txt,.md,.csv"
-              style="display:none"
-              aria-label="File input"
-              tabindex="-1"
-            >
-          </div>
-          <div class="file-chip" id="fileChip" style="display:none" aria-live="polite" aria-label="Uploaded file">
-            <i class="fas fa-file-alt" style="color:var(--gold)" aria-hidden="true"></i>
-            <span class="file-chip-name" id="fileChipName"></span>
-            <span
-              class="file-chip-rm"
-              id="fileChipRm"
-              role="button"
-              tabindex="0"
-              title="Remove file"
-              aria-label="Remove uploaded file"
-            >
-              <i class="fas fa-times" aria-hidden="true"></i>
-            </span>
-          </div>
-        </div>
-      </div><!-- /file-collapse-wrap -->
-
-
-      <!-- ── Collapsible Selectors (hidden during streaming) ── -->
-      <div class="selectors-collapse-wrap" id="selectorsCollapseWrap">
-
-
-        <!-- Detail Level -->
-        <div class="field-group">
-          <div class="field-lbl" id="depthLbl">Detail Level</div>
-          <div class="field-sel-wrap">
-            <select
-              id="depthSel"
-              class="field-sel"
-              aria-label="Select detail level"
-              aria-describedby="depthLbl"
-            >
-              <option value="standard">Standard (600–900 words)</option>
-              <option value="detailed" selected>Detailed (1,000–1,500 words)</option>
-              <option value="comprehensive">Comprehensive (1,500–2,000 words)</option>
-              <option value="expert">Expert (2,000–2,800 words)</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
-
-
-        <!-- Output Language -->
-        <div class="field-group">
-          <div class="field-lbl" id="langLbl">Output Language</div>
-          <div class="field-sel-wrap">
-            <select
-              id="langSel"
-              class="field-sel"
-              aria-label="Select output language"
-              aria-describedby="langLbl"
-            >
-              <option value="English" selected>🇬🇧  English</option>
-              <option value="Urdu">🇵🇰  اردو — Urdu</option>
-              <option value="Hindi">🇮🇳  हिन्दी — Hindi</option>
-              <option value="Arabic">🇸🇦  العربية — Arabic</option>
-              <option value="French">🇫🇷  Français — French</option>
-              <option value="German">🇩🇪  Deutsch — German</option>
-              <option value="Spanish">🇪🇸  Español — Spanish</option>
-              <option value="Portuguese">🇧🇷  Português — Portuguese</option>
-              <option value="Italian">🇮🇹  Italiano — Italian</option>
-              <option value="Dutch">🇳🇱  Nederlands — Dutch</option>
-              <option value="Russian">🇷🇺  Русский — Russian</option>
-              <option value="Turkish">🇹🇷  Türkçe — Turkish</option>
-              <option value="Chinese (Simplified)">🇨🇳  中文简体 — Chinese (Simplified)</option>
-              <option value="Chinese (Traditional)">🇹🇼  中文繁體 — Chinese (Traditional)</option>
-              <option value="Japanese">🇯🇵  日本語 — Japanese</option>
-              <option value="Korean">🇰🇷  한국어 — Korean</option>
-              <option value="Bengali">🇧🇩  বাংলা — Bengali</option>
-              <option value="Punjabi">🇵🇰  ਪੰਜਾਬੀ — Punjabi</option>
-              <option value="Indonesian">🇮🇩  Bahasa Indonesia</option>
-              <option value="Malay">🇲🇾  Bahasa Melayu — Malay</option>
-              <option value="Swahili">🇰🇪  Kiswahili — Swahili</option>
-              <option value="Persian">🇮🇷  فارسی — Persian (Farsi)</option>
-              <option value="Vietnamese">🇻🇳  Tiếng Việt — Vietnamese</option>
-              <option value="Thai">🇹🇭  ภาษาไทย — Thai</option>
-              <option value="Greek">🇬🇷  Ελληνικά — Greek</option>
-              <option value="Polish">🇵🇱  Polski — Polish</option>
-              <option value="Swedish">🇸🇪  Svenska — Swedish</option>
-              <option value="Norwegian">🇳🇴  Norsk — Norwegian</option>
-              <option value="Danish">🇩🇰  Dansk — Danish</option>
-              <option value="Finnish">🇫🇮  Suomi — Finnish</option>
-              <option value="Czech">🇨🇿  Čeština — Czech</option>
-              <option value="Romanian">🇷🇴  Română — Romanian</option>
-              <option value="Hungarian">🇭🇺  Magyar — Hungarian</option>
-              <option value="Ukrainian">🇺🇦  Українська — Ukrainian</option>
-              <option value="Hebrew">🇮🇱  עברית — Hebrew</option>
-              <option value="Nepali">🇳🇵  नेपाली — Nepali</option>
-              <option value="Tamil">🇮🇳  தமிழ் — Tamil</option>
-              <option value="Telugu">🇮🇳  తెలుగు — Telugu</option>
-              <option value="Kannada">🇮🇳  ಕನ್ನಡ — Kannada</option>
-              <option value="Marathi">🇮🇳  मराठी — Marathi</option>
-              <option value="Gujarati">🇮🇳  ગુજરાતી — Gujarati</option>
-              <option value="Sinhala">🇱🇰  සිංහල — Sinhala</option>
-              <option value="Amharic">🇪🇹  አማርኛ — Amharic</option>
-              <option value="Somali">🇸🇴  Soomaali — Somali</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
-
-
-        <!-- Writing Style -->
-        <div class="field-group">
-          <div class="field-lbl" id="styleLbl">Writing Style</div>
-          <div class="field-sel-wrap">
-            <select
-              id="styleSel"
-              class="field-sel"
-              aria-label="Select writing style"
-              aria-describedby="styleLbl"
-            >
-              <option value="simple" selected>Simple &amp; Clear — Beginner Friendly</option>
-              <option value="academic">Academic &amp; Formal — Scholarly Language</option>
-              <option value="detailed">Highly Detailed — Maximum Depth</option>
-              <option value="exam">Exam-Focused — Mark-Worthy Phrases</option>
-              <option value="visual">Visual &amp; Analogy-Rich — Mental Models</option>
-            </select>
-            <i class="fas fa-chevron-down field-sel-arrow" aria-hidden="true"></i>
-          </div>
-        </div>
-
-
-      </div><!-- /selectors-collapse-wrap -->
-
-
-      <!-- ── Quick Topic Suggestion Pills ── -->
-      <div class="sugg-collapse-wrap" id="suggCollapseWrap">
-        <div class="lp-sugg">
-          <span class="lp-sugg-label" aria-label="Quick topic suggestions">Quick Topics</span>
-          <div class="lp-sugg-pills" role="list">
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Photosynthesis — how plants convert sunlight into glucose')"
-              aria-label="Photosynthesis quick topic"
-              role="listitem"
-            >Photosynthesis</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Newton\'s Three Laws of Motion — classical mechanics')"
-              aria-label="Newton's Laws quick topic"
-              role="listitem"
-            >Newton's Laws</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('World War II — causes, major events and consequences')"
-              aria-label="World War II quick topic"
-              role="listitem"
-            >World War II</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Machine Learning — algorithms, types and real-world applications')"
-              aria-label="Machine Learning quick topic"
-              role="listitem"
-            >Machine Learning</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('The French Revolution — causes, key events and lasting legacy')"
-              aria-label="French Revolution quick topic"
-              role="listitem"
-            >French Revolution</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Cell division — mitosis, meiosis and their biological significance')"
-              aria-label="Cell Division quick topic"
-              role="listitem"
-            >Cell Division</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Quantum mechanics — fundamental principles, wave-particle duality, uncertainty')"
-              aria-label="Quantum Mechanics quick topic"
-              role="listitem"
-            >Quantum Mechanics</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('The Industrial Revolution — origins, impact on society and the global economy')"
-              aria-label="Industrial Revolution quick topic"
-              role="listitem"
-            >Industrial Revolution</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('DNA replication — the process, enzymes involved and significance in genetics')"
-              aria-label="DNA Replication quick topic"
-              role="listitem"
-            >DNA Replication</button>
-
-            <button
-              class="sugg-pill"
-              type="button"
-              onclick="setSugg('Supply and demand — economics fundamentals, curves, equilibrium, elasticity')"
-              aria-label="Supply and Demand quick topic"
-              role="listitem"
-            >Supply &amp; Demand</button>
-
-          </div>
-        </div>
-      </div><!-- /sugg-collapse-wrap -->
-
-
-    </div><!-- /lp-fields -->
-
-
-    <!-- ── Generate Button ── -->
-    <div class="lp-run-wrap" id="lpRunWrap">
-
-      <button
-        class="run-btn"
-        id="runBtn"
-        type="button"
-        aria-label="Generate study materials"
-        title="Generate (press Enter)"
-      >
-        <i class="fas fa-book-open" id="runIcon" aria-hidden="true"></i>
-        <span id="runLabel">Generate Notes</span>
-      </button>
-
-      <!-- Cancel Button (shown during generation) -->
-      <button
-        class="cancel-btn"
-        id="cancelBtn"
-        type="button"
-        aria-label="Cancel generation"
-        title="Cancel current generation"
-        style="margin-top:6px"
-      >
-        <i class="fas fa-stop-circle" aria-hidden="true"></i>
-        Cancel Generation
-      </button>
-
-    </div><!-- /lp-run-wrap -->
-
-
-    <!-- ── Sidebar Recent History Strip ── -->
-    <div class="lp-history" id="lpHistory" aria-label="Recent study history">
+    <!-- Recent History -->
+    <div class="lp-history">
       <div class="lp-hist-header">
-        <span class="lp-hist-title">Recent</span>
-        <button
-          class="lp-hist-all"
-          id="lpHistAll"
-          type="button"
-          aria-label="View all study history"
-        >View All</button>
+        <span class="lp-hist-title">Recent History</span>
+        <button class="lp-hist-all" id="lpHistAll">View All</button>
       </div>
-      <div
-        class="lp-hist-list"
-        id="lpHistList"
-        role="list"
-        aria-label="Recent history items"
-      >
-        <div
-          style="font-size:.74rem;color:var(--t4);padding:4px 7px;font-family:var(--fu);font-style:italic"
-          role="listitem"
-        >
-          No history yet — start studying!
-        </div>
+      <div class="lp-hist-list" id="lpHistList">
+        <div style="font-size:.74rem;color:var(--t4);padding:8px;text-align:center">No history yet</div>
       </div>
-    </div><!-- /lp-history -->
+    </div>
+  </aside>
 
+  <!-- RIGHT PANEL - Output Area with Wizard Button -->
+  <main class="right-panel" id="rightPanel">
+    
+    <!-- Output Toolbar -->
+    <div class="out-toolbar" id="outToolbar">
+      <button class="otb-btn" id="copyBtn" type="button"><i class="fas fa-copy"></i><span>Copy</span></button>
+      <button class="otb-btn" id="pdfBtn" type="button"><i class="fas fa-file-pdf"></i><span>PDF</span></button>
+      <div class="otb-sep"></div>
+      <button class="otb-btn" id="saveBtn" type="button"><i class="fas fa-star"></i><span>Save</span></button>
+      <button class="otb-btn" id="shareBtn" type="button"><i class="fas fa-share-alt"></i><span>Share</span></button>
+      <button class="otb-btn" id="clearBtn" type="button"><i class="fas fa-trash-alt"></i><span>Clear</span></button>
+      <div class="otb-sep"></div>
+      <button class="focus-mode-btn otb-btn" id="focusModeBtn" type="button"><i class="fas fa-expand-alt"></i><span>Focus</span></button>
+    </div>
 
-  </aside><!-- /left-panel -->
-
-
-  <!-- ╔══════════════════════════════════════════════════════════════╗
-       ║  RIGHT PANEL — Output Area                                  ║
-       ╚══════════════════════════════════════════════════════════════╝ -->
-  <main
-    class="right-panel"
-    id="rightPanel"
-    aria-label="Generated study output"
-    role="main"
-  >
-
-    <!-- ── Output Toolbar ── -->
-    <div
-      class="out-toolbar"
-      id="outToolbar"
-      role="toolbar"
-      aria-label="Output action buttons"
-    >
-
-      <button
-        class="otb-btn"
-        id="copyBtn"
-        type="button"
-        title="Copy all output to clipboard (Ctrl+C)"
-        aria-label="Copy output"
-        data-tooltip="Copy (Ctrl+C)"
-      >
-        <i class="fas fa-copy" aria-hidden="true"></i>
-        <span>Copy</span>
-      </button>
-
-      <button
-        class="otb-btn"
-        id="pdfBtn"
-        type="button"
-        title="Download output as professional PDF"
-        aria-label="Download PDF"
-        data-tooltip="Download PDF"
-      >
-        <i class="fas fa-file-pdf" aria-hidden="true"></i>
-        <span>PDF</span>
-      </button>
-
-      <div class="otb-sep" role="separator" aria-hidden="true"></div>
-
-      <button
-        class="otb-btn"
-        id="saveBtn"
-        type="button"
-        title="Save to your note library"
-        aria-label="Save note to library"
-        data-tooltip="Save Note"
-      >
-        <i class="fas fa-star" aria-hidden="true"></i>
-        <span>Save</span>
-      </button>
-
-      <button
-        class="otb-btn"
-        id="shareBtn"
-        type="button"
-        title="Share this study material"
-        aria-label="Share"
-        data-tooltip="Share"
-      >
-        <i class="fas fa-share-alt" aria-hidden="true"></i>
-        <span>Share</span>
-      </button>
-
-      <button
-        class="otb-btn"
-        id="clearBtn"
-        type="button"
-        title="Clear the output area"
-        aria-label="Clear output"
-        data-tooltip="Clear Output"
-      >
-        <i class="fas fa-trash-alt" aria-hidden="true"></i>
-        <span>Clear</span>
-      </button>
-
-      <div class="otb-sep" role="separator" aria-hidden="true"></div>
-
-      <!-- Focus mode toggle -->
-      <button
-        class="focus-mode-btn otb-btn"
-        id="focusModeBtn"
-        type="button"
-        title="Toggle focus mode — hides sidebar for distraction-free reading"
-        aria-label="Toggle focus mode"
-        data-tooltip="Focus Mode"
-      >
-        <i class="fas fa-expand-alt" aria-hidden="true"></i>
-        <span>Focus</span>
-      </button>
-
-      <!-- Keyboard hints -->
-      <div class="otb-hint" aria-hidden="true">
-        <kbd>Ctrl</kbd>+<kbd>K</kbd> focus &nbsp;·&nbsp;
-        <kbd>Ctrl</kbd>+<kbd>H</kbd> history &nbsp;·&nbsp;
-        <kbd>Enter</kbd> generate &nbsp;·&nbsp;
-        <kbd>Esc</kbd> close
-      </div>
-
-    </div><!-- /out-toolbar -->
-
-
-    <!-- ── Output Scroll Area ── -->
-    <div
-      class="out-area"
-      id="outArea"
-      role="region"
-      aria-label="Generated study content"
-      aria-live="polite"
-    >
-
-      <!-- ════════════════════════════════════════════════════════
-           EMPTY STATE — shown when nothing has been generated yet
-           ════════════════════════════════════════════════════════ -->
-      <div
-        class="empty-state"
-        id="emptyState"
-        role="status"
-        aria-label="No study content generated yet"
-      >
-
-        <!-- Animated Brand Logo -->
-        <span class="es-mark" aria-hidden="true">Ś</span>
-
-        <!-- Title -->
+    <!-- Output Scroll Area -->
+    <div class="out-area" id="outArea">
+      
+      <!-- Empty State with BIG WIZARD BUTTON -->
+      <div class="empty-state" id="emptyState">
+        <span class="es-mark">Ś</span>
         <div class="es-title">What would you like to study today?</div>
-
-        <!-- Subtitle -->
-        <div class="es-sub">
-          Enter any topic, concept, question, or paste text in the panel on the left.
-          Choose your tool, press Generate, and watch your study materials
-          appear here — <strong style="color:var(--gold)">live, as they are written</strong>.
+        <div class="es-sub">Click the button below to start generating your study materials with our step-by-step wizard.</div>
+        
+        <!-- BIG WIZARD BUTTON IN MAIN AREA -->
+        <button class="empty-wizard-cta" id="mainWizardBtn" type="button">
+          <i class="fas fa-magic"></i>
+          ✨ Click Here to Generate ✨
+        </button>
+        
+        <div class="es-tips">
+          <span class="es-tip"><i class="fas fa-layer-group"></i> 5 Study Tools</span>
+          <span class="es-tip"><i class="fas fa-globe"></i> 50+ Languages</span>
+          <span class="es-tip"><i class="fas fa-file-pdf"></i> PDF Export</span>
+          <span class="es-tip"><i class="fas fa-infinity"></i> Free Forever</span>
         </div>
-
-        <!-- Feature Tip Pills -->
-        <div class="es-tips" role="list" aria-label="Available features">
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-book-open" aria-hidden="true"></i> Deep Notes
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-layer-group" aria-hidden="true"></i> Flashcards
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-question-circle" aria-hidden="true"></i> Quiz Mode
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-align-left" aria-hidden="true"></i> Summary
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-project-diagram" aria-hidden="true"></i> Mind Map
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-file-pdf" aria-hidden="true"></i> PDF Export
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-globe" aria-hidden="true"></i> 50+ Languages
-          </span>
-          <span class="es-tip" role="listitem">
-            <i class="fas fa-infinity" aria-hidden="true"></i> Always Free
-          </span>
-        </div>
-
-        <!-- Keyboard Shortcuts -->
-        <div class="es-shortcuts" aria-label="Keyboard shortcuts">
-          <span class="es-shortcut"><kbd>Enter</kbd> Generate</span>
-          <span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Focus input</span>
+        <div class="es-shortcuts">
+          <span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Focus</span>
           <span class="es-shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</span>
           <span class="es-shortcut"><kbd>Space</kbd> Flip card</span>
         </div>
+      </div>
 
-        <!-- Branding -->
-        <div class="es-brand">
-          Powered by Savoiré AI v2.0 &nbsp;·&nbsp;
-          <a
-            href="https://soobantalhatech.xyz"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Visit Sooban Talha Technologies"
-          >Sooban Talha Technologies</a>
-          &nbsp;·&nbsp;
-          <a
-            href="https://savoireai.vercel.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Visit Savoiré AI"
-          >savoireai.vercel.app</a>
-        </div>
-
-      </div><!-- /emptyState -->
-
-
-      <!-- ════════════════════════════════════════════════════════
-           THINKING / LOADING INDICATOR
-           Shown from the moment Generate is clicked
-           ════════════════════════════════════════════════════════ -->
-      <div
-        class="thinking-wrap"
-        id="thinkingWrap"
-        style="display:none"
-        aria-live="polite"
-        aria-label="Generating study materials"
-        role="status"
-      >
+      <!-- Thinking Indicator -->
+      <div class="thinking-wrap" id="thinkingWrap" style="display:none">
         <div class="thinking-card">
-          <!-- Pulsing Avatar -->
-          <div class="th-av" aria-hidden="true">Ś</div>
-          <!-- Content -->
+          <div class="th-av">Ś</div>
           <div class="th-body">
-            <div class="th-title" id="thinkingTitle">
-              Savoiré AI is crafting your study materials…
-            </div>
-            <div class="th-dots" aria-hidden="true">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <!-- Stage Badges -->
-            <div
-              class="th-stages"
-              role="list"
-              aria-label="Generation stage progress"
-            >
-              <span class="ths" id="ts0" role="listitem">
-                <i class="fas fa-search" aria-hidden="true"></i> Analysing
-              </span>
-              <span class="ths" id="ts1" role="listitem">
-                <i class="fas fa-pen-nib" aria-hidden="true"></i> Writing
-              </span>
-              <span class="ths" id="ts2" role="listitem">
-                <i class="fas fa-layer-group" aria-hidden="true"></i> Building
-              </span>
-              <span class="ths" id="ts3" role="listitem">
-                <i class="fas fa-question-circle" aria-hidden="true"></i> Quiz
-              </span>
-              <span class="ths" id="ts4" role="listitem">
-                <i class="fas fa-check-circle" aria-hidden="true"></i> Done
-              </span>
+            <div class="th-title">Savoiré AI is crafting your study materials…</div>
+            <div class="th-dots"><span></span><span></span><span></span></div>
+            <div class="th-stages">
+              <span class="ths" id="ts0"><i class="fas fa-search"></i> Analysing</span>
+              <span class="ths" id="ts1"><i class="fas fa-pen-nib"></i> Writing</span>
+              <span class="ths" id="ts2"><i class="fas fa-layer-group"></i> Building</span>
+              <span class="ths" id="ts3"><i class="fas fa-question-circle"></i> Quiz</span>
+              <span class="ths" id="ts4"><i class="fas fa-check-circle"></i> Done</span>
             </div>
           </div>
         </div>
-      </div><!-- /thinkingWrap -->
+      </div>
 
+      <!-- Result Area -->
+      <div id="resultArea" style="display:none"></div>
 
-      <!-- ════════════════════════════════════════════════════════
-           RESULT AREA — All generated content renders here
-           ════════════════════════════════════════════════════════ -->
-      <div
-        id="resultArea"
-        style="display:none"
-        role="region"
-        aria-label="Generated study results"
-        aria-live="polite"
-      ></div>
-
-
-    </div><!-- /out-area -->
-
-  </main><!-- /right-panel -->
-
-
-</div><!-- /dash-body -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     LIVE STREAMING FULL-PAGE OVERLAY
-     This covers the RIGHT PANEL during generation for full typewriter effect.
-     Input collapses in left panel, output streams here char-by-char.
-     After generation completes, this hides and the full structured result appears.
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="stream-fullpage-wrap"
-  id="streamFullpage"
-  style="display:none"
-  role="region"
-  aria-label="Live AI output — streaming"
-  aria-live="polite"
->
-
-  <!-- Stream Header Bar -->
-  <div class="sfp-header" id="sfpHeader">
-
-    <!-- Animated dots -->
-    <div class="sfp-indicator" aria-hidden="true">
-      <span class="sfp-dot"></span>
-      <span class="sfp-dot"></span>
-      <span class="sfp-dot"></span>
     </div>
+  </main>
 
-    <!-- Status label -->
-    <span class="sfp-label" id="sfpLabel">
-      Savoiré AI is generating your study materials live…
-    </span>
+</div>
 
-    <!-- Topic preview -->
-    <span class="sfp-topic" id="sfpTopic" aria-label="Current topic"></span>
-
-    <!-- Tool badge -->
-    <span class="sfp-tool-badge" id="sfpToolBadge" aria-label="Current tool">
-      <i class="fas fa-book-open" id="sfpToolIcon" aria-hidden="true"></i>
-      <span id="sfpToolName">Notes</span>
-    </span>
-
-  </div><!-- /sfp-header -->
-
-  <!-- Scrollable Stream Text -->
+<!-- Live Streaming Fullpage Overlay -->
+<div class="stream-fullpage-wrap" id="streamFullpage" style="display:none">
+  <div class="sfp-header">
+    <div class="sfp-indicator"><span class="sfp-dot"></span><span class="sfp-dot"></span><span class="sfp-dot"></span></div>
+    <span class="sfp-label" id="sfpLabel">Savoiré AI is generating your study materials live…</span>
+    <span class="sfp-topic" id="sfpTopic"></span>
+    <span class="sfp-tool-badge"><i class="fas fa-book-open" id="sfpToolIcon"></i><span id="sfpToolName">Notes</span></span>
+  </div>
   <div class="sfp-scroll" id="sfpScroll">
-    <!-- The typewriter text renders here character by character -->
-    <div
-      class="sfp-text"
-      id="sfpText"
-      aria-live="polite"
-      aria-label="Live streaming output"
-    ></div>
-  </div><!-- /sfp-scroll -->
+    <div class="sfp-text" id="sfpText"></div>
+  </div>
+</div>
 
-</div><!-- /streamFullpage -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     NEW v2.2: WIZARD GENERATION MODAL (Step-by-step card flow with File Upload)
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="wizardModal"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="wizardTitle"
->
+<!-- Wizard Modal -->
+<div class="modal-overlay" id="wizardModal" style="display:none">
   <div class="modal modal-lg">
     <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i class="fas fa-magic modal-hdr-icon" aria-hidden="true"></i>
-        <h3 class="modal-title" id="wizardTitle">Generate Study Materials — Step by Step</h3>
-      </div>
-      <button class="modal-close" data-close="wizardModal" type="button" aria-label="Close wizard">
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
+      <div class="modal-hdr-left"><i class="fas fa-magic modal-hdr-icon"></i><h3 class="modal-title">Generate Study Materials — Step by Step</h3></div>
+      <button class="modal-close" data-close="wizardModal"><i class="fas fa-times"></i></button>
     </div>
-    <div class="modal-body" id="wizardContent" style="padding: 24px; min-height: 460px;">
-      <!-- Wizard content will be rendered dynamically by app.js -->
+    <div class="modal-body" id="wizardContent" style="padding: 24px; min-height: 460px;"></div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-overlay" id="histModal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-history modal-hdr-icon"></i><h3 class="modal-title">Study History</h3></div><button class="modal-close" data-close="histModal"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div class="hist-search-bar"><i class="fas fa-search"></i><input type="search" id="histSearchInput" placeholder="Search history by topic…"></div>
+      <div class="hist-filters"><button class="hf active" data-filter="all">All</button><button class="hf" data-filter="notes">Notes</button><button class="hf" data-filter="flashcards">Flashcards</button><button class="hf" data-filter="quiz">Quiz</button><button class="hf" data-filter="summary">Summary</button><button class="hf" data-filter="mindmap">Mind Map</button></div>
+      <div class="hist-list" id="histList"></div>
+      <div class="modal-empty" id="histEmpty" style="display:none"><i class="fas fa-history"></i><p>No history yet.</p></div>
+    </div>
+    <div class="modal-ftr"><button class="btn btn-ghost btn-sm" id="clearHistBtn"><i class="fas fa-trash"></i> Clear History</button><button class="btn btn-ghost btn-sm" id="exportHistBtn"><i class="fas fa-download"></i> Export JSON</button><button class="btn btn-primary btn-sm" data-close="histModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Saved Notes Modal -->
+<div class="modal-overlay" id="savedModal" style="display:none">
+  <div class="modal modal-lg">
+    <div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-star modal-hdr-icon"></i><h3 class="modal-title">Saved Notes Library</h3></div><button class="modal-close" data-close="savedModal"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body"><div class="hist-list" id="savedList"></div><div class="modal-empty" id="savedEmpty" style="display:none"><i class="fas fa-star"></i><p>No saved notes yet.</p></div></div>
+    <div class="modal-ftr"><button class="btn btn-primary btn-sm" data-close="savedModal">Close</button></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal" style="display:none">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-cog modal-hdr-icon"></i><h3 class="modal-title">Settings &amp; About</h3></div><button class="modal-close" data-close="settingsModal"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-user"></i> Your Profile</div><div class="settings-row"><div class="settings-lbl">Display Name</div><div class="settings-input-row"><input type="text" id="nameInput" placeholder="Your name"><button class="btn btn-primary btn-sm" id="saveNameBtn">Save</button></div></div></div>
+      <div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-palette"></i> Appearance</div><div class="settings-row"><div class="settings-lbl">Theme</div><div class="toggle-row"><button class="toggle-btn" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button><button class="toggle-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button></div></div><div class="settings-row"><div class="settings-lbl">Font Size</div><div class="toggle-row"><button class="toggle-btn font-sz" data-size="small">Small</button><button class="toggle-btn font-sz active" data-size="medium">Medium</button><button class="toggle-btn font-sz" data-size="large">Large</button></div></div></div>
+      <div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-database"></i> Your Data</div><div class="ds-stats-row" id="dsStats"></div><div class="settings-btn-row"><button class="btn btn-ghost btn-sm" id="exportDataBtn"><i class="fas fa-download"></i> Export All Data</button><button class="btn btn-danger btn-sm" id="clearDataBtn"><i class="fas fa-trash"></i> Clear All Data</button></div></div>
+      <div class="settings-sec"><div class="settings-sec-title"><i class="fas fa-info-circle"></i> About</div><div class="about-card"><div class="about-mark">Ś</div><div class="about-name">Savoiré AI v2.0</div><div class="about-tagline">Think Less. Know More.</div><p class="about-desc">A completely free AI study companion. No login, no payment, no subscription — ever.</p><div class="about-quote-card"><i class="fas fa-quote-left about-qico"></i><blockquote class="about-quote">"I built Savoiré AI because great learning tools shouldn't cost anything. Free, forever."</blockquote><cite class="about-cite">— Sooban Talha, Founder</cite></div><div class="about-links"><a href="https://soobantalhatech.xyz" class="about-link" target="_blank"><i class="fas fa-building"></i> soobantalhatech.xyz</a><a href="https://savoireai.vercel.app" class="about-link" target="_blank"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a></div></div></div>
     </div>
   </div>
 </div>
 
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MODAL — Study History
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="histModal"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="histModalTitle"
-  aria-describedby="histModalDesc"
->
-  <div class="modal modal-lg">
-
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i class="fas fa-history modal-hdr-icon" aria-hidden="true"></i>
-        <h3 class="modal-title" id="histModalTitle">Study History</h3>
-        <span
-          id="histCount"
-          style="font-family:var(--fm);font-size:.67rem;color:var(--t3);margin-left:8px"
-          aria-live="polite"
-        ></span>
-      </div>
-      <button
-        class="modal-close"
-        data-close="histModal"
-        type="button"
-        aria-label="Close history modal"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body" id="histModalDesc">
-
-      <!-- Search Bar -->
-      <div class="hist-search-bar" role="search">
-        <i class="fas fa-search" aria-hidden="true"></i>
-        <input
-          type="search"
-          id="histSearchInput"
-          class="hist-search-input"
-          placeholder="Search history by topic…"
-          autocomplete="off"
-          aria-label="Search study history"
-          aria-controls="histList"
-        >
-        <button
-          id="histSearchClear"
-          type="button"
-          style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:.78rem;padding:2px 4px;transition:color .15s"
-          aria-label="Clear search"
-          title="Clear search"
-          onclick="document.getElementById('histSearchInput').value='';document.getElementById('histSearchInput').dispatchEvent(new Event('input'))"
-        >
-          <i class="fas fa-times" aria-hidden="true"></i>
-        </button>
-      </div>
-
-      <!-- Filter Buttons -->
-      <div
-        class="hist-filters"
-        role="group"
-        aria-label="Filter history by tool type"
-        id="histFilters"
-      >
-        <button class="hf active" data-filter="all"        type="button" aria-pressed="true">All</button>
-        <button class="hf"        data-filter="notes"      type="button" aria-pressed="false">Notes</button>
-        <button class="hf"        data-filter="flashcards" type="button" aria-pressed="false">Flashcards</button>
-        <button class="hf"        data-filter="quiz"       type="button" aria-pressed="false">Quiz</button>
-        <button class="hf"        data-filter="summary"    type="button" aria-pressed="false">Summary</button>
-        <button class="hf"        data-filter="mindmap"    type="button" aria-pressed="false">Mind Map</button>
-      </div>
-
-      <!-- History List -->
-      <div
-        class="hist-list"
-        id="histList"
-        role="list"
-        aria-label="History items — click any to reload"
-      ></div>
-
-      <!-- Empty State -->
-      <div
-        class="modal-empty"
-        id="histEmpty"
-        style="display:none"
-        aria-live="polite"
-      >
-        <i class="fas fa-history" aria-hidden="true"></i>
-        <p>No history yet. Start studying something — it'll appear here!</p>
-      </div>
-
-    </div><!-- /modal-body -->
-
-    <!-- Footer -->
-    <div class="modal-ftr">
-      <button class="btn btn-ghost btn-sm" id="clearHistBtn" type="button">
-        <i class="fas fa-trash" aria-hidden="true"></i> Clear History
-      </button>
-      <button class="btn btn-ghost btn-sm" id="exportHistBtn" type="button">
-        <i class="fas fa-download" aria-hidden="true"></i> Export JSON
-      </button>
-      <button class="btn btn-primary btn-sm" data-close="histModal" type="button">
-        Close
-      </button>
-    </div>
-
-  </div><!-- /modal -->
-</div><!-- /histModal -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MODAL — Saved Notes Library
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="savedModal"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="savedModalTitle"
->
-  <div class="modal modal-lg">
-
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i class="fas fa-star modal-hdr-icon" aria-hidden="true"></i>
-        <h3 class="modal-title" id="savedModalTitle">Saved Notes Library</h3>
-        <span
-          id="savedCount"
-          style="font-family:var(--fm);font-size:.67rem;color:var(--t3);margin-left:8px"
-          aria-live="polite"
-        ></span>
-      </div>
-      <button
-        class="modal-close"
-        data-close="savedModal"
-        type="button"
-        aria-label="Close saved notes modal"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-
-      <!-- Saved List -->
-      <div
-        class="hist-list"
-        id="savedList"
-        role="list"
-        aria-label="Saved notes — click any to reload"
-      ></div>
-
-      <!-- Empty State -->
-      <div
-        class="modal-empty"
-        id="savedEmpty"
-        style="display:none"
-        aria-live="polite"
-      >
-        <i class="fas fa-star" aria-hidden="true"></i>
-        <p>
-          No saved notes yet.<br>
-          After generating, click <strong>Save</strong> in the toolbar or export bar.
-        </p>
-      </div>
-
-    </div><!-- /modal-body -->
-
-    <!-- Footer -->
-    <div class="modal-ftr">
-      <button class="btn btn-primary btn-sm" data-close="savedModal" type="button">
-        Close
-      </button>
-    </div>
-
-  </div>
-</div><!-- /savedModal -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MODAL — Settings & About
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="settingsModal"
-  style="display:none"
-  role="dialog"
-  aria-modal="true"
-  aria-labelledby="settingsModalTitle"
->
-  <div class="modal">
-
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i class="fas fa-cog modal-hdr-icon" aria-hidden="true"></i>
-        <h3 class="modal-title" id="settingsModalTitle">Settings &amp; About</h3>
-      </div>
-      <button
-        class="modal-close"
-        data-close="settingsModal"
-        type="button"
-        aria-label="Close settings"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-
-      <!-- ── Profile Section ── -->
-      <div class="settings-sec" id="settingsProfile">
-        <div class="settings-sec-title">
-          <i class="fas fa-user" aria-hidden="true"></i> Your Profile
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-lbl">Display Name</div>
-          <div class="settings-input-row">
-            <input
-              type="text"
-              id="nameInput"
-              class="settings-input"
-              placeholder="Your name"
-              maxlength="40"
-              autocomplete="given-name"
-              aria-label="Your display name"
-            >
-            <button class="btn btn-primary btn-sm" id="saveNameBtn" type="button">
-              Save
-            </button>
-          </div>
-        </div>
-
-      </div><!-- /settingsProfile -->
-
-
-      <!-- ── Appearance Section ── -->
-      <div class="settings-sec" id="settingsAppearance">
-        <div class="settings-sec-title">
-          <i class="fas fa-palette" aria-hidden="true"></i> Appearance
-        </div>
-
-        <!-- Theme -->
-        <div class="settings-row">
-          <div class="settings-lbl">Theme</div>
-          <div class="toggle-row" role="group" aria-label="Select colour theme">
-            <button
-              class="toggle-btn active"
-              data-theme-btn="dark"
-              type="button"
-              aria-pressed="true"
-            >
-              <i class="fas fa-moon" aria-hidden="true"></i> Dark
-            </button>
-            <button
-              class="toggle-btn"
-              data-theme-btn="light"
-              type="button"
-              aria-pressed="false"
-            >
-              <i class="fas fa-sun" aria-hidden="true"></i> Light
-            </button>
-          </div>
-        </div>
-
-        <!-- Font Size -->
-        <div class="settings-row">
-          <div class="settings-lbl">Font Size</div>
-          <div class="toggle-row" role="group" aria-label="Select font size">
-            <button class="toggle-btn font-sz" data-size="small"  type="button" aria-pressed="false">Small</button>
-            <button class="toggle-btn font-sz active" data-size="medium" type="button" aria-pressed="true">Medium</button>
-            <button class="toggle-btn font-sz" data-size="large"  type="button" aria-pressed="false">Large</button>
-          </div>
-        </div>
-
-      </div><!-- /settingsAppearance -->
-
-
-      <!-- ── Data Section ── -->
-      <div class="settings-sec" id="settingsData">
-        <div class="settings-sec-title">
-          <i class="fas fa-database" aria-hidden="true"></i> Your Data
-        </div>
-
-        <!-- Stats Grid -->
-        <div class="ds-stats-row" id="dsStats" aria-label="Data usage statistics"></div>
-
-        <!-- Action Buttons -->
-        <div class="settings-btn-row">
-          <button class="btn btn-ghost btn-sm" id="exportDataBtn" type="button">
-            <i class="fas fa-download" aria-hidden="true"></i> Export All Data
-          </button>
-          <button class="btn btn-danger btn-sm" id="clearDataBtn" type="button">
-            <i class="fas fa-trash" aria-hidden="true"></i> Clear All Data
-          </button>
-        </div>
-
-        <p style="margin-top:10px;font-family:var(--fb);font-size:.84rem;color:var(--t3);line-height:1.7">
-          All your data — history, saved notes and preferences — is stored
-          privately in your browser's localStorage. Nothing is sent to any server.
-          Export creates a JSON backup you can keep forever.
-        </p>
-
-      </div><!-- /settingsData -->
-
-
-      <!-- ── About Section ── -->
-      <div class="settings-sec" id="settingsAbout">
-        <div class="settings-sec-title">
-          <i class="fas fa-info-circle" aria-hidden="true"></i> About Savoiré AI
-        </div>
-
-        <div class="about-card">
-
-          <!-- Logo -->
-          <div class="about-mark" aria-hidden="true">Ś</div>
-
-          <!-- Name & Tagline -->
-          <div class="about-name">Savoiré AI v2.0</div>
-          <div class="about-tagline">Think Less. Know More.</div>
-
-          <!-- Description -->
-          <p class="about-desc">
-            A completely free AI study companion built for students everywhere.
-            No login, no payment, no subscription — ever, for anyone.
-            All data stays private in your own browser.
-            Every feature is and will always be free.
-          </p>
-
-          <!-- Founder Photo + Quote -->
-          <div class="about-quote-card">
-            <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
-              <img
-                src="CEO.png"
-                alt="Sooban Talha — Founder of Savoiré AI"
-                style="
-                  width:64px;height:64px;
-                  border-radius:50%;
-                  object-fit:cover;
-                  border:2.5px solid var(--gold);
-                  box-shadow:0 2px 16px rgba(201,169,110,.35);
-                  flex-shrink:0;
-                "
-                onerror="this.style.display='none'"
-              >
-              <div style="text-align:left">
-                <div style="font-family:var(--fd);font-size:1rem;font-weight:700;color:var(--gold);line-height:1.2">Sooban Talha</div>
-                <div style="font-family:var(--fu);font-size:0.72rem;color:var(--t3);margin-top:3px">Founder &amp; Developer</div>
-                <div style="font-family:var(--fu);font-size:0.68rem;color:var(--t4);margin-top:1px">Sooban Talha Technologies</div>
-              </div>
-            </div>
-            <i class="fas fa-quote-left about-qico" aria-hidden="true"></i>
-            <blockquote class="about-quote">
-              "I built Savoiré AI because great learning tools shouldn't cost anything.
-              Every student — whether in Karachi or California, in a top university
-              or teaching themselves at home at midnight — deserves access to the
-              very best AI has to offer.
-              <strong style="color:var(--gold)">Free, forever.</strong>"
-            </blockquote>
-            <cite class="about-cite">
-              — Sooban Talha, Founder &amp; Developer &nbsp;·&nbsp; Sooban Talha Technologies
-            </cite>
-          </div>
-
-          <!-- Version Info -->
-          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-code-branch" aria-hidden="true" style="color:var(--gold);margin-right:4px"></i>
-              Version 2.0
-            </span>
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-globe" aria-hidden="true" style="color:var(--gold);margin-right:4px"></i>
-              50+ Languages
-            </span>
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-robot" aria-hidden="true" style="color:var(--gold);margin-right:4px"></i>
-              10 AI Models
-            </span>
-            <span style="font-family:var(--fm);font-size:.66rem;color:var(--t4);padding:3px 10px;border:1px solid var(--b2);border-radius:var(--rf)">
-              <i class="fas fa-lock-open" aria-hidden="true" style="color:var(--em2);margin-right:4px"></i>
-              No Login Ever
-            </span>
-          </div>
-
-          <!-- Links -->
-          <div class="about-links">
-            <a
-              href="https://soobantalhatech.xyz"
-              class="about-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Visit Sooban Talha Technologies"
-            >
-              <i class="fas fa-building" aria-hidden="true"></i>
-              soobantalhatech.xyz
-            </a>
-            <a
-              href="https://savoireai.vercel.app"
-              class="about-link"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Visit Savoiré AI"
-            >
-              <i class="fas fa-external-link-alt" aria-hidden="true"></i>
-              savoireai.vercel.app
-            </a>
-          </div>
-
-        </div><!-- /about-card -->
-      </div><!-- /settingsAbout -->
-
-    </div><!-- /modal-body -->
-  </div><!-- /modal -->
-</div><!-- /settingsModal -->
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MODAL — Confirm Destructive Action
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="modal-overlay"
-  id="confirmModal"
-  style="display:none"
-  role="alertdialog"
-  aria-modal="true"
-  aria-labelledby="confirmTitle"
-  aria-describedby="confirmMsg"
->
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal" style="display:none">
   <div class="modal modal-sm">
-
-    <!-- Header -->
-    <div class="modal-hdr">
-      <div class="modal-hdr-left">
-        <i
-          class="fas fa-exclamation-triangle modal-hdr-icon"
-          style="color:var(--ruby2)"
-          aria-hidden="true"
-        ></i>
-        <h3 class="modal-title" id="confirmTitle">Confirm Action</h3>
-      </div>
-      <button
-        class="modal-close"
-        data-close="confirmModal"
-        type="button"
-        aria-label="Cancel"
-      >
-        <i class="fas fa-times" aria-hidden="true"></i>
-      </button>
-    </div>
-
-    <!-- Body -->
-    <div class="modal-body">
-      <p
-        class="confirm-msg"
-        id="confirmMsg"
-        style="font-family:var(--fb);color:var(--t2);line-height:1.72;font-size:.96rem"
-      ></p>
-    </div>
-
-    <!-- Footer -->
-    <div class="modal-ftr">
-      <button class="btn btn-ghost btn-sm" data-close="confirmModal" type="button">
-        Cancel
-      </button>
-      <button class="btn btn-danger btn-sm" id="confirmOkBtn" type="button">
-        <i class="fas fa-check" aria-hidden="true"></i> Confirm
-      </button>
-    </div>
-
+    <div class="modal-hdr"><div class="modal-hdr-left"><i class="fas fa-exclamation-triangle modal-hdr-icon" style="color:var(--ruby2)"></i><h3 class="modal-title">Confirm Action</h3></div><button class="modal-close" data-close="confirmModal"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body"><p class="confirm-msg" id="confirmMsg"></p></div>
+    <div class="modal-ftr"><button class="btn btn-ghost btn-sm" data-close="confirmModal">Cancel</button><button class="btn btn-danger btn-sm" id="confirmOkBtn"><i class="fas fa-check"></i> Confirm</button></div>
   </div>
-</div><!-- /confirmModal -->
+</div>
 
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     TOAST NOTIFICATION CONTAINER
-     Bottom-right, stacked, auto-dismiss
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<div
-  class="toast-container"
-  id="toastContainer"
-  role="region"
-  aria-label="Notifications"
-  aria-live="polite"
-  aria-atomic="false"
-></div>
+<!-- Back to Top -->
+<button class="back-to-top" id="backToTopBtn"><i class="fas fa-arrow-up"></i></button>
 
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     BACK TO TOP BUTTON
-     ═══════════════════════════════════════════════════════════════════════════════ -->
-<button
-  class="back-to-top"
-  id="backToTopBtn"
-  type="button"
-  title="Back to top"
-  aria-label="Scroll back to top"
->
-  <i class="fas fa-arrow-up" aria-hidden="true"></i>
-</button>
-
-
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     INLINE BOOTSTRAP SCRIPT
-     Runs before app.js — initialises Marked, global helpers, prefills stats
-     ═══════════════════════════════════════════════════════════════════════════════ -->
 <script>
-/* ════════════════════════════════════════════════════════════════════════════
-   MARKED.JS CONFIGURATION
-   ════════════════════════════════════════════════════════════════════════════ */
-if (window.marked) {
-  marked.setOptions({
-    breaks:    true,
-    gfm:       true,
-    pedantic:  false,
-    sanitize:  false,
-  });
-}
+if (window.marked) { marked.setOptions({ breaks: true, gfm: true, pedantic: false, sanitize: false }); }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   GLOBAL HELPER — setSugg()
-   Called by Quick Topic pill onclick attributes.
-   Fills the textarea, triggers char count update, and focuses it.
-   ════════════════════════════════════════════════════════════════════════════ */
-function setSugg(topic) {
-  var el = document.getElementById('mainInput');
-  if (!el) return;
-  el.value = topic;
-  el.dispatchEvent(new Event('input'));
-  el.focus();
-  /* On mobile scroll textarea into view */
-  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
+function setSugg(topic) { var el = document.getElementById('mainInput'); if (!el) return; el.value = topic; el.dispatchEvent(new Event('input')); el.focus(); }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   PREFILL WELCOME-BACK STATS
-   Reads localStorage immediately (before app.js loads) so stats appear
-   instantly without a flash of zeros.
-   ════════════════════════════════════════════════════════════════════════════ */
 (function prefillWelcomeBackStats() {
   try {
-    var hist     = JSON.parse(localStorage.getItem('sv_history') || '[]');
-    var saved    = JSON.parse(localStorage.getItem('sv_saved')   || '[]');
-    var sessions = parseInt(localStorage.getItem('sv_sessions')  || '0');
-    var streak   = JSON.parse(localStorage.getItem('sv_streak') || '{"count":0}');
-
-    var hEl  = document.getElementById('wbHistCount');
-    var sEl  = document.getElementById('wbSavedCount');
-    var seEl = document.getElementById('wbSessions');
-    var stEl = document.getElementById('wbStreak');
-
-    if (hEl)  hEl.textContent  = hist.length;
-    if (sEl)  sEl.textContent  = saved.length;
-    if (seEl) seEl.textContent = sessions;
-    if (stEl) stEl.textContent = streak.count || 0;
-  } catch (e) {}
+    var hist = JSON.parse(localStorage.getItem('sv_history') || '[]');
+    var saved = JSON.parse(localStorage.getItem('sv_saved') || '[]');
+    var sessions = parseInt(localStorage.getItem('sv_sessions') || '0');
+    var streak = JSON.parse(localStorage.getItem('sv_streak') || '{"count":0}');
+    if (document.getElementById('wbHistCount')) document.getElementById('wbHistCount').textContent = hist.length;
+    if (document.getElementById('wbSavedCount')) document.getElementById('wbSavedCount').textContent = saved.length;
+    if (document.getElementById('wbSessions')) document.getElementById('wbSessions').textContent = sessions;
+    if (document.getElementById('wbStreak')) document.getElementById('wbStreak').textContent = streak.count || 0;
+  } catch(e) {}
 })();
 
-/* ════════════════════════════════════════════════════════════════════════════
-   THEME FLASH PREVENTION
-   Apply stored theme before paint to prevent dark→light flash
-   ════════════════════════════════════════════════════════════════════════════ */
 (function applyStoredTheme() {
   try {
     var prefs = JSON.parse(localStorage.getItem('sv_prefs') || '{}');
-    if (prefs.theme) {
-      document.documentElement.dataset.theme = prefs.theme;
-    }
-    if (prefs.fontSize) {
-      document.documentElement.dataset.font = prefs.fontSize;
-    }
-  } catch (e) {}
+    if (prefs.theme) document.documentElement.dataset.theme = prefs.theme;
+    if (prefs.fontSize) document.documentElement.dataset.font = prefs.fontSize;
+  } catch(e) {}
 })();
 
-/* ════════════════════════════════════════════════════════════════════════════
-   BACK TO TOP BUTTON LOGIC
-   ════════════════════════════════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', function () {
-  var outArea     = document.getElementById('outArea');
+document.addEventListener('DOMContentLoaded', function() {
+  var outArea = document.getElementById('outArea');
   var backToTopBtn = document.getElementById('backToTopBtn');
-
   if (outArea && backToTopBtn) {
-    outArea.addEventListener('scroll', function () {
-      if (outArea.scrollTop > 300) {
-        backToTopBtn.classList.add('is-visible');
-      } else {
-        backToTopBtn.classList.remove('is-visible');
-      }
-    });
-
-    backToTopBtn.addEventListener('click', function () {
-      outArea.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    outArea.addEventListener('scroll', function() { if (outArea.scrollTop > 300) backToTopBtn.classList.add('is-visible'); else backToTopBtn.classList.remove('is-visible'); });
+    backToTopBtn.addEventListener('click', function() { outArea.scrollTo({ top: 0, behavior: 'smooth' }); });
   }
-  
-  /* Wizard Modal close handler */
   var wizardModal = document.getElementById('wizardModal');
   if (wizardModal) {
-    wizardModal.addEventListener('click', function(e) {
-      if (e.target === wizardModal) {
-        wizardModal.style.display = 'none';
-      }
-    });
+    wizardModal.addEventListener('click', function(e) { if (e.target === wizardModal) wizardModal.style.display = 'none'; });
+  }
+  document.querySelectorAll('[data-close]').forEach(function(btn) {
+    btn.addEventListener('click', function() { var modal = document.getElementById(btn.dataset.close); if (modal) modal.style.display = 'none'; });
+  });
+  
+  // Connect main wizard button to open wizard
+  var mainWizardBtn = document.getElementById('mainWizardBtn');
+  if (mainWizardBtn) {
+    mainWizardBtn.addEventListener('click', function() { if (window._app) window._app._openWizard(); });
   }
 });
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════════════════════
-     MAIN APPLICATION SCRIPT
-     All logic is in app.js — this tag loads it after the full DOM is ready
-     ═══════════════════════════════════════════════════════════════════════════════ -->
 <script src="app.js"></script>
 
 </body>
