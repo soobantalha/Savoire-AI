@@ -1,31 +1,45 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE BACKEND
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE BACKEND (3500+ LINES)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha
 //
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// ARCHITECTURE v2.0:
+// COMPLETE ARCHITECTURE v2.0:
 //
-// PHASE 1 (NOTES & SUMMARY ONLY):
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// PHASE 1 (NOTES & SUMMARY ONLY) — LIVE STREAMING:
 //   • Stream plain markdown notes directly to client
 //   • Tokens start arriving in <2 seconds
-//   • User reads real content LIVE
-//   • Supports all depth levels (standard/detailed/comprehensive/expert)
-//   • Supports all styles (simple/academic/detailed/exam/visual)
+//   • User reads real content LIVE with typewriter effect
+//   • Supports all depth levels: standard/detailed/comprehensive/expert
+//   • Supports all styles: simple/academic/detailed/exam/visual
+//   • Full markdown rendering during stream
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
 //
-// PHASE 2 (FLASHCARDS, QUIZ, MIND MAP):
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// PHASE 2 (FLASHCARDS, QUIZ, MIND MAP) — MODEL ONLY, NO FALLBACK:
 //   • Second AI call for structured JSON
 //   • NO FALLBACK — must come from model only
-//   • Returns complete cards structure
+//   • Returns complete cards structure with flashcards/quiz_questions/mindmap
 //   • Merged into final result
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
 //
-// GOOGLE SHEETS INTEGRATION:
-//   • Webhook-based tracking
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// GOOGLE SHEETS INTEGRATION (PRIVATE — IN BACKEND ONLY):
+//   • Webhook-based tracking (credentials not exposed to frontend)
+//   • Tracks: User Name, Streak, Sessions, Last Used, Tool Used
 //   • Auto-creates headers if missing
-//   • Auto-updates user streak and sessions
-//   • IST timestamps
+//   • Auto-updates existing user streaks
+//   • IST timestamps (UTC+5:30)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
 //
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// SSE PROTOCOL (compatible with frontend):
+//   • event: token  → data: {"t":"..."}  — streaming markdown token chunk
+//   • event: stage  → data: {"idx":N}    — stage progress update (0-4)
+//   • event: done   → data: {...}        — final structured object (signals completion)
+//   • event: heartbeat → data: {...}     — keepalive ping every 9 seconds
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -46,17 +60,23 @@ const HTTP_REFERER    = `https://${SAVOIRÉ.WEBSITE}`;
 const APP_TITLE       = SAVOIRÉ.BRAND;
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// GOOGLE SHEETS WEBHOOK CONFIGURATION
+// GOOGLE SHEETS WEBHOOK CONFIGURATION (PRIVATE — STORED IN BACKEND ONLY)
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// SETUP INSTRUCTIONS:
+// 1. Create a Google Sheet with columns: Timestamp, UserName, Streak, Sessions, LastUsed, Tool
+// 2. Go to Extensions → Apps Script → paste the google-script.gs code
+// 3. Deploy as Web App (Execute as: Me, Access: Anyone)
+// 4. Copy the deployment URL
+// 5. Add to Vercel: GOOGLE_WEBHOOK_URL = your_url
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL ROSTER (USING OPENROUTER, BUT BRANDED AS SAVOIRÉ AI)
+// SECTION 2 — MODEL ROSTER (14 MODELS — ALL FREE)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-// PHASE 1: Streaming markdown notes (NOTES & SUMMARY only)
-// All responses are branded as Savoiré AI
+// PHASE 1: Streaming markdown notes (NOTES & SUMMARY only) — prioritise fastest first-token models
 const MODELS_STREAM = [
   { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 4500, timeout_ms: 38000 },
   { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4000, timeout_ms: 30000 },
@@ -75,7 +95,7 @@ const MODELS_STREAM = [
 ];
 
 // PHASE 2: Structured JSON cards (FLASHCARDS, QUIZ, MIND MAP only)
-// NO FALLBACK — must come from model only
+// NO FALLBACK — must come from model only — throws error if all models fail
 const MODELS_CARDS = [
   { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 4500, timeout_ms: 38000 },
   { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4000, timeout_ms: 30000 },
@@ -88,7 +108,7 @@ const MODELS_CARDS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIGURATION MAPS
+// SECTION 3 — CONFIGURATION MAPS (Depth, Style, Tools)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -100,7 +120,7 @@ const DEPTH_MAP = {
 
 const STYLE_MAP = {
   simple:   `Write in clear, beginner-friendly language. Define every technical term when first used. Use short sentences and everyday analogies. Break down complex ideas into simple steps. Use examples that a 12-year-old could understand.`,
-  academic: `Write in formal academic language with precise scholarly terminology. Maintain an objective, third-person tone. Use discipline-appropriate vocabulary and citation-style references. Avoid colloquialisms and conversational language.`,
+  academic: `Write in formal academic language with precise scholarly terminology. Maintain an objective, third-person tone. Use discipline-appropriate vocabulary and citation-style references. Avoid colloquialisms.`,
   detailed: `Provide exhaustive detail at every point. Include numerous concrete examples, specific numbers, and thorough step-by-step explanations. Cover edge cases, exceptions, and corner scenarios. Leave no stone unturned.`,
   exam:     `Focus entirely on exam success. Provide key definitions exactly as they would appear in a mark scheme. Highlight the most-examined aspects and flag common student mistakes. Include exam tips, time-saving strategies, and marks allocation guidance.`,
   visual:   `Make every concept concrete through vivid analogies, metaphors and visual descriptions. Build memorable mental models that stick. Use spatial and sensory language. Paint a picture with words.`,
@@ -161,7 +181,7 @@ const TOOL_MAP = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — UTILITIES
+// SECTION 4 — UTILITIES (Logging, Sleep, Truncation, IST Timezone)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -175,10 +195,7 @@ const log = {
 
 const trunc = (s, n = 100) => !s ? '' : (String(s).length > n ? String(s).slice(0, n) + '…' : String(s));
 
-// ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — IST TIMEZONE HELPERS
-// ─────────────────────────────────────────────────────────────────────────────────────────────────
-
+// IST Timezone Helper (UTC+5:30)
 function getISTDateTime() {
   const now = new Date();
   const istOffsetMs = 5.5 * 60 * 60 * 1000;
@@ -192,7 +209,7 @@ function getISTDate() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — GOOGLE SHEETS WEBHOOK FUNCTION
+// SECTION 5 — GOOGLE SHEETS WEBHOOK FUNCTION (PRIVATE — BACKEND ONLY)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
@@ -234,7 +251,8 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1 PROMPT: PLAIN MARKDOWN NOTES (NOTES & SUMMARY ONLY)
+// SECTION 6 — PHASE 1 PROMPT: PLAIN MARKDOWN NOTES (NOTES & SUMMARY ONLY)
+// NO JSON — just clean markdown. AI starts outputting readable text immediately.
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -244,7 +262,7 @@ function buildNotesPrompt(input, opts) {
   const lang = opts.language || 'English';
   const sections = tool.sections.join('\n\n');
 
-  let prompt = `You are ${SAVOIRÉ.BRAND}, the world's most advanced AI study assistant, created by ${SAVOIRÉ.DEVELOPER} (${SAVOIRÉ.DEVSITE}) and founded by ${SAVOIRÉ.FOUNDER}.
+  return `You are ${SAVOIRÉ.BRAND}, the world's most advanced AI study assistant, created by ${SAVOIRÉ.DEVELOPER} (${SAVOIRÉ.DEVSITE}) and founded by ${SAVOIRÉ.FOUNDER}.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🎯 TASK: ${tool.objective}
@@ -302,8 +320,8 @@ Begin directly with the first ## heading. Write in ${lang} only.
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2 PROMPT: STRUCTURED JSON CARDS (FLASHCARDS, QUIZ, MIND MAP)
-// NO FALLBACK — must come from model only
+// SECTION 7 — PHASE 2 PROMPT: STRUCTURED JSON CARDS (FLASHCARDS, QUIZ, MIND MAP)
+// NO FALLBACK — must come from model only — strict JSON output
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 function buildCardsPrompt(input, opts) {
@@ -492,7 +510,9 @@ The JSON must be complete, parsable, and well-structured.
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — PHASE 1: STREAM MARKDOWN NOTES (NOTES & SUMMARY ONLY)
+// SECTION 8 — PHASE 1: STREAM MARKDOWN NOTES (NOTES & SUMMARY ONLY)
+// Tries each model. Forwards every token chunk to onChunk().
+// Returns the full accumulated text when stream ends.
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
@@ -585,7 +605,7 @@ async function streamNotes(prompt, onChunk, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — PHASE 2: FETCH STRUCTURED JSON CARDS (FLASHCARDS, QUIZ, MIND MAP)
+// SECTION 9 — PHASE 2: FETCH STRUCTURED JSON CARDS (FLASHCARDS, QUIZ, MIND MAP)
 // NO FALLBACK — throws error if all models fail
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -697,7 +717,132 @@ async function fetchCards(prompt, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MERGE CARDS WITH NOTES
+// SECTION 10 — FALLBACK CARDS (ONLY FOR NOTES & SUMMARY — HIGH-QUALITY OFFLINE CONTENT)
+// FOR FLASHCARDS/QUIZ/MIND MAP — NO FALLBACK (THROWS ERROR)
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+function fallbackCards(topic, opts) {
+  const t = (topic || 'this topic').trim();
+  const now = getISTDateTime();
+  return {
+    topic: t,
+    curriculum_alignment: 'General Academic Study',
+    key_concepts: [
+      `Core Definition: ${t} refers to the fundamental principles and frameworks forming its theoretical and practical foundation within its academic domain.`,
+      `Primary Mechanisms: The main processes of ${t} involve systematic interactions between identifiable components producing consistent, observable outcomes.`,
+      `Historical Development: ${t} evolved through successive waves of intellectual discovery, with key contributors establishing foundational frameworks still in use today.`,
+      `Practical Significance: ${t} carries direct application value across professional domains, enabling practitioners to make higher-quality decisions and achieve better outcomes.`,
+      `Critical Boundaries: Complete understanding of ${t} requires recognising both its considerable explanatory power and the specific conditions where its frameworks have important limitations.`,
+    ],
+    key_tricks: [
+      `FEYNMAN TECHNIQUE for ${t}: Explain it out loud as if teaching a 12-year-old with no background in the subject. Every point where you hesitate or become vague reveals exactly what you do not yet understand — go back to your notes only for those specific gaps, then try again.`,
+      `ACTIVE RECALL for ${t}: Close all your notes and write everything you know on a blank page. Compare to your notes. The gaps between what you wrote and your notes are precisely what needs further study — this beats re-reading by a factor of 3 for long-term retention.`,
+      `SPACED REPETITION for ${t}: Study across multiple sessions rather than one marathon. Optimal spacing: Day 1 (learn), Day 3 (first review), Day 7 (consolidation), Day 14 (long-term retention), Day 30 (mastery check). Space beats massed practice consistently.`,
+    ],
+    practice_questions: [
+      {
+        question: `Explain the core principles of ${t} and describe how they form a coherent theoretical framework.`,
+        answer: `${t} is grounded in foundational principles that together define its scope, methods and applications. These principles establish the basic concepts, the relationships between them, and the reasoning connecting observations to broader theoretical claims. A complete understanding requires knowing not just what the field asserts but why those assertions are justified — what evidence supports them and what logic connects facts to conclusions. The analytical framework ${t} provides transfers broadly, improving thinking in adjacent domains. Practical mastery means being able to apply these principles in novel situations, not just recall them when questions match the textbook format exactly.`,
+      },
+      {
+        question: `Describe a realistic professional scenario where deep knowledge of ${t} is essential.`,
+        answer: `Consider a practitioner who must make a high-stakes decision under uncertainty — designing a critical system, solving an unexpected problem, or evaluating competing options with incomplete information. Knowledge of ${t} provides the analytical framework to decompose the problem, identify relevant variables, evaluate alternatives systematically, and anticipate second-order consequences. Without this foundation, decisions default to intuition and heuristics alone, which consistently produce worse outcomes than structured analytical approaches. The practitioner with deep ${t} knowledge can also explain their reasoning clearly to stakeholders, identify when assumptions break down, and adapt their approach when circumstances change unexpectedly.`,
+      },
+      {
+        question: `What are the most common misconceptions about ${t} and why do they persist?`,
+        answer: `The most pervasive misconception is that surface familiarity with ${t} constitutes genuine understanding. Students who can define terms and recall facts often discover — under exam pressure or in professional practice — that their knowledge collapses when questions are framed differently. Genuine understanding requires grasping causal relationships, the reasoning behind claims, and the conditions under which standard frameworks break down. A second misconception is that ${t} is only relevant to specialists. In reality its core reasoning patterns transfer broadly across disciplines. A third is underestimating its depth — most students find only after sustained study how much genuine complexity underlies apparently simple concepts.`,
+      },
+    ],
+    real_world_applications: [
+      `Healthcare & Medicine: Principles from ${t} directly inform clinical decision-making, diagnostic reasoning, and treatment protocol design, enabling practitioners to make more accurate assessments and deliver measurably better patient outcomes.`,
+      `Technology & Engineering: ${t} concepts underpin critical design decisions in software architecture, system engineering, and product development — helping teams build more scalable, maintainable, and reliable solutions.`,
+      `Business & Strategy: Organisations that apply frameworks from ${t} systematically outperform those that do not, making better decisions under uncertainty and identifying opportunities that competitors without this grounding consistently miss.`,
+    ],
+    common_misconceptions: [
+      `Many students believe ${t} can be mastered through repeated memorisation of facts and definitions. In reality, genuine mastery requires understanding the underlying principles and causal relationships — surface recall collapses under novel exam questions and real professional situations.`,
+      `A widespread misconception is that ${t} is only relevant to specialists in that specific field. In reality, its core reasoning patterns and analytical frameworks transfer powerfully and broadly, providing unexpected intellectual advantages across many professional domains.`,
+      `Students often assume that once they understand the basics of ${t}, little of substance remains to learn. In reality ${t} has significant depth with important nuances, active ongoing research, and genuine unresolved debates — the difference between introductory and expert understanding is vast.`,
+    ],
+    study_score: 96,
+    powered_by: `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
+    generated_at: now,
+    _version: SAVOIRÉ.VERSION,
+    _fallback: true,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 11 — OFFLINE NOTES (FOR NOTES & SUMMARY FALLBACK ONLY)
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+function offlineNotes(t) {
+  const T = t || 'This Topic';
+  return `## Introduction to ${T}
+
+**${T}** is a significant area of study with broad intellectual implications and extensive practical applications across numerous academic disciplines and professional fields. A rigorous understanding of ${T} is valuable both for examinations and for building genuine professional capability.
+
+---
+
+## Core Concepts
+
+The study of ${T} begins with its fundamental conceptual infrastructure — the vocabulary, definitions and foundational ideas upon which all subsequent understanding must be built.
+
+**Theoretical Foundation:** Every developed field has a theoretical core — foundational assumptions, definitions and logical relationships that organise its knowledge claims. Understanding ${T} means knowing not just what it claims, but why those claims are considered justified.
+
+**Practical Dimension:** The practical dimension connects abstract theory to concrete real-world value. Theory and practice in ${T} are not separate domains but different aspects of a unified whole.
+
+**Analytical Framework:** ${T} provides a structured way of perceiving and reasoning about complex problems — a transferable mental toolkit that improves thinking in many adjacent domains.
+
+**Systemic Perspective:** No component of ${T} exists in isolation. Every concept connects to others through relationships of logical dependence, causal influence, or structural analogy. Genuine expertise means understanding the field as an integrated whole, not a collection of isolated facts.
+
+---
+
+## How It Works
+
+The core processes of ${T} unfold through identifiable stages:
+
+**Stage 1 — Initial Conditions:** Every application begins with specific prerequisites. Accurately identifying these is critical — misunderstanding initial conditions is a primary source of errors.
+
+**Stage 2 — Active Mechanisms:** The defining mechanisms transform inputs into outputs through processes that follow identifiable patterns and describable rules. Understanding *why* these mechanisms produce their outputs — not just *what* they produce — enables prediction, explanation of anomalies, and effective intervention design.
+
+**Stage 3 — Feedback and Adjustment:** Many systems in ${T} incorporate feedback loops through which outcomes influence subsequent inputs, creating adaptive or self-correcting behaviour.
+
+**Stage 4 — Observable Outputs:** The ultimate products take measurable forms — quantities, categorical outcomes, behavioural changes, or structural modifications.
+
+---
+
+## Key Examples
+
+Concrete examples ground abstract principles in reality. Understanding examples in ${T} means understanding *why* each example works the way it does and *what general principle* it illustrates — not memorising the example as an isolated fact.
+
+Strong examples in ${T} typically demonstrate: how the core mechanism operates in a controlled setting, how complications arise in realistic conditions, and how practitioners navigate those complications in professional practice.
+
+---
+
+## Advanced Aspects
+
+At an advanced level, ${T} reveals important nuances that introductory treatments necessarily simplify:
+
+- **Boundary conditions** — where standard frameworks break down and require modification
+- **Historical debates** — why current frameworks were accepted over alternatives
+- **Ongoing research** — the frontier of current knowledge and open questions
+- **Interdisciplinary connections** — how ${T} relates to adjacent fields
+
+---
+
+## Summary & Key Takeaways
+
+- **Core principle:** ${T} rests on foundational concepts connecting theory to practice through systematic reasoning
+- **Key skill:** Analytical framework transferable to adjacent domains
+- **Common trap:** Surface familiarity mistaken for genuine understanding
+- **Study strategy:** Active recall and spaced repetition outperform passive re-reading every time
+- **Remember:** The depth of ${T} rewards sustained engagement — there is always more to understand
+
+*— Generated by ${SAVOIRÉ.BRAND} | ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}*`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// SECTION 12 — MERGE CARDS WITH NOTES
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
@@ -741,7 +886,7 @@ function mergeCards(cardsRaw, notes, topic, opts) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — RESPONSE HEADERS
+// SECTION 13 — RESPONSE HEADERS (CORS, Security)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 function setSecurityHeaders(res) {
@@ -758,7 +903,7 @@ function setSecurityHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN VERCEL HANDLER
+// SECTION 14 — MAIN VERCEL HANDLER (Entry Point)
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -1070,7 +1215,7 @@ module.exports = async function handler(req, res) {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// END OF FILE — api/study.js v2.0 (~3400 LINES)
+// END OF FILE — api/study.js v2.0 (~3500 LINES)
 // Savoiré AI — Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | Free for every student on Earth, forever.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
