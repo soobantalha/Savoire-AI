@@ -19,157 +19,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
-    
-    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="style.css">
     
     <style>
-        /* ========================================
-           CRITICAL INLINE STYLES (ONLY LAYOUT)
-           All other styles are in style.css
-           ======================================== */
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        body {
-            font-family: 'Inter', 'Montserrat', system-ui, sans-serif;
-            background: linear-gradient(135deg, #0a1128 0%, #050814 50%, #000000 100%);
-            color: #c0c0c0;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Dashboard Layout */
-        .dash-root {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-        
-        .dash-body {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        /* Loading Spinner */
-        .loading-spinner {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            border: 3px solid rgba(212,175,55,0.2);
-            border-top-color: #d4af37;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            z-index: 9999;
-        }
-        
-        @keyframes spin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        
+        /* Critical inline styles - rest in style.css */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(135deg, #0a1128 0%, #050814 50%, #000000 100%); color: #c0c0c0; display: flex; flex-direction: column; }
+        .dash-body { flex: 1; display: flex; overflow: hidden; position: relative; }
+        .loading-spinner { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; border: 3px solid rgba(212,175,55,0.2); border-top-color: #d4af37; border-radius: 50%; animation: spin 0.8s linear infinite; z-index: 9999; }
+        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
         .loaded .loading-spinner { display: none; }
-        
-        /* Particle Canvas */
-        #particleCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        /* No JS Fallback */
-        .no-js {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: #0a1128;
-            color: #fff;
-            text-align: center;
-            padding: 20px;
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-        }
-        
-        /* Custom Scrollbar */
+        #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        .no-js { display: flex; align-items: center; justify-content: center; height: 100vh; background: #0a1128; color: #fff; text-align: center; padding: 20px; position: fixed; inset: 0; z-index: 9999; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #d4af37, #ffae00); border-radius: 10px; }
-        
-        /* Toast Container */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
-        
-        .toast {
-            pointer-events: auto;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 20px;
-            background: rgba(15,23,42,0.95);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(212,175,55,0.2);
-            border-radius: 12px;
-            font-size: 0.85rem;
-            color: #fff;
-            animation: slideInRight 0.3s ease;
-            cursor: pointer;
-        }
-        
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: rgba(15,23,42,0.95); backdrop-filter: blur(16px); border: 1px solid rgba(212,175,55,0.2); border-radius: 12px; font-size: 0.85rem; color: #fff; animation: slideInRight 0.3s ease; cursor: pointer; }
         .toast.success { border-left: 4px solid #00ff88; }
         .toast.error { border-left: 4px solid #ff4444; }
         .toast.info { border-left: 4px solid #00d4ff; }
-        
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(100%); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        
-        /* Sidebar Backdrop */
-        .sb-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            z-index: 48;
-            cursor: pointer;
-        }
-        
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        .sb-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 48; cursor: pointer; }
         .sb-backdrop.visible { display: block; animation: fadeIn 0.25s ease; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -256,7 +130,7 @@
                 <div class="nav-item" data-nav="wizard" id="navWizard">
                     <i class="fas fa-magic nav-icon"></i>
                     <span class="nav-text">Wizard Generator</span>
-                    <span class="nav-badge">5-step</span>
+                    <span class="nav-badge">6-step</span>
                 </div>
                 <div class="nav-item" data-nav="history" id="navHistory">
                     <i class="fas fa-history nav-icon"></i>
@@ -387,6 +261,8 @@
                         <button class="sugg-pill-sidebar" data-topic="DNA replication and protein synthesis">🧬 DNA Replication</button>
                         <button class="sugg-pill-sidebar" data-topic="Quantum computing fundamentals">⚛️ Quantum Computing</button>
                         <button class="sugg-pill-sidebar" data-topic="Blockchain technology and cryptocurrency">⛓️ Blockchain</button>
+                        <button class="sugg-pill-sidebar" data-topic="Artificial Neural Networks explained">🧠 Neural Networks</button>
+                        <button class="sugg-pill-sidebar" data-topic="Climate change causes and effects">🌡️ Climate Change</button>
                     </div>
                 </div>
             </div>
@@ -470,6 +346,7 @@
                 </div>
                 
                 <div class="dh-stats">
+                    <div class="dh-stat"><i class="fas fa-fire" style="color:#ffae00"></i> Streak: <span id="headerStreak" class="dh-stat-val">0</span></div>
                     <div class="dh-stat"><i class="fas fa-clock"></i> Sessions: <span id="statSessions" class="dh-stat-val">0</span></div>
                     <div class="dh-stat"><i class="fas fa-history"></i> History: <span id="statHistory" class="dh-stat-val">0</span></div>
                     <div class="dh-stat"><i class="fas fa-star"></i> Saved: <span id="statSaved" class="dh-stat-val">0</span></div>
@@ -541,8 +418,8 @@
                 <div id="emptyState" class="empty-state">
                     <div class="es-mark">✨</div>
                     <div class="es-title">Ready to Study Smarter?</div>
-                    <div class="es-sub">Enter any topic above or use the Wizard to get started</div>
-                    <button class="empty-wizard-btn" id="mainWizardBtn"><i class="fas fa-magic"></i> Launch Wizard</button>
+                    <div class="es-sub">Use the Wizard below or enter any topic to get started</div>
+                    <button class="empty-wizard-btn" id="emptyWizardBtn"><i class="fas fa-magic"></i> Launch Wizard Generator</button>
                     <div class="es-features">
                         <span class="es-feat"><i class="fas fa-book-open"></i> Notes</span>
                         <span class="es-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
@@ -600,7 +477,7 @@
     <div class="modal-overlay" id="wizardModal">
         <div class="modal modal-lg">
             <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-magic"></i> Wizard — Step by Step</div>
+                <div class="modal-title"><i class="fas fa-magic"></i> Wizard — Step by Step Generator</div>
                 <button class="modal-close" data-close="wizardModal"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" id="wizardContent"></div>
@@ -688,10 +565,10 @@
                     <div class="settings-row">
                         <div class="settings-label">Font Size</div>
                         <div class="font-buttons">
-                            <button class="font-btn" data-size="small">Small</button>
-                            <button class="font-btn" data-size="medium">Medium</button>
-                            <button class="font-btn" data-size="large">Large</button>
-                            <button class="font-btn" data-size="xlarge">X-Large</button>
+                            <button class="font-btn font-sz" data-size="small">Small</button>
+                            <button class="font-btn font-sz" data-size="medium">Medium</button>
+                            <button class="font-btn font-sz" data-size="large">Large</button>
+                            <button class="font-btn font-sz" data-size="xlarge">X-Large</button>
                         </div>
                     </div>
                 </div>
@@ -806,7 +683,7 @@
     </div>
     
     <!-- ═══════════════════════════════════════════════════════════════════════════════
-         SCRIPTS (Only to load app.js - NO LOGIC HERE)
+         SCRIPTS
          ═══════════════════════════════════════════════════════════════════════════════ -->
     <script>
         // Theme flash prevention

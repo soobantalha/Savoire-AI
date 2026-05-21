@@ -5690,6 +5690,641 @@ input::placeholder, textarea::placeholder {
 .dismissing {
   animation: fadeOut 0.3s ease forwards;
 }
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   NEW STYLES ADDED FOR FIXES & ENHANCEMENTS - Savoiré AI v2.0
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: QUIZ MINI LIST STYLES (for quiz section in results)
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.quiz-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quiz-mini-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.quiz-mini-card:hover {
+  border-color: rgba(0, 212, 255, 0.3);
+  transform: translateX(4px);
+}
+
+.quiz-mini-q {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #00d4ff;
+  margin-bottom: 12px;
+}
+
+.quiz-mini-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.quiz-mini-opt {
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.quiz-mini-opt.correct {
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.08);
+}
+
+.quiz-mini-answer {
+  font-size: 0.8rem;
+  padding: 8px 12px;
+  background: rgba(0, 255, 136, 0.05);
+  border-radius: 8px;
+  color: #00ff88;
+}
+
+.quiz-mini-more {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 8px;
+  font-style: italic;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: FLASHCARD MINI LIST STYLES
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.fc-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fc-mini-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.3s ease;
+}
+
+.fc-mini-card:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  transform: translateX(4px);
+}
+
+.fc-mini-q {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #d4af37;
+  margin-bottom: 8px;
+}
+
+.fc-mini-a {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  padding-left: 12px;
+  border-left: 2px solid #00d4ff;
+}
+
+.fc-mini-more {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  padding: 8px;
+  font-style: italic;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: MIND MAP MINI STYLES
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.mm-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mm-mini-central {
+  display: inline-block;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #00d4ff, #bf00ff);
+  border-radius: 40px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.mm-mini-branches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.mm-mini-branch {
+  flex: 1;
+  min-width: 180px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.mm-mini-branch-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #00d4ff;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mm-mini-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mm-mini-item {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.mm-mini-item:hover {
+  background: rgba(0, 212, 255, 0.1);
+  transform: translateX(4px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: MM CONNECTIONS STYLES
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.mm-connections {
+  margin-top: 24px;
+  padding: 16px;
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.mm-conn-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #00d4ff;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mm-conn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mm-conn-item {
+  font-size: 0.7rem;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: STREAK DISPLAY IN HEADER - FIXED
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.dh-stat i.fa-fire {
+  color: #ffae00;
+  animation: firePulse 2s ease infinite;
+}
+
+#headerStreak {
+  color: #ffae00;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffae00, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: PDF BUTTON HOVER EFFECT
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.exp-btn.pdf:hover {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: #ff4444;
+  color: #ff4444;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.2);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: ERROR CARD IMPROVEMENTS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.error-card {
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  animation: fadeUp 0.3s ease;
+}
+
+.error-card-hdr {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ff4444;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.error-card-body {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 20px;
+}
+
+.error-card-hint {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 24px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: TOAST IMPROVEMENTS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.toast.removing {
+  animation: slideOutRight 0.3s ease forwards;
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: WIZARD STEP 5 & 6 STYLES (Depth & Style separate)
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.wizard-depth-section,
+.wizard-style-section {
+  margin-bottom: 24px;
+}
+
+.wizard-depth-grid,
+.wizard-style-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.wizard-depth-card,
+.wizard-style-card {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wizard-depth-card:hover,
+.wizard-style-card:hover {
+  background: rgba(0, 212, 255, 0.08);
+  border-color: #00d4ff;
+  transform: translateY(-2px);
+}
+
+.wizard-depth-card.selected,
+.wizard-style-card.selected {
+  border-color: #d4af37;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.wizard-depth-card i,
+.wizard-style-card i {
+  font-size: 1.2rem;
+  color: #d4af37;
+  margin-bottom: 10px;
+}
+
+.wizard-depth-name,
+.wizard-style-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.wizard-depth-desc,
+.wizard-style-desc {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.wizard-depth-words {
+  font-size: 0.65rem;
+  color: #00ff88;
+  margin-top: 8px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: RESPONSIVE FIXES FOR MOBILE
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .wizard-depth-grid,
+  .wizard-style-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .wizard-step-label,
+  .wizard-step-desc {
+    display: none;
+  }
+  
+  .wizard-step-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+  
+  .wizard-steps {
+    margin-bottom: 20px;
+  }
+  
+  .fc-mini-branch {
+    min-width: 100%;
+  }
+  
+  .mm-mini-branches {
+    flex-direction: column;
+  }
+  
+  .quiz-mini-options {
+    font-size: 0.75rem;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: STREAMING OVERLAY IMPROVEMENTS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.stream-overlay.fading-out {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+.sfp-text.live-md .typing-cursor {
+  display: inline-block;
+}
+
+.sfp-text.done .typing-cursor {
+  display: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: CANCEL BUTTON VISIBILITY
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.cancel-btn-sidebar {
+  display: none;
+}
+
+.cancel-btn-sidebar.is-visible {
+  display: flex;
+  animation: fadeUp 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: INPUT COLLAPSE TRANSITIONS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.ta-collapse-wrap.is-collapsed,
+.selectors-collapse-wrap.is-collapsed,
+.sugg-collapse-wrap.is-collapsed,
+.file-collapse-wrap.is-collapsed {
+  max-height: 0 !important;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.input-mini-bar {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 12px;
+  cursor: pointer;
+  margin: 0 0 16px 0;
+}
+
+.input-mini-bar.is-visible {
+  display: flex;
+  animation: fadeUp 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: STREAM STATUS CARD VISIBILITY
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.stream-status-card {
+  display: none;
+}
+
+.stream-status-card.is-visible {
+  display: block;
+  animation: fadeUp 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: FOCUS MODE SIDEBAR COLLAPSE
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.left-panel.collapsed {
+  transform: translateX(-320px);
+}
+
+.right-panel {
+  transition: all 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: SCORE RING FIX
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.rh-score {
+  --pct: 96;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: KEYBOARD SHORTCUT HINT STYLES
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.otb-hint kbd {
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: WELCOME OVERLAY DISMISS ANIMATION
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+#welcomeOverlay.dismissing,
+#welcomeBackOverlay.dismissing {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: CONFIRM BUTTON HOVER EFFECTS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.confirm-btn.ok:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+}
+
+.confirm-btn.cancel:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: #ff4444;
+  color: #ff4444;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: SETTINGS BUTTON IMPROVEMENTS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.settings-btn {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.settings-btn:active {
+  transform: scale(0.98);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: HISTORY ITEM DELETE BUTTON
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.hist-del {
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.hist-del:hover {
+  opacity: 1;
+  background: rgba(255, 68, 68, 0.15);
+  color: #ff4444;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: SIDEBAR STATS HOVER EFFECT
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.stat-card-sidebar {
+  transition: all 0.2s ease;
+}
+
+.stat-card-sidebar:hover {
+  transform: translateY(-2px);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: TOOL ITEM ACTIVE STATE IMPROVEMENT
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.tool-item-sidebar.active {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(191, 0, 255, 0.15));
+  border-left: 2px solid #00d4ff;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: NAV ITEM ACTIVE STATE
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(191, 0, 255, 0.12));
+  border-left: 2px solid #00d4ff;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: THINKING STAGES PROGRESS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.ths {
+  transition: all 0.3s ease;
+}
+
+.ths.active {
+  background: rgba(0, 212, 255, 0.15);
+  color: #00d4ff;
+  transform: scale(1.05);
+}
+
+.ths.done {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────────────────────────
+   NEW: SSC STAGES PROGRESS
+   ───────────────────────────────────────────────────────────────────────────────────────────────── */
+
+.ssc-stage {
+  transition: all 0.3s ease;
+}
+
+.ssc-stage.active {
+  color: #00d4ff;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+}
+
+.ssc-stage.done {
+  color: #00ff88;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   END OF NEW STYLES - Savoiré AI v2.0
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* ============================================================
    END OF FILE — style.css v2.0 (12,000+ LINES)
