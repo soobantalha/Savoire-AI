@@ -6331,3 +6331,467 @@ input::placeholder, textarea::placeholder {
    Savoiré AI — Built by Sooban Talha Technologies
    All IDs and Classes Matched Perfectly
    ============================================================ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   SECTION 39: ALL BUG FIXES & NEW FEATURES — Savoiré AI v2.0 FINAL
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── CRITICAL FIX: Right panel fills full width when sidebar is collapsed ── */
+.left-panel.collapsed ~ .right-panel,
+.dash-body:has(.left-panel.collapsed) .right-panel {
+  width: 100%;
+}
+
+/* ── CRITICAL FIX: Desktop sidebar collapse — right panel expands ── */
+@media (min-width: 1025px) {
+  .left-panel.collapsed {
+    position: fixed;
+    transform: translateX(-320px);
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 100;
+  }
+  /* Right panel always fills flex space correctly */
+  .right-panel {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* ── FIXED: Wizard Navbar CTA styling ── */
+.nav-item-wizard {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12), rgba(191, 0, 255, 0.08));
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.nav-item-wizard:hover {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(191, 0, 255, 0.15));
+  border-color: #d4af37;
+  color: #d4af37 !important;
+}
+
+.nav-item-wizard .nav-text {
+  font-weight: 700 !important;
+  color: #d4af37;
+}
+
+.nav-item-wizard .nav-icon {
+  color: #d4af37;
+}
+
+/* ── FIXED: Wizard button in header — distinct styling ── */
+.dh-btn-wizard {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(191, 0, 255, 0.1)) !important;
+  border-color: rgba(212, 175, 55, 0.3) !important;
+  color: #d4af37 !important;
+}
+
+.dh-btn-wizard:hover {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3), rgba(191, 0, 255, 0.2)) !important;
+  border-color: #d4af37 !important;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.3) !important;
+}
+
+/* ── FIXED: Streak display — gold color in header ── */
+.dh-stat-streak {
+  background: linear-gradient(135deg, rgba(255, 174, 0, 0.08), rgba(212, 175, 55, 0.08));
+  border: 1px solid rgba(255, 174, 0, 0.2);
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+.dh-streak-val {
+  background: linear-gradient(135deg, #ffae00, #d4af37) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  font-weight: 800 !important;
+  font-size: 0.9rem !important;
+}
+
+.dh-stat-lbl {
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-left: 2px;
+}
+
+/* ── FIXED: Stream overlay progress bar visible ── */
+.sfp-progress-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  flex: 1;
+  margin: 0 8px;
+}
+
+.sfp-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #d4af37);
+  border-radius: 4px;
+  width: 5%;
+  transition: width 0.4s ease;
+}
+
+/* ── FIXED: Stream overlay stages ── */
+.sfp-stages {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── FIXED: Output toolbar — visible on output, flex layout ── */
+.out-toolbar {
+  display: none; /* Hidden by default — JS shows it */
+}
+
+.out-toolbar[style*="flex"] {
+  display: flex !important;
+  animation: fadeDown 0.3s ease;
+}
+
+/* ── FIXED: Output area — proper height calculation ── */
+.out-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  position: relative;
+  /* Ensure it takes remaining height */
+  height: 0;
+  min-height: 0;
+}
+
+/* ── FIXED: New Wizard button in toolbar ── */
+#newWizardBtn {
+  border-color: rgba(191, 0, 255, 0.3);
+  color: #bf00ff;
+}
+
+#newWizardBtn:hover {
+  background: rgba(191, 0, 255, 0.1);
+  border-color: #bf00ff;
+  color: #bf00ff;
+}
+
+/* ── FIXED: Mobile wizard — smaller buttons ── */
+@media (max-width: 768px) {
+  .wizard-tool-card {
+    padding: 14px;
+  }
+
+  .wizard-tool-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+
+  .wizard-tool-name {
+    font-size: 0.85rem;
+  }
+
+  .wizard-tool-desc {
+    font-size: 0.7rem;
+  }
+
+  .wizard-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+  }
+
+  .wizard-depth-card,
+  .wizard-style-card {
+    padding: 12px;
+  }
+
+  .wizard-depth-card i,
+  .wizard-style-card i {
+    font-size: 1rem;
+  }
+
+  .wizard-depth-name,
+  .wizard-style-name {
+    font-size: 0.8rem;
+  }
+
+  /* Mobile: Sidebar width adjustment */
+  .left-panel {
+    width: 290px;
+  }
+
+  /* Mobile: Stats grid 4-col */
+  .stats-grid-sidebar {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── FIXED: Empty wizard button — more prominent ── */
+.empty-wizard-btn {
+  background: linear-gradient(135deg, #d4af37, #b8941f);
+  animation: scalePulse 3s ease infinite;
+  font-size: 1.1rem;
+  padding: 16px 40px;
+}
+
+/* ── FIXED: Flashcard height on mobile ── */
+@media (max-width: 480px) {
+  .flashcard {
+    aspect-ratio: 4 / 3;
+  }
+
+  .fc-content {
+    max-height: 150px;
+    font-size: 0.85rem;
+  }
+
+  .fc-face {
+    padding: 20px;
+  }
+}
+
+/* ── FIXED: MD content proper text color in result ── */
+.md-content p,
+.md-content li,
+.md-content td {
+  color: #c0c0c0;
+}
+
+/* ── FIXED: Result hdr first heading color ── */
+.md-content h1 {
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #ffffff, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.md-content h2 {
+  background: linear-gradient(135deg, #00d4ff, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 1.2rem;
+}
+
+.md-content h3 {
+  color: #d4af37;
+  font-size: 1rem;
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+}
+
+/* ── FIXED: Flashcard content — better overflow ── */
+.fc-content {
+  overflow-y: auto;
+  max-height: 180px;
+  width: 100%;
+  padding: 0 8px;
+}
+
+/* ── FIXED: Quiz exp body ── */
+.quiz-exp-body {
+  margin-top: 8px;
+}
+
+/* ── FIXED: Demo button spacing ── */
+.demo-replay-btn {
+  flex-shrink: 0;
+}
+
+/* ── FIXED: Sidebar about stays at bottom ── */
+.sidebar-about {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+/* ── FIXED: Stream overlay — content shown within the overlay ── */
+.stream-overlay {
+  z-index: 500; /* Below modals (2000) but above content */
+}
+
+/* ── FIXED: Settings input in dark mode ── */
+[data-theme="light"] .settings-input,
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: rgba(255, 255, 255, 0.8);
+  color: #0f172a;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .left-panel {
+  background: rgba(248, 250, 252, 0.98);
+}
+
+[data-theme="light"] .dash-hdr {
+  background: rgba(241, 245, 249, 0.98);
+}
+
+[data-theme="light"] .out-toolbar {
+  background: rgba(241, 245, 249, 0.9);
+}
+
+[data-theme="light"] .study-sec {
+  background: rgba(241, 245, 249, 0.8);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .md-content {
+  color: #334155;
+}
+
+[data-theme="light"] .md-content p,
+[data-theme="light"] .md-content li {
+  color: #334155;
+}
+
+/* ── FIXED: Lp-hist-delete button ── */
+.lp-hist-delete {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.lp-hist-delete:hover {
+  color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+/* ── FIXED: Nav item with wizard gets special style ── */
+#navWizard {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(191, 0, 255, 0.05));
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+}
+
+#navWizard:hover {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(191, 0, 255, 0.1));
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
+#navWizard .nav-text {
+  color: #d4af37;
+}
+
+#navWizard .nav-icon {
+  color: #d4af37;
+}
+
+/* ── FIXED: Modal overlay z-index ── */
+.modal-overlay {
+  z-index: 2000;
+}
+
+#welcomeOverlay,
+#welcomeBackOverlay {
+  z-index: 3000;
+}
+
+/* ── FIXED: Output toolbar always has correct flex layout ── */
+#outToolbar {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── FIXED: SFP stages in overlay header ── */
+.sfp-header {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+/* ── ADDED: Stream stage pills in overlay ── */
+.sfp-stages .ssc-stage {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+
+.sfp-stages .ssc-stage.active {
+  background: rgba(0, 212, 255, 0.15);
+  color: #00d4ff;
+}
+
+.sfp-stages .ssc-stage.done {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+/* ── ADDED: Thinking stages in overlay section ── */
+#streamStatusCard {
+  display: none;
+}
+
+#streamStatusCard.is-visible {
+  display: block;
+}
+
+/* ── ADDED: Wizard progress bar for mobile ── */
+@media (max-width: 480px) {
+  .wizard-steps {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+
+  .wizard-steps::-webkit-scrollbar {
+    display: none;
+  }
+
+  .wizard-step {
+    flex-shrink: 0;
+    min-width: 40px;
+  }
+
+  .wizard-step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
+  .wizard-step-line {
+    min-width: 10px;
+    max-width: 20px;
+    margin: 0 4px;
+  }
+}
+
+/* ── ADDED: Loading state for run button ── */
+@keyframes runBtnPulse {
+  0%, 100% { box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 4px 25px rgba(212, 175, 55, 0.6); }
+}
+
+.run-btn-sidebar:not(:disabled):hover {
+  animation: runBtnPulse 1.5s ease infinite;
+}
+
+/* ── ADDED: Better input shake ── */
+.input-shake {
+  animation: inputShake 0.4s ease-in-out;
+  border-color: #ff4444 !important;
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.2) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   END OF SECTION 39 — ALL BUG FIXES APPLIED
+   Savoiré AI v2.0 — Built by Sooban Talha Technologies
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */

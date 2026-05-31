@@ -7,22 +7,22 @@
     <meta name="author" content="Sooban Talha Technologies">
     <meta name="theme-color" content="#0a1128">
     <title>Savoiré AI v2.0 — Ultimate AI Study Assistant</title>
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+
     <!-- External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     <link rel="stylesheet" href="style.css">
-    
+
     <style>
-        /* Critical inline styles - rest in style.css */
+        /* Critical inline styles */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; overflow: hidden; }
         body { font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(135deg, #0a1128 0%, #050814 50%, #000000 100%); color: #c0c0c0; display: flex; flex-direction: column; }
@@ -55,28 +55,29 @@
             </div>
         </div>
     </noscript>
-    
+
     <div class="loading-spinner"></div>
-    
+
     <!-- Particle Background Canvas -->
     <canvas id="particleCanvas"></canvas>
-    
+
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
-    
+
     <!-- Sidebar Backdrop -->
     <div class="sb-backdrop" id="sbBackdrop"></div>
-    
+
     <!-- ═══════════════════════════════════════════════════════════════════════════════
          MAIN DASHBOARD BODY
          ═══════════════════════════════════════════════════════════════════════════════ -->
     <div class="dash-body">
-        
+
         <!-- ═══════════════════════════════════════════════════════════════════════════════
-             LEFT PANEL (SIDEBAR)
+             LEFT PANEL (SIDEBAR) — FIXED: Tool Selector & Sidebar Input Removed
+             Only Wizard, History, Saved, Settings, About in sidebar
              ═══════════════════════════════════════════════════════════════════════════════ -->
         <aside class="left-panel" id="leftPanel">
-            
+
             <!-- Sidebar Header -->
             <div class="lp-hdr">
                 <div class="lp-hdr-row">
@@ -84,7 +85,7 @@
                     <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
                 </div>
             </div>
-            
+
             <!-- User Profile -->
             <div class="user-profile-sidebar">
                 <div class="user-avatar-sidebar" id="sidebarAvatar">Ś</div>
@@ -92,7 +93,7 @@
                     <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
                 </div>
             </div>
-            
+
             <!-- Stats Grid - Compact -->
             <div class="stats-grid-sidebar" id="sidebarStats">
                 <div class="stat-card-sidebar">
@@ -124,13 +125,14 @@
                     <div class="stat-label-sidebar"><i class="fas fa-calendar"></i> Active</div>
                 </div>
             </div>
-            
-            <!-- Navigation -->
+
+            <!-- Navigation — FIXED: All items work, Sidebar tools removed -->
             <nav class="sidebar-nav" id="sidebarNav">
-                <div class="nav-item" data-nav="wizard" id="navWizard">
+                <!-- MAIN CTA: Wizard Generator Button -->
+                <div class="nav-item nav-item-wizard" data-nav="wizard" id="navWizard">
                     <i class="fas fa-magic nav-icon"></i>
-                    <span class="nav-text">Wizard Generator</span>
-                    <span class="nav-badge">6-step</span>
+                    <span class="nav-text">✨ Create Study Material</span>
+                    <span class="nav-badge">Wizard</span>
                 </div>
                 <div class="nav-item" data-nav="history" id="navHistory">
                     <i class="fas fa-history nav-icon"></i>
@@ -149,154 +151,13 @@
                     <span class="nav-text">Focus Mode</span>
                 </div>
             </nav>
-            
+
             <!-- Demo Replay Button -->
             <button class="demo-replay-btn" id="demoReplayBtn">
                 <i class="fas fa-play-circle"></i> Watch Demo Again
             </button>
-            
-            <!-- Tool Selector Sidebar -->
-            <div class="tool-selector-sidebar" id="toolSelectorSidebar">
-                <div class="tool-selector-label">STUDY TOOLS</div>
-                <div class="tool-list-sidebar">
-                    <button class="tool-item-sidebar active" data-tool="notes" id="toolNotes">
-                        <i class="fas fa-book-open"></i> Notes
-                    </button>
-                    <button class="tool-item-sidebar" data-tool="flashcards" id="toolFlashcards">
-                        <i class="fas fa-layer-group"></i> Flashcards
-                    </button>
-                    <button class="tool-item-sidebar" data-tool="quiz" id="toolQuiz">
-                        <i class="fas fa-question-circle"></i> Quiz
-                    </button>
-                    <button class="tool-item-sidebar" data-tool="summary" id="toolSummary">
-                        <i class="fas fa-align-left"></i> Summary
-                    </button>
-                    <button class="tool-item-sidebar" data-tool="mindmap" id="toolMindmap">
-                        <i class="fas fa-project-diagram"></i> Mind Map
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Input Fields -->
-            <div class="sidebar-fields" id="sidebarFields">
-                
-                <!-- Textarea -->
-                <div class="input-group-sidebar">
-                    <div class="field-label-sidebar">Topic / Text to Study</div>
-                    <textarea id="mainInput" class="main-textarea-sidebar" rows="3" placeholder="Enter any topic, concept, question, or paste text to study..."></textarea>
-                    <div class="textarea-footer-sidebar">
-                        <span class="char-count-sidebar" id="charCount">0 / 4000</span>
-                        <button class="clear-textarea-sidebar" id="taClearBtn"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-                
-                <!-- Detail Level -->
-                <div class="selector-group-sidebar">
-                    <div class="field-label-sidebar">Detail Level</div>
-                    <select id="depthSel" class="selector-sidebar">
-                        <option value="standard">📏 Standard (600-900 words)</option>
-                        <option value="detailed" selected>📚 Detailed (1000-1500 words)</option>
-                        <option value="comprehensive">📖 Comprehensive (1500-2200 words)</option>
-                        <option value="expert">🎓 Expert (2200-3500 words)</option>
-                    </select>
-                </div>
-                
-                <!-- Writing Style -->
-                <div class="selector-group-sidebar">
-                    <div class="field-label-sidebar">Writing Style</div>
-                    <select id="styleSel" class="selector-sidebar">
-                        <option value="simple">✨ Simple & Clear</option>
-                        <option value="academic">🎓 Academic & Formal</option>
-                        <option value="detailed" selected>📝 Highly Detailed</option>
-                        <option value="exam">📋 Exam-Focused</option>
-                        <option value="visual">🎨 Visual & Analogy-Rich</option>
-                    </select>
-                </div>
-                
-                <!-- Language -->
-                <div class="selector-group-sidebar">
-                    <div class="field-label-sidebar">Output Language</div>
-                    <select id="langSel" class="selector-sidebar">
-                        <option value="English" selected>🇬🇧 English</option>
-                        <option value="Urdu">🇵🇰 اردو — Urdu</option>
-                        <option value="Hindi">🇮🇳 हिन्दी — Hindi</option>
-                        <option value="Arabic">🇸🇦 العربية — Arabic</option>
-                        <option value="French">🇫🇷 Français — French</option>
-                        <option value="German">🇩🇪 Deutsch — German</option>
-                        <option value="Spanish">🇪🇸 Español — Spanish</option>
-                        <option value="Portuguese">🇧🇷 Português — Portuguese</option>
-                        <option value="Italian">🇮🇹 Italiano — Italian</option>
-                        <option value="Dutch">🇳🇱 Nederlands — Dutch</option>
-                        <option value="Russian">🇷🇺 Русский — Russian</option>
-                        <option value="Turkish">🇹🇷 Türkçe — Turkish</option>
-                        <option value="Chinese (Simplified)">🇨🇳 中文简体</option>
-                        <option value="Japanese">🇯🇵 日本語</option>
-                        <option value="Korean">🇰🇷 한국어</option>
-                        <option value="Bengali">🇧🇩 বাংলা</option>
-                        <option value="Swahili">🇰🇪 Kiswahili</option>
-                    </select>
-                </div>
-                
-                <!-- File Upload -->
-                <div class="upload-zone-sidebar" id="uploadZone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <span>Click or drag to upload .txt, .md, or .csv file</span>
-                    <input type="file" id="fileInput" accept=".txt,.md,.csv" style="display:none">
-                </div>
-                <div class="file-chip-sidebar" id="fileChip" style="display:none">
-                    <i class="fas fa-file-alt"></i>
-                    <span id="fileChipName"></span>
-                    <button id="fileChipRm"><i class="fas fa-times"></i></button>
-                </div>
-                
-                <!-- Quick Suggestions -->
-                <div class="suggestions-sidebar">
-                    <div class="suggestions-label-sidebar">Quick Suggestions:</div>
-                    <div class="suggestions-pills-sidebar">
-                        <button class="sugg-pill-sidebar" data-topic="Photosynthesis - how plants convert sunlight into glucose">🌿 Photosynthesis</button>
-                        <button class="sugg-pill-sidebar" data-topic="Newton's Three Laws of Motion">⚡ Newton's Laws</button>
-                        <button class="sugg-pill-sidebar" data-topic="World War II - causes, major events and consequences">🌍 World War II</button>
-                        <button class="sugg-pill-sidebar" data-topic="Machine Learning algorithms and applications">🤖 Machine Learning</button>
-                        <button class="sugg-pill-sidebar" data-topic="The French Revolution - causes and legacy">🇫🇷 French Revolution</button>
-                        <button class="sugg-pill-sidebar" data-topic="DNA replication and protein synthesis">🧬 DNA Replication</button>
-                        <button class="sugg-pill-sidebar" data-topic="Quantum computing fundamentals">⚛️ Quantum Computing</button>
-                        <button class="sugg-pill-sidebar" data-topic="Blockchain technology and cryptocurrency">⛓️ Blockchain</button>
-                        <button class="sugg-pill-sidebar" data-topic="Artificial Neural Networks explained">🧠 Neural Networks</button>
-                        <button class="sugg-pill-sidebar" data-topic="Climate change causes and effects">🌡️ Climate Change</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Generate Button Section -->
-            <div class="sidebar-run-wrap">
-                <button class="run-btn-sidebar" id="runBtn">
-                    <i class="fas fa-book-open" id="runIcon"></i>
-                    <span id="runLabel">Generate Notes</span>
-                </button>
-                <button class="cancel-btn-sidebar" id="cancelBtn">
-                    <i class="fas fa-stop-circle"></i> Cancel Generation
-                </button>
-            </div>
-            
-            <!-- Stream Status Card -->
-            <div class="stream-status-card" id="streamStatusCard">
-                <div class="ssc-header">
-                    <span class="ssc-dot"></span>
-                    <span class="ssc-label" id="sscLabel">Generating study materials...</span>
-                </div>
-                <div class="ssc-progress">
-                    <div class="ssc-progress-bar" id="sscProgressBar"></div>
-                </div>
-                <div class="ssc-stages">
-                    <span class="ssc-stage" id="ss0">🎯 Analyse</span>
-                    <span class="ssc-stage" id="ss1">📝 Write</span>
-                    <span class="ssc-stage" id="ss2">🔍 Build</span>
-                    <span class="ssc-stage" id="ss3">✨ Craft</span>
-                    <span class="ssc-stage" id="ss4">✅ Done</span>
-                </div>
-            </div>
-            
-            <!-- History Strip -->
+
+            <!-- History Strip — FIXED: Shows in sidebar -->
             <div class="lp-history" id="lpHistory">
                 <div class="lp-hist-header">
                     <span class="lp-hist-title">Recent Study</span>
@@ -306,14 +167,25 @@
                     <div class="lp-hist-empty">No history yet — start studying!</div>
                 </div>
             </div>
-            
-            <!-- About Section -->
+
+            <!-- Saved Notes Strip — FIXED: Shows in sidebar -->
+            <div class="lp-history" id="lpSavedStrip" style="border-top: 1px solid rgba(255,255,255,0.05);">
+                <div class="lp-hist-header">
+                    <span class="lp-hist-title">Saved Notes</span>
+                    <button class="lp-hist-all" id="lpSavedAll">View All</button>
+                </div>
+                <div class="lp-hist-list" id="lpSavedList">
+                    <div class="lp-hist-empty">No saved notes yet.</div>
+                </div>
+            </div>
+
+            <!-- About Section — FIXED: Shows in sidebar -->
             <div class="sidebar-about">
                 <div class="about-title"><i class="fas fa-info-circle"></i> About</div>
                 <div class="about-text">
                     <strong>Savoiré AI v2.0</strong><br>
                     World's most advanced AI study assistant.<br>
-                    Generate notes, flashcards, quizzes, summaries, and mind maps.
+                    Generate notes, flashcards, quizzes, summaries & mind maps via the Wizard.
                 </div>
                 <div class="about-text">
                     <i class="fas fa-code"></i> Built by <strong>Sooban Talha Technologies</strong><br>
@@ -323,17 +195,18 @@
                     <i class="fas fa-heart" style="color:#ff4444"></i> Free forever for every student on Earth.
                 </div>
             </div>
+
         </aside>
-        
+
         <!-- ═══════════════════════════════════════════════════════════════════════════════
              RIGHT PANEL (MAIN CONTENT)
              ═══════════════════════════════════════════════════════════════════════════════ -->
         <main class="right-panel" id="rightPanel">
-            
-            <!-- Header -->
+
+            <!-- Header — FIXED: Always visible, streak in gold, all buttons work -->
             <header class="dash-hdr" id="dashHdr">
                 <div class="dh-left">
-                    <button class="dh-btn" id="sbToggle">
+                    <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar" aria-expanded="false">
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="dh-logo" id="dhLogo">
@@ -344,26 +217,32 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="dh-stats">
-                    <div class="dh-stat"><i class="fas fa-fire" style="color:#ffae00"></i> Streak: <span id="headerStreak" class="dh-stat-val">0</span></div>
+                    <div class="dh-stat dh-stat-streak">
+                        <i class="fas fa-fire" style="color:#ffae00"></i>
+                        <span id="headerStreak" class="dh-stat-val dh-streak-val">0</span>
+                        <span class="dh-stat-lbl">Streak</span>
+                    </div>
                     <div class="dh-stat"><i class="fas fa-clock"></i> Sessions: <span id="statSessions" class="dh-stat-val">0</span></div>
                     <div class="dh-stat"><i class="fas fa-history"></i> History: <span id="statHistory" class="dh-stat-val">0</span></div>
                     <div class="dh-stat"><i class="fas fa-star"></i> Saved: <span id="statSaved" class="dh-stat-val">0</span></div>
                 </div>
-                
+
                 <div class="dh-greeting" id="dhGreeting">Think Less. Know More.</div>
-                
+
                 <div class="dh-actions">
-                    <button class="dh-btn" id="themeBtn"><i class="fas fa-moon" id="themeIcon"></i></button>
-                    <button class="dh-btn" id="settingsBtn"><i class="fas fa-cog"></i></button>
-                    <button class="dh-btn" id="wizardHeaderBtn"><i class="fas fa-magic"></i></button>
-                    <div class="dh-av" id="avBtn">
+                    <button class="dh-btn" id="themeBtn" aria-label="Toggle theme"><i class="fas fa-moon" id="themeIcon"></i></button>
+                    <button class="dh-btn" id="settingsBtn" aria-label="Settings"><i class="fas fa-cog"></i></button>
+                    <button class="dh-btn dh-btn-wizard" id="wizardHeaderBtn" aria-label="Open Wizard">
+                        <i class="fas fa-magic"></i>
+                    </button>
+                    <div class="dh-av" id="avBtn" role="button" aria-label="User menu">
                         <span id="avInitials">Ś</span>
                     </div>
                 </div>
             </header>
-            
+
             <!-- Avatar Dropdown -->
             <div class="av-dropdown" id="avDropdown">
                 <div class="av-user">
@@ -380,22 +259,23 @@
                 <div class="av-divider"></div>
                 <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i> Clear All Data</button>
             </div>
-            
-            <!-- Output Toolbar -->
-            <div class="out-toolbar" id="outToolbar">
-                <button class="otb-btn" id="copyBtn"><i class="fas fa-copy"></i> Copy</button>
-                <button class="otb-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i> PDF</button>
-                <button class="otb-btn" id="saveBtn"><i class="fas fa-star"></i> Save</button>
-                <button class="otb-btn" id="shareBtn"><i class="fas fa-share-alt"></i> Share</button>
-                <button class="otb-btn" id="clearBtn"><i class="fas fa-trash-alt"></i> Clear</button>
+
+            <!-- Output Toolbar — FIXED: Shown only after output, all buttons work -->
+            <div class="out-toolbar" id="outToolbar" style="display:none">
+                <button class="otb-btn" id="copyBtn"><i class="fas fa-copy"></i> <span>Copy</span></button>
+                <button class="otb-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
+                <button class="otb-btn" id="saveBtn"><i class="fas fa-star"></i> <span>Save</span></button>
+                <button class="otb-btn" id="shareBtn"><i class="fas fa-share-alt"></i> <span>Share</span></button>
+                <button class="otb-btn" id="clearBtn"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
                 <div class="otb-sep"></div>
-                <button class="otb-btn" id="focusModeBtn"><i class="fas fa-expand-alt"></i> Focus</button>
-                <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> focus · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Enter</kbd> generate</div>
+                <button class="otb-btn" id="newWizardBtn"><i class="fas fa-magic"></i> <span>New</span></button>
+                <button class="otb-btn" id="focusModeBtn"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
+                <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> generate · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
             </div>
-            
+
             <!-- Output Area -->
             <div class="out-area" id="outArea">
-                
+
                 <!-- Thinking Indicator -->
                 <div id="thinkingWrap" style="display:none">
                     <div class="thinking-card">
@@ -413,13 +293,15 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Empty State -->
+
+                <!-- Empty State — FIXED: Wizard CTA clearly labeled -->
                 <div id="emptyState" class="empty-state">
                     <div class="es-mark">✨</div>
                     <div class="es-title">Ready to Study Smarter?</div>
-                    <div class="es-sub">Use the Wizard below or enter any topic to get started</div>
-                    <button class="empty-wizard-btn" id="emptyWizardBtn"><i class="fas fa-magic"></i> Launch Wizard Generator</button>
+                    <div class="es-sub">Use the Wizard to generate Notes, Flashcards, Quiz, Summary, or Mind Map — all powered by AI</div>
+                    <button class="empty-wizard-btn" id="emptyWizardBtn">
+                        <i class="fas fa-magic"></i> Open Study Wizard
+                    </button>
                     <div class="es-features">
                         <span class="es-feat"><i class="fas fa-book-open"></i> Notes</span>
                         <span class="es-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
@@ -428,27 +310,27 @@
                         <span class="es-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
                     </div>
                     <div class="es-shortcuts">
-                        <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Focus input</div>
+                        <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
                         <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</div>
                         <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save note</div>
                         <div class="shortcut"><kbd>Esc</kbd> Close modals</div>
                     </div>
                 </div>
-                
+
                 <!-- Result Area -->
                 <div id="resultArea"></div>
-                
+
             </div>
-            
+
             <!-- Back to Top Button -->
             <button class="back-to-top" id="backToTopBtn"><i class="fas fa-arrow-up"></i></button>
-            
+
         </main>
-        
+
     </div>
-    
+
     <!-- ═══════════════════════════════════════════════════════════════════════════════
-         STREAMING OVERLAY
+         STREAMING OVERLAY — FIXED: Shows live content, header+sidebar still visible below
          ═══════════════════════════════════════════════════════════════════════════════ -->
     <div class="stream-overlay" id="streamFullpage" style="display:none">
         <div class="sfp-header">
@@ -457,33 +339,45 @@
                 <span class="sfp-dot"></span>
                 <span class="sfp-dot"></span>
             </div>
-            <span class="sfp-label" id="sfpLabel">Generating comprehensive study notes...</span>
+            <span class="sfp-label" id="sfpLabel">Generating study materials...</span>
             <span class="sfp-topic" id="sfpTopic"></span>
             <div class="sfp-tool-badge">
                 <i class="fas fa-book-open" id="sfpToolIcon"></i>
                 <span id="sfpToolName">Notes</span>
+            </div>
+            <!-- Stage Progress in Overlay -->
+            <div class="sfp-stages">
+                <span class="ssc-stage" id="ss0">🎯 Analyse</span>
+                <span class="ssc-stage" id="ss1">📝 Write</span>
+                <span class="ssc-stage" id="ss2">🔍 Build</span>
+                <span class="ssc-stage" id="ss3">✨ Craft</span>
+                <span class="ssc-stage" id="ss4">✅ Done</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="sfp-progress-bar">
+                <div class="sfp-progress-fill" id="sscProgressBar"></div>
             </div>
         </div>
         <div class="sfp-scroll" id="sfpScroll">
             <div class="sfp-text" id="sfpText"></div>
         </div>
     </div>
-    
+
     <!-- ═══════════════════════════════════════════════════════════════════════════════
          MODALS
          ═══════════════════════════════════════════════════════════════════════════════ -->
-    
-    <!-- Wizard Modal -->
+
+    <!-- Wizard Modal — FIXED: 6 Steps, correct labels, works on mobile -->
     <div class="modal-overlay" id="wizardModal">
         <div class="modal modal-lg">
             <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-magic"></i> Wizard — Step by Step Generator</div>
+                <div class="modal-title"><i class="fas fa-magic"></i> Study Wizard — Step by Step Generator</div>
                 <button class="modal-close" data-close="wizardModal"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body" id="wizardContent"></div>
         </div>
     </div>
-    
+
     <!-- History Modal -->
     <div class="modal-overlay" id="histModal">
         <div class="modal modal-md">
@@ -517,7 +411,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Saved Modal -->
     <div class="modal-overlay" id="savedModal">
         <div class="modal modal-md">
@@ -534,8 +428,8 @@
             </div>
         </div>
     </div>
-    
-    <!-- Settings Modal -->
+
+    <!-- Settings Modal — FIXED: All settings work, added extra options -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal modal-md">
             <div class="modal-header">
@@ -558,7 +452,7 @@
                     <div class="settings-row">
                         <div class="settings-label">Theme</div>
                         <div class="theme-buttons">
-                            <button class="theme-btn" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button>
+                            <button class="theme-btn active" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button>
                             <button class="theme-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button>
                         </div>
                     </div>
@@ -566,10 +460,26 @@
                         <div class="settings-label">Font Size</div>
                         <div class="font-buttons">
                             <button class="font-btn font-sz" data-size="small">Small</button>
-                            <button class="font-btn font-sz" data-size="medium">Medium</button>
+                            <button class="font-btn font-sz active" data-size="medium">Medium</button>
                             <button class="font-btn font-sz" data-size="large">Large</button>
                             <button class="font-btn font-sz" data-size="xlarge">X-Large</button>
                         </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <div class="settings-title"><i class="fas fa-language"></i> Default Language</div>
+                    <div class="settings-row">
+                        <div class="settings-label">Output Language</div>
+                        <select id="defaultLangSel" class="settings-input" style="flex:1;max-width:200px">
+                            <option value="English" selected>🇬🇧 English</option>
+                            <option value="Urdu">🇵🇰 Urdu</option>
+                            <option value="Hindi">🇮🇳 Hindi</option>
+                            <option value="Arabic">🇸🇦 Arabic</option>
+                            <option value="French">🇫🇷 French</option>
+                            <option value="German">🇩🇪 German</option>
+                            <option value="Spanish">🇪🇸 Spanish</option>
+                        </select>
+                        <button id="saveDefaultLangBtn" class="settings-btn">Save</button>
                     </div>
                 </div>
                 <div class="settings-section">
@@ -613,7 +523,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Confirm Modal -->
     <div class="modal-overlay" id="confirmModal">
         <div class="modal modal-sm">
@@ -630,7 +540,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Welcome Overlay -->
     <div class="modal-overlay" id="welcomeOverlay">
         <div class="modal" style="max-width:450px;text-align:center">
@@ -648,14 +558,14 @@
                     <span class="welcome-feat"><i class="fas fa-infinity"></i> Free Forever</span>
                 </div>
                 <p class="welcome-quote">"Think Less. Know More."</p>
-                <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name">
+                <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started">
                 <button id="welcomeBtn" class="welcome-btn">Start Studying →</button>
                 <button id="welcomeSkip" class="welcome-skip">Skip for now</button>
                 <p class="welcome-footer">Free forever · Built by Sooban Talha Technologies</p>
             </div>
         </div>
     </div>
-    
+
     <!-- Welcome Back Overlay -->
     <div class="modal-overlay" id="welcomeBackOverlay">
         <div class="modal" style="max-width:400px;text-align:center">
@@ -681,7 +591,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- ═══════════════════════════════════════════════════════════════════════════════
          SCRIPTS
          ═══════════════════════════════════════════════════════════════════════════════ -->
@@ -694,7 +604,7 @@
                 if(prefs.fontSize) document.documentElement.setAttribute('data-font', prefs.fontSize);
             } catch(e) {}
         })();
-        
+
         // Remove loading spinner
         window.addEventListener('load', function() {
             document.body.classList.add('loaded');
@@ -702,9 +612,9 @@
             if(spinner) spinner.remove();
         });
     </script>
-    
+
     <!-- Main Application Script -->
     <script src="app.js"></script>
-    
+
 </body>
 </html>
