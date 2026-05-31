@@ -1,620 +1,725 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <meta name="description" content="Savoiré AI v2.0 — World's Most Advanced AI Study Assistant">
-    <meta name="author" content="Sooban Talha Technologies">
-    <meta name="theme-color" content="#0a1128">
-    <title>Savoiré AI v2.0 — Ultimate AI Study Assistant</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <meta name="description" content="Savoiré AI v2.0 — World's Most Advanced AI Study Assistant">
+  <meta name="author" content="Sooban Talha Technologies">
+  <meta name="theme-color" content="#0a1128">
+  <title>Savoiré AI v2.0 — Ultimate AI Study Assistant</title>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+  <link rel="stylesheet" href="style.css">
 
-    <!-- External Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
-    <link rel="stylesheet" href="style.css">
-
-    <style>
-        /* Critical inline styles */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; overflow: hidden; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: linear-gradient(135deg, #0a1128 0%, #050814 50%, #000000 100%); color: #c0c0c0; display: flex; flex-direction: column; }
-        .dash-body { flex: 1; display: flex; overflow: hidden; position: relative; }
-        .loading-spinner { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; border: 3px solid rgba(212,175,55,0.2); border-top-color: #d4af37; border-radius: 50%; animation: spin 0.8s linear infinite; z-index: 9999; }
-        @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
-        .loaded .loading-spinner { display: none; }
-        #particleCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-        .no-js { display: flex; align-items: center; justify-content: center; height: 100vh; background: #0a1128; color: #fff; text-align: center; padding: 20px; position: fixed; inset: 0; z-index: 9999; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #d4af37, #ffae00); border-radius: 10px; }
-        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
-        .toast { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: rgba(15,23,42,0.95); backdrop-filter: blur(16px); border: 1px solid rgba(212,175,55,0.2); border-radius: 12px; font-size: 0.85rem; color: #fff; animation: slideInRight 0.3s ease; cursor: pointer; }
-        .toast.success { border-left: 4px solid #00ff88; }
-        .toast.error { border-left: 4px solid #ff4444; }
-        .toast.info { border-left: 4px solid #00d4ff; }
-        @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
-        .sb-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 48; cursor: pointer; }
-        .sb-backdrop.visible { display: block; animation: fadeIn 0.25s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(135deg,#0a1128 0%,#050814 50%,#000000 100%);color:#c0c0c0;display:flex;flex-direction:column}
+    .dash-body{flex:1;display:flex;overflow:hidden;position:relative}
+    .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border:3px solid rgba(212,175,55,0.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite;z-index:9999}
+    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+    .loaded .loading-spinner{display:none}
+    #particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+    .toast-container{position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 18px;background:rgba(15,23,42,0.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;font-size:.82rem;color:#fff;animation:slideInToast .3s ease;cursor:pointer;max-width:340px}
+    .toast.success{border-left:4px solid #00ff88}
+    .toast.error{border-left:4px solid #ff4444}
+    .toast.info{border-left:4px solid #00d4ff}
+    @keyframes slideInToast{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+    .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:48;cursor:pointer}
+    .sb-backdrop.visible{display:block;animation:fadeIn .25s ease}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+  </style>
 </head>
 <body>
-    <noscript>
-        <div class="no-js">
-            <div>
-                <h1>⚠️ JavaScript Required</h1>
-                <p>Savoiré AI requires JavaScript to function.<br>Please enable JavaScript in your browser settings.</p>
-            </div>
+  <noscript>
+    <div style="position:fixed;inset:0;background:#0a1128;display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;text-align:center;padding:20px">
+      <div><h1>⚠️ JavaScript Required</h1><p>Savoiré AI requires JavaScript to function. Please enable it in your browser.</p></div>
+    </div>
+  </noscript>
+
+  <div class="loading-spinner"></div>
+  <canvas id="particleCanvas"></canvas>
+  <div id="toastContainer" class="toast-container"></div>
+  <div class="sb-backdrop" id="sbBackdrop"></div>
+
+  <!-- ═══════════ MAIN LAYOUT ═══════════ -->
+  <div class="dash-body">
+
+    <!-- ═══════════ LEFT PANEL / SIDEBAR ═══════════ -->
+    <aside class="left-panel" id="leftPanel">
+
+      <div class="lp-hdr">
+        <div class="lp-hdr-row">
+          <span class="lp-title">MENU</span>
+          <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
         </div>
-    </noscript>
+      </div>
 
-    <div class="loading-spinner"></div>
+      <!-- User Profile -->
+      <div class="user-profile-sidebar">
+        <div class="user-avatar-sidebar" id="sidebarAvatar">Ś</div>
+        <div class="user-info-sidebar">
+          <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
+          <div class="user-tagline-sidebar">Think Less. Know More.</div>
+        </div>
+      </div>
 
-    <!-- Particle Background Canvas -->
-    <canvas id="particleCanvas"></canvas>
+      <!-- Stats Grid -->
+      <div class="stats-grid-sidebar" id="sidebarStats">
+        <div class="stat-card-sidebar">
+          <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
+          <div class="stat-label-sidebar"><i class="fas fa-fire"></i> Streak</div>
+        </div>
+        <div class="stat-card-sidebar">
+          <div class="stat-value-sidebar" id="sidebarBestStreak">0</div>
+          <div class="stat-label-sidebar"><i class="fas fa-trophy"></i> Best</div>
+        </div>
+        <div class="stat-card-sidebar">
+          <div class="stat-value-sidebar" id="sidebarSessionsValue">0</div>
+          <div class="stat-label-sidebar"><i class="fas fa-clock"></i> Sessions</div>
+        </div>
+        <div class="stat-card-sidebar">
+          <div class="stat-value-sidebar" id="sidebarWordsValue">0</div>
+          <div class="stat-label-sidebar"><i class="fas fa-file-alt"></i> Words</div>
+        </div>
+        <div class="stat-card-sidebar">
+          <div class="stat-value-sidebar" id="sidebarHistoryValue">0</div>
+          <div class="stat-label-sidebar"><i class="fas fa-history"></i> History</div>
+        </div>
+        <div class="stat-card-sidebar">
+          <div class="stat-value-sidebar" id="sidebarSavedValue">0</div>
+          <div class="stat-label-sidebar"><i class="fas fa-star"></i> Saved</div>
+        </div>
+        <div class="stat-card-sidebar">
+          <div class="stat-value-sidebar" id="sidebarLastActive">—</div>
+          <div class="stat-label-sidebar"><i class="fas fa-calendar"></i> Active</div>
+        </div>
+      </div>
 
-    <!-- Toast Container -->
-    <div id="toastContainer" class="toast-container"></div>
+      <!-- Navigation -->
+      <nav class="sidebar-nav" id="sidebarNav">
+        <!-- MAIN CTA -->
+        <div class="nav-item nav-item-wizard" data-nav="wizard" id="navWizard">
+          <i class="fas fa-magic nav-icon"></i>
+          <span class="nav-text">✨ Create Study Material</span>
+          <span class="nav-badge new-badge">Wizard</span>
+        </div>
+        <!-- ALL TOOLS MEGA -->
+        <div class="nav-item nav-item-mega" data-nav="all" id="navAll">
+          <i class="fas fa-layer-group nav-icon"></i>
+          <span class="nav-text">⚡ Mega Study Bundle</span>
+          <span class="nav-badge mega-badge">ALL 5</span>
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-item" data-nav="history" id="navHistory">
+          <i class="fas fa-history nav-icon"></i>
+          <span class="nav-text">Study History</span>
+        </div>
+        <div class="nav-item" data-nav="saved" id="navSaved">
+          <i class="fas fa-star nav-icon"></i>
+          <span class="nav-text">Saved Notes</span>
+        </div>
+        <div class="nav-item" data-nav="settings" id="navSettings">
+          <i class="fas fa-cog nav-icon"></i>
+          <span class="nav-text">Settings</span>
+        </div>
+        <div class="nav-item" data-nav="focus" id="navFocus">
+          <i class="fas fa-expand-alt nav-icon"></i>
+          <span class="nav-text">Focus Mode</span>
+        </div>
+      </nav>
 
-    <!-- Sidebar Backdrop -->
-    <div class="sb-backdrop" id="sbBackdrop"></div>
+      <!-- Demo Button -->
+      <button class="demo-replay-btn" id="demoReplayBtn">
+        <i class="fas fa-play-circle"></i> Watch Demo
+      </button>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════════════
-         MAIN DASHBOARD BODY
-         ═══════════════════════════════════════════════════════════════════════════════ -->
-    <div class="dash-body">
+      <!-- Recent History -->
+      <div class="lp-history" id="lpHistory">
+        <div class="lp-hist-header">
+          <span class="lp-hist-title">Recent Study</span>
+          <button class="lp-hist-all" id="lpHistAll">View All</button>
+        </div>
+        <div class="lp-hist-list" id="lpHistList">
+          <div class="lp-hist-empty">No history yet — start studying!</div>
+        </div>
+      </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════════════════
-             LEFT PANEL (SIDEBAR) — FIXED: Tool Selector & Sidebar Input Removed
-             Only Wizard, History, Saved, Settings, About in sidebar
-             ═══════════════════════════════════════════════════════════════════════════════ -->
-        <aside class="left-panel" id="leftPanel">
+      <!-- Saved Notes Strip -->
+      <div class="lp-history" id="lpSavedStrip">
+        <div class="lp-hist-header">
+          <span class="lp-hist-title">Saved Notes</span>
+          <button class="lp-hist-all" id="lpSavedAll">View All</button>
+        </div>
+        <div class="lp-hist-list" id="lpSavedList">
+          <div class="lp-hist-empty">No saved notes yet.</div>
+        </div>
+      </div>
 
-            <!-- Sidebar Header -->
-            <div class="lp-hdr">
-                <div class="lp-hdr-row">
-                    <span class="lp-title">MAIN MENU</span>
-                    <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
-                </div>
+      <!-- About Section -->
+      <div class="sidebar-about">
+        <button class="about-toggle-btn" id="aboutToggleBtn">
+          <i class="fas fa-info-circle"></i> About Savoiré AI
+          <i class="fas fa-chevron-down about-chevron" id="aboutChevron"></i>
+        </button>
+        <div class="about-content" id="aboutContent">
+          <div class="about-text">
+            <strong>Savoiré AI v2.0</strong> — World's most advanced AI study assistant.
+            Generate notes, flashcards, quizzes, summaries &amp; mind maps.
+          </div>
+          <div class="about-text">
+            <i class="fas fa-code"></i> Built by <strong>Sooban Talha Technologies</strong><br>
+            <i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank">soobantalhatech.xyz</a>
+          </div>
+          <div class="about-text" style="color:#d4af37;font-style:italic;font-size:0.72rem;">
+            "Think Less. Know More." — Sooban Talha
+          </div>
+          <div class="about-text">
+            <i class="fas fa-heart" style="color:#ff4444"></i> Free forever for every student on Earth.
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ═══════════ RIGHT PANEL ═══════════ -->
+    <main class="right-panel" id="rightPanel">
+
+      <!-- HEADER -->
+      <header class="dash-hdr" id="dashHdr">
+        <div class="dh-left">
+          <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home">
+            <div class="dh-mark">Ś</div>
+            <div class="dh-text">
+              <span class="dh-name">Savoiré AI</span>
+              <span class="dh-ver">v2.0</span>
             </div>
+          </div>
+        </div>
 
-            <!-- User Profile -->
-            <div class="user-profile-sidebar">
-                <div class="user-avatar-sidebar" id="sidebarAvatar">Ś</div>
-                <div class="user-info-sidebar">
-                    <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
-                </div>
+        <div class="dh-stats">
+          <div class="dh-stat dh-stat-streak">
+            <i class="fas fa-fire"></i>
+            <span id="headerStreak" class="dh-streak-val">0</span>
+            <span class="dh-stat-lbl">Streak</span>
+          </div>
+          <div class="dh-stat dh-stat-hide-md">
+            <i class="fas fa-clock"></i> Sessions: <span id="statSessions" class="dh-stat-val">0</span>
+          </div>
+          <div class="dh-stat dh-stat-hide-md">
+            <i class="fas fa-history"></i> History: <span id="statHistory" class="dh-stat-val">0</span>
+          </div>
+          <div class="dh-stat dh-stat-hide-sm">
+            <i class="fas fa-star"></i> Saved: <span id="statSaved" class="dh-stat-val">0</span>
+          </div>
+        </div>
+
+        <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think Less. Know More.</div>
+
+        <div class="dh-actions">
+          <button class="dh-btn" id="themeBtn" aria-label="Toggle theme">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </button>
+          <button class="dh-btn" id="settingsBtn" aria-label="Settings">
+            <i class="fas fa-cog"></i>
+          </button>
+          <!-- Wizard Button in header -->
+          <button class="dh-btn dh-wizard-btn" id="wizardHeaderBtn" aria-label="Open Wizard" title="Create Study Material">
+            <i class="fas fa-magic"></i>
+          </button>
+          <!-- Mega Bundle Button in header -->
+          <button class="dh-btn dh-mega-btn" id="megaHeaderBtn" aria-label="Mega Study Bundle" title="⚡ Mega Study Bundle — All 5 Tools">
+            <i class="fas fa-layer-group"></i>
+          </button>
+          <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu">
+            <span id="avInitials">Ś</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Avatar Dropdown -->
+      <div class="av-dropdown" id="avDropdown">
+        <div class="av-user">
+          <div class="av-u-av" id="avDropdownAvatar">Ś</div>
+          <div>
+            <div class="av-u-name" id="avDropdownName">Scholar</div>
+            <div class="av-u-sub">Savoiré AI Member</div>
+          </div>
+        </div>
+        <div class="av-divider"></div>
+        <button class="av-item" id="avHist"><i class="fas fa-history"></i> Study History</button>
+        <button class="av-item" id="avSaved"><i class="fas fa-star"></i> Saved Notes</button>
+        <button class="av-item" id="avSettings"><i class="fas fa-cog"></i> Settings</button>
+        <div class="av-divider"></div>
+        <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i> Clear All Data</button>
+      </div>
+
+      <!-- Output Toolbar (hidden until output ready) -->
+      <div class="out-toolbar" id="outToolbar" style="display:none">
+        <button class="otb-btn" id="copyBtn"><i class="fas fa-copy"></i> <span>Copy</span></button>
+        <button class="otb-btn otb-pdf" id="pdfBtn"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
+        <button class="otb-btn" id="saveBtn"><i class="fas fa-star"></i> <span>Save</span></button>
+        <button class="otb-btn" id="shareBtn"><i class="fas fa-share-alt"></i> <span>Share</span></button>
+        <button class="otb-btn otb-danger" id="clearBtn"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
+        <div class="otb-sep"></div>
+        <button class="otb-btn otb-new" id="newWizardBtn"><i class="fas fa-magic"></i> <span>New</span></button>
+        <button class="otb-btn" id="focusModeBtn"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
+        <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
+      </div>
+
+      <!-- Output Area -->
+      <div class="out-area" id="outArea">
+
+        <!-- Thinking indicator -->
+        <div id="thinkingWrap" style="display:none">
+          <div class="thinking-card">
+            <div class="th-av"><i class="fas fa-brain"></i></div>
+            <div class="th-body">
+              <div class="th-title">Savoiré AI is generating your study materials…</div>
+              <div class="th-dots"><span></span><span></span><span></span></div>
+              <div class="th-stages">
+                <span class="ths" id="ts0">🎯 Analysing</span>
+                <span class="ths" id="ts1">📝 Writing</span>
+                <span class="ths" id="ts2">🔍 Building</span>
+                <span class="ths" id="ts3">✨ Crafting</span>
+                <span class="ths" id="ts4">✅ Finalising</span>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Stats Grid - Compact -->
-            <div class="stats-grid-sidebar" id="sidebarStats">
-                <div class="stat-card-sidebar">
-                    <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
-                    <div class="stat-label-sidebar"><i class="fas fa-fire"></i> Streak</div>
-                </div>
-                <div class="stat-card-sidebar">
-                    <div class="stat-value-sidebar" id="sidebarBestStreak">0</div>
-                    <div class="stat-label-sidebar"><i class="fas fa-trophy"></i> Best</div>
-                </div>
-                <div class="stat-card-sidebar">
-                    <div class="stat-value-sidebar" id="sidebarSessionsValue">0</div>
-                    <div class="stat-label-sidebar"><i class="fas fa-clock"></i> Sessions</div>
-                </div>
-                <div class="stat-card-sidebar">
-                    <div class="stat-value-sidebar" id="sidebarWordsValue">0</div>
-                    <div class="stat-label-sidebar"><i class="fas fa-file-alt"></i> Words</div>
-                </div>
-                <div class="stat-card-sidebar">
-                    <div class="stat-value-sidebar" id="sidebarHistoryValue">0</div>
-                    <div class="stat-label-sidebar"><i class="fas fa-history"></i> History</div>
-                </div>
-                <div class="stat-card-sidebar">
-                    <div class="stat-value-sidebar" id="sidebarSavedValue">0</div>
-                    <div class="stat-label-sidebar"><i class="fas fa-star"></i> Saved</div>
-                </div>
-                <div class="stat-card-sidebar">
-                    <div class="stat-value-sidebar" id="sidebarLastActive">—</div>
-                    <div class="stat-label-sidebar"><i class="fas fa-calendar"></i> Active</div>
-                </div>
-            </div>
-
-            <!-- Navigation — FIXED: All items work, Sidebar tools removed -->
-            <nav class="sidebar-nav" id="sidebarNav">
-                <!-- MAIN CTA: Wizard Generator Button -->
-                <div class="nav-item nav-item-wizard" data-nav="wizard" id="navWizard">
-                    <i class="fas fa-magic nav-icon"></i>
-                    <span class="nav-text">✨ Create Study Material</span>
-                    <span class="nav-badge">Wizard</span>
-                </div>
-                <div class="nav-item" data-nav="history" id="navHistory">
-                    <i class="fas fa-history nav-icon"></i>
-                    <span class="nav-text">Study History</span>
-                </div>
-                <div class="nav-item" data-nav="saved" id="navSaved">
-                    <i class="fas fa-star nav-icon"></i>
-                    <span class="nav-text">Saved Notes</span>
-                </div>
-                <div class="nav-item" data-nav="settings" id="navSettings">
-                    <i class="fas fa-cog nav-icon"></i>
-                    <span class="nav-text">Settings</span>
-                </div>
-                <div class="nav-item" data-nav="focus" id="navFocus">
-                    <i class="fas fa-expand-alt nav-icon"></i>
-                    <span class="nav-text">Focus Mode</span>
-                </div>
-            </nav>
-
-            <!-- Demo Replay Button -->
-            <button class="demo-replay-btn" id="demoReplayBtn">
-                <i class="fas fa-play-circle"></i> Watch Demo Again
+        <!-- Empty state -->
+        <div id="emptyState" class="empty-state">
+          <div class="es-mark">✨</div>
+          <div class="es-title">Ready to Study Smarter?</div>
+          <div class="es-sub">Use the Wizard to generate Notes, Flashcards, Quiz, Summary, or Mind Map — all powered by AI in real-time</div>
+          <div class="es-cta-row">
+            <button class="empty-wizard-btn" id="emptyWizardBtn">
+              <i class="fas fa-magic"></i> Open Study Wizard
             </button>
-
-            <!-- History Strip — FIXED: Shows in sidebar -->
-            <div class="lp-history" id="lpHistory">
-                <div class="lp-hist-header">
-                    <span class="lp-hist-title">Recent Study</span>
-                    <button class="lp-hist-all" id="lpHistAll">View All</button>
-                </div>
-                <div class="lp-hist-list" id="lpHistList">
-                    <div class="lp-hist-empty">No history yet — start studying!</div>
-                </div>
-            </div>
-
-            <!-- Saved Notes Strip — FIXED: Shows in sidebar -->
-            <div class="lp-history" id="lpSavedStrip" style="border-top: 1px solid rgba(255,255,255,0.05);">
-                <div class="lp-hist-header">
-                    <span class="lp-hist-title">Saved Notes</span>
-                    <button class="lp-hist-all" id="lpSavedAll">View All</button>
-                </div>
-                <div class="lp-hist-list" id="lpSavedList">
-                    <div class="lp-hist-empty">No saved notes yet.</div>
-                </div>
-            </div>
-
-            <!-- About Section — FIXED: Shows in sidebar -->
-            <div class="sidebar-about">
-                <div class="about-title"><i class="fas fa-info-circle"></i> About</div>
-                <div class="about-text">
-                    <strong>Savoiré AI v2.0</strong><br>
-                    World's most advanced AI study assistant.<br>
-                    Generate notes, flashcards, quizzes, summaries & mind maps via the Wizard.
-                </div>
-                <div class="about-text">
-                    <i class="fas fa-code"></i> Built by <strong>Sooban Talha Technologies</strong><br>
-                    <i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank">soobantalhatech.xyz</a>
-                </div>
-                <div class="about-text">
-                    <i class="fas fa-heart" style="color:#ff4444"></i> Free forever for every student on Earth.
-                </div>
-            </div>
-
-        </aside>
-
-        <!-- ═══════════════════════════════════════════════════════════════════════════════
-             RIGHT PANEL (MAIN CONTENT)
-             ═══════════════════════════════════════════════════════════════════════════════ -->
-        <main class="right-panel" id="rightPanel">
-
-            <!-- Header — FIXED: Always visible, streak in gold, all buttons work -->
-            <header class="dash-hdr" id="dashHdr">
-                <div class="dh-left">
-                    <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar" aria-expanded="false">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="dh-logo" id="dhLogo">
-                        <div class="dh-mark">Ś</div>
-                        <div class="dh-text">
-                            <span class="dh-name">Savoiré AI</span>
-                            <span class="dh-ver">v2.0</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dh-stats">
-                    <div class="dh-stat dh-stat-streak">
-                        <i class="fas fa-fire" style="color:#ffae00"></i>
-                        <span id="headerStreak" class="dh-stat-val dh-streak-val">0</span>
-                        <span class="dh-stat-lbl">Streak</span>
-                    </div>
-                    <div class="dh-stat"><i class="fas fa-clock"></i> Sessions: <span id="statSessions" class="dh-stat-val">0</span></div>
-                    <div class="dh-stat"><i class="fas fa-history"></i> History: <span id="statHistory" class="dh-stat-val">0</span></div>
-                    <div class="dh-stat"><i class="fas fa-star"></i> Saved: <span id="statSaved" class="dh-stat-val">0</span></div>
-                </div>
-
-                <div class="dh-greeting" id="dhGreeting">Think Less. Know More.</div>
-
-                <div class="dh-actions">
-                    <button class="dh-btn" id="themeBtn" aria-label="Toggle theme"><i class="fas fa-moon" id="themeIcon"></i></button>
-                    <button class="dh-btn" id="settingsBtn" aria-label="Settings"><i class="fas fa-cog"></i></button>
-                    <button class="dh-btn dh-btn-wizard" id="wizardHeaderBtn" aria-label="Open Wizard">
-                        <i class="fas fa-magic"></i>
-                    </button>
-                    <div class="dh-av" id="avBtn" role="button" aria-label="User menu">
-                        <span id="avInitials">Ś</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Avatar Dropdown -->
-            <div class="av-dropdown" id="avDropdown">
-                <div class="av-user">
-                    <div class="av-u-av" id="avDropdownAvatar">Ś</div>
-                    <div>
-                        <div class="av-u-name" id="avDropdownName">Scholar</div>
-                        <div class="av-u-sub">Savoiré AI Member</div>
-                    </div>
-                </div>
-                <div class="av-divider"></div>
-                <button class="av-item" id="avHist"><i class="fas fa-history"></i> Study History</button>
-                <button class="av-item" id="avSaved"><i class="fas fa-star"></i> Saved Notes</button>
-                <button class="av-item" id="avSettings"><i class="fas fa-cog"></i> Settings</button>
-                <div class="av-divider"></div>
-                <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i> Clear All Data</button>
-            </div>
-
-            <!-- Output Toolbar — FIXED: Shown only after output, all buttons work -->
-            <div class="out-toolbar" id="outToolbar" style="display:none">
-                <button class="otb-btn" id="copyBtn"><i class="fas fa-copy"></i> <span>Copy</span></button>
-                <button class="otb-btn" id="pdfBtn"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
-                <button class="otb-btn" id="saveBtn"><i class="fas fa-star"></i> <span>Save</span></button>
-                <button class="otb-btn" id="shareBtn"><i class="fas fa-share-alt"></i> <span>Share</span></button>
-                <button class="otb-btn" id="clearBtn"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
-                <div class="otb-sep"></div>
-                <button class="otb-btn" id="newWizardBtn"><i class="fas fa-magic"></i> <span>New</span></button>
-                <button class="otb-btn" id="focusModeBtn"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
-                <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> generate · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
-            </div>
-
-            <!-- Output Area -->
-            <div class="out-area" id="outArea">
-
-                <!-- Thinking Indicator -->
-                <div id="thinkingWrap" style="display:none">
-                    <div class="thinking-card">
-                        <div class="th-av"><i class="fas fa-brain"></i></div>
-                        <div class="th-body">
-                            <div class="th-title">Savoiré AI is generating your study materials...</div>
-                            <div class="th-dots"><span></span><span></span><span></span></div>
-                            <div class="th-stages">
-                                <span class="ths" id="ts0">🎯 Analysing</span>
-                                <span class="ths" id="ts1">📝 Writing</span>
-                                <span class="ths" id="ts2">🔍 Building</span>
-                                <span class="ths" id="ts3">✨ Crafting</span>
-                                <span class="ths" id="ts4">✅ Finalising</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Empty State — FIXED: Wizard CTA clearly labeled -->
-                <div id="emptyState" class="empty-state">
-                    <div class="es-mark">✨</div>
-                    <div class="es-title">Ready to Study Smarter?</div>
-                    <div class="es-sub">Use the Wizard to generate Notes, Flashcards, Quiz, Summary, or Mind Map — all powered by AI</div>
-                    <button class="empty-wizard-btn" id="emptyWizardBtn">
-                        <i class="fas fa-magic"></i> Open Study Wizard
-                    </button>
-                    <div class="es-features">
-                        <span class="es-feat"><i class="fas fa-book-open"></i> Notes</span>
-                        <span class="es-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
-                        <span class="es-feat"><i class="fas fa-question-circle"></i> Quiz</span>
-                        <span class="es-feat"><i class="fas fa-align-left"></i> Summary</span>
-                        <span class="es-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
-                    </div>
-                    <div class="es-shortcuts">
-                        <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
-                        <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</div>
-                        <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save note</div>
-                        <div class="shortcut"><kbd>Esc</kbd> Close modals</div>
-                    </div>
-                </div>
-
-                <!-- Result Area -->
-                <div id="resultArea"></div>
-
-            </div>
-
-            <!-- Back to Top Button -->
-            <button class="back-to-top" id="backToTopBtn"><i class="fas fa-arrow-up"></i></button>
-
-        </main>
-
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════════════
-         STREAMING OVERLAY — FIXED: Shows live content, header+sidebar still visible below
-         ═══════════════════════════════════════════════════════════════════════════════ -->
-    <div class="stream-overlay" id="streamFullpage" style="display:none">
-        <div class="sfp-header">
-            <div class="sfp-indicator">
-                <span class="sfp-dot"></span>
-                <span class="sfp-dot"></span>
-                <span class="sfp-dot"></span>
-            </div>
-            <span class="sfp-label" id="sfpLabel">Generating study materials...</span>
-            <span class="sfp-topic" id="sfpTopic"></span>
-            <div class="sfp-tool-badge">
-                <i class="fas fa-book-open" id="sfpToolIcon"></i>
-                <span id="sfpToolName">Notes</span>
-            </div>
-            <!-- Stage Progress in Overlay -->
-            <div class="sfp-stages">
-                <span class="ssc-stage" id="ss0">🎯 Analyse</span>
-                <span class="ssc-stage" id="ss1">📝 Write</span>
-                <span class="ssc-stage" id="ss2">🔍 Build</span>
-                <span class="ssc-stage" id="ss3">✨ Craft</span>
-                <span class="ssc-stage" id="ss4">✅ Done</span>
-            </div>
-            <!-- Progress Bar -->
-            <div class="sfp-progress-bar">
-                <div class="sfp-progress-fill" id="sscProgressBar"></div>
-            </div>
+            <button class="empty-mega-btn" id="emptyMegaBtn">
+              <i class="fas fa-layer-group"></i> ⚡ Mega Bundle — All 5
+            </button>
+          </div>
+          <div class="es-features">
+            <span class="es-feat"><i class="fas fa-book-open"></i> Notes</span>
+            <span class="es-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+            <span class="es-feat"><i class="fas fa-question-circle"></i> Quiz</span>
+            <span class="es-feat"><i class="fas fa-align-left"></i> Summary</span>
+            <span class="es-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+            <span class="es-feat es-feat-mega"><i class="fas fa-bolt"></i> All 5 at Once!</span>
+          </div>
+          <div class="es-shortcuts">
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</div>
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save note</div>
+            <div class="shortcut"><kbd>Esc</kbd> Close</div>
+          </div>
         </div>
-        <div class="sfp-scroll" id="sfpScroll">
-            <div class="sfp-text" id="sfpText"></div>
+
+        <!-- Result Area -->
+        <div id="resultArea"></div>
+
+      </div>
+
+      <button class="back-to-top" id="backToTopBtn"><i class="fas fa-arrow-up"></i></button>
+
+    </main>
+  </div>
+
+  <!-- ═══════════ STREAM OVERLAY ═══════════ -->
+  <div class="stream-overlay" id="streamFullpage" style="display:none">
+    <div class="sfp-header">
+      <div class="sfp-left">
+        <div class="sfp-indicator">
+          <span class="sfp-dot"></span>
+          <span class="sfp-dot"></span>
+          <span class="sfp-dot"></span>
         </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════════════
-         MODALS
-         ═══════════════════════════════════════════════════════════════════════════════ -->
-
-    <!-- Wizard Modal — FIXED: 6 Steps, correct labels, works on mobile -->
-    <div class="modal-overlay" id="wizardModal">
-        <div class="modal modal-lg">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-magic"></i> Study Wizard — Step by Step Generator</div>
-                <button class="modal-close" data-close="wizardModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" id="wizardContent"></div>
+        <div>
+          <div class="sfp-label" id="sfpLabel">Generating…</div>
+          <div class="sfp-topic" id="sfpTopic"></div>
         </div>
-    </div>
-
-    <!-- History Modal -->
-    <div class="modal-overlay" id="histModal">
-        <div class="modal modal-md">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-history"></i> Study History <span id="histBadge" class="modal-badge">0</span></div>
-                <button class="modal-close" data-close="histModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="hist-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="histSearchInput" placeholder="Search history...">
-                    <button id="histSearchClear"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="hist-filters">
-                    <button class="hist-filter active" data-filter="all">All</button>
-                    <button class="hist-filter" data-filter="notes">Notes</button>
-                    <button class="hist-filter" data-filter="flashcards">Flashcards</button>
-                    <button class="hist-filter" data-filter="quiz">Quiz</button>
-                    <button class="hist-filter" data-filter="summary">Summary</button>
-                    <button class="hist-filter" data-filter="mindmap">Mind Map</button>
-                </div>
-                <div class="hist-actions">
-                    <button id="clearHistBtn" class="hist-action"><i class="fas fa-trash"></i> Clear All</button>
-                    <button id="exportHistBtn" class="hist-action"><i class="fas fa-download"></i> Export JSON</button>
-                </div>
-                <div id="histList" class="hist-list"></div>
-                <div id="histEmpty" class="hist-empty" style="display:none">
-                    <i class="fas fa-history"></i>
-                    <p>No history yet. Generate some study materials!</p>
-                </div>
-            </div>
+      </div>
+      <div class="sfp-right">
+        <div class="sfp-tool-badge">
+          <i class="fas fa-book-open" id="sfpToolIcon"></i>
+          <span id="sfpToolName">Notes</span>
         </div>
-    </div>
-
-    <!-- Saved Modal -->
-    <div class="modal-overlay" id="savedModal">
-        <div class="modal modal-md">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-star"></i> Saved Notes <span id="savedCount" class="modal-badge">0</span></div>
-                <button class="modal-close" data-close="savedModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div id="savedList" class="saved-list"></div>
-                <div id="savedEmpty" class="saved-empty" style="display:none">
-                    <i class="fas fa-star"></i>
-                    <p>No saved notes yet. Save some study materials!</p>
-                </div>
-            </div>
+        <div class="sfp-stages-row">
+          <span class="ssc-stage" id="ss0">🎯</span>
+          <span class="ssc-stage" id="ss1">📝</span>
+          <span class="ssc-stage" id="ss2">🔍</span>
+          <span class="ssc-stage" id="ss3">✨</span>
+          <span class="ssc-stage" id="ss4">✅</span>
         </div>
+      </div>
     </div>
+    <div class="sfp-progress-track">
+      <div class="sfp-progress-fill" id="sscProgressBar"></div>
+    </div>
+    <div class="sfp-scroll" id="sfpScroll">
+      <div class="sfp-text md-content" id="sfpText"></div>
+    </div>
+  </div>
 
-    <!-- Settings Modal — FIXED: All settings work, added extra options -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal modal-md">
-            <div class="modal-header">
-                <div class="modal-title"><i class="fas fa-cog"></i> Settings & About</div>
-                <button class="modal-close" data-close="settingsModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <div class="settings-title"><i class="fas fa-user"></i> Your Profile</div>
-                    <div class="settings-row">
-                        <div class="settings-label">Display Name</div>
-                        <div class="settings-input-group">
-                            <input type="text" id="nameInput" placeholder="Your name" class="settings-input">
-                            <button id="saveNameBtn" class="settings-btn">Save</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <div class="settings-title"><i class="fas fa-palette"></i> Appearance</div>
-                    <div class="settings-row">
-                        <div class="settings-label">Theme</div>
-                        <div class="theme-buttons">
-                            <button class="theme-btn active" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button>
-                            <button class="theme-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button>
-                        </div>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-label">Font Size</div>
-                        <div class="font-buttons">
-                            <button class="font-btn font-sz" data-size="small">Small</button>
-                            <button class="font-btn font-sz active" data-size="medium">Medium</button>
-                            <button class="font-btn font-sz" data-size="large">Large</button>
-                            <button class="font-btn font-sz" data-size="xlarge">X-Large</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <div class="settings-title"><i class="fas fa-language"></i> Default Language</div>
-                    <div class="settings-row">
-                        <div class="settings-label">Output Language</div>
-                        <select id="defaultLangSel" class="settings-input" style="flex:1;max-width:200px">
-                            <option value="English" selected>🇬🇧 English</option>
-                            <option value="Urdu">🇵🇰 Urdu</option>
-                            <option value="Hindi">🇮🇳 Hindi</option>
-                            <option value="Arabic">🇸🇦 Arabic</option>
-                            <option value="French">🇫🇷 French</option>
-                            <option value="German">🇩🇪 German</option>
-                            <option value="Spanish">🇪🇸 Spanish</option>
-                        </select>
-                        <button id="saveDefaultLangBtn" class="settings-btn">Save</button>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <div class="settings-title"><i class="fas fa-chart-bar"></i> Your Statistics</div>
-                    <div class="stats-grid" id="dsStats"></div>
-                </div>
-                <div class="settings-section">
-                    <div class="settings-title"><i class="fas fa-database"></i> Backup & Restore</div>
-                    <div class="settings-buttons">
-                        <button id="exportDataBtn" class="settings-btn"><i class="fas fa-download"></i> Export Data</button>
-                        <button id="importBackupBtn" class="settings-btn"><i class="fas fa-upload"></i> Import Backup</button>
-                        <button id="clearDataBtn" class="settings-btn danger"><i class="fas fa-trash"></i> Clear All Data</button>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
-                    <div class="about-card-settings">
-                        <div class="about-logo">Ś</div>
-                        <div class="about-name">Savoiré AI v2.0</div>
-                        <div class="about-tagline">Think Less. Know More.</div>
-                        <div class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</div>
-                        <div class="about-founder">
-                            <div class="founder-avatar">ST</div>
-                            <div class="founder-info">
-                                <div class="founder-name">Sooban Talha</div>
-                                <div class="founder-role">Founder & Developer</div>
-                                <div class="founder-company">Sooban Talha Technologies</div>
-                            </div>
-                        </div>
-                        <div class="about-quote">
-                            <i class="fas fa-quote-left"></i>
-                            "I built Savoiré AI because great learning tools shouldn't cost anything. Every student deserves access to the best AI has to offer. Free, forever."
-                            <cite>— Sooban Talha</cite>
-                        </div>
-                        <div class="about-links">
-                            <a href="https://soobantalhatech.xyz" target="_blank" class="about-link"><i class="fas fa-building"></i> soobantalhatech.xyz</a>
-                            <a href="https://savoireai.vercel.app" target="_blank" class="about-link"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+  <!-- ═══════════ MODALS ═══════════ -->
+
+  <!-- Wizard Modal -->
+  <div class="modal-overlay" id="wizardModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-magic"></i> Study Wizard — Step-by-Step Generator</div>
+        <button class="modal-close" data-close="wizardModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="wizardContent"></div>
+    </div>
+  </div>
+
+  <!-- Mega Bundle Modal -->
+  <div class="modal-overlay" id="megaModal">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-layer-group"></i> ⚡ Mega Study Bundle — All 5 Tools</div>
+        <button class="modal-close" data-close="megaModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="mega-intro">
+          <div class="mega-badge-big">⚡ MEGA BUNDLE</div>
+          <p class="mega-desc">Generate <strong>all 5 study tools</strong> for your topic in one premium generation — Notes, Flashcards, Quiz, Summary &amp; Mind Map.</p>
+          <div class="mega-tools-preview">
+            <span class="mega-tool-chip"><i class="fas fa-book-open"></i> Notes</span>
+            <span class="mega-tool-chip"><i class="fas fa-layer-group"></i> Flashcards</span>
+            <span class="mega-tool-chip"><i class="fas fa-question-circle"></i> Quiz</span>
+            <span class="mega-tool-chip"><i class="fas fa-align-left"></i> Summary</span>
+            <span class="mega-tool-chip"><i class="fas fa-project-diagram"></i> Mind Map</span>
+          </div>
         </div>
-    </div>
-
-    <!-- Confirm Modal -->
-    <div class="modal-overlay" id="confirmModal">
-        <div class="modal modal-sm">
-            <div class="modal-header">
-                <div class="modal-title">Confirm Action</div>
-                <button class="modal-close" data-close="confirmModal"><i class="fas fa-times"></i></button>
+        <div class="mega-form">
+          <label class="mega-label"><i class="fas fa-pencil-alt"></i> What topic should we cover?</label>
+          <textarea class="mega-textarea" id="megaTopicInput" rows="4" placeholder="Enter any topic, concept, or paste text to study… e.g. Photosynthesis, World War II, Machine Learning, Newton's Laws"></textarea>
+          <div class="mega-char-count" id="megaCharCount">0 / 4000</div>
+          <div class="mega-options">
+            <div class="mega-opt-group">
+              <label class="mega-opt-label">Language</label>
+              <select id="megaLangSel" class="mega-select">
+                <option value="English">🇬🇧 English</option>
+                <option value="Urdu">🇵🇰 Urdu</option>
+                <option value="Hindi">🇮🇳 Hindi</option>
+                <option value="Arabic">🇸🇦 Arabic</option>
+                <option value="French">🇫🇷 French</option>
+                <option value="German">🇩🇪 German</option>
+                <option value="Spanish">🇪🇸 Spanish</option>
+              </select>
             </div>
-            <div class="modal-body">
-                <p id="confirmMsg">Are you sure?</p>
-                <div class="confirm-buttons">
-                    <button id="confirmOkBtn" class="confirm-btn ok">Yes, Confirm</button>
-                    <button class="confirm-btn cancel" data-close="confirmModal">Cancel</button>
-                </div>
+            <div class="mega-opt-group">
+              <label class="mega-opt-label">Depth</label>
+              <select id="megaDepthSel" class="mega-select">
+                <option value="standard">📏 Standard</option>
+                <option value="detailed" selected>📚 Detailed</option>
+                <option value="comprehensive">📖 Comprehensive</option>
+                <option value="expert">🎓 Expert</option>
+              </select>
             </div>
+          </div>
+          <div class="mega-sugg">
+            <div class="mega-sugg-label">Quick picks:</div>
+            <div class="mega-sugg-pills">
+              <button class="mega-sugg-pill" data-topic="Photosynthesis">🌿 Photosynthesis</button>
+              <button class="mega-sugg-pill" data-topic="Newton's Three Laws of Motion">⚡ Newton's Laws</button>
+              <button class="mega-sugg-pill" data-topic="World War II — causes, events, consequences">🌍 World War II</button>
+              <button class="mega-sugg-pill" data-topic="Machine Learning fundamentals">🤖 Machine Learning</button>
+              <button class="mega-sugg-pill" data-topic="DNA Replication and Protein Synthesis">🧬 DNA Replication</button>
+              <button class="mega-sugg-pill" data-topic="French Revolution — causes and legacy">🇫🇷 French Revolution</button>
+            </div>
+          </div>
+          <button class="mega-generate-btn" id="megaGenerateBtn">
+            <i class="fas fa-bolt"></i> Generate Mega Bundle — All 5 Tools
+          </button>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Welcome Overlay -->
-    <div class="modal-overlay" id="welcomeOverlay">
-        <div class="modal" style="max-width:450px;text-align:center">
-            <div class="modal-body" style="text-align:center">
-                <div class="welcome-logo">Ś</div>
-                <h2 class="welcome-title">Welcome to Savoiré AI</h2>
-                <p class="welcome-subtitle">The world's most advanced AI study assistant</p>
-                <div class="welcome-features">
-                    <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
-                    <span class="welcome-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
-                    <span class="welcome-feat"><i class="fas fa-question-circle"></i> Quiz</span>
-                    <span class="welcome-feat"><i class="fas fa-align-left"></i> Summary</span>
-                    <span class="welcome-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
-                    <span class="welcome-feat"><i class="fas fa-file-pdf"></i> PDF Export</span>
-                    <span class="welcome-feat"><i class="fas fa-infinity"></i> Free Forever</span>
-                </div>
-                <p class="welcome-quote">"Think Less. Know More."</p>
-                <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started">
-                <button id="welcomeBtn" class="welcome-btn">Start Studying →</button>
-                <button id="welcomeSkip" class="welcome-skip">Skip for now</button>
-                <p class="welcome-footer">Free forever · Built by Sooban Talha Technologies</p>
-            </div>
+  <!-- History Modal -->
+  <div class="modal-overlay" id="histModal">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-history"></i> Study History <span id="histBadge" class="modal-badge">0</span></div>
+        <button class="modal-close" data-close="histModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="hist-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="histSearchInput" placeholder="Search history…">
+          <button id="histSearchClear"><i class="fas fa-times"></i></button>
         </div>
-    </div>
-
-    <!-- Welcome Back Overlay -->
-    <div class="modal-overlay" id="welcomeBackOverlay">
-        <div class="modal" style="max-width:400px;text-align:center">
-            <div class="modal-body" style="text-align:center">
-                <div class="wb-icon">🎓</div>
-                <h2 class="wb-title">Welcome back, <span id="wbName">Scholar</span>!</h2>
-                <p class="wb-sub">Ready to continue your learning journey?</p>
-                <div class="wb-stats">
-                    <div class="wb-stat">
-                        <div class="wb-stat-val" id="wbStreak">0</div>
-                        <div class="wb-stat-lbl">Day Streak</div>
-                    </div>
-                    <div class="wb-stat">
-                        <div class="wb-stat-val" id="wbSessions">0</div>
-                        <div class="wb-stat-lbl">Sessions</div>
-                    </div>
-                    <div class="wb-stat">
-                        <div class="wb-stat-val" id="wbSaved">0</div>
-                        <div class="wb-stat-lbl">Saved Notes</div>
-                    </div>
-                </div>
-                <button id="welcomeBackBtn" class="wb-btn">Continue →</button>
-            </div>
+        <div class="hist-filters">
+          <button class="hist-filter active" data-filter="all">All</button>
+          <button class="hist-filter" data-filter="notes">Notes</button>
+          <button class="hist-filter" data-filter="flashcards">Flashcards</button>
+          <button class="hist-filter" data-filter="quiz">Quiz</button>
+          <button class="hist-filter" data-filter="summary">Summary</button>
+          <button class="hist-filter" data-filter="mindmap">Mind Map</button>
+          <button class="hist-filter" data-filter="all">Mega</button>
         </div>
+        <div class="hist-actions">
+          <button id="clearHistBtn" class="hist-action"><i class="fas fa-trash"></i> Clear All</button>
+          <button id="exportHistBtn" class="hist-action"><i class="fas fa-download"></i> Export JSON</button>
+        </div>
+        <div id="histList" class="hist-list"></div>
+        <div id="histEmpty" class="hist-empty" style="display:none">
+          <i class="fas fa-history"></i><p>No history yet. Generate some study materials!</p>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════════════
-         SCRIPTS
-         ═══════════════════════════════════════════════════════════════════════════════ -->
-    <script>
-        // Theme flash prevention
-        (function() {
-            try {
-                const prefs = JSON.parse(localStorage.getItem('sv_prefs') || '{}');
-                if(prefs.theme) document.documentElement.setAttribute('data-theme', prefs.theme);
-                if(prefs.fontSize) document.documentElement.setAttribute('data-font', prefs.fontSize);
-            } catch(e) {}
-        })();
+  <!-- Saved Modal -->
+  <div class="modal-overlay" id="savedModal">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-star"></i> Saved Notes <span id="savedCount" class="modal-badge">0</span></div>
+        <button class="modal-close" data-close="savedModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="savedList" class="saved-list"></div>
+        <div id="savedEmpty" class="saved-empty" style="display:none">
+          <i class="fas fa-star"></i><p>No saved notes yet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        // Remove loading spinner
-        window.addEventListener('load', function() {
-            document.body.classList.add('loaded');
-            const spinner = document.querySelector('.loading-spinner');
-            if(spinner) spinner.remove();
-        });
-    </script>
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-cog"></i> Settings</div>
+        <button class="modal-close" data-close="settingsModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <!-- Profile -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-user"></i> Your Profile</div>
+          <div class="settings-row">
+            <div class="settings-label">Display Name</div>
+            <div class="settings-input-group">
+              <input type="text" id="nameInput" placeholder="Your name" class="settings-input">
+              <button id="saveNameBtn" class="settings-btn">Save</button>
+            </div>
+          </div>
+        </div>
+        <!-- Appearance -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-palette"></i> Appearance</div>
+          <div class="settings-row">
+            <div class="settings-label">Theme</div>
+            <div class="theme-buttons">
+              <button class="theme-btn active" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button>
+              <button class="theme-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button>
+              <button class="theme-btn" data-theme-btn="golden"><i class="fas fa-star"></i> Golden</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">Font Size</div>
+            <div class="font-buttons">
+              <button class="font-btn font-sz" data-size="xsmall">XS</button>
+              <button class="font-btn font-sz" data-size="small">S</button>
+              <button class="font-btn font-sz active" data-size="medium">M</button>
+              <button class="font-btn font-sz" data-size="large">L</button>
+              <button class="font-btn font-sz" data-size="xlarge">XL</button>
+            </div>
+          </div>
+        </div>
+        <!-- Default Language -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-language"></i> Default Language</div>
+          <div class="settings-row">
+            <div class="settings-label">Output Language</div>
+            <div class="settings-input-group">
+              <select id="defaultLangSel" class="settings-input" style="flex:1;max-width:180px">
+                <option value="English" selected>🇬🇧 English</option>
+                <option value="Urdu">🇵🇰 Urdu</option>
+                <option value="Hindi">🇮🇳 Hindi</option>
+                <option value="Arabic">🇸🇦 Arabic</option>
+                <option value="French">🇫🇷 French</option>
+                <option value="German">🇩🇪 German</option>
+                <option value="Spanish">🇪🇸 Spanish</option>
+                <option value="Portuguese">🇧🇷 Portuguese</option>
+                <option value="Russian">🇷🇺 Russian</option>
+                <option value="Turkish">🇹🇷 Turkish</option>
+                <option value="Chinese (Simplified)">🇨🇳 Chinese</option>
+                <option value="Japanese">🇯🇵 Japanese</option>
+                <option value="Korean">🇰🇷 Korean</option>
+              </select>
+              <button id="saveDefaultLangBtn" class="settings-btn">Save</button>
+            </div>
+          </div>
+        </div>
+        <!-- PDF Style -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-file-pdf"></i> PDF Style</div>
+          <div class="settings-row">
+            <div class="settings-label">PDF Theme</div>
+            <div class="theme-buttons">
+              <button class="theme-btn active" data-pdf-theme="dark"><i class="fas fa-moon"></i> Dark PDF</button>
+              <button class="theme-btn" data-pdf-theme="light"><i class="fas fa-sun"></i> Light PDF</button>
+            </div>
+          </div>
+        </div>
+        <!-- Stats -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-chart-bar"></i> Your Statistics</div>
+          <div class="stats-grid" id="dsStats"></div>
+        </div>
+        <!-- Backup -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-database"></i> Backup &amp; Restore</div>
+          <div class="settings-buttons">
+            <button id="exportDataBtn" class="settings-btn"><i class="fas fa-download"></i> Export</button>
+            <button id="importBackupBtn" class="settings-btn"><i class="fas fa-upload"></i> Import</button>
+            <button id="clearDataBtn" class="settings-btn danger"><i class="fas fa-trash"></i> Clear All</button>
+          </div>
+        </div>
+        <!-- About -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
+          <div class="about-card-settings">
+            <div class="about-logo">Ś</div>
+            <div class="about-name">Savoiré AI v2.0</div>
+            <div class="about-tagline">"Think Less. Know More."</div>
+            <div class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</div>
+            <div class="about-founder">
+              <div class="founder-avatar">ST</div>
+              <div class="founder-info">
+                <div class="founder-name">Sooban Talha</div>
+                <div class="founder-role">Founder &amp; Developer</div>
+                <div class="founder-company">Sooban Talha Technologies</div>
+              </div>
+            </div>
+            <div class="about-quote">
+              <i class="fas fa-quote-left"></i>
+              "I built Savoiré AI because great learning tools shouldn't cost anything."
+              <cite>— Sooban Talha</cite>
+            </div>
+            <div class="about-links">
+              <a href="https://soobantalhatech.xyz" target="_blank" class="about-link"><i class="fas fa-building"></i> soobantalhatech.xyz</a>
+              <a href="https://savoireai.vercel.app" target="_blank" class="about-link"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Main Application Script -->
-    <script src="app.js"></script>
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div class="modal-title">Confirm Action</div>
+        <button class="modal-close" data-close="confirmModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMsg">Are you sure?</p>
+        <div class="confirm-buttons">
+          <button id="confirmOkBtn" class="confirm-btn ok">Yes, Confirm</button>
+          <button class="confirm-btn cancel" data-close="confirmModal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-</body>
+  <!-- Welcome Overlay (New User) -->
+  <div class="modal-overlay" id="welcomeOverlay">
+    <div class="modal" style="max-width:460px;text-align:center">
+      <div class="modal-body" style="text-align:center;padding:32px">
+        <div class="welcome-logo">Ś</div>
+        <h2 class="welcome-title">Welcome to Savoiré AI</h2>
+        <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
+        <div class="welcome-features">
+          <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
+          <span class="welcome-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+          <span class="welcome-feat"><i class="fas fa-question-circle"></i> Quiz</span>
+          <span class="welcome-feat"><i class="fas fa-align-left"></i> Summary</span>
+          <span class="welcome-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+          <span class="welcome-feat" style="border-color:rgba(212,175,55,.4);color:#d4af37"><i class="fas fa-bolt"></i> All 5 at Once!</span>
+        </div>
+        <p class="welcome-quote">"Think Less. Know More."</p>
+        <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started…" autocomplete="given-name">
+        <button id="welcomeBtn" class="welcome-btn">Start Studying →</button>
+        <button id="welcomeSkip" class="welcome-skip">Skip for now</button>
+        <p class="welcome-footer">Free forever · Built by Sooban Talha Technologies</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome Back Overlay -->
+  <div class="modal-overlay" id="welcomeBackOverlay">
+    <div class="modal" style="max-width:400px;text-align:center">
+      <div class="modal-body" style="text-align:center;padding:32px">
+        <div class="wb-icon">🎓</div>
+        <h2 class="wb-title">Welcome back, <span id="wbName">Scholar</span>!</h2>
+        <p class="wb-sub">Ready to continue your learning journey?</p>
+        <div class="wb-stats">
+          <div class="wb-stat">
+            <div class="wb-stat-val" id="wbStreak">0</div>
+            <div class="wb-stat-lbl">Day Streak</div>
+          </div>
+          <div class="wb-stat">
+            <div class="wb-stat-val" id="wbSessions">0</div>
+            <div class="wb-stat-lbl">Sessions</div>
+          </div>
+          <div class="wb-stat">
+            <div class="wb-stat-val" id="wbSaved">0</div>
+            <div class="wb-stat-lbl">Saved Notes</div>
+          </div>
+        </div>
+        <button id="welcomeBackBtn" class="wb-btn">Continue Studying →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Modal -->
+  <div class="modal-overlay" id="demoModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-play-circle"></i> Savoiré AI — Interactive Demo Tour</div>
+        <button class="modal-close" data-close="demoModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="demoContent">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme flash prevention
+    (function(){
+      try{
+        const p=JSON.parse(localStorage.getItem('sv_prefs')||'{}');
+        if(p.theme)document.documentElement.setAttribute('data-theme',p.theme);
+        if(p.fontSize)document.documentElement.setAttribute('data-font',p.fontSize);
+      }catch(e){}
+    })();
+    window.addEventListener('load',function(){
+      document.body.classList.add('loaded');
+      const s=document.querySelector('.loading-spinner');
+      if(s)s.remove();
+    });
+  </script>
+  <script src="app.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0455ee80d3fa89b',t:'MTc4MDIyNDEzNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
