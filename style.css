@@ -14209,3 +14209,455 @@ img.loaded   { opacity: 1; }
 /* line 22048 */
 /* line 22049 */
 /* line 22050+ — Savoiré AI v2.0 Complete | soobantalhatech.xyz */
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   APPENDIX K: NEW LIVE OUTPUT COMPONENTS — sfp-init-state, live-gen-*, live-mm-central-node, etc.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Stream overlay initial loading state (per-tool) ── */
+.sfp-init-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+  animation: fadeIn .4s ease;
+  min-height: 260px;
+}
+
+.sfp-init-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  animation: sfpIconPulse 2s ease infinite;
+}
+
+@keyframes sfpIconPulse {
+  0%,100% { transform: scale(1);    filter: drop-shadow(0 0 8px currentColor); }
+  50%      { transform: scale(1.12); filter: drop-shadow(0 0 22px currentColor); }
+}
+
+.sfp-init-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e0e0ff;
+  letter-spacing: .02em;
+}
+
+.sfp-init-sub {
+  font-size: .82rem;
+  color: rgba(255,255,255,.45);
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* ── NEW: Unified live-gen topbar (replaces old live-cards-header) ── */
+.live-gen-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,.03);
+  border-radius: 12px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.live-gen-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  animation: sfpIconPulse 2s ease infinite;
+}
+
+.live-gen-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.live-gen-title {
+  font-size: .88rem;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-gen-sub {
+  font-size: .72rem;
+  color: rgba(255,255,255,.4);
+  margin-top: 2px;
+}
+
+.live-gen-badge {
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+}
+
+/* ── Unified progress bar ── */
+.live-gen-bar-wrap {
+  height: 5px;
+  background: rgba(255,255,255,.07);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.live-gen-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width .5s cubic-bezier(.25,.46,.45,.94);
+}
+
+/* ── Flashcard new items ── */
+.live-card-badge {
+  font-size: .58rem;
+  font-weight: 800;
+  color: rgba(191,0,255,.7);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 7px;
+  font-family: var(--font-mono, monospace);
+}
+
+.live-card-q-label,
+.live-card-a-label {
+  font-size: .58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  opacity: .5;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.live-card-divider {
+  height: 1px;
+  background: rgba(191,0,255,.2);
+  margin: 8px 0;
+}
+
+.live-card-loading-slot {
+  background: rgba(255,255,255,.02) !important;
+  border-color: rgba(255,255,255,.07) !important;
+  animation: none !important;
+}
+
+.live-card-skeleton-line {
+  height: 10px;
+  background: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.06) 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  animation: skeletonShimmer 1.5s infinite linear;
+}
+
+@keyframes skeletonShimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* ── Quiz toprow ── */
+.live-quiz-toprow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+  flex-wrap: wrap;
+}
+
+.live-quiz-num {
+  font-size: .7rem;
+  font-weight: 800;
+  color: rgba(0,255,136,.8);
+  font-family: var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.live-quiz-diff {
+  font-size: .6rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid;
+  text-transform: capitalize;
+}
+
+.live-quiz-tag {
+  font-size: .6rem;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.45);
+}
+
+.live-quiz-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .76rem;
+  color: rgba(255,255,255,.55);
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all .15s;
+}
+
+.live-quiz-opt-letter {
+  font-size: .65rem;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+}
+
+/* ── Mind Map: central node ── */
+.live-mm-central-node {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, rgba(212,175,55,.15), rgba(0,212,255,.08));
+  border: 2px solid rgba(212,175,55,.35);
+  border-radius: 40px;
+  margin-bottom: 8px;
+  animation: liveCardIn .5s ease;
+  box-shadow: 0 0 30px rgba(212,175,55,.15);
+}
+
+.live-mm-central-text {
+  font-size: .98rem;
+  font-weight: 800;
+  color: #d4af37;
+  letter-spacing: .02em;
+}
+
+.live-mm-central-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 46px;
+  border: 2px solid rgba(212,175,55,.2);
+  animation: centralPulse 2s ease infinite;
+  pointer-events: none;
+}
+
+@keyframes centralPulse {
+  0%,100% { opacity: .8; transform: scale(1); }
+  50%      { opacity: 0;  transform: scale(1.06); }
+}
+
+.live-mm-connector-line {
+  width: 2px;
+  height: 20px;
+  background: linear-gradient(#d4af37, transparent);
+  margin: 0 auto 8px;
+}
+
+.live-mm-branch-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.live-mm-branch-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.live-mm-branch-count {
+  font-size: .62rem;
+  font-family: var(--font-mono, monospace);
+  margin-left: auto;
+}
+
+.live-mm-link-tag {
+  font-size: .6rem;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.4);
+}
+
+.live-mm-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Completion & footer ── */
+.live-gen-complete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1.5px solid;
+  font-size: .86rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.8);
+  margin-top: 16px;
+  animation: liveCardIn .5s ease;
+}
+
+.live-gen-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+  font-size: .78rem;
+  color: rgba(255,255,255,.4);
+  font-style: italic;
+  animation: fadeIn .4s ease;
+}
+
+/* ── Live summary wrapper ── */
+.live-summary-wrapper {
+  animation: fadeIn .3s ease;
+}
+
+.live-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .8rem;
+  color: #00d4ff;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,212,255,.15);
+}
+
+.live-summary-body {
+  line-height: 1.8;
+}
+
+/* ── Stream overlay fading out ── */
+.stream-overlay.fading-out {
+  animation: sfpFadeOut .3s ease forwards;
+}
+
+@keyframes sfpFadeOut {
+  to { opacity: 0; pointer-events: none; }
+}
+
+/* ── sfpText done state ── */
+.sfp-text.done {
+  opacity: .6;
+  transition: opacity .5s ease;
+}
+
+/* ── END APPENDIX K ── */
+
+/* ── Live Research Wrapper (for card tools during Phase 1) ── */
+.live-research-wrapper {
+  animation: fadeIn .3s ease;
+}
+
+.live-research-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .82rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+.live-research-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.live-stat-chip {
+  font-size: .68rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.55);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.live-research-preview {
+  font-size: .78rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,.6);
+  max-height: 340px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0));
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0));
+}
+
+.live-research-preview h1, .live-research-preview h2, .live-research-preview h3 {
+  font-size: .9rem !important;
+  color: rgba(255,255,255,.8) !important;
+}
+
+/* ── END APPENDIX L ── */
+
+/* ── Sidebar Avatar Picker ── */
+.sidebar-avatar-picker {
+  padding: 10px 16px 6px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  margin-bottom: 2px;
+}
+.sidebar-avatar-picker .avatar-picker-label {
+  font-size: .65rem;
+  font-weight: 600;
+  color: rgba(255,255,255,.4);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 8px;
+}
+.sidebar-avatar-picker .avatar-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sidebar-avatar-picker .avatar-color-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s;
+  font-size: .58rem;
+  color: #fff;
+}
+.sidebar-avatar-picker .avatar-color-btn:hover { transform: scale(1.18); border-color: rgba(255,255,255,.5); }
+.sidebar-avatar-picker .avatar-color-btn.active { border-color: #fff; transform: scale(1.12); box-shadow: 0 0 10px rgba(255,255,255,.4); }
+/* ── END Sidebar Avatar Picker ── */

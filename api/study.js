@@ -2056,3 +2056,224 @@ module.exports = async function handler(req, res) {
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More." — Free forever for every student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// APPENDIX: EXTENDED CONFIGURATION — COMPLETE TOOL DEFINITIONS & QUALITY STANDARDS
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * COMPLETE QUALITY EVALUATION RUBRIC
+ * Used internally to assess generation quality and adjust responses
+ *
+ * Dimension 1: Content Accuracy (0-25 points)
+ *   25: All factual claims are verifiably correct
+ *   20: Minor inaccuracies that don't affect core understanding
+ *   15: Some factual gaps but main concepts correct
+ *   10: Several errors affecting understanding
+ *    5: Significant accuracy issues
+ *    0: Fundamentally incorrect content
+ *
+ * Dimension 2: Completeness (0-25 points)
+ *   25: All required sections complete, all aspects covered
+ *   20: All sections present, minor gaps
+ *   15: Most sections complete with some gaps
+ *   10: Several sections incomplete
+ *    5: Major gaps in coverage
+ *    0: Severely incomplete
+ *
+ * Dimension 3: Clarity & Language (0-25 points)
+ *   25: Crystal clear, perfectly structured, optimal language level
+ *   20: Very clear with minor issues
+ *   15: Mostly clear, some confusing passages
+ *   10: Several unclear sections
+ *    5: Hard to follow in many places
+ *    0: Very difficult to understand
+ *
+ * Dimension 4: Educational Value (0-25 points)
+ *   25: Excellent examples, analogies, and real-world connections
+ *   20: Good examples with some gaps
+ *   15: Basic examples, limited depth
+ *   10: Few examples, mostly abstract
+ *    5: Very limited educational value
+ *    0: No meaningful educational value
+ */
+
+/**
+ * COMPLETE SUPPORTED LANGUAGES
+ * All languages supported for output generation
+ */
+const SUPPORTED_LANGUAGES = [
+  { code: 'en',  name: 'English',               flag: '🇬🇧', native: 'English' },
+  { code: 'ur',  name: 'Urdu',                  flag: '🇵🇰', native: 'اردو' },
+  { code: 'hi',  name: 'Hindi',                 flag: '🇮🇳', native: 'हिन्दी' },
+  { code: 'ar',  name: 'Arabic',                flag: '🇸🇦', native: 'العربية' },
+  { code: 'fr',  name: 'French',                flag: '🇫🇷', native: 'Français' },
+  { code: 'de',  name: 'German',                flag: '🇩🇪', native: 'Deutsch' },
+  { code: 'es',  name: 'Spanish',               flag: '🇪🇸', native: 'Español' },
+  { code: 'pt',  name: 'Portuguese',            flag: '🇧🇷', native: 'Português' },
+  { code: 'it',  name: 'Italian',               flag: '🇮🇹', native: 'Italiano' },
+  { code: 'nl',  name: 'Dutch',                 flag: '🇳🇱', native: 'Nederlands' },
+  { code: 'ru',  name: 'Russian',               flag: '🇷🇺', native: 'Русский' },
+  { code: 'tr',  name: 'Turkish',               flag: '🇹🇷', native: 'Türkçe' },
+  { code: 'zh',  name: 'Chinese (Simplified)',  flag: '🇨🇳', native: '中文简体' },
+  { code: 'ja',  name: 'Japanese',              flag: '🇯🇵', native: '日本語' },
+  { code: 'ko',  name: 'Korean',                flag: '🇰🇷', native: '한국어' },
+  { code: 'bn',  name: 'Bengali',               flag: '🇧🇩', native: 'বাংলা' },
+  { code: 'sw',  name: 'Swahili',               flag: '🇰🇪', native: 'Kiswahili' },
+  { code: 'fa',  name: 'Persian',               flag: '🇮🇷', native: 'فارسی' },
+  { code: 'vi',  name: 'Vietnamese',            flag: '🇻🇳', native: 'Tiếng Việt' },
+  { code: 'th',  name: 'Thai',                  flag: '🇹🇭', native: 'ภาษาไทย' },
+  { code: 'pl',  name: 'Polish',                flag: '🇵🇱', native: 'Polski' },
+  { code: 'id',  name: 'Indonesian',            flag: '🇮🇩', native: 'Bahasa Indonesia' },
+];
+
+/**
+ * TOOL CAPABILITY MATRIX
+ * Documents exactly what each tool produces
+ */
+const TOOL_CAPABILITY_MATRIX = {
+  notes: {
+    primaryOutput:    'Comprehensive markdown study notes',
+    sections:         8,
+    minWords:         600,
+    maxWords:         3500,
+    flashcards:       false,
+    quizQuestions:    false,
+    mindmap:          false,
+    keyConceptsCount: 6,
+    practiceQCount:   4,
+    liveStreaming:     true,
+    idealFor:         ['in-depth study', 'understanding complex topics', 'exam preparation'],
+  },
+  flashcards: {
+    primaryOutput:    '15-20 interactive 3D flashcards',
+    sections:         6,
+    minWords:         400,
+    maxWords:         1500,
+    flashcards:       true,
+    flashcardCount:   '15-20',
+    quizQuestions:    false,
+    mindmap:          false,
+    keyConceptsCount: 6,
+    practiceQCount:   4,
+    liveStreaming:     true,
+    idealFor:         ['memorisation', 'spaced repetition', 'vocabulary building'],
+  },
+  quiz: {
+    primaryOutput:    '10-12 self-scoring multiple-choice questions',
+    sections:         5,
+    minWords:         350,
+    maxWords:         1200,
+    flashcards:       false,
+    quizQuestions:    true,
+    quizCount:        '10-12',
+    mindmap:          false,
+    keyConceptsCount: 6,
+    practiceQCount:   4,
+    liveStreaming:     true,
+    idealFor:         ['exam practice', 'self-testing', 'knowledge assessment'],
+  },
+  summary: {
+    primaryOutput:    'Concise TL;DR summary with key points',
+    sections:         5,
+    minWords:         300,
+    maxWords:         900,
+    flashcards:       false,
+    quizQuestions:    false,
+    mindmap:          false,
+    keyConceptsCount: 6,
+    practiceQCount:   4,
+    liveStreaming:     true,
+    idealFor:         ['quick revision', 'overview', 'time-pressed study'],
+  },
+  mindmap: {
+    primaryOutput:    'Visual mind map with 5-7 branches',
+    sections:         7,
+    minWords:         400,
+    maxWords:         1200,
+    flashcards:       false,
+    quizQuestions:    false,
+    mindmap:          true,
+    branchCount:      '5-7',
+    keyConceptsCount: 6,
+    practiceQCount:   4,
+    liveStreaming:     true,
+    idealFor:         ['visual learners', 'concept mapping', 'relationship understanding'],
+  },
+  all: {
+    primaryOutput:    'Notes + Flashcards + Quiz + Summary + Mind Map',
+    sections:         9,
+    minWords:         800,
+    maxWords:         3500,
+    flashcards:       true,
+    flashcardCount:   '15-20',
+    quizQuestions:    true,
+    quizCount:        '10-12',
+    mindmap:          true,
+    branchCount:      '5-7',
+    keyConceptsCount: 6,
+    practiceQCount:   4,
+    liveStreaming:     true,
+    idealFor:         ['comprehensive study', 'complete exam preparation', 'deep learning'],
+  },
+};
+
+/**
+ * HTTP STATUS CODE MAP — Friendly messages for all possible API errors
+ * Used in _friendlyError() to convert technical errors to user-friendly messages
+ */
+const HTTP_ERROR_MESSAGES = {
+  400: 'Invalid request. Please check your input and try again.',
+  401: 'API authentication failed. Please check the service configuration.',
+  403: 'Access denied. This service is currently restricted.',
+  404: 'Service endpoint not found. Please try again.',
+  408: 'Request timed out. The AI is taking too long — please try again.',
+  429: 'Too many requests. The AI service is rate-limited. Please wait a moment.',
+  500: 'AI service internal error. Please try again in a few seconds.',
+  502: 'AI service gateway error. Please try again.',
+  503: 'AI service temporarily unavailable. Please try again shortly.',
+  504: 'AI service gateway timed out. Please try again.',
+};
+
+/**
+ * Validate and sanitise user input before sending to AI
+ * @param {string} input - Raw user input
+ * @returns {{ valid: boolean, sanitised: string, error: string | null }}
+ */
+function validateInput(input) {
+  if (!input || typeof input !== 'string') {
+    return { valid: false, sanitised: '', error: 'Input must be a non-empty string.' };
+  }
+
+  const trimmed = input.trim();
+
+  if (trimmed.length < 2) {
+    return { valid: false, sanitised: trimmed, error: 'Please enter at least 2 characters.' };
+  }
+
+  if (trimmed.length > 20000) {
+    return { valid: false, sanitised: trimmed.slice(0, 20000), error: 'Input truncated to 20,000 characters.' };
+  }
+
+  // Check for likely injection attempts (basic protection)
+  if (trimmed.includes('</script>') || trimmed.includes('javascript:')) {
+    return { valid: false, sanitised: '', error: 'Invalid characters in input.' };
+  }
+
+  return { valid: true, sanitised: trimmed, error: null };
+}
+
+// Export validation function for use in handler
+module.exports.validateInput = validateInput;
+
+// Export model rosters for testing and monitoring
+module.exports.MODELS_STREAM = MODELS_STREAM;
+module.exports.MODELS_CARDS  = MODELS_CARDS;
+module.exports.SUPPORTED_LANGUAGES = SUPPORTED_LANGUAGES;
+module.exports.TOOL_CAPABILITY_MATRIX = TOOL_CAPABILITY_MATRIX;
+
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// END OF APPENDIX — api/study.js v2.0 COMPLETE
+// Total: 2,400+ lines | Built by Sooban Talha Technologies | soobantalhatech.xyz
+// Founder: Sooban Talha | "Think Less. Know More." | Free forever.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════

@@ -567,7 +567,7 @@ class SavoireApp {
       // Saved modal
       'savedList','savedEmpty','savedCount',
       // Welcome
-      'welcomeOverlay','welcomeBackOverlay','welcomeNameInput','welcomeBtn','welcomeSkip',
+      'welcomeOverlay','welcomeBackOverlay','welcomeNameInput','welcomeBtn',
       'wbName','wbStreak','wbSessions','wbSaved','welcomeBackBtn',
       // Navigation
       'navWizard','navAll','navHistory','navSaved','navSettings','navFocus',
@@ -1344,18 +1344,109 @@ Examples:
     }
   }
 
+  // ════════════════════════════════════════════════════════════════════════════
+  // SIMULATE STREAM — fallback for when server returns plain JSON (not SSE)
+  // Simulates progressive token rendering so UI still looks live
+  // ════════════════════════════════════════════════════════════════════════════
+  _simulateStream(data, resolve, reject) {
+    if (!data || typeof data !== 'object') { reject(new Error('Invalid response')); return; }
+    if (data.error) { reject(new Error(data.error)); return; }
+
+    const tool = this.tool || 'notes';
+    const notes = data.ultra_long_notes || data.notes || '';
+
+    // For card-based tools — directly animate cards in live view then resolve
+    if (tool === 'flashcards' && Array.isArray(data.flashcards) && data.flashcards.length) {
+      this._liveCards = [];
+      const cards = data.flashcards;
+      let i = 0;
+      const tick = () => {
+        if (i >= cards.length) { resolve(data); return; }
+        this._liveCards.push(cards[i]);
+        this._updateLiveCards(i, cards.length);
+        i++;
+        setTimeout(tick, 120);
+      };
+      setTimeout(tick, 200);
+      return;
+    }
+    if (tool === 'quiz' && Array.isArray(data.quiz_questions) && data.quiz_questions.length) {
+      this._liveQuestions = [];
+      const qs = data.quiz_questions;
+      let i = 0;
+      const tick = () => {
+        if (i >= qs.length) { resolve(data); return; }
+        this._liveQuestions.push(qs[i]);
+        this._updateLiveQuestions(i, qs.length);
+        i++;
+        setTimeout(tick, 140);
+      };
+      setTimeout(tick, 200);
+      return;
+    }
+    if (tool === 'mindmap' && data.mindmap?.branches?.length) {
+      this._liveBranches  = [];
+      this._liveMMCentral = data.mindmap.central || '';
+      this._liveMMConns   = data.mindmap.connections || [];
+      const branches = data.mindmap.branches;
+      this._updateLiveMindmap(-1, branches.length);
+      let i = 0;
+      const tick = () => {
+        if (i >= branches.length) { resolve(data); return; }
+        this._liveBranches.push(branches[i]);
+        this._updateLiveMindmap(i, branches.length);
+        i++;
+        setTimeout(tick, 160);
+      };
+      setTimeout(tick, 300);
+      return;
+    }
+
+    // For notes/summary/all — stream text token by token
+    if (!notes) { resolve(data); return; }
+    const CHUNK = 4;
+    let pos = 0;
+    let renderThrottle = 0;
+    const stream = () => {
+      if (pos >= notes.length) {
+        if (this.el.sfpText) {
+          this.el.sfpText.classList.remove('live-md');
+          this.el.sfpText.classList.add('done');
+        }
+        resolve(data);
+        return;
+      }
+      this.streamBuffer += notes.slice(pos, pos + CHUNK);
+      pos += CHUNK;
+      const now = Date.now();
+      if (now - renderThrottle > 32 && this.el.sfpText) {
+        renderThrottle = now;
+        this._renderLiveNotes(tool);
+      }
+      this._updateStageByProgress(pos);
+      setTimeout(stream, 6);
+    };
+    setTimeout(stream, 100);
+  }
+
   async _streamSSE(message, opts) {
-    // ══════════════════════════════════════════════════════════════════════
-    // WORLD-CLASS SSE STREAMING — Handles ALL tool types with live animation
-    // New events handled:
-    //   token    → streaming notes token (render live with markdown)
-    //   card     → one flashcard streamed (animate in one by one)
-    //   question → one quiz question streamed (animate in)
-    //   branch   → one mindmap branch streamed (animate in)
-    //   stage    → progress stage update
-    //   done     → complete final data object
-    //   error    → generation error
-    // ══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WORLD-CLASS SSE STREAMING — Properly parses event: + data: lines
+    // Protocol: each SSE message is:
+    //   event: <eventName>\n
+    //   data: <json>\n
+    //   \n
+    //
+    // Events:
+    //   heartbeat → ignore (connection confirmed)
+    //   stage     → update progress stage + label
+    //   token     → stream one text token (notes/summary live render)
+    //   card      → one flashcard animated in
+    //   question  → one quiz question animated in
+    //   branch    → one mindmap branch animated in
+    //   done      → final complete data object → resolve
+    //   error     → error message → reject
+    // ═══════════════════════════════════════════════════════════════════════════
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({
         message,
@@ -1366,12 +1457,12 @@ Examples:
         options:   { ...opts, stream: true },
       });
 
-      // Accumulated cards (for flashcard/quiz/mindmap live streaming)
-      this._liveCards    = [];
-      this._liveQuestions= [];
-      this._liveBranches = [];
-      this._liveMMCentral= '';
-      this._liveMMConns  = [];
+      // Reset live data accumulators
+      this._liveCards     = [];
+      this._liveQuestions = [];
+      this._liveBranches  = [];
+      this._liveMMCentral = '';
+      this._liveMMConns   = [];
 
       fetch(SAVOIRÉ.API_URL, {
         method:  'POST',
@@ -1384,257 +1475,463 @@ Examples:
           reject(new Error(d.error || `Server error (${res.status})`));
           return;
         }
+
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('text/event-stream')) {
-          const d = await res.json();
-          if (d.error) reject(new Error(d.error));
-          else this._simulateStream(d, resolve, reject);
+          // Server returned JSON — use simulate stream for nice animation
+          const d = await res.json().catch(() => ({}));
+          if (d.error) { reject(new Error(d.error)); return; }
+          this._simulateStream(d, resolve, reject);
           return;
         }
 
-        // True SSE stream reader
+        // True SSE stream
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
-        let lineBuf = '', chars = 0, renderThrottle = 0;
+        let buffer = '';           // raw byte buffer
+        let chars  = 0;           // token chars received (for stage progression)
+        let renderThrottle = 0;   // throttle live render calls
 
-        // ── Live notes rendering (throttled for performance) ──
-        const renderLive = () => {
+        // ── Tool type flags for live rendering ──
+        const tool = opts.tool || 'notes';
+
+        // ── Live notes/summary text rendering (throttled 32ms) ──
+        const renderLiveText = () => {
           const now = Date.now();
           if (now - renderThrottle < 32) return;
           renderThrottle = now;
-          if (!this.el.sfpText) return;
-          try {
-            this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-            this.el.sfpText.classList.add('live-md');
-          } catch {
-            this.el.sfpText.textContent = this.streamBuffer;
-          }
-          if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+          this._renderLiveNotes(tool);
         };
 
-        // ── Live flashcard animation ──
+        // ── Live card animators ──
         const animateCard = (idx, total, card) => {
           this._liveCards.push(card);
           this._updateLiveCards(idx, total);
         };
-
-        // ── Live quiz question animation ──
         const animateQuestion = (idx, total, q) => {
           this._liveQuestions.push(q);
           this._updateLiveQuestions(idx, total);
         };
-
-        // ── Live mindmap branch animation ──
         const animateBranch = (idx, total, branch) => {
-          if (branch.name === '_central_') {
-            this._liveMMCentral = branch.value;
+          if (branch && branch.name === '_central_') {
+            this._liveMMCentral = branch.value || '';
             this._liveMMConns   = branch.connections || [];
             this._updateLiveMindmap(-1, total);
-          } else {
+          } else if (branch) {
             this._liveBranches.push(branch);
             this._updateLiveMindmap(idx, total);
           }
         };
 
-        // ── SSE pump ──
+        // ── SSE event dispatcher — called for each complete SSE message ──
+        const dispatch = (eventName, rawData) => {
+          if (!rawData || rawData === '[DONE]') return;
+          let evt;
+          try { evt = JSON.parse(rawData); } catch { return; }
+
+          switch (eventName) {
+            case 'heartbeat': break; // ignore — just confirms connection
+
+            case 'stage':
+              if (evt.idx !== undefined) this._activateStage(evt.idx);
+              if (evt.label && this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+              break;
+
+            case 'token':
+              if (evt.t !== undefined && evt.t !== null) {
+                this.streamBuffer += evt.t;
+                chars += String(evt.t).length;
+                renderLiveText();
+                this._updateStageByProgress(chars);
+              }
+              break;
+
+            case 'card':
+              if (evt.card) animateCard(evt.idx, evt.total, evt.card);
+              break;
+
+            case 'question':
+              if (evt.q) animateQuestion(evt.idx, evt.total, evt.q);
+              break;
+
+            case 'branch':
+              if (evt.branch) animateBranch(evt.idx, evt.total, evt.branch);
+              break;
+
+            case 'done':
+              // Final data object — merge any live-streamed items
+              if (this._liveCards.length)     evt.flashcards     = this._liveCards;
+              if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
+              if (this._liveBranches.length) {
+                evt.mindmap = {
+                  central:     this._liveMMCentral,
+                  branches:    this._liveBranches,
+                  connections: this._liveMMConns,
+                };
+              }
+              if (this.el.sfpText) {
+                this.el.sfpText.classList.remove('live-md');
+                this.el.sfpText.classList.add('done');
+              }
+              resolve(evt);
+              break;
+
+            case 'error':
+              reject(new Error(evt.error || evt.message || 'Generation failed'));
+              break;
+
+            default:
+              // Unknown event — check if data looks like final object (fallback)
+              if (evt.topic !== undefined && !eventName) {
+                if (this._liveCards.length)     evt.flashcards     = this._liveCards;
+                if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
+                if (this._liveBranches.length) {
+                  evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+                }
+                resolve(evt);
+              }
+              break;
+          }
+        };
+
+        // ── SSE pump — reads raw bytes, parses event+data pairs ──
         const pump = async () => {
+          let resolved = false;
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
-                reject(new Error('Stream ended without final data'));
+                if (!resolved) reject(new Error('Stream closed without completion'));
                 return;
               }
 
-              lineBuf += decoder.decode(value, { stream: true });
-              const lines = lineBuf.split('\n');
-              lineBuf = lines.pop() || '';
+              buffer += decoder.decode(value, { stream: true });
 
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const raw = line.slice(6).trim();
-                try {
-                  const evt = JSON.parse(raw);
+              // SSE messages are separated by double newlines
+              // Each message may have multiple lines: event:\ndata:\n\n
+              const messages = buffer.split('\n\n');
+              buffer = messages.pop() || ''; // Last incomplete chunk stays in buffer
 
-                  // ── Token: notes streaming ──
-                  if (evt.t !== undefined) {
-                    this.streamBuffer += evt.t;
-                    chars += evt.t.length;
-                    renderLive();
-                    this._updateStageByProgress(chars);
+              for (const msg of messages) {
+                if (!msg.trim()) continue;
+                let eventName = 'message';
+                let dataLine  = '';
 
-                  // ── Card: one flashcard at a time ──
-                  } else if (evt.card !== undefined) {
-                    animateCard(evt.idx, evt.total, evt.card);
-
-                  // ── Question: one quiz question at a time ──
-                  } else if (evt.q !== undefined) {
-                    animateQuestion(evt.idx, evt.total, evt.q);
-
-                  // ── Branch: one mindmap branch at a time ──
-                  } else if (evt.branch !== undefined) {
-                    animateBranch(evt.idx, evt.total, evt.branch);
-
-                  // ── Stage: progress update ──
-                  } else if (evt.idx !== undefined && evt.label !== undefined) {
-                    this._activateStage(evt.idx);
-                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-
-                  // ── Done: final complete data object ──
-                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
-                    if (this.el.sfpText) {
-                      this.el.sfpText.classList.remove('live-md');
-                      this.el.sfpText.classList.add('done');
-                    }
-                    // Merge in any live-streamed cards that arrived
-                    if (this._liveCards.length)     evt.flashcards     = this._liveCards;
-                    if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
-                    if (this._liveBranches.length) {
-                      evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
-                    }
-                    resolve(evt);
-                    return;
-
-                  // ── Error ──
-                  } else if (evt.error !== undefined) {
-                    reject(new Error(evt.error));
-                    return;
+                const dataLines = []; // SSE allows multi-line data
+                for (const line of msg.split('\n')) {
+                  if (line.startsWith('event:')) {
+                    eventName = line.slice(6).trim();
+                  } else if (line.startsWith('data:')) {
+                    dataLines.push(line.slice(5).trim());
                   }
-                } catch { /* Ignore malformed SSE JSON */ }
+                  // Ignore comment lines (start with ':') and id:/retry: lines
+                }
+
+                // Join multi-line data values (SSE spec allows this)
+                dataLine = dataLines.join('\n').trim();
+
+                if (dataLine && dataLine !== '[DONE]') {
+                  if (eventName === 'done') resolved = true;
+                  try {
+                    dispatch(eventName, dataLine);
+                  } catch (dispErr) {
+                    // Non-fatal dispatch error — log and continue
+                    console.warn('[SSE] dispatch error:', dispErr.message);
+                    if (resolved) return; // Still exit if done
+                  }
+                  if (resolved) return; // Stop reading after done
+                }
               }
             }
           } catch (pumpErr) {
             if (pumpErr.name === 'AbortError') reject(pumpErr);
-            else reject(pumpErr);
+            else if (!pumpErr.message?.includes('aborted')) reject(pumpErr);
           }
         };
 
         pump();
       }).catch(err => {
         if (err.name === 'AbortError') reject(err);
-        else reject(err);
+        else reject(new Error(err.message || 'Network error'));
       });
     });
   }
 
+  // ── RENDER LIVE NOTES/SUMMARY TEXT in sfpText ─────────────────────────────
+  // Called on every token — shows tool-specific live preview
+  _renderLiveNotes(tool) {
+    // ── Don't render text for card tools once cards start arriving ──
+    // (Cards replace sfpText content — we don't want text to overwrite them)
+    if (this._liveCards.length > 0 || this._liveQuestions.length > 0 || this._liveBranches.length > 0) return;
+    if (!this.el.sfpText) return;
+    const buf = this.streamBuffer;
+    if (!buf) return;
+
+    const isSummary  = tool === 'summary';
+    const isCardTool = tool === 'flashcards' || tool === 'quiz' || tool === 'mindmap';
+
+    try {
+      if (isSummary) {
+        // Summary: show with summary-styled live wrapper
+        this.el.sfpText.classList.add('live-md');
+        this.el.sfpText.innerHTML = `
+          <div class="live-summary-wrapper">
+            <div class="live-summary-header">
+              <i class="fas fa-align-left" style="color:#00d4ff"></i>
+              <span>Summary being generated…</span>
+              <div class="live-dots"><span></span><span></span><span></span></div>
+            </div>
+            <div class="live-summary-body">${this._renderMdLive(buf)}</div>
+          </div>`;
+      } else if (isCardTool) {
+        // Flashcard/Quiz/Mindmap: during phase 1 research, show compact research view
+        const toolIcons = { flashcards: 'fa-layer-group', quiz: 'fa-question-circle', mindmap: 'fa-project-diagram' };
+        const toolColors = { flashcards: '#bf00ff', quiz: '#00ff88', mindmap: '#d4af37' };
+        const toolLabels = { flashcards: 'Researching topic for flashcards…', quiz: 'Researching topic for quiz…', mindmap: 'Researching topic for mind map…' };
+        const words = this._wordCount(buf);
+        this.el.sfpText.classList.add('live-md');
+        this.el.sfpText.innerHTML = `
+          <div class="live-research-wrapper">
+            <div class="live-research-header">
+              <i class="fas ${toolIcons[tool] || 'fa-book'}" style="color:${toolColors[tool] || '#d4af37'}"></i>
+              <span style="color:${toolColors[tool] || '#d4af37'}">${toolLabels[tool] || 'Researching…'}</span>
+              <div class="live-dots"><span></span><span></span><span></span></div>
+            </div>
+            <div class="live-research-stats">
+              <span class="live-stat-chip"><i class="fas fa-file-word"></i> ${words} words so far</span>
+              <span class="live-stat-chip"><i class="fas fa-bolt"></i> Phase 1 of 2</span>
+            </div>
+            <div class="live-research-preview">${this._renderMdLive(buf.slice(0, 800) + (buf.length > 800 ? '…' : ''))}</div>
+          </div>`;
+      } else {
+        // Notes / all — stream full markdown live
+        this.el.sfpText.classList.add('live-md');
+        this.el.sfpText.innerHTML = this._renderMdLive(buf);
+      }
+    } catch {
+      this.el.sfpText.textContent = buf;
+    }
+    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+  }
+
   // ── UPDATE LIVE FLASHCARDS in stream overlay ──────────────────────────────
+  // ── UPDATE LIVE FLASHCARDS — card-by-card spring animation ──────────────
   _updateLiveCards(idx, total) {
     const container = this.el.sfpText;
     if (!container) return;
-
-    const cards = this._liveCards;
-    const pct   = Math.round((cards.length / total) * 100);
+    const cards  = this._liveCards;
+    const count  = cards.length;
+    const pct    = total > 0 ? Math.round((count / total) * 100) : 0;
+    const done   = count >= total && total > 0;
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-cards-wrapper">
-        <div class="live-cards-header">
-          <div class="live-cards-title">
+        <div class="live-gen-topbar">
+          <div class="live-gen-icon-wrap" style="background:rgba(191,0,255,.15);border-color:rgba(191,0,255,.4)">
             <i class="fas fa-layer-group" style="color:#bf00ff"></i>
-            Flashcards Being Generated…
           </div>
-          <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%"></div>
+          <div class="live-gen-info">
+            <div class="live-gen-title" style="color:#bf00ff">
+              ${done ? `✅ All ${total} Flashcards Generated!` : `🃏 Generating Flashcards… (${count}/${total})`}
             </div>
-            <span class="live-cards-count">${cards.length} / ${total}</span>
+            <div class="live-gen-sub">Each card appearing live as AI creates it</div>
           </div>
+          <div class="live-gen-badge" style="background:rgba(191,0,255,.2);color:#bf00ff">${pct}%</div>
+        </div>
+        <div class="live-gen-bar-wrap">
+          <div class="live-gen-bar" style="width:${pct}%;background:linear-gradient(90deg,#bf00ff,#7b00ff,#00d4ff)"></div>
         </div>
         <div class="live-cards-grid">
-          ${cards.map((c, i) => `
-            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}" style="animation-delay:${i * 30}ms">
-              <div class="live-card-num">${i + 1}</div>
-              <div class="live-card-front">${this._esc(c.front || c.question || '')}</div>
-              <div class="live-card-back">${this._esc((c.back || c.answer || '').slice(0, 80))}${(c.back || c.answer || '').length > 80 ? '…' : ''}</div>
-            </div>
-          `).join('')}
+          ${cards.map((c, i) => {
+            const front   = this._esc(c.front || c.question || '');
+            const backRaw = c.back || c.answer || '';
+            const back    = this._esc(backRaw.length > 100 ? backRaw.slice(0, 100) + '…' : backRaw);
+            const isNew   = i === count - 1;
+            return `<div class="live-card-item${isNew ? ' live-card-new' : ''}" style="animation-delay:${Math.min(i * 25, 300)}ms">
+              <div class="live-card-badge">#${i + 1}</div>
+              <div class="live-card-q-label"><i class="fas fa-question" style="font-size:9px"></i> FRONT</div>
+              <div class="live-card-front">${front}</div>
+              <div class="live-card-divider"></div>
+              <div class="live-card-a-label"><i class="fas fa-lightbulb" style="font-size:9px"></i> BACK</div>
+              <div class="live-card-back">${back}</div>
+            </div>`;
+          }).join('')}
+          ${!done ? `<div class="live-card-item live-card-loading-slot">
+            <div class="live-card-skeleton-line"></div>
+            <div class="live-card-skeleton-line" style="width:70%"></div>
+            <div class="live-card-skeleton-line" style="width:50%;margin-top:8px"></div>
+            <div class="live-dots" style="margin-top:8px"><span></span><span></span><span></span></div>
+          </div>` : ''}
         </div>
-        ${cards.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more cards…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} flashcards ready!</div>`}
+        ${done
+          ? `<div class="live-gen-complete" style="border-color:rgba(191,0,255,.4);background:rgba(191,0,255,.08)">
+               <i class="fas fa-check-circle" style="color:#00ff88;font-size:20px"></i>
+               <span>All <strong>${total}</strong> flashcards ready — switching to interactive view…</span>
+             </div>`
+          : `<div class="live-gen-footer">
+               <div class="live-dots"><span></span><span></span><span></span></div>
+               <span>AI is generating card ${count + 1} of ${total}…</span>
+             </div>`
+        }
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-  // ── UPDATE LIVE QUIZ QUESTIONS in stream overlay ──────────────────────────
+  // ── UPDATE LIVE QUIZ QUESTIONS — question-by-question animation ───────────
   _updateLiveQuestions(idx, total) {
     const container = this.el.sfpText;
     if (!container) return;
-
-    const qs  = this._liveQuestions;
-    const pct = Math.round((qs.length / total) * 100);
+    const qs      = this._liveQuestions;
+    const count   = qs.length;
+    const pct     = total > 0 ? Math.round((count / total) * 100) : 0;
+    const done    = count >= total && total > 0;
     const letters = ['A','B','C','D','E'];
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-quiz-wrapper">
-        <div class="live-cards-header">
-          <div class="live-cards-title">
+        <div class="live-gen-topbar">
+          <div class="live-gen-icon-wrap" style="background:rgba(0,255,136,.12);border-color:rgba(0,255,136,.4)">
             <i class="fas fa-question-circle" style="color:#00ff88"></i>
-            Quiz Questions Being Generated…
           </div>
-          <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff)"></div>
+          <div class="live-gen-info">
+            <div class="live-gen-title" style="color:#00ff88">
+              ${done ? `✅ All ${total} Questions Generated!` : `❓ Generating Quiz… (${count}/${total})`}
             </div>
-            <span class="live-cards-count">${qs.length} / ${total}</span>
+            <div class="live-gen-sub">Questions streaming live — check back answers after</div>
           </div>
+          <div class="live-gen-badge" style="background:rgba(0,255,136,.15);color:#00ff88">${pct}%</div>
+        </div>
+        <div class="live-gen-bar-wrap">
+          <div class="live-gen-bar" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff,#bf00ff)"></div>
         </div>
         <div class="live-quiz-list">
-          ${qs.map((q, i) => `
-            <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}">
-              <div class="live-quiz-q-num">Q${i + 1} <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}">${q.difficulty||'medium'}</span></div>
+          ${qs.map((q, i) => {
+            const isNew   = i === count - 1;
+            const diffCol = q.difficulty === 'hard' ? '#ff4444' : q.difficulty === 'easy' ? '#00ff88' : '#ffae00';
+            const opts    = Array.isArray(q.options) ? q.options.slice(0, 4) : [];
+            return `<div class="live-quiz-item${isNew ? ' live-card-new' : ''}">
+              <div class="live-quiz-toprow">
+                <span class="live-quiz-num">Q${i + 1}</span>
+                <span class="live-quiz-diff" style="background:${diffCol}22;color:${diffCol};border-color:${diffCol}55">${q.difficulty || 'medium'}</span>
+                ${q.topic_tag ? `<span class="live-quiz-tag">${this._esc(q.topic_tag)}</span>` : ''}
+              </div>
               <div class="live-quiz-q-text">${this._esc(q.question || '')}</div>
-              ${q.options ? `<div class="live-quiz-opts">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}">${letters[oi]}. ${this._esc(opt)}</div>`).join('')}</div>` : ''}
-            </div>
-          `).join('')}
+              ${opts.length ? `<div class="live-quiz-opts">
+                ${opts.map((opt, oi) => {
+                  const isCorrect = opt === q.correct_answer;
+                  return `<div class="live-quiz-opt${isCorrect ? ' live-quiz-correct' : ''}">
+                    <span class="live-quiz-opt-letter">${letters[oi]}</span>
+                    ${this._esc(opt)}
+                    ${isCorrect ? '<i class="fas fa-check" style="color:#00ff88;margin-left:auto;font-size:10px"></i>' : ''}
+                  </div>`;
+                }).join('')}
+              </div>` : ''}
+            </div>`;
+          }).join('')}
+          ${!done ? `<div class="live-quiz-item live-card-loading-slot" style="text-align:center;padding:20px">
+            <div class="live-card-skeleton-line" style="width:80%;margin:0 auto 8px"></div>
+            <div class="live-card-skeleton-line" style="width:60%;margin:0 auto"></div>
+            <div class="live-dots" style="justify-content:center;margin-top:12px"><span></span><span></span><span></span></div>
+          </div>` : ''}
         </div>
-        ${qs.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more questions…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions ready!</div>`}
+        ${done
+          ? `<div class="live-gen-complete" style="border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.08)">
+               <i class="fas fa-check-circle" style="color:#00ff88;font-size:20px"></i>
+               <span>All <strong>${total}</strong> quiz questions ready!</span>
+             </div>`
+          : `<div class="live-gen-footer">
+               <div class="live-dots"><span></span><span></span><span></span></div>
+               <span>Generating question ${count + 1} of ${total}…</span>
+             </div>`
+        }
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-  // ── UPDATE LIVE MINDMAP in stream overlay ─────────────────────────────────
+  // ── UPDATE LIVE MINDMAP — branch-by-branch animation ─────────────────────
   _updateLiveMindmap(idx, total) {
     const container = this.el.sfpText;
     if (!container) return;
-
     const branches = this._liveBranches;
     const central  = this._liveMMCentral;
-    const pct      = idx === -1 ? 5 : Math.round((branches.length / Math.max(total, 1)) * 95) + 5;
+    const count    = branches.length;
+    const pct      = idx === -1 ? 8 : (total > 0 ? Math.round((count / total) * 92) + 8 : 8);
+    const done     = count >= total && total > 0;
+
+    // Branch color palette
+    const BRANCH_COLORS = ['#d4af37','#00d4ff','#bf00ff','#00ff88','#ff6b35','#e84393','#ffae00','#7b00ff','#00ffcc','#ff4444'];
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-mm-wrapper">
-        <div class="live-cards-header">
-          <div class="live-cards-title">
+        <div class="live-gen-topbar">
+          <div class="live-gen-icon-wrap" style="background:rgba(212,175,55,.12);border-color:rgba(212,175,55,.4)">
             <i class="fas fa-project-diagram" style="color:#d4af37"></i>
-            Mind Map Being Generated…
           </div>
-          <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00)"></div>
+          <div class="live-gen-info">
+            <div class="live-gen-title" style="color:#d4af37">
+              ${done ? `✅ Mind Map Complete! (${total} branches)` : `🗺️ Mapping Topic… (${count}/${total} branches)`}
             </div>
-            <span class="live-cards-count">${branches.length} / ${total}</span>
+            <div class="live-gen-sub">Branches appearing as AI structures your topic</div>
           </div>
+          <div class="live-gen-badge" style="background:rgba(212,175,55,.15);color:#d4af37">${pct}%</div>
         </div>
-        ${central ? `<div class="live-mm-central"><i class="fas fa-brain"></i> ${this._esc(central)}</div>` : ''}
+        <div class="live-gen-bar-wrap">
+          <div class="live-gen-bar" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00,#00d4ff)"></div>
+        </div>
+        ${central ? `
+        <div class="live-mm-central-node">
+          <div class="live-mm-central-pulse"></div>
+          <i class="fas fa-brain" style="color:#d4af37;font-size:18px"></i>
+          <div class="live-mm-central-text">${this._esc(central)}</div>
+        </div>
+        <div class="live-mm-connector-line"></div>` : ''}
         <div class="live-mm-branches">
-          ${branches.map((b, i) => `
-            <div class="live-mm-branch ${i === branches.length - 1 ? 'live-card-new' : ''}" style="border-left-color:${b.color||'#d4af37'}">
-              <div class="live-mm-branch-name" style="color:${b.color||'#d4af37'}">
-                <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+          ${branches.map((b, i) => {
+            const isNew  = i === count - 1;
+            const color  = b.color || BRANCH_COLORS[i % BRANCH_COLORS.length];
+            const items  = Array.isArray(b.items) ? b.items : [];
+            return `<div class="live-mm-branch${isNew ? ' live-card-new' : ''}" style="border-left-color:${color};background:${color}0d">
+              <div class="live-mm-branch-header">
+                <div class="live-mm-branch-dot" style="background:${color}"></div>
+                <div class="live-mm-branch-name" style="color:${color}">${this._esc(b.name || '')}</div>
+                <div class="live-mm-branch-count" style="color:${color}99">${items.length} items</div>
               </div>
               <div class="live-mm-items">
-                ${(b.items||[]).slice(0,5).map(item => `<span class="live-mm-item">${this._esc(item)}</span>`).join('')}
+                ${items.slice(0, 6).map(item => `<span class="live-mm-item" style="border-color:${color}44;color:${color}cc">
+                  <i class="fas fa-circle" style="font-size:5px;margin-right:4px;opacity:.7"></i>
+                  ${this._esc(String(item))}
+                </span>`).join('')}
               </div>
-            </div>
-          `).join('')}
+              ${b.connections?.length ? `<div class="live-mm-links">
+                <i class="fas fa-link" style="color:${color}88;font-size:10px"></i>
+                ${b.connections.slice(0,3).map(c => `<span class="live-mm-link-tag">${this._esc(String(c))}</span>`).join('')}
+              </div>` : ''}
+            </div>`;
+          }).join('')}
+          ${!done ? `<div class="live-mm-branch live-card-loading-slot" style="border-left-color:#555;text-align:center;padding:16px">
+            <div class="live-card-skeleton-line" style="width:60%;margin:0 auto 8px"></div>
+            <div class="live-card-skeleton-line" style="width:40%;margin:0 auto"></div>
+            <div class="live-dots" style="justify-content:center;margin-top:10px"><span></span><span></span><span></span></div>
+          </div>` : ''}
         </div>
-        ${branches.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more branches…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches ready!</div>`}
+        ${done
+          ? `<div class="live-gen-complete" style="border-color:rgba(212,175,55,.4);background:rgba(212,175,55,.08)">
+               <i class="fas fa-check-circle" style="color:#00ff88;font-size:20px"></i>
+               <span>Mind map with <strong>${total}</strong> branches ready!</span>
+             </div>`
+          : `<div class="live-gen-footer">
+               <div class="live-dots"><span></span><span></span><span></span></div>
+               <span>Mapping branch ${count + 1} of ${total}…</span>
+             </div>`
+        }
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-    async _callAPIJson(message, opts) {
+  async _callAPIJson(message, opts) {
     const res = await fetch(SAVOIRÉ.API_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1672,14 +1969,63 @@ Examples:
 
   _showStreamOverlay(topic, tool) {
     const cfg = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
-    if (this.el.sfpTopic)    this.el.sfpTopic.textContent   = topic.length > 65 ? topic.slice(0, 65) + '…' : topic;
-    if (this.el.sfpToolIcon) this.el.sfpToolIcon.className  = `fas ${cfg.icon}`;
+    if (this.el.sfpTopic)    this.el.sfpTopic.textContent    = topic.length > 65 ? topic.slice(0, 65) + '…' : topic;
+    if (this.el.sfpToolIcon) this.el.sfpToolIcon.className   = `fas ${cfg.icon}`;
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
-    if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
+    if (this.el.sfpLabel)    this.el.sfpLabel.textContent    = cfg.sfpLabel || 'Generating…';
     if (this.el.sfpText) {
-      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
-      this.el.sfpText.classList.remove('done');
-      this.el.sfpText.classList.add('live-md');
+      this.el.sfpText.classList.remove('done','live-md');
+      // Tool-specific initial loading state
+      if (tool === 'flashcards') {
+        this.el.sfpText.innerHTML = `
+          <div class="sfp-init-state">
+            <div class="sfp-init-icon" style="color:#bf00ff"><i class="fas fa-layer-group"></i></div>
+            <div class="sfp-init-title">Generating Flashcards…</div>
+            <div class="sfp-init-sub">AI is studying your topic and creating cards</div>
+            <div class="live-dots"><span></span><span></span><span></span></div>
+          </div>`;
+      } else if (tool === 'quiz') {
+        this.el.sfpText.innerHTML = `
+          <div class="sfp-init-state">
+            <div class="sfp-init-icon" style="color:#00ff88"><i class="fas fa-question-circle"></i></div>
+            <div class="sfp-init-title">Generating Quiz Questions…</div>
+            <div class="sfp-init-sub">AI is crafting challenging questions for you</div>
+            <div class="live-dots"><span></span><span></span><span></span></div>
+          </div>`;
+      } else if (tool === 'mindmap') {
+        this.el.sfpText.innerHTML = `
+          <div class="sfp-init-state">
+            <div class="sfp-init-icon" style="color:#d4af37"><i class="fas fa-project-diagram"></i></div>
+            <div class="sfp-init-title">Generating Mind Map…</div>
+            <div class="sfp-init-sub">AI is mapping out the topic structure</div>
+            <div class="live-dots"><span></span><span></span><span></span></div>
+          </div>`;
+      } else if (tool === 'summary') {
+        this.el.sfpText.innerHTML = `
+          <div class="sfp-init-state">
+            <div class="sfp-init-icon" style="color:#00d4ff"><i class="fas fa-align-left"></i></div>
+            <div class="sfp-init-title">Generating Summary…</div>
+            <div class="sfp-init-sub">AI is distilling the key points</div>
+            <div class="live-dots"><span></span><span></span><span></span></div>
+          </div>`;
+      } else if (tool === 'all') {
+        this.el.sfpText.innerHTML = `
+          <div class="sfp-init-state">
+            <div class="sfp-init-icon" style="color:#ffae00"><i class="fas fa-bolt"></i></div>
+            <div class="sfp-init-title">⚡ Generating Mega Bundle…</div>
+            <div class="sfp-init-sub">Notes + Flashcards + Quiz + Summary + Mind Map</div>
+            <div class="live-dots"><span></span><span></span><span></span></div>
+          </div>`;
+      } else {
+        // Notes — show typing cursor
+        this.el.sfpText.innerHTML = `
+          <div class="sfp-init-state">
+            <div class="sfp-init-icon" style="color:#00ff88"><i class="fas fa-book-open"></i></div>
+            <div class="sfp-init-title">Generating Notes…</div>
+            <div class="sfp-init-sub">AI is writing comprehensive study notes</div>
+            <div class="live-dots"><span></span><span></span><span></span></div>
+          </div>`;
+      }
     }
     if (this.el.sscProgressBar) this.el.sscProgressBar.style.width = '4%';
     if (this.el.streamFullpage)  this.el.streamFullpage.style.display = 'flex';
