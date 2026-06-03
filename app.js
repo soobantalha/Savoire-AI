@@ -3660,5 +3660,5 @@ window.addEventListener('DOMContentLoaded', () => {
 // END OF FILE — app.js v2.0 WORLD CLASS MAXIMUM LINES — ALL BUGS FIXED
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | "Think Less. Know More."
-// Free forever for every student on Earth.
+// Free forever for everfy student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
