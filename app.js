@@ -2409,32 +2409,32 @@ Examples:
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
   _buildFcHTML(data) {
+    // FLASHCARDS ONLY — no extra notes or sections
     const cards = data.flashcards?.length ? data.flashcards
       : (data.key_concepts || []).slice(0, 15).map(c => ({
           front: c.split(':')[0]?.trim() || c.slice(0, 60),
           back:  c,
         }));
 
-    if (!cards.length) return this._buildNotesHTML(data);
+    if (!cards.length) {
+      return `<div class="empty-tool-msg">
+        <i class="fas fa-layer-group" style="font-size:2rem;color:#bf00ff;margin-bottom:12px"></i>
+        <div style="font-size:1rem;color:#e0e0ff;font-weight:700">No flashcards generated.</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.85rem;margin-top:6px">Try again or use Mega Bundle.</div>
+      </div>`;
+    }
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
     this.fcFlipped = false;
 
-    let h = `<div class="study-sec" id="sec-fc">
+    // ONLY the flashcard interactive viewer — nothing else
+    return `<div class="study-sec" id="sec-fc">
       <div class="ss-hdr">
         <div class="ss-title"><i class="fas fa-layer-group"></i> Interactive Flashcards (${cards.length} cards)</div>
       </div>
       <div class="ss-body">${this._buildFcMode(cards)}</div>
     </div>`;
-
-    if (data.ultra_long_notes) {
-      h += `<div class="study-sec" id="sec-notes">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Study Notes</div></div>
-        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-      </div>`;
-    }
-    return h;
   }
 
   _buildFcMode(cards) {
@@ -2538,7 +2538,13 @@ Examples:
 
   _buildQuizHTML(data) {
     const qs = data.quiz_questions || data.practice_questions || [];
-    if (!qs.length) return this._buildNotesHTML(data);
+    if (!qs.length) {
+      return `<div class="empty-tool-msg" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;gap:12px">
+        <i class="fas fa-question-circle" style="font-size:2rem;color:#00ff88"></i>
+        <div style="font-size:1rem;color:#e0e0ff;font-weight:700">No quiz questions generated.</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.85rem">Try again or use Mega Bundle for all tools at once.</div>
+      </div>`;
+    }
 
     this.quizData  = qs.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
     this.quizIdx   = 0;
@@ -2553,12 +2559,7 @@ Examples:
         <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
       </div>`;
 
-    if (data.ultra_long_notes) {
-      h += `<div class="study-sec">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Study Notes</div></div>
-        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-      </div>`;
-    }
+    // QUIZ ONLY — no extra notes section
     return h;
   }
 
@@ -2840,21 +2841,23 @@ Examples:
           </div>
         </div>`;
 
-      if (data.ultra_long_notes) {
-        h += `<div class="study-sec" id="sec-notes">
-          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Mind Map Notes</div></div>
-          <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-        </div>`;
-      }
+      // MINDMAP ONLY — no extra notes
       return h;
     }
 
-    // Fallback mindmap from key_concepts
+    // Fallback mindmap using topic-specific branch names from key_concepts
+    // Branch names derived from actual topic words — never generic
+    const topicWords = (data.topic || topic || '').split(/[\s,;]+/).filter(w => w.length > 3);
+    const seg1 = topicWords[0] || topic.split(' ')[0] || 'Core';
+    const seg2 = topicWords[1] || 'Principles';
+    const seg3 = topicWords[2] || 'Applications';
+    const Tshort = topicWords.slice(0,3).join(' ') || topic.slice(0,25);
+
     const branches = [
-      { name: 'Core Concepts', items: data.key_concepts || [],            color: '#d4af37' },
-      { name: 'Study Tricks',  items: data.key_tricks || [],              color: '#00ff88' },
-      { name: 'Applications',  items: data.real_world_applications || [], color: '#00d4ff' },
-      { name: 'Misconceptions',items: data.common_misconceptions || [],   color: '#ff4444' },
+      { name: `${seg1} — What It Is`,        items: (data.key_concepts || []).slice(0,6),            color: '#d4af37' },
+      { name: `${seg2} — How It Works`,       items: (data.key_tricks   || []).slice(0,6),            color: '#00ff88' },
+      { name: `${Tshort} — Real Uses`,        items: (data.real_world_applications || []).slice(0,6), color: '#00d4ff' },
+      { name: `${Tshort} — Common Errors`,    items: (data.common_misconceptions   || []).slice(0,6), color: '#ff4444' },
     ].filter(b => b.items.length > 0);
 
     const bh = branches.map(b => `
@@ -2866,29 +2869,22 @@ Examples:
           ${b.items.slice(0, 6).map(item => `
             <div class="mm-node">
               <span class="mm-node-dot" style="background:${b.color}"></span>
-              <span class="mm-node-text">${this._esc(String(item).slice(0, 120))}</span>
+              <span class="mm-node-text">${this._esc(String(item).slice(0, 150))}</span>
             </div>`).join('')}
         </div>
       </div>`).join('');
 
-    let h = `
+    // MINDMAP ONLY — no extra notes
+    return `
       <div class="study-sec" id="sec-mm">
         <div class="ss-hdr">
           <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(topic)}</div>
         </div>
         <div class="ss-body">
-          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(topic)}</div>
+          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm?.central || topic)}</div>
           <div class="mm-branches">${bh || '<p style="color:rgba(255,255,255,.4);padding:16px">Mind map content generated…</p>'}</div>
         </div>
       </div>`;
-
-    if (data.ultra_long_notes) {
-      h += `<div class="study-sec" id="sec-notes">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Notes</div></div>
-        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-      </div>`;
-    }
-    return h;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
