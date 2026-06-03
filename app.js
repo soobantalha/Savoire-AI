@@ -263,7 +263,7 @@ class SavoireApp {
 
     // ── Session Increment Logic ──
     // This is the FIX: increment session count on each new calendar day
-    this._incrementSessionIfNewDay();
+    this._incrementSession(); // ← Updates on EVERY page load/refresh
 
     // ── DOM Cache ──
     this._cacheEl();
@@ -314,20 +314,16 @@ class SavoireApp {
     localStorage.setItem('sv_sessions', String(this.sessions));
   }
 
-  _incrementSessionIfNewDay() {
-    // This is the SESSION FIX:
-    // Compare today's IST date to last-active date.
-    // If today is a new day → increment sessions counter.
-    const today     = this._getISTDate();
-    const lastActive = localStorage.getItem('sv_last_active');
-
-    if (lastActive !== today) {
-      // New day! Increment sessions.
-      this.sessions++;
-      this._saveSessions();
-      localStorage.setItem('sv_last_active', today);
-      this.lastActive = today;
-    }
+  _incrementSession() {
+    // SESSION FIX — increment on EVERY page load / refresh
+    // The user's intent: jab bhi page refresh ho, session count barhay
+    // This means: every constructor call (page load/refresh) → sessions++
+    this.sessions++;
+    this._saveSessions();
+    // Also update last-active date
+    const today = this._getISTDate();
+    localStorage.setItem('sv_last_active', today);
+    this.lastActive = today;
   }
 
   _warmupAndTrack() {
@@ -2432,252 +2428,188 @@ Examples:
   }
 
   _generatePDF(data, theme = 'dark') {
-    this._toast('info', 'fa-spinner fa-pulse', `Generating ${theme === 'dark' ? 'Dark' : 'Light'} PDF…`);
+    this._toast('info', 'fa-file-pdf', `Generating ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
     try {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
-      const PW = 210, PH = 297, ML = 14, MR = 14, CW = PW - ML - MR;
-      let Y = 42, pageNum = 1;
 
-      // ─ Theme colors ─
-      const isDark  = theme !== 'light';
-      const BG      = isDark ? [8, 14, 35]     : [255, 255, 255];
-      const GOLD    = [212, 175, 55];
-      const BLUE    = [0, 160, 220];
-      const PURPLE  = [140, 0, 200];
-      const GREEN   = [0, 180, 100];
-      const RRED    = [220, 60, 60];
-      const TEXT    = isDark ? [200, 200, 208]  : [30, 35, 50];
-      const HEAD    = isDark ? [240, 240, 255]  : [10, 20, 60];
-      const MUTED   = isDark ? [120, 120, 140]  : [100, 100, 120];
-      const CARD_BG = isDark ? [12, 20, 48]     : [245, 247, 255];
-      const HBDR    = isDark ? [18, 28, 65]     : [230, 235, 252];
-      const BORDER  = isDark ? [25, 40, 80]     : [210, 215, 240];
+      // ── Page dimensions ──
+      const PW = 210, PH = 297, ML = 15, MR = 15, CW = PW - ML - MR;
+      const isDark = theme !== 'light';
+      let Y = 0, pageNum = 1;
 
-      // ─ Helpers ─
+      // ── Color palette ──
+      const C = isDark ? {
+        bg:    [8,14,35],  gold:  [212,175,55], blue:  [0,180,220],
+        text:  [195,195,205], head: [240,240,255], muted: [120,120,140],
+        card:  [14,22,55],  hdr:  [20,32,75],   green: [0,180,100],
+        red:   [220,60,60], purple:[160,60,220],
+      } : {
+        bg:    [255,255,255], gold: [180,140,30], blue: [0,90,180],
+        text:  [40,45,60],    head: [10,20,60],   muted:[100,105,120],
+        card:  [245,248,255], hdr: [230,235,250], green:[0,130,70],
+        red:   [180,40,40],   purple:[120,40,180],
+      };
 
+      // ── Helper: set color ──
+      const fg = ([r,g,b]) => doc.setTextColor(r,g,b);
+      const bg = ([r,g,b]) => doc.setFillColor(r,g,b);
+      const dc = ([r,g,b]) => doc.setDrawColor(r,g,b);
+
+      // ── Helper: fill background ──
       const fillBg = () => {
-        if (isDark) { doc.setFillColor(BG[0], BG[1], BG[2]); doc.rect(0, 0, PW, PH, 'F'); }
+        if (isDark) { bg(C.bg); doc.rect(0,0,PW,PH,'F'); }
       };
 
-      const addBorderRect = () => {
-        doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.setLineWidth(0.4);
-        doc.rect(3, 3, PW - 6, PH - 6, 'S');
+      // ── Helper: add footer ──
+      const addFooter = () => {
+        bg(isDark ? [12,20,50] : [240,244,255]);
+        doc.rect(0, PH-12, PW, 12, 'F');
+        dc(C.gold); doc.setLineWidth(0.3); doc.line(ML, PH-12, PW-MR, PH-12);
+        doc.setFontSize(7); doc.setFont('helvetica','normal'); fg(C.muted);
+        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE}`, ML, PH-5);
+        doc.text(`Page ${pageNum}`, PW-MR, PH-5, {align:'right'});
       };
 
-      const addFooter = (pn) => {
-        const fy = PH - 10;
-        doc.setFillColor(isDark ? 12 : 240, isDark ? 20 : 244, isDark ? 50 : 255);
-        doc.rect(0, PH - 14, PW, 14, 'F');
-        doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.setLineWidth(0.3);
-        doc.line(ML, PH - 14, PW - MR, PH - 14);
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE} · "${SAVOIRÉ.TAGLINE}"`, ML, fy);
-        doc.text(`Page ${pn}`, PW - MR, fy, { align: 'right' });
-      };
-
+      // ── Helper: new page ──
       const newPage = () => {
-        addFooter(pageNum);
-        doc.addPage();
-        pageNum++;
+        addFooter(); doc.addPage(); pageNum++; Y = 22; fillBg();
+        // Thin header bar on continuation pages
+        bg(C.hdr); doc.rect(0,0,PW,14,'F');
+        dc(C.gold); doc.setLineWidth(0.2); doc.line(0,14,PW,14);
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); fg(C.gold);
+        doc.text(SAVOIRÉ.BRAND, ML, 9.5);
+        doc.setFont('helvetica','normal'); fg(C.muted);
+        doc.text((data.topic||'').slice(0,70), PW-MR, 9.5, {align:'right'});
         Y = 22;
-        fillBg();
-        addBorderRect();
-        // Mini header
-        doc.setFillColor(HBDR[0], HBDR[1], HBDR[2]);
-        doc.rect(0, 0, PW, 16, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.text(SAVOIRÉ.BRAND, ML, 10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-        doc.text((data.topic || '').slice(0, 70), PW - MR, 10, { align: 'right' });
-        doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.setLineWidth(0.3);
-        doc.line(0, 16, PW, 16);
-        Y = 24;
       };
 
-      const checkY = (needed = 12) => {
-        if (Y + needed > PH - 18) newPage();
-      };
+      // ── Helper: check if need new page ──
+      const ck = (need=12) => { if (Y + need > PH - 16) newPage(); };
 
-      const writeText = (text, x, maxW, size, bold = false, color = TEXT) => {
-        if (!text) return;
-        doc.setFontSize(size);
-        doc.setFont('helvetica', bold ? 'bold' : 'normal');
-        doc.setTextColor(color[0], color[1], color[2]);
-        const lines = doc.splitTextToSize(String(text), maxW);
-        checkY(lines.length * size * 0.36 + 1);
+      // ── Helper: write wrapped text, returns new Y ──
+      const wt = (txt, x, maxW, size, bold=false, color=C.text) => {
+        if (!txt) return;
+        doc.setFontSize(size); doc.setFont('helvetica', bold?'bold':'normal'); fg(color);
+        const lines = doc.splitTextToSize(String(txt), maxW);
+        ck(lines.length * size * 0.37 + 1);
         doc.text(lines, x, Y);
-        Y += lines.length * size * 0.36 + 0.8;
+        Y += lines.length * size * 0.37 + 0.5;
       };
 
-      const sectionHeader = (title, color = GOLD) => {
-        checkY(14);
-        doc.setFillColor(HBDR[0], HBDR[1], HBDR[2]);
-        doc.rect(ML, Y, CW, 9, 'F');
-        doc.setFillColor(color[0], color[1], color[2]);
-        doc.rect(ML, Y, 3, 9, 'F');
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(color[0], color[1], color[2]);
-        doc.text(title, ML + 6, Y + 6.3);
-        Y += 13;
+      // ── Helper: section header ──
+      const secHdr = (title, color=C.gold) => {
+        ck(14);
+        bg(C.hdr); doc.rect(ML, Y, CW, 9, 'F');
+        bg(color); doc.rect(ML, Y, 3, 9, 'F');
+        doc.setFontSize(9.5); doc.setFont('helvetica','bold'); fg(color);
+        doc.text(title, ML+6, Y+6.5); Y += 13;
       };
 
-      const drawCard = (height = 14) => {
-        checkY(height + 2);
-        doc.setFillColor(CARD_BG[0], CARD_BG[1], CARD_BG[2]);
-        doc.roundedRect(ML, Y, CW, height, 2, 2, 'F');
-        doc.setDrawColor(BORDER[0], BORDER[1], BORDER[2]);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(ML, Y, CW, height, 2, 2, 'S');
-        Y += 4;
-      };
-
-      // ─────────── COVER PAGE ───────────
+      // ─────────────────── COVER PAGE ───────────────────
       fillBg();
-      addBorderRect();
+      // Gold accent bars
+      bg(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
 
-      // Gold top bar
-      doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.rect(0, 0, PW, 4, 'F');
-
-      // Logo box
-      doc.setFillColor(isDark ? 0 : 0, isDark ? 140 : 120, isDark ? 220 : 200);
-      doc.roundedRect(ML, 14, 22, 22, 4, 4, 'F');
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 255, 255);
-      doc.text('Ś', ML + 8, 30);
+      // Logo
+      bg([0,140,220]); doc.roundedRect(ML, 14, 22, 22, 4,4,'F');
+      doc.setFontSize(18); doc.setFont('helvetica','bold'); fg([255,255,255]);
+      doc.text('Ś', ML+8, 30);
 
       // App name
-      doc.setFontSize(26);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.text('SAVOIRÉ AI', ML + 28, 22);
-      doc.setFontSize(9.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text('v2.0 — World\'s Most Advanced AI Study Assistant', ML + 28, 29);
-      doc.setFontSize(8);
-      doc.text(`Built by ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}`, ML + 28, 35);
+      doc.setFontSize(26); doc.setFont('helvetica','bold'); fg(C.gold);
+      doc.text('SAVOIRÉ AI', ML+28, 22);
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); fg(C.muted);
+      doc.text('v2.0 — World\'s Most Advanced AI Study Assistant', ML+28, 29);
+      doc.text(`Built by ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}`, ML+28, 36);
 
       // Divider
-      doc.setDrawColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.setLineWidth(0.5);
-      doc.line(ML, 42, PW - MR, 42);
+      dc(C.gold); doc.setLineWidth(0.5); doc.line(ML, 43, PW-MR, 43);
 
       // Tool badge
       const toolCfg = TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes;
-      doc.setFillColor(isDark ? 0 : 0, isDark ? 80 : 100, isDark ? 160 : 180);
-      doc.roundedRect(ML, 47, 70, 9, 2, 2, 'F');
-      doc.setFontSize(8.5);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(isDark ? 200 : 255, isDark ? 230 : 255, isDark ? 255 : 255);
-      doc.text(`${toolCfg.sfpName.toUpperCase()}${this.tool === 'all' ? ' — ALL 5 TOOLS ⚡' : ''}`, ML + 4, 53);
+      bg([0,80,160]); doc.roundedRect(ML, 48, 70, 9, 2,2,'F');
+      doc.setFontSize(8.5); doc.setFont('helvetica','bold'); fg([200,230,255]);
+      doc.text(toolCfg.sfpName.toUpperCase() + (this.tool==='all'?' — ALL 5 TOOLS ⚡':''), ML+4, 54);
 
       // Topic title
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(HEAD[0], HEAD[1], HEAD[2]);
-      const titleLines = doc.splitTextToSize(data.topic || 'Study Notes', CW);
-      doc.text(titleLines, ML, 70);
-      let coverY = 70 + titleLines.length * 9;
+      doc.setFontSize(21); doc.setFont('helvetica','bold'); fg(C.head);
+      const tLines = doc.splitTextToSize(data.topic || 'Study Notes', CW);
+      doc.text(tLines, ML, 70);
+      let cy = 70 + tLines.length * 9;
 
-      // Curriculum alignment
-      doc.setFontSize(9.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text(data.curriculum_alignment || 'General Academic Study', ML, coverY + 5);
-      coverY += 12;
+      // Curriculum
+      doc.setFontSize(9.5); doc.setFont('helvetica','normal'); fg(C.muted);
+      doc.text(data.curriculum_alignment || 'General Academic Study', ML, cy+5);
+      cy += 14;
 
-      // Stats grid
+      // Stats cards
+      const wc   = this._wordCount(this._stripMd(data.ultra_long_notes||''));
       const stats = [
-        { label: 'Score',   val: `${data.study_score || 96}/100` },
-        { label: 'Tool',    val: toolCfg.sfpName },
-        { label: 'Date',    val: new Date().toLocaleDateString() },
-        { label: 'Words',   val: `~${this._wordCount(this._stripMd(data.ultra_long_notes || '')).toLocaleString()}` },
-        { label: 'Lang',    val: data._language || 'English' },
-        { label: 'Quality', val: data._quality === 'ai_generated' ? 'AI Gen' : 'Enhanced' },
+        {l:'Score',  v:`${data.study_score||96}/100`},
+        {l:'Tool',   v:toolCfg.sfpName},
+        {l:'Words',  v:`~${wc.toLocaleString()}`},
+        {l:'Lang',   v:data._language||'English'},
+        {l:'Date',   v:new Date().toLocaleDateString()},
+        {l:'Quality',v:data._quality==='ai_generated'?'AI Generated':'Enhanced'},
       ];
-      const statW = CW / 3;
-      stats.forEach((s, i) => {
-        const sx = ML + (i % 3) * statW;
-        const sy = coverY + Math.floor(i / 3) * 20;
-        doc.setFillColor(CARD_BG[0], CARD_BG[1], CARD_BG[2]);
-        doc.roundedRect(sx, sy, statW - 2, 17, 2, 2, 'F');
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.text(s.val, sx + (statW - 2) / 2, sy + 10, { align: 'center' });
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-        doc.text(s.label, sx + (statW - 2) / 2, sy + 15.5, { align: 'center' });
+      const sw = CW/3;
+      stats.forEach((s,i) => {
+        const sx = ML + (i%3)*sw, sy = cy + Math.floor(i/3)*20;
+        bg(C.card); doc.roundedRect(sx, sy, sw-2, 16, 2,2,'F');
+        doc.setFontSize(11.5); doc.setFont('helvetica','bold'); fg(C.gold);
+        doc.text(s.v, sx+(sw-2)/2, sy+9, {align:'center'});
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); fg(C.muted);
+        doc.text(s.l, sx+(sw-2)/2, sy+14, {align:'center'});
       });
-      coverY += 44;
+      cy += 46;
 
       // Tagline
-      doc.setFontSize(13);
-      doc.setFont('helvetica', 'bolditalic');
-      doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.text(`"${SAVOIRÉ.TAGLINE}"`, PW / 2, coverY + 5, { align: 'center' });
+      doc.setFontSize(13); doc.setFont('helvetica','bolditalic'); fg(C.gold);
+      doc.text(`"${SAVOIRÉ.TAGLINE}"`, PW/2, cy+4, {align:'center'});
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); fg(C.muted);
+      doc.text(`— ${SAVOIRÉ.FOUNDER} · ${SAVOIRÉ.DEVELOPER}`, PW/2, cy+11, {align:'center'});
 
-      // PDF theme indicator
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(MUTED[0], MUTED[1], MUTED[2]);
-      doc.text(`${isDark ? 'Dark' : 'Light'} PDF Theme · Generated: ${new Date().toLocaleString()}`, PW / 2, PH - 30, { align: 'center' });
-      doc.text(`${SAVOIRÉ.FOUNDER} · ${SAVOIRÉ.DEVELOPER}`, PW / 2, PH - 24, { align: 'center' });
+      // Generated info
+      doc.text(`Generated: ${new Date().toLocaleString()}`, PW/2, PH-26, {align:'center'});
+      doc.text(`PDF Theme: ${isDark?'Dark':'Light'} | ${SAVOIRÉ.DEVSITE}`, PW/2, PH-20, {align:'center'});
 
-      doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-      doc.rect(0, PH - 4, PW, 4, 'F');
+      addFooter();
 
-      addFooter(pageNum);
-
-      // ─────────── CONTENT PAGES ───────────
+      // ─────────────────── CONTENT PAGES ───────────────────
       newPage();
 
       // ── NOTES ──
       if (data.ultra_long_notes) {
-        sectionHeader('📚 Study Notes', GOLD);
-        const clean  = this._stripMd(data.ultra_long_notes);
-        const lines  = clean.split('\n');
+        secHdr('📚 Study Notes', C.gold);
+        const clean = this._stripMd(data.ultra_long_notes);
+        const lines = clean.split('\n');
         for (const line of lines) {
           const tr = line.trim();
           if (!tr) { Y += 2; continue; }
-          checkY(8);
-          if (tr.match(/^#{1,3}/)) {
-            const lv  = (tr.match(/^#+/) || [''])[0].length;
-            const txt = tr.replace(/^#+\s*/, '').replace(/\*+/g, '');
-            const sz  = lv === 1 ? 13 : lv === 2 ? 11 : 9.5;
-            const col = lv <= 2 ? GOLD : BLUE;
-            if (lv <= 2) { Y += 3; }
-            writeText(txt, ML, CW, sz, true, col);
-            Y += lv <= 2 ? 2 : 1;
-          } else if (tr.startsWith('-') || tr.startsWith('•') || tr.startsWith('*')) {
-            writeText('• ' + tr.replace(/^[-•*]\s*/, ''), ML + 4, CW - 4, 8.5, false, TEXT);
+          ck(8);
+          if (tr.match(/^#{1,4}/)) {
+            const lv  = (tr.match(/^#+/)||[''])[0].length;
+            const txt = tr.replace(/^#+\s*/,'').replace(/\*+/g,'');
+            const sz  = lv===1?13:lv===2?11:9.5;
+            const col = lv<=2 ? C.gold : lv===3 ? C.blue : C.text;
+            if (lv<=2) Y += 3;
+            wt(txt, ML, CW, sz, true, col);
+            Y += lv<=2 ? 2 : 1;
+          } else if (tr.startsWith('-')||tr.startsWith('•')) {
+            wt('• '+tr.replace(/^[-•*]\s*/,''), ML+4, CW-4, 8.5, false, C.text);
             Y += 0.5;
           } else if (tr.match(/^\d+\./)) {
-            writeText(tr, ML + 4, CW - 4, 8.5, false, TEXT);
+            wt(tr, ML+4, CW-4, 8.5, false, C.text);
             Y += 0.5;
           } else if (tr.startsWith('>')) {
-            checkY(10);
-            doc.setFillColor(isDark ? 15 : 240, isDark ? 25 : 245, isDark ? 60 : 255);
-            doc.rect(ML, Y - 1, CW, 10, 'F');
-            doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-            doc.rect(ML, Y - 1, 2, 10, 'F');
-            writeText(tr.replace(/^>\s*/, ''), ML + 5, CW - 5, 8.5, false, isDark ? [220, 210, 150] : [80, 60, 10]);
+            ck(10);
+            bg(C.hdr); doc.rect(ML, Y-1, CW, 10, 'F');
+            bg(C.gold); doc.rect(ML, Y-1, 2, 10, 'F');
+            wt(tr.replace(/^>\s*/,''), ML+5, CW-5, 8.5, false, isDark?[220,210,160]:[80,60,10]);
             Y += 3;
           } else {
-            writeText(tr, ML, CW, 8.5, false, TEXT);
+            wt(tr, ML, CW, 8.5, false, C.text);
             Y += 1.5;
           }
         }
@@ -2686,101 +2618,94 @@ Examples:
 
       // ── KEY CONCEPTS ──
       if (data.key_concepts?.length) {
-        sectionHeader('💡 Key Concepts', GOLD);
-        data.key_concepts.slice(0, 10).forEach((c, i) => {
-          checkY(16);
-          doc.setFillColor(CARD_BG[0], CARD_BG[1], CARD_BG[2]);
-          doc.roundedRect(ML, Y, CW, 14, 2, 2, 'F');
-          doc.setFillColor(GOLD[0], GOLD[1], GOLD[2]);
-          doc.circle(ML + 5, Y + 7, 3, 'F');
-          doc.setFontSize(7);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(8, 14, 35);
-          doc.text(`${i + 1}`, ML + 5, Y + 8.5, { align: 'center' });
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-          const cLines = doc.splitTextToSize(String(c).slice(0, 220), CW - 14);
-          doc.text(cLines[0] || '', ML + 11, Y + 7.5);
-          if (cLines[1]) doc.text(cLines[1], ML + 11, Y + 11.5);
-          Y += 17;
+        secHdr('💡 Key Concepts', C.gold);
+        data.key_concepts.slice(0,8).forEach((c,i) => {
+          ck(16);
+          bg(C.card); doc.roundedRect(ML, Y, CW, 13, 2,2,'F');
+          bg(C.gold); doc.circle(ML+5, Y+6.5, 3, 'F');
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg([8,14,35]);
+          doc.text(`${i+1}`, ML+5, Y+8, {align:'center'});
+          const cl = doc.splitTextToSize(String(c).slice(0,200), CW-14);
+          doc.setFontSize(8); doc.setFont('helvetica','normal'); fg(C.text);
+          doc.text(cl[0]||'', ML+11, Y+7);
+          if (cl[1]) doc.text(cl[1], ML+11, Y+11);
+          Y += 16;
         });
         Y += 3;
       }
 
       // ── FLASHCARDS ──
       if (data.flashcards?.length) {
-        sectionHeader('🃏 Flashcards', PURPLE);
-        data.flashcards.slice(0, 15).forEach((card, i) => {
-          checkY(24);
-          doc.setFillColor(CARD_BG[0], CARD_BG[1], CARD_BG[2]);
-          doc.roundedRect(ML, Y, CW, 22, 2, 2, 'F');
-          doc.setDrawColor(PURPLE[0], PURPLE[1], PURPLE[2]);
-          doc.setLineWidth(0.3);
-          doc.roundedRect(ML, Y, CW, 22, 2, 2, 'S');
-          doc.setFontSize(7.5);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(PURPLE[0], PURPLE[1], PURPLE[2]);
-          doc.text(`Q${i + 1}: ${String(card.front || card.question || '').slice(0, 80)}`, ML + 3, Y + 7);
-          doc.setFontSize(7);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-          const aLines = doc.splitTextToSize(`A: ${String(card.back || card.answer || '').slice(0, 160)}`, CW - 6);
-          doc.text(aLines.slice(0, 2), ML + 3, Y + 13);
-          Y += 25;
+        secHdr('🃏 Flashcards', C.purple);
+        data.flashcards.slice(0,15).forEach((card,i) => {
+          ck(26);
+          bg(C.card); doc.roundedRect(ML, Y, CW, 24, 2,2,'F');
+          dc(C.purple); doc.setLineWidth(0.25); doc.roundedRect(ML, Y, CW, 24, 2,2,'S');
+          // Q label
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg(C.purple);
+          doc.text(`Q${i+1}`, ML+2.5, Y+5.5);
+          // Front
+          const fLines = doc.splitTextToSize(String(card.front||card.question||'').slice(0,80), CW-20);
+          doc.setFontSize(8); fg(C.head);
+          doc.text(fLines[0]||'', ML+10, Y+5.5);
+          // A label
+          bg(isDark?[18,28,65]:[230,235,252]); doc.rect(ML, Y+9, CW, 0.3, 'F');
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg(C.blue);
+          doc.text('A:', ML+2.5, Y+14.5);
+          // Back
+          const bLines = doc.splitTextToSize(String(card.back||card.answer||'').slice(0,150), CW-14);
+          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
+          doc.text(bLines.slice(0,2), ML+10, Y+14.5);
+          Y += 27;
         });
         Y += 3;
       }
 
       // ── QUIZ ──
       if (data.quiz_questions?.length) {
-        sectionHeader('❓ Practice Quiz', GREEN);
-        data.quiz_questions.slice(0, 10).forEach((q, i) => {
-          checkY(35);
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(HEAD[0], HEAD[1], HEAD[2]);
-          const qLines = doc.splitTextToSize(`${i + 1}. ${q.question}`, CW);
-          doc.text(qLines.slice(0, 2), ML, Y);
-          Y += Math.min(qLines.length, 2) * 5 + 1;
+        secHdr('❓ Practice Quiz', C.green);
+        data.quiz_questions.slice(0,10).forEach((q,i) => {
+          ck(40);
+          // Question
+          doc.setFontSize(9); doc.setFont('helvetica','bold'); fg(C.head);
+          const qL = doc.splitTextToSize(`${i+1}. ${q.question}`, CW);
+          doc.text(qL.slice(0,2), ML, Y); Y += Math.min(qL.length,2)*5+2;
+          // Options
           if (q.options) {
-            q.options.forEach((opt, oi) => {
-              checkY(6);
-              const isC = opt === q.correct_answer;
-              doc.setFontSize(8);
-              doc.setFont('helvetica', isC ? 'bold' : 'normal');
-              doc.setTextColor(isC ? 0 : TEXT[0], isC ? 140 : TEXT[1], isC ? 0 : TEXT[2]);
-              doc.text(`${String.fromCharCode(65 + oi)}. ${String(opt).slice(0, 70)}${isC ? ' ✓' : ''}`, ML + 5, Y);
-              Y += 5;
+            q.options.forEach((opt,oi) => {
+              ck(7);
+              const isC = opt===q.correct_answer;
+              if (isC) { bg(isDark?[0,40,20]:[220,255,230]); doc.rect(ML+3, Y-3, CW-3, 7, 'F'); }
+              doc.setFontSize(7.5); doc.setFont('helvetica', isC?'bold':'normal');
+              fg(isC ? C.green : C.text);
+              doc.text(`${String.fromCharCode(65+oi)}. ${String(opt).slice(0,70)}${isC?' ✓':''}`, ML+5, Y);
+              Y += 6;
             });
           }
-          Y += 4;
+          Y += 5;
         });
-        Y += 3;
       }
 
       // ── MIND MAP ──
       if (data.mindmap?.branches?.length) {
-        sectionHeader('🗺️ Visual Mind Map', BLUE);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(GOLD[0], GOLD[1], GOLD[2]);
-        doc.text(`Central: ${data.mindmap.central || data.topic || 'Topic'}`, ML, Y);
-        Y += 8;
-        data.mindmap.branches.slice(0, 7).forEach(b => {
-          checkY(20);
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(BLUE[0], BLUE[1], BLUE[2]);
-          doc.text(`▸ ${b.name}`, ML, Y);
-          Y += 5;
-          (b.items || []).slice(0, 5).forEach(item => {
-            checkY(6);
-            doc.setFontSize(7.5);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(TEXT[0], TEXT[1], TEXT[2]);
-            doc.text(`     • ${String(item).slice(0, 90)}`, ML, Y);
-            Y += 5;
+        secHdr('🗺️ Mind Map', C.blue);
+        doc.setFontSize(11); doc.setFont('helvetica','bold'); fg(C.gold);
+        doc.text(`⊙ ${data.mindmap.central||data.topic||'Topic'}`, ML, Y); Y += 9;
+        data.mindmap.branches.slice(0,7).forEach((b,bi) => {
+          ck(22);
+          const bColor = b.color ? b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)) : C.blue;
+          // Branch header
+          bg(C.card); doc.rect(ML, Y, CW, 9, 'F');
+          try { bg(bColor); } catch { bg(C.blue); }
+          doc.rect(ML, Y, 3, 9, 'F');
+          doc.setFontSize(9); doc.setFont('helvetica','bold');
+          try { fg(bColor); } catch { fg(C.blue); }
+          doc.text(`▸ ${b.name}`, ML+6, Y+6.3); Y += 12;
+          // Items
+          (b.items||[]).slice(0,5).forEach(item => {
+            ck(6);
+            doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
+            doc.text(`    • ${String(item).slice(0,90)}`, ML, Y); Y += 5.5;
           });
           Y += 3;
         });
@@ -2788,50 +2713,44 @@ Examples:
 
       // ── STUDY TRICKS ──
       if (data.key_tricks?.length) {
-        sectionHeader('🧠 Study Tricks & Memory Aids', GOLD);
-        data.key_tricks.slice(0, 4).forEach((t, i) => {
-          checkY(14);
-          writeText(`${i + 1}. ${String(t).slice(0, 250)}`, ML, CW, 8, false, TEXT);
+        secHdr('🧠 Memory Tricks', C.gold);
+        data.key_tricks.slice(0,4).forEach((t,i) => {
+          ck(14);
+          wt(`${i+1}. ${String(t).slice(0,220)}`, ML, CW, 8.5, false, C.text);
           Y += 4;
         });
       }
 
-      // ── REAL WORLD APPLICATIONS ──
+      // ── REAL WORLD APPS ──
       if (data.real_world_applications?.length) {
-        sectionHeader('🌍 Real-World Applications', BLUE);
-        data.real_world_applications.slice(0, 6).forEach((a, i) => {
-          checkY(12);
-          writeText(`${i + 1}. ${String(a).slice(0, 200)}`, ML, CW, 8, false, TEXT);
-          Y += 3;
+        secHdr('🌍 Real-World Applications', C.blue);
+        data.real_world_applications.slice(0,5).forEach((a,i) => {
+          ck(12); wt(`${i+1}. ${String(a).slice(0,200)}`, ML, CW, 8.5, false, C.text); Y += 3;
         });
       }
 
       // ── MISCONCEPTIONS ──
       if (data.common_misconceptions?.length) {
-        sectionHeader('⚠️ Common Misconceptions', RRED);
-        data.common_misconceptions.slice(0, 4).forEach((m, i) => {
-          checkY(12);
-          writeText(`${i + 1}. ${String(m).slice(0, 200)}`, ML, CW, 8, false, TEXT);
-          Y += 3;
+        secHdr('⚠️ Common Misconceptions', C.red);
+        data.common_misconceptions.slice(0,4).forEach((m,i) => {
+          ck(12); wt(`${i+1}. ${String(m).slice(0,200)}`, ML, CW, 8.5, false, C.text); Y += 3;
         });
       }
 
-      // Final footer
-      addFooter(pageNum);
+      addFooter();
 
-      // Save file
-      const safe = (data.topic || 'StudyNotes').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
-      const date = new Date().toISOString().slice(0, 10);
-      doc.save(`SavoireAI_${safe}_${date}_${theme}.pdf`);
-      this._toast('success', 'fa-file-pdf', `✓ ${isDark ? 'Dark' : 'Light'} PDF downloaded!`);
+      // ── Save ──
+      const safe = (data.topic||'StudyNotes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
+      doc.save(`SavoireAI_${safe}_${new Date().toISOString().slice(0,10)}_${theme}.pdf`);
+      this._toast('success','fa-file-pdf',`✓ PDF downloaded! (${pageNum} page${pageNum>1?'s':''})`);
 
     } catch (err) {
-      console.error('PDF generation error:', err);
-      this._toast('error', 'fa-times', `PDF error: ${err.message}. Please try again.`);
+      console.error('PDF error:', err);
+      this._toast('error','fa-times',`PDF failed: ${err.message}`);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────────────────────────────
   // SECTION 26: COPY / SAVE / SHARE / CLEAR
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -3124,6 +3043,9 @@ Examples:
     this.prefs.pdfTheme = theme;
     this._save('sv_prefs', this.prefs);
     this._qsa('[data-pdf-theme]').forEach(b => b.classList.toggle('active', b.dataset.pdfTheme === theme));
+    // Update PDF button tooltip
+    const pdfBtn = this.el.pdfBtn;
+    if (pdfBtn) pdfBtn.setAttribute('data-theme', theme === 'dark' ? '🌙' : '☀️');
     this._toast('info', 'fa-file-pdf', `PDF theme: ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
   }
 
@@ -3295,46 +3217,128 @@ Examples:
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
   _initDemoSystem() {
-    // Create overlay elements
-    this.demoOverlay = document.createElement('div');
-    this.demoOverlay.id        = 'demoSpotlightOverlay';
-    this.demoOverlay.className = 'demo-spotlight-overlay';
-    this.demoOverlay.style.cssText = `
-      display:none;position:fixed;inset:0;z-index:9998;
-      background:rgba(0,0,0,.75);backdrop-filter:blur(2px);
-      pointer-events:all;
-    `;
-    document.body.appendChild(this.demoOverlay);
+    // ── DEMO SYSTEM — Professional spotlight tour with canvas cutout ──
+    // Creates a dark overlay with a "hole" cut through to the target element
 
+    // Canvas overlay (draws the dark backdrop with cutout hole)
+    this.demoCanvas = document.createElement('canvas');
+    this.demoCanvas.id = 'demoCanvas';
+    Object.assign(this.demoCanvas.style, {
+      display: 'none', position: 'fixed', inset: '0', width: '100%', height: '100%',
+      zIndex: '9990', pointerEvents: 'all', cursor: 'default',
+    });
+    document.body.appendChild(this.demoCanvas);
+
+    // Tooltip card
     this.demoTooltip = document.createElement('div');
-    this.demoTooltip.id        = 'demoTooltip';
-    this.demoTooltip.className = 'demo-tooltip';
-    this.demoTooltip.style.cssText = `
-      display:none;position:fixed;z-index:9999;
-      background:rgba(8,14,40,.97);
-      border:1px solid rgba(212,175,55,.4);
-      border-radius:20px;
-      box-shadow:0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(212,175,55,.15) inset;
-      padding:24px;
-      max-width:380px;min-width:280px;
-      animation:fadeUp .3s ease;
-    `;
+    this.demoTooltip.id = 'demoTooltip';
+    Object.assign(this.demoTooltip.style, {
+      display: 'none', position: 'fixed', zIndex: '9999',
+      background: 'rgba(5,10,30,.97)',
+      border: '1.5px solid rgba(212,175,55,.5)',
+      borderRadius: '18px',
+      boxShadow: '0 24px 64px rgba(0,0,0,.7), 0 0 0 1px rgba(212,175,55,.12) inset',
+      padding: '20px', maxWidth: '360px', minWidth: '260px',
+      fontFamily: 'Inter,sans-serif',
+    });
     document.body.appendChild(this.demoTooltip);
+
+    // Arrow element
+    this.demoArrow = document.createElement('div');
+    this.demoArrow.id = 'demoArrow';
+    Object.assign(this.demoArrow.style, {
+      display: 'none', position: 'fixed', zIndex: '9998',
+      width: '0', height: '0', pointerEvents: 'none',
+    });
+    document.body.appendChild(this.demoArrow);
+
+    // Resize handler
+    this._demoResizeH = () => { if (this.demoCanvas.style.display !== 'none') this._drawDemoSpotlight(); };
+    window.addEventListener('resize', this._demoResizeH);
+  }
+
+  _drawDemoSpotlight(rect) {
+    // Draw dark overlay with a bright cutout hole showing the target element
+    const canvas = this.demoCanvas;
+    if (!canvas) return;
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Dark overlay
+    ctx.fillStyle = 'rgba(0,0,8,0.78)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (rect) {
+      const pad = 10, r = 12;
+      const x = rect.left - pad, y = rect.top - pad;
+      const w = rect.width + pad*2, h = rect.height + pad*2;
+
+      // Cut out the hole (composite operation)
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+      ctx.lineTo(x+w, y+h-r);
+      ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+      ctx.lineTo(x+r, y+h);
+      ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+      ctx.lineTo(x, y+r);
+      ctx.quadraticCurveTo(x, y, x+r, y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Gold border around the hole
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = 'rgba(212,175,55,0.9)';
+      ctx.lineWidth   = 2.5;
+      ctx.shadowColor = '#d4af37';
+      ctx.shadowBlur  = 18;
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+      ctx.lineTo(x+w, y+h-r);
+      ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+      ctx.lineTo(x+r, y+h);
+      ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+      ctx.lineTo(x, y+r);
+      ctx.quadraticCurveTo(x, y, x+r, y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
   }
 
   _openDemo() {
     this.demoStep = 0;
+    if (this.demoCanvas) {
+      this.demoCanvas.width  = window.innerWidth;
+      this.demoCanvas.height = window.innerHeight;
+      this.demoCanvas.style.display = 'block';
+    }
+    if (this.demoTooltip) this.demoTooltip.style.display = 'block';
+    // Add/show click hint
+    let hint = this._el('demoCHint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'demoCHint';
+      hint.className = 'demo-canvas-hint';
+      hint.innerHTML = '<i class="fas fa-hand-pointer"></i> Click dark area to advance · <kbd>→</kbd> or <kbd>Esc</kbd>';
+      document.body.appendChild(hint);
+    }
+    hint.style.display = 'block';
     this._renderDemoStep();
-    this.demoOverlay.style.display = 'block';
-    this.demoTooltip.style.display = 'block';
   }
 
   _closeDemo() {
-    this.demoOverlay.style.display = 'none';
-    this.demoTooltip.style.display = 'block';
-    this.demoTooltip.style.display = 'none';
-    this.demoOverlay.style.display = 'none';
-    // Remove highlight from any element
+    if (this.demoCanvas)  this.demoCanvas.style.display  = 'none';
+    if (this.demoTooltip) this.demoTooltip.style.display = 'none';
+    if (this.demoArrow)   this.demoArrow.style.display   = 'none';
+    const hint = this._el('demoCHint');
+    if (hint) hint.style.display = 'none';
     this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
   }
 
@@ -3342,99 +3346,110 @@ Examples:
     const step    = DEMO_STEPS[this.demoStep];
     const isLast  = this.demoStep === DEMO_STEPS.length - 1;
     const isFirst = this.demoStep === 0;
+    if (!step || !this.demoTooltip) return;
 
-    // Highlight target element
+    // ── 1. Find target element + scroll into view ──
+    let targetEl   = null;
+    let targetRect = null;
     this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
+
     if (step.targetId) {
-      const target = this._el(step.targetId);
-      if (target) target.classList.add('demo-highlighted');
+      targetEl = this._el(step.targetId);
+      if (targetEl) {
+        // Scroll target into view smoothly
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Wait a tick for scroll then measure
+        setTimeout(() => {
+          targetRect = targetEl.getBoundingClientRect();
+          this._drawDemoSpotlight(targetRect);
+          this._placeDemoTooltip(targetRect);
+        }, 180);
+      }
+    } else {
+      this._drawDemoSpotlight(null);
+      this._placeDemoTooltipCenter();
     }
 
-    // Render tooltip content
+    // ── 2. Render tooltip HTML ──
+    const dots = DEMO_STEPS.map((_, i) => {
+      const cls = i === this.demoStep ? 'active' : i < this.demoStep ? 'done' : '';
+      return `<button class="demo-dot ${cls}" onclick="window._app._jumpDemo(${i})" title="Step ${i+1}">${i < this.demoStep ? '✓' : i+1}</button>`;
+    }).join('');
+
+    const tipsHtml = step.tips.map(t =>
+      `<div class="demo-tip-row"><span class="demo-tip-icon">›</span><span>${t}</span></div>`
+    ).join('');
+
     this.demoTooltip.innerHTML = `
-      <div class="demo-tooltip-header" style="color:${step.color}">
-        <i class="fas ${step.icon}" style="font-size:1.4rem;margin-right:10px"></i>
-        <span style="font-size:1rem;font-weight:700">${step.title}</span>
-      </div>
-      <div class="demo-step-indicator">
-        ${DEMO_STEPS.map((_, i) => `<span class="demo-dot ${i === this.demoStep ? 'active' : i < this.demoStep ? 'done' : ''}"
-          onclick="window._app._jumpDemo(${i})">${i < this.demoStep ? '✓' : i + 1}</span>`).join('')}
-      </div>
-      <div class="demo-content">${step.content}</div>
-      <div class="demo-tips-list">
-        ${step.tips.map(t => `<div class="demo-tip-item">${t}</div>`).join('')}
-      </div>
-      <div class="demo-footer-btns">
-        <button class="demo-prev-btn" onclick="window._app._prevDemo()" ${isFirst ? 'disabled' : ''}>
-          <i class="fas fa-arrow-left"></i> Back
+      <div class="demo-tt-header">
+        <div class="demo-tt-icon" style="background:${step.color}22;color:${step.color}">
+          <i class="fas ${step.icon}"></i>
+        </div>
+        <div class="demo-tt-title" style="color:${step.color}">${step.title}</div>
+        <button class="demo-tt-close" onclick="window._app._closeDemo()" title="Close demo">
+          <i class="fas fa-times"></i>
         </button>
-        <span class="demo-counter">${this.demoStep + 1} / ${DEMO_STEPS.length}</span>
-        ${isLast
-          ? `<button class="demo-finish-btn" onclick="window._app._closeDemo();window._app._openWizard()">
-               <i class="fas fa-magic"></i> Start Studying!
-             </button>`
-          : `<button class="demo-next-btn" onclick="window._app._nextDemo()">
-               Next <i class="fas fa-arrow-right"></i>
-             </button>`}
       </div>
-      <button class="demo-close-x" onclick="window._app._closeDemo()">
-        <i class="fas fa-times"></i>
-      </button>`;
-
-    // Position tooltip
-    this._positionDemoTooltip(step.targetId);
+      <div class="demo-tt-dots">${dots}</div>
+      <div class="demo-tt-content">${step.content}</div>
+      <div class="demo-tt-tips">${tipsHtml}</div>
+      <div class="demo-tt-footer">
+        <button class="demo-btn-prev" onclick="window._app._prevDemo()" ${isFirst?'disabled':''}>
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <span class="demo-tt-counter">${this.demoStep+1} <span style="opacity:.4">/</span> ${DEMO_STEPS.length}</span>
+        ${isLast
+          ? `<button class="demo-btn-finish" onclick="window._app._closeDemo();window._app._openWizard()">
+               <i class="fas fa-magic"></i> Let's Go!
+             </button>`
+          : `<button class="demo-btn-next" onclick="window._app._nextDemo()">
+               <i class="fas fa-chevron-right"></i>
+             </button>`}
+      </div>`;
   }
 
-  _positionDemoTooltip(targetId) {
-    if (!targetId) {
-      // Center of screen
-      this.demoTooltip.style.top       = '50%';
-      this.demoTooltip.style.left      = '50%';
-      this.demoTooltip.style.transform = 'translate(-50%, -50%)';
-      return;
-    }
-    const target = this._el(targetId);
-    if (!target) {
-      this.demoTooltip.style.top       = '50%';
-      this.demoTooltip.style.left      = '50%';
-      this.demoTooltip.style.transform = 'translate(-50%, -50%)';
-      return;
-    }
-
-    const rect    = target.getBoundingClientRect();
-    const tW      = 380;
-    const tH      = 320;
-    const margin  = 16;
-    const vw      = window.innerWidth;
-    const vh      = window.innerHeight;
-
+  _placeDemoTooltip(rect) {
+    if (!this.demoTooltip || !rect) { this._placeDemoTooltipCenter(); return; }
+    const TW = 340, TH = 340, M = 14;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let top, left;
     this.demoTooltip.style.transform = '';
+    this.demoTooltip.style.width     = TW + 'px';
 
-    // Try below
-    if (rect.bottom + tH + margin < vh) {
-      this.demoTooltip.style.top  = `${rect.bottom + margin}px`;
-      this.demoTooltip.style.left = `${Math.max(margin, Math.min(vw - tW - margin, rect.left))}px`;
+    // Decide position — prefer below, then above, then right, then left, then center
+    if (rect.bottom + TH + M < vh) {
+      top  = rect.bottom + M;
+      left = Math.max(M, Math.min(vw - TW - M, rect.left + rect.width/2 - TW/2));
+    } else if (rect.top - TH - M > 0) {
+      top  = rect.top - TH - M;
+      left = Math.max(M, Math.min(vw - TW - M, rect.left + rect.width/2 - TW/2));
+    } else if (rect.right + TW + M < vw) {
+      top  = Math.max(M, Math.min(vh - TH - M, rect.top + rect.height/2 - TH/2));
+      left = rect.right + M;
+    } else if (rect.left - TW - M > 0) {
+      top  = Math.max(M, Math.min(vh - TH - M, rect.top + rect.height/2 - TH/2));
+      left = rect.left - TW - M;
+    } else {
+      this._placeDemoTooltipCenter(); return;
     }
-    // Try above
-    else if (rect.top - tH - margin > 0) {
-      this.demoTooltip.style.top  = `${rect.top - tH - margin}px`;
-      this.demoTooltip.style.left = `${Math.max(margin, Math.min(vw - tW - margin, rect.left))}px`;
-    }
-    // Try right
-    else if (rect.right + tW + margin < vw) {
-      this.demoTooltip.style.top  = `${Math.max(margin, Math.min(vh - tH - margin, rect.top))}px`;
-      this.demoTooltip.style.left = `${rect.right + margin}px`;
-    }
-    // Fallback: center
-    else {
-      this.demoTooltip.style.top       = '50%';
-      this.demoTooltip.style.left      = '50%';
-      this.demoTooltip.style.transform = 'translate(-50%, -50%)';
-    }
+    this.demoTooltip.style.top  = top  + 'px';
+    this.demoTooltip.style.left = left + 'px';
   }
 
-  _nextDemo() { if (this.demoStep < DEMO_STEPS.length - 1) { this.demoStep++; this._renderDemoStep(); } }
-  _prevDemo() { if (this.demoStep > 0) { this.demoStep--; this._renderDemoStep(); } }
+  _placeDemoTooltipCenter() {
+    if (!this.demoTooltip) return;
+    this.demoTooltip.style.width     = '340px';
+    this.demoTooltip.style.top       = '50%';
+    this.demoTooltip.style.left      = '50%';
+    this.demoTooltip.style.transform = 'translate(-50%, -50%)';
+  }
+
+  _nextDemo() {
+    if (this.demoStep < DEMO_STEPS.length - 1) { this.demoStep++; this._renderDemoStep(); }
+  }
+  _prevDemo() {
+    if (this.demoStep > 0) { this.demoStep--; this._renderDemoStep(); }
+  }
   _jumpDemo(step) { this.demoStep = step; this._renderDemoStep(); }
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -3623,7 +3638,13 @@ Examples:
 
     // ── Demo overlay click-to-close ──
     if (this.demoOverlay) {
-      this.demoOverlay.addEventListener('click', () => this._closeDemo());
+      // Demo canvas click — clicking outside target area advances to next step
+      if (this.demoCanvas) {
+        this.demoCanvas.addEventListener('click', () => {
+          if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
+          else this._closeDemo();
+        });
+      }
     }
 
     // ── Modal close buttons & overlay clicks ──
