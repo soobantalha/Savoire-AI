@@ -2260,6 +2260,9 @@ Examples:
   // SECTION 19: RESULT BUILDERS — NOTES
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+  // ══════════════════════════════════════════════════════════════════════
+  // NOTES — shows ONLY notes content (no flashcards/quiz/mindmap)
+  // ══════════════════════════════════════════════════════════════════════
   _buildNotesHTML(data) {
     let h = '';
     if (data.ultra_long_notes) {
@@ -2267,36 +2270,41 @@ Examples:
         <div class="ss-hdr">
           <div class="ss-title"><i class="fas fa-book-open"></i> Comprehensive Study Notes</div>
           <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
-            <i class="fas fa-copy"></i> Copy
+            <i class="fas fa-copy"></i> Copy Notes
           </button>
         </div>
         <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
       </div>`;
     }
-    if (data.key_concepts?.length)           h += this._secConcepts(data.key_concepts);
-    if (data.key_tricks?.length)             h += this._secTricks(data.key_tricks);
-    if (data.practice_questions?.length)     h += this._secQA(data.practice_questions);
-    if (data.real_world_applications?.length)h += this._secApps(data.real_world_applications);
-    if (data.common_misconceptions?.length)  h += this._secMisc(data.common_misconceptions);
-    if (data.flashcards?.length)             h += `<div class="study-sec section-anchor" id="sec-fc"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-layer-group"></i> Flashcard Preview</div></div><div class="ss-body">${this._fcMiniList(data.flashcards)}</div></div>`;
-    if (data.quiz_questions?.length)         h += `<div class="study-sec section-anchor" id="sec-quiz"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-question-circle"></i> Quiz Preview</div></div><div class="ss-body">${this._quizMiniList(data.quiz_questions)}</div></div>`;
-    if (data.mindmap)                        h += `<div class="study-sec section-anchor" id="sec-mm"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-project-diagram"></i> Mind Map Preview</div></div><div class="ss-body">${this._mmMini(data.mindmap)}</div></div>`;
-    return h || '<div style="padding:24px;text-align:center;color:#d4af37">Study materials generated successfully.</div>';
+    if (data.key_concepts?.length)            h += this._secConcepts(data.key_concepts);
+    if (data.key_tricks?.length)              h += this._secTricks(data.key_tricks);
+    if (data.practice_questions?.length)      h += this._secQA(data.practice_questions);
+    if (data.real_world_applications?.length) h += this._secApps(data.real_world_applications);
+    if (data.common_misconceptions?.length)   h += this._secMisc(data.common_misconceptions);
+    return h || `<div class="result-empty-msg"><i class="fas fa-book-open"></i> Notes generated — scroll up to read!</div>`;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
   // SECTION 20: ALL-TOOLS MEGA BUNDLE HTML
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+  // ══════════════════════════════════════════════════════════════════════
+  // MEGA BUNDLE — shows ALL 5 tools in sequence
+  // ══════════════════════════════════════════════════════════════════════
   _buildAllHTML(data) {
+    const PALETTE = ['#d4af37','#00d4ff','#bf00ff','#00ff88','#ff6b35','#e84393'];
     let h = `<div class="mega-result-banner">
-      <i class="fas fa-bolt"></i>
-      ⚡ Mega Study Bundle — All 5 Tools Generated
-      <span class="mega-result-count">
-        ${data.flashcards?.length ? `🃏 ${data.flashcards.length} Cards` : ''}
-        ${data.quiz_questions?.length ? ` · ❓ ${data.quiz_questions.length} Questions` : ''}
-        ${data.mindmap?.branches?.length ? ` · 🗺️ ${data.mindmap.branches.length} Branches` : ''}
-      </span>
+      <div class="mega-banner-icon"><i class="fas fa-bolt"></i></div>
+      <div class="mega-banner-text">
+        <div class="mega-banner-title">⚡ Mega Study Bundle — All 5 Tools</div>
+        <div class="mega-banner-counts">
+          ${data.ultra_long_notes ? `<span>📝 Notes</span>` : ''}
+          ${data.flashcards?.length ? `<span>🃏 ${data.flashcards.length} Flashcards</span>` : ''}
+          ${data.quiz_questions?.length ? `<span>❓ ${data.quiz_questions.length} Quiz Q's</span>` : ''}
+          <span>📄 Summary</span>
+          ${data.mindmap?.branches?.length ? `<span>🗺️ ${data.mindmap.branches.length} Branches</span>` : ''}
+        </div>
+      </div>
     </div>`;
 
     // 1. NOTES
@@ -2357,41 +2365,12 @@ Examples:
       </div>`;
     }
 
-    // 5. MIND MAP
-    if (data.mindmap) {
-      h += `<div class="study-sec section-anchor mega-section" id="sec-mm">
-        <div class="ss-hdr mega-hdr">
-          <div class="ss-title"><span class="mega-num">5</span><i class="fas fa-project-diagram"></i> Visual Mind Map</div>
-        </div>
-        <div class="ss-body">
-          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(data.mindmap.central || data.topic || 'Topic')}</div>
-          <div class="mm-branches">
-            ${(data.mindmap.branches || []).map(b => `
-              <div class="mm-branch">
-                <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
-                  <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
-                </div>
-                <div class="mm-nodes-list">
-                  ${(b.items || []).map(item => `
-                    <div class="mm-node">
-                      <span class="mm-node-dot" style="background:${b.color || '#d4af37'}"></span>
-                      <span class="mm-node-text">${this._esc(item)}</span>
-                    </div>`).join('')}
-                </div>
-              </div>`).join('')}
-          </div>
-          ${data.mindmap.connections?.length ? `
-            <div class="mm-connections">
-              <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
-              <div class="mm-conn-list">
-                ${data.mindmap.connections.map(c => `
-                  <div class="mm-conn-item">
-                    <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
-                    ${this._esc(c.description)}
-                  </div>`).join('')}
-              </div>
-            </div>` : ''}
-        </div>
+    // 5. MIND MAP (reuse the beautiful _buildMindmapHTML renderer)
+    const mmSection = this._buildMindmapHTML(data);
+    if (mmSection) {
+      h += `<div class="mega-section-wrap">
+        <div class="mega-section-num-badge" style="background:#d4af37;color:#0a1128">5</div>
+        ${mmSection}
       </div>`;
     }
 
@@ -2408,30 +2387,29 @@ Examples:
   // SECTION 21: FLASHCARD HTML BUILDER
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+  // ══════════════════════════════════════════════════════════════════════
+  // FLASHCARDS — shows ONLY the interactive flashcard viewer
+  // ══════════════════════════════════════════════════════════════════════
   _buildFcHTML(data) {
-    // FLASHCARDS ONLY — no extra notes or sections
+    // Use flashcards if available, else generate from key_concepts
     const cards = data.flashcards?.length ? data.flashcards
       : (data.key_concepts || []).slice(0, 15).map(c => ({
-          front: c.split(':')[0]?.trim() || c.slice(0, 60),
+          front: c.split(':')[0]?.trim() || c.slice(0, 80),
           back:  c,
         }));
 
-    if (!cards.length) {
-      return `<div class="empty-tool-msg">
-        <i class="fas fa-layer-group" style="font-size:2rem;color:#bf00ff;margin-bottom:12px"></i>
-        <div style="font-size:1rem;color:#e0e0ff;font-weight:700">No flashcards generated.</div>
-        <div style="color:rgba(255,255,255,.5);font-size:.85rem;margin-top:6px">Try again or use Mega Bundle.</div>
-      </div>`;
-    }
+    if (!cards.length) return `<div class="result-empty-msg"><i class="fas fa-layer-group"></i> Flashcards generating… please retry.</div>`;
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
     this.fcFlipped = false;
 
-    // ONLY the flashcard interactive viewer — nothing else
-    return `<div class="study-sec" id="sec-fc">
+    return `<div class="study-sec section-anchor" id="sec-fc">
       <div class="ss-hdr">
-        <div class="ss-title"><i class="fas fa-layer-group"></i> Interactive Flashcards (${cards.length} cards)</div>
+        <div class="ss-title"><i class="fas fa-layer-group"></i> Flashcards — ${cards.length} Cards</div>
+        <div class="fc-header-stats">
+          <span class="fc-stat-chip"><i class="fas fa-brain"></i> Spaced Repetition Mode</span>
+        </div>
       </div>
       <div class="ss-body">${this._buildFcMode(cards)}</div>
     </div>`;
@@ -2536,31 +2514,24 @@ Examples:
   // SECTION 22: QUIZ HTML BUILDER
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+  // ══════════════════════════════════════════════════════════════════════
+  // QUIZ — shows ONLY the interactive quiz (no notes/flashcards/mindmap)
+  // ══════════════════════════════════════════════════════════════════════
   _buildQuizHTML(data) {
-    const qs = data.quiz_questions || data.practice_questions || [];
-    if (!qs.length) {
-      return `<div class="empty-tool-msg" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;gap:12px">
-        <i class="fas fa-question-circle" style="font-size:2rem;color:#00ff88"></i>
-        <div style="font-size:1rem;color:#e0e0ff;font-weight:700">No quiz questions generated.</div>
-        <div style="color:rgba(255,255,255,.5);font-size:.85rem">Try again or use Mega Bundle for all tools at once.</div>
-      </div>`;
-    }
+    const qs = data.quiz_questions?.length ? data.quiz_questions : (data.practice_questions || []);
+    if (!qs.length) return `<div class="result-empty-msg"><i class="fas fa-question-circle"></i> Quiz generating… please retry.</div>`;
 
     this.quizData  = qs.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
     this.quizIdx   = 0;
     this.quizScore = 0;
 
-    let h = `
-      <div class="study-sec" id="quizContainer">
-        <div class="ss-hdr">
-          <div class="ss-title"><i class="fas fa-question-circle"></i> Practice Quiz (${this.quizData.length} questions)</div>
-          <div class="quiz-score-display"><i class="fas fa-star"></i> <span id="quizScoreNum">0</span> / ${this.quizData.length}</div>
-        </div>
-        <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
-      </div>`;
-
-    // QUIZ ONLY — no extra notes section
-    return h;
+    return `<div class="study-sec section-anchor" id="quizContainer">
+      <div class="ss-hdr">
+        <div class="ss-title"><i class="fas fa-question-circle"></i> Practice Quiz — ${this.quizData.length} Questions</div>
+        <div class="quiz-score-display"><i class="fas fa-star"></i> <span id="quizScoreNum">0</span> / ${this.quizData.length}</div>
+      </div>
+      <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
+    </div>`;
   }
 
   _renderQuizQ(idx) {
@@ -2751,42 +2722,44 @@ Examples:
   // SECTION 23: SUMMARY & MIND MAP HTML
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+  // ══════════════════════════════════════════════════════════════════════
+  // SUMMARY — shows ONLY summary content (no flashcards/quiz/mindmap)
+  // ══════════════════════════════════════════════════════════════════════
   _buildSummaryHTML(data) {
     let h = '';
     if (data.ultra_long_notes) {
-      const paragraphs = data.ultra_long_notes.split('\n\n');
-      const tldr = paragraphs.find(p => p.includes('TL;DR') || p.includes('Summary') || p.includes('Executive')) || paragraphs[0] || '';
-      h += `
-        <div class="study-sec" id="sec-tldr">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-bolt"></i> TL;DR — Executive Summary</div>
-            <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.summary-tldr-content').innerText)">
-              <i class="fas fa-copy"></i> Copy
-            </button>
-          </div>
-          <div class="ss-body">
-            <div class="summary-tldr-box">
-              <div class="summary-tldr-icon"><i class="fas fa-align-left"></i></div>
-              <div class="summary-tldr-content">${this._renderMd(tldr)}</div>
-            </div>
+      const paras = data.ultra_long_notes.split('\n\n');
+      const tldr  = paras.find(p => /TL;DR|Summary|Executive|Overview|Introduction/i.test(p)) || paras[0] || '';
+      h += `<div class="study-sec" id="sec-tldr">
+        <div class="ss-hdr">
+          <div class="ss-title"><i class="fas fa-bolt"></i> TL;DR — Quick Summary</div>
+          <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.summary-tldr-content').innerText)">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="ss-body">
+          <div class="summary-tldr-box">
+            <div class="summary-tldr-icon"><i class="fas fa-align-left"></i></div>
+            <div class="summary-tldr-content">${this._renderMd(tldr)}</div>
           </div>
         </div>
-        <div class="study-sec" id="sec-notes">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-book-open"></i> Full Summary</div>
-            <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
-              <i class="fas fa-copy"></i> Copy
-            </button>
-          </div>
-          <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-        </div>`;
+      </div>`;
+      h += `<div class="study-sec" id="sec-summary-full">
+        <div class="ss-hdr">
+          <div class="ss-title"><i class="fas fa-book-open"></i> Full Summary</div>
+          <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
+        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
+      </div>`;
     }
     if (data.key_concepts?.length) {
-      h += `<div class="study-sec">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-list-check"></i> Key Points</div></div>
+      h += `<div class="study-sec section-anchor" id="sec-concepts">
+        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-list-check"></i> Key Points at a Glance</div></div>
         <div class="ss-body">
           <div class="summary-points-list">
-            ${data.key_concepts.map((c, i) => `
+            ${data.key_concepts.slice(0, 12).map((c, i) => `
               <div class="summary-point">
                 <div class="summary-point-num">${i + 1}</div>
                 <div class="summary-point-text">${this._esc(c)}</div>
@@ -2795,96 +2768,92 @@ Examples:
         </div>
       </div>`;
     }
-    return h || this._buildNotesHTML(data);
+    if (data.key_tricks?.length)              h += this._secTricks(data.key_tricks);
+    if (data.common_misconceptions?.length)   h += this._secMisc(data.common_misconceptions);
+    return h || `<div class="result-empty-msg"><i class="fas fa-align-left"></i> Summary generated — scroll up!</div>`;
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // MINDMAP — shows ONLY mindmap (no notes/flashcards/quiz)
+  // ══════════════════════════════════════════════════════════════════════
   _buildMindmapHTML(data) {
     const mm    = data.mindmap;
     const topic = data.topic || 'Topic';
+    const PALETTE = ['#d4af37','#00d4ff','#bf00ff','#00ff88','#ff6b35','#e84393','#ffae00','#7b00ff','#00ffcc','#ff4444'];
+
+    // Build branches array — from AI mindmap OR reconstruct from key concepts
+    let branches = [];
+    let central  = topic;
 
     if (mm?.branches?.length) {
-      const branchHtml = mm.branches.map(b => `
-        <div class="mm-branch">
-          <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
-            <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
-          </div>
-          <div class="mm-nodes-list">
-            ${(b.items || []).map(item => `
-              <div class="mm-node">
-                <span class="mm-node-dot" style="background:${b.color || '#d4af37'}"></span>
-                <span class="mm-node-text">${this._esc(item)}</span>
-              </div>`).join('')}
-          </div>
-        </div>`).join('');
-
-      const connHtml = mm.connections?.length ? `
-        <div class="mm-connections">
-          <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
-          <div class="mm-conn-list">
-            ${mm.connections.map(c => `
-              <div class="mm-conn-item">
-                <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
-                ${this._esc(c.description)}
-              </div>`).join('')}
-          </div>
-        </div>` : '';
-
-      let h = `
-        <div class="study-sec" id="sec-mm">
-          <div class="ss-hdr">
-            <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(mm.central || topic)}</div>
-          </div>
-          <div class="ss-body">
-            <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm.central || topic)}</div>
-            <div class="mm-branches">${branchHtml}</div>
-            ${connHtml}
-          </div>
-        </div>`;
-
-      // MINDMAP ONLY — no extra notes
-      return h;
+      branches = mm.branches;
+      central  = mm.central || topic;
+    } else if (data.key_concepts?.length) {
+      // Reconstruct mindmap from key_concepts (each concept → a branch)
+      central  = topic;
+      const chunkSize = 3;
+      const branchNames = ['Core Concepts','Key Mechanisms','Applications','Important Facts','Study Guide','Deep Insights'];
+      for (let i = 0; i < Math.min(6, Math.ceil(data.key_concepts.length / chunkSize)); i++) {
+        branches.push({
+          name:  branchNames[i] || `Branch ${i+1}`,
+          color: PALETTE[i % PALETTE.length],
+          items: data.key_concepts.slice(i * chunkSize, (i + 1) * chunkSize).map(c => String(c).slice(0, 100)),
+        });
+      }
     }
 
-    // Fallback mindmap using topic-specific branch names from key_concepts
-    // Branch names derived from actual topic words — never generic
-    const topicWords = (data.topic || topic || '').split(/[\s,;]+/).filter(w => w.length > 3);
-    const seg1 = topicWords[0] || topic.split(' ')[0] || 'Core';
-    const seg2 = topicWords[1] || 'Principles';
-    const seg3 = topicWords[2] || 'Applications';
-    const Tshort = topicWords.slice(0,3).join(' ') || topic.slice(0,25);
+    if (!branches.length) {
+      return `<div class="result-empty-msg"><i class="fas fa-project-diagram"></i> Mind map generating… please retry.</div>`;
+    }
 
-    const branches = [
-      { name: `${seg1} — What It Is`,        items: (data.key_concepts || []).slice(0,6),            color: '#d4af37' },
-      { name: `${seg2} — How It Works`,       items: (data.key_tricks   || []).slice(0,6),            color: '#00ff88' },
-      { name: `${Tshort} — Real Uses`,        items: (data.real_world_applications || []).slice(0,6), color: '#00d4ff' },
-      { name: `${Tshort} — Common Errors`,    items: (data.common_misconceptions   || []).slice(0,6), color: '#ff4444' },
-    ].filter(b => b.items.length > 0);
-
-    const bh = branches.map(b => `
-      <div class="mm-branch">
-        <div class="mm-branch-hdr" style="color:${b.color}">
-          <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+    const branchHtml = branches.map((b, bi) => {
+      const col = b.color || PALETTE[bi % PALETTE.length];
+      return `<div class="mm-branch-card" style="border-color:${col}30;--bc:${col}">
+        <div class="mm-branch-title" style="color:${col}">
+          <span class="mm-branch-dot" style="background:${col}"></span>
+          ${this._esc(b.name)}
         </div>
-        <div class="mm-nodes-list">
-          ${b.items.slice(0, 6).map(item => `
-            <div class="mm-node">
-              <span class="mm-node-dot" style="background:${b.color}"></span>
-              <span class="mm-node-text">${this._esc(String(item).slice(0, 150))}</span>
+        <div class="mm-items-grid">
+          ${(b.items || []).slice(0, 8).map(item => `
+            <div class="mm-item-chip" style="border-color:${col}40;color:${col}cc">
+              <i class="fas fa-circle" style="font-size:4px;margin-right:5px;opacity:.7"></i>
+              ${this._esc(String(item))}
             </div>`).join('')}
         </div>
-      </div>`).join('');
-
-    // MINDMAP ONLY — no extra notes
-    return `
-      <div class="study-sec" id="sec-mm">
-        <div class="ss-hdr">
-          <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(topic)}</div>
-        </div>
-        <div class="ss-body">
-          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm?.central || topic)}</div>
-          <div class="mm-branches">${bh || '<p style="color:rgba(255,255,255,.4);padding:16px">Mind map content generated…</p>'}</div>
-        </div>
       </div>`;
+    }).join('');
+
+    const connHtml = mm?.connections?.length ? `
+      <div class="mm-connections-section">
+        <div class="mm-conn-header"><i class="fas fa-link"></i> Cross-Connections</div>
+        <div class="mm-conn-grid">
+          ${mm.connections.map(c => `
+            <div class="mm-conn-chip">
+              <strong>${this._esc(c.from)}</strong>
+              <span class="mm-conn-arrow">↔</span>
+              <strong>${this._esc(c.to)}</strong>
+              ${c.description ? `<div class="mm-conn-desc">${this._esc(c.description)}</div>` : ''}
+            </div>`).join('')}
+        </div>
+      </div>` : '';
+
+    return `<div class="study-sec section-anchor" id="sec-mm">
+      <div class="ss-hdr">
+        <div class="ss-title"><i class="fas fa-project-diagram"></i> Mind Map — ${this._esc(central)}</div>
+        <button class="ss-copy-btn" onclick="window._app._copyTxt(document.getElementById('sec-mm').innerText)">
+          <i class="fas fa-copy"></i> Copy
+        </button>
+      </div>
+      <div class="ss-body">
+        <div class="mm-central-node">
+          <div class="mm-central-pulse"></div>
+          <i class="fas fa-brain" style="font-size:1.4rem;color:#d4af37"></i>
+          <div class="mm-central-label">${this._esc(central)}</div>
+        </div>
+        <div class="mm-branches-grid">${branchHtml}</div>
+        ${connHtml}
+      </div>
+    </div>`;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -3038,444 +3007,390 @@ Examples:
   }
 
   _generatePDF(data, theme = 'dark') {
-    this._toast('info', 'fa-spinner fa-pulse', `Generating world-class ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
+    this._toast('info', 'fa-spinner fa-pulse', 'Generating PDF…');
     try {
       const { jsPDF } = window.jspdf;
-      const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
+      if (!jsPDF) throw new Error('jsPDF not loaded');
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
 
-      // ── Page metrics ──
-      const PW = 210, PH = 297, ML = 14, MR = 14, CW = PW - ML - MR;
-      const MT_CONTENT = 26;  // top margin on content pages after mini-header
-      const MB = 16;          // bottom margin (above footer)
-      const isDark = theme !== 'light';
-      let Y = 0, pageNum = 1;
+      // ── Page metrics ──────────────────────────────────────────────
+      const PW = 210, PH = 297, ML = 15, MR = 15, CW = PW - ML - MR;
+      const HDR = 20, FTR = 14, BODY_TOP = HDR + 4, BODY_BOT = PH - FTR - 2;
+      const isDark = (theme !== 'light');
+      let Y = BODY_TOP, page = 1;
 
-      // ── Palette ──
+      // ── Color palette ─────────────────────────────────────────────
       const C = isDark ? {
-        bg:      [7, 12, 32],
-        gold:    [212, 175, 55],
-        blue:    [0, 170, 220],
-        purple:  [160, 60, 220],
-        green:   [0, 180, 100],
-        red:     [210, 55, 55],
-        text:    [195, 198, 210],
-        head:    [238, 240, 255],
-        muted:   [115, 118, 138],
-        card:    [14, 20, 52],
-        hdr:     [20, 30, 72],
-        border:  [28, 40, 88],
-        correct: [0, 170, 90],
+        bg:     [7,12,32],    card:   [14,20,52],   hdr:    [18,28,68],
+        border: [30,42,90],   gold:   [212,175,55],  blue:   [0,160,220],
+        purple: [160,60,220], green:  [0,175,100],   red:    [200,50,50],
+        text:   [195,198,210],head:   [235,238,255], muted:  [110,115,138],
+        correct:[0,170,90],
       } : {
-        bg:      [255, 255, 255],
-        gold:    [170, 135, 30],
-        blue:    [0, 100, 190],
-        purple:  [130, 40, 200],
-        green:   [0, 130, 70],
-        red:     [180, 40, 40],
-        text:    [38, 40, 56],
-        head:    [10, 18, 56],
-        muted:   [100, 106, 126],
-        card:    [244, 246, 255],
-        hdr:     [228, 232, 252],
-        border:  [210, 215, 240],
-        correct: [0, 120, 60],
+        bg:     [255,255,255],card:   [245,247,255], hdr:    [232,236,252],
+        border: [210,215,240],gold:   [165,128,22],  blue:   [0,100,185],
+        purple: [120,35,195], green:  [0,125,65],    red:    [175,35,35],
+        text:   [42,45,60],   head:   [12,18,55],    muted:  [95,100,122],
+        correct:[0,120,60],
       };
 
-      // ── Helpers ──
-      const setFG = ([r,g,b]) => doc.setTextColor(r,g,b);
-      const setBG = ([r,g,b]) => doc.setFillColor(r,g,b);
-      const setDC = ([r,g,b]) => doc.setDrawColor(r,g,b);
+      const fg  = (c) => { if(c) doc.setTextColor(c[0],c[1],c[2]); };
+      const bg  = (c) => { if(c) doc.setFillColor(c[0],c[1],c[2]); };
+      const dc  = (c) => { if(c) doc.setDrawColor(c[0],c[1],c[2]); };
 
-      const fillBg = () => { if(isDark){setBG(C.bg);doc.rect(0,0,PW,PH,'F');} };
-
-      const addPageFooter = () => {
-        setBG(isDark?[10,16,40]:[235,238,252]);
-        doc.rect(0, PH-MB, PW, MB, 'F');
-        setDC(C.gold); doc.setLineWidth(0.25); doc.line(ML, PH-MB, PW-MR, PH-MB);
-        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE} · "${SAVOIRÉ.TAGLINE}"`, ML, PH-6);
-        doc.text(`Page ${pageNum}`, PW-MR, PH-6, {align:'right'});
+      // ── Fill page background ──────────────────────────────────────
+      const fillPage = () => {
+        if (isDark) { bg(C.bg); doc.rect(0,0,PW,PH,'F'); }
       };
 
-      const addPageHeader = (subtitle='') => {
-        setBG(C.hdr); doc.rect(0,0,PW,MT_CONTENT-4,'F');
-        setDC(C.gold); doc.setLineWidth(0.25); doc.line(0,MT_CONTENT-4,PW,MT_CONTENT-4);
-        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG(C.gold);
-        doc.text(SAVOIRÉ.BRAND, ML, MT_CONTENT-9);
-        doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text((subtitle||(data.topic||'')).slice(0,72), PW-MR, MT_CONTENT-9, {align:'right'});
+      // ── Page header ───────────────────────────────────────────────
+      const drawHeader = (title) => {
+        bg(C.hdr); doc.rect(0,0,PW,HDR,'F');
+        dc(C.gold); doc.setLineWidth(0.3); doc.line(0,HDR,PW,HDR);
+        doc.setFontSize(7); doc.setFont('helvetica','bold'); fg(C.gold);
+        doc.text('SAVOIRÉ AI v2.0', ML, HDR-5);
+        doc.setFont('helvetica','normal'); fg(C.muted);
+        const subtitle = (title || (data.topic||'')).slice(0,70);
+        doc.text(subtitle, PW-MR, HDR-5, {align:'right'});
       };
 
-      const newPage = (subtitle) => {
-        addPageFooter();
-        doc.addPage(); pageNum++; Y = MT_CONTENT+2;
-        fillBg(); addPageHeader(subtitle);
+      // ── Page footer ───────────────────────────────────────────────
+      const drawFooter = () => {
+        bg(isDark?[10,16,42]:[230,234,252]); doc.rect(0,PH-FTR,PW,FTR,'F');
+        dc(C.gold); doc.setLineWidth(0.2); doc.line(ML,PH-FTR,PW-MR,PH-FTR);
+        doc.setFontSize(6); doc.setFont('helvetica','normal'); fg(C.muted);
+        doc.text('savoireai.vercel.app  ·  soobantalhatech.xyz  ·  "Think Less. Know More."', ML, PH-4);
+        doc.text(`Page ${page}`, PW-MR, PH-4, {align:'right'});
       };
 
-      const ck = (need=12) => { if(Y+need > PH-MB-2) newPage(); };
+      // ── New page ──────────────────────────────────────────────────
+      const newPage = (title) => {
+        drawFooter();
+        doc.addPage(); page++; fillPage(); drawHeader(title);
+        Y = BODY_TOP;
+      };
 
-      // ── Word-wrapped text writer ──
-      const wt = (txt, x, maxW, sz, bold=false, color=C.text, lineH=null) => {
-        if(!txt)return;
-        doc.setFontSize(sz); doc.setFont('helvetica', bold?'bold':'normal'); setFG(color);
-        const lines = doc.splitTextToSize(String(txt), maxW);
-        const lh    = lineH || sz * 0.385;
-        ck(lines.length * lh + 1);
-        doc.text(lines, x, Y);
-        Y += lines.length * lh + 0.5;
+      // ── Space check ───────────────────────────────────────────────
+      const ck = (need) => { if (Y + need > BODY_BOT) newPage(); };
+
+      // ── Wrapped text writer ───────────────────────────────────────
+      const wt = (txt, x, w, sz, bold, color, lh) => {
+        if (!txt) return 0;
+        const s = String(txt).replace(/[\u0000-\u001F]/g,' ');
+        doc.setFontSize(sz); doc.setFont('helvetica', bold?'bold':'normal'); fg(color||C.text);
+        const lines = doc.splitTextToSize(s, w);
+        const lineH = lh || sz * 0.38;
+        ck(lines.length * lineH + 1);
+        doc.text(lines, x, Y); Y += lines.length * lineH + 0.5;
         return lines.length;
       };
 
-      // ── Section header bar ──
-      const secHdr = (label, color=C.gold) => {
-        ck(14);
-        setBG(C.hdr); doc.rect(ML, Y, CW, 9, 'F');
-        setBG(color);  doc.rect(ML, Y, 3, 9, 'F');
-        doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(color);
-        doc.text(label, ML+6, Y+6.2);
-        Y += 13;
+      // ── Section header ────────────────────────────────────────────
+      const secH = (label, accent) => {
+        ck(13);
+        bg(C.hdr); doc.rect(ML,Y,CW,9,'F');
+        bg(accent||C.gold); doc.rect(ML,Y,3,9,'F');
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); fg(accent||C.gold);
+        const lbl = label.replace(/[^\x00-\x7E]/g,''); // strip emoji for safety
+        doc.text(lbl, ML+6, Y+6); Y += 13;
       };
 
-      // ── Rounded card ──
-      const card = (h, fillColor=C.card, borderColor=C.border) => {
-        ck(h+2);
-        setBG(fillColor); doc.roundedRect(ML, Y, CW, h, 2, 2, 'F');
-        setDC(borderColor); doc.setLineWidth(0.18); doc.roundedRect(ML, Y, CW, h, 2, 2, 'S');
-        Y += 3;
-      };
-
-      // ───────────────────────────────────────────────────────────────
+      // ────────────────────────────────────────────────────────────────
       // COVER PAGE
-      // ───────────────────────────────────────────────────────────────
-      fillBg();
+      // ────────────────────────────────────────────────────────────────
+      fillPage();
 
-      // Gold accent bars top+bottom
-      setBG(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
+      // Gold top bar
+      bg(C.gold); doc.rect(0,0,PW,3,'F');
+      bg(C.gold); doc.rect(0,PH-3,PW,3,'F');
 
       // Logo block
-      setBG([0,140,220]); doc.roundedRect(ML, 14, 22, 22, 4, 4, 'F');
-      doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
-      doc.text('Ś', ML+8, 30);
+      bg(C.blue); doc.roundedRect(ML,10,20,20,3,3,'F');
+      doc.setFontSize(14); doc.setFont('helvetica','bold'); fg([255,255,255]);
+      doc.text('S',ML+7,24);
 
-      // App name
-      doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
-      doc.text('SAVOIRÉ AI', ML+28, 22);
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text("v2.0 — World's Most Advanced Free AI Study Assistant", ML+28, 29);
-      doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`, ML+28, 36);
+      // Brand name
+      doc.setFontSize(22); doc.setFont('helvetica','bold'); fg(C.gold);
+      doc.text('SAVOIRÉ AI', ML+26,18);
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); fg(C.muted);
+      doc.text("World's Most Advanced Free AI Study Assistant — v2.0", ML+26,25);
+      doc.text('Built by Sooban Talha Technologies  ·  soobantalhatech.xyz', ML+26,31);
 
       // Divider
-      setDC(C.gold); doc.setLineWidth(0.4); doc.line(ML, 43, PW-MR, 43);
+      dc(C.gold); doc.setLineWidth(0.5); doc.line(ML,38,PW-MR,38);
 
       // Tool badge
       const tCfg = TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes;
-      setBG([0,80,160]); doc.roundedRect(ML, 48, 72, 8, 1.5, 1.5, 'F');
-      doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG([200,228,255]);
-      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all'?' — ALL 5 TOOLS ⚡':''}`, ML+4, 53.5);
+      bg(isDark?[0,60,140]:[0,80,180]); doc.roundedRect(ML,44,60,8,2,2,'F');
+      doc.setFontSize(7.5); doc.setFont('helvetica','bold'); fg([200,225,255]);
+      doc.text((tCfg.sfpName + (this.tool==='all'?' — ALL 5 TOOLS':'')).toUpperCase(), ML+3,50);
 
-      // Main topic title
-      doc.setFontSize(20); doc.setFont('helvetica','bold'); setFG(C.head);
-      const titleLines = doc.splitTextToSize(data.topic || 'Study Notes', CW);
-      doc.text(titleLines, ML, 67);
-      let cy = 67 + titleLines.length * 8.5;
+      // Topic title
+      doc.setFontSize(18); doc.setFont('helvetica','bold'); fg(C.head);
+      const topicLines = doc.splitTextToSize(data.topic||'Study Notes', CW);
+      doc.text(topicLines, ML,65);
+      let cy = 65 + topicLines.length * 7.5;
 
-      // Curriculum subtitle
-      doc.setFontSize(9.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text(data.curriculum_alignment || 'General Academic Study', ML, cy + 4);
+      // Subtitle
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); fg(C.muted);
+      doc.text(data.curriculum_alignment||'General Academic Study', ML, cy+4);
       cy += 14;
 
-      // Stats cards row
+      // Stats row
       const wc    = this._wordCount(this._stripMd(data.ultra_long_notes||''));
       const stats = [
-        { l:'Score',   v:`${data.study_score||97}/100` },
-        { l:'Words',   v:`~${wc.toLocaleString()}` },
-        { l:'Quality', v:data._quality==='ai_generated'?'AI Generated':'Enhanced' },
-        { l:'Lang',    v:data._language||'English' },
-        { l:'Date',    v:new Date().toLocaleDateString() },
-        { l:'Tool',    v:tCfg.sfpName },
+        ['Score',   `${data.study_score||97}/100`],
+        ['Words',   `~${wc.toLocaleString()}`],
+        ['Quality', data._quality==='ai_generated'?'AI Generated':'Enhanced'],
+        ['Language', data._language||'English'],
+        ['Date',    new Date().toLocaleDateString()],
+        ['Tool',    tCfg.sfpName],
       ];
-      const sw = CW / 3;
-      stats.forEach((s,i) => {
-        const sx = ML + (i%3)*sw, sy = cy + Math.floor(i/3)*20;
-        setBG(C.card); doc.roundedRect(sx, sy, sw-2, 17, 2, 2, 'F');
-        doc.setFontSize(11); doc.setFont('helvetica','bold'); setFG(C.gold);
-        doc.text(s.v, sx+(sw-2)/2, sy+9, {align:'center'});
-        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text(s.l, sx+(sw-2)/2, sy+14.5, {align:'center'});
+      const sw = CW/3;
+      stats.forEach(([lbl,val],i) => {
+        const sx = ML+(i%3)*sw, sy = cy+Math.floor(i/3)*18;
+        bg(C.card); doc.roundedRect(sx,sy,sw-2,15,2,2,'F');
+        dc(C.border); doc.setLineWidth(0.15); doc.roundedRect(sx,sy,sw-2,15,2,2,'S');
+        doc.setFontSize(10); doc.setFont('helvetica','bold'); fg(C.gold);
+        doc.text(String(val), sx+(sw-2)/2,sy+8,{align:'center'});
+        doc.setFontSize(6); doc.setFont('helvetica','normal'); fg(C.muted);
+        doc.text(lbl, sx+(sw-2)/2,sy+13,{align:'center'});
       });
-      cy += 44;
+      cy += 40;
 
       // Tagline
-      doc.setFontSize(12.5); doc.setFont('helvetica','bolditalic'); setFG(C.gold);
-      doc.text(`"${SAVOIRÉ.TAGLINE}"`, PW/2, cy+6, {align:'center'});
-      doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text(`— ${SAVOIRÉ.FOUNDER}`, PW/2, cy+13, {align:'center'});
+      doc.setFontSize(11); doc.setFont('helvetica','bolditalic'); fg(C.gold);
+      doc.text('"Think Less. Know More."', PW/2,cy+6,{align:'center'});
+      doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.muted);
+      doc.text('— Sooban Talha, Founder', PW/2,cy+13,{align:'center'});
 
-      // PDF info at bottom
-      doc.text(`Generated: ${new Date().toLocaleString()} · PDF Theme: ${isDark?'Dark':'Light'}`, PW/2, PH-22, {align:'center'});
-      doc.text(`${SAVOIRÉ.WEBSITE}`, PW/2, PH-16, {align:'center'});
+      doc.setFontSize(7); fg(C.muted);
+      doc.text(`Generated: ${new Date().toLocaleString()}  ·  PDF Theme: ${isDark?'Dark':'Light'}`, PW/2,PH-20,{align:'center'});
+      doc.text('savoireai.vercel.app', PW/2,PH-13,{align:'center'});
 
-      addPageFooter();
+      drawFooter();
 
-      // ───────────────────────────────────────────────────────────────
+      // ────────────────────────────────────────────────────────────────
       // CONTENT PAGES
-      // ───────────────────────────────────────────────────────────────
+      // ────────────────────────────────────────────────────────────────
       newPage('Study Notes');
 
-      // ── STUDY NOTES ──
+      // ── NOTES ──
       if (data.ultra_long_notes) {
-        secHdr('📚  Study Notes', C.gold);
-        const clean  = this._stripMd(data.ultra_long_notes);
-        const lines  = clean.split('\n');
-        let   prevBlank = false;
-
-        for (const raw of lines) {
+        secH('STUDY NOTES', C.gold);
+        const noteLines = this._stripMd(data.ultra_long_notes).split('\n');
+        let prevBlank = false;
+        for (const raw of noteLines) {
           const tr = raw.trim();
-          if (!tr) { if (!prevBlank) Y += 2; prevBlank = true; continue; }
+          if (!tr) { if (!prevBlank) Y += 1.5; prevBlank=true; continue; }
           prevBlank = false;
-          ck(9);
-
-          if (tr.match(/^#{1,4}/)) {
+          ck(8);
+          if (/^#{1,4}/.test(tr)) {
             const lv  = (tr.match(/^#+/)||[''])[0].length;
-            const txt = tr.replace(/^#+\s*/,'').replace(/\*+/g,'').replace(/`/g,'');
-            Y += lv<=2 ? 4 : 2;
-            const sz  = lv===1?14 : lv===2?11.5 : lv===3?10 : 9;
-            const col = lv<=2 ? C.gold : lv===3 ? C.blue : C.head;
-            if (lv <= 2) {
-              // Draw accent line for H1/H2
-              setBG(col); doc.rect(ML, Y-1, 3, sz*0.4, 'F');
-              wt(txt, ML+5, CW-5, sz, true, col);
+            const txt = tr.replace(/^#+\s*/,'').replace(/[*`]/g,'').trim();
+            Y += lv<=2?3:1;
+            if (lv<=2) {
+              bg(lv===1?C.gold:C.blue); doc.rect(ML,Y-1,3,lv===1?12:9,'F');
+              wt(txt, ML+5, CW-5, lv===1?13:11, true, lv===1?C.gold:C.blue);
             } else {
-              wt(txt, ML, CW, sz, true, col);
+              wt(txt, ML, CW, lv===3?10:9, true, C.head);
             }
-            Y += lv<=2 ? 3 : 1;
-
-          } else if (tr.match(/^[-•*]\s/)) {
-            const txt = tr.replace(/^[-•*]\s*/,'');
-            // Bullet dot
-            setBG(C.gold); doc.circle(ML+2, Y-1.5, 1, 'F');
-            wt(txt, ML+5, CW-5, 8.5, false, C.text);
-            Y += 0.5;
-
-          } else if (tr.match(/^\d+\.\s/)) {
+            Y += lv<=2?2:1;
+          } else if (/^[-*•]\s/.test(tr)) {
+            bg(C.gold); doc.circle(ML+2,Y-1.2,0.9,'F');
+            wt(tr.replace(/^[-*•]\s*/,''), ML+5, CW-5, 8.5, false, C.text);
+          } else if (/^\d+\.\s/.test(tr)) {
             wt(tr, ML+4, CW-4, 8.5, false, C.text);
-            Y += 0.5;
-
           } else if (tr.startsWith('>')) {
-            ck(12);
-            const qText = tr.replace(/^>\s*/,'');
-            setBG(isDark?[12,20,52]:[238,242,255]);
-            doc.rect(ML, Y-2, CW, 10, 'F');
-            setBG(C.gold); doc.rect(ML, Y-2, 2.5, 10, 'F');
-            wt(qText, ML+5, CW-5, 8.5, false, isDark?[220,210,160]:[75,60,10]);
-            Y += 3;
-
-          } else if (tr.startsWith('---')) {
-            setDC(C.border); doc.setLineWidth(0.2);
-            doc.line(ML, Y, PW-MR, Y);
-            Y += 5;
-
-          } else if (tr.includes('**') || tr.includes('`')) {
-            const cleaned = tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'[$1]').replace(/\*/g,'');
-            wt(cleaned, ML, CW, 8.5, false, C.text);
-            Y += 1;
+            ck(10);
+            bg(isDark?[12,20,55]:[238,242,255]); doc.rect(ML,Y-2,CW,9,'F');
+            bg(C.gold); doc.rect(ML,Y-2,2,9,'F');
+            wt(tr.replace(/^>\s*/,''), ML+5, CW-5, 8, false, isDark?[215,205,155]:[70,55,8]);
+            Y += 2;
+          } else if (tr==='---' || tr==='***') {
+            dc(C.border); doc.setLineWidth(0.15); doc.line(ML,Y,PW-MR,Y); Y+=4;
           } else {
-            wt(tr, ML, CW, 8.5, false, C.text);
-            Y += 1;
+            const clean = tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'$1').replace(/[*_]/g,'');
+            wt(clean, ML, CW, 8.5, false, C.text);
           }
         }
-        Y += 6;
+        Y += 5;
       }
 
       // ── KEY CONCEPTS ──
       if (data.key_concepts?.length) {
-        secHdr('💡  Key Concepts', C.gold);
-        data.key_concepts.slice(0, 10).forEach((c, i) => {
-          ck(16);
-          setBG(C.card); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'F');
-          setDC(C.border); doc.setLineWidth(0.15); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'S');
-          // Number circle
-          setBG(C.gold); doc.circle(ML+5, Y+7, 3.5, 'F');
-          doc.setFontSize(7); doc.setFont('helvetica','bold'); setFG([8,14,35]);
-          doc.text(String(i+1), ML+5, Y+8.5, {align:'center'});
-          // Content
-          const cLines = doc.splitTextToSize(String(c).slice(0,220), CW-14);
-          doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.text);
-          doc.text(cLines.slice(0,2), ML+11, Y+6);
-          Y += 17;
+        ck(14); secH('KEY CONCEPTS', C.gold);
+        data.key_concepts.slice(0,10).forEach((c,i) => {
+          ck(15);
+          bg(C.card); doc.roundedRect(ML,Y,CW,13,2,2,'F');
+          dc(C.border); doc.setLineWidth(0.12); doc.roundedRect(ML,Y,CW,13,2,2,'S');
+          bg(C.gold); doc.circle(ML+5,Y+6.5,3,'F');
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); fg([8,14,35]);
+          doc.text(String(i+1),ML+5,Y+8,{align:'center'});
+          const txt = String(c).replace(/[\u0000-\u001F]/g,' ').slice(0,200);
+          const ls  = doc.splitTextToSize(txt, CW-13);
+          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
+          doc.text(ls.slice(0,2), ML+11, Y+5.5);
+          Y += 16;
         });
-        Y += 4;
+        Y += 3;
       }
 
       // ── FLASHCARDS ──
       if (data.flashcards?.length) {
         newPage('Flashcards');
-        secHdr('🃏  Flashcards', C.purple);
-        data.flashcards.forEach((fc, i) => {
-          ck(28);
-          // Card background
-          setBG(C.card); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'F');
-          setDC(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'S');
-          // Q label
-          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.purple);
-          doc.text(`Q${i+1}`, ML+2.5, Y+5.5);
-          // Front
-          const fLines = doc.splitTextToSize(String(fc.front||fc.question||'').slice(0,90), CW-18);
-          doc.setFontSize(8.5); doc.setFont('helvetica','bold'); setFG(C.head);
-          doc.text(fLines.slice(0,2), ML+10, Y+6);
-          // Divider line
-          setDC(C.border); doc.setLineWidth(0.15); doc.line(ML+3, Y+12, PW-MR-3, Y+12);
-          // A label
-          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.blue);
-          doc.text('A:', ML+2.5, Y+17);
-          // Back
-          const bLines = doc.splitTextToSize(String(fc.back||fc.answer||'').slice(0,160), CW-14);
-          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
-          doc.text(bLines.slice(0,2), ML+10, Y+17);
-          Y += 29;
+        secH('FLASHCARDS', C.purple);
+        data.flashcards.forEach((fc,i) => {
+          ck(26);
+          bg(C.card); doc.roundedRect(ML,Y,CW,24,2,2,'F');
+          dc(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML,Y,CW,24,2,2,'S');
+          bg(C.purple); doc.roundedRect(ML,Y,3,24,2,0,'F');
+          doc.setFontSize(6); doc.setFont('helvetica','bold'); fg(C.purple);
+          doc.text(`Q${i+1}`, ML+2, Y+4.5);
+          const front = String(fc.front||fc.question||'').replace(/[\u0000-\u001F]/g,' ').slice(0,120);
+          const fl = doc.splitTextToSize(front, CW-16);
+          doc.setFontSize(8.5); doc.setFont('helvetica','bold'); fg(C.head);
+          doc.text(fl.slice(0,2), ML+9, Y+5.5);
+          dc(C.border); doc.setLineWidth(0.12); doc.line(ML+4,Y+12,PW-MR-4,Y+12);
+          doc.setFontSize(6); doc.setFont('helvetica','bold'); fg(C.blue);
+          doc.text('ANSWER', ML+9, Y+16);
+          const back = String(fc.back||fc.answer||'').replace(/[\u0000-\u001F]/g,' ').slice(0,150);
+          const bl = doc.splitTextToSize(back, CW-16);
+          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
+          doc.text(bl.slice(0,2), ML+9, Y+19.5);
+          Y += 27;
         });
-        Y += 4;
       }
 
       // ── QUIZ ──
       if (data.quiz_questions?.length) {
         newPage('Practice Quiz');
-        secHdr('❓  Practice Quiz', C.green);
-        const letters = ['A','B','C','D','E'];
-        data.quiz_questions.forEach((q, i) => {
-          ck(42);
-          // Question number badge
-          setBG(C.green); doc.circle(ML+4, Y+4, 4, 'F');
-          doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG([255,255,255]);
+        secH('PRACTICE QUIZ', C.green);
+        const LTR = ['A','B','C','D'];
+        data.quiz_questions.forEach((q,i) => {
+          ck(40);
+          // Q number
+          bg(C.green); doc.circle(ML+4,Y+4,4,'F');
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg([255,255,255]);
           doc.text(String(i+1), ML+4, Y+5.5, {align:'center'});
           // Difficulty
           if (q.difficulty) {
-            const dc = q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
-            setBG(dc); doc.roundedRect(ML+10, Y+0.5, 18, 6, 1, 1, 'F');
-            doc.setFontSize(5.5); setFG([255,255,255]);
-            doc.text(q.difficulty.toUpperCase(), ML+19, Y+5, {align:'center'});
+            const dc2 = q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
+            bg(dc2); doc.roundedRect(ML+11,Y,16,6,1,1,'F');
+            doc.setFontSize(5); fg([255,255,255]);
+            doc.text(q.difficulty.toUpperCase(), ML+19,Y+4.2,{align:'center'});
           }
-          // Question text
-          doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(C.head);
-          const qLines = doc.splitTextToSize(q.question, CW-12);
-          doc.text(qLines.slice(0,3), ML+30, Y+5);
-          Y += Math.min(qLines.length, 3) * 4.5 + 5;
+          const qTxt = String(q.question||'').replace(/[\u0000-\u001F]/g,' ');
+          const ql   = doc.splitTextToSize(qTxt, CW-14);
+          doc.setFontSize(9); doc.setFont('helvetica','bold'); fg(C.head);
+          doc.text(ql.slice(0,3), ML+29,Y+4.5);
+          Y += Math.min(ql.length,3)*4.2 + 5;
           // Options
-          (q.options||[]).forEach((opt, oi) => {
-            ck(8);
-            const isCorrect = opt === q.correct_answer;
-            if (isCorrect) {
-              setBG(isDark?[0,40,18]:[215,255,228]);
-              doc.roundedRect(ML+2, Y-2, CW-2, 7.5, 1, 1, 'F');
-            }
-            doc.setFontSize(7.5);
-            doc.setFont('helvetica', isCorrect?'bold':'normal');
-            setFG(isCorrect ? C.correct : C.text);
-            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' ✓':''}`, ML+5, Y+3);
+          (q.options||[]).slice(0,4).forEach((opt,oi) => {
+            ck(9);
+            const ok = opt===q.correct_answer;
+            if (ok) { bg(isDark?[0,38,16]:[210,250,225]); doc.roundedRect(ML+2,Y-1.5,CW-2,8,1,1,'F'); }
+            doc.setFontSize(7.5); doc.setFont('helvetica',ok?'bold':'normal');
+            fg(ok?C.correct:C.text);
+            const optTxt = String(opt).replace(/[\u0000-\u001F]/g,' ').slice(0,80);
+            doc.text(`${LTR[oi]}.  ${optTxt}${ok?' ✓':''}`, ML+5,Y+3.5);
             Y += 8;
           });
-          // Explanation (short)
           if (q.explanation) {
             ck(8);
-            doc.setFontSize(6.8); doc.setFont('helvetica','italic'); setFG(C.muted);
-            const expLines = doc.splitTextToSize('Explanation: '+q.explanation.slice(0,140), CW-6);
-            doc.text(expLines.slice(0,2), ML+3, Y+2);
-            Y += expLines.length > 1 ? 12 : 8;
+            const exTxt = ('Explanation: '+q.explanation).replace(/[\u0000-\u001F]/g,' ').slice(0,180);
+            const xl = doc.splitTextToSize(exTxt, CW-5);
+            doc.setFontSize(6.5); doc.setFont('helvetica','italic'); fg(C.muted);
+            doc.text(xl.slice(0,2), ML+3, Y+2); Y += xl.length>1?12:8;
           }
-          Y += 4;
-          setDC(C.border); doc.setLineWidth(0.12); doc.line(ML+10, Y, PW-MR-10, Y);
-          Y += 6;
+          Y += 3;
+          dc(C.border); doc.setLineWidth(0.1); doc.line(ML+8,Y,PW-MR-8,Y); Y += 6;
         });
       }
 
       // ── MIND MAP ──
       if (data.mindmap?.branches?.length) {
         newPage('Mind Map');
-        secHdr('🗺️  Mind Map', C.blue);
-        // Central node
-        setBG(C.gold); doc.roundedRect(ML+CW/2-40, Y, 80, 10, 5, 5, 'F');
-        doc.setFontSize(9.5); doc.setFont('helvetica','bold'); setFG([8,14,35]);
-        doc.text((data.mindmap.central||data.topic||'').slice(0,30), ML+CW/2, Y+7, {align:'center'});
-        Y += 16;
-        // Branches
-        data.mindmap.branches.forEach(b => {
-          ck(24);
-          const bRGB = b.color ? b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)) : [0,170,220];
-          try{setBG(bRGB);}catch{setBG(C.blue);}
-          doc.rect(ML, Y, 3, 9, 'F');
-          setBG(C.card); doc.roundedRect(ML+4, Y, CW-4, 9, 1.5, 1.5, 'F');
-          try{setFG(bRGB);}catch{setFG(C.blue);}
-          doc.setFontSize(9); doc.setFont('helvetica','bold');
-          doc.text(`▸ ${b.name}`, ML+8, Y+6.2);
-          Y += 12;
+        secH('MIND MAP', C.blue);
+        const central = String(data.mindmap.central||data.topic||'').slice(0,40);
+        bg(C.gold); doc.roundedRect(ML+CW/2-35,Y,70,10,5,5,'F');
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); fg([8,14,35]);
+        doc.text(central, ML+CW/2,Y+7,{align:'center'});
+        Y += 15;
+        const BPAL = [[0,170,220],[160,60,220],[0,175,100],[212,175,55],[200,100,50],[230,67,147]];
+        data.mindmap.branches.forEach((b,bi) => {
+          ck(22);
+          const bRGB = BPAL[bi%BPAL.length];
+          bg(bRGB); doc.rect(ML,Y,3,8,'F');
+          bg(C.card); doc.roundedRect(ML+4,Y,CW-4,8,1,1,'F');
+          fg(bRGB); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
+          doc.text(String(b.name||'').slice(0,50), ML+9,Y+5.8);
+          Y += 11;
           (b.items||[]).slice(0,6).forEach(item => {
-            ck(6); setBG(C.hdr); doc.roundedRect(ML+8, Y, CW-8, 6, 1, 1, 'F');
-            doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
-            doc.text(`• ${String(item).slice(0,85)}`, ML+12, Y+4.2);
+            ck(7);
+            bg(C.hdr); doc.roundedRect(ML+6,Y,CW-6,6,1,1,'F');
+            doc.setFontSize(7); doc.setFont('helvetica','normal'); fg(C.text);
+            doc.text('• '+String(item||'').replace(/[\u0000-\u001F]/g,' ').slice(0,90), ML+10,Y+4.2);
             Y += 7;
           });
-          Y += 4;
+          Y += 3;
         });
       }
 
-      // ── SUMMARY / TLDR ──
-      if (data.ultra_long_notes && (this.tool==='summary'||this.tool==='all')) {
-        const tldr = data.ultra_long_notes.split('\n\n').find(p => p.includes('TL;DR')||p.includes('Summary'))||'';
+      // ── SUMMARY (for summary/all tools) ──
+      if ((this.tool==='summary'||this.tool==='all') && data.ultra_long_notes) {
+        const ps   = data.ultra_long_notes.split('\n\n');
+        const tldr = ps.find(p=>/TL;DR|Summary|Overview/i.test(p))||ps[0]||'';
         if (tldr) {
-          newPage('Smart Summary');
-          secHdr('⚡  TL;DR Summary', C.gold);
-          setBG(isDark?[12,18,48]:[238,242,255]);
-          ck(4); doc.rect(ML, Y, CW, 2, 'F'); Y += 4;
-          wt(this._stripMd(tldr).slice(0,600), ML, CW, 9, false, C.text, 5.5);
-          Y += 6;
+          ck(16); secH('SUMMARY / TL;DR', C.gold);
+          bg(isDark?[12,18,50]:[236,240,255]); ck(4); doc.rect(ML,Y,CW,2,'F'); Y+=4;
+          wt(this._stripMd(tldr).replace(/[\u0000-\u001F]/g,' ').slice(0,500), ML, CW, 9, false, C.text, 5.2);
+          Y += 5;
         }
       }
 
-      // ── KEY TRICKS ──
+      // ── STUDY TRICKS ──
       if (data.key_tricks?.length) {
-        ck(18);
-        secHdr('🧠  Study Tricks & Memory Aids', C.gold);
+        ck(14); secH('STUDY TRICKS', C.gold);
         data.key_tricks.slice(0,4).forEach((t,i) => {
-          ck(14);
-          wt(`${i+1}. ${String(t).slice(0,220)}`, ML, CW, 8.5, false, C.text);
-          Y += 4;
+          ck(12);
+          wt(`${i+1}. ${String(t).replace(/[\u0000-\u001F]/g,' ').slice(0,200)}`, ML, CW, 8, false, C.text);
+          Y += 3;
         });
       }
 
       // ── APPLICATIONS ──
       if (data.real_world_applications?.length) {
-        ck(18);
-        secHdr('🌍  Real-World Applications', C.blue);
-        data.real_world_applications.slice(0,6).forEach((a,i) => {
+        ck(14); secH('REAL-WORLD APPLICATIONS', C.blue);
+        data.real_world_applications.slice(0,6).forEach(a => {
           ck(10);
-          setBG(C.hdr); doc.roundedRect(ML, Y, CW, 8.5, 1, 1, 'F');
-          wt(String(a).slice(0,180), ML+3, CW-3, 8, false, C.text);
+          bg(C.hdr); doc.roundedRect(ML,Y,CW,8,1,1,'F');
+          wt(String(a).replace(/[\u0000-\u001F]/g,' ').slice(0,160), ML+3, CW-4, 8, false, C.text, 4.5);
           Y += 10;
         });
       }
 
       // ── MISCONCEPTIONS ──
       if (data.common_misconceptions?.length) {
-        ck(18);
-        secHdr('⚠️  Common Misconceptions', C.red);
-        data.common_misconceptions.slice(0,4).forEach((m,i) => {
+        ck(14); secH('COMMON MISCONCEPTIONS', C.red);
+        data.common_misconceptions.slice(0,4).forEach(m => {
           ck(10);
-          wt(String(m).slice(0,200), ML, CW, 8, false, C.text);
+          wt(String(m).replace(/[\u0000-\u001F]/g,' ').slice(0,180), ML, CW, 8, false, C.text);
           Y += 4;
         });
       }
 
-      addPageFooter();
+      drawFooter();
 
       // ── Save ──
-      const safeName = (data.topic||'Study_Notes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
-      const dateStr  = new Date().toISOString().slice(0,10);
-      doc.save(`SavoireAI_${safeName}_${dateStr}_${theme}.pdf`);
-      this._toast('success','fa-file-pdf', `✓ PDF ready — ${pageNum} page${pageNum>1?'s':''} · ${theme} theme`);
+      const safe = (data.topic||'Study').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_').slice(0,35);
+      const dt   = new Date().toISOString().slice(0,10);
+      doc.save(`SavoireAI_${safe}_${dt}_${theme}.pdf`);
+      this._toast('success', 'fa-file-pdf', `PDF ready — ${page} page${page>1?'s':''} · ${theme} theme`);
 
-    } catch(err) {
-      console.error('PDF error:', err);
-      this._toast('error','fa-times', `PDF failed: ${err.message.slice(0,60)}. Please try again.`);
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      this._toast('error', 'fa-times', `PDF failed: ${err.message?.slice(0,60)||'Unknown error'}. Try again.`);
     }
   }
 

@@ -14661,3 +14661,120 @@ img.loaded   { opacity: 1; }
 .sidebar-avatar-picker .avatar-color-btn:hover { transform: scale(1.18); border-color: rgba(255,255,255,.5); }
 .sidebar-avatar-picker .avatar-color-btn.active { border-color: #fff; transform: scale(1.12); box-shadow: 0 0 10px rgba(255,255,255,.4); }
 /* ── END Sidebar Avatar Picker ── */
+
+/* ═══════════════════════════════════════════════════════════
+   APPENDIX M — TOOL-SPECIFIC OUTPUT: CLEAN FINAL RENDERS
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Result empty message ── */
+.result-empty-msg {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 48px 24px; font-size: 1rem; font-weight: 600;
+  color: rgba(255,255,255,.45); text-align: center;
+  flex-direction: column;
+}
+.result-empty-msg i { font-size: 2.5rem; opacity: .5; }
+
+/* ── New Mindmap: branch cards grid ── */
+.mm-branches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.mm-branch-card {
+  border: 1.5px solid; border-radius: 14px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,.03);
+  animation: liveCardIn .5s cubic-bezier(.34,1.56,.64,1) both;
+  transition: transform .2s, box-shadow .2s;
+}
+.mm-branch-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+.mm-branch-title {
+  font-size: .88rem; font-weight: 800; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px; letter-spacing: .02em;
+}
+.mm-branch-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+.mm-items-grid { display: flex; flex-direction: column; gap: 5px; }
+.mm-item-chip {
+  font-size: .76rem; padding: 4px 10px; border-radius: 8px;
+  border: 1px solid; background: rgba(255,255,255,.03);
+  display: flex; align-items: center; line-height: 1.4;
+  transition: background .15s;
+}
+.mm-item-chip:hover { background: rgba(255,255,255,.07); }
+
+/* ── Central node ── */
+.mm-central-node {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; padding: 16px 32px;
+  background: linear-gradient(135deg, rgba(212,175,55,.15), rgba(0,212,255,.08));
+  border: 2px solid rgba(212,175,55,.4); border-radius: 50px;
+  margin-bottom: 6px; position: relative;
+  box-shadow: 0 0 40px rgba(212,175,55,.15), inset 0 1px 0 rgba(255,255,255,.1);
+  animation: centralNodeIn .6s ease;
+}
+@keyframes centralNodeIn {
+  from { opacity:0; transform: scale(.85); }
+  to   { opacity:1; transform: scale(1); }
+}
+.mm-central-pulse {
+  position: absolute; inset: -6px; border-radius: 56px;
+  border: 2px solid rgba(212,175,55,.2);
+  animation: centralPulse 2.5s ease infinite;
+}
+.mm-central-label {
+  font-size: 1.05rem; font-weight: 800; color: #d4af37; letter-spacing: .02em;
+}
+
+/* ── Connections section ── */
+.mm-connections-section { margin-top: 20px; padding: 16px; background: rgba(255,255,255,.03); border-radius: 12px; border: 1px solid rgba(255,255,255,.07); }
+.mm-conn-header { font-size: .8rem; font-weight: 700; color: rgba(255,255,255,.6); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.mm-conn-grid { display: flex; flex-direction: column; gap: 8px; }
+.mm-conn-chip { padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); font-size: .78rem; color: rgba(255,255,255,.7); }
+.mm-conn-arrow { margin: 0 6px; color: #d4af37; font-weight: 800; }
+.mm-conn-desc { font-size: .7rem; color: rgba(255,255,255,.4); margin-top: 3px; }
+
+/* ── Mega section wrapper ── */
+.mega-section-wrap { position: relative; }
+.mega-section-num-badge {
+  position: absolute; top: -8px; left: 8px; z-index: 2;
+  width: 22px; height: 22px; border-radius: 50%;
+  font-size: .7rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Mega banner improved ── */
+.mega-result-banner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(255,174,0,.12), rgba(191,0,255,.08));
+  border: 1.5px solid rgba(255,174,0,.3); border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.2);
+}
+.mega-banner-icon { font-size: 2rem; color: #ffae00; animation: sfpIconPulse 2s ease infinite; }
+.mega-banner-title { font-size: 1rem; font-weight: 800; color: #ffae00; }
+.mega-banner-counts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.mega-banner-counts span { font-size: .72rem; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); }
+
+/* ── Flashcard header stats ── */
+.fc-header-stats { display: flex; gap: 8px; }
+.fc-stat-chip { font-size: .7rem; padding: 3px 10px; border-radius: 20px; background: rgba(191,0,255,.12); color: #bf00ff; border: 1px solid rgba(191,0,255,.3); }
+
+/* Light theme overrides for new components */
+[data-theme="light"] .mm-branch-card { background: rgba(0,0,0,.02); }
+[data-theme="light"] .mm-item-chip { background: rgba(0,0,0,.03); }
+[data-theme="light"] .mm-central-node { background: linear-gradient(135deg,rgba(165,128,22,.12),rgba(0,100,185,.07)); }
+[data-theme="light"] .mm-central-label { color: #a08016; }
+[data-theme="light"] .mm-conn-chip { background: rgba(0,0,0,.03); }
+[data-theme="light"] .mega-result-banner { background: linear-gradient(135deg,rgba(165,128,22,.1),rgba(120,35,195,.06)); }
+[data-theme="light"] .result-empty-msg { color: rgba(0,0,0,.35); }
+
+/* Golden theme overrides */
+[data-theme="golden"] .mm-central-node { background: linear-gradient(135deg,rgba(212,175,55,.2),rgba(255,174,0,.1)); }
+[data-theme="golden"] .mm-branch-card { background: rgba(212,175,55,.04); }
+
+/* ── END APPENDIX M ── */
