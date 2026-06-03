@@ -155,60 +155,151 @@ const AVATAR_COLORS = [
 
 const DEMO_STEPS = [
   {
-    title:     '👋 Welcome to Savoiré AI v2.0',
-    content:   'The world\'s most advanced free AI study assistant. Let\'s take a quick tour of all the powerful features available to you.',
-    icon:      'fa-magic',
-    color:     '#d4af37',
-    target:    null,
-    tips: ['✅ 100% Free — No login, no payment, ever', '✅ Works in 20+ languages', '✅ All data stays on your device', '✅ Built by Sooban Talha Technologies'],
+    step:     1,
+    title:    'Welcome to Savoiré AI ✨',
+    subtitle: "The World's Most Advanced Free AI Study Assistant",
+    content:  'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
+    icon:     'fa-graduation-cap',
+    color:    '#d4af37',
+    targetId: null,
+    arrow:    null,
+    tips: [
+      { icon: 'fa-infinity',  text: '100% Free — No login, no payment, ever' },
+      { icon: 'fa-globe',     text: 'Works in 20+ languages including Urdu, Hindi, Arabic' },
+      { icon: 'fa-shield-alt',text: 'All your data stays on your device — private & secure' },
+      { icon: 'fa-bolt',      text: 'Powered by 14+ cutting-edge AI models with live fallback' },
+      { icon: 'fa-code',      text: 'Built by Sooban Talha Technologies — soobantalhatech.xyz' },
+    ],
+    cta: 'Start Tour →',
   },
   {
-    title:     '✨ Study Wizard — Your Command Center',
-    content:   'Click "✨ Create Study Material" in the sidebar or the wand icon in the header to open the 6-step Study Wizard.',
-    icon:      'fa-wand-magic-sparkles',
-    color:     '#00d4ff',
-    targetId:  'navWizard',
-    tips: ['6 guided steps: Tool → Topic → Language → Depth → Style → Generate', 'Step 4 = Detail Level (separate step)', 'Step 5 = Writing Style (separate step)', 'Supports 20+ output languages'],
+    step:     2,
+    title:    '✨ Study Wizard — Your Main Tool',
+    subtitle: 'Click to open 6-step guided generation',
+    content:  'The <strong>✨ Create Study Material</strong> button in the sidebar opens the Study Wizard. It guides you through 6 steps: choose tool → enter topic → select language → set detail level → choose writing style → generate.',
+    icon:     'fa-magic',
+    color:    '#00d4ff',
+    targetId: 'navWizard',
+    arrow:    'right',
+    tips: [
+      { icon: 'fa-mouse-pointer', text: 'Click this button to open the 6-step wizard' },
+      { icon: 'fa-book-open',     text: 'Choose: Notes, Flashcards, Quiz, Summary or Mind Map' },
+      { icon: 'fa-globe',         text: 'Output in any of 20+ languages' },
+      { icon: 'fa-sliders-h',     text: 'Step 4 = Detail Level — Step 5 = Writing Style (separate)' },
+      { icon: 'fa-keyboard',      text: 'Keyboard shortcut: Ctrl+K opens the wizard instantly' },
+    ],
+    cta: 'Next: Mega Bundle →',
+    action: { label: 'Open Wizard Now', fn: '_openWizard' },
   },
   {
-    title:     '⚡ Mega Bundle — All 5 Tools at Once!',
-    content:   'Click "⚡ Mega Study Bundle" for the ultimate experience — generates Notes, Flashcards, Quiz, Summary AND Mind Map in one go!',
-    icon:      'fa-bolt',
-    color:     '#d4af37',
-    targetId:  'navAll',
-    tips: ['One topic → 5 complete study tools', '15-20 interactive flashcards included', '10-12 quiz questions included', 'Full visual mind map included', 'Smart TL;DR summary included'],
+    step:     3,
+    title:    '⚡ Mega Bundle — All 5 Tools At Once',
+    subtitle: 'Notes + Flashcards + Quiz + Summary + Mind Map in one generation',
+    content:  'The <strong>⚡ Mega Study Bundle</strong> generates ALL 5 study tools simultaneously. Enter one topic, get a complete study package with 15-20 flashcards, 10-12 quiz questions, and a full visual mind map.',
+    icon:     'fa-bolt',
+    color:    '#d4af37',
+    targetId: 'navAll',
+    arrow:    'right',
+    tips: [
+      { icon: 'fa-mouse-pointer',   text: 'Click this button for the mega bundle' },
+      { icon: 'fa-layer-group',     text: '15-20 interactive 3D flip flashcards' },
+      { icon: 'fa-question-circle', text: '10-12 quiz questions with instant feedback' },
+      { icon: 'fa-project-diagram', text: 'Visual mind map with 5-7 branches' },
+      { icon: 'fa-align-left',      text: 'Smart TL;DR summary included' },
+    ],
+    cta: 'Next: Feature Chips →',
+    action: { label: 'Try Mega Bundle', fn: '_openMega' },
   },
   {
-    title:     '📡 Live Streaming Output',
-    content:   'Watch your study materials being written in real-time with full formatting — headers, bullets, examples all appear as the AI writes.',
-    icon:      'fa-stream',
-    color:     '#00ff88',
-    targetId:  'streamFullpage',
-    tips: ['Content streams token-by-token with full markdown formatting', '5 progress stages shown in the header', 'Cancel generation anytime', 'Typically 20-40 seconds for complete output'],
+    step:     4,
+    title:    '🎯 Quick Tool Buttons — One Click Open',
+    subtitle: 'Each chip opens Wizard with that tool pre-selected',
+    content:  'The <strong>Notes, Flashcards, Quiz, Summary, Mind Map</strong> chips below open the Wizard with that tool already selected for you — no need to go through Step 1!',
+    icon:     'fa-mouse-pointer',
+    color:    '#00ff88',
+    targetId: 'emptyState',
+    arrow:    'down',
+    tips: [
+      { icon: 'fa-book-open',       text: 'Notes chip → opens Wizard with Notes pre-selected' },
+      { icon: 'fa-layer-group',     text: 'Flashcards chip → opens Wizard with Flashcards ready' },
+      { icon: 'fa-question-circle', text: 'Quiz chip → opens Wizard with Quiz pre-selected' },
+      { icon: 'fa-align-left',      text: 'Summary chip → opens Wizard with Summary ready' },
+      { icon: 'fa-project-diagram', text: 'Mind Map chip → opens Wizard with Mind Map selected' },
+    ],
+    cta: 'Next: Live Output →',
   },
   {
-    title:     '🃏 Interactive Study Tools',
-    content:   'After generation, your flashcards, quiz, and mind map are fully interactive — not just static text!',
-    icon:      'fa-layer-group',
-    color:     '#bf00ff',
-    targetId:  'resultArea',
-    tips: ['Flashcards: Tap to flip • Arrow keys navigate • Space bar flips', 'Quiz: Click answer → instant feedback with detailed explanation', 'Mind Map: Visual branches with cross-connection lines', 'Quiz shows score and full review at end'],
+    step:     5,
+    title:    '📡 Live Streaming — Watch AI Write',
+    subtitle: 'Content appears in real-time with full formatting',
+    content:  'When you generate, the AI streams content <strong>live to your screen</strong>. Notes appear word-by-word with full markdown formatting. Flashcards, quiz questions, and mind map branches appear <strong>one by one with animation</strong> as they are generated.',
+    icon:     'fa-stream',
+    color:    '#bf00ff',
+    targetId: 'streamFullpage',
+    arrow:    null,
+    tips: [
+      { icon: 'fa-pen',             text: 'Notes stream live with headings, bullets, blockquotes' },
+      { icon: 'fa-layer-group',     text: 'Flashcards appear card-by-card with spring animation' },
+      { icon: 'fa-question-circle', text: 'Quiz questions appear one-by-one with difficulty badge' },
+      { icon: 'fa-project-diagram', text: 'Mind map branches appear with color animation' },
+      { icon: 'fa-tasks',           text: '5 progress stages shown in the overlay header' },
+    ],
+    cta: 'Next: Interactive Tools →',
   },
   {
-    title:     '📄 World-Class PDF Export',
-    content:   'Download a beautifully formatted professional PDF with a cover page, all sections, and your choice of Dark or Light theme.',
-    icon:      'fa-file-pdf',
-    color:     '#ff4444',
-    targetId:  'pdfBtn',
-    tips: ['Dark PDF: Professional dark background with gold accents', 'Light PDF: Clean white background, print-ready', 'Set PDF theme in Settings → PDF Style', 'Includes cover page, all content sections, footer on every page'],
+    step:     6,
+    title:    '🃏 Interactive Study Tools',
+    subtitle: 'Flashcards flip, quiz gives instant feedback, mind map is visual',
+    content:  'After generation, your study materials are <strong>fully interactive</strong>. Flashcards flip in 3D, quiz questions give instant feedback with explanations, and the mind map shows visual branches with cross-connections.',
+    icon:     'fa-layer-group',
+    color:    '#bf00ff',
+    targetId: 'resultArea',
+    arrow:    null,
+    tips: [
+      { icon: 'fa-hand-pointer',  text: 'Flashcards: Tap/click to flip (or press Space)' },
+      { icon: 'fa-arrow-right',   text: 'Arrow keys ← → navigate between flashcards' },
+      { icon: 'fa-random',        text: 'Shuffle button randomizes flashcard order' },
+      { icon: 'fa-check-circle',  text: 'Quiz: click an option → instant feedback + explanation' },
+      { icon: 'fa-trophy',        text: 'Quiz result shows score, grade and full answer review' },
+    ],
+    cta: 'Next: PDF Export →',
   },
   {
-    title:     '🔥 Streak & Statistics',
-    content:   'Study every day to build your streak! Your learning statistics are tracked automatically. Check Settings to customize your experience.',
-    icon:      'fa-fire',
-    color:     '#ffae00',
-    targetId:  'headerStreak',
-    tips: ['🔥 Gold streak counter in the header', '📊 Sessions, Words, History all tracked', '🌙 Dark | ☀️ Light | ⭐ Golden themes', '5 font sizes: XS to XL', '🎨 Custom avatar colors in profile'],
+    step:     7,
+    title:    '📄 World-Class PDF Export',
+    subtitle: 'Professional formatted PDF with all your content',
+    content:  'Download a beautifully formatted PDF with a <strong>cover page</strong> (topic, stats, date), all notes sections, flashcards list, quiz with answers highlighted, and mind map branches. Choose <strong>Dark or Light</strong> PDF theme in Settings.',
+    icon:     'fa-file-pdf',
+    color:    '#ff4444',
+    targetId: 'pdfBtn',
+    arrow:    'up',
+    tips: [
+      { icon: 'fa-moon',   text: 'Dark PDF: black background, gold accents, professional' },
+      { icon: 'fa-sun',    text: 'Light PDF: white background, clean, print-ready' },
+      { icon: 'fa-cog',    text: 'Change PDF theme in Settings → PDF Style section' },
+      { icon: 'fa-copy',   text: 'Copy button copies all content as clean markdown text' },
+      { icon: 'fa-star',   text: 'Save button stores notes in your local library' },
+    ],
+    cta: 'Next: Streak & Stats →',
+  },
+  {
+    step:     8,
+    title:    '🔥 Streak, Stats & Personalisation',
+    subtitle: 'Track your learning progress and customise your experience',
+    content:  "Your <strong>fire streak</strong> shows how many days in a row you've studied — visible in gold at the top. Sessions count every page visit. Customise theme (Dark/Light/Golden), font size, avatar, PDF style and default language in Settings.",
+    icon:     'fa-fire',
+    color:    '#ffae00',
+    targetId: 'headerStreak',
+    arrow:    'down',
+    tips: [
+      { icon: 'fa-fire',        text: '🔥 Gold streak in header — study daily to keep it alive!' },
+      { icon: 'fa-user-circle', text: 'Click your avatar → pick from 8 color themes' },
+      { icon: 'fa-palette',     text: '3 app themes: Dark, Light, and Golden' },
+      { icon: 'fa-font',        text: '5 font sizes: XSmall to XLarge — accessible for all' },
+      { icon: 'fa-history',     text: 'Full study history and saved notes in sidebar' },
+    ],
+    cta: "Let's Start Studying! 🚀",
+    isLast: true,
   },
 ];
 
@@ -706,7 +797,9 @@ class SavoireApp {
     this._updateAllStats();
     // Re-send ping with real name now
     this._warmupAndTrack();
-    this._toast('success', 'fa-hand-wave', `Welcome, ${name}! Ready to study smarter? 🎓`);
+    this._toast('success', 'fa-hand-wave', `Welcome, ${name}! Let me show you around 🎓`);
+    // Auto-start demo for new users
+    setTimeout(() => this._openDemo(), 800);
   }
 
   _skipWelcome() {
@@ -721,6 +814,11 @@ class SavoireApp {
     this._warmupAndTrack();
   }
 
+  _skipWelcome_DISABLED() {
+    // Skip is disabled — name entry is now mandatory
+    // This method is kept for reference only
+  }
+
   _dismissOverlay(id) {
     const el = this._el(id);
     if (!el) return;
@@ -731,31 +829,35 @@ class SavoireApp {
 
   _updateUserUI() {
     const name  = this.userName || 'Scholar';
-    const init  = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const init  = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
     const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
 
-    // Apply avatar color everywhere
-    const applyAvatarStyle = el => {
+    // Apply avatar color to all avatar elements
+    [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
       if (!el) return;
       el.style.background = color.bg;
       el.style.color      = color.fg;
-    };
-    applyAvatarStyle(this.el.avInitials?.parentElement || this.el.avBtn);
-    applyAvatarStyle(this.el.avDropdownAvatar);
-    applyAvatarStyle(this.el.sidebarAvatar);
-
-    if (this.el.avInitials)       this.el.avInitials.textContent       = init;
-    if (this.el.avDropdownAvatar) this.el.avDropdownAvatar.textContent  = init;
-    if (this.el.avDropdownName)   this.el.avDropdownName.textContent    = name;
-    if (this.el.sidebarUserName)  this.el.sidebarUserName.textContent   = name;
-    if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent     = init;
-    if (this.el.avBtn)            this.el.avBtn.style.background        = color.bg;
-    if (this.el.avInitials)       this.el.avInitials.style.color        = color.fg;
+    });
+    if (this.el.avInitials)       { this.el.avInitials.textContent = init; this.el.avInitials.style.color = color.fg; }
+    if (this.el.avDropdownAvatar) this.el.avDropdownAvatar.textContent = init;
+    if (this.el.avDropdownName)   this.el.avDropdownName.textContent   = name;
+    if (this.el.sidebarUserName)  this.el.sidebarUserName.textContent  = name;
+    if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = init;
+    if (this.el.avBtn)            { this.el.avBtn.style.background = color.bg; this.el.avBtn.style.color = color.fg; }
 
     if (this.el.dhGreeting) {
       const hr    = new Date().getHours();
       const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
       this.el.dhGreeting.textContent = `${greet}, ${name}`;
+    }
+
+    // Update welcome screen avatar grid initials with the selected color
+    const wGrid = this._el('welcomeAvatarGrid');
+    if (wGrid) {
+      wGrid.querySelectorAll('.wavatarBtn').forEach((btn, i) => {
+        btn.textContent = init;
+        btn.classList.toggle('active', i === this.avatarColorIdx);
+      });
     }
   }
 
@@ -1228,6 +1330,17 @@ Examples:
   }
 
   async _streamSSE(message, opts) {
+    // ══════════════════════════════════════════════════════════════════════
+    // WORLD-CLASS SSE STREAMING — Handles ALL tool types with live animation
+    // New events handled:
+    //   token    → streaming notes token (render live with markdown)
+    //   card     → one flashcard streamed (animate in one by one)
+    //   question → one quiz question streamed (animate in)
+    //   branch   → one mindmap branch streamed (animate in)
+    //   stage    → progress stage update
+    //   done     → complete final data object
+    //   error    → generation error
+    // ══════════════════════════════════════════════════════════════════════
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({
         message,
@@ -1237,6 +1350,13 @@ Examples:
         sessionId: this._currentSessionId || this._genId(),
         options:   { ...opts, stream: true },
       });
+
+      // Accumulated cards (for flashcard/quiz/mindmap live streaming)
+      this._liveCards    = [];
+      this._liveQuestions= [];
+      this._liveBranches = [];
+      this._liveMMCentral= '';
+      this._liveMMConns  = [];
 
       fetch(SAVOIRÉ.API_URL, {
         method:  'POST',
@@ -1251,25 +1371,24 @@ Examples:
         }
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('text/event-stream')) {
-          // Got JSON instead of SSE — simulate stream
           const d = await res.json();
           if (d.error) reject(new Error(d.error));
           else this._simulateStream(d, resolve, reject);
           return;
         }
 
-        // True SSE stream
+        // True SSE stream reader
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let lineBuf = '', chars = 0, renderThrottle = 0;
 
+        // ── Live notes rendering (throttled for performance) ──
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 35) return; // Throttle to ~28 fps
+          if (now - renderThrottle < 32) return;
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
-            // FORMATTED live render — the key improvement
             this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
             this.el.sfpText.classList.add('live-md');
           } catch {
@@ -1278,11 +1397,39 @@ Examples:
           if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
         };
 
+        // ── Live flashcard animation ──
+        const animateCard = (idx, total, card) => {
+          this._liveCards.push(card);
+          this._updateLiveCards(idx, total);
+        };
+
+        // ── Live quiz question animation ──
+        const animateQuestion = (idx, total, q) => {
+          this._liveQuestions.push(q);
+          this._updateLiveQuestions(idx, total);
+        };
+
+        // ── Live mindmap branch animation ──
+        const animateBranch = (idx, total, branch) => {
+          if (branch.name === '_central_') {
+            this._liveMMCentral = branch.value;
+            this._liveMMConns   = branch.connections || [];
+            this._updateLiveMindmap(-1, total);
+          } else {
+            this._liveBranches.push(branch);
+            this._updateLiveMindmap(idx, total);
+          }
+        };
+
+        // ── SSE pump ──
         const pump = async () => {
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
+              if (done) {
+                reject(new Error('Stream ended without final data'));
+                return;
+              }
 
               lineBuf += decoder.decode(value, { stream: true });
               const lines = lineBuf.split('\n');
@@ -1294,31 +1441,51 @@ Examples:
                 try {
                   const evt = JSON.parse(raw);
 
+                  // ── Token: notes streaming ──
                   if (evt.t !== undefined) {
-                    // Token chunk — add to buffer and render
                     this.streamBuffer += evt.t;
                     chars += evt.t.length;
                     renderLive();
                     this._updateStageByProgress(chars);
 
+                  // ── Card: one flashcard at a time ──
+                  } else if (evt.card !== undefined) {
+                    animateCard(evt.idx, evt.total, evt.card);
+
+                  // ── Question: one quiz question at a time ──
+                  } else if (evt.q !== undefined) {
+                    animateQuestion(evt.idx, evt.total, evt.q);
+
+                  // ── Branch: one mindmap branch at a time ──
+                  } else if (evt.branch !== undefined) {
+                    animateBranch(evt.idx, evt.total, evt.branch);
+
+                  // ── Stage: progress update ──
+                  } else if (evt.idx !== undefined && evt.label !== undefined) {
+                    this._activateStage(evt.idx);
+                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+
+                  // ── Done: final complete data object ──
                   } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
-                    // Final data object — done
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
                     }
+                    // Merge in any live-streamed cards that arrived
+                    if (this._liveCards.length)     evt.flashcards     = this._liveCards;
+                    if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
+                    if (this._liveBranches.length) {
+                      evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+                    }
                     resolve(evt);
                     return;
 
-                  } else if (evt.idx !== undefined) {
-                    // Stage update
-                    this._activateStage(evt.idx);
-
+                  // ── Error ──
                   } else if (evt.error !== undefined) {
                     reject(new Error(evt.error));
                     return;
                   }
-                } catch { /* Ignore malformed JSON in SSE */ }
+                } catch { /* Ignore malformed SSE JSON */ }
               }
             }
           } catch (pumpErr) {
@@ -1335,38 +1502,124 @@ Examples:
     });
   }
 
-  async _simulateStream(data, resolve, reject) {
-    // Simulate streaming for non-SSE fallback
-    const notes     = data.ultra_long_notes || data.topic || 'Loading…';
-    let   i         = 0;
-    const chunkSize = 8;
-    const delay     = 8;
+  // ── UPDATE LIVE FLASHCARDS in stream overlay ──────────────────────────────
+  _updateLiveCards(idx, total) {
+    const container = this.el.sfpText;
+    if (!container) return;
 
-    const tick = () => {
-      if (this.streamCtrl?.signal.aborted) { reject(new Error('AbortError')); return; }
-      if (i >= notes.length) {
-        if (this.el.sfpText) { this.el.sfpText.classList.remove('live-md'); this.el.sfpText.classList.add('done'); }
-        resolve(data);
-        return;
-      }
-      this.streamBuffer += notes.slice(i, i + chunkSize);
-      i += chunkSize;
-      if (this.el.sfpText) {
-        try {
-          this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-          this.el.sfpText.classList.add('live-md');
-        } catch {
-          this.el.sfpText.textContent = this.streamBuffer;
-        }
-        if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
-      }
-      this._updateStageByProgress(i);
-      setTimeout(tick, delay);
-    };
-    tick();
+    const cards = this._liveCards;
+    const pct   = Math.round((cards.length / total) * 100);
+
+    container.classList.remove('live-md');
+    container.innerHTML = `
+      <div class="live-cards-wrapper">
+        <div class="live-cards-header">
+          <div class="live-cards-title">
+            <i class="fas fa-layer-group" style="color:#bf00ff"></i>
+            Flashcards Being Generated…
+          </div>
+          <div class="live-cards-progress">
+            <div class="live-cards-prog-bar">
+              <div class="live-cards-prog-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="live-cards-count">${cards.length} / ${total}</span>
+          </div>
+        </div>
+        <div class="live-cards-grid">
+          ${cards.map((c, i) => `
+            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}" style="animation-delay:${i * 30}ms">
+              <div class="live-card-num">${i + 1}</div>
+              <div class="live-card-front">${this._esc(c.front || c.question || '')}</div>
+              <div class="live-card-back">${this._esc((c.back || c.answer || '').slice(0, 80))}${(c.back || c.answer || '').length > 80 ? '…' : ''}</div>
+            </div>
+          `).join('')}
+        </div>
+        ${cards.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more cards…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} flashcards ready!</div>`}
+      </div>`;
+    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-  async _callAPIJson(message, opts) {
+  // ── UPDATE LIVE QUIZ QUESTIONS in stream overlay ──────────────────────────
+  _updateLiveQuestions(idx, total) {
+    const container = this.el.sfpText;
+    if (!container) return;
+
+    const qs  = this._liveQuestions;
+    const pct = Math.round((qs.length / total) * 100);
+    const letters = ['A','B','C','D','E'];
+
+    container.classList.remove('live-md');
+    container.innerHTML = `
+      <div class="live-quiz-wrapper">
+        <div class="live-cards-header">
+          <div class="live-cards-title">
+            <i class="fas fa-question-circle" style="color:#00ff88"></i>
+            Quiz Questions Being Generated…
+          </div>
+          <div class="live-cards-progress">
+            <div class="live-cards-prog-bar">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff)"></div>
+            </div>
+            <span class="live-cards-count">${qs.length} / ${total}</span>
+          </div>
+        </div>
+        <div class="live-quiz-list">
+          ${qs.map((q, i) => `
+            <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}">
+              <div class="live-quiz-q-num">Q${i + 1} <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}">${q.difficulty||'medium'}</span></div>
+              <div class="live-quiz-q-text">${this._esc(q.question || '')}</div>
+              ${q.options ? `<div class="live-quiz-opts">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}">${letters[oi]}. ${this._esc(opt)}</div>`).join('')}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+        ${qs.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more questions…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions ready!</div>`}
+      </div>`;
+    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+  }
+
+  // ── UPDATE LIVE MINDMAP in stream overlay ─────────────────────────────────
+  _updateLiveMindmap(idx, total) {
+    const container = this.el.sfpText;
+    if (!container) return;
+
+    const branches = this._liveBranches;
+    const central  = this._liveMMCentral;
+    const pct      = idx === -1 ? 5 : Math.round((branches.length / Math.max(total, 1)) * 95) + 5;
+
+    container.classList.remove('live-md');
+    container.innerHTML = `
+      <div class="live-mm-wrapper">
+        <div class="live-cards-header">
+          <div class="live-cards-title">
+            <i class="fas fa-project-diagram" style="color:#d4af37"></i>
+            Mind Map Being Generated…
+          </div>
+          <div class="live-cards-progress">
+            <div class="live-cards-prog-bar">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00)"></div>
+            </div>
+            <span class="live-cards-count">${branches.length} / ${total}</span>
+          </div>
+        </div>
+        ${central ? `<div class="live-mm-central"><i class="fas fa-brain"></i> ${this._esc(central)}</div>` : ''}
+        <div class="live-mm-branches">
+          ${branches.map((b, i) => `
+            <div class="live-mm-branch ${i === branches.length - 1 ? 'live-card-new' : ''}" style="border-left-color:${b.color||'#d4af37'}">
+              <div class="live-mm-branch-name" style="color:${b.color||'#d4af37'}">
+                <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+              </div>
+              <div class="live-mm-items">
+                ${(b.items||[]).slice(0,5).map(item => `<span class="live-mm-item">${this._esc(item)}</span>`).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        ${branches.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more branches…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches ready!</div>`}
+      </div>`;
+    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+  }
+
+    async _callAPIJson(message, opts) {
     const res = await fetch(SAVOIRÉ.API_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2428,292 +2681,403 @@ Examples:
   }
 
   _generatePDF(data, theme = 'dark') {
-    this._toast('info', 'fa-file-pdf', `Generating ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
+    this._toast('info', 'fa-spinner fa-pulse', `Generating world-class ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
     try {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+      const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
 
-      // ── Page dimensions ──
-      const PW = 210, PH = 297, ML = 15, MR = 15, CW = PW - ML - MR;
+      // ── Page metrics ──
+      const PW = 210, PH = 297, ML = 14, MR = 14, CW = PW - ML - MR;
+      const MT_CONTENT = 26;  // top margin on content pages after mini-header
+      const MB = 16;          // bottom margin (above footer)
       const isDark = theme !== 'light';
       let Y = 0, pageNum = 1;
 
-      // ── Color palette ──
+      // ── Palette ──
       const C = isDark ? {
-        bg:    [8,14,35],  gold:  [212,175,55], blue:  [0,180,220],
-        text:  [195,195,205], head: [240,240,255], muted: [120,120,140],
-        card:  [14,22,55],  hdr:  [20,32,75],   green: [0,180,100],
-        red:   [220,60,60], purple:[160,60,220],
+        bg:      [7, 12, 32],
+        gold:    [212, 175, 55],
+        blue:    [0, 170, 220],
+        purple:  [160, 60, 220],
+        green:   [0, 180, 100],
+        red:     [210, 55, 55],
+        text:    [195, 198, 210],
+        head:    [238, 240, 255],
+        muted:   [115, 118, 138],
+        card:    [14, 20, 52],
+        hdr:     [20, 30, 72],
+        border:  [28, 40, 88],
+        correct: [0, 170, 90],
       } : {
-        bg:    [255,255,255], gold: [180,140,30], blue: [0,90,180],
-        text:  [40,45,60],    head: [10,20,60],   muted:[100,105,120],
-        card:  [245,248,255], hdr: [230,235,250], green:[0,130,70],
-        red:   [180,40,40],   purple:[120,40,180],
+        bg:      [255, 255, 255],
+        gold:    [170, 135, 30],
+        blue:    [0, 100, 190],
+        purple:  [130, 40, 200],
+        green:   [0, 130, 70],
+        red:     [180, 40, 40],
+        text:    [38, 40, 56],
+        head:    [10, 18, 56],
+        muted:   [100, 106, 126],
+        card:    [244, 246, 255],
+        hdr:     [228, 232, 252],
+        border:  [210, 215, 240],
+        correct: [0, 120, 60],
       };
 
-      // ── Helper: set color ──
-      const fg = ([r,g,b]) => doc.setTextColor(r,g,b);
-      const bg = ([r,g,b]) => doc.setFillColor(r,g,b);
-      const dc = ([r,g,b]) => doc.setDrawColor(r,g,b);
+      // ── Helpers ──
+      const setFG = ([r,g,b]) => doc.setTextColor(r,g,b);
+      const setBG = ([r,g,b]) => doc.setFillColor(r,g,b);
+      const setDC = ([r,g,b]) => doc.setDrawColor(r,g,b);
 
-      // ── Helper: fill background ──
-      const fillBg = () => {
-        if (isDark) { bg(C.bg); doc.rect(0,0,PW,PH,'F'); }
+      const fillBg = () => { if(isDark){setBG(C.bg);doc.rect(0,0,PW,PH,'F');} };
+
+      const addPageFooter = () => {
+        setBG(isDark?[10,16,40]:[235,238,252]);
+        doc.rect(0, PH-MB, PW, MB, 'F');
+        setDC(C.gold); doc.setLineWidth(0.25); doc.line(ML, PH-MB, PW-MR, PH-MB);
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
+        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE} · "${SAVOIRÉ.TAGLINE}"`, ML, PH-6);
+        doc.text(`Page ${pageNum}`, PW-MR, PH-6, {align:'right'});
       };
 
-      // ── Helper: add footer ──
-      const addFooter = () => {
-        bg(isDark ? [12,20,50] : [240,244,255]);
-        doc.rect(0, PH-12, PW, 12, 'F');
-        dc(C.gold); doc.setLineWidth(0.3); doc.line(ML, PH-12, PW-MR, PH-12);
-        doc.setFontSize(7); doc.setFont('helvetica','normal'); fg(C.muted);
-        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE}`, ML, PH-5);
-        doc.text(`Page ${pageNum}`, PW-MR, PH-5, {align:'right'});
+      const addPageHeader = (subtitle='') => {
+        setBG(C.hdr); doc.rect(0,0,PW,MT_CONTENT-4,'F');
+        setDC(C.gold); doc.setLineWidth(0.25); doc.line(0,MT_CONTENT-4,PW,MT_CONTENT-4);
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG(C.gold);
+        doc.text(SAVOIRÉ.BRAND, ML, MT_CONTENT-9);
+        doc.setFont('helvetica','normal'); setFG(C.muted);
+        doc.text((subtitle||(data.topic||'')).slice(0,72), PW-MR, MT_CONTENT-9, {align:'right'});
       };
 
-      // ── Helper: new page ──
-      const newPage = () => {
-        addFooter(); doc.addPage(); pageNum++; Y = 22; fillBg();
-        // Thin header bar on continuation pages
-        bg(C.hdr); doc.rect(0,0,PW,14,'F');
-        dc(C.gold); doc.setLineWidth(0.2); doc.line(0,14,PW,14);
-        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); fg(C.gold);
-        doc.text(SAVOIRÉ.BRAND, ML, 9.5);
-        doc.setFont('helvetica','normal'); fg(C.muted);
-        doc.text((data.topic||'').slice(0,70), PW-MR, 9.5, {align:'right'});
-        Y = 22;
+      const newPage = (subtitle) => {
+        addPageFooter();
+        doc.addPage(); pageNum++; Y = MT_CONTENT+2;
+        fillBg(); addPageHeader(subtitle);
       };
 
-      // ── Helper: check if need new page ──
-      const ck = (need=12) => { if (Y + need > PH - 16) newPage(); };
+      const ck = (need=12) => { if(Y+need > PH-MB-2) newPage(); };
 
-      // ── Helper: write wrapped text, returns new Y ──
-      const wt = (txt, x, maxW, size, bold=false, color=C.text) => {
-        if (!txt) return;
-        doc.setFontSize(size); doc.setFont('helvetica', bold?'bold':'normal'); fg(color);
+      // ── Word-wrapped text writer ──
+      const wt = (txt, x, maxW, sz, bold=false, color=C.text, lineH=null) => {
+        if(!txt)return;
+        doc.setFontSize(sz); doc.setFont('helvetica', bold?'bold':'normal'); setFG(color);
         const lines = doc.splitTextToSize(String(txt), maxW);
-        ck(lines.length * size * 0.37 + 1);
+        const lh    = lineH || sz * 0.385;
+        ck(lines.length * lh + 1);
         doc.text(lines, x, Y);
-        Y += lines.length * size * 0.37 + 0.5;
+        Y += lines.length * lh + 0.5;
+        return lines.length;
       };
 
-      // ── Helper: section header ──
-      const secHdr = (title, color=C.gold) => {
+      // ── Section header bar ──
+      const secHdr = (label, color=C.gold) => {
         ck(14);
-        bg(C.hdr); doc.rect(ML, Y, CW, 9, 'F');
-        bg(color); doc.rect(ML, Y, 3, 9, 'F');
-        doc.setFontSize(9.5); doc.setFont('helvetica','bold'); fg(color);
-        doc.text(title, ML+6, Y+6.5); Y += 13;
+        setBG(C.hdr); doc.rect(ML, Y, CW, 9, 'F');
+        setBG(color);  doc.rect(ML, Y, 3, 9, 'F');
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(color);
+        doc.text(label, ML+6, Y+6.2);
+        Y += 13;
       };
 
-      // ─────────────────── COVER PAGE ───────────────────
-      fillBg();
-      // Gold accent bars
-      bg(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
+      // ── Rounded card ──
+      const card = (h, fillColor=C.card, borderColor=C.border) => {
+        ck(h+2);
+        setBG(fillColor); doc.roundedRect(ML, Y, CW, h, 2, 2, 'F');
+        setDC(borderColor); doc.setLineWidth(0.18); doc.roundedRect(ML, Y, CW, h, 2, 2, 'S');
+        Y += 3;
+      };
 
-      // Logo
-      bg([0,140,220]); doc.roundedRect(ML, 14, 22, 22, 4,4,'F');
-      doc.setFontSize(18); doc.setFont('helvetica','bold'); fg([255,255,255]);
+      // ───────────────────────────────────────────────────────────────
+      // COVER PAGE
+      // ───────────────────────────────────────────────────────────────
+      fillBg();
+
+      // Gold accent bars top+bottom
+      setBG(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
+
+      // Logo block
+      setBG([0,140,220]); doc.roundedRect(ML, 14, 22, 22, 4, 4, 'F');
+      doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
       doc.text('Ś', ML+8, 30);
 
       // App name
-      doc.setFontSize(26); doc.setFont('helvetica','bold'); fg(C.gold);
+      doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
       doc.text('SAVOIRÉ AI', ML+28, 22);
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); fg(C.muted);
-      doc.text('v2.0 — World\'s Most Advanced AI Study Assistant', ML+28, 29);
-      doc.text(`Built by ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}`, ML+28, 36);
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
+      doc.text("v2.0 — World's Most Advanced Free AI Study Assistant", ML+28, 29);
+      doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`, ML+28, 36);
 
       // Divider
-      dc(C.gold); doc.setLineWidth(0.5); doc.line(ML, 43, PW-MR, 43);
+      setDC(C.gold); doc.setLineWidth(0.4); doc.line(ML, 43, PW-MR, 43);
 
       // Tool badge
-      const toolCfg = TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes;
-      bg([0,80,160]); doc.roundedRect(ML, 48, 70, 9, 2,2,'F');
-      doc.setFontSize(8.5); doc.setFont('helvetica','bold'); fg([200,230,255]);
-      doc.text(toolCfg.sfpName.toUpperCase() + (this.tool==='all'?' — ALL 5 TOOLS ⚡':''), ML+4, 54);
+      const tCfg = TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes;
+      setBG([0,80,160]); doc.roundedRect(ML, 48, 72, 8, 1.5, 1.5, 'F');
+      doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG([200,228,255]);
+      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all'?' — ALL 5 TOOLS ⚡':''}`, ML+4, 53.5);
 
-      // Topic title
-      doc.setFontSize(21); doc.setFont('helvetica','bold'); fg(C.head);
-      const tLines = doc.splitTextToSize(data.topic || 'Study Notes', CW);
-      doc.text(tLines, ML, 70);
-      let cy = 70 + tLines.length * 9;
+      // Main topic title
+      doc.setFontSize(20); doc.setFont('helvetica','bold'); setFG(C.head);
+      const titleLines = doc.splitTextToSize(data.topic || 'Study Notes', CW);
+      doc.text(titleLines, ML, 67);
+      let cy = 67 + titleLines.length * 8.5;
 
-      // Curriculum
-      doc.setFontSize(9.5); doc.setFont('helvetica','normal'); fg(C.muted);
-      doc.text(data.curriculum_alignment || 'General Academic Study', ML, cy+5);
+      // Curriculum subtitle
+      doc.setFontSize(9.5); doc.setFont('helvetica','normal'); setFG(C.muted);
+      doc.text(data.curriculum_alignment || 'General Academic Study', ML, cy + 4);
       cy += 14;
 
-      // Stats cards
-      const wc   = this._wordCount(this._stripMd(data.ultra_long_notes||''));
+      // Stats cards row
+      const wc    = this._wordCount(this._stripMd(data.ultra_long_notes||''));
       const stats = [
-        {l:'Score',  v:`${data.study_score||96}/100`},
-        {l:'Tool',   v:toolCfg.sfpName},
-        {l:'Words',  v:`~${wc.toLocaleString()}`},
-        {l:'Lang',   v:data._language||'English'},
-        {l:'Date',   v:new Date().toLocaleDateString()},
-        {l:'Quality',v:data._quality==='ai_generated'?'AI Generated':'Enhanced'},
+        { l:'Score',   v:`${data.study_score||97}/100` },
+        { l:'Words',   v:`~${wc.toLocaleString()}` },
+        { l:'Quality', v:data._quality==='ai_generated'?'AI Generated':'Enhanced' },
+        { l:'Lang',    v:data._language||'English' },
+        { l:'Date',    v:new Date().toLocaleDateString() },
+        { l:'Tool',    v:tCfg.sfpName },
       ];
-      const sw = CW/3;
+      const sw = CW / 3;
       stats.forEach((s,i) => {
         const sx = ML + (i%3)*sw, sy = cy + Math.floor(i/3)*20;
-        bg(C.card); doc.roundedRect(sx, sy, sw-2, 16, 2,2,'F');
-        doc.setFontSize(11.5); doc.setFont('helvetica','bold'); fg(C.gold);
+        setBG(C.card); doc.roundedRect(sx, sy, sw-2, 17, 2, 2, 'F');
+        doc.setFontSize(11); doc.setFont('helvetica','bold'); setFG(C.gold);
         doc.text(s.v, sx+(sw-2)/2, sy+9, {align:'center'});
-        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); fg(C.muted);
-        doc.text(s.l, sx+(sw-2)/2, sy+14, {align:'center'});
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
+        doc.text(s.l, sx+(sw-2)/2, sy+14.5, {align:'center'});
       });
-      cy += 46;
+      cy += 44;
 
       // Tagline
-      doc.setFontSize(13); doc.setFont('helvetica','bolditalic'); fg(C.gold);
-      doc.text(`"${SAVOIRÉ.TAGLINE}"`, PW/2, cy+4, {align:'center'});
-      doc.setFontSize(8); doc.setFont('helvetica','normal'); fg(C.muted);
-      doc.text(`— ${SAVOIRÉ.FOUNDER} · ${SAVOIRÉ.DEVELOPER}`, PW/2, cy+11, {align:'center'});
+      doc.setFontSize(12.5); doc.setFont('helvetica','bolditalic'); setFG(C.gold);
+      doc.text(`"${SAVOIRÉ.TAGLINE}"`, PW/2, cy+6, {align:'center'});
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.muted);
+      doc.text(`— ${SAVOIRÉ.FOUNDER}`, PW/2, cy+13, {align:'center'});
 
-      // Generated info
-      doc.text(`Generated: ${new Date().toLocaleString()}`, PW/2, PH-26, {align:'center'});
-      doc.text(`PDF Theme: ${isDark?'Dark':'Light'} | ${SAVOIRÉ.DEVSITE}`, PW/2, PH-20, {align:'center'});
+      // PDF info at bottom
+      doc.text(`Generated: ${new Date().toLocaleString()} · PDF Theme: ${isDark?'Dark':'Light'}`, PW/2, PH-22, {align:'center'});
+      doc.text(`${SAVOIRÉ.WEBSITE}`, PW/2, PH-16, {align:'center'});
 
-      addFooter();
+      addPageFooter();
 
-      // ─────────────────── CONTENT PAGES ───────────────────
-      newPage();
+      // ───────────────────────────────────────────────────────────────
+      // CONTENT PAGES
+      // ───────────────────────────────────────────────────────────────
+      newPage('Study Notes');
 
-      // ── NOTES ──
+      // ── STUDY NOTES ──
       if (data.ultra_long_notes) {
-        secHdr('📚 Study Notes', C.gold);
-        const clean = this._stripMd(data.ultra_long_notes);
-        const lines = clean.split('\n');
-        for (const line of lines) {
-          const tr = line.trim();
-          if (!tr) { Y += 2; continue; }
-          ck(8);
+        secHdr('📚  Study Notes', C.gold);
+        const clean  = this._stripMd(data.ultra_long_notes);
+        const lines  = clean.split('\n');
+        let   prevBlank = false;
+
+        for (const raw of lines) {
+          const tr = raw.trim();
+          if (!tr) { if (!prevBlank) Y += 2; prevBlank = true; continue; }
+          prevBlank = false;
+          ck(9);
+
           if (tr.match(/^#{1,4}/)) {
             const lv  = (tr.match(/^#+/)||[''])[0].length;
-            const txt = tr.replace(/^#+\s*/,'').replace(/\*+/g,'');
-            const sz  = lv===1?13:lv===2?11:9.5;
-            const col = lv<=2 ? C.gold : lv===3 ? C.blue : C.text;
-            if (lv<=2) Y += 3;
-            wt(txt, ML, CW, sz, true, col);
-            Y += lv<=2 ? 2 : 1;
-          } else if (tr.startsWith('-')||tr.startsWith('•')) {
-            wt('• '+tr.replace(/^[-•*]\s*/,''), ML+4, CW-4, 8.5, false, C.text);
+            const txt = tr.replace(/^#+\s*/,'').replace(/\*+/g,'').replace(/`/g,'');
+            Y += lv<=2 ? 4 : 2;
+            const sz  = lv===1?14 : lv===2?11.5 : lv===3?10 : 9;
+            const col = lv<=2 ? C.gold : lv===3 ? C.blue : C.head;
+            if (lv <= 2) {
+              // Draw accent line for H1/H2
+              setBG(col); doc.rect(ML, Y-1, 3, sz*0.4, 'F');
+              wt(txt, ML+5, CW-5, sz, true, col);
+            } else {
+              wt(txt, ML, CW, sz, true, col);
+            }
+            Y += lv<=2 ? 3 : 1;
+
+          } else if (tr.match(/^[-•*]\s/)) {
+            const txt = tr.replace(/^[-•*]\s*/,'');
+            // Bullet dot
+            setBG(C.gold); doc.circle(ML+2, Y-1.5, 1, 'F');
+            wt(txt, ML+5, CW-5, 8.5, false, C.text);
             Y += 0.5;
-          } else if (tr.match(/^\d+\./)) {
+
+          } else if (tr.match(/^\d+\.\s/)) {
             wt(tr, ML+4, CW-4, 8.5, false, C.text);
             Y += 0.5;
+
           } else if (tr.startsWith('>')) {
-            ck(10);
-            bg(C.hdr); doc.rect(ML, Y-1, CW, 10, 'F');
-            bg(C.gold); doc.rect(ML, Y-1, 2, 10, 'F');
-            wt(tr.replace(/^>\s*/,''), ML+5, CW-5, 8.5, false, isDark?[220,210,160]:[80,60,10]);
+            ck(12);
+            const qText = tr.replace(/^>\s*/,'');
+            setBG(isDark?[12,20,52]:[238,242,255]);
+            doc.rect(ML, Y-2, CW, 10, 'F');
+            setBG(C.gold); doc.rect(ML, Y-2, 2.5, 10, 'F');
+            wt(qText, ML+5, CW-5, 8.5, false, isDark?[220,210,160]:[75,60,10]);
             Y += 3;
+
+          } else if (tr.startsWith('---')) {
+            setDC(C.border); doc.setLineWidth(0.2);
+            doc.line(ML, Y, PW-MR, Y);
+            Y += 5;
+
+          } else if (tr.includes('**') || tr.includes('`')) {
+            const cleaned = tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'[$1]').replace(/\*/g,'');
+            wt(cleaned, ML, CW, 8.5, false, C.text);
+            Y += 1;
           } else {
             wt(tr, ML, CW, 8.5, false, C.text);
-            Y += 1.5;
+            Y += 1;
           }
         }
-        Y += 5;
+        Y += 6;
       }
 
       // ── KEY CONCEPTS ──
       if (data.key_concepts?.length) {
-        secHdr('💡 Key Concepts', C.gold);
-        data.key_concepts.slice(0,8).forEach((c,i) => {
+        secHdr('💡  Key Concepts', C.gold);
+        data.key_concepts.slice(0, 10).forEach((c, i) => {
           ck(16);
-          bg(C.card); doc.roundedRect(ML, Y, CW, 13, 2,2,'F');
-          bg(C.gold); doc.circle(ML+5, Y+6.5, 3, 'F');
-          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg([8,14,35]);
-          doc.text(`${i+1}`, ML+5, Y+8, {align:'center'});
-          const cl = doc.splitTextToSize(String(c).slice(0,200), CW-14);
-          doc.setFontSize(8); doc.setFont('helvetica','normal'); fg(C.text);
-          doc.text(cl[0]||'', ML+11, Y+7);
-          if (cl[1]) doc.text(cl[1], ML+11, Y+11);
-          Y += 16;
+          setBG(C.card); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'F');
+          setDC(C.border); doc.setLineWidth(0.15); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'S');
+          // Number circle
+          setBG(C.gold); doc.circle(ML+5, Y+7, 3.5, 'F');
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); setFG([8,14,35]);
+          doc.text(String(i+1), ML+5, Y+8.5, {align:'center'});
+          // Content
+          const cLines = doc.splitTextToSize(String(c).slice(0,220), CW-14);
+          doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.text);
+          doc.text(cLines.slice(0,2), ML+11, Y+6);
+          Y += 17;
         });
-        Y += 3;
+        Y += 4;
       }
 
       // ── FLASHCARDS ──
       if (data.flashcards?.length) {
-        secHdr('🃏 Flashcards', C.purple);
-        data.flashcards.slice(0,15).forEach((card,i) => {
-          ck(26);
-          bg(C.card); doc.roundedRect(ML, Y, CW, 24, 2,2,'F');
-          dc(C.purple); doc.setLineWidth(0.25); doc.roundedRect(ML, Y, CW, 24, 2,2,'S');
+        newPage('Flashcards');
+        secHdr('🃏  Flashcards', C.purple);
+        data.flashcards.forEach((fc, i) => {
+          ck(28);
+          // Card background
+          setBG(C.card); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'F');
+          setDC(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'S');
           // Q label
-          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg(C.purple);
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.purple);
           doc.text(`Q${i+1}`, ML+2.5, Y+5.5);
           // Front
-          const fLines = doc.splitTextToSize(String(card.front||card.question||'').slice(0,80), CW-20);
-          doc.setFontSize(8); fg(C.head);
-          doc.text(fLines[0]||'', ML+10, Y+5.5);
+          const fLines = doc.splitTextToSize(String(fc.front||fc.question||'').slice(0,90), CW-18);
+          doc.setFontSize(8.5); doc.setFont('helvetica','bold'); setFG(C.head);
+          doc.text(fLines.slice(0,2), ML+10, Y+6);
+          // Divider line
+          setDC(C.border); doc.setLineWidth(0.15); doc.line(ML+3, Y+12, PW-MR-3, Y+12);
           // A label
-          bg(isDark?[18,28,65]:[230,235,252]); doc.rect(ML, Y+9, CW, 0.3, 'F');
-          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg(C.blue);
-          doc.text('A:', ML+2.5, Y+14.5);
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.blue);
+          doc.text('A:', ML+2.5, Y+17);
           // Back
-          const bLines = doc.splitTextToSize(String(card.back||card.answer||'').slice(0,150), CW-14);
-          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
-          doc.text(bLines.slice(0,2), ML+10, Y+14.5);
-          Y += 27;
+          const bLines = doc.splitTextToSize(String(fc.back||fc.answer||'').slice(0,160), CW-14);
+          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
+          doc.text(bLines.slice(0,2), ML+10, Y+17);
+          Y += 29;
         });
-        Y += 3;
+        Y += 4;
       }
 
       // ── QUIZ ──
       if (data.quiz_questions?.length) {
-        secHdr('❓ Practice Quiz', C.green);
-        data.quiz_questions.slice(0,10).forEach((q,i) => {
-          ck(40);
-          // Question
-          doc.setFontSize(9); doc.setFont('helvetica','bold'); fg(C.head);
-          const qL = doc.splitTextToSize(`${i+1}. ${q.question}`, CW);
-          doc.text(qL.slice(0,2), ML, Y); Y += Math.min(qL.length,2)*5+2;
-          // Options
-          if (q.options) {
-            q.options.forEach((opt,oi) => {
-              ck(7);
-              const isC = opt===q.correct_answer;
-              if (isC) { bg(isDark?[0,40,20]:[220,255,230]); doc.rect(ML+3, Y-3, CW-3, 7, 'F'); }
-              doc.setFontSize(7.5); doc.setFont('helvetica', isC?'bold':'normal');
-              fg(isC ? C.green : C.text);
-              doc.text(`${String.fromCharCode(65+oi)}. ${String(opt).slice(0,70)}${isC?' ✓':''}`, ML+5, Y);
-              Y += 6;
-            });
+        newPage('Practice Quiz');
+        secHdr('❓  Practice Quiz', C.green);
+        const letters = ['A','B','C','D','E'];
+        data.quiz_questions.forEach((q, i) => {
+          ck(42);
+          // Question number badge
+          setBG(C.green); doc.circle(ML+4, Y+4, 4, 'F');
+          doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG([255,255,255]);
+          doc.text(String(i+1), ML+4, Y+5.5, {align:'center'});
+          // Difficulty
+          if (q.difficulty) {
+            const dc = q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
+            setBG(dc); doc.roundedRect(ML+10, Y+0.5, 18, 6, 1, 1, 'F');
+            doc.setFontSize(5.5); setFG([255,255,255]);
+            doc.text(q.difficulty.toUpperCase(), ML+19, Y+5, {align:'center'});
           }
-          Y += 5;
+          // Question text
+          doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(C.head);
+          const qLines = doc.splitTextToSize(q.question, CW-12);
+          doc.text(qLines.slice(0,3), ML+30, Y+5);
+          Y += Math.min(qLines.length, 3) * 4.5 + 5;
+          // Options
+          (q.options||[]).forEach((opt, oi) => {
+            ck(8);
+            const isCorrect = opt === q.correct_answer;
+            if (isCorrect) {
+              setBG(isDark?[0,40,18]:[215,255,228]);
+              doc.roundedRect(ML+2, Y-2, CW-2, 7.5, 1, 1, 'F');
+            }
+            doc.setFontSize(7.5);
+            doc.setFont('helvetica', isCorrect?'bold':'normal');
+            setFG(isCorrect ? C.correct : C.text);
+            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' ✓':''}`, ML+5, Y+3);
+            Y += 8;
+          });
+          // Explanation (short)
+          if (q.explanation) {
+            ck(8);
+            doc.setFontSize(6.8); doc.setFont('helvetica','italic'); setFG(C.muted);
+            const expLines = doc.splitTextToSize('Explanation: '+q.explanation.slice(0,140), CW-6);
+            doc.text(expLines.slice(0,2), ML+3, Y+2);
+            Y += expLines.length > 1 ? 12 : 8;
+          }
+          Y += 4;
+          setDC(C.border); doc.setLineWidth(0.12); doc.line(ML+10, Y, PW-MR-10, Y);
+          Y += 6;
         });
       }
 
       // ── MIND MAP ──
       if (data.mindmap?.branches?.length) {
-        secHdr('🗺️ Mind Map', C.blue);
-        doc.setFontSize(11); doc.setFont('helvetica','bold'); fg(C.gold);
-        doc.text(`⊙ ${data.mindmap.central||data.topic||'Topic'}`, ML, Y); Y += 9;
-        data.mindmap.branches.slice(0,7).forEach((b,bi) => {
-          ck(22);
-          const bColor = b.color ? b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)) : C.blue;
-          // Branch header
-          bg(C.card); doc.rect(ML, Y, CW, 9, 'F');
-          try { bg(bColor); } catch { bg(C.blue); }
+        newPage('Mind Map');
+        secHdr('🗺️  Mind Map', C.blue);
+        // Central node
+        setBG(C.gold); doc.roundedRect(ML+CW/2-40, Y, 80, 10, 5, 5, 'F');
+        doc.setFontSize(9.5); doc.setFont('helvetica','bold'); setFG([8,14,35]);
+        doc.text((data.mindmap.central||data.topic||'').slice(0,30), ML+CW/2, Y+7, {align:'center'});
+        Y += 16;
+        // Branches
+        data.mindmap.branches.forEach(b => {
+          ck(24);
+          const bRGB = b.color ? b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)) : [0,170,220];
+          try{setBG(bRGB);}catch{setBG(C.blue);}
           doc.rect(ML, Y, 3, 9, 'F');
+          setBG(C.card); doc.roundedRect(ML+4, Y, CW-4, 9, 1.5, 1.5, 'F');
+          try{setFG(bRGB);}catch{setFG(C.blue);}
           doc.setFontSize(9); doc.setFont('helvetica','bold');
-          try { fg(bColor); } catch { fg(C.blue); }
-          doc.text(`▸ ${b.name}`, ML+6, Y+6.3); Y += 12;
-          // Items
-          (b.items||[]).slice(0,5).forEach(item => {
-            ck(6);
-            doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
-            doc.text(`    • ${String(item).slice(0,90)}`, ML, Y); Y += 5.5;
+          doc.text(`▸ ${b.name}`, ML+8, Y+6.2);
+          Y += 12;
+          (b.items||[]).slice(0,6).forEach(item => {
+            ck(6); setBG(C.hdr); doc.roundedRect(ML+8, Y, CW-8, 6, 1, 1, 'F');
+            doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
+            doc.text(`• ${String(item).slice(0,85)}`, ML+12, Y+4.2);
+            Y += 7;
           });
-          Y += 3;
+          Y += 4;
         });
       }
 
-      // ── STUDY TRICKS ──
+      // ── SUMMARY / TLDR ──
+      if (data.ultra_long_notes && (this.tool==='summary'||this.tool==='all')) {
+        const tldr = data.ultra_long_notes.split('\n\n').find(p => p.includes('TL;DR')||p.includes('Summary'))||'';
+        if (tldr) {
+          newPage('Smart Summary');
+          secHdr('⚡  TL;DR Summary', C.gold);
+          setBG(isDark?[12,18,48]:[238,242,255]);
+          ck(4); doc.rect(ML, Y, CW, 2, 'F'); Y += 4;
+          wt(this._stripMd(tldr).slice(0,600), ML, CW, 9, false, C.text, 5.5);
+          Y += 6;
+        }
+      }
+
+      // ── KEY TRICKS ──
       if (data.key_tricks?.length) {
-        secHdr('🧠 Memory Tricks', C.gold);
+        ck(18);
+        secHdr('🧠  Study Tricks & Memory Aids', C.gold);
         data.key_tricks.slice(0,4).forEach((t,i) => {
           ck(14);
           wt(`${i+1}. ${String(t).slice(0,220)}`, ML, CW, 8.5, false, C.text);
@@ -2721,36 +3085,44 @@ Examples:
         });
       }
 
-      // ── REAL WORLD APPS ──
+      // ── APPLICATIONS ──
       if (data.real_world_applications?.length) {
-        secHdr('🌍 Real-World Applications', C.blue);
-        data.real_world_applications.slice(0,5).forEach((a,i) => {
-          ck(12); wt(`${i+1}. ${String(a).slice(0,200)}`, ML, CW, 8.5, false, C.text); Y += 3;
+        ck(18);
+        secHdr('🌍  Real-World Applications', C.blue);
+        data.real_world_applications.slice(0,6).forEach((a,i) => {
+          ck(10);
+          setBG(C.hdr); doc.roundedRect(ML, Y, CW, 8.5, 1, 1, 'F');
+          wt(String(a).slice(0,180), ML+3, CW-3, 8, false, C.text);
+          Y += 10;
         });
       }
 
       // ── MISCONCEPTIONS ──
       if (data.common_misconceptions?.length) {
-        secHdr('⚠️ Common Misconceptions', C.red);
+        ck(18);
+        secHdr('⚠️  Common Misconceptions', C.red);
         data.common_misconceptions.slice(0,4).forEach((m,i) => {
-          ck(12); wt(`${i+1}. ${String(m).slice(0,200)}`, ML, CW, 8.5, false, C.text); Y += 3;
+          ck(10);
+          wt(String(m).slice(0,200), ML, CW, 8, false, C.text);
+          Y += 4;
         });
       }
 
-      addFooter();
+      addPageFooter();
 
       // ── Save ──
-      const safe = (data.topic||'StudyNotes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
-      doc.save(`SavoireAI_${safe}_${new Date().toISOString().slice(0,10)}_${theme}.pdf`);
-      this._toast('success','fa-file-pdf',`✓ PDF downloaded! (${pageNum} page${pageNum>1?'s':''})`);
+      const safeName = (data.topic||'Study_Notes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
+      const dateStr  = new Date().toISOString().slice(0,10);
+      doc.save(`SavoireAI_${safeName}_${dateStr}_${theme}.pdf`);
+      this._toast('success','fa-file-pdf', `✓ PDF ready — ${pageNum} page${pageNum>1?'s':''} · ${theme} theme`);
 
-    } catch (err) {
+    } catch(err) {
       console.error('PDF error:', err);
-      this._toast('error','fa-times',`PDF failed: ${err.message}`);
+      this._toast('error','fa-times', `PDF failed: ${err.message.slice(0,60)}. Please try again.`);
     }
   }
 
-    // ─────────────────────────────────────────────────────────────────────────────────────────────────
+      // ─────────────────────────────────────────────────────────────────────────────────────────────────
   // SECTION 26: COPY / SAVE / SHARE / CLEAR
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -3344,104 +3716,103 @@ Examples:
 
   _renderDemoStep() {
     const step    = DEMO_STEPS[this.demoStep];
-    const isLast  = this.demoStep === DEMO_STEPS.length - 1;
     const isFirst = this.demoStep === 0;
+    const isLast  = !!step.isLast;
     if (!step || !this.demoTooltip) return;
 
-    // ── 1. Find target element + scroll into view ──
-    let targetEl   = null;
-    let targetRect = null;
+    // ── Find & highlight target element ──
     this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
+    let targetRect = null;
 
     if (step.targetId) {
-      targetEl = this._el(step.targetId);
-      if (targetEl) {
-        // Scroll target into view smoothly
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        // Wait a tick for scroll then measure
+      const target = this._el(step.targetId);
+      if (target) {
+        // Ensure element is visible (scroll into view if needed)
+        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // Brief delay for scroll, then measure + draw
         setTimeout(() => {
-          targetRect = targetEl.getBoundingClientRect();
+          targetRect = target.getBoundingClientRect();
           this._drawDemoSpotlight(targetRect);
-          this._placeDemoTooltip(targetRect);
-        }, 180);
+          this._placeDemoTooltip(targetRect, step.arrow);
+          target.classList.add('demo-highlighted');
+        }, 200);
       }
     } else {
       this._drawDemoSpotlight(null);
       this._placeDemoTooltipCenter();
     }
 
-    // ── 2. Render tooltip HTML ──
-    const dots = DEMO_STEPS.map((_, i) => {
-      const cls = i === this.demoStep ? 'active' : i < this.demoStep ? 'done' : '';
-      return `<button class="demo-dot ${cls}" onclick="window._app._jumpDemo(${i})" title="Step ${i+1}">${i < this.demoStep ? '✓' : i+1}</button>`;
+    // ── Progress bar ──
+    const pct = Math.round(((this.demoStep + 1) / DEMO_STEPS.length) * 100);
+
+    // ── Step dots ──
+    const dotsHtml = DEMO_STEPS.map((_, i) => {
+      const s = i === this.demoStep ? 'active' : i < this.demoStep ? 'done' : 'pending';
+      return `<button class="demo-tt-dot demo-dot-${s}" onclick="window._app._jumpDemo(${i})" title="Step ${i+1}">
+        ${i < this.demoStep ? '<i class="fas fa-check"></i>' : (i + 1)}
+      </button>`;
     }).join('');
 
-    const tipsHtml = step.tips.map(t =>
-      `<div class="demo-tip-row"><span class="demo-tip-icon">›</span><span>${t}</span></div>`
-    ).join('');
+    // ── Tips list ──
+    const tipsHtml = (step.tips || []).map((t, i) => `
+      <div class="demo-tip-item" style="animation-delay:${i*60}ms">
+        <div class="demo-tip-ic"><i class="fas ${t.icon}"></i></div>
+        <div class="demo-tip-text">${t.text}</div>
+      </div>`).join('');
 
+    // ── Action button ──
+    const actionBtn = step.action ? `
+      <button class="demo-action-btn" onclick="window._app._closeDemo();window._app.${step.action.fn}();return false;">
+        <i class="fas fa-play"></i> ${step.action.label}
+      </button>` : '';
+
+    // ── Render tooltip ──
     this.demoTooltip.innerHTML = `
-      <div class="demo-tt-header">
-        <div class="demo-tt-icon" style="background:${step.color}22;color:${step.color}">
-          <i class="fas ${step.icon}"></i>
-        </div>
-        <div class="demo-tt-title" style="color:${step.color}">${step.title}</div>
-        <button class="demo-tt-close" onclick="window._app._closeDemo()" title="Close demo">
+      <div class="demo-tt-top">
+        <div class="demo-tt-step-badge">Step ${step.step} of ${DEMO_STEPS.length}</div>
+        <button class="demo-tt-x" onclick="window._app._closeDemo()" title="Close demo (Esc)">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="demo-tt-dots">${dots}</div>
+
+      <div class="demo-tt-icon-row">
+        <div class="demo-tt-icon-wrap" style="--demo-color:${step.color};background:${step.color}18;border:2px solid ${step.color}44">
+          <i class="fas ${step.icon}" style="color:${step.color};font-size:1.6rem"></i>
+        </div>
+        <div class="demo-tt-titles">
+          <div class="demo-tt-title" style="color:${step.color}">${step.title}</div>
+          <div class="demo-tt-subtitle">${step.subtitle}</div>
+        </div>
+      </div>
+
+      <div class="demo-tt-progress">
+        <div class="demo-tt-prog-bar">
+          <div class="demo-tt-prog-fill" style="width:${pct}%;background:${step.color}"></div>
+        </div>
+        <div class="demo-tt-dots">${dotsHtml}</div>
+      </div>
+
       <div class="demo-tt-content">${step.content}</div>
+
       <div class="demo-tt-tips">${tipsHtml}</div>
+
+      ${actionBtn}
+
       <div class="demo-tt-footer">
-        <button class="demo-btn-prev" onclick="window._app._prevDemo()" ${isFirst?'disabled':''}>
-          <i class="fas fa-chevron-left"></i>
+        <button class="demo-btn-prev" onclick="window._app._prevDemo()" ${isFirst ? 'disabled' : ''} title="Previous (←)">
+          <i class="fas fa-arrow-left"></i> Back
         </button>
-        <span class="demo-tt-counter">${this.demoStep+1} <span style="opacity:.4">/</span> ${DEMO_STEPS.length}</span>
+        <div class="demo-tt-nav-info">
+          <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd> close
+        </div>
         ${isLast
-          ? `<button class="demo-btn-finish" onclick="window._app._closeDemo();window._app._openWizard()">
-               <i class="fas fa-magic"></i> Let's Go!
+          ? `<button class="demo-btn-finish" onclick="window._app._closeDemo();window._app._openWizard();">
+               <i class="fas fa-rocket"></i> Start Studying!
              </button>`
           : `<button class="demo-btn-next" onclick="window._app._nextDemo()">
-               <i class="fas fa-chevron-right"></i>
+               ${step.cta || 'Next →'}
              </button>`}
       </div>`;
-  }
-
-  _placeDemoTooltip(rect) {
-    if (!this.demoTooltip || !rect) { this._placeDemoTooltipCenter(); return; }
-    const TW = 340, TH = 340, M = 14;
-    const vw = window.innerWidth, vh = window.innerHeight;
-    let top, left;
-    this.demoTooltip.style.transform = '';
-    this.demoTooltip.style.width     = TW + 'px';
-
-    // Decide position — prefer below, then above, then right, then left, then center
-    if (rect.bottom + TH + M < vh) {
-      top  = rect.bottom + M;
-      left = Math.max(M, Math.min(vw - TW - M, rect.left + rect.width/2 - TW/2));
-    } else if (rect.top - TH - M > 0) {
-      top  = rect.top - TH - M;
-      left = Math.max(M, Math.min(vw - TW - M, rect.left + rect.width/2 - TW/2));
-    } else if (rect.right + TW + M < vw) {
-      top  = Math.max(M, Math.min(vh - TH - M, rect.top + rect.height/2 - TH/2));
-      left = rect.right + M;
-    } else if (rect.left - TW - M > 0) {
-      top  = Math.max(M, Math.min(vh - TH - M, rect.top + rect.height/2 - TH/2));
-      left = rect.left - TW - M;
-    } else {
-      this._placeDemoTooltipCenter(); return;
-    }
-    this.demoTooltip.style.top  = top  + 'px';
-    this.demoTooltip.style.left = left + 'px';
-  }
-
-  _placeDemoTooltipCenter() {
-    if (!this.demoTooltip) return;
-    this.demoTooltip.style.width     = '340px';
-    this.demoTooltip.style.top       = '50%';
-    this.demoTooltip.style.left      = '50%';
-    this.demoTooltip.style.transform = 'translate(-50%, -50%)';
   }
 
   _nextDemo() {
@@ -3451,6 +3822,62 @@ Examples:
     if (this.demoStep > 0) { this.demoStep--; this._renderDemoStep(); }
   }
   _jumpDemo(step) { this.demoStep = step; this._renderDemoStep(); }
+
+  _placeDemoTooltip(rect, preferredArrow) {
+    if (!this.demoTooltip || !rect) { this._placeDemoTooltipCenter(); return; }
+    const TW = 380, TH = 500, M = 16;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const w  = Math.min(TW, vw - M*2);
+    this.demoTooltip.style.transform = '';
+    this.demoTooltip.style.width     = w + 'px';
+    this.demoTooltip.style.maxHeight = (vh - M*2) + 'px';
+    this.demoTooltip.style.overflowY = 'auto';
+
+    const fits = {
+      below: rect.bottom + TH + M < vh,
+      above: rect.top    - TH - M > 0,
+      right: rect.right  + w  + M < vw,
+      left:  rect.left   - w  - M > 0,
+    };
+
+    let top, left, placed = false;
+    const tryDir = (dir) => {
+      if (dir === 'down'  && fits.below) { top = rect.bottom + M; left = Math.max(M, Math.min(vw-w-M, rect.left + rect.width/2 - w/2)); return true; }
+      if (dir === 'up'    && fits.above) { top = rect.top - TH - M; left = Math.max(M, Math.min(vw-w-M, rect.left + rect.width/2 - w/2)); return true; }
+      if (dir === 'right' && fits.right) { top = Math.max(M, Math.min(vh-TH-M, rect.top + rect.height/2 - TH/2)); left = rect.right + M; return true; }
+      if (dir === 'left'  && fits.left)  { top = Math.max(M, Math.min(vh-TH-M, rect.top + rect.height/2 - TH/2)); left = rect.left - w - M; return true; }
+      return false;
+    };
+
+    // Try preferred direction first, then auto-fallback
+    const order = ['below','right','above','left'];
+    if (preferredArrow) {
+      const mapped = { down:'below', up:'above', right:'right', left:'left' };
+      placed = tryDir(mapped[preferredArrow] || preferredArrow);
+    }
+    if (!placed) {
+      for (const dir of order) { if (tryDir(dir)) { placed = true; break; } }
+    }
+    if (!placed) { this._placeDemoTooltipCenter(); return; }
+
+    this.demoTooltip.style.top    = top  + 'px';
+    this.demoTooltip.style.left   = left + 'px';
+    this.demoTooltip.style.bottom = 'auto';
+    this.demoTooltip.style.right  = 'auto';
+  }
+
+  _placeDemoTooltipCenter() {
+    if (!this.demoTooltip) return;
+    const w = Math.min(380, window.innerWidth - 32);
+    Object.assign(this.demoTooltip.style, {
+      width:     w + 'px',
+      top:       '50%',
+      left:      '50%',
+      transform: 'translate(-50%,-50%)',
+      bottom:    'auto',
+      right:     'auto',
+    });
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
   // SECTION 33: MODAL SYSTEM
@@ -3537,6 +3964,15 @@ Examples:
     on(this.el.wizardHeaderBtn, 'click', () => this._openWizard());
     on(this.el.megaHeaderBtn,   'click', () => this._openMega());
     on(this.el.emptyWizardBtn,  'click', () => this._openWizard());
+    // Feature chips on empty state — each opens wizard with that tool pre-selected
+    this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        if (e.target.closest('[onclick]') && e.target.dataset.tool === 'all') return; // mega handled by onclick
+        const tool = chip.dataset.tool;
+        if (tool && tool !== 'all') this._openWizard(tool);
+      });
+      chip.style.cursor = 'pointer';
+    });
     on(this.el.emptyMegaBtn,    'click', () => this._openMega());
 
     // ── Home link / logo ──
@@ -3613,7 +4049,7 @@ Examples:
 
     // ── Welcome ──
     on(this.el.welcomeBtn,      'click',   () => this._submitWelcome());
-    on(this.el.welcomeSkip,     'click',   () => this._skipWelcome());
+    // Skip removed — name is mandatory. welcomeSkip button hidden in HTML.
     on(this.el.welcomeNameInput,'keydown', e => { if (e.key === 'Enter') this._submitWelcome(); });
     on(this.el.welcomeBackBtn,  'click',   () => this._dismissOverlay('welcomeBackOverlay'));
 
@@ -3707,9 +4143,46 @@ Examples:
 // INITIALIZATION
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+// ── Global welcome avatar selector (called from inline onclick in welcome modal) ──
+window._welcomeSetAvatar = function(idx) {
+  if (!window._app) return;
+  window._app.avatarColorIdx = idx;
+  localStorage.setItem('sv_avatar_color', String(idx));
+  // Update all avatar buttons in welcome grid
+  document.querySelectorAll('.wavatarBtn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+  // Update the main UI avatars immediately
+  window._app._updateUserUI();
+};
+
+// ── Global welcome name input — show hint when empty ──
+window._welcomeValidateName = function() {
+  const inp  = document.getElementById('welcomeNameInput');
+  const hint = document.getElementById('welcomeNameHint');
+  if (!inp || !hint) return;
+  const val = inp.value.trim();
+  if (val.length === 0) {
+    hint.textContent = '';
+    inp.classList.remove('name-ok', 'name-err');
+  } else if (val.length < 2) {
+    hint.textContent = '⚠️ Please enter at least 2 characters';
+    hint.style.color = '#ffae00';
+    inp.classList.add('name-err'); inp.classList.remove('name-ok');
+  } else {
+    hint.textContent = `✓ Hello, ${val}! Let's get started 🎓`;
+    hint.style.color = '#00ff88';
+    inp.classList.add('name-ok'); inp.classList.remove('name-err');
+  }
+};
+
 window.addEventListener('DOMContentLoaded', () => {
   window._app = new SavoireApp();
-  window._sav = window._app; // Alias
+  window._sav = window._app;
+
+  // Wire up welcome name input validation
+  const wInp = document.getElementById('welcomeNameInput');
+  if (wInp) wInp.addEventListener('input', window._welcomeValidateName);
 
   console.log('%c✅ Savoiré AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
   console.log('%c📊 Sessions tracked | 🔥 Streak monitored | 📄 World-class PDF | 📡 Live streaming', 'color:#00d4ff;font-size:11px');
