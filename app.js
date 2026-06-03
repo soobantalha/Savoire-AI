@@ -547,7 +547,6 @@ class SavoireApp {
       // Layout
       'leftPanel','sbToggle','sbBackdrop','rightPanel','outArea','outToolbar',
       'resultArea','emptyState','thinkingWrap','backToTopBtn',
-      'emptyWizardBtn','emptyMegaBtn',
       // Header
       'dashHdr','themeBtn','themeIcon','settingsBtn','wizardHeaderBtn','megaHeaderBtn',
       'avBtn','avDropdown','avInitials','avDropdownAvatar','avDropdownName',
@@ -567,7 +566,7 @@ class SavoireApp {
       // Saved modal
       'savedList','savedEmpty','savedCount',
       // Welcome
-      'welcomeOverlay','welcomeBackOverlay','welcomeNameInput','welcomeBtn',
+      'welcomeOverlay','welcomeBackOverlay','welcomeNameInput','welcomeBtn','welcomeSkip',
       'wbName','wbStreak','wbSessions','wbSaved','welcomeBackBtn',
       // Navigation
       'navWizard','navAll','navHistory','navSaved','navSettings','navFocus',
@@ -776,13 +775,6 @@ class SavoireApp {
     if (!name || name.length < 2) {
       this.el.welcomeNameInput?.classList.add('input-shake');
       setTimeout(() => this.el.welcomeNameInput?.classList.remove('input-shake'), 500);
-      // Show error in hint element
-      const hint = this._el('welcomeNameHint');
-      if (hint) {
-        hint.textContent = '⚠️ Please enter your name (at least 2 characters) to continue';
-        hint.style.color = '#ff6644';
-      }
-      this.el.welcomeNameInput?.focus();
       return;
     }
     this.userName = name;
@@ -904,24 +896,17 @@ class SavoireApp {
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
   _openWizard(presetTool) {
-    const tool = presetTool || this.tool || 'notes';
     this.wizardData = {
-      tool:     tool,
+      tool:     presetTool || this.tool || 'notes',
       topic:    '',
       language: this.prefs.defaultLanguage || 'English',
       depth:    'detailed',
       style:    'simple',
     };
+    this.wizardStep = 0;
     this.wizardFile = null;
-    // If a specific tool was pre-selected from a chip, skip to Step 2 (Topic)
-    // so user doesn't need to re-select the tool they already chose
-    this.wizardStep = presetTool ? 1 : 0;
     this._renderWizardStep();
     this._openModal('wizardModal');
-    // Show a toast to confirm what was pre-selected
-    if (presetTool && TOOL_CONFIG[presetTool]) {
-      setTimeout(() => this._toast('info', `fa-${TOOL_CONFIG[presetTool].icon}`, `${TOOL_CONFIG[presetTool].label} pre-selected — now enter your topic!`), 300);
-    }
   }
 
   _renderWizardStep() {
@@ -1344,109 +1329,18 @@ Examples:
     }
   }
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // SIMULATE STREAM — fallback for when server returns plain JSON (not SSE)
-  // Simulates progressive token rendering so UI still looks live
-  // ════════════════════════════════════════════════════════════════════════════
-  _simulateStream(data, resolve, reject) {
-    if (!data || typeof data !== 'object') { reject(new Error('Invalid response')); return; }
-    if (data.error) { reject(new Error(data.error)); return; }
-
-    const tool = this.tool || 'notes';
-    const notes = data.ultra_long_notes || data.notes || '';
-
-    // For card-based tools — directly animate cards in live view then resolve
-    if (tool === 'flashcards' && Array.isArray(data.flashcards) && data.flashcards.length) {
-      this._liveCards = [];
-      const cards = data.flashcards;
-      let i = 0;
-      const tick = () => {
-        if (i >= cards.length) { resolve(data); return; }
-        this._liveCards.push(cards[i]);
-        this._updateLiveCards(i, cards.length);
-        i++;
-        setTimeout(tick, 120);
-      };
-      setTimeout(tick, 200);
-      return;
-    }
-    if (tool === 'quiz' && Array.isArray(data.quiz_questions) && data.quiz_questions.length) {
-      this._liveQuestions = [];
-      const qs = data.quiz_questions;
-      let i = 0;
-      const tick = () => {
-        if (i >= qs.length) { resolve(data); return; }
-        this._liveQuestions.push(qs[i]);
-        this._updateLiveQuestions(i, qs.length);
-        i++;
-        setTimeout(tick, 140);
-      };
-      setTimeout(tick, 200);
-      return;
-    }
-    if (tool === 'mindmap' && data.mindmap?.branches?.length) {
-      this._liveBranches  = [];
-      this._liveMMCentral = data.mindmap.central || '';
-      this._liveMMConns   = data.mindmap.connections || [];
-      const branches = data.mindmap.branches;
-      this._updateLiveMindmap(-1, branches.length);
-      let i = 0;
-      const tick = () => {
-        if (i >= branches.length) { resolve(data); return; }
-        this._liveBranches.push(branches[i]);
-        this._updateLiveMindmap(i, branches.length);
-        i++;
-        setTimeout(tick, 160);
-      };
-      setTimeout(tick, 300);
-      return;
-    }
-
-    // For notes/summary/all — stream text token by token
-    if (!notes) { resolve(data); return; }
-    const CHUNK = 4;
-    let pos = 0;
-    let renderThrottle = 0;
-    const stream = () => {
-      if (pos >= notes.length) {
-        if (this.el.sfpText) {
-          this.el.sfpText.classList.remove('live-md');
-          this.el.sfpText.classList.add('done');
-        }
-        resolve(data);
-        return;
-      }
-      this.streamBuffer += notes.slice(pos, pos + CHUNK);
-      pos += CHUNK;
-      const now = Date.now();
-      if (now - renderThrottle > 32 && this.el.sfpText) {
-        renderThrottle = now;
-        this._renderLiveNotes(tool);
-      }
-      this._updateStageByProgress(pos);
-      setTimeout(stream, 6);
-    };
-    setTimeout(stream, 100);
-  }
-
   async _streamSSE(message, opts) {
-    // ═══════════════════════════════════════════════════════════════════════════
-    // WORLD-CLASS SSE STREAMING — Properly parses event: + data: lines
-    // Protocol: each SSE message is:
-    //   event: <eventName>\n
-    //   data: <json>\n
-    //   \n
-    //
-    // Events:
-    //   heartbeat → ignore (connection confirmed)
-    //   stage     → update progress stage + label
-    //   token     → stream one text token (notes/summary live render)
-    //   card      → one flashcard animated in
-    //   question  → one quiz question animated in
-    //   branch    → one mindmap branch animated in
-    //   done      → final complete data object → resolve
-    //   error     → error message → reject
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ══════════════════════════════════════════════════════════════════════
+    // WORLD-CLASS SSE STREAMING — Handles ALL tool types with live animation
+    // New events handled:
+    //   token    → streaming notes token (render live with markdown)
+    //   card     → one flashcard streamed (animate in one by one)
+    //   question → one quiz question streamed (animate in)
+    //   branch   → one mindmap branch streamed (animate in)
+    //   stage    → progress stage update
+    //   done     → complete final data object
+    //   error    → generation error
+    // ══════════════════════════════════════════════════════════════════════
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({
         message,
@@ -1457,12 +1351,12 @@ Examples:
         options:   { ...opts, stream: true },
       });
 
-      // Reset live data accumulators
-      this._liveCards     = [];
-      this._liveQuestions = [];
-      this._liveBranches  = [];
-      this._liveMMCentral = '';
-      this._liveMMConns   = [];
+      // Accumulated cards (for flashcard/quiz/mindmap live streaming)
+      this._liveCards    = [];
+      this._liveQuestions= [];
+      this._liveBranches = [];
+      this._liveMMCentral= '';
+      this._liveMMConns  = [];
 
       fetch(SAVOIRÉ.API_URL, {
         method:  'POST',
@@ -1475,463 +1369,257 @@ Examples:
           reject(new Error(d.error || `Server error (${res.status})`));
           return;
         }
-
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('text/event-stream')) {
-          // Server returned JSON — use simulate stream for nice animation
-          const d = await res.json().catch(() => ({}));
-          if (d.error) { reject(new Error(d.error)); return; }
-          this._simulateStream(d, resolve, reject);
+          const d = await res.json();
+          if (d.error) reject(new Error(d.error));
+          else this._simulateStream(d, resolve, reject);
           return;
         }
 
-        // True SSE stream
+        // True SSE stream reader
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';           // raw byte buffer
-        let chars  = 0;           // token chars received (for stage progression)
-        let renderThrottle = 0;   // throttle live render calls
+        let lineBuf = '', chars = 0, renderThrottle = 0;
 
-        // ── Tool type flags for live rendering ──
-        const tool = opts.tool || 'notes';
-
-        // ── Live notes/summary text rendering (throttled 32ms) ──
-        const renderLiveText = () => {
+        // ── Live notes rendering (throttled for performance) ──
+        const renderLive = () => {
           const now = Date.now();
           if (now - renderThrottle < 32) return;
           renderThrottle = now;
-          this._renderLiveNotes(tool);
+          if (!this.el.sfpText) return;
+          try {
+            this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+            this.el.sfpText.classList.add('live-md');
+          } catch {
+            this.el.sfpText.textContent = this.streamBuffer;
+          }
+          if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
         };
 
-        // ── Live card animators ──
+        // ── Live flashcard animation ──
         const animateCard = (idx, total, card) => {
           this._liveCards.push(card);
           this._updateLiveCards(idx, total);
         };
+
+        // ── Live quiz question animation ──
         const animateQuestion = (idx, total, q) => {
           this._liveQuestions.push(q);
           this._updateLiveQuestions(idx, total);
         };
+
+        // ── Live mindmap branch animation ──
         const animateBranch = (idx, total, branch) => {
-          if (branch && branch.name === '_central_') {
-            this._liveMMCentral = branch.value || '';
+          if (branch.name === '_central_') {
+            this._liveMMCentral = branch.value;
             this._liveMMConns   = branch.connections || [];
             this._updateLiveMindmap(-1, total);
-          } else if (branch) {
+          } else {
             this._liveBranches.push(branch);
             this._updateLiveMindmap(idx, total);
           }
         };
 
-        // ── SSE event dispatcher — called for each complete SSE message ──
-        const dispatch = (eventName, rawData) => {
-          if (!rawData || rawData === '[DONE]') return;
-          let evt;
-          try { evt = JSON.parse(rawData); } catch { return; }
-
-          switch (eventName) {
-            case 'heartbeat': break; // ignore — just confirms connection
-
-            case 'stage':
-              if (evt.idx !== undefined) this._activateStage(evt.idx);
-              if (evt.label && this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-              break;
-
-            case 'token':
-              if (evt.t !== undefined && evt.t !== null) {
-                this.streamBuffer += evt.t;
-                chars += String(evt.t).length;
-                renderLiveText();
-                this._updateStageByProgress(chars);
-              }
-              break;
-
-            case 'card':
-              if (evt.card) animateCard(evt.idx, evt.total, evt.card);
-              break;
-
-            case 'question':
-              if (evt.q) animateQuestion(evt.idx, evt.total, evt.q);
-              break;
-
-            case 'branch':
-              if (evt.branch) animateBranch(evt.idx, evt.total, evt.branch);
-              break;
-
-            case 'done':
-              // Final data object — merge any live-streamed items
-              if (this._liveCards.length)     evt.flashcards     = this._liveCards;
-              if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
-              if (this._liveBranches.length) {
-                evt.mindmap = {
-                  central:     this._liveMMCentral,
-                  branches:    this._liveBranches,
-                  connections: this._liveMMConns,
-                };
-              }
-              if (this.el.sfpText) {
-                this.el.sfpText.classList.remove('live-md');
-                this.el.sfpText.classList.add('done');
-              }
-              resolve(evt);
-              break;
-
-            case 'error':
-              reject(new Error(evt.error || evt.message || 'Generation failed'));
-              break;
-
-            default:
-              // Unknown event — check if data looks like final object (fallback)
-              if (evt.topic !== undefined && !eventName) {
-                if (this._liveCards.length)     evt.flashcards     = this._liveCards;
-                if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
-                if (this._liveBranches.length) {
-                  evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
-                }
-                resolve(evt);
-              }
-              break;
-          }
-        };
-
-        // ── SSE pump — reads raw bytes, parses event+data pairs ──
+        // ── SSE pump ──
         const pump = async () => {
-          let resolved = false;
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
-                if (!resolved) reject(new Error('Stream closed without completion'));
+                reject(new Error('Stream ended without final data'));
                 return;
               }
 
-              buffer += decoder.decode(value, { stream: true });
+              lineBuf += decoder.decode(value, { stream: true });
+              const lines = lineBuf.split('\n');
+              lineBuf = lines.pop() || '';
 
-              // SSE messages are separated by double newlines
-              // Each message may have multiple lines: event:\ndata:\n\n
-              const messages = buffer.split('\n\n');
-              buffer = messages.pop() || ''; // Last incomplete chunk stays in buffer
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const raw = line.slice(6).trim();
+                try {
+                  const evt = JSON.parse(raw);
 
-              for (const msg of messages) {
-                if (!msg.trim()) continue;
-                let eventName = 'message';
-                let dataLine  = '';
+                  // ── Token: notes streaming ──
+                  if (evt.t !== undefined) {
+                    this.streamBuffer += evt.t;
+                    chars += evt.t.length;
+                    renderLive();
+                    this._updateStageByProgress(chars);
 
-                const dataLines = []; // SSE allows multi-line data
-                for (const line of msg.split('\n')) {
-                  if (line.startsWith('event:')) {
-                    eventName = line.slice(6).trim();
-                  } else if (line.startsWith('data:')) {
-                    dataLines.push(line.slice(5).trim());
+                  // ── Card: one flashcard at a time ──
+                  } else if (evt.card !== undefined) {
+                    animateCard(evt.idx, evt.total, evt.card);
+
+                  // ── Question: one quiz question at a time ──
+                  } else if (evt.q !== undefined) {
+                    animateQuestion(evt.idx, evt.total, evt.q);
+
+                  // ── Branch: one mindmap branch at a time ──
+                  } else if (evt.branch !== undefined) {
+                    animateBranch(evt.idx, evt.total, evt.branch);
+
+                  // ── Stage: progress update ──
+                  } else if (evt.idx !== undefined && evt.label !== undefined) {
+                    this._activateStage(evt.idx);
+                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+
+                  // ── Done: final complete data object ──
+                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
+                    if (this.el.sfpText) {
+                      this.el.sfpText.classList.remove('live-md');
+                      this.el.sfpText.classList.add('done');
+                    }
+                    // Merge in any live-streamed cards that arrived
+                    if (this._liveCards.length)     evt.flashcards     = this._liveCards;
+                    if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
+                    if (this._liveBranches.length) {
+                      evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+                    }
+                    resolve(evt);
+                    return;
+
+                  // ── Error ──
+                  } else if (evt.error !== undefined) {
+                    reject(new Error(evt.error));
+                    return;
                   }
-                  // Ignore comment lines (start with ':') and id:/retry: lines
-                }
-
-                // Join multi-line data values (SSE spec allows this)
-                dataLine = dataLines.join('\n').trim();
-
-                if (dataLine && dataLine !== '[DONE]') {
-                  if (eventName === 'done') resolved = true;
-                  try {
-                    dispatch(eventName, dataLine);
-                  } catch (dispErr) {
-                    // Non-fatal dispatch error — log and continue
-                    console.warn('[SSE] dispatch error:', dispErr.message);
-                    if (resolved) return; // Still exit if done
-                  }
-                  if (resolved) return; // Stop reading after done
-                }
+                } catch { /* Ignore malformed SSE JSON */ }
               }
             }
           } catch (pumpErr) {
             if (pumpErr.name === 'AbortError') reject(pumpErr);
-            else if (!pumpErr.message?.includes('aborted')) reject(pumpErr);
+            else reject(pumpErr);
           }
         };
 
         pump();
       }).catch(err => {
         if (err.name === 'AbortError') reject(err);
-        else reject(new Error(err.message || 'Network error'));
+        else reject(err);
       });
     });
   }
 
-  // ── RENDER LIVE NOTES/SUMMARY TEXT in sfpText ─────────────────────────────
-  // Called on every token — shows tool-specific live preview
-  _renderLiveNotes(tool) {
-    // ── Don't render text for card tools once cards start arriving ──
-    // (Cards replace sfpText content — we don't want text to overwrite them)
-    if (this._liveCards.length > 0 || this._liveQuestions.length > 0 || this._liveBranches.length > 0) return;
-    if (!this.el.sfpText) return;
-    const buf = this.streamBuffer;
-    if (!buf) return;
-
-    const isSummary  = tool === 'summary';
-    const isCardTool = tool === 'flashcards' || tool === 'quiz' || tool === 'mindmap';
-
-    try {
-      if (isSummary) {
-        // Summary: show with summary-styled live wrapper
-        this.el.sfpText.classList.add('live-md');
-        this.el.sfpText.innerHTML = `
-          <div class="live-summary-wrapper">
-            <div class="live-summary-header">
-              <i class="fas fa-align-left" style="color:#00d4ff"></i>
-              <span>Summary being generated…</span>
-              <div class="live-dots"><span></span><span></span><span></span></div>
-            </div>
-            <div class="live-summary-body">${this._renderMdLive(buf)}</div>
-          </div>`;
-      } else if (isCardTool) {
-        // Flashcard/Quiz/Mindmap: during phase 1 research, show compact research view
-        const toolIcons = { flashcards: 'fa-layer-group', quiz: 'fa-question-circle', mindmap: 'fa-project-diagram' };
-        const toolColors = { flashcards: '#bf00ff', quiz: '#00ff88', mindmap: '#d4af37' };
-        const toolLabels = { flashcards: 'Researching topic for flashcards…', quiz: 'Researching topic for quiz…', mindmap: 'Researching topic for mind map…' };
-        const words = this._wordCount(buf);
-        this.el.sfpText.classList.add('live-md');
-        this.el.sfpText.innerHTML = `
-          <div class="live-research-wrapper">
-            <div class="live-research-header">
-              <i class="fas ${toolIcons[tool] || 'fa-book'}" style="color:${toolColors[tool] || '#d4af37'}"></i>
-              <span style="color:${toolColors[tool] || '#d4af37'}">${toolLabels[tool] || 'Researching…'}</span>
-              <div class="live-dots"><span></span><span></span><span></span></div>
-            </div>
-            <div class="live-research-stats">
-              <span class="live-stat-chip"><i class="fas fa-file-word"></i> ${words} words so far</span>
-              <span class="live-stat-chip"><i class="fas fa-bolt"></i> Phase 1 of 2</span>
-            </div>
-            <div class="live-research-preview">${this._renderMdLive(buf.slice(0, 800) + (buf.length > 800 ? '…' : ''))}</div>
-          </div>`;
-      } else {
-        // Notes / all — stream full markdown live
-        this.el.sfpText.classList.add('live-md');
-        this.el.sfpText.innerHTML = this._renderMdLive(buf);
-      }
-    } catch {
-      this.el.sfpText.textContent = buf;
-    }
-    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
-  }
-
   // ── UPDATE LIVE FLASHCARDS in stream overlay ──────────────────────────────
-  // ── UPDATE LIVE FLASHCARDS — card-by-card spring animation ──────────────
   _updateLiveCards(idx, total) {
     const container = this.el.sfpText;
     if (!container) return;
-    const cards  = this._liveCards;
-    const count  = cards.length;
-    const pct    = total > 0 ? Math.round((count / total) * 100) : 0;
-    const done   = count >= total && total > 0;
+
+    const cards = this._liveCards;
+    const pct   = Math.round((cards.length / total) * 100);
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-cards-wrapper">
-        <div class="live-gen-topbar">
-          <div class="live-gen-icon-wrap" style="background:rgba(191,0,255,.15);border-color:rgba(191,0,255,.4)">
+        <div class="live-cards-header">
+          <div class="live-cards-title">
             <i class="fas fa-layer-group" style="color:#bf00ff"></i>
+            Flashcards Being Generated…
           </div>
-          <div class="live-gen-info">
-            <div class="live-gen-title" style="color:#bf00ff">
-              ${done ? `✅ All ${total} Flashcards Generated!` : `🃏 Generating Flashcards… (${count}/${total})`}
+          <div class="live-cards-progress">
+            <div class="live-cards-prog-bar">
+              <div class="live-cards-prog-fill" style="width:${pct}%"></div>
             </div>
-            <div class="live-gen-sub">Each card appearing live as AI creates it</div>
+            <span class="live-cards-count">${cards.length} / ${total}</span>
           </div>
-          <div class="live-gen-badge" style="background:rgba(191,0,255,.2);color:#bf00ff">${pct}%</div>
-        </div>
-        <div class="live-gen-bar-wrap">
-          <div class="live-gen-bar" style="width:${pct}%;background:linear-gradient(90deg,#bf00ff,#7b00ff,#00d4ff)"></div>
         </div>
         <div class="live-cards-grid">
-          ${cards.map((c, i) => {
-            const front   = this._esc(c.front || c.question || '');
-            const backRaw = c.back || c.answer || '';
-            const back    = this._esc(backRaw.length > 100 ? backRaw.slice(0, 100) + '…' : backRaw);
-            const isNew   = i === count - 1;
-            return `<div class="live-card-item${isNew ? ' live-card-new' : ''}" style="animation-delay:${Math.min(i * 25, 300)}ms">
-              <div class="live-card-badge">#${i + 1}</div>
-              <div class="live-card-q-label"><i class="fas fa-question" style="font-size:9px"></i> FRONT</div>
-              <div class="live-card-front">${front}</div>
-              <div class="live-card-divider"></div>
-              <div class="live-card-a-label"><i class="fas fa-lightbulb" style="font-size:9px"></i> BACK</div>
-              <div class="live-card-back">${back}</div>
-            </div>`;
-          }).join('')}
-          ${!done ? `<div class="live-card-item live-card-loading-slot">
-            <div class="live-card-skeleton-line"></div>
-            <div class="live-card-skeleton-line" style="width:70%"></div>
-            <div class="live-card-skeleton-line" style="width:50%;margin-top:8px"></div>
-            <div class="live-dots" style="margin-top:8px"><span></span><span></span><span></span></div>
-          </div>` : ''}
+          ${cards.map((c, i) => `
+            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}" style="animation-delay:${i * 30}ms">
+              <div class="live-card-num">${i + 1}</div>
+              <div class="live-card-front">${this._esc(c.front || c.question || '')}</div>
+              <div class="live-card-back">${this._esc((c.back || c.answer || '').slice(0, 80))}${(c.back || c.answer || '').length > 80 ? '…' : ''}</div>
+            </div>
+          `).join('')}
         </div>
-        ${done
-          ? `<div class="live-gen-complete" style="border-color:rgba(191,0,255,.4);background:rgba(191,0,255,.08)">
-               <i class="fas fa-check-circle" style="color:#00ff88;font-size:20px"></i>
-               <span>All <strong>${total}</strong> flashcards ready — switching to interactive view…</span>
-             </div>`
-          : `<div class="live-gen-footer">
-               <div class="live-dots"><span></span><span></span><span></span></div>
-               <span>AI is generating card ${count + 1} of ${total}…</span>
-             </div>`
-        }
+        ${cards.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more cards…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} flashcards ready!</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-  // ── UPDATE LIVE QUIZ QUESTIONS — question-by-question animation ───────────
+  // ── UPDATE LIVE QUIZ QUESTIONS in stream overlay ──────────────────────────
   _updateLiveQuestions(idx, total) {
     const container = this.el.sfpText;
     if (!container) return;
-    const qs      = this._liveQuestions;
-    const count   = qs.length;
-    const pct     = total > 0 ? Math.round((count / total) * 100) : 0;
-    const done    = count >= total && total > 0;
+
+    const qs  = this._liveQuestions;
+    const pct = Math.round((qs.length / total) * 100);
     const letters = ['A','B','C','D','E'];
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-quiz-wrapper">
-        <div class="live-gen-topbar">
-          <div class="live-gen-icon-wrap" style="background:rgba(0,255,136,.12);border-color:rgba(0,255,136,.4)">
+        <div class="live-cards-header">
+          <div class="live-cards-title">
             <i class="fas fa-question-circle" style="color:#00ff88"></i>
+            Quiz Questions Being Generated…
           </div>
-          <div class="live-gen-info">
-            <div class="live-gen-title" style="color:#00ff88">
-              ${done ? `✅ All ${total} Questions Generated!` : `❓ Generating Quiz… (${count}/${total})`}
+          <div class="live-cards-progress">
+            <div class="live-cards-prog-bar">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff)"></div>
             </div>
-            <div class="live-gen-sub">Questions streaming live — check back answers after</div>
+            <span class="live-cards-count">${qs.length} / ${total}</span>
           </div>
-          <div class="live-gen-badge" style="background:rgba(0,255,136,.15);color:#00ff88">${pct}%</div>
-        </div>
-        <div class="live-gen-bar-wrap">
-          <div class="live-gen-bar" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff,#bf00ff)"></div>
         </div>
         <div class="live-quiz-list">
-          ${qs.map((q, i) => {
-            const isNew   = i === count - 1;
-            const diffCol = q.difficulty === 'hard' ? '#ff4444' : q.difficulty === 'easy' ? '#00ff88' : '#ffae00';
-            const opts    = Array.isArray(q.options) ? q.options.slice(0, 4) : [];
-            return `<div class="live-quiz-item${isNew ? ' live-card-new' : ''}">
-              <div class="live-quiz-toprow">
-                <span class="live-quiz-num">Q${i + 1}</span>
-                <span class="live-quiz-diff" style="background:${diffCol}22;color:${diffCol};border-color:${diffCol}55">${q.difficulty || 'medium'}</span>
-                ${q.topic_tag ? `<span class="live-quiz-tag">${this._esc(q.topic_tag)}</span>` : ''}
-              </div>
+          ${qs.map((q, i) => `
+            <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}">
+              <div class="live-quiz-q-num">Q${i + 1} <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}">${q.difficulty||'medium'}</span></div>
               <div class="live-quiz-q-text">${this._esc(q.question || '')}</div>
-              ${opts.length ? `<div class="live-quiz-opts">
-                ${opts.map((opt, oi) => {
-                  const isCorrect = opt === q.correct_answer;
-                  return `<div class="live-quiz-opt${isCorrect ? ' live-quiz-correct' : ''}">
-                    <span class="live-quiz-opt-letter">${letters[oi]}</span>
-                    ${this._esc(opt)}
-                    ${isCorrect ? '<i class="fas fa-check" style="color:#00ff88;margin-left:auto;font-size:10px"></i>' : ''}
-                  </div>`;
-                }).join('')}
-              </div>` : ''}
-            </div>`;
-          }).join('')}
-          ${!done ? `<div class="live-quiz-item live-card-loading-slot" style="text-align:center;padding:20px">
-            <div class="live-card-skeleton-line" style="width:80%;margin:0 auto 8px"></div>
-            <div class="live-card-skeleton-line" style="width:60%;margin:0 auto"></div>
-            <div class="live-dots" style="justify-content:center;margin-top:12px"><span></span><span></span><span></span></div>
-          </div>` : ''}
+              ${q.options ? `<div class="live-quiz-opts">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}">${letters[oi]}. ${this._esc(opt)}</div>`).join('')}</div>` : ''}
+            </div>
+          `).join('')}
         </div>
-        ${done
-          ? `<div class="live-gen-complete" style="border-color:rgba(0,255,136,.4);background:rgba(0,255,136,.08)">
-               <i class="fas fa-check-circle" style="color:#00ff88;font-size:20px"></i>
-               <span>All <strong>${total}</strong> quiz questions ready!</span>
-             </div>`
-          : `<div class="live-gen-footer">
-               <div class="live-dots"><span></span><span></span><span></span></div>
-               <span>Generating question ${count + 1} of ${total}…</span>
-             </div>`
-        }
+        ${qs.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more questions…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions ready!</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-  // ── UPDATE LIVE MINDMAP — branch-by-branch animation ─────────────────────
+  // ── UPDATE LIVE MINDMAP in stream overlay ─────────────────────────────────
   _updateLiveMindmap(idx, total) {
     const container = this.el.sfpText;
     if (!container) return;
+
     const branches = this._liveBranches;
     const central  = this._liveMMCentral;
-    const count    = branches.length;
-    const pct      = idx === -1 ? 8 : (total > 0 ? Math.round((count / total) * 92) + 8 : 8);
-    const done     = count >= total && total > 0;
-
-    // Branch color palette
-    const BRANCH_COLORS = ['#d4af37','#00d4ff','#bf00ff','#00ff88','#ff6b35','#e84393','#ffae00','#7b00ff','#00ffcc','#ff4444'];
+    const pct      = idx === -1 ? 5 : Math.round((branches.length / Math.max(total, 1)) * 95) + 5;
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-mm-wrapper">
-        <div class="live-gen-topbar">
-          <div class="live-gen-icon-wrap" style="background:rgba(212,175,55,.12);border-color:rgba(212,175,55,.4)">
+        <div class="live-cards-header">
+          <div class="live-cards-title">
             <i class="fas fa-project-diagram" style="color:#d4af37"></i>
+            Mind Map Being Generated…
           </div>
-          <div class="live-gen-info">
-            <div class="live-gen-title" style="color:#d4af37">
-              ${done ? `✅ Mind Map Complete! (${total} branches)` : `🗺️ Mapping Topic… (${count}/${total} branches)`}
+          <div class="live-cards-progress">
+            <div class="live-cards-prog-bar">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00)"></div>
             </div>
-            <div class="live-gen-sub">Branches appearing as AI structures your topic</div>
+            <span class="live-cards-count">${branches.length} / ${total}</span>
           </div>
-          <div class="live-gen-badge" style="background:rgba(212,175,55,.15);color:#d4af37">${pct}%</div>
         </div>
-        <div class="live-gen-bar-wrap">
-          <div class="live-gen-bar" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00,#00d4ff)"></div>
-        </div>
-        ${central ? `
-        <div class="live-mm-central-node">
-          <div class="live-mm-central-pulse"></div>
-          <i class="fas fa-brain" style="color:#d4af37;font-size:18px"></i>
-          <div class="live-mm-central-text">${this._esc(central)}</div>
-        </div>
-        <div class="live-mm-connector-line"></div>` : ''}
+        ${central ? `<div class="live-mm-central"><i class="fas fa-brain"></i> ${this._esc(central)}</div>` : ''}
         <div class="live-mm-branches">
-          ${branches.map((b, i) => {
-            const isNew  = i === count - 1;
-            const color  = b.color || BRANCH_COLORS[i % BRANCH_COLORS.length];
-            const items  = Array.isArray(b.items) ? b.items : [];
-            return `<div class="live-mm-branch${isNew ? ' live-card-new' : ''}" style="border-left-color:${color};background:${color}0d">
-              <div class="live-mm-branch-header">
-                <div class="live-mm-branch-dot" style="background:${color}"></div>
-                <div class="live-mm-branch-name" style="color:${color}">${this._esc(b.name || '')}</div>
-                <div class="live-mm-branch-count" style="color:${color}99">${items.length} items</div>
+          ${branches.map((b, i) => `
+            <div class="live-mm-branch ${i === branches.length - 1 ? 'live-card-new' : ''}" style="border-left-color:${b.color||'#d4af37'}">
+              <div class="live-mm-branch-name" style="color:${b.color||'#d4af37'}">
+                <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
               </div>
               <div class="live-mm-items">
-                ${items.slice(0, 6).map(item => `<span class="live-mm-item" style="border-color:${color}44;color:${color}cc">
-                  <i class="fas fa-circle" style="font-size:5px;margin-right:4px;opacity:.7"></i>
-                  ${this._esc(String(item))}
-                </span>`).join('')}
+                ${(b.items||[]).slice(0,5).map(item => `<span class="live-mm-item">${this._esc(item)}</span>`).join('')}
               </div>
-              ${b.connections?.length ? `<div class="live-mm-links">
-                <i class="fas fa-link" style="color:${color}88;font-size:10px"></i>
-                ${b.connections.slice(0,3).map(c => `<span class="live-mm-link-tag">${this._esc(String(c))}</span>`).join('')}
-              </div>` : ''}
-            </div>`;
-          }).join('')}
-          ${!done ? `<div class="live-mm-branch live-card-loading-slot" style="border-left-color:#555;text-align:center;padding:16px">
-            <div class="live-card-skeleton-line" style="width:60%;margin:0 auto 8px"></div>
-            <div class="live-card-skeleton-line" style="width:40%;margin:0 auto"></div>
-            <div class="live-dots" style="justify-content:center;margin-top:10px"><span></span><span></span><span></span></div>
-          </div>` : ''}
+            </div>
+          `).join('')}
         </div>
-        ${done
-          ? `<div class="live-gen-complete" style="border-color:rgba(212,175,55,.4);background:rgba(212,175,55,.08)">
-               <i class="fas fa-check-circle" style="color:#00ff88;font-size:20px"></i>
-               <span>Mind map with <strong>${total}</strong> branches ready!</span>
-             </div>`
-          : `<div class="live-gen-footer">
-               <div class="live-dots"><span></span><span></span><span></span></div>
-               <span>Mapping branch ${count + 1} of ${total}…</span>
-             </div>`
-        }
+        ${branches.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more branches…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches ready!</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-  async _callAPIJson(message, opts) {
+    async _callAPIJson(message, opts) {
     const res = await fetch(SAVOIRÉ.API_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1969,63 +1657,14 @@ Examples:
 
   _showStreamOverlay(topic, tool) {
     const cfg = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
-    if (this.el.sfpTopic)    this.el.sfpTopic.textContent    = topic.length > 65 ? topic.slice(0, 65) + '…' : topic;
-    if (this.el.sfpToolIcon) this.el.sfpToolIcon.className   = `fas ${cfg.icon}`;
+    if (this.el.sfpTopic)    this.el.sfpTopic.textContent   = topic.length > 65 ? topic.slice(0, 65) + '…' : topic;
+    if (this.el.sfpToolIcon) this.el.sfpToolIcon.className  = `fas ${cfg.icon}`;
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
-    if (this.el.sfpLabel)    this.el.sfpLabel.textContent    = cfg.sfpLabel || 'Generating…';
+    if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
     if (this.el.sfpText) {
-      this.el.sfpText.classList.remove('done','live-md');
-      // Tool-specific initial loading state
-      if (tool === 'flashcards') {
-        this.el.sfpText.innerHTML = `
-          <div class="sfp-init-state">
-            <div class="sfp-init-icon" style="color:#bf00ff"><i class="fas fa-layer-group"></i></div>
-            <div class="sfp-init-title">Generating Flashcards…</div>
-            <div class="sfp-init-sub">AI is studying your topic and creating cards</div>
-            <div class="live-dots"><span></span><span></span><span></span></div>
-          </div>`;
-      } else if (tool === 'quiz') {
-        this.el.sfpText.innerHTML = `
-          <div class="sfp-init-state">
-            <div class="sfp-init-icon" style="color:#00ff88"><i class="fas fa-question-circle"></i></div>
-            <div class="sfp-init-title">Generating Quiz Questions…</div>
-            <div class="sfp-init-sub">AI is crafting challenging questions for you</div>
-            <div class="live-dots"><span></span><span></span><span></span></div>
-          </div>`;
-      } else if (tool === 'mindmap') {
-        this.el.sfpText.innerHTML = `
-          <div class="sfp-init-state">
-            <div class="sfp-init-icon" style="color:#d4af37"><i class="fas fa-project-diagram"></i></div>
-            <div class="sfp-init-title">Generating Mind Map…</div>
-            <div class="sfp-init-sub">AI is mapping out the topic structure</div>
-            <div class="live-dots"><span></span><span></span><span></span></div>
-          </div>`;
-      } else if (tool === 'summary') {
-        this.el.sfpText.innerHTML = `
-          <div class="sfp-init-state">
-            <div class="sfp-init-icon" style="color:#00d4ff"><i class="fas fa-align-left"></i></div>
-            <div class="sfp-init-title">Generating Summary…</div>
-            <div class="sfp-init-sub">AI is distilling the key points</div>
-            <div class="live-dots"><span></span><span></span><span></span></div>
-          </div>`;
-      } else if (tool === 'all') {
-        this.el.sfpText.innerHTML = `
-          <div class="sfp-init-state">
-            <div class="sfp-init-icon" style="color:#ffae00"><i class="fas fa-bolt"></i></div>
-            <div class="sfp-init-title">⚡ Generating Mega Bundle…</div>
-            <div class="sfp-init-sub">Notes + Flashcards + Quiz + Summary + Mind Map</div>
-            <div class="live-dots"><span></span><span></span><span></span></div>
-          </div>`;
-      } else {
-        // Notes — show typing cursor
-        this.el.sfpText.innerHTML = `
-          <div class="sfp-init-state">
-            <div class="sfp-init-icon" style="color:#00ff88"><i class="fas fa-book-open"></i></div>
-            <div class="sfp-init-title">Generating Notes…</div>
-            <div class="sfp-init-sub">AI is writing comprehensive study notes</div>
-            <div class="live-dots"><span></span><span></span><span></span></div>
-          </div>`;
-      }
+      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
+      this.el.sfpText.classList.remove('done');
+      this.el.sfpText.classList.add('live-md');
     }
     if (this.el.sscProgressBar) this.el.sscProgressBar.style.width = '4%';
     if (this.el.streamFullpage)  this.el.streamFullpage.style.display = 'flex';
@@ -2260,9 +1899,6 @@ Examples:
   // SECTION 19: RESULT BUILDERS — NOTES
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  // ══════════════════════════════════════════════════════════════════════
-  // NOTES — shows ONLY notes content (no flashcards/quiz/mindmap)
-  // ══════════════════════════════════════════════════════════════════════
   _buildNotesHTML(data) {
     let h = '';
     if (data.ultra_long_notes) {
@@ -2270,41 +1906,36 @@ Examples:
         <div class="ss-hdr">
           <div class="ss-title"><i class="fas fa-book-open"></i> Comprehensive Study Notes</div>
           <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
-            <i class="fas fa-copy"></i> Copy Notes
+            <i class="fas fa-copy"></i> Copy
           </button>
         </div>
         <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
       </div>`;
     }
-    if (data.key_concepts?.length)            h += this._secConcepts(data.key_concepts);
-    if (data.key_tricks?.length)              h += this._secTricks(data.key_tricks);
-    if (data.practice_questions?.length)      h += this._secQA(data.practice_questions);
-    if (data.real_world_applications?.length) h += this._secApps(data.real_world_applications);
-    if (data.common_misconceptions?.length)   h += this._secMisc(data.common_misconceptions);
-    return h || `<div class="result-empty-msg"><i class="fas fa-book-open"></i> Notes generated — scroll up to read!</div>`;
+    if (data.key_concepts?.length)           h += this._secConcepts(data.key_concepts);
+    if (data.key_tricks?.length)             h += this._secTricks(data.key_tricks);
+    if (data.practice_questions?.length)     h += this._secQA(data.practice_questions);
+    if (data.real_world_applications?.length)h += this._secApps(data.real_world_applications);
+    if (data.common_misconceptions?.length)  h += this._secMisc(data.common_misconceptions);
+    if (data.flashcards?.length)             h += `<div class="study-sec section-anchor" id="sec-fc"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-layer-group"></i> Flashcard Preview</div></div><div class="ss-body">${this._fcMiniList(data.flashcards)}</div></div>`;
+    if (data.quiz_questions?.length)         h += `<div class="study-sec section-anchor" id="sec-quiz"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-question-circle"></i> Quiz Preview</div></div><div class="ss-body">${this._quizMiniList(data.quiz_questions)}</div></div>`;
+    if (data.mindmap)                        h += `<div class="study-sec section-anchor" id="sec-mm"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-project-diagram"></i> Mind Map Preview</div></div><div class="ss-body">${this._mmMini(data.mindmap)}</div></div>`;
+    return h || '<div style="padding:24px;text-align:center;color:#d4af37">Study materials generated successfully.</div>';
   }
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
   // SECTION 20: ALL-TOOLS MEGA BUNDLE HTML
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  // ══════════════════════════════════════════════════════════════════════
-  // MEGA BUNDLE — shows ALL 5 tools in sequence
-  // ══════════════════════════════════════════════════════════════════════
   _buildAllHTML(data) {
-    const PALETTE = ['#d4af37','#00d4ff','#bf00ff','#00ff88','#ff6b35','#e84393'];
     let h = `<div class="mega-result-banner">
-      <div class="mega-banner-icon"><i class="fas fa-bolt"></i></div>
-      <div class="mega-banner-text">
-        <div class="mega-banner-title">⚡ Mega Study Bundle — All 5 Tools</div>
-        <div class="mega-banner-counts">
-          ${data.ultra_long_notes ? `<span>📝 Notes</span>` : ''}
-          ${data.flashcards?.length ? `<span>🃏 ${data.flashcards.length} Flashcards</span>` : ''}
-          ${data.quiz_questions?.length ? `<span>❓ ${data.quiz_questions.length} Quiz Q's</span>` : ''}
-          <span>📄 Summary</span>
-          ${data.mindmap?.branches?.length ? `<span>🗺️ ${data.mindmap.branches.length} Branches</span>` : ''}
-        </div>
-      </div>
+      <i class="fas fa-bolt"></i>
+      ⚡ Mega Study Bundle — All 5 Tools Generated
+      <span class="mega-result-count">
+        ${data.flashcards?.length ? `🃏 ${data.flashcards.length} Cards` : ''}
+        ${data.quiz_questions?.length ? ` · ❓ ${data.quiz_questions.length} Questions` : ''}
+        ${data.mindmap?.branches?.length ? ` · 🗺️ ${data.mindmap.branches.length} Branches` : ''}
+      </span>
     </div>`;
 
     // 1. NOTES
@@ -2365,12 +1996,41 @@ Examples:
       </div>`;
     }
 
-    // 5. MIND MAP (reuse the beautiful _buildMindmapHTML renderer)
-    const mmSection = this._buildMindmapHTML(data);
-    if (mmSection) {
-      h += `<div class="mega-section-wrap">
-        <div class="mega-section-num-badge" style="background:#d4af37;color:#0a1128">5</div>
-        ${mmSection}
+    // 5. MIND MAP
+    if (data.mindmap) {
+      h += `<div class="study-sec section-anchor mega-section" id="sec-mm">
+        <div class="ss-hdr mega-hdr">
+          <div class="ss-title"><span class="mega-num">5</span><i class="fas fa-project-diagram"></i> Visual Mind Map</div>
+        </div>
+        <div class="ss-body">
+          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(data.mindmap.central || data.topic || 'Topic')}</div>
+          <div class="mm-branches">
+            ${(data.mindmap.branches || []).map(b => `
+              <div class="mm-branch">
+                <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
+                  <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+                </div>
+                <div class="mm-nodes-list">
+                  ${(b.items || []).map(item => `
+                    <div class="mm-node">
+                      <span class="mm-node-dot" style="background:${b.color || '#d4af37'}"></span>
+                      <span class="mm-node-text">${this._esc(item)}</span>
+                    </div>`).join('')}
+                </div>
+              </div>`).join('')}
+          </div>
+          ${data.mindmap.connections?.length ? `
+            <div class="mm-connections">
+              <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
+              <div class="mm-conn-list">
+                ${data.mindmap.connections.map(c => `
+                  <div class="mm-conn-item">
+                    <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
+                    ${this._esc(c.description)}
+                  </div>`).join('')}
+              </div>
+            </div>` : ''}
+        </div>
       </div>`;
     }
 
@@ -2387,32 +2047,33 @@ Examples:
   // SECTION 21: FLASHCARD HTML BUILDER
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  // ══════════════════════════════════════════════════════════════════════
-  // FLASHCARDS — shows ONLY the interactive flashcard viewer
-  // ══════════════════════════════════════════════════════════════════════
   _buildFcHTML(data) {
-    // Use flashcards if available, else generate from key_concepts
     const cards = data.flashcards?.length ? data.flashcards
       : (data.key_concepts || []).slice(0, 15).map(c => ({
-          front: c.split(':')[0]?.trim() || c.slice(0, 80),
+          front: c.split(':')[0]?.trim() || c.slice(0, 60),
           back:  c,
         }));
 
-    if (!cards.length) return `<div class="result-empty-msg"><i class="fas fa-layer-group"></i> Flashcards generating… please retry.</div>`;
+    if (!cards.length) return this._buildNotesHTML(data);
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
     this.fcFlipped = false;
 
-    return `<div class="study-sec section-anchor" id="sec-fc">
+    let h = `<div class="study-sec" id="sec-fc">
       <div class="ss-hdr">
-        <div class="ss-title"><i class="fas fa-layer-group"></i> Flashcards — ${cards.length} Cards</div>
-        <div class="fc-header-stats">
-          <span class="fc-stat-chip"><i class="fas fa-brain"></i> Spaced Repetition Mode</span>
-        </div>
+        <div class="ss-title"><i class="fas fa-layer-group"></i> Interactive Flashcards (${cards.length} cards)</div>
       </div>
       <div class="ss-body">${this._buildFcMode(cards)}</div>
     </div>`;
+
+    if (data.ultra_long_notes) {
+      h += `<div class="study-sec" id="sec-notes">
+        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Study Notes</div></div>
+        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
+      </div>`;
+    }
+    return h;
   }
 
   _buildFcMode(cards) {
@@ -2514,24 +2175,30 @@ Examples:
   // SECTION 22: QUIZ HTML BUILDER
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  // ══════════════════════════════════════════════════════════════════════
-  // QUIZ — shows ONLY the interactive quiz (no notes/flashcards/mindmap)
-  // ══════════════════════════════════════════════════════════════════════
   _buildQuizHTML(data) {
-    const qs = data.quiz_questions?.length ? data.quiz_questions : (data.practice_questions || []);
-    if (!qs.length) return `<div class="result-empty-msg"><i class="fas fa-question-circle"></i> Quiz generating… please retry.</div>`;
+    const qs = data.quiz_questions || data.practice_questions || [];
+    if (!qs.length) return this._buildNotesHTML(data);
 
     this.quizData  = qs.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
     this.quizIdx   = 0;
     this.quizScore = 0;
 
-    return `<div class="study-sec section-anchor" id="quizContainer">
-      <div class="ss-hdr">
-        <div class="ss-title"><i class="fas fa-question-circle"></i> Practice Quiz — ${this.quizData.length} Questions</div>
-        <div class="quiz-score-display"><i class="fas fa-star"></i> <span id="quizScoreNum">0</span> / ${this.quizData.length}</div>
-      </div>
-      <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
-    </div>`;
+    let h = `
+      <div class="study-sec" id="quizContainer">
+        <div class="ss-hdr">
+          <div class="ss-title"><i class="fas fa-question-circle"></i> Practice Quiz (${this.quizData.length} questions)</div>
+          <div class="quiz-score-display"><i class="fas fa-star"></i> <span id="quizScoreNum">0</span> / ${this.quizData.length}</div>
+        </div>
+        <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
+      </div>`;
+
+    if (data.ultra_long_notes) {
+      h += `<div class="study-sec">
+        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Study Notes</div></div>
+        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
+      </div>`;
+    }
+    return h;
   }
 
   _renderQuizQ(idx) {
@@ -2722,44 +2389,42 @@ Examples:
   // SECTION 23: SUMMARY & MIND MAP HTML
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
-  // ══════════════════════════════════════════════════════════════════════
-  // SUMMARY — shows ONLY summary content (no flashcards/quiz/mindmap)
-  // ══════════════════════════════════════════════════════════════════════
   _buildSummaryHTML(data) {
     let h = '';
     if (data.ultra_long_notes) {
-      const paras = data.ultra_long_notes.split('\n\n');
-      const tldr  = paras.find(p => /TL;DR|Summary|Executive|Overview|Introduction/i.test(p)) || paras[0] || '';
-      h += `<div class="study-sec" id="sec-tldr">
-        <div class="ss-hdr">
-          <div class="ss-title"><i class="fas fa-bolt"></i> TL;DR — Quick Summary</div>
-          <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.summary-tldr-content').innerText)">
-            <i class="fas fa-copy"></i> Copy
-          </button>
-        </div>
-        <div class="ss-body">
-          <div class="summary-tldr-box">
-            <div class="summary-tldr-icon"><i class="fas fa-align-left"></i></div>
-            <div class="summary-tldr-content">${this._renderMd(tldr)}</div>
+      const paragraphs = data.ultra_long_notes.split('\n\n');
+      const tldr = paragraphs.find(p => p.includes('TL;DR') || p.includes('Summary') || p.includes('Executive')) || paragraphs[0] || '';
+      h += `
+        <div class="study-sec" id="sec-tldr">
+          <div class="ss-hdr">
+            <div class="ss-title"><i class="fas fa-bolt"></i> TL;DR — Executive Summary</div>
+            <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.summary-tldr-content').innerText)">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="ss-body">
+            <div class="summary-tldr-box">
+              <div class="summary-tldr-icon"><i class="fas fa-align-left"></i></div>
+              <div class="summary-tldr-content">${this._renderMd(tldr)}</div>
+            </div>
           </div>
         </div>
-      </div>`;
-      h += `<div class="study-sec" id="sec-summary-full">
-        <div class="ss-hdr">
-          <div class="ss-title"><i class="fas fa-book-open"></i> Full Summary</div>
-          <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
-            <i class="fas fa-copy"></i> Copy
-          </button>
-        </div>
-        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-      </div>`;
+        <div class="study-sec" id="sec-notes">
+          <div class="ss-hdr">
+            <div class="ss-title"><i class="fas fa-book-open"></i> Full Summary</div>
+            <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
+        </div>`;
     }
     if (data.key_concepts?.length) {
-      h += `<div class="study-sec section-anchor" id="sec-concepts">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-list-check"></i> Key Points at a Glance</div></div>
+      h += `<div class="study-sec">
+        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-list-check"></i> Key Points</div></div>
         <div class="ss-body">
           <div class="summary-points-list">
-            ${data.key_concepts.slice(0, 12).map((c, i) => `
+            ${data.key_concepts.map((c, i) => `
               <div class="summary-point">
                 <div class="summary-point-num">${i + 1}</div>
                 <div class="summary-point-text">${this._esc(c)}</div>
@@ -2768,92 +2433,101 @@ Examples:
         </div>
       </div>`;
     }
-    if (data.key_tricks?.length)              h += this._secTricks(data.key_tricks);
-    if (data.common_misconceptions?.length)   h += this._secMisc(data.common_misconceptions);
-    return h || `<div class="result-empty-msg"><i class="fas fa-align-left"></i> Summary generated — scroll up!</div>`;
+    return h || this._buildNotesHTML(data);
   }
 
-  // ══════════════════════════════════════════════════════════════════════
-  // MINDMAP — shows ONLY mindmap (no notes/flashcards/quiz)
-  // ══════════════════════════════════════════════════════════════════════
   _buildMindmapHTML(data) {
     const mm    = data.mindmap;
     const topic = data.topic || 'Topic';
-    const PALETTE = ['#d4af37','#00d4ff','#bf00ff','#00ff88','#ff6b35','#e84393','#ffae00','#7b00ff','#00ffcc','#ff4444'];
-
-    // Build branches array — from AI mindmap OR reconstruct from key concepts
-    let branches = [];
-    let central  = topic;
 
     if (mm?.branches?.length) {
-      branches = mm.branches;
-      central  = mm.central || topic;
-    } else if (data.key_concepts?.length) {
-      // Reconstruct mindmap from key_concepts (each concept → a branch)
-      central  = topic;
-      const chunkSize = 3;
-      const branchNames = ['Core Concepts','Key Mechanisms','Applications','Important Facts','Study Guide','Deep Insights'];
-      for (let i = 0; i < Math.min(6, Math.ceil(data.key_concepts.length / chunkSize)); i++) {
-        branches.push({
-          name:  branchNames[i] || `Branch ${i+1}`,
-          color: PALETTE[i % PALETTE.length],
-          items: data.key_concepts.slice(i * chunkSize, (i + 1) * chunkSize).map(c => String(c).slice(0, 100)),
-        });
+      const branchHtml = mm.branches.map(b => `
+        <div class="mm-branch">
+          <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
+            <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+          </div>
+          <div class="mm-nodes-list">
+            ${(b.items || []).map(item => `
+              <div class="mm-node">
+                <span class="mm-node-dot" style="background:${b.color || '#d4af37'}"></span>
+                <span class="mm-node-text">${this._esc(item)}</span>
+              </div>`).join('')}
+          </div>
+        </div>`).join('');
+
+      const connHtml = mm.connections?.length ? `
+        <div class="mm-connections">
+          <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
+          <div class="mm-conn-list">
+            ${mm.connections.map(c => `
+              <div class="mm-conn-item">
+                <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
+                ${this._esc(c.description)}
+              </div>`).join('')}
+          </div>
+        </div>` : '';
+
+      let h = `
+        <div class="study-sec" id="sec-mm">
+          <div class="ss-hdr">
+            <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(mm.central || topic)}</div>
+          </div>
+          <div class="ss-body">
+            <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm.central || topic)}</div>
+            <div class="mm-branches">${branchHtml}</div>
+            ${connHtml}
+          </div>
+        </div>`;
+
+      if (data.ultra_long_notes) {
+        h += `<div class="study-sec" id="sec-notes">
+          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Mind Map Notes</div></div>
+          <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
+        </div>`;
       }
+      return h;
     }
 
-    if (!branches.length) {
-      return `<div class="result-empty-msg"><i class="fas fa-project-diagram"></i> Mind map generating… please retry.</div>`;
-    }
+    // Fallback mindmap from key_concepts
+    const branches = [
+      { name: 'Core Concepts', items: data.key_concepts || [],            color: '#d4af37' },
+      { name: 'Study Tricks',  items: data.key_tricks || [],              color: '#00ff88' },
+      { name: 'Applications',  items: data.real_world_applications || [], color: '#00d4ff' },
+      { name: 'Misconceptions',items: data.common_misconceptions || [],   color: '#ff4444' },
+    ].filter(b => b.items.length > 0);
 
-    const branchHtml = branches.map((b, bi) => {
-      const col = b.color || PALETTE[bi % PALETTE.length];
-      return `<div class="mm-branch-card" style="border-color:${col}30;--bc:${col}">
-        <div class="mm-branch-title" style="color:${col}">
-          <span class="mm-branch-dot" style="background:${col}"></span>
-          ${this._esc(b.name)}
+    const bh = branches.map(b => `
+      <div class="mm-branch">
+        <div class="mm-branch-hdr" style="color:${b.color}">
+          <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
         </div>
-        <div class="mm-items-grid">
-          ${(b.items || []).slice(0, 8).map(item => `
-            <div class="mm-item-chip" style="border-color:${col}40;color:${col}cc">
-              <i class="fas fa-circle" style="font-size:4px;margin-right:5px;opacity:.7"></i>
-              ${this._esc(String(item))}
+        <div class="mm-nodes-list">
+          ${b.items.slice(0, 6).map(item => `
+            <div class="mm-node">
+              <span class="mm-node-dot" style="background:${b.color}"></span>
+              <span class="mm-node-text">${this._esc(String(item).slice(0, 120))}</span>
             </div>`).join('')}
+        </div>
+      </div>`).join('');
+
+    let h = `
+      <div class="study-sec" id="sec-mm">
+        <div class="ss-hdr">
+          <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(topic)}</div>
+        </div>
+        <div class="ss-body">
+          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(topic)}</div>
+          <div class="mm-branches">${bh || '<p style="color:rgba(255,255,255,.4);padding:16px">Mind map content generated…</p>'}</div>
         </div>
       </div>`;
-    }).join('');
 
-    const connHtml = mm?.connections?.length ? `
-      <div class="mm-connections-section">
-        <div class="mm-conn-header"><i class="fas fa-link"></i> Cross-Connections</div>
-        <div class="mm-conn-grid">
-          ${mm.connections.map(c => `
-            <div class="mm-conn-chip">
-              <strong>${this._esc(c.from)}</strong>
-              <span class="mm-conn-arrow">↔</span>
-              <strong>${this._esc(c.to)}</strong>
-              ${c.description ? `<div class="mm-conn-desc">${this._esc(c.description)}</div>` : ''}
-            </div>`).join('')}
-        </div>
-      </div>` : '';
-
-    return `<div class="study-sec section-anchor" id="sec-mm">
-      <div class="ss-hdr">
-        <div class="ss-title"><i class="fas fa-project-diagram"></i> Mind Map — ${this._esc(central)}</div>
-        <button class="ss-copy-btn" onclick="window._app._copyTxt(document.getElementById('sec-mm').innerText)">
-          <i class="fas fa-copy"></i> Copy
-        </button>
-      </div>
-      <div class="ss-body">
-        <div class="mm-central-node">
-          <div class="mm-central-pulse"></div>
-          <i class="fas fa-brain" style="font-size:1.4rem;color:#d4af37"></i>
-          <div class="mm-central-label">${this._esc(central)}</div>
-        </div>
-        <div class="mm-branches-grid">${branchHtml}</div>
-        ${connHtml}
-      </div>
-    </div>`;
+    if (data.ultra_long_notes) {
+      h += `<div class="study-sec" id="sec-notes">
+        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Notes</div></div>
+        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
+      </div>`;
+    }
+    return h;
   }
 
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -3007,390 +2681,444 @@ Examples:
   }
 
   _generatePDF(data, theme = 'dark') {
-    this._toast('info', 'fa-spinner fa-pulse', 'Generating PDF…');
+    this._toast('info', 'fa-spinner fa-pulse', `Generating world-class ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
     try {
       const { jsPDF } = window.jspdf;
-      if (!jsPDF) throw new Error('jsPDF not loaded');
-      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+      const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
 
-      // ── Page metrics ──────────────────────────────────────────────
-      const PW = 210, PH = 297, ML = 15, MR = 15, CW = PW - ML - MR;
-      const HDR = 20, FTR = 14, BODY_TOP = HDR + 4, BODY_BOT = PH - FTR - 2;
-      const isDark = (theme !== 'light');
-      let Y = BODY_TOP, page = 1;
+      // ── Page metrics ──
+      const PW = 210, PH = 297, ML = 14, MR = 14, CW = PW - ML - MR;
+      const MT_CONTENT = 26;  // top margin on content pages after mini-header
+      const MB = 16;          // bottom margin (above footer)
+      const isDark = theme !== 'light';
+      let Y = 0, pageNum = 1;
 
-      // ── Color palette ─────────────────────────────────────────────
+      // ── Palette ──
       const C = isDark ? {
-        bg:     [7,12,32],    card:   [14,20,52],   hdr:    [18,28,68],
-        border: [30,42,90],   gold:   [212,175,55],  blue:   [0,160,220],
-        purple: [160,60,220], green:  [0,175,100],   red:    [200,50,50],
-        text:   [195,198,210],head:   [235,238,255], muted:  [110,115,138],
-        correct:[0,170,90],
+        bg:      [7, 12, 32],
+        gold:    [212, 175, 55],
+        blue:    [0, 170, 220],
+        purple:  [160, 60, 220],
+        green:   [0, 180, 100],
+        red:     [210, 55, 55],
+        text:    [195, 198, 210],
+        head:    [238, 240, 255],
+        muted:   [115, 118, 138],
+        card:    [14, 20, 52],
+        hdr:     [20, 30, 72],
+        border:  [28, 40, 88],
+        correct: [0, 170, 90],
       } : {
-        bg:     [255,255,255],card:   [245,247,255], hdr:    [232,236,252],
-        border: [210,215,240],gold:   [165,128,22],  blue:   [0,100,185],
-        purple: [120,35,195], green:  [0,125,65],    red:    [175,35,35],
-        text:   [42,45,60],   head:   [12,18,55],    muted:  [95,100,122],
-        correct:[0,120,60],
+        bg:      [255, 255, 255],
+        gold:    [170, 135, 30],
+        blue:    [0, 100, 190],
+        purple:  [130, 40, 200],
+        green:   [0, 130, 70],
+        red:     [180, 40, 40],
+        text:    [38, 40, 56],
+        head:    [10, 18, 56],
+        muted:   [100, 106, 126],
+        card:    [244, 246, 255],
+        hdr:     [228, 232, 252],
+        border:  [210, 215, 240],
+        correct: [0, 120, 60],
       };
 
-      const fg  = (c) => { if(c) doc.setTextColor(c[0],c[1],c[2]); };
-      const bg  = (c) => { if(c) doc.setFillColor(c[0],c[1],c[2]); };
-      const dc  = (c) => { if(c) doc.setDrawColor(c[0],c[1],c[2]); };
+      // ── Helpers ──
+      const setFG = ([r,g,b]) => doc.setTextColor(r,g,b);
+      const setBG = ([r,g,b]) => doc.setFillColor(r,g,b);
+      const setDC = ([r,g,b]) => doc.setDrawColor(r,g,b);
 
-      // ── Fill page background ──────────────────────────────────────
-      const fillPage = () => {
-        if (isDark) { bg(C.bg); doc.rect(0,0,PW,PH,'F'); }
+      const fillBg = () => { if(isDark){setBG(C.bg);doc.rect(0,0,PW,PH,'F');} };
+
+      const addPageFooter = () => {
+        setBG(isDark?[10,16,40]:[235,238,252]);
+        doc.rect(0, PH-MB, PW, MB, 'F');
+        setDC(C.gold); doc.setLineWidth(0.25); doc.line(ML, PH-MB, PW-MR, PH-MB);
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
+        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE} · "${SAVOIRÉ.TAGLINE}"`, ML, PH-6);
+        doc.text(`Page ${pageNum}`, PW-MR, PH-6, {align:'right'});
       };
 
-      // ── Page header ───────────────────────────────────────────────
-      const drawHeader = (title) => {
-        bg(C.hdr); doc.rect(0,0,PW,HDR,'F');
-        dc(C.gold); doc.setLineWidth(0.3); doc.line(0,HDR,PW,HDR);
-        doc.setFontSize(7); doc.setFont('helvetica','bold'); fg(C.gold);
-        doc.text('SAVOIRÉ AI v2.0', ML, HDR-5);
-        doc.setFont('helvetica','normal'); fg(C.muted);
-        const subtitle = (title || (data.topic||'')).slice(0,70);
-        doc.text(subtitle, PW-MR, HDR-5, {align:'right'});
+      const addPageHeader = (subtitle='') => {
+        setBG(C.hdr); doc.rect(0,0,PW,MT_CONTENT-4,'F');
+        setDC(C.gold); doc.setLineWidth(0.25); doc.line(0,MT_CONTENT-4,PW,MT_CONTENT-4);
+        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG(C.gold);
+        doc.text(SAVOIRÉ.BRAND, ML, MT_CONTENT-9);
+        doc.setFont('helvetica','normal'); setFG(C.muted);
+        doc.text((subtitle||(data.topic||'')).slice(0,72), PW-MR, MT_CONTENT-9, {align:'right'});
       };
 
-      // ── Page footer ───────────────────────────────────────────────
-      const drawFooter = () => {
-        bg(isDark?[10,16,42]:[230,234,252]); doc.rect(0,PH-FTR,PW,FTR,'F');
-        dc(C.gold); doc.setLineWidth(0.2); doc.line(ML,PH-FTR,PW-MR,PH-FTR);
-        doc.setFontSize(6); doc.setFont('helvetica','normal'); fg(C.muted);
-        doc.text('savoireai.vercel.app  ·  soobantalhatech.xyz  ·  "Think Less. Know More."', ML, PH-4);
-        doc.text(`Page ${page}`, PW-MR, PH-4, {align:'right'});
+      const newPage = (subtitle) => {
+        addPageFooter();
+        doc.addPage(); pageNum++; Y = MT_CONTENT+2;
+        fillBg(); addPageHeader(subtitle);
       };
 
-      // ── New page ──────────────────────────────────────────────────
-      const newPage = (title) => {
-        drawFooter();
-        doc.addPage(); page++; fillPage(); drawHeader(title);
-        Y = BODY_TOP;
-      };
+      const ck = (need=12) => { if(Y+need > PH-MB-2) newPage(); };
 
-      // ── Space check ───────────────────────────────────────────────
-      const ck = (need) => { if (Y + need > BODY_BOT) newPage(); };
-
-      // ── Wrapped text writer ───────────────────────────────────────
-      const wt = (txt, x, w, sz, bold, color, lh) => {
-        if (!txt) return 0;
-        const s = String(txt).replace(/[\u0000-\u001F]/g,' ');
-        doc.setFontSize(sz); doc.setFont('helvetica', bold?'bold':'normal'); fg(color||C.text);
-        const lines = doc.splitTextToSize(s, w);
-        const lineH = lh || sz * 0.38;
-        ck(lines.length * lineH + 1);
-        doc.text(lines, x, Y); Y += lines.length * lineH + 0.5;
+      // ── Word-wrapped text writer ──
+      const wt = (txt, x, maxW, sz, bold=false, color=C.text, lineH=null) => {
+        if(!txt)return;
+        doc.setFontSize(sz); doc.setFont('helvetica', bold?'bold':'normal'); setFG(color);
+        const lines = doc.splitTextToSize(String(txt), maxW);
+        const lh    = lineH || sz * 0.385;
+        ck(lines.length * lh + 1);
+        doc.text(lines, x, Y);
+        Y += lines.length * lh + 0.5;
         return lines.length;
       };
 
-      // ── Section header ────────────────────────────────────────────
-      const secH = (label, accent) => {
-        ck(13);
-        bg(C.hdr); doc.rect(ML,Y,CW,9,'F');
-        bg(accent||C.gold); doc.rect(ML,Y,3,9,'F');
-        doc.setFontSize(9); doc.setFont('helvetica','bold'); fg(accent||C.gold);
-        const lbl = label.replace(/[^\x00-\x7E]/g,''); // strip emoji for safety
-        doc.text(lbl, ML+6, Y+6); Y += 13;
+      // ── Section header bar ──
+      const secHdr = (label, color=C.gold) => {
+        ck(14);
+        setBG(C.hdr); doc.rect(ML, Y, CW, 9, 'F');
+        setBG(color);  doc.rect(ML, Y, 3, 9, 'F');
+        doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(color);
+        doc.text(label, ML+6, Y+6.2);
+        Y += 13;
       };
 
-      // ────────────────────────────────────────────────────────────────
-      // COVER PAGE
-      // ────────────────────────────────────────────────────────────────
-      fillPage();
+      // ── Rounded card ──
+      const card = (h, fillColor=C.card, borderColor=C.border) => {
+        ck(h+2);
+        setBG(fillColor); doc.roundedRect(ML, Y, CW, h, 2, 2, 'F');
+        setDC(borderColor); doc.setLineWidth(0.18); doc.roundedRect(ML, Y, CW, h, 2, 2, 'S');
+        Y += 3;
+      };
 
-      // Gold top bar
-      bg(C.gold); doc.rect(0,0,PW,3,'F');
-      bg(C.gold); doc.rect(0,PH-3,PW,3,'F');
+      // ───────────────────────────────────────────────────────────────
+      // COVER PAGE
+      // ───────────────────────────────────────────────────────────────
+      fillBg();
+
+      // Gold accent bars top+bottom
+      setBG(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
 
       // Logo block
-      bg(C.blue); doc.roundedRect(ML,10,20,20,3,3,'F');
-      doc.setFontSize(14); doc.setFont('helvetica','bold'); fg([255,255,255]);
-      doc.text('S',ML+7,24);
+      setBG([0,140,220]); doc.roundedRect(ML, 14, 22, 22, 4, 4, 'F');
+      doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
+      doc.text('Ś', ML+8, 30);
 
-      // Brand name
-      doc.setFontSize(22); doc.setFont('helvetica','bold'); fg(C.gold);
-      doc.text('SAVOIRÉ AI', ML+26,18);
-      doc.setFontSize(8); doc.setFont('helvetica','normal'); fg(C.muted);
-      doc.text("World's Most Advanced Free AI Study Assistant — v2.0", ML+26,25);
-      doc.text('Built by Sooban Talha Technologies  ·  soobantalhatech.xyz', ML+26,31);
+      // App name
+      doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
+      doc.text('SAVOIRÉ AI', ML+28, 22);
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
+      doc.text("v2.0 — World's Most Advanced Free AI Study Assistant", ML+28, 29);
+      doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`, ML+28, 36);
 
       // Divider
-      dc(C.gold); doc.setLineWidth(0.5); doc.line(ML,38,PW-MR,38);
+      setDC(C.gold); doc.setLineWidth(0.4); doc.line(ML, 43, PW-MR, 43);
 
       // Tool badge
       const tCfg = TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes;
-      bg(isDark?[0,60,140]:[0,80,180]); doc.roundedRect(ML,44,60,8,2,2,'F');
-      doc.setFontSize(7.5); doc.setFont('helvetica','bold'); fg([200,225,255]);
-      doc.text((tCfg.sfpName + (this.tool==='all'?' — ALL 5 TOOLS':'')).toUpperCase(), ML+3,50);
+      setBG([0,80,160]); doc.roundedRect(ML, 48, 72, 8, 1.5, 1.5, 'F');
+      doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG([200,228,255]);
+      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all'?' — ALL 5 TOOLS ⚡':''}`, ML+4, 53.5);
 
-      // Topic title
-      doc.setFontSize(18); doc.setFont('helvetica','bold'); fg(C.head);
-      const topicLines = doc.splitTextToSize(data.topic||'Study Notes', CW);
-      doc.text(topicLines, ML,65);
-      let cy = 65 + topicLines.length * 7.5;
+      // Main topic title
+      doc.setFontSize(20); doc.setFont('helvetica','bold'); setFG(C.head);
+      const titleLines = doc.splitTextToSize(data.topic || 'Study Notes', CW);
+      doc.text(titleLines, ML, 67);
+      let cy = 67 + titleLines.length * 8.5;
 
-      // Subtitle
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); fg(C.muted);
-      doc.text(data.curriculum_alignment||'General Academic Study', ML, cy+4);
+      // Curriculum subtitle
+      doc.setFontSize(9.5); doc.setFont('helvetica','normal'); setFG(C.muted);
+      doc.text(data.curriculum_alignment || 'General Academic Study', ML, cy + 4);
       cy += 14;
 
-      // Stats row
+      // Stats cards row
       const wc    = this._wordCount(this._stripMd(data.ultra_long_notes||''));
       const stats = [
-        ['Score',   `${data.study_score||97}/100`],
-        ['Words',   `~${wc.toLocaleString()}`],
-        ['Quality', data._quality==='ai_generated'?'AI Generated':'Enhanced'],
-        ['Language', data._language||'English'],
-        ['Date',    new Date().toLocaleDateString()],
-        ['Tool',    tCfg.sfpName],
+        { l:'Score',   v:`${data.study_score||97}/100` },
+        { l:'Words',   v:`~${wc.toLocaleString()}` },
+        { l:'Quality', v:data._quality==='ai_generated'?'AI Generated':'Enhanced' },
+        { l:'Lang',    v:data._language||'English' },
+        { l:'Date',    v:new Date().toLocaleDateString() },
+        { l:'Tool',    v:tCfg.sfpName },
       ];
-      const sw = CW/3;
-      stats.forEach(([lbl,val],i) => {
-        const sx = ML+(i%3)*sw, sy = cy+Math.floor(i/3)*18;
-        bg(C.card); doc.roundedRect(sx,sy,sw-2,15,2,2,'F');
-        dc(C.border); doc.setLineWidth(0.15); doc.roundedRect(sx,sy,sw-2,15,2,2,'S');
-        doc.setFontSize(10); doc.setFont('helvetica','bold'); fg(C.gold);
-        doc.text(String(val), sx+(sw-2)/2,sy+8,{align:'center'});
-        doc.setFontSize(6); doc.setFont('helvetica','normal'); fg(C.muted);
-        doc.text(lbl, sx+(sw-2)/2,sy+13,{align:'center'});
+      const sw = CW / 3;
+      stats.forEach((s,i) => {
+        const sx = ML + (i%3)*sw, sy = cy + Math.floor(i/3)*20;
+        setBG(C.card); doc.roundedRect(sx, sy, sw-2, 17, 2, 2, 'F');
+        doc.setFontSize(11); doc.setFont('helvetica','bold'); setFG(C.gold);
+        doc.text(s.v, sx+(sw-2)/2, sy+9, {align:'center'});
+        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
+        doc.text(s.l, sx+(sw-2)/2, sy+14.5, {align:'center'});
       });
-      cy += 40;
+      cy += 44;
 
       // Tagline
-      doc.setFontSize(11); doc.setFont('helvetica','bolditalic'); fg(C.gold);
-      doc.text('"Think Less. Know More."', PW/2,cy+6,{align:'center'});
-      doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.muted);
-      doc.text('— Sooban Talha, Founder', PW/2,cy+13,{align:'center'});
+      doc.setFontSize(12.5); doc.setFont('helvetica','bolditalic'); setFG(C.gold);
+      doc.text(`"${SAVOIRÉ.TAGLINE}"`, PW/2, cy+6, {align:'center'});
+      doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.muted);
+      doc.text(`— ${SAVOIRÉ.FOUNDER}`, PW/2, cy+13, {align:'center'});
 
-      doc.setFontSize(7); fg(C.muted);
-      doc.text(`Generated: ${new Date().toLocaleString()}  ·  PDF Theme: ${isDark?'Dark':'Light'}`, PW/2,PH-20,{align:'center'});
-      doc.text('savoireai.vercel.app', PW/2,PH-13,{align:'center'});
+      // PDF info at bottom
+      doc.text(`Generated: ${new Date().toLocaleString()} · PDF Theme: ${isDark?'Dark':'Light'}`, PW/2, PH-22, {align:'center'});
+      doc.text(`${SAVOIRÉ.WEBSITE}`, PW/2, PH-16, {align:'center'});
 
-      drawFooter();
+      addPageFooter();
 
-      // ────────────────────────────────────────────────────────────────
+      // ───────────────────────────────────────────────────────────────
       // CONTENT PAGES
-      // ────────────────────────────────────────────────────────────────
+      // ───────────────────────────────────────────────────────────────
       newPage('Study Notes');
 
-      // ── NOTES ──
+      // ── STUDY NOTES ──
       if (data.ultra_long_notes) {
-        secH('STUDY NOTES', C.gold);
-        const noteLines = this._stripMd(data.ultra_long_notes).split('\n');
-        let prevBlank = false;
-        for (const raw of noteLines) {
+        secHdr('📚  Study Notes', C.gold);
+        const clean  = this._stripMd(data.ultra_long_notes);
+        const lines  = clean.split('\n');
+        let   prevBlank = false;
+
+        for (const raw of lines) {
           const tr = raw.trim();
-          if (!tr) { if (!prevBlank) Y += 1.5; prevBlank=true; continue; }
+          if (!tr) { if (!prevBlank) Y += 2; prevBlank = true; continue; }
           prevBlank = false;
-          ck(8);
-          if (/^#{1,4}/.test(tr)) {
+          ck(9);
+
+          if (tr.match(/^#{1,4}/)) {
             const lv  = (tr.match(/^#+/)||[''])[0].length;
-            const txt = tr.replace(/^#+\s*/,'').replace(/[*`]/g,'').trim();
-            Y += lv<=2?3:1;
-            if (lv<=2) {
-              bg(lv===1?C.gold:C.blue); doc.rect(ML,Y-1,3,lv===1?12:9,'F');
-              wt(txt, ML+5, CW-5, lv===1?13:11, true, lv===1?C.gold:C.blue);
+            const txt = tr.replace(/^#+\s*/,'').replace(/\*+/g,'').replace(/`/g,'');
+            Y += lv<=2 ? 4 : 2;
+            const sz  = lv===1?14 : lv===2?11.5 : lv===3?10 : 9;
+            const col = lv<=2 ? C.gold : lv===3 ? C.blue : C.head;
+            if (lv <= 2) {
+              // Draw accent line for H1/H2
+              setBG(col); doc.rect(ML, Y-1, 3, sz*0.4, 'F');
+              wt(txt, ML+5, CW-5, sz, true, col);
             } else {
-              wt(txt, ML, CW, lv===3?10:9, true, C.head);
+              wt(txt, ML, CW, sz, true, col);
             }
-            Y += lv<=2?2:1;
-          } else if (/^[-*•]\s/.test(tr)) {
-            bg(C.gold); doc.circle(ML+2,Y-1.2,0.9,'F');
-            wt(tr.replace(/^[-*•]\s*/,''), ML+5, CW-5, 8.5, false, C.text);
-          } else if (/^\d+\.\s/.test(tr)) {
+            Y += lv<=2 ? 3 : 1;
+
+          } else if (tr.match(/^[-•*]\s/)) {
+            const txt = tr.replace(/^[-•*]\s*/,'');
+            // Bullet dot
+            setBG(C.gold); doc.circle(ML+2, Y-1.5, 1, 'F');
+            wt(txt, ML+5, CW-5, 8.5, false, C.text);
+            Y += 0.5;
+
+          } else if (tr.match(/^\d+\.\s/)) {
             wt(tr, ML+4, CW-4, 8.5, false, C.text);
+            Y += 0.5;
+
           } else if (tr.startsWith('>')) {
-            ck(10);
-            bg(isDark?[12,20,55]:[238,242,255]); doc.rect(ML,Y-2,CW,9,'F');
-            bg(C.gold); doc.rect(ML,Y-2,2,9,'F');
-            wt(tr.replace(/^>\s*/,''), ML+5, CW-5, 8, false, isDark?[215,205,155]:[70,55,8]);
-            Y += 2;
-          } else if (tr==='---' || tr==='***') {
-            dc(C.border); doc.setLineWidth(0.15); doc.line(ML,Y,PW-MR,Y); Y+=4;
+            ck(12);
+            const qText = tr.replace(/^>\s*/,'');
+            setBG(isDark?[12,20,52]:[238,242,255]);
+            doc.rect(ML, Y-2, CW, 10, 'F');
+            setBG(C.gold); doc.rect(ML, Y-2, 2.5, 10, 'F');
+            wt(qText, ML+5, CW-5, 8.5, false, isDark?[220,210,160]:[75,60,10]);
+            Y += 3;
+
+          } else if (tr.startsWith('---')) {
+            setDC(C.border); doc.setLineWidth(0.2);
+            doc.line(ML, Y, PW-MR, Y);
+            Y += 5;
+
+          } else if (tr.includes('**') || tr.includes('`')) {
+            const cleaned = tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'[$1]').replace(/\*/g,'');
+            wt(cleaned, ML, CW, 8.5, false, C.text);
+            Y += 1;
           } else {
-            const clean = tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'$1').replace(/[*_]/g,'');
-            wt(clean, ML, CW, 8.5, false, C.text);
+            wt(tr, ML, CW, 8.5, false, C.text);
+            Y += 1;
           }
         }
-        Y += 5;
+        Y += 6;
       }
 
       // ── KEY CONCEPTS ──
       if (data.key_concepts?.length) {
-        ck(14); secH('KEY CONCEPTS', C.gold);
-        data.key_concepts.slice(0,10).forEach((c,i) => {
-          ck(15);
-          bg(C.card); doc.roundedRect(ML,Y,CW,13,2,2,'F');
-          dc(C.border); doc.setLineWidth(0.12); doc.roundedRect(ML,Y,CW,13,2,2,'S');
-          bg(C.gold); doc.circle(ML+5,Y+6.5,3,'F');
-          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); fg([8,14,35]);
-          doc.text(String(i+1),ML+5,Y+8,{align:'center'});
-          const txt = String(c).replace(/[\u0000-\u001F]/g,' ').slice(0,200);
-          const ls  = doc.splitTextToSize(txt, CW-13);
-          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
-          doc.text(ls.slice(0,2), ML+11, Y+5.5);
-          Y += 16;
+        secHdr('💡  Key Concepts', C.gold);
+        data.key_concepts.slice(0, 10).forEach((c, i) => {
+          ck(16);
+          setBG(C.card); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'F');
+          setDC(C.border); doc.setLineWidth(0.15); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'S');
+          // Number circle
+          setBG(C.gold); doc.circle(ML+5, Y+7, 3.5, 'F');
+          doc.setFontSize(7); doc.setFont('helvetica','bold'); setFG([8,14,35]);
+          doc.text(String(i+1), ML+5, Y+8.5, {align:'center'});
+          // Content
+          const cLines = doc.splitTextToSize(String(c).slice(0,220), CW-14);
+          doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.text);
+          doc.text(cLines.slice(0,2), ML+11, Y+6);
+          Y += 17;
         });
-        Y += 3;
+        Y += 4;
       }
 
       // ── FLASHCARDS ──
       if (data.flashcards?.length) {
         newPage('Flashcards');
-        secH('FLASHCARDS', C.purple);
-        data.flashcards.forEach((fc,i) => {
-          ck(26);
-          bg(C.card); doc.roundedRect(ML,Y,CW,24,2,2,'F');
-          dc(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML,Y,CW,24,2,2,'S');
-          bg(C.purple); doc.roundedRect(ML,Y,3,24,2,0,'F');
-          doc.setFontSize(6); doc.setFont('helvetica','bold'); fg(C.purple);
-          doc.text(`Q${i+1}`, ML+2, Y+4.5);
-          const front = String(fc.front||fc.question||'').replace(/[\u0000-\u001F]/g,' ').slice(0,120);
-          const fl = doc.splitTextToSize(front, CW-16);
-          doc.setFontSize(8.5); doc.setFont('helvetica','bold'); fg(C.head);
-          doc.text(fl.slice(0,2), ML+9, Y+5.5);
-          dc(C.border); doc.setLineWidth(0.12); doc.line(ML+4,Y+12,PW-MR-4,Y+12);
-          doc.setFontSize(6); doc.setFont('helvetica','bold'); fg(C.blue);
-          doc.text('ANSWER', ML+9, Y+16);
-          const back = String(fc.back||fc.answer||'').replace(/[\u0000-\u001F]/g,' ').slice(0,150);
-          const bl = doc.splitTextToSize(back, CW-16);
-          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); fg(C.text);
-          doc.text(bl.slice(0,2), ML+9, Y+19.5);
-          Y += 27;
+        secHdr('🃏  Flashcards', C.purple);
+        data.flashcards.forEach((fc, i) => {
+          ck(28);
+          // Card background
+          setBG(C.card); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'F');
+          setDC(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'S');
+          // Q label
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.purple);
+          doc.text(`Q${i+1}`, ML+2.5, Y+5.5);
+          // Front
+          const fLines = doc.splitTextToSize(String(fc.front||fc.question||'').slice(0,90), CW-18);
+          doc.setFontSize(8.5); doc.setFont('helvetica','bold'); setFG(C.head);
+          doc.text(fLines.slice(0,2), ML+10, Y+6);
+          // Divider line
+          setDC(C.border); doc.setLineWidth(0.15); doc.line(ML+3, Y+12, PW-MR-3, Y+12);
+          // A label
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.blue);
+          doc.text('A:', ML+2.5, Y+17);
+          // Back
+          const bLines = doc.splitTextToSize(String(fc.back||fc.answer||'').slice(0,160), CW-14);
+          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
+          doc.text(bLines.slice(0,2), ML+10, Y+17);
+          Y += 29;
         });
+        Y += 4;
       }
 
       // ── QUIZ ──
       if (data.quiz_questions?.length) {
         newPage('Practice Quiz');
-        secH('PRACTICE QUIZ', C.green);
-        const LTR = ['A','B','C','D'];
-        data.quiz_questions.forEach((q,i) => {
-          ck(40);
-          // Q number
-          bg(C.green); doc.circle(ML+4,Y+4,4,'F');
-          doc.setFontSize(7); doc.setFont('helvetica','bold'); fg([255,255,255]);
+        secHdr('❓  Practice Quiz', C.green);
+        const letters = ['A','B','C','D','E'];
+        data.quiz_questions.forEach((q, i) => {
+          ck(42);
+          // Question number badge
+          setBG(C.green); doc.circle(ML+4, Y+4, 4, 'F');
+          doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG([255,255,255]);
           doc.text(String(i+1), ML+4, Y+5.5, {align:'center'});
           // Difficulty
           if (q.difficulty) {
-            const dc2 = q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
-            bg(dc2); doc.roundedRect(ML+11,Y,16,6,1,1,'F');
-            doc.setFontSize(5); fg([255,255,255]);
-            doc.text(q.difficulty.toUpperCase(), ML+19,Y+4.2,{align:'center'});
+            const dc = q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
+            setBG(dc); doc.roundedRect(ML+10, Y+0.5, 18, 6, 1, 1, 'F');
+            doc.setFontSize(5.5); setFG([255,255,255]);
+            doc.text(q.difficulty.toUpperCase(), ML+19, Y+5, {align:'center'});
           }
-          const qTxt = String(q.question||'').replace(/[\u0000-\u001F]/g,' ');
-          const ql   = doc.splitTextToSize(qTxt, CW-14);
-          doc.setFontSize(9); doc.setFont('helvetica','bold'); fg(C.head);
-          doc.text(ql.slice(0,3), ML+29,Y+4.5);
-          Y += Math.min(ql.length,3)*4.2 + 5;
+          // Question text
+          doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(C.head);
+          const qLines = doc.splitTextToSize(q.question, CW-12);
+          doc.text(qLines.slice(0,3), ML+30, Y+5);
+          Y += Math.min(qLines.length, 3) * 4.5 + 5;
           // Options
-          (q.options||[]).slice(0,4).forEach((opt,oi) => {
-            ck(9);
-            const ok = opt===q.correct_answer;
-            if (ok) { bg(isDark?[0,38,16]:[210,250,225]); doc.roundedRect(ML+2,Y-1.5,CW-2,8,1,1,'F'); }
-            doc.setFontSize(7.5); doc.setFont('helvetica',ok?'bold':'normal');
-            fg(ok?C.correct:C.text);
-            const optTxt = String(opt).replace(/[\u0000-\u001F]/g,' ').slice(0,80);
-            doc.text(`${LTR[oi]}.  ${optTxt}${ok?' ✓':''}`, ML+5,Y+3.5);
+          (q.options||[]).forEach((opt, oi) => {
+            ck(8);
+            const isCorrect = opt === q.correct_answer;
+            if (isCorrect) {
+              setBG(isDark?[0,40,18]:[215,255,228]);
+              doc.roundedRect(ML+2, Y-2, CW-2, 7.5, 1, 1, 'F');
+            }
+            doc.setFontSize(7.5);
+            doc.setFont('helvetica', isCorrect?'bold':'normal');
+            setFG(isCorrect ? C.correct : C.text);
+            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' ✓':''}`, ML+5, Y+3);
             Y += 8;
           });
+          // Explanation (short)
           if (q.explanation) {
             ck(8);
-            const exTxt = ('Explanation: '+q.explanation).replace(/[\u0000-\u001F]/g,' ').slice(0,180);
-            const xl = doc.splitTextToSize(exTxt, CW-5);
-            doc.setFontSize(6.5); doc.setFont('helvetica','italic'); fg(C.muted);
-            doc.text(xl.slice(0,2), ML+3, Y+2); Y += xl.length>1?12:8;
+            doc.setFontSize(6.8); doc.setFont('helvetica','italic'); setFG(C.muted);
+            const expLines = doc.splitTextToSize('Explanation: '+q.explanation.slice(0,140), CW-6);
+            doc.text(expLines.slice(0,2), ML+3, Y+2);
+            Y += expLines.length > 1 ? 12 : 8;
           }
-          Y += 3;
-          dc(C.border); doc.setLineWidth(0.1); doc.line(ML+8,Y,PW-MR-8,Y); Y += 6;
+          Y += 4;
+          setDC(C.border); doc.setLineWidth(0.12); doc.line(ML+10, Y, PW-MR-10, Y);
+          Y += 6;
         });
       }
 
       // ── MIND MAP ──
       if (data.mindmap?.branches?.length) {
         newPage('Mind Map');
-        secH('MIND MAP', C.blue);
-        const central = String(data.mindmap.central||data.topic||'').slice(0,40);
-        bg(C.gold); doc.roundedRect(ML+CW/2-35,Y,70,10,5,5,'F');
-        doc.setFontSize(9); doc.setFont('helvetica','bold'); fg([8,14,35]);
-        doc.text(central, ML+CW/2,Y+7,{align:'center'});
-        Y += 15;
-        const BPAL = [[0,170,220],[160,60,220],[0,175,100],[212,175,55],[200,100,50],[230,67,147]];
-        data.mindmap.branches.forEach((b,bi) => {
-          ck(22);
-          const bRGB = BPAL[bi%BPAL.length];
-          bg(bRGB); doc.rect(ML,Y,3,8,'F');
-          bg(C.card); doc.roundedRect(ML+4,Y,CW-4,8,1,1,'F');
-          fg(bRGB); doc.setFontSize(8.5); doc.setFont('helvetica','bold');
-          doc.text(String(b.name||'').slice(0,50), ML+9,Y+5.8);
-          Y += 11;
+        secHdr('🗺️  Mind Map', C.blue);
+        // Central node
+        setBG(C.gold); doc.roundedRect(ML+CW/2-40, Y, 80, 10, 5, 5, 'F');
+        doc.setFontSize(9.5); doc.setFont('helvetica','bold'); setFG([8,14,35]);
+        doc.text((data.mindmap.central||data.topic||'').slice(0,30), ML+CW/2, Y+7, {align:'center'});
+        Y += 16;
+        // Branches
+        data.mindmap.branches.forEach(b => {
+          ck(24);
+          const bRGB = b.color ? b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)) : [0,170,220];
+          try{setBG(bRGB);}catch{setBG(C.blue);}
+          doc.rect(ML, Y, 3, 9, 'F');
+          setBG(C.card); doc.roundedRect(ML+4, Y, CW-4, 9, 1.5, 1.5, 'F');
+          try{setFG(bRGB);}catch{setFG(C.blue);}
+          doc.setFontSize(9); doc.setFont('helvetica','bold');
+          doc.text(`▸ ${b.name}`, ML+8, Y+6.2);
+          Y += 12;
           (b.items||[]).slice(0,6).forEach(item => {
-            ck(7);
-            bg(C.hdr); doc.roundedRect(ML+6,Y,CW-6,6,1,1,'F');
-            doc.setFontSize(7); doc.setFont('helvetica','normal'); fg(C.text);
-            doc.text('• '+String(item||'').replace(/[\u0000-\u001F]/g,' ').slice(0,90), ML+10,Y+4.2);
+            ck(6); setBG(C.hdr); doc.roundedRect(ML+8, Y, CW-8, 6, 1, 1, 'F');
+            doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
+            doc.text(`• ${String(item).slice(0,85)}`, ML+12, Y+4.2);
             Y += 7;
           });
-          Y += 3;
+          Y += 4;
         });
       }
 
-      // ── SUMMARY (for summary/all tools) ──
-      if ((this.tool==='summary'||this.tool==='all') && data.ultra_long_notes) {
-        const ps   = data.ultra_long_notes.split('\n\n');
-        const tldr = ps.find(p=>/TL;DR|Summary|Overview/i.test(p))||ps[0]||'';
+      // ── SUMMARY / TLDR ──
+      if (data.ultra_long_notes && (this.tool==='summary'||this.tool==='all')) {
+        const tldr = data.ultra_long_notes.split('\n\n').find(p => p.includes('TL;DR')||p.includes('Summary'))||'';
         if (tldr) {
-          ck(16); secH('SUMMARY / TL;DR', C.gold);
-          bg(isDark?[12,18,50]:[236,240,255]); ck(4); doc.rect(ML,Y,CW,2,'F'); Y+=4;
-          wt(this._stripMd(tldr).replace(/[\u0000-\u001F]/g,' ').slice(0,500), ML, CW, 9, false, C.text, 5.2);
-          Y += 5;
+          newPage('Smart Summary');
+          secHdr('⚡  TL;DR Summary', C.gold);
+          setBG(isDark?[12,18,48]:[238,242,255]);
+          ck(4); doc.rect(ML, Y, CW, 2, 'F'); Y += 4;
+          wt(this._stripMd(tldr).slice(0,600), ML, CW, 9, false, C.text, 5.5);
+          Y += 6;
         }
       }
 
-      // ── STUDY TRICKS ──
+      // ── KEY TRICKS ──
       if (data.key_tricks?.length) {
-        ck(14); secH('STUDY TRICKS', C.gold);
+        ck(18);
+        secHdr('🧠  Study Tricks & Memory Aids', C.gold);
         data.key_tricks.slice(0,4).forEach((t,i) => {
-          ck(12);
-          wt(`${i+1}. ${String(t).replace(/[\u0000-\u001F]/g,' ').slice(0,200)}`, ML, CW, 8, false, C.text);
-          Y += 3;
+          ck(14);
+          wt(`${i+1}. ${String(t).slice(0,220)}`, ML, CW, 8.5, false, C.text);
+          Y += 4;
         });
       }
 
       // ── APPLICATIONS ──
       if (data.real_world_applications?.length) {
-        ck(14); secH('REAL-WORLD APPLICATIONS', C.blue);
-        data.real_world_applications.slice(0,6).forEach(a => {
+        ck(18);
+        secHdr('🌍  Real-World Applications', C.blue);
+        data.real_world_applications.slice(0,6).forEach((a,i) => {
           ck(10);
-          bg(C.hdr); doc.roundedRect(ML,Y,CW,8,1,1,'F');
-          wt(String(a).replace(/[\u0000-\u001F]/g,' ').slice(0,160), ML+3, CW-4, 8, false, C.text, 4.5);
+          setBG(C.hdr); doc.roundedRect(ML, Y, CW, 8.5, 1, 1, 'F');
+          wt(String(a).slice(0,180), ML+3, CW-3, 8, false, C.text);
           Y += 10;
         });
       }
 
       // ── MISCONCEPTIONS ──
       if (data.common_misconceptions?.length) {
-        ck(14); secH('COMMON MISCONCEPTIONS', C.red);
-        data.common_misconceptions.slice(0,4).forEach(m => {
+        ck(18);
+        secHdr('⚠️  Common Misconceptions', C.red);
+        data.common_misconceptions.slice(0,4).forEach((m,i) => {
           ck(10);
-          wt(String(m).replace(/[\u0000-\u001F]/g,' ').slice(0,180), ML, CW, 8, false, C.text);
+          wt(String(m).slice(0,200), ML, CW, 8, false, C.text);
           Y += 4;
         });
       }
 
-      drawFooter();
+      addPageFooter();
 
       // ── Save ──
-      const safe = (data.topic||'Study').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'_').slice(0,35);
-      const dt   = new Date().toISOString().slice(0,10);
-      doc.save(`SavoireAI_${safe}_${dt}_${theme}.pdf`);
-      this._toast('success', 'fa-file-pdf', `PDF ready — ${page} page${page>1?'s':''} · ${theme} theme`);
+      const safeName = (data.topic||'Study_Notes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
+      const dateStr  = new Date().toISOString().slice(0,10);
+      doc.save(`SavoireAI_${safeName}_${dateStr}_${theme}.pdf`);
+      this._toast('success','fa-file-pdf', `✓ PDF ready — ${pageNum} page${pageNum>1?'s':''} · ${theme} theme`);
 
-    } catch (err) {
-      console.error('PDF generation error:', err);
-      this._toast('error', 'fa-times', `PDF failed: ${err.message?.slice(0,60)||'Unknown error'}. Try again.`);
+    } catch(err) {
+      console.error('PDF error:', err);
+      this._toast('error','fa-times', `PDF failed: ${err.message.slice(0,60)}. Please try again.`);
     }
   }
 
@@ -4235,23 +3963,17 @@ Examples:
     on(this.el.settingsBtn,     'click', () => this._openSettingsModal());
     on(this.el.wizardHeaderBtn, 'click', () => this._openWizard());
     on(this.el.megaHeaderBtn,   'click', () => this._openMega());
-    // ── Empty state CTA buttons — FIXED: now properly cached ──
     on(this.el.emptyWizardBtn,  'click', () => this._openWizard());
-    on(this.el.emptyMegaBtn,    'click', () => this._openMega());
-
-    // ── Feature tool chips — each opens Wizard with that tool PRE-SELECTED ──
-    // These are <button> elements with data-tool attribute
+    // Feature chips on empty state — each opens wizard with that tool pre-selected
     this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
-      chip.addEventListener('click', () => {
+      chip.addEventListener('click', (e) => {
+        if (e.target.closest('[onclick]') && e.target.dataset.tool === 'all') return; // mega handled by onclick
         const tool = chip.dataset.tool;
-        if (!tool) return;
-        if (tool === 'all') {
-          this._openMega(); // All 5 → Mega Bundle modal
-        } else {
-          this._openWizard(tool); // Specific tool → Wizard Step 1 pre-selected
-        }
+        if (tool && tool !== 'all') this._openWizard(tool);
       });
+      chip.style.cursor = 'pointer';
     });
+    on(this.el.emptyMegaBtn,    'click', () => this._openMega());
 
     // ── Home link / logo ──
     if (this.el.homeLink) this.el.homeLink.addEventListener('click', e => { e.preventDefault(); this._clearOutput(); this._showToolbar(false); });
@@ -4472,589 +4194,3 @@ window.addEventListener('DOMContentLoaded', () => {
 // Founder: Sooban Talha | "Think Less. Know More."
 // Free forever for every student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-
-/* ══════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.0 — EXTENDED UTILITIES & PROFESSIONAL HELPERS
-   Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
-   ══════════════════════════════════════════════════════════════════════════════════════════
-
-   This section contains extended utility functions, helper methods, and advanced
-   configuration used throughout the application for professional-grade functionality.
-   All methods are fully integrated and tested.
-   ══════════════════════════════════════════════════════════════════════════════════════════ */
-
-/**
- * ── EXTENDED DATE/TIME UTILITIES ─────────────────────────────────────────────────────────
- * Provides comprehensive date/time formatting for the IST timezone
- * Used across history display, stats tracking, and PDF generation
- */
-
-window._dateUtils = {
-  /**
-   * Format a timestamp as a human-readable relative time string
-   * @param {number} ts - Unix timestamp in milliseconds
-   * @returns {string} e.g. "just now", "2h ago", "yesterday", "3 Jan 2025"
-   */
-  relativeTime(ts) {
-    if (!ts) return '';
-    const diff  = Date.now() - ts;
-    const secs  = Math.floor(diff / 1000);
-    const mins  = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days  = Math.floor(diff / 86400000);
-    const weeks = Math.floor(diff / 604800000);
-    if (secs < 30)   return 'just now';
-    if (secs < 90)   return 'a minute ago';
-    if (mins < 60)   return `${mins} min${mins === 1 ? '' : 's'} ago`;
-    if (hours === 1) return '1 hour ago';
-    if (hours < 24)  return `${hours} hours ago`;
-    if (days === 1)  return 'yesterday';
-    if (days < 7)    return `${days} days ago`;
-    if (weeks === 1) return 'last week';
-    if (weeks < 4)   return `${weeks} weeks ago`;
-    return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  },
-
-  /**
-   * Format a timestamp as date group label for history grouping
-   * @param {number} ts - Unix timestamp
-   * @returns {string} 'Today' | 'Yesterday' | 'This Week' | 'This Month' | 'Older'
-   */
-  dateGroup(ts) {
-    if (!ts) return 'Unknown';
-    const days = Math.floor((Date.now() - ts) / 86400000);
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
-    if (days < 7)   return 'This Week';
-    if (days < 30)  return 'This Month';
-    return 'Older';
-  },
-
-  /**
-   * Format milliseconds as a human-readable duration
-   * @param {number} ms - Duration in milliseconds
-   * @returns {string} e.g. "1.2s", "35.8s", "2m 14s"
-   */
-  formatDuration(ms) {
-    if (!ms || ms < 0) return '0s';
-    if (ms < 1000)    return `${ms}ms`;
-    const secs  = ms / 1000;
-    if (secs < 60)   return `${secs.toFixed(1)}s`;
-    const mins  = Math.floor(secs / 60);
-    const rem   = Math.floor(secs % 60);
-    return `${mins}m ${rem}s`;
-  },
-
-  /**
-   * Get the IST date string for today
-   * @returns {string} YYYY-MM-DD
-   */
-  todayIST() {
-    const now  = new Date();
-    const ist  = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 5.5 * 3600000);
-    const pad  = n => String(n).padStart(2, '0');
-    return `${ist.getFullYear()}-${pad(ist.getMonth()+1)}-${pad(ist.getDate())}`;
-  },
-
-  /**
-   * Format a date as a display string
-   * @param {number|Date} date - Date to format
-   * @returns {string} Formatted date string
-   */
-  formatDate(date) {
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-  },
-
-  /**
-   * Format a date as a compact display string
-   * @param {number|Date} date - Date to format
-   * @returns {string} e.g. "3 Jan 2025"
-   */
-  formatDateCompact(date) {
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  },
-
-  /**
-   * Format a date+time string
-   * @param {number|Date} date - Date to format
-   * @returns {string} e.g. "3 Jan 2025, 14:32"
-   */
-  formatDateTime(date) {
-    const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  },
-};
-
-/**
- * ── EXTENDED KEYBOARD SHORTCUT SYSTEM ────────────────────────────────────────────────────
- * Comprehensive keyboard shortcut registry and display formatter
- * Used in the empty state shortcuts display and settings modal
- */
-
-window._shortcuts = {
-  /**
-   * All registered keyboard shortcuts with their descriptions
-   * Used to render the shortcuts reference panel
-   */
-  registry: [
-    { keys: ['Ctrl', 'K'],   action: 'Open Study Wizard',   category: 'generation' },
-    { keys: ['Ctrl', 'M'],   action: 'Open Mega Bundle',    category: 'generation' },
-    { keys: ['Ctrl', 'H'],   action: 'View Study History',  category: 'navigation' },
-    { keys: ['Ctrl', 'B'],   action: 'Toggle Sidebar',      category: 'navigation' },
-    { keys: ['Ctrl', 'S'],   action: 'Save Current Note',   category: 'output' },
-    { keys: ['Ctrl', 'P'],   action: 'Download PDF',        category: 'output' },
-    { keys: ['Escape'],      action: 'Close Any Modal',     category: 'navigation' },
-    { keys: ['Space'],       action: 'Flip Flashcard',      category: 'flashcards' },
-    { keys: ['←', '→'],     action: 'Navigate Flashcards', category: 'flashcards' },
-    { keys: ['S'],           action: 'Shuffle Flashcards',  category: 'flashcards' },
-    { keys: ['←', '→'],     action: 'Demo Navigation',     category: 'demo' },
-  ],
-
-  /**
-   * Format keyboard shortcut keys as HTML
-   * @param {string[]} keys - Array of key names
-   * @returns {string} HTML string with styled <kbd> elements
-   */
-  formatKeys(keys) {
-    return keys.map(k => `<kbd>${k}</kbd>`).join('+');
-  },
-
-  /**
-   * Get shortcuts by category
-   * @param {string} category - Category name
-   * @returns {object[]} Array of shortcuts in that category
-   */
-  byCategory(category) {
-    return this.registry.filter(s => s.category === category);
-  },
-};
-
-/**
- * ── EXTENDED CONTENT STATISTICS ──────────────────────────────────────────────────────────
- * Utilities for analysing and displaying content statistics
- */
-
-window._contentStats = {
-  /**
-   * Count words in a string accurately
-   * @param {string} text - Input text
-   * @returns {number} Word count
-   */
-  words(text) {
-    if (!text) return 0;
-    return text.trim().split(/\s+/).filter(Boolean).length;
-  },
-
-  /**
-   * Count characters in a string
-   * @param {string} text - Input text
-   * @returns {number} Character count (excluding whitespace)
-   */
-  chars(text) {
-    if (!text) return 0;
-    return text.replace(/\s/g, '').length;
-  },
-
-  /**
-   * Estimate reading time in minutes
-   * @param {string} text - Input text
-   * @param {number} wpm - Words per minute (default 200)
-   * @returns {number} Estimated minutes
-   */
-  readingTime(text, wpm = 200) {
-    const words = this.words(text);
-    return Math.max(1, Math.ceil(words / wpm));
-  },
-
-  /**
-   * Calculate comprehension difficulty score
-   * @param {string} text - Input text
-   * @returns {string} 'easy' | 'medium' | 'hard' | 'expert'
-   */
-  difficulty(text) {
-    if (!text) return 'easy';
-    const words    = this.words(text);
-    const avgLen   = text.replace(/\s+/g, '').length / Math.max(words, 1);
-    const longWords = text.split(/\s+/).filter(w => w.length > 8).length;
-    const ratio    = longWords / Math.max(words, 1);
-    if (ratio > 0.3 || avgLen > 7)  return 'expert';
-    if (ratio > 0.2 || avgLen > 6)  return 'hard';
-    if (ratio > 0.1 || avgLen > 5)  return 'medium';
-    return 'easy';
-  },
-
-  /**
-   * Get content quality score (0-100)
-   * @param {object} data - Content data object
-   * @returns {number} Quality score
-   */
-  qualityScore(data) {
-    if (!data) return 0;
-    let score = 0;
-    const notes = data.ultra_long_notes || '';
-    if (this.words(notes) > 800)  score += 25;
-    else if (this.words(notes) > 400) score += 15;
-    else if (notes.length > 0)    score += 8;
-    if (data.key_concepts?.length >= 5)    score += 15;
-    else if (data.key_concepts?.length > 0) score += 8;
-    if (data.flashcards?.length >= 12)     score += 15;
-    else if (data.flashcards?.length > 0)  score += 8;
-    if (data.quiz_questions?.length >= 8)  score += 15;
-    else if (data.quiz_questions?.length > 0) score += 8;
-    if (data.mindmap?.branches?.length >= 5) score += 15;
-    else if (data.mindmap)                 score += 8;
-    if (data.practice_questions?.length >= 3) score += 10;
-    if (data.real_world_applications?.length >= 4) score += 5;
-    return Math.min(100, score);
-  },
-};
-
-/**
- * ── EXTENDED TOAST NOTIFICATION SYSTEM ───────────────────────────────────────────────────
- * Advanced notification helper with more control over appearance and timing
- */
-
-window._notify = {
-  /**
-   * Show a success notification
-   * @param {string} message - Message to display
-   * @param {number} [duration=4000] - Duration in ms
-   */
-  success(message, duration = 4000) {
-    if (window._app) window._app._toast('success', 'fa-check-circle', message, duration);
-  },
-
-  /**
-   * Show an error notification
-   * @param {string} message - Message to display
-   * @param {number} [duration=5000] - Duration in ms
-   */
-  error(message, duration = 5000) {
-    if (window._app) window._app._toast('error', 'fa-exclamation-circle', message, duration);
-  },
-
-  /**
-   * Show an info notification
-   * @param {string} message - Message to display
-   * @param {number} [duration=3500] - Duration in ms
-   */
-  info(message, duration = 3500) {
-    if (window._app) window._app._toast('info', 'fa-info-circle', message, duration);
-  },
-
-  /**
-   * Show a warning notification
-   * @param {string} message - Message to display
-   * @param {number} [duration=4500] - Duration in ms
-   */
-  warning(message, duration = 4500) {
-    if (window._app) window._app._toast('info', 'fa-exclamation-triangle', message, duration);
-  },
-
-  /**
-   * Show a loading notification (no auto-dismiss)
-   * @param {string} message - Message to display
-   * @returns {Function} Dismiss function — call to remove the notification
-   */
-  loading(message) {
-    if (window._app) {
-      window._app._toast('info', 'fa-spinner fa-spin', message, 60000);
-    }
-    return () => {};
-  },
-
-  /**
-   * Show a streak milestone notification
-   * @param {number} count - Current streak count
-   */
-  streakMilestone(count) {
-    const milestones = {
-      7:   { icon: 'fa-fire',  msg: `🔥 7-day streak! You're on fire!`, dur: 5500 },
-      14:  { icon: 'fa-bolt',  msg: `⚡ 14-day streak! Two weeks strong!`, dur: 5500 },
-      30:  { icon: 'fa-crown', msg: `👑 30-day streak! One month champion!`, dur: 6000 },
-      50:  { icon: 'fa-star',  msg: `⭐ 50-day streak! Phenomenal dedication!`, dur: 6000 },
-      100: { icon: 'fa-gem',   msg: `💎 100-day streak! You are LEGENDARY!`, dur: 7000 },
-    };
-    const m = milestones[count];
-    if (m && window._app) {
-      window._app._toast('success', m.icon, m.msg, m.dur);
-    }
-  },
-};
-
-/**
- * ── EXTENDED MARKDOWN UTILITIES ──────────────────────────────────────────────────────────
- * Advanced markdown processing for export and display purposes
- */
-
-window._markdown = {
-  /**
-   * Extract all headings from markdown text
-   * @param {string} text - Markdown text
-   * @returns {Array<{level: number, text: string}>} Array of headings
-   */
-  extractHeadings(text) {
-    if (!text) return [];
-    const matches = text.matchAll(/^(#{1,6})\s+(.+)$/gm);
-    return Array.from(matches).map(m => ({
-      level: m[1].length,
-      text:  m[2].replace(/\*+/g, '').trim(),
-    }));
-  },
-
-  /**
-   * Extract all bullet points from markdown text
-   * @param {string} text - Markdown text
-   * @returns {string[]} Array of bullet point texts
-   */
-  extractBullets(text) {
-    if (!text) return [];
-    const matches = text.matchAll(/^[-*]\s+(.+)$/gm);
-    return Array.from(matches).map(m => m[1].trim());
-  },
-
-  /**
-   * Extract the TL;DR / summary paragraph from notes
-   * @param {string} notes - Full markdown notes
-   * @returns {string} The TL;DR section text, or first paragraph
-   */
-  extractTLDR(notes) {
-    if (!notes) return '';
-    // Look for TL;DR section
-    const tldrMatch = notes.match(/##.*TL;DR.*\n([\s\S]*?)(?=\n##|$)/i);
-    if (tldrMatch) return tldrMatch[1].trim();
-    // Look for Summary section
-    const summaryMatch = notes.match(/##.*Summary.*\n([\s\S]*?)(?=\n##|$)/i);
-    if (summaryMatch) return summaryMatch[1].trim();
-    // Fall back to first substantial paragraph
-    const paragraphs = notes.split('\n\n').filter(p => p.trim() && !p.startsWith('#'));
-    return paragraphs[0]?.trim() || '';
-  },
-
-  /**
-   * Convert markdown to plain text for clipboard/PDF use
-   * @param {string} md - Markdown text
-   * @returns {string} Plain text
-   */
-  toPlainText(md) {
-    if (!md) return '';
-    return md
-      .replace(/#{1,6}\s/g, '')
-      .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
-      .replace(/\*\*(.+?)\*\*/g, '$1')
-      .replace(/\*(.+?)\*/g, '$1')
-      .replace(/`{3}[\s\S]*?`{3}/g, '')
-      .replace(/`(.+?)`/g, '$1')
-      .replace(/\[(.+?)\]\(.+?\)/g, '$1')
-      .replace(/^[-*]\s/gm, '• ')
-      .replace(/^>\s/gm, '  ')
-      .replace(/^---+$/gm, '────────────────────')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-  },
-
-  /**
-   * Estimate if text is rich markdown (has formatting)
-   * @param {string} text - Text to check
-   * @returns {boolean} True if text contains markdown formatting
-   */
-  isRichMarkdown(text) {
-    if (!text) return false;
-    return /^#{1,6}\s|^\*\*|^[-*]\s/m.test(text);
-  },
-};
-
-/**
- * ── EXTENDED LOCAL STORAGE UTILITIES ─────────────────────────────────────────────────────
- * Safe localStorage operations with error handling and size checking
- */
-
-window._storage = {
-  /**
-   * Get total size of all sv_ localStorage items
-   * @returns {number} Size in bytes
-   */
-  getTotalSize() {
-    let total = 0;
-    for (const key of Object.keys(localStorage)) {
-      if (key.startsWith('sv_')) {
-        total += (localStorage.getItem(key) || '').length;
-      }
-    }
-    return total;
-  },
-
-  /**
-   * Get size of a specific localStorage item
-   * @param {string} key - Storage key
-   * @returns {number} Size in bytes
-   */
-  getItemSize(key) {
-    return (localStorage.getItem(key) || '').length;
-  },
-
-  /**
-   * Format bytes as human-readable size
-   * @param {number} bytes - Size in bytes
-   * @returns {string} e.g. "1.2 KB", "456 B"
-   */
-  formatSize(bytes) {
-    if (bytes < 1024)           return `${bytes} B`;
-    if (bytes < 1024 * 1024)    return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  },
-
-  /**
-   * Check if localStorage is approaching capacity
-   * @returns {boolean} True if > 80% used
-   */
-  isNearCapacity() {
-    const estimate = this.getTotalSize() * 2; // UTF-16 encoding
-    const limit    = 5 * 1024 * 1024; // 5MB typical limit
-    return estimate > limit * 0.8;
-  },
-
-  /**
-   * Safe get with JSON parse
-   * @param {string} key - Storage key
-   * @param {*} defaultVal - Default value if not found
-   * @returns {*} Parsed value or default
-   */
-  get(key, defaultVal = null) {
-    try {
-      const v = localStorage.getItem(key);
-      return v !== null ? JSON.parse(v) : defaultVal;
-    } catch { return defaultVal; }
-  },
-
-  /**
-   * Safe set with JSON stringify
-   * @param {string} key - Storage key
-   * @param {*} value - Value to store
-   * @returns {boolean} Success status
-   */
-  set(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (e) {
-      console.warn(`Storage failed for key "${key}":`, e.message);
-      return false;
-    }
-  },
-
-  /**
-   * Remove a storage item
-   * @param {string} key - Storage key
-   */
-  remove(key) {
-    try { localStorage.removeItem(key); } catch {}
-  },
-
-  /**
-   * Get a summary of all sv_ storage usage
-   * @returns {object} Usage summary
-   */
-  getUsageSummary() {
-    const items = {};
-    for (const key of Object.keys(localStorage)) {
-      if (key.startsWith('sv_')) {
-        items[key] = this.formatSize(this.getItemSize(key));
-      }
-    }
-    return {
-      items,
-      total:   this.formatSize(this.getTotalSize()),
-      bytes:   this.getTotalSize(),
-      isHeavy: this.isNearCapacity(),
-    };
-  },
-};
-
-/**
- * ── EXTENDED ANALYTICS & TRACKING ────────────────────────────────────────────────────────
- * Client-side analytics helpers for tracking study patterns
- */
-
-window._analytics = {
-  /**
-   * Get study insights from history data
-   * @param {object[]} history - History array
-   * @returns {object} Insights object
-   */
-  getInsights(history) {
-    if (!history || !history.length) {
-      return { mostUsedTool: 'notes', avgDuration: 0, totalGenerations: 0, mostStudiedTopics: [] };
-    }
-    // Count tool usage
-    const toolCounts = {};
-    history.forEach(h => { toolCounts[h.tool] = (toolCounts[h.tool] || 0) + 1; });
-    const mostUsedTool = Object.entries(toolCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || 'notes';
-
-    // Average duration
-    const durItems   = history.filter(h => h.dur && h.dur > 0);
-    const avgDuration = durItems.length ? Math.round(durItems.reduce((s,h)=>s+h.dur,0) / durItems.length) : 0;
-
-    // Topic frequency (simple word extraction)
-    const topicWords = {};
-    history.forEach(h => {
-      (h.topic || '').split(/\s+/).filter(w => w.length > 4).forEach(w => {
-        const lw = w.toLowerCase();
-        topicWords[lw] = (topicWords[lw] || 0) + 1;
-      });
-    });
-    const mostStudiedTopics = Object.entries(topicWords)
-      .sort((a,b) => b[1]-a[1])
-      .slice(0,5)
-      .map(([word, count]) => ({ word, count }));
-
-    return {
-      mostUsedTool,
-      avgDuration,
-      totalGenerations: history.length,
-      mostStudiedTopics,
-      toolBreakdown: toolCounts,
-    };
-  },
-
-  /**
-   * Calculate learning consistency score (0-100)
-   * @param {number} streak - Current streak
-   * @param {number} sessions - Total sessions
-   * @param {number} savedNotes - Number of saved notes
-   * @returns {number} Consistency score
-   */
-  consistencyScore(streak, sessions, savedNotes) {
-    let score = 0;
-    if (streak >= 1)   score += 20;
-    if (streak >= 7)   score += 20;
-    if (streak >= 30)  score += 20;
-    if (sessions >= 5)  score += 15;
-    if (sessions >= 20) score += 15;
-    if (savedNotes >= 5)  score += 10;
-    return Math.min(100, score);
-  },
-
-  /**
-   * Get motivational message based on stats
-   * @param {number} streak - Current streak
-   * @param {number} sessions - Total sessions
-   * @returns {string} Motivational message
-   */
-  getMotivation(streak, sessions) {
-    if (streak === 0) return 'Start your first study session today! 🚀';
-    if (streak === 1) return 'Great start! Come back tomorrow to build your streak! 🌱';
-    if (streak < 7)   return `${streak} days and counting — keep going! 💪`;
-    if (streak < 30)  return `${streak}-day streak — you're building a great habit! 🔥`;
-    if (streak < 100) return `${streak}-day streak — you are absolutely crushing it! 🏆`;
-    return `${streak}-day streak — you are a study legend! 💎`;
-  },
-};
-
-// ═════════════════════════════════════════════════════════════════════════════════════════
-// END OF EXTENDED UTILITIES — Savoiré AI v2.0
-// Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
-// "Think Less. Know More." — Free forever for every student on Earth.
-// ═════════════════════════════════════════════════════════════════════════════════════════

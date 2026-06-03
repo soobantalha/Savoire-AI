@@ -8,11 +8,9 @@
   <meta name="theme-color" content="#0a1128">
   <title>Savoiré AI v2.0 — Ultimate AI Study Assistant</title>
 
-  <!-- Icons & Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -24,25 +22,27 @@
     html,body{height:100%;overflow:hidden}
     body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(135deg,#0a1128 0%,#050814 50%,#000000 100%);color:#c0c0c0;display:flex;flex-direction:column}
     .dash-body{flex:1;display:flex;overflow:hidden;position:relative}
-    .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite;z-index:9999}
+    .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border:3px solid rgba(212,175,55,0.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite;z-index:9999}
     @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
     .loaded .loading-spinner{display:none}
     #particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
     .toast-container{position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 18px;background:rgba(10,17,40,.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,.22);border-radius:12px;font-size:.82rem;color:#fff;animation:toastIn .3s ease;cursor:pointer;max-width:340px}
-    .toast.success{border-left:4px solid #00ff88}.toast.error{border-left:4px solid #ff4444}.toast.info{border-left:4px solid #00d4ff}
-    @keyframes toastIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
-    .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);z-index:48;cursor:pointer}
+    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 18px;background:rgba(15,23,42,0.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;font-size:.82rem;color:#fff;animation:slideInToast .3s ease;cursor:pointer;max-width:340px}
+    .toast.success{border-left:4px solid #00ff88}
+    .toast.error{border-left:4px solid #ff4444}
+    .toast.info{border-left:4px solid #00d4ff}
+    @keyframes slideInToast{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+    .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:48;cursor:pointer}
     .sb-backdrop.visible{display:block;animation:fadeIn .25s ease}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes scaleIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
   </style>
 </head>
 <body>
   <noscript>
     <div style="position:fixed;inset:0;background:#0a1128;display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;text-align:center;padding:20px">
-      <div><h1 style="color:#d4af37">⚠️ JavaScript Required</h1><p style="margin-top:12px">Savoiré AI requires JavaScript. Please enable it in your browser.</p></div>
+      <div><h1>⚠️ JavaScript Required</h1><p>Savoiré AI requires JavaScript to function. Please enable it in your browser.</p></div>
     </div>
   </noscript>
 
@@ -54,7 +54,7 @@
   <!-- ═══════════ MAIN LAYOUT ═══════════ -->
   <div class="dash-body">
 
-    <!-- ═══════════ SIDEBAR ═══════════ -->
+    <!-- ═══════════ LEFT PANEL / SIDEBAR ═══════════ -->
     <aside class="left-panel" id="leftPanel">
 
       <div class="lp-hdr">
@@ -107,17 +107,17 @@
 
       <!-- Navigation -->
       <nav class="sidebar-nav" id="sidebarNav">
-        <!-- PRIMARY: Wizard CTA -->
+        <!-- MAIN CTA -->
         <div class="nav-item nav-item-wizard" data-nav="wizard" id="navWizard">
           <i class="fas fa-magic nav-icon"></i>
           <span class="nav-text">✨ Create Study Material</span>
           <span class="nav-badge new-badge">Wizard</span>
         </div>
-        <!-- MEGA: All 5 tools -->
+        <!-- ALL TOOLS MEGA -->
         <div class="nav-item nav-item-mega" data-nav="all" id="navAll">
-          <i class="fas fa-bolt nav-icon"></i>
-          <span class="nav-text">⚡ Mega Bundle — All 5</span>
-          <span class="nav-badge mega-badge">ALL</span>
+          <i class="fas fa-layer-group nav-icon"></i>
+          <span class="nav-text">⚡ Mega Study Bundle</span>
+          <span class="nav-badge mega-badge">ALL 5</span>
         </div>
         <div class="nav-divider"></div>
         <div class="nav-item" data-nav="history" id="navHistory">
@@ -140,10 +140,10 @@
 
       <!-- Demo Button -->
       <button class="demo-replay-btn" id="demoReplayBtn">
-        <i class="fas fa-play-circle"></i> Watch Feature Tour
+        <i class="fas fa-play-circle"></i> Watch Demo
       </button>
 
-      <!-- Recent History Strip -->
+      <!-- Recent History -->
       <div class="lp-history" id="lpHistory">
         <div class="lp-hist-header">
           <span class="lp-hist-title">Recent Study</span>
@@ -165,20 +165,27 @@
         </div>
       </div>
 
-      <!-- Avatar Picker (sidebar) -->
-      <div class="sidebar-avatar-picker" id="sidebarAvatarPicker"></div>
-
-      <!-- About — Collapsible -->
+      <!-- About Section -->
       <div class="sidebar-about">
         <button class="about-toggle-btn" id="aboutToggleBtn">
           <i class="fas fa-info-circle"></i> About Savoiré AI
           <i class="fas fa-chevron-down about-chevron" id="aboutChevron"></i>
         </button>
         <div class="about-content" id="aboutContent">
-          <div class="about-text"><strong>Savoiré AI v2.0</strong> — World's most advanced AI study assistant. Notes, Flashcards, Quiz, Summary &amp; Mind Map.</div>
-          <div class="about-text"><i class="fas fa-code"></i> Built by <strong>Sooban Talha Technologies</strong><br><i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank">soobantalhatech.xyz</a></div>
-          <div class="about-text" style="color:#d4af37;font-style:italic;font-size:.7rem">"Think Less. Know More." — Sooban Talha</div>
-          <div class="about-text"><i class="fas fa-heart" style="color:#ff4444"></i> Free forever for every student on Earth.</div>
+          <div class="about-text">
+            <strong>Savoiré AI v2.0</strong> — World's most advanced AI study assistant.
+            Generate notes, flashcards, quizzes, summaries &amp; mind maps.
+          </div>
+          <div class="about-text">
+            <i class="fas fa-code"></i> Built by <strong>Sooban Talha Technologies</strong><br>
+            <i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank">soobantalhatech.xyz</a>
+          </div>
+          <div class="about-text" style="color:#d4af37;font-style:italic;font-size:0.72rem;">
+            "Think Less. Know More." — Sooban Talha
+          </div>
+          <div class="about-text">
+            <i class="fas fa-heart" style="color:#ff4444"></i> Free forever for every student on Earth.
+          </div>
         </div>
       </div>
 
@@ -187,10 +194,10 @@
     <!-- ═══════════ RIGHT PANEL ═══════════ -->
     <main class="right-panel" id="rightPanel">
 
-      <!-- ── HEADER ── -->
+      <!-- HEADER -->
       <header class="dash-hdr" id="dashHdr">
         <div class="dh-left">
-          <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar" aria-expanded="false">
+          <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar">
             <i class="fas fa-bars"></i>
           </button>
           <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home">
@@ -222,19 +229,21 @@
         <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think Less. Know More.</div>
 
         <div class="dh-actions">
-          <button class="dh-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle theme (Dark/Light/Golden)">
+          <button class="dh-btn" id="themeBtn" aria-label="Toggle theme">
             <i class="fas fa-moon" id="themeIcon"></i>
           </button>
-          <button class="dh-btn" id="settingsBtn" aria-label="Settings" title="Settings">
+          <button class="dh-btn" id="settingsBtn" aria-label="Settings">
             <i class="fas fa-cog"></i>
           </button>
-          <button class="dh-btn dh-wizard-btn" id="wizardHeaderBtn" aria-label="Open Study Wizard" title="✨ Open Study Wizard">
+          <!-- Wizard Button in header -->
+          <button class="dh-btn dh-wizard-btn" id="wizardHeaderBtn" aria-label="Open Wizard" title="Create Study Material">
             <i class="fas fa-magic"></i>
           </button>
-          <button class="dh-btn dh-mega-btn" id="megaHeaderBtn" aria-label="Mega Bundle — All 5 Tools" title="⚡ Mega Bundle — All 5 Tools at Once">
-            <i class="fas fa-bolt"></i>
+          <!-- Mega Bundle Button in header -->
+          <button class="dh-btn dh-mega-btn" id="megaHeaderBtn" aria-label="Mega Study Bundle" title="⚡ Mega Study Bundle — All 5 Tools">
+            <i class="fas fa-layer-group"></i>
           </button>
-          <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu" title="Your profile &amp; settings">
+          <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu">
             <span id="avInitials">Ś</span>
           </div>
         </div>
@@ -257,17 +266,17 @@
         <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i> Clear All Data</button>
       </div>
 
-      <!-- Output Toolbar — shown ONLY after output ready -->
+      <!-- Output Toolbar (hidden until output ready) -->
       <div class="out-toolbar" id="outToolbar" style="display:none">
-        <button class="otb-btn" id="copyBtn" title="Copy all content"><i class="fas fa-copy"></i> <span>Copy</span></button>
-        <button class="otb-btn otb-pdf" id="pdfBtn" title="Download PDF" data-theme="🌙"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
-        <button class="otb-btn" id="saveBtn" title="Save to library"><i class="fas fa-star"></i> <span>Save</span></button>
-        <button class="otb-btn" id="shareBtn" title="Share"><i class="fas fa-share-alt"></i> <span>Share</span></button>
-        <button class="otb-btn otb-danger" id="clearBtn" title="Clear output"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
+        <button class="otb-btn" id="copyBtn"><i class="fas fa-copy"></i> <span>Copy</span></button>
+        <button class="otb-btn otb-pdf" id="pdfBtn" data-theme="dark"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
+        <button class="otb-btn" id="saveBtn"><i class="fas fa-star"></i> <span>Save</span></button>
+        <button class="otb-btn" id="shareBtn"><i class="fas fa-share-alt"></i> <span>Share</span></button>
+        <button class="otb-btn otb-danger" id="clearBtn"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
         <div class="otb-sep"></div>
-        <button class="otb-btn otb-new" id="newWizardBtn" title="Generate new material"><i class="fas fa-magic"></i> <span>New</span></button>
-        <button class="otb-btn" id="focusModeBtn" title="Toggle focus mode"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
-        <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> Wizard · <kbd>Ctrl</kbd>+<kbd>H</kbd> History · <kbd>Esc</kbd> Close</div>
+        <button class="otb-btn otb-new" id="newWizardBtn"><i class="fas fa-magic"></i> <span>New</span></button>
+        <button class="otb-btn" id="focusModeBtn"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
+        <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
       </div>
 
       <!-- Output Area -->
@@ -291,50 +300,32 @@
           </div>
         </div>
 
-        <!-- Empty State — FIXED: All buttons wired, chips have data-tool -->
+        <!-- Empty state -->
         <div id="emptyState" class="empty-state">
           <div class="es-mark">✨</div>
           <div class="es-title">Ready to Study Smarter?</div>
-          <div class="es-sub">Choose a tool below, or open the Wizard for full control — all powered by 14+ AI models</div>
-
-          <!-- PRIMARY CTAs — BOTH FIXED with correct IDs -->
+          <div class="es-sub">Use the Wizard to generate Notes, Flashcards, Quiz, Summary, or Mind Map — all powered by AI in real-time</div>
           <div class="es-cta-row">
             <button class="empty-wizard-btn" id="emptyWizardBtn">
               <i class="fas fa-magic"></i> Open Study Wizard
             </button>
             <button class="empty-mega-btn" id="emptyMegaBtn">
-              <i class="fas fa-bolt"></i> Mega Bundle — All 5
+              <i class="fas fa-layer-group"></i> ⚡ Mega Bundle — All 5
             </button>
           </div>
-
-          <!-- TOOL CHIPS — each opens Wizard with tool pre-selected -->
-          <div class="es-tools-label">Or pick a specific tool — click to open:</div>
           <div class="es-features">
-            <button class="es-feat es-feat-chip" data-tool="notes" title="Open Wizard with Notes selected">
-              <i class="fas fa-book-open"></i> Notes
-            </button>
-            <button class="es-feat es-feat-chip" data-tool="flashcards" title="Open Wizard with Flashcards selected">
-              <i class="fas fa-layer-group"></i> Flashcards
-            </button>
-            <button class="es-feat es-feat-chip" data-tool="quiz" title="Open Wizard with Quiz selected">
-              <i class="fas fa-question-circle"></i> Quiz
-            </button>
-            <button class="es-feat es-feat-chip" data-tool="summary" title="Open Wizard with Summary selected">
-              <i class="fas fa-align-left"></i> Summary
-            </button>
-            <button class="es-feat es-feat-chip" data-tool="mindmap" title="Open Wizard with Mind Map selected">
-              <i class="fas fa-project-diagram"></i> Mind Map
-            </button>
-            <button class="es-feat es-feat-chip es-feat-mega" data-tool="all" title="Open Mega Bundle — All 5 Tools">
-              <i class="fas fa-bolt"></i> All 5 at Once!
-            </button>
+            <span class="es-feat"><i class="fas fa-book-open"></i> Notes</span>
+            <span class="es-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+            <span class="es-feat"><i class="fas fa-question-circle"></i> Quiz</span>
+            <span class="es-feat"><i class="fas fa-align-left"></i> Summary</span>
+            <span class="es-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+            <span class="es-feat es-feat-mega"><i class="fas fa-bolt"></i> All 5 at Once!</span>
           </div>
-
           <div class="es-shortcuts">
             <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
-            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>M</kbd> Mega Bundle</div>
             <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</div>
-            <div class="shortcut"><kbd>Esc</kbd> Close modals</div>
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save note</div>
+            <div class="shortcut"><kbd>Esc</kbd> Close</div>
           </div>
         </div>
 
@@ -343,17 +334,19 @@
 
       </div>
 
-      <button class="back-to-top" id="backToTopBtn" title="Back to top"><i class="fas fa-arrow-up"></i></button>
+      <button class="back-to-top" id="backToTopBtn"><i class="fas fa-arrow-up"></i></button>
 
     </main>
   </div>
 
-  <!-- ═══════════ STREAM OVERLAY — Live output for ALL tools ═══════════ -->
+  <!-- ═══════════ STREAM OVERLAY ═══════════ -->
   <div class="stream-overlay" id="streamFullpage" style="display:none">
     <div class="sfp-header">
       <div class="sfp-left">
         <div class="sfp-indicator">
-          <span class="sfp-dot"></span><span class="sfp-dot"></span><span class="sfp-dot"></span>
+          <span class="sfp-dot"></span>
+          <span class="sfp-dot"></span>
+          <span class="sfp-dot"></span>
         </div>
         <div>
           <div class="sfp-label" id="sfpLabel">Generating…</div>
@@ -366,11 +359,11 @@
           <span id="sfpToolName">Notes</span>
         </div>
         <div class="sfp-stages-row">
-          <span class="ssc-stage" id="ss0" title="Analysing">🎯</span>
-          <span class="ssc-stage" id="ss1" title="Writing">📝</span>
-          <span class="ssc-stage" id="ss2" title="Building">🔍</span>
-          <span class="ssc-stage" id="ss3" title="Generating cards">✨</span>
-          <span class="ssc-stage" id="ss4" title="Done">✅</span>
+          <span class="ssc-stage" id="ss0">🎯</span>
+          <span class="ssc-stage" id="ss1">📝</span>
+          <span class="ssc-stage" id="ss2">🔍</span>
+          <span class="ssc-stage" id="ss3">✨</span>
+          <span class="ssc-stage" id="ss4">✅</span>
         </div>
       </div>
     </div>
@@ -388,7 +381,7 @@
   <div class="modal-overlay" id="wizardModal">
     <div class="modal modal-lg">
       <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-magic"></i> Study Wizard — 6-Step Generator</div>
+        <div class="modal-title"><i class="fas fa-magic"></i> Study Wizard — Step-by-Step Generator</div>
         <button class="modal-close" data-close="wizardModal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body" id="wizardContent"></div>
@@ -399,24 +392,24 @@
   <div class="modal-overlay" id="megaModal">
     <div class="modal modal-md">
       <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-bolt"></i> ⚡ Mega Study Bundle — All 5 Tools</div>
+        <div class="modal-title"><i class="fas fa-layer-group"></i> ⚡ Mega Study Bundle — All 5 Tools</div>
         <button class="modal-close" data-close="megaModal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
         <div class="mega-intro">
           <div class="mega-badge-big">⚡ MEGA BUNDLE</div>
-          <p class="mega-desc">Generate <strong>all 5 study tools</strong> simultaneously — Notes, Flashcards, Quiz, Summary &amp; Mind Map — for any topic in one premium generation.</p>
+          <p class="mega-desc">Generate <strong>all 5 study tools</strong> for your topic in one premium generation — Notes, Flashcards, Quiz, Summary &amp; Mind Map.</p>
           <div class="mega-tools-preview">
             <span class="mega-tool-chip"><i class="fas fa-book-open"></i> Notes</span>
-            <span class="mega-tool-chip"><i class="fas fa-layer-group"></i> 15-20 Flashcards</span>
-            <span class="mega-tool-chip"><i class="fas fa-question-circle"></i> 10-12 Quiz Q's</span>
+            <span class="mega-tool-chip"><i class="fas fa-layer-group"></i> Flashcards</span>
+            <span class="mega-tool-chip"><i class="fas fa-question-circle"></i> Quiz</span>
             <span class="mega-tool-chip"><i class="fas fa-align-left"></i> Summary</span>
             <span class="mega-tool-chip"><i class="fas fa-project-diagram"></i> Mind Map</span>
           </div>
         </div>
         <div class="mega-form">
           <label class="mega-label"><i class="fas fa-pencil-alt"></i> What topic should we cover?</label>
-          <textarea class="mega-textarea" id="megaTopicInput" rows="4" placeholder="Enter any topic, concept, or paste text to study…&#10;&#10;Examples:&#10;• Photosynthesis&#10;• World War II — causes and consequences&#10;• Machine Learning algorithms&#10;• Newton's Three Laws of Motion"></textarea>
+          <textarea class="mega-textarea" id="megaTopicInput" rows="4" placeholder="Enter any topic, concept, or paste text to study… e.g. Photosynthesis, World War II, Machine Learning, Newton's Laws"></textarea>
           <div class="mega-char-count" id="megaCharCount">0 / 4000</div>
           <div class="mega-options">
             <div class="mega-opt-group">
@@ -442,18 +435,18 @@
             </div>
           </div>
           <div class="mega-sugg">
-            <div class="mega-sugg-label"><i class="fas fa-bolt"></i> Quick picks:</div>
+            <div class="mega-sugg-label">Quick picks:</div>
             <div class="mega-sugg-pills">
-              <button class="mega-sugg-pill" data-topic="Photosynthesis — how plants convert sunlight to glucose">🌿 Photosynthesis</button>
-              <button class="mega-sugg-pill" data-topic="Newton's Three Laws of Motion with examples">⚡ Newton's Laws</button>
-              <button class="mega-sugg-pill" data-topic="World War II — causes, major events, consequences">🌍 World War II</button>
-              <button class="mega-sugg-pill" data-topic="Machine Learning fundamentals and applications">🤖 Machine Learning</button>
-              <button class="mega-sugg-pill" data-topic="DNA replication and protein synthesis">🧬 DNA Replication</button>
-              <button class="mega-sugg-pill" data-topic="The French Revolution — causes and legacy">🇫🇷 French Revolution</button>
+              <button class="mega-sugg-pill" data-topic="Photosynthesis">🌿 Photosynthesis</button>
+              <button class="mega-sugg-pill" data-topic="Newton's Three Laws of Motion">⚡ Newton's Laws</button>
+              <button class="mega-sugg-pill" data-topic="World War II — causes, events, consequences">🌍 World War II</button>
+              <button class="mega-sugg-pill" data-topic="Machine Learning fundamentals">🤖 Machine Learning</button>
+              <button class="mega-sugg-pill" data-topic="DNA Replication and Protein Synthesis">🧬 DNA Replication</button>
+              <button class="mega-sugg-pill" data-topic="French Revolution — causes and legacy">🇫🇷 French Revolution</button>
             </div>
           </div>
           <button class="mega-generate-btn" id="megaGenerateBtn">
-            <i class="fas fa-bolt"></i> Generate Mega Bundle — All 5 Tools Now!
+            <i class="fas fa-bolt"></i> Generate Mega Bundle — All 5 Tools
           </button>
         </div>
       </div>
@@ -476,15 +469,15 @@
         <div class="hist-filters">
           <button class="hist-filter active" data-filter="all">All</button>
           <button class="hist-filter" data-filter="notes">Notes</button>
-          <button class="hist-filter" data-filter="flashcards">Cards</button>
+          <button class="hist-filter" data-filter="flashcards">Flashcards</button>
           <button class="hist-filter" data-filter="quiz">Quiz</button>
           <button class="hist-filter" data-filter="summary">Summary</button>
-          <button class="hist-filter" data-filter="mindmap">Map</button>
+          <button class="hist-filter" data-filter="mindmap">Mind Map</button>
           <button class="hist-filter" data-filter="all">Mega</button>
         </div>
         <div class="hist-actions">
           <button id="clearHistBtn" class="hist-action"><i class="fas fa-trash"></i> Clear All</button>
-          <button id="exportHistBtn" class="hist-action"><i class="fas fa-download"></i> Export</button>
+          <button id="exportHistBtn" class="hist-action"><i class="fas fa-download"></i> Export JSON</button>
         </div>
         <div id="histList" class="hist-list"></div>
         <div id="histEmpty" class="hist-empty" style="display:none">
@@ -514,31 +507,26 @@
   <div class="modal-overlay" id="settingsModal">
     <div class="modal modal-md">
       <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-cog"></i> Settings &amp; Customisation</div>
+        <div class="modal-title"><i class="fas fa-cog"></i> Settings</div>
         <button class="modal-close" data-close="settingsModal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
         <!-- Profile -->
         <div class="settings-section">
-          <div class="settings-title"><i class="fas fa-user-graduate"></i> Your Profile</div>
+          <div class="settings-title"><i class="fas fa-user"></i> Your Profile</div>
           <div class="settings-row">
             <div class="settings-label">Display Name</div>
             <div class="settings-input-group">
-              <input type="text" id="nameInput" placeholder="Your name" class="settings-input" maxlength="40">
+              <input type="text" id="nameInput" placeholder="Your name" class="settings-input">
               <button id="saveNameBtn" class="settings-btn">Save</button>
             </div>
-          </div>
-          <!-- Avatar Color Picker -->
-          <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px">
-            <div class="settings-label">Avatar Color</div>
-            <div id="avatarPickerSettings" class="avatar-picker-grid-settings"></div>
           </div>
         </div>
         <!-- Appearance -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-palette"></i> Appearance</div>
           <div class="settings-row">
-            <div class="settings-label">App Theme</div>
+            <div class="settings-label">Theme</div>
             <div class="theme-buttons">
               <button class="theme-btn active" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button>
               <button class="theme-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button>
@@ -556,22 +544,11 @@
             </div>
           </div>
         </div>
-        <!-- PDF Theme -->
+        <!-- Default Language -->
         <div class="settings-section">
-          <div class="settings-title"><i class="fas fa-file-pdf"></i> PDF Export Style</div>
+          <div class="settings-title"><i class="fas fa-language"></i> Default Language</div>
           <div class="settings-row">
-            <div class="settings-label">PDF Theme</div>
-            <div class="theme-buttons">
-              <button class="theme-btn active" data-pdf-theme="dark"><i class="fas fa-moon"></i> Dark PDF</button>
-              <button class="theme-btn" data-pdf-theme="light"><i class="fas fa-sun"></i> Light PDF</button>
-            </div>
-          </div>
-        </div>
-        <!-- Language -->
-        <div class="settings-section">
-          <div class="settings-title"><i class="fas fa-language"></i> Default Output Language</div>
-          <div class="settings-row">
-            <div class="settings-label">Language</div>
+            <div class="settings-label">Output Language</div>
             <div class="settings-input-group">
               <select id="defaultLangSel" class="settings-input" style="flex:1;max-width:180px">
                 <option value="English" selected>🇬🇧 English</option>
@@ -589,6 +566,17 @@
                 <option value="Korean">🇰🇷 Korean</option>
               </select>
               <button id="saveDefaultLangBtn" class="settings-btn">Save</button>
+            </div>
+          </div>
+        </div>
+        <!-- PDF Style -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-file-pdf"></i> PDF Style</div>
+          <div class="settings-row">
+            <div class="settings-label">PDF Theme</div>
+            <div class="theme-buttons">
+              <button class="theme-btn active" data-pdf-theme="dark"><i class="fas fa-moon"></i> Dark PDF</button>
+              <button class="theme-btn" data-pdf-theme="light"><i class="fas fa-sun"></i> Light PDF</button>
             </div>
           </div>
         </div>
@@ -637,10 +625,6 @@
     </div>
   </div>
 
-  <!-- Demo Modal (canvas-based spotlight tour — not a real modal) -->
-  <div id="demoModal" style="display:none"></div>
-  <div id="demoContent" style="display:none"></div>
-
   <!-- Confirm Modal -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal modal-sm">
@@ -658,59 +642,26 @@
     </div>
   </div>
 
-  <!-- ═══ WELCOME OVERLAY — New User (Name mandatory, no skip) ═══ -->
+  <!-- Welcome Overlay (New User) -->
   <div class="modal-overlay" id="welcomeOverlay">
-    <div class="modal" style="max-width:480px">
-      <div class="modal-body welcome-modal-body">
-        <!-- Academic cap animation -->
-        <div class="welcome-cap-wrap">
-          <div class="welcome-cap">🎓</div>
-          <div class="welcome-sparkles">✨</div>
+    <div class="modal" style="max-width:460px;text-align:center">
+      <div class="modal-body" style="text-align:center;padding:32px">
+        <div class="welcome-logo">Ś</div>
+        <h2 class="welcome-title">Welcome to Savoiré AI</h2>
+        <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
+        <div class="welcome-features">
+          <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
+          <span class="welcome-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+          <span class="welcome-feat"><i class="fas fa-question-circle"></i> Quiz</span>
+          <span class="welcome-feat"><i class="fas fa-align-left"></i> Summary</span>
+          <span class="welcome-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+          <span class="welcome-feat" style="border-color:rgba(212,175,55,.4);color:#d4af37"><i class="fas fa-bolt"></i> All 5 at Once!</span>
         </div>
-
-        <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré AI</span></h2>
-        <p class="welcome-tagline">"Think Less. Know More."</p>
-        <p class="welcome-subtitle">The world's most advanced free AI study assistant — 5 tools, 20+ languages, 14+ AI models</p>
-
-        <!-- Avatar color grid -->
-        <div class="welcome-avatar-section">
-          <div class="welcome-avatar-label">Choose your avatar colour:</div>
-          <div class="welcome-avatar-grid" id="welcomeAvatarGrid">
-            <button class="wavatarBtn active" data-idx="0" style="background:linear-gradient(135deg,#d4af37,#ffae00);color:#0a1128" onclick="window._welcomeSetAvatar(0)" title="Gold">ST</button>
-            <button class="wavatarBtn" data-idx="1" style="background:linear-gradient(135deg,#00d4ff,#0099cc)" onclick="window._welcomeSetAvatar(1)" title="Blue">ST</button>
-            <button class="wavatarBtn" data-idx="2" style="background:linear-gradient(135deg,#bf00ff,#7a00cc)" onclick="window._welcomeSetAvatar(2)" title="Purple">ST</button>
-            <button class="wavatarBtn" data-idx="3" style="background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a1128" onclick="window._welcomeSetAvatar(3)" title="Green">ST</button>
-            <button class="wavatarBtn" data-idx="4" style="background:linear-gradient(135deg,#ff4444,#cc0000)" onclick="window._welcomeSetAvatar(4)" title="Red">ST</button>
-            <button class="wavatarBtn" data-idx="5" style="background:linear-gradient(135deg,#ff6b00,#cc4400)" onclick="window._welcomeSetAvatar(5)" title="Orange">ST</button>
-            <button class="wavatarBtn" data-idx="6" style="background:linear-gradient(135deg,#e84393,#a0006b)" onclick="window._welcomeSetAvatar(6)" title="Pink">ST</button>
-            <button class="wavatarBtn" data-idx="7" style="background:linear-gradient(135deg,#4ecdc4,#2aa198)" onclick="window._welcomeSetAvatar(7)" title="Teal">ST</button>
-          </div>
-        </div>
-
-        <!-- Name input — MANDATORY -->
-        <div class="welcome-name-section">
-          <label class="welcome-name-label" for="welcomeNameInput">
-            <i class="fas fa-user-graduate"></i> Your Name <span class="welcome-name-req">*</span>
-          </label>
-          <input type="text" id="welcomeNameInput" class="welcome-input"
-            placeholder="e.g. Ahmed, Sara, John…"
-            autocomplete="given-name" maxlength="40">
-          <div class="welcome-name-hint" id="welcomeNameHint"></div>
-        </div>
-
-        <button id="welcomeBtn" class="welcome-btn">
-          <i class="fas fa-graduation-cap"></i> Start Studying — Free Forever!
-        </button>
-
-        <div class="welcome-feature-chips">
-          <span class="wfeat"><i class="fas fa-infinity"></i> Free Forever</span>
-          <span class="wfeat"><i class="fas fa-globe"></i> 20+ Languages</span>
-          <span class="wfeat"><i class="fas fa-bolt"></i> 5 Study Tools</span>
-          <span class="wfeat"><i class="fas fa-shield-alt"></i> Data on Device</span>
-        </div>
-
-        <p class="welcome-footer">Built by <strong>Sooban Talha Technologies</strong> · soobantalhatech.xyz</p>
-        <!-- NO SKIP BUTTON — name is mandatory -->
+        <p class="welcome-quote">"Think Less. Know More."</p>
+        <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started…" autocomplete="given-name">
+        <button id="welcomeBtn" class="welcome-btn">Start Studying →</button>
+        <button id="welcomeSkip" class="welcome-skip">Skip for now</button>
+        <p class="welcome-footer">Free forever · Built by Sooban Talha Technologies</p>
       </div>
     </div>
   </div>
@@ -733,7 +684,7 @@
           </div>
           <div class="wb-stat">
             <div class="wb-stat-val" id="wbSaved">0</div>
-            <div class="wb-stat-lbl">Saved</div>
+            <div class="wb-stat-lbl">Saved Notes</div>
           </div>
         </div>
         <button id="welcomeBackBtn" class="wb-btn">Continue Studying →</button>
@@ -741,25 +692,35 @@
     </div>
   </div>
 
-  <!-- ═══════════ SCRIPTS ═══════════ -->
+  <!-- Demo Modal -->
+  <div class="modal-overlay" id="demoModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-play-circle"></i> Savoiré AI — Interactive Demo Tour</div>
+        <button class="modal-close" data-close="demoModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="demoContent">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Theme flash prevention — must run before DOM renders
+    // Theme flash prevention
     (function(){
       try{
-        const p = JSON.parse(localStorage.getItem('sv_prefs')||'{}');
-        if(p.theme)    document.documentElement.setAttribute('data-theme', p.theme);
-        if(p.fontSize) document.documentElement.setAttribute('data-font',  p.fontSize);
+        const p=JSON.parse(localStorage.getItem('sv_prefs')||'{}');
+        if(p.theme)document.documentElement.setAttribute('data-theme',p.theme);
+        if(p.fontSize)document.documentElement.setAttribute('data-font',p.fontSize);
       }catch(e){}
     })();
-
-    window.addEventListener('load', function(){
+    window.addEventListener('load',function(){
       document.body.classList.add('loaded');
-      const s = document.querySelector('.loading-spinner');
-      if(s) s.remove();
+      const s=document.querySelector('.loading-spinner');
+      if(s)s.remove();
     });
   </script>
-
   <script src="app.js"></script>
-
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a05df68279669387',t:'MTc4MDQ4MjAwMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a05ce6585d238c13',t:'MTc4MDQ3MDg1NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
 </html>
