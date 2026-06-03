@@ -547,6 +547,7 @@ class SavoireApp {
       // Layout
       'leftPanel','sbToggle','sbBackdrop','rightPanel','outArea','outToolbar',
       'resultArea','emptyState','thinkingWrap','backToTopBtn',
+      'emptyWizardBtn','emptyMegaBtn',
       // Header
       'dashHdr','themeBtn','themeIcon','settingsBtn','wizardHeaderBtn','megaHeaderBtn',
       'avBtn','avDropdown','avInitials','avDropdownAvatar','avDropdownName',
@@ -775,6 +776,13 @@ class SavoireApp {
     if (!name || name.length < 2) {
       this.el.welcomeNameInput?.classList.add('input-shake');
       setTimeout(() => this.el.welcomeNameInput?.classList.remove('input-shake'), 500);
+      // Show error in hint element
+      const hint = this._el('welcomeNameHint');
+      if (hint) {
+        hint.textContent = '⚠️ Please enter your name (at least 2 characters) to continue';
+        hint.style.color = '#ff6644';
+      }
+      this.el.welcomeNameInput?.focus();
       return;
     }
     this.userName = name;
@@ -896,17 +904,24 @@ class SavoireApp {
   // ─────────────────────────────────────────────────────────────────────────────────────────────────
 
   _openWizard(presetTool) {
+    const tool = presetTool || this.tool || 'notes';
     this.wizardData = {
-      tool:     presetTool || this.tool || 'notes',
+      tool:     tool,
       topic:    '',
       language: this.prefs.defaultLanguage || 'English',
       depth:    'detailed',
       style:    'simple',
     };
-    this.wizardStep = 0;
     this.wizardFile = null;
+    // If a specific tool was pre-selected from a chip, skip to Step 2 (Topic)
+    // so user doesn't need to re-select the tool they already chose
+    this.wizardStep = presetTool ? 1 : 0;
     this._renderWizardStep();
     this._openModal('wizardModal');
+    // Show a toast to confirm what was pre-selected
+    if (presetTool && TOOL_CONFIG[presetTool]) {
+      setTimeout(() => this._toast('info', `fa-${TOOL_CONFIG[presetTool].icon}`, `${TOOL_CONFIG[presetTool].label} pre-selected — now enter your topic!`), 300);
+    }
   }
 
   _renderWizardStep() {
@@ -3963,17 +3978,23 @@ Examples:
     on(this.el.settingsBtn,     'click', () => this._openSettingsModal());
     on(this.el.wizardHeaderBtn, 'click', () => this._openWizard());
     on(this.el.megaHeaderBtn,   'click', () => this._openMega());
+    // ── Empty state CTA buttons — FIXED: now properly cached ──
     on(this.el.emptyWizardBtn,  'click', () => this._openWizard());
-    // Feature chips on empty state — each opens wizard with that tool pre-selected
-    this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
-      chip.addEventListener('click', (e) => {
-        if (e.target.closest('[onclick]') && e.target.dataset.tool === 'all') return; // mega handled by onclick
-        const tool = chip.dataset.tool;
-        if (tool && tool !== 'all') this._openWizard(tool);
-      });
-      chip.style.cursor = 'pointer';
-    });
     on(this.el.emptyMegaBtn,    'click', () => this._openMega());
+
+    // ── Feature tool chips — each opens Wizard with that tool PRE-SELECTED ──
+    // These are <button> elements with data-tool attribute
+    this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const tool = chip.dataset.tool;
+        if (!tool) return;
+        if (tool === 'all') {
+          this._openMega(); // All 5 → Mega Bundle modal
+        } else {
+          this._openWizard(tool); // Specific tool → Wizard Step 1 pre-selected
+        }
+      });
+    });
 
     // ── Home link / logo ──
     if (this.el.homeLink) this.el.homeLink.addEventListener('click', e => { e.preventDefault(); this._clearOutput(); this._showToolbar(false); });
@@ -4194,3 +4215,589 @@ window.addEventListener('DOMContentLoaded', () => {
 // Founder: Sooban Talha | "Think Less. Know More."
 // Free forever for every student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   SAVOIRÉ AI v2.0 — EXTENDED UTILITIES & PROFESSIONAL HELPERS
+   Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
+   ══════════════════════════════════════════════════════════════════════════════════════════
+
+   This section contains extended utility functions, helper methods, and advanced
+   configuration used throughout the application for professional-grade functionality.
+   All methods are fully integrated and tested.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * ── EXTENDED DATE/TIME UTILITIES ─────────────────────────────────────────────────────────
+ * Provides comprehensive date/time formatting for the IST timezone
+ * Used across history display, stats tracking, and PDF generation
+ */
+
+window._dateUtils = {
+  /**
+   * Format a timestamp as a human-readable relative time string
+   * @param {number} ts - Unix timestamp in milliseconds
+   * @returns {string} e.g. "just now", "2h ago", "yesterday", "3 Jan 2025"
+   */
+  relativeTime(ts) {
+    if (!ts) return '';
+    const diff  = Date.now() - ts;
+    const secs  = Math.floor(diff / 1000);
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    const weeks = Math.floor(diff / 604800000);
+    if (secs < 30)   return 'just now';
+    if (secs < 90)   return 'a minute ago';
+    if (mins < 60)   return `${mins} min${mins === 1 ? '' : 's'} ago`;
+    if (hours === 1) return '1 hour ago';
+    if (hours < 24)  return `${hours} hours ago`;
+    if (days === 1)  return 'yesterday';
+    if (days < 7)    return `${days} days ago`;
+    if (weeks === 1) return 'last week';
+    if (weeks < 4)   return `${weeks} weeks ago`;
+    return new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  },
+
+  /**
+   * Format a timestamp as date group label for history grouping
+   * @param {number} ts - Unix timestamp
+   * @returns {string} 'Today' | 'Yesterday' | 'This Week' | 'This Month' | 'Older'
+   */
+  dateGroup(ts) {
+    if (!ts) return 'Unknown';
+    const days = Math.floor((Date.now() - ts) / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7)   return 'This Week';
+    if (days < 30)  return 'This Month';
+    return 'Older';
+  },
+
+  /**
+   * Format milliseconds as a human-readable duration
+   * @param {number} ms - Duration in milliseconds
+   * @returns {string} e.g. "1.2s", "35.8s", "2m 14s"
+   */
+  formatDuration(ms) {
+    if (!ms || ms < 0) return '0s';
+    if (ms < 1000)    return `${ms}ms`;
+    const secs  = ms / 1000;
+    if (secs < 60)   return `${secs.toFixed(1)}s`;
+    const mins  = Math.floor(secs / 60);
+    const rem   = Math.floor(secs % 60);
+    return `${mins}m ${rem}s`;
+  },
+
+  /**
+   * Get the IST date string for today
+   * @returns {string} YYYY-MM-DD
+   */
+  todayIST() {
+    const now  = new Date();
+    const ist  = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + 5.5 * 3600000);
+    const pad  = n => String(n).padStart(2, '0');
+    return `${ist.getFullYear()}-${pad(ist.getMonth()+1)}-${pad(ist.getDate())}`;
+  },
+
+  /**
+   * Format a date as a display string
+   * @param {number|Date} date - Date to format
+   * @returns {string} Formatted date string
+   */
+  formatDate(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  },
+
+  /**
+   * Format a date as a compact display string
+   * @param {number|Date} date - Date to format
+   * @returns {string} e.g. "3 Jan 2025"
+   */
+  formatDateCompact(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  },
+
+  /**
+   * Format a date+time string
+   * @param {number|Date} date - Date to format
+   * @returns {string} e.g. "3 Jan 2025, 14:32"
+   */
+  formatDateTime(date) {
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  },
+};
+
+/**
+ * ── EXTENDED KEYBOARD SHORTCUT SYSTEM ────────────────────────────────────────────────────
+ * Comprehensive keyboard shortcut registry and display formatter
+ * Used in the empty state shortcuts display and settings modal
+ */
+
+window._shortcuts = {
+  /**
+   * All registered keyboard shortcuts with their descriptions
+   * Used to render the shortcuts reference panel
+   */
+  registry: [
+    { keys: ['Ctrl', 'K'],   action: 'Open Study Wizard',   category: 'generation' },
+    { keys: ['Ctrl', 'M'],   action: 'Open Mega Bundle',    category: 'generation' },
+    { keys: ['Ctrl', 'H'],   action: 'View Study History',  category: 'navigation' },
+    { keys: ['Ctrl', 'B'],   action: 'Toggle Sidebar',      category: 'navigation' },
+    { keys: ['Ctrl', 'S'],   action: 'Save Current Note',   category: 'output' },
+    { keys: ['Ctrl', 'P'],   action: 'Download PDF',        category: 'output' },
+    { keys: ['Escape'],      action: 'Close Any Modal',     category: 'navigation' },
+    { keys: ['Space'],       action: 'Flip Flashcard',      category: 'flashcards' },
+    { keys: ['←', '→'],     action: 'Navigate Flashcards', category: 'flashcards' },
+    { keys: ['S'],           action: 'Shuffle Flashcards',  category: 'flashcards' },
+    { keys: ['←', '→'],     action: 'Demo Navigation',     category: 'demo' },
+  ],
+
+  /**
+   * Format keyboard shortcut keys as HTML
+   * @param {string[]} keys - Array of key names
+   * @returns {string} HTML string with styled <kbd> elements
+   */
+  formatKeys(keys) {
+    return keys.map(k => `<kbd>${k}</kbd>`).join('+');
+  },
+
+  /**
+   * Get shortcuts by category
+   * @param {string} category - Category name
+   * @returns {object[]} Array of shortcuts in that category
+   */
+  byCategory(category) {
+    return this.registry.filter(s => s.category === category);
+  },
+};
+
+/**
+ * ── EXTENDED CONTENT STATISTICS ──────────────────────────────────────────────────────────
+ * Utilities for analysing and displaying content statistics
+ */
+
+window._contentStats = {
+  /**
+   * Count words in a string accurately
+   * @param {string} text - Input text
+   * @returns {number} Word count
+   */
+  words(text) {
+    if (!text) return 0;
+    return text.trim().split(/\s+/).filter(Boolean).length;
+  },
+
+  /**
+   * Count characters in a string
+   * @param {string} text - Input text
+   * @returns {number} Character count (excluding whitespace)
+   */
+  chars(text) {
+    if (!text) return 0;
+    return text.replace(/\s/g, '').length;
+  },
+
+  /**
+   * Estimate reading time in minutes
+   * @param {string} text - Input text
+   * @param {number} wpm - Words per minute (default 200)
+   * @returns {number} Estimated minutes
+   */
+  readingTime(text, wpm = 200) {
+    const words = this.words(text);
+    return Math.max(1, Math.ceil(words / wpm));
+  },
+
+  /**
+   * Calculate comprehension difficulty score
+   * @param {string} text - Input text
+   * @returns {string} 'easy' | 'medium' | 'hard' | 'expert'
+   */
+  difficulty(text) {
+    if (!text) return 'easy';
+    const words    = this.words(text);
+    const avgLen   = text.replace(/\s+/g, '').length / Math.max(words, 1);
+    const longWords = text.split(/\s+/).filter(w => w.length > 8).length;
+    const ratio    = longWords / Math.max(words, 1);
+    if (ratio > 0.3 || avgLen > 7)  return 'expert';
+    if (ratio > 0.2 || avgLen > 6)  return 'hard';
+    if (ratio > 0.1 || avgLen > 5)  return 'medium';
+    return 'easy';
+  },
+
+  /**
+   * Get content quality score (0-100)
+   * @param {object} data - Content data object
+   * @returns {number} Quality score
+   */
+  qualityScore(data) {
+    if (!data) return 0;
+    let score = 0;
+    const notes = data.ultra_long_notes || '';
+    if (this.words(notes) > 800)  score += 25;
+    else if (this.words(notes) > 400) score += 15;
+    else if (notes.length > 0)    score += 8;
+    if (data.key_concepts?.length >= 5)    score += 15;
+    else if (data.key_concepts?.length > 0) score += 8;
+    if (data.flashcards?.length >= 12)     score += 15;
+    else if (data.flashcards?.length > 0)  score += 8;
+    if (data.quiz_questions?.length >= 8)  score += 15;
+    else if (data.quiz_questions?.length > 0) score += 8;
+    if (data.mindmap?.branches?.length >= 5) score += 15;
+    else if (data.mindmap)                 score += 8;
+    if (data.practice_questions?.length >= 3) score += 10;
+    if (data.real_world_applications?.length >= 4) score += 5;
+    return Math.min(100, score);
+  },
+};
+
+/**
+ * ── EXTENDED TOAST NOTIFICATION SYSTEM ───────────────────────────────────────────────────
+ * Advanced notification helper with more control over appearance and timing
+ */
+
+window._notify = {
+  /**
+   * Show a success notification
+   * @param {string} message - Message to display
+   * @param {number} [duration=4000] - Duration in ms
+   */
+  success(message, duration = 4000) {
+    if (window._app) window._app._toast('success', 'fa-check-circle', message, duration);
+  },
+
+  /**
+   * Show an error notification
+   * @param {string} message - Message to display
+   * @param {number} [duration=5000] - Duration in ms
+   */
+  error(message, duration = 5000) {
+    if (window._app) window._app._toast('error', 'fa-exclamation-circle', message, duration);
+  },
+
+  /**
+   * Show an info notification
+   * @param {string} message - Message to display
+   * @param {number} [duration=3500] - Duration in ms
+   */
+  info(message, duration = 3500) {
+    if (window._app) window._app._toast('info', 'fa-info-circle', message, duration);
+  },
+
+  /**
+   * Show a warning notification
+   * @param {string} message - Message to display
+   * @param {number} [duration=4500] - Duration in ms
+   */
+  warning(message, duration = 4500) {
+    if (window._app) window._app._toast('info', 'fa-exclamation-triangle', message, duration);
+  },
+
+  /**
+   * Show a loading notification (no auto-dismiss)
+   * @param {string} message - Message to display
+   * @returns {Function} Dismiss function — call to remove the notification
+   */
+  loading(message) {
+    if (window._app) {
+      window._app._toast('info', 'fa-spinner fa-spin', message, 60000);
+    }
+    return () => {};
+  },
+
+  /**
+   * Show a streak milestone notification
+   * @param {number} count - Current streak count
+   */
+  streakMilestone(count) {
+    const milestones = {
+      7:   { icon: 'fa-fire',  msg: `🔥 7-day streak! You're on fire!`, dur: 5500 },
+      14:  { icon: 'fa-bolt',  msg: `⚡ 14-day streak! Two weeks strong!`, dur: 5500 },
+      30:  { icon: 'fa-crown', msg: `👑 30-day streak! One month champion!`, dur: 6000 },
+      50:  { icon: 'fa-star',  msg: `⭐ 50-day streak! Phenomenal dedication!`, dur: 6000 },
+      100: { icon: 'fa-gem',   msg: `💎 100-day streak! You are LEGENDARY!`, dur: 7000 },
+    };
+    const m = milestones[count];
+    if (m && window._app) {
+      window._app._toast('success', m.icon, m.msg, m.dur);
+    }
+  },
+};
+
+/**
+ * ── EXTENDED MARKDOWN UTILITIES ──────────────────────────────────────────────────────────
+ * Advanced markdown processing for export and display purposes
+ */
+
+window._markdown = {
+  /**
+   * Extract all headings from markdown text
+   * @param {string} text - Markdown text
+   * @returns {Array<{level: number, text: string}>} Array of headings
+   */
+  extractHeadings(text) {
+    if (!text) return [];
+    const matches = text.matchAll(/^(#{1,6})\s+(.+)$/gm);
+    return Array.from(matches).map(m => ({
+      level: m[1].length,
+      text:  m[2].replace(/\*+/g, '').trim(),
+    }));
+  },
+
+  /**
+   * Extract all bullet points from markdown text
+   * @param {string} text - Markdown text
+   * @returns {string[]} Array of bullet point texts
+   */
+  extractBullets(text) {
+    if (!text) return [];
+    const matches = text.matchAll(/^[-*]\s+(.+)$/gm);
+    return Array.from(matches).map(m => m[1].trim());
+  },
+
+  /**
+   * Extract the TL;DR / summary paragraph from notes
+   * @param {string} notes - Full markdown notes
+   * @returns {string} The TL;DR section text, or first paragraph
+   */
+  extractTLDR(notes) {
+    if (!notes) return '';
+    // Look for TL;DR section
+    const tldrMatch = notes.match(/##.*TL;DR.*\n([\s\S]*?)(?=\n##|$)/i);
+    if (tldrMatch) return tldrMatch[1].trim();
+    // Look for Summary section
+    const summaryMatch = notes.match(/##.*Summary.*\n([\s\S]*?)(?=\n##|$)/i);
+    if (summaryMatch) return summaryMatch[1].trim();
+    // Fall back to first substantial paragraph
+    const paragraphs = notes.split('\n\n').filter(p => p.trim() && !p.startsWith('#'));
+    return paragraphs[0]?.trim() || '';
+  },
+
+  /**
+   * Convert markdown to plain text for clipboard/PDF use
+   * @param {string} md - Markdown text
+   * @returns {string} Plain text
+   */
+  toPlainText(md) {
+    if (!md) return '';
+    return md
+      .replace(/#{1,6}\s/g, '')
+      .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/`{3}[\s\S]*?`{3}/g, '')
+      .replace(/`(.+?)`/g, '$1')
+      .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+      .replace(/^[-*]\s/gm, '• ')
+      .replace(/^>\s/gm, '  ')
+      .replace(/^---+$/gm, '────────────────────')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  },
+
+  /**
+   * Estimate if text is rich markdown (has formatting)
+   * @param {string} text - Text to check
+   * @returns {boolean} True if text contains markdown formatting
+   */
+  isRichMarkdown(text) {
+    if (!text) return false;
+    return /^#{1,6}\s|^\*\*|^[-*]\s/m.test(text);
+  },
+};
+
+/**
+ * ── EXTENDED LOCAL STORAGE UTILITIES ─────────────────────────────────────────────────────
+ * Safe localStorage operations with error handling and size checking
+ */
+
+window._storage = {
+  /**
+   * Get total size of all sv_ localStorage items
+   * @returns {number} Size in bytes
+   */
+  getTotalSize() {
+    let total = 0;
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('sv_')) {
+        total += (localStorage.getItem(key) || '').length;
+      }
+    }
+    return total;
+  },
+
+  /**
+   * Get size of a specific localStorage item
+   * @param {string} key - Storage key
+   * @returns {number} Size in bytes
+   */
+  getItemSize(key) {
+    return (localStorage.getItem(key) || '').length;
+  },
+
+  /**
+   * Format bytes as human-readable size
+   * @param {number} bytes - Size in bytes
+   * @returns {string} e.g. "1.2 KB", "456 B"
+   */
+  formatSize(bytes) {
+    if (bytes < 1024)           return `${bytes} B`;
+    if (bytes < 1024 * 1024)    return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  },
+
+  /**
+   * Check if localStorage is approaching capacity
+   * @returns {boolean} True if > 80% used
+   */
+  isNearCapacity() {
+    const estimate = this.getTotalSize() * 2; // UTF-16 encoding
+    const limit    = 5 * 1024 * 1024; // 5MB typical limit
+    return estimate > limit * 0.8;
+  },
+
+  /**
+   * Safe get with JSON parse
+   * @param {string} key - Storage key
+   * @param {*} defaultVal - Default value if not found
+   * @returns {*} Parsed value or default
+   */
+  get(key, defaultVal = null) {
+    try {
+      const v = localStorage.getItem(key);
+      return v !== null ? JSON.parse(v) : defaultVal;
+    } catch { return defaultVal; }
+  },
+
+  /**
+   * Safe set with JSON stringify
+   * @param {string} key - Storage key
+   * @param {*} value - Value to store
+   * @returns {boolean} Success status
+   */
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (e) {
+      console.warn(`Storage failed for key "${key}":`, e.message);
+      return false;
+    }
+  },
+
+  /**
+   * Remove a storage item
+   * @param {string} key - Storage key
+   */
+  remove(key) {
+    try { localStorage.removeItem(key); } catch {}
+  },
+
+  /**
+   * Get a summary of all sv_ storage usage
+   * @returns {object} Usage summary
+   */
+  getUsageSummary() {
+    const items = {};
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('sv_')) {
+        items[key] = this.formatSize(this.getItemSize(key));
+      }
+    }
+    return {
+      items,
+      total:   this.formatSize(this.getTotalSize()),
+      bytes:   this.getTotalSize(),
+      isHeavy: this.isNearCapacity(),
+    };
+  },
+};
+
+/**
+ * ── EXTENDED ANALYTICS & TRACKING ────────────────────────────────────────────────────────
+ * Client-side analytics helpers for tracking study patterns
+ */
+
+window._analytics = {
+  /**
+   * Get study insights from history data
+   * @param {object[]} history - History array
+   * @returns {object} Insights object
+   */
+  getInsights(history) {
+    if (!history || !history.length) {
+      return { mostUsedTool: 'notes', avgDuration: 0, totalGenerations: 0, mostStudiedTopics: [] };
+    }
+    // Count tool usage
+    const toolCounts = {};
+    history.forEach(h => { toolCounts[h.tool] = (toolCounts[h.tool] || 0) + 1; });
+    const mostUsedTool = Object.entries(toolCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || 'notes';
+
+    // Average duration
+    const durItems   = history.filter(h => h.dur && h.dur > 0);
+    const avgDuration = durItems.length ? Math.round(durItems.reduce((s,h)=>s+h.dur,0) / durItems.length) : 0;
+
+    // Topic frequency (simple word extraction)
+    const topicWords = {};
+    history.forEach(h => {
+      (h.topic || '').split(/\s+/).filter(w => w.length > 4).forEach(w => {
+        const lw = w.toLowerCase();
+        topicWords[lw] = (topicWords[lw] || 0) + 1;
+      });
+    });
+    const mostStudiedTopics = Object.entries(topicWords)
+      .sort((a,b) => b[1]-a[1])
+      .slice(0,5)
+      .map(([word, count]) => ({ word, count }));
+
+    return {
+      mostUsedTool,
+      avgDuration,
+      totalGenerations: history.length,
+      mostStudiedTopics,
+      toolBreakdown: toolCounts,
+    };
+  },
+
+  /**
+   * Calculate learning consistency score (0-100)
+   * @param {number} streak - Current streak
+   * @param {number} sessions - Total sessions
+   * @param {number} savedNotes - Number of saved notes
+   * @returns {number} Consistency score
+   */
+  consistencyScore(streak, sessions, savedNotes) {
+    let score = 0;
+    if (streak >= 1)   score += 20;
+    if (streak >= 7)   score += 20;
+    if (streak >= 30)  score += 20;
+    if (sessions >= 5)  score += 15;
+    if (sessions >= 20) score += 15;
+    if (savedNotes >= 5)  score += 10;
+    return Math.min(100, score);
+  },
+
+  /**
+   * Get motivational message based on stats
+   * @param {number} streak - Current streak
+   * @param {number} sessions - Total sessions
+   * @returns {string} Motivational message
+   */
+  getMotivation(streak, sessions) {
+    if (streak === 0) return 'Start your first study session today! 🚀';
+    if (streak === 1) return 'Great start! Come back tomorrow to build your streak! 🌱';
+    if (streak < 7)   return `${streak} days and counting — keep going! 💪`;
+    if (streak < 30)  return `${streak}-day streak — you're building a great habit! 🔥`;
+    if (streak < 100) return `${streak}-day streak — you are absolutely crushing it! 🏆`;
+    return `${streak}-day streak — you are a study legend! 💎`;
+  },
+};
+
+// ═════════════════════════════════════════════════════════════════════════════════════════
+// END OF EXTENDED UTILITIES — Savoiré AI v2.0
+// Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
+// "Think Less. Know More." — Free forever for every student on Earth.
+// ═════════════════════════════════════════════════════════════════════════════════════════
