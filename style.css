@@ -9045,3 +9045,342 @@ input::placeholder, textarea::placeholder {
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
    END SECTIONS 49-51
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   SECTION 52: SAVOIRÉ AI v2.0 FINAL ENHANCED — ALL BUG FIXES + NEW FEATURES
+   Live animation, demo fixes, quiz/fc/mindmap only output, professional PDF, all devices
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── DEMO TOOLTIP ANIMATIONS ── */
+#demoTooltip { animation: demoTTIn .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes demoTTIn { from{opacity:0;transform:scale(.92)translateY(10px)} to{opacity:1;transform:scale(1)translateY(0)} }
+
+/* ── DEMO PREV BUTTON STYLE FIX ── */
+.demo-btn-prev {
+  padding: 7px 16px !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  border-radius: 30px !important;
+  font-size: .8rem !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.7) !important;
+  cursor: pointer !important;
+  transition: all .2s !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
+}
+.demo-btn-prev:hover:not(:disabled) { border-color: #d4af37 !important; color: #d4af37 !important; background: rgba(212,175,55,.08) !important; }
+.demo-btn-prev:disabled { opacity: .3 !important; cursor: not-allowed !important; }
+
+.demo-btn-next {
+  padding: 7px 18px !important;
+  background: linear-gradient(135deg,#d4af37,#b8941f) !important;
+  border: none !important;
+  border-radius: 30px !important;
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  color: #0a1128 !important;
+  cursor: pointer !important;
+  transition: all .2s !important;
+  white-space: nowrap !important;
+}
+.demo-btn-next:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 18px rgba(212,175,55,.4) !important; }
+
+.demo-btn-finish {
+  padding: 7px 18px !important;
+  background: linear-gradient(135deg,#00ff88,#00cc66) !important;
+  border: none !important;
+  border-radius: 30px !important;
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  color: #0a1128 !important;
+  cursor: pointer !important;
+  display: flex !important; align-items: center !important; gap: 6px !important;
+  transition: all .2s !important;
+  white-space: nowrap !important;
+}
+.demo-btn-finish:hover { transform: translateY(-2px) !important; box-shadow: 0 6px 18px rgba(0,255,136,.4) !important; }
+
+/* ── LIVE DECK VISUALIZER ── */
+.deck-viz-wrap { position: relative; width: 100px; height: 70px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; }
+.deck-card-viz {
+  position: absolute; width: 68px; height: 48px;
+  background: linear-gradient(135deg,rgba(191,0,255,.15),rgba(0,212,255,.1));
+  border: 1px solid rgba(191,0,255,.3);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(191,0,255,.15);
+}
+.deck-count-badge {
+  position: absolute; bottom: -8px; right: -8px;
+  background: linear-gradient(135deg,#bf00ff,#7a00cc);
+  color: #fff; font-size: .72rem; font-weight: 800;
+  padding: 3px 9px; border-radius: 20px; z-index: 10;
+  box-shadow: 0 2px 8px rgba(191,0,255,.4);
+}
+
+/* ── LIVE MINDMAP PULSE ── */
+.live-mm-pulse {
+  display: inline-block; width: 8px; height: 8px;
+  background: #d4af37; border-radius: 50%; margin-left: 8px;
+  animation: livePulse 1.5s ease infinite;
+}
+@keyframes livePulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.6);opacity:.4} }
+
+/* ── LIVE MM CENTRAL ── */
+.live-mm-central {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg,rgba(212,175,55,.12),rgba(0,212,255,.07));
+  border: 1.5px solid rgba(212,175,55,.3);
+  border-radius: 40px;
+  font-size: 1rem; font-weight: 700; color: #d4af37;
+  margin-bottom: 18px;
+  animation: liveCardIn .5s ease;
+}
+.live-mm-central-placeholder {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 16px;
+  background: rgba(212,175,55,.06);
+  border: 1px dashed rgba(212,175,55,.2);
+  border-radius: 40px;
+  color: rgba(212,175,55,.5); font-size: .85rem;
+  margin-bottom: 16px;
+}
+
+/* ── QUIZ SPEED TRACK ── */
+.live-quiz-speed-track { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 14px; padding: 8px 12px; background: rgba(0,255,136,.04); border-radius: 8px; }
+.quiz-speed-pip { width: 14px; height: 14px; border-radius: 3px; background: rgba(255,255,255,.08); transition: background .3s ease; }
+.quiz-speed-pip.filled { background: rgba(0,255,136,.4); }
+
+/* ── FC DECK INFO ── */
+.fc-deck-info { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.fc-deck-badge { padding: 3px 10px; background: rgba(191,0,255,.1); border: 1px solid rgba(191,0,255,.2); border-radius: 20px; font-size: .62rem; color: #bf00ff; font-weight: 600; }
+
+/* ── EMPTY TOOL MESSAGE ── */
+.empty-tool-msg { padding: 60px 40px; text-align: center; color: rgba(255,255,255,.4); font-size: 1.1rem; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.empty-tool-msg i { font-size: 3rem; color: rgba(255,255,255,.2); }
+
+/* ── MINDMAP BRANCH BORDER TOP ── */
+.mm-branch {
+  background: rgba(255,255,255,.03);
+  border-radius: 20px;
+  padding: 20px;
+  transition: all .3s ease;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.mm-branch:hover { background: rgba(0,212,255,.04); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+
+/* ── QUIZ DIFF BADGE COLORS ── */
+.quiz-diff-badge { font-size: .62rem; padding: 2px 9px; border-radius: 20px; font-weight: 600; text-transform: capitalize; }
+
+/* ── LIVE RADIAL MINDMAP ── */
+.live-mm-radial-container { display: flex; flex-wrap: wrap; gap: 10px; max-height: calc(100vh - 260px); overflow-y: auto; }
+.live-mm-branch {
+  flex: 1; min-width: 200px;
+  background: rgba(255,255,255,.03); border-radius: 12px; padding: 12px;
+  border-left: 3px solid #d4af37;
+  animation: liveCardIn .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+.live-mm-branch-name { font-size: .82rem; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+.live-mm-items { display: flex; flex-wrap: wrap; gap: 5px; }
+.live-mm-item { font-size: .68rem; padding: 3px 9px; background: rgba(255,255,255,.05); border-radius: 20px; color: rgba(255,255,255,.65); }
+
+/* ── MEGA SECTION / HEADER ── */
+.mega-section .ss-hdr { background: rgba(0,0,0,.4); }
+.mega-hdr .ss-title { font-size: .8rem; gap: 8px; }
+
+/* ── HEADER STREAK STAT WRAP ── */
+#headerStreakWrap { display: flex; align-items: center; gap: 5px; }
+
+/* ── WELCOME BRAND GRADIENT ── */
+.welcome-brand {
+  background: linear-gradient(135deg,#d4af37,#00d4ff);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-weight: 900;
+}
+.welcome-tagline { font-size: .9rem; font-style: italic; color: #d4af37; margin-bottom: 6px; }
+.welcome-name-section { text-align: left; margin-bottom: 16px; }
+.welcome-name-label { display: block; font-size: .76rem; font-weight: 600; color: rgba(255,255,255,.6); margin-bottom: 8px; }
+.welcome-name-req { color: #ff6666; font-size: .8rem; }
+.welcome-name-hint { font-size: .72rem; margin-top: 6px; min-height: 18px; transition: all .25s; text-align: left; }
+
+/* ── FEATURE CHIP HOVER TOOLTIPS ── */
+.es-feat-chip { position: relative; cursor: pointer !important; }
+.es-feat-chip::after {
+  content: 'Click to open'; position: absolute; bottom: -22px; left: 50%;
+  transform: translateX(-50%); font-size: .58rem; color: rgba(255,255,255,.5);
+  white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s;
+}
+.es-feat-chip:hover::after { opacity: 1; }
+
+/* ── NOTES/SUMMARY LIVE STREAM — FULL MD RENDERING ── */
+.sfp-text.live-md {
+  white-space: normal;
+  font-family: 'Inter', sans-serif;
+  font-size: .95rem;
+  line-height: 1.8;
+  color: #c8c8c8;
+}
+.sfp-text.live-md h1 { font-size: 1.5rem; margin: 1em 0 .5em; background: linear-gradient(135deg,#fff,#d4af37); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sfp-text.live-md h2 { font-size: 1.2rem; margin: .9em 0 .4em; border-left: 3px solid #d4af37; padding-left: 12px; background: linear-gradient(135deg,#00d4ff,#d4af37); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sfp-text.live-md h3 { font-size: 1rem; color: #d4af37; margin: .8em 0 .3em; background: none; -webkit-background-clip: unset; background-clip: unset; }
+.sfp-text.live-md p  { margin-bottom: .8em; color: #c0c0c0; }
+.sfp-text.live-md ul,.sfp-text.live-md ol { margin: .4em 0 .7em 1.4em; }
+.sfp-text.live-md li { margin: .2em 0; color: #c0c0c0; }
+.sfp-text.live-md blockquote { border-left: 3px solid #d4af37; padding: 8px 16px; margin: .8em 0; background: rgba(212,175,55,.05); border-radius: 0 8px 8px 0; font-style: italic; }
+.sfp-text.live-md code { background: rgba(0,0,0,.45); padding: 2px 8px; border-radius: 6px; font-family: var(--font-mono); font-size: .84em; color: #00d4ff; }
+.sfp-text.live-md hr  { border: none; border-top: 1px solid rgba(255,255,255,.1); margin: 1.4em 0; }
+.sfp-text.live-md strong { color: #ffffff; }
+
+/* ── FLASHCARDS/QUIZ/MINDMAP LIVE — NO PLAIN TEXT ── */
+.live-cards-wrapper,.live-quiz-wrapper,.live-mm-wrapper { animation: fadeIn .3s ease; }
+.live-cards-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.live-cards-title { font-size: .9rem; font-weight: 700; color: #d4af37; display: flex; align-items: center; gap: 8px; }
+.live-cards-progress { display: flex; align-items: center; gap: 10px; }
+.live-cards-prog-bar { width: 120px; height: 4px; background: rgba(255,255,255,.08); border-radius: 4px; overflow: hidden; }
+.live-cards-prog-fill { height: 100%; background: linear-gradient(90deg,#bf00ff,#00d4ff); border-radius: 4px; transition: width .4s ease; }
+.live-cards-count { font-size: .7rem; color: rgba(255,255,255,.5); font-family: var(--font-mono); white-space: nowrap; }
+.live-cards-grid { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 240px); overflow-y: auto; padding-right: 4px; }
+.live-card-item { background: rgba(191,0,255,.06); border: 1px solid rgba(191,0,255,.2); border-radius: 12px; padding: 12px 14px; animation: liveCardIn .4s cubic-bezier(.34,1.56,.64,1) both; }
+.live-card-item:hover { border-color: rgba(191,0,255,.4); }
+.live-card-new { border-color: rgba(191,0,255,.6) !important; box-shadow: 0 0 20px rgba(191,0,255,.2); }
+.live-card-num { font-size: .62rem; font-weight: 700; color: rgba(191,0,255,.7); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }
+.live-card-front { font-size: .86rem; font-weight: 600; color: #e0e0ff; margin-bottom: 6px; line-height: 1.5; }
+.live-card-back { font-size: .78rem; color: rgba(255,255,255,.55); line-height: 1.5; padding-left: 10px; border-left: 2px solid rgba(191,0,255,.3); }
+.live-quiz-list { display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 240px); overflow-y: auto; }
+.live-quiz-item { background: rgba(0,255,136,.04); border: 1px solid rgba(0,255,136,.15); border-radius: 12px; padding: 12px 14px; animation: liveCardIn .4s cubic-bezier(.34,1.56,.64,1) both; }
+.live-quiz-item:hover { border-color: rgba(0,255,136,.3); }
+.live-quiz-q-num { font-size: .7rem; font-weight: 700; color: rgba(0,255,136,.7); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+.live-quiz-diff { font-size: .58rem; padding: 1px 7px; border-radius: 20px; font-weight: 600; }
+.live-diff-easy   { background: rgba(0,255,136,.15); color: #00ff88; }
+.live-diff-medium { background: rgba(255,174,0,.15); color: #ffae00; }
+.live-diff-hard   { background: rgba(255,68,68,.15); color: #ff6666; }
+.live-quiz-q-text { font-size: .85rem; font-weight: 600; color: #e8e8ff; margin-bottom: 8px; line-height: 1.5; }
+.live-quiz-opts { display: flex; flex-direction: column; gap: 4px; }
+.live-quiz-opt { font-size: .75rem; color: rgba(255,255,255,.5); padding: 3px 8px; border-radius: 6px; }
+.live-quiz-correct { color: #00ff88 !important; background: rgba(0,255,136,.08); font-weight: 600; }
+.live-cards-loading { display: flex; align-items: center; gap: 10px; font-size: .78rem; color: rgba(255,255,255,.4); padding: 12px 0 4px; font-style: italic; }
+.live-cards-done { font-size: .82rem; color: #00ff88; padding: 10px 0 4px; display: flex; align-items: center; gap: 8px; font-weight: 600; animation: fadeIn .4s ease; }
+.live-dots { display: flex; gap: 4px; }
+.live-dots span { width: 5px; height: 5px; background: #d4af37; border-radius: 50%; animation: liveDotPulse 1.2s ease infinite; }
+.live-dots span:nth-child(2){animation-delay:.2s} .live-dots span:nth-child(3){animation-delay:.4s}
+@keyframes liveDotPulse { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
+@keyframes liveCardIn { from{opacity:0;transform:translateX(-20px) scale(.96)} to{opacity:1;transform:translateX(0) scale(1)} }
+
+/* ── RESULT HEADER TOOL BADGE ── */
+.rh-tool-badge {
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 7px;
+}
+
+/* ── QUIZ REVIEW WRONG ── */
+.quiz-review-wrong { font-size: .78rem; padding: 6px 12px; background: rgba(255,68,68,.06); border-radius: 8px; color: rgba(255,100,100,.9); margin-top: 4px; }
+
+/* ── MINDMAP CONNECTIONS ── */
+.mm-connections { margin-top: 24px; padding: 16px; background: rgba(0,212,255,.05); border-radius: 16px; border: 1px solid rgba(0,212,255,.15); }
+.mm-conn-title { font-size: .75rem; font-weight: 600; color: #00d4ff; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.mm-conn-list { display: flex; flex-direction: column; gap: 8px; }
+.mm-conn-item { font-size: .7rem; padding: 6px 10px; background: rgba(255,255,255,.03); border-radius: 8px; color: rgba(255,255,255,.7); line-height: 1.5; }
+
+/* ── SIDEBAR AVATAR PICKER ── */
+#sidebarAvatarPicker .avatar-picker-label { font-size: .68rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+#sidebarAvatarPicker .avatar-picker-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.avatar-color-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; font-size: .7rem; }
+.avatar-color-btn:hover { transform: scale(1.15); border-color: rgba(255,255,255,.4); }
+.avatar-color-btn.active { border-color: #ffffff; transform: scale(1.1); box-shadow: 0 0 12px rgba(255,255,255,.4); }
+
+/* ── PDF BUTTON THEME INDICATOR ── */
+#pdfBtn { position: relative; }
+#pdfBtn::after {
+  content: attr(data-theme);
+  position: absolute; top: -6px; right: -6px;
+  font-size: .5rem; padding: 2px 4px;
+  background: rgba(212,175,55,.2); border-radius: 4px; color: #d4af37;
+  pointer-events: none; white-space: nowrap;
+}
+
+/* ── DEMO HIGHLIGHTED ELEMENT ── */
+.demo-highlighted {
+  position: relative; z-index: 9999 !important;
+  outline: 3px solid #d4af37 !important; outline-offset: 4px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 4px rgba(212,175,55,.3), 0 0 30px rgba(212,175,55,.4) !important;
+  animation: demoPulse 1.5s ease infinite;
+}
+@keyframes demoPulse {
+  0%,100% { box-shadow: 0 0 0 4px rgba(212,175,55,.3), 0 0 30px rgba(212,175,55,.4); }
+  50%      { box-shadow: 0 0 0 8px rgba(212,175,55,.15), 0 0 50px rgba(212,175,55,.6); }
+}
+
+/* ── DEMO CANVAS HINT ── */
+.demo-canvas-hint {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  z-index: 9997; font-size: .7rem; color: rgba(255,255,255,.55);
+  background: rgba(0,0,8,.6); backdrop-filter: blur(8px);
+  padding: 6px 18px; border-radius: 30px;
+  border: 1px solid rgba(255,255,255,.12);
+  pointer-events: none; font-family: var(--font-body); white-space: nowrap;
+}
+.demo-canvas-hint i { margin-right: 6px; color: #d4af37; }
+.demo-canvas-hint kbd { padding: 2px 6px; background: rgba(255,255,255,.1); border-radius: 4px; font-family: var(--font-mono); font-size: .62rem; }
+
+/* ── WELCOME INPUT UPDATED STYLE ── */
+.welcome-input { text-align: left !important; border-radius: 14px !important; padding: 13px 18px !important; }
+.welcome-input.name-ok  { border-color: #00ff88 !important; }
+.welcome-input.name-err { border-color: #ffae00 !important; }
+
+/* ── MEGA RESULT BANNER IMPROVED ── */
+.mega-result-banner { flex-wrap: wrap; }
+.mega-result-count { font-size: .75rem; font-weight: 400; color: rgba(255,255,255,.6); margin-left: auto; }
+
+/* ── SECTION ANCHOR OFFSET ── */
+.section-anchor { scroll-margin-top: 70px; }
+
+/* ── WIZARD REVIEW INFO/TIP ── */
+.wizard-review-info { padding: 14px 16px; background: rgba(255,174,0,.09); border: 1px solid rgba(255,174,0,.2); border-radius: 13px; display: flex; align-items: flex-start; gap: 10px; font-size: .76rem; color: #ffae00; margin-bottom: 14px; }
+.wizard-review-tip  { padding: 14px 16px; background: rgba(0,212,255,.07); border: 1px solid rgba(0,212,255,.14); border-radius: 13px; display: flex; align-items: flex-start; gap: 10px; font-size: .76rem; color: #00d4ff; }
+.wizard-review-tip i, .wizard-review-info i { flex-shrink: 0; margin-top: 1px; }
+
+/* ── HEADER STATS — ALL VISIBLE ── */
+.dh-stat-hide-md { display: flex; }
+.dh-stat-hide-sm { display: flex; }
+@media (max-width: 900px) { .dh-stat-hide-md { display: none !important; } }
+@media (max-width: 600px) { .dh-stat-hide-sm { display: none !important; } }
+
+/* ── STREAM OVERLAY MOBILE ── */
+@media (max-width: 1024px) { .stream-overlay { left: 0 !important; z-index: 600 !important; } }
+@media (max-width: 600px) { .sfp-scroll { padding: 14px 16px; } .sfp-header { padding: 10px 14px; } .sfp-stages-row { display: none !important; } }
+
+/* ── MEGA MINDMAP IMPROVEMENTS ── */
+.mm-branches { display: flex; flex-wrap: wrap; gap: 18px; }
+.mm-branch-hdr { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: .9rem; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.08); }
+
+/* ── ALL DEVICE MOBILE FINAL ── */
+@media (max-width: 480px) {
+  .mega-result-banner { font-size: .82rem; }
+  .rh-topic { font-size: 1.1rem; }
+  .mm-branches { flex-direction: column; }
+  .mm-branch { min-width: unset !important; }
+  .fc-face { padding: 18px 14px; }
+  .fc-content { font-size: .84rem; max-height: 130px; }
+  .flashcard { aspect-ratio: 4/3; }
+}
+
+/* ── TOAST REMOVING ── */
+.toast.removing { animation: slideOutRight .3s ease forwards; }
+@keyframes slideOutRight { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(100%)} }
+
+/* ── LIGHT THEME STREAM OVERLAY ── */
+[data-theme="light"] .sfp-text { color: #2d3748; }
+[data-theme="light"] .sfp-text.live-md p, [data-theme="light"] .sfp-text.live-md li { color: #2d3748; }
+[data-theme="light"] .live-card-front { color: #1a1f3a; }
+[data-theme="light"] .live-quiz-q-text { color: #1a1f3a; }
+
+/* ── GOLDEN THEME MINDMAP ── */
+[data-theme="golden"] .mm-root { background: linear-gradient(135deg,rgba(212,175,55,.8),rgba(255,174,0,.6)); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   END SECTION 52 — SAVOIRÉ AI v2.0 FINAL
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */

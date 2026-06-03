@@ -1,65 +1,32 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — MAXIMUM LINES
+   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — MAXIMUM LINES — FINAL ENHANCED
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
    ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   ALL FEATURES — COMPLETE LIST:
+   ALL ISSUES FIXED IN THIS VERSION:
    ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
-   ✅ SESSION COUNTING: Incremented on every new calendar day (IST) — stored in localStorage
-   ✅ GOOGLE SHEETS: Ping sent on app load with current session/streak count
-   ✅ GOOGLE SHEETS: Tool usage sent with full topic, duration, status
-   ✅ SESSIONS FIX: Sessions count updates in Google Sheets from frontend on every visit
+   ✅ NOTES:   Live stream = notes only shown. Final output = rendered notes ONLY (no fallback)
+   ✅ FLASHCARDS: Live output shows deck-shuffling animation, card-by-card generation with spring
+                  Final output = ONLY interactive flashcards (no notes shown)
+   ✅ QUIZ:    Live output shows quiz building animation (fast question generation)
+                  Final output = ONLY interactive quiz (no notes shown)
+   ✅ MINDMAP: Live output shows branch-by-branch build animation
+                  Final output = ONLY beautiful mindmap (no notes shown)
+   ✅ SUMMARY: Beautiful TL;DR summary with key points
+   ✅ MEGA:    All 5 tools — each section clearly separated
 
-   ✅ WIZARD: 6 steps — Tool → Topic → Language → Depth → Style → Generate
-   ✅ WIZARD: Writing Style is Step 5 (separate from Depth which is Step 4)
-   ✅ WIZARD: All 5 tools + Mega Bundle (all) selectable
-   ✅ MEGA BUNDLE: Generates Notes + Flashcards + Quiz + Summary + Mind Map at once
-   ✅ MEGA BUNDLE: Available in sidebar nav, header button, empty state
-
-   ✅ LIVE STREAMING: Content shown formatted (full markdown render) while tokens arrive
-   ✅ LIVE STREAMING: Stages shown in overlay header with progress bar
-   ✅ LIVE STREAMING: Cancel button works
-   ✅ OUTPUT TOOLBAR: Shown ONLY after output generated
-   ✅ OUTPUT TOOLBAR: Copy, PDF, Save, Share, Clear, New Wizard — all working
-
-   ✅ PDF: World-class formatted with cover page, all sections, dark AND light themes
-   ✅ PDF: User chooses dark or light PDF in Settings
-   ✅ PDF: Cover page with stats, section headers, flashcards, quiz, mindmap
-
-   ✅ FLASHCARDS: Interactive 3D flip, keyboard nav, shuffle, restart — fully working
-   ✅ QUIZ: 10-12 MCQ, instant feedback, explanation shown, results with review
-   ✅ MIND MAP: Visual branches with items and cross-connections
-   ✅ NOTES: Full markdown rendered beautifully
-   ✅ SUMMARY: TL;DR box + full notes + key points
-
-   ✅ DEMO: Professional 7-step guided on-screen tour with arrows (spotlight style)
-   ✅ DEMO: Highlights actual UI elements with tooltip overlays
-   ✅ DEMO: Next/Previous navigation with step counter
-
-   ✅ AVATAR: User can choose avatar color/emoji in profile
-   ✅ STREAK: Gold color in header with fire animation
-   ✅ THEME: Dark / Light / Golden — all working
-   ✅ FONT SIZE: XSmall, Small, Medium, Large, XLarge (5 options)
-
-   ✅ ABOUT: Collapsible in sidebar (button → expand/collapse)
-   ✅ ABOUT: Full card in Settings modal
-   ✅ SETTINGS: All settings working — name, theme, font, PDF theme, language
-
-   ✅ SIDEBAR: History strip shows (clickable items)
-   ✅ SIDEBAR: Saved Notes strip shows (clickable items)
-   ✅ SIDEBAR: No tool selector — all generation via Wizard
-   ✅ SIDEBAR: About section collapsible
-
-   ✅ MOBILE: World-class responsive, compact, touch-friendly
-   ✅ MOBILE: Swipe to open sidebar
-   ✅ MOBILE: Wizard buttons smaller and tighter on mobile
-   ✅ MOBILE: Stream overlay optimized for small screens
-
-   ✅ FOCUS MODE: Sidebar collapses, content fills screen, header stays
-   ✅ KEYBOARD: Ctrl+K (Wizard), Ctrl+H (History), Ctrl+S (Save), Space (flip card)
+   ✅ FEATURE CHIPS: Notes/Flashcards/Quiz/Summary/Mind Map/All 5 — each opens Wizard with that tool
+   ✅ DEMO: Professional spotlight with canvas cutout — enhanced
+   ✅ TOP BAR: Streak, Sessions, History, Saved all shown in header
+   ✅ PDF: Professional, clean, no garbage — uses DOM print approach
+   ✅ BACK BUTTON: Demo navigation fixed — all buttons styled correctly
+   ✅ LIVE FLASHCARD: Deck-shuffle animation + card-by-card appearing
+   ✅ LIVE QUIZ: Question-by-question with speed building
+   ✅ LIVE MINDMAP: Branch-by-branch with radial build animation
+   ✅ GOOGLE SHEETS: Section 5 preserved exactly as-is
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -120,18 +87,18 @@ const TOOL_CONFIG = {
 };
 
 const DEPTH_CONFIG = {
-  standard:      { label: 'Standard',      desc: '600–900 words',   subDesc: 'Core concepts',      icon: 'fa-flag',       words: '600-900'   },
-  detailed:      { label: 'Detailed',      desc: '1000–1500 words', subDesc: 'Comprehensive',       icon: 'fa-chart-line', words: '1000-1500' },
-  comprehensive: { label: 'Comprehensive', desc: '1500–2200 words', subDesc: 'Deep dive',           icon: 'fa-book',       words: '1500-2200' },
-  expert:        { label: 'Expert',        desc: '2200–3500 words', subDesc: 'Maximum depth',       icon: 'fa-crown',      words: '2200-3500' },
+  standard:      { label: 'Standard',      desc: '600–900 words',   subDesc: 'Core concepts',    icon: 'fa-flag',       words: '600-900'   },
+  detailed:      { label: 'Detailed',      desc: '1000–1500 words', subDesc: 'Comprehensive',     icon: 'fa-chart-line', words: '1000-1500' },
+  comprehensive: { label: 'Comprehensive', desc: '1500–2200 words', subDesc: 'Deep dive',         icon: 'fa-book',       words: '1500-2200' },
+  expert:        { label: 'Expert',        desc: '2200–3500 words', subDesc: 'Maximum depth',     icon: 'fa-crown',      words: '2200-3500' },
 };
 
 const STYLE_CONFIG = {
-  simple:   { label: 'Simple & Clear',        desc: 'Beginner-friendly, analogies',    icon: 'fa-smile'          },
-  academic: { label: 'Academic & Formal',     desc: 'Scholarly, precise terminology',  icon: 'fa-graduation-cap' },
-  detailed: { label: 'Highly Detailed',       desc: 'Exhaustive, many examples',       icon: 'fa-list-check'     },
-  exam:     { label: 'Exam-Focused',          desc: 'Mark-scheme, exam tips',          icon: 'fa-clipboard-check'},
-  visual:   { label: 'Visual & Analogy-Rich', desc: 'Mental models, vivid examples',   icon: 'fa-eye'            },
+  simple:   { label: 'Simple & Clear',       desc: 'Beginner-friendly, analogies',   icon: 'fa-smile'           },
+  academic: { label: 'Academic & Formal',    desc: 'Scholarly, precise terminology', icon: 'fa-graduation-cap'  },
+  detailed: { label: 'Highly Detailed',      desc: 'Exhaustive, many examples',      icon: 'fa-list-check'      },
+  exam:     { label: 'Exam-Focused',         desc: 'Mark-scheme, exam tips',         icon: 'fa-clipboard-check' },
+  visual:   { label: 'Visual & Analogy-Rich',desc: 'Mental models, vivid examples',  icon: 'fa-eye'             },
 };
 
 const STAGE_MESSAGES = [
@@ -143,44 +110,36 @@ const STAGE_MESSAGES = [
 ];
 
 const AVATAR_COLORS = [
-  { bg: 'linear-gradient(135deg,#d4af37,#ffae00)', fg: '#0a1128', name: 'Gold'    },
-  { bg: 'linear-gradient(135deg,#00d4ff,#0099cc)', fg: '#ffffff', name: 'Blue'    },
-  { bg: 'linear-gradient(135deg,#bf00ff,#7a00cc)', fg: '#ffffff', name: 'Purple'  },
-  { bg: 'linear-gradient(135deg,#00ff88,#00cc66)', fg: '#0a1128', name: 'Green'   },
-  { bg: 'linear-gradient(135deg,#ff4444,#cc0000)', fg: '#ffffff', name: 'Red'     },
-  { bg: 'linear-gradient(135deg,#ff6b00,#cc4400)', fg: '#ffffff', name: 'Orange'  },
-  { bg: 'linear-gradient(135deg,#e84393,#a0006b)', fg: '#ffffff', name: 'Pink'    },
-  { bg: 'linear-gradient(135deg,#4ecdc4,#2aa198)', fg: '#ffffff', name: 'Teal'    },
+  { bg: 'linear-gradient(135deg,#d4af37,#ffae00)', fg: '#0a1128', name: 'Gold'   },
+  { bg: 'linear-gradient(135deg,#00d4ff,#0099cc)', fg: '#ffffff', name: 'Blue'   },
+  { bg: 'linear-gradient(135deg,#bf00ff,#7a00cc)', fg: '#ffffff', name: 'Purple' },
+  { bg: 'linear-gradient(135deg,#00ff88,#00cc66)', fg: '#0a1128', name: 'Green'  },
+  { bg: 'linear-gradient(135deg,#ff4444,#cc0000)', fg: '#ffffff', name: 'Red'    },
+  { bg: 'linear-gradient(135deg,#ff6b00,#cc4400)', fg: '#ffffff', name: 'Orange' },
+  { bg: 'linear-gradient(135deg,#e84393,#a0006b)', fg: '#ffffff', name: 'Pink'   },
+  { bg: 'linear-gradient(135deg,#4ecdc4,#2aa198)', fg: '#ffffff', name: 'Teal'   },
 ];
 
 const DEMO_STEPS = [
   {
-    step:     1,
-    title:    'Welcome to Savoiré AI ✨',
+    step: 1, title: 'Welcome to Savoiré AI ✨',
     subtitle: "The World's Most Advanced Free AI Study Assistant",
-    content:  'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
-    icon:     'fa-graduation-cap',
-    color:    '#d4af37',
-    targetId: null,
-    arrow:    null,
+    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
+    icon: 'fa-graduation-cap', color: '#d4af37', targetId: null, arrow: null,
     tips: [
-      { icon: 'fa-infinity',  text: '100% Free — No login, no payment, ever' },
-      { icon: 'fa-globe',     text: 'Works in 20+ languages including Urdu, Hindi, Arabic' },
-      { icon: 'fa-shield-alt',text: 'All your data stays on your device — private & secure' },
-      { icon: 'fa-bolt',      text: 'Powered by 14+ cutting-edge AI models with live fallback' },
-      { icon: 'fa-code',      text: 'Built by Sooban Talha Technologies — soobantalhatech.xyz' },
+      { icon: 'fa-infinity',   text: '100% Free — No login, no payment, ever' },
+      { icon: 'fa-globe',      text: 'Works in 20+ languages including Urdu, Hindi, Arabic' },
+      { icon: 'fa-shield-alt', text: 'All your data stays on your device — private & secure' },
+      { icon: 'fa-bolt',       text: 'Powered by 14+ cutting-edge AI models with live fallback' },
+      { icon: 'fa-code',       text: 'Built by Sooban Talha Technologies — soobantalhatech.xyz' },
     ],
     cta: 'Start Tour →',
   },
   {
-    step:     2,
-    title:    '✨ Study Wizard — Your Main Tool',
+    step: 2, title: '✨ Study Wizard — Your Main Tool',
     subtitle: 'Click to open 6-step guided generation',
-    content:  'The <strong>✨ Create Study Material</strong> button in the sidebar opens the Study Wizard. It guides you through 6 steps: choose tool → enter topic → select language → set detail level → choose writing style → generate.',
-    icon:     'fa-magic',
-    color:    '#00d4ff',
-    targetId: 'navWizard',
-    arrow:    'right',
+    content: 'The <strong>✨ Create Study Material</strong> button in the sidebar opens the Study Wizard. It guides you through 6 steps: choose tool → enter topic → select language → set detail level → choose writing style → generate.',
+    icon: 'fa-magic', color: '#00d4ff', targetId: 'navWizard', arrow: 'right',
     tips: [
       { icon: 'fa-mouse-pointer', text: 'Click this button to open the 6-step wizard' },
       { icon: 'fa-book-open',     text: 'Choose: Notes, Flashcards, Quiz, Summary or Mind Map' },
@@ -192,14 +151,10 @@ const DEMO_STEPS = [
     action: { label: 'Open Wizard Now', fn: '_openWizard' },
   },
   {
-    step:     3,
-    title:    '⚡ Mega Bundle — All 5 Tools At Once',
+    step: 3, title: '⚡ Mega Bundle — All 5 Tools At Once',
     subtitle: 'Notes + Flashcards + Quiz + Summary + Mind Map in one generation',
-    content:  'The <strong>⚡ Mega Study Bundle</strong> generates ALL 5 study tools simultaneously. Enter one topic, get a complete study package with 15-20 flashcards, 10-12 quiz questions, and a full visual mind map.',
-    icon:     'fa-bolt',
-    color:    '#d4af37',
-    targetId: 'navAll',
-    arrow:    'right',
+    content: 'The <strong>⚡ Mega Study Bundle</strong> generates ALL 5 study tools simultaneously. Enter one topic, get a complete study package with 15-20 flashcards, 10-12 quiz questions, and a full visual mind map.',
+    icon: 'fa-bolt', color: '#d4af37', targetId: 'navAll', arrow: 'right',
     tips: [
       { icon: 'fa-mouse-pointer',   text: 'Click this button for the mega bundle' },
       { icon: 'fa-layer-group',     text: '15-20 interactive 3D flip flashcards' },
@@ -207,18 +162,14 @@ const DEMO_STEPS = [
       { icon: 'fa-project-diagram', text: 'Visual mind map with 5-7 branches' },
       { icon: 'fa-align-left',      text: 'Smart TL;DR summary included' },
     ],
-    cta: 'Next: Feature Chips →',
+    cta: 'Next: Tool Buttons →',
     action: { label: 'Try Mega Bundle', fn: '_openMega' },
   },
   {
-    step:     4,
-    title:    '🎯 Quick Tool Buttons — One Click Open',
+    step: 4, title: '🎯 Quick Tool Buttons — One Click',
     subtitle: 'Each chip opens Wizard with that tool pre-selected',
-    content:  'The <strong>Notes, Flashcards, Quiz, Summary, Mind Map</strong> chips below open the Wizard with that tool already selected for you — no need to go through Step 1!',
-    icon:     'fa-mouse-pointer',
-    color:    '#00ff88',
-    targetId: 'emptyState',
-    arrow:    'down',
+    content: 'The <strong>Notes, Flashcards, Quiz, Summary, Mind Map</strong> chips in the main area open the Wizard with that tool already selected — no need to go through Step 1!',
+    icon: 'fa-mouse-pointer', color: '#00ff88', targetId: 'emptyState', arrow: 'down',
     tips: [
       { icon: 'fa-book-open',       text: 'Notes chip → opens Wizard with Notes pre-selected' },
       { icon: 'fa-layer-group',     text: 'Flashcards chip → opens Wizard with Flashcards ready' },
@@ -229,68 +180,52 @@ const DEMO_STEPS = [
     cta: 'Next: Live Output →',
   },
   {
-    step:     5,
-    title:    '📡 Live Streaming — Watch AI Write',
+    step: 5, title: '📡 Live Streaming — Watch AI Write',
     subtitle: 'Content appears in real-time with full formatting',
-    content:  'When you generate, the AI streams content <strong>live to your screen</strong>. Notes appear word-by-word with full markdown formatting. Flashcards, quiz questions, and mind map branches appear <strong>one by one with animation</strong> as they are generated.',
-    icon:     'fa-stream',
-    color:    '#bf00ff',
-    targetId: 'streamFullpage',
-    arrow:    null,
+    content: 'When you generate, the AI streams content <strong>live to your screen</strong>. Notes appear word-by-word with full markdown formatting. Flashcards appear <strong>card-by-card with deck animation</strong>, quiz questions build up rapidly, and mind map branches grow one by one.',
+    icon: 'fa-stream', color: '#bf00ff', targetId: null, arrow: null,
     tips: [
       { icon: 'fa-pen',             text: 'Notes stream live with headings, bullets, blockquotes' },
-      { icon: 'fa-layer-group',     text: 'Flashcards appear card-by-card with spring animation' },
-      { icon: 'fa-question-circle', text: 'Quiz questions appear one-by-one with difficulty badge' },
+      { icon: 'fa-layer-group',     text: 'Flashcards appear with deck-shuffle spring animation' },
+      { icon: 'fa-question-circle', text: 'Quiz questions appear one-by-one at rapid speed' },
       { icon: 'fa-project-diagram', text: 'Mind map branches appear with color animation' },
       { icon: 'fa-tasks',           text: '5 progress stages shown in the overlay header' },
     ],
     cta: 'Next: Interactive Tools →',
   },
   {
-    step:     6,
-    title:    '🃏 Interactive Study Tools',
+    step: 6, title: '🃏 Interactive Study Tools',
     subtitle: 'Flashcards flip, quiz gives instant feedback, mind map is visual',
-    content:  'After generation, your study materials are <strong>fully interactive</strong>. Flashcards flip in 3D, quiz questions give instant feedback with explanations, and the mind map shows visual branches with cross-connections.',
-    icon:     'fa-layer-group',
-    color:    '#bf00ff',
-    targetId: 'resultArea',
-    arrow:    null,
+    content: 'After generation, your study materials are <strong>fully interactive</strong>. Flashcards flip in 3D, quiz questions give instant feedback with explanations, and the mind map shows visual branches with cross-connections.',
+    icon: 'fa-layer-group', color: '#bf00ff', targetId: 'resultArea', arrow: null,
     tips: [
-      { icon: 'fa-hand-pointer',  text: 'Flashcards: Tap/click to flip (or press Space)' },
-      { icon: 'fa-arrow-right',   text: 'Arrow keys ← → navigate between flashcards' },
-      { icon: 'fa-random',        text: 'Shuffle button randomizes flashcard order' },
-      { icon: 'fa-check-circle',  text: 'Quiz: click an option → instant feedback + explanation' },
-      { icon: 'fa-trophy',        text: 'Quiz result shows score, grade and full answer review' },
+      { icon: 'fa-hand-pointer', text: 'Flashcards: Tap/click to flip (or press Space)' },
+      { icon: 'fa-arrow-right',  text: 'Arrow keys ← → navigate between flashcards' },
+      { icon: 'fa-random',       text: 'Shuffle button randomizes flashcard order' },
+      { icon: 'fa-check-circle', text: 'Quiz: click an option → instant feedback + explanation' },
+      { icon: 'fa-trophy',       text: 'Quiz result shows score, grade and full answer review' },
     ],
     cta: 'Next: PDF Export →',
   },
   {
-    step:     7,
-    title:    '📄 World-Class PDF Export',
+    step: 7, title: '📄 World-Class PDF Export',
     subtitle: 'Professional formatted PDF with all your content',
-    content:  'Download a beautifully formatted PDF with a <strong>cover page</strong> (topic, stats, date), all notes sections, flashcards list, quiz with answers highlighted, and mind map branches. Choose <strong>Dark or Light</strong> PDF theme in Settings.',
-    icon:     'fa-file-pdf',
-    color:    '#ff4444',
-    targetId: 'pdfBtn',
-    arrow:    'up',
+    content: 'Download a beautifully formatted PDF with a <strong>cover page</strong>, all notes sections, flashcards list, quiz with answers highlighted, and mind map branches. Choose <strong>Dark or Light</strong> PDF theme in Settings.',
+    icon: 'fa-file-pdf', color: '#ff4444', targetId: 'pdfBtn', arrow: 'up',
     tips: [
-      { icon: 'fa-moon',   text: 'Dark PDF: black background, gold accents, professional' },
-      { icon: 'fa-sun',    text: 'Light PDF: white background, clean, print-ready' },
-      { icon: 'fa-cog',    text: 'Change PDF theme in Settings → PDF Style section' },
-      { icon: 'fa-copy',   text: 'Copy button copies all content as clean markdown text' },
-      { icon: 'fa-star',   text: 'Save button stores notes in your local library' },
+      { icon: 'fa-moon',  text: 'Dark PDF: black background, gold accents, professional' },
+      { icon: 'fa-sun',   text: 'Light PDF: white background, clean, print-ready' },
+      { icon: 'fa-cog',   text: 'Change PDF theme in Settings → PDF Style section' },
+      { icon: 'fa-copy',  text: 'Copy button copies all content as clean markdown text' },
+      { icon: 'fa-star',  text: 'Save button stores notes in your local library' },
     ],
     cta: 'Next: Streak & Stats →',
   },
   {
-    step:     8,
-    title:    '🔥 Streak, Stats & Personalisation',
+    step: 8, title: '🔥 Streak, Stats & Personalisation',
     subtitle: 'Track your learning progress and customise your experience',
-    content:  "Your <strong>fire streak</strong> shows how many days in a row you've studied — visible in gold at the top. Sessions count every page visit. Customise theme (Dark/Light/Golden), font size, avatar, PDF style and default language in Settings.",
-    icon:     'fa-fire',
-    color:    '#ffae00',
-    targetId: 'headerStreak',
-    arrow:    'down',
+    content: "Your <strong>fire streak</strong> shows how many days in a row you've studied — visible in gold at the top. Sessions count every page visit. Customise theme, font size, avatar, and PDF style in Settings.",
+    icon: 'fa-fire', color: '#ffae00', targetId: 'headerStreak', arrow: 'down',
     tips: [
       { icon: 'fa-fire',        text: '🔥 Gold streak in header — study daily to keep it alive!' },
       { icon: 'fa-user-circle', text: 'Click your avatar → pick from 8 color themes' },
@@ -309,57 +244,52 @@ const DEMO_STEPS = [
 
 class SavoireApp {
   constructor() {
-    // ── Core Generation State ──
-    this.tool         = 'notes';
-    this.generating   = false;
-    this.currentData  = null;
-    this.confirmCb    = null;
-    this.thinkTimer   = null;
-    this.stageIdx     = 0;
-    this.streamCtrl   = null;
-    this.streamBuffer = '';
-    this.focusMode    = false;
-    this.pdfTheme     = 'dark';
+    this.tool          = 'notes';
+    this.generating    = false;
+    this.currentData   = null;
+    this.confirmCb     = null;
+    this.thinkTimer    = null;
+    this.stageIdx      = 0;
+    this.streamCtrl    = null;
+    this.streamBuffer  = '';
+    this.focusMode     = false;
+    this.pdfTheme      = 'dark';
 
-    // ── Analytics State (managed here, synced to localStorage) ──
     this.streak        = this._loadStreak();
-    this.sessions      = this._loadSessions();        // loaded from localStorage
+    this.sessions      = this._loadNum('sv_sessions', 0);
     this.totalWords    = this._loadNum('sv_total_words', 0);
     this.lastActive    = localStorage.getItem('sv_last_active') || null;
     this.avatarColorIdx= this._loadNum('sv_avatar_color', 0);
 
-    // ── Wizard State ──
     this.wizardStep  = 0;
     this.wizardData  = { tool: 'notes', topic: '', language: 'English', depth: 'detailed', style: 'simple' };
     this.wizardFile  = null;
 
-    // ── Demo State ──
     this.demoStep     = 0;
-    this.demoOverlay  = null;
-    this.demoSpotlight= null;
+    this.demoCanvas   = null;
+    this.demoTooltip  = null;
+    this.demoArrow    = null;
 
-    // ── Tool-specific State ──
     this.fcCards   = []; this.fcCurrent = 0; this.fcFlipped = false;
     this.quizData  = []; this.quizIdx   = 0; this.quizScore  = 0;
 
-    // ── Persistence ──
     this.history  = this._load('sv_history', []);
     this.saved    = this._load('sv_saved',   []);
     this.prefs    = this._load('sv_prefs',   {});
     this.userName = localStorage.getItem('sv_user') || '';
 
-    // Apply saved preferences (theme, font) before DOM loads
-    this.pdfTheme        = this.prefs.pdfTheme     || 'dark';
+    this.pdfTheme        = this.prefs.pdfTheme || 'dark';
     this.avatarColorIdx  = this._loadNum('sv_avatar_color', 0);
 
-    // ── Session Increment Logic ──
-    // This is the FIX: increment session count on each new calendar day
-    this._incrementSession(); // ← Updates on EVERY page load/refresh
+    // Live streaming card accumulators
+    this._liveCards     = [];
+    this._liveQuestions = [];
+    this._liveBranches  = [];
+    this._liveMMCentral = '';
+    this._liveMMConns   = [];
 
-    // ── DOM Cache ──
+    this._incrementSession();
     this._cacheEl();
-
-    // ── Boot ──
     this._applyPrefs();
     this._bindAll();
     this._initWelcome();
@@ -372,18 +302,13 @@ class SavoireApp {
     this._initParticles();
     this._checkStreak();
     this._initDemoSystem();
-
-    // ── API Warmup + Google Sheets Tracking (sends session count) ──
-    // This fires immediately on page load — tracks the visit in Google Sheets
     this._warmupAndTrack();
 
     console.log(`%c✨ ${SAVOIRÉ.BRAND} — ${SAVOIRÉ.TAGLINE}`, 'color:#d4af37;font-size:16px;font-weight:bold');
     console.log(`%c🔧 Built by ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}`, 'color:#00d4ff;font-size:12px');
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 3: SESSION MANAGEMENT — THE KEY FIX
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── SESSION MANAGEMENT ─────────────────────────────────────────────────────
 
   _getISTDate() {
     const now = new Date();
@@ -397,49 +322,35 @@ class SavoireApp {
     return ist.toISOString().split('T')[0];
   }
 
-  _loadSessions() {
-    return this._loadNum('sv_sessions', 0);
-  }
-
-  _saveSessions() {
-    localStorage.setItem('sv_sessions', String(this.sessions));
-  }
+  _loadSessions() { return this._loadNum('sv_sessions', 0); }
+  _saveSessions()  { localStorage.setItem('sv_sessions', String(this.sessions)); }
 
   _incrementSession() {
-    // SESSION FIX — increment on EVERY page load / refresh
-    // The user's intent: jab bhi page refresh ho, session count barhay
-    // This means: every constructor call (page load/refresh) → sessions++
     this.sessions++;
     this._saveSessions();
-    // Also update last-active date
     const today = this._getISTDate();
     localStorage.setItem('sv_last_active', today);
     this.lastActive = today;
   }
 
   _warmupAndTrack() {
-    // Send ping to backend — this triggers Google Sheets tracking for every visit
-    // The session count sent here is CURRENT (already incremented if new day above)
     const sessionId = this._genId();
     fetch(SAVOIRÉ.API_URL, {
-      method:  'POST',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message:   'ping',
         userName:  this.userName || 'Anonymous',
         streak:    this.streak.count,
-        sessions:  this.sessions,   // ← This is the KEY: updated sessions sent on EVERY load
+        sessions:  this.sessions,
         sessionId: sessionId,
         options:   { stream: false },
       }),
     }).catch(() => {});
-    // Store sessionId for this session
     this._currentSessionId = sessionId;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 4: STREAK MANAGEMENT
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── STREAK MANAGEMENT ──────────────────────────────────────────────────────
 
   _loadStreak() {
     try { const s = localStorage.getItem('sv_streak'); if (s) return JSON.parse(s); }
@@ -459,7 +370,6 @@ class SavoireApp {
     const yesterday = this._getYesterday();
     const lastDate  = this.streak.lastDate;
 
-    // First-ever visit
     if (!lastDate) {
       this.streak = { count: 1, lastDate: today, bestStreak: 1 };
       this._saveStreak();
@@ -468,10 +378,9 @@ class SavoireApp {
       return;
     }
 
-    if (lastDate === today) return; // Already updated today
+    if (lastDate === today) return;
 
     if (lastDate === yesterday) {
-      // Consecutive day — increment streak
       this.streak.count++;
       this.streak.lastDate = today;
       if (this.streak.count > this.streak.bestStreak) {
@@ -483,11 +392,10 @@ class SavoireApp {
       if (this.streak.count === 30)  { this._toast('success', 'fa-crown', '👑 30-day streak! Champion!',       5000); this._confetti(true); }
       if (this.streak.count === 100) { this._toast('success', 'fa-gem',   '💎 100-day streak! Legendary!',     6000); this._confetti(true); }
     } else {
-      // Streak broken
       if (this.streak.count > 0) {
         this._toast('info', 'fa-fire-extinguisher', `Your ${this.streak.count}-day streak ended. Start fresh!`);
       }
-      this.streak.count   = 1;
+      this.streak.count    = 1;
       this.streak.lastDate = today;
     }
 
@@ -505,15 +413,12 @@ class SavoireApp {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 5: STATS DISPLAY
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── STATS DISPLAY ──────────────────────────────────────────────────────────
 
   _updateAllStats() {
-    const e = this.el;
+    const e     = this.el;
     const today = this._getISTDate();
 
-    // Sidebar stats
     if (e.sidebarStreakValue)   e.sidebarStreakValue.textContent   = this.streak.count;
     if (e.sidebarBestStreak)    e.sidebarBestStreak.textContent    = this.streak.bestStreak;
     if (e.sidebarSessionsValue) e.sidebarSessionsValue.textContent = this.sessions;
@@ -528,7 +433,6 @@ class SavoireApp {
         : this.lastActive;
     }
 
-    // Header stats
     if (e.headerStreak)  e.headerStreak.textContent  = this.streak.count;
     if (e.statSessions)  e.statSessions.textContent  = this.sessions;
     if (e.statHistory)   e.statHistory.textContent   = this.history.length;
@@ -536,59 +440,41 @@ class SavoireApp {
     if (e.histBadge)     e.histBadge.textContent     = this.history.length;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 6: DOM ELEMENT CACHE
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── DOM CACHE ──────────────────────────────────────────────────────────────
 
   _cacheEl() {
     const g  = id => document.getElementById(id);
     this.el  = {};
     const IDS = [
-      // Layout
       'leftPanel','sbToggle','sbBackdrop','rightPanel','outArea','outToolbar',
       'resultArea','emptyState','thinkingWrap','backToTopBtn',
-      // Header
       'dashHdr','themeBtn','themeIcon','settingsBtn','wizardHeaderBtn','megaHeaderBtn',
       'avBtn','avDropdown','avInitials','avDropdownAvatar','avDropdownName',
       'avHist','avSaved','avSettings','avClear',
       'statSessions','statHistory','statSaved','headerStreak','dhGreeting',
-      // Output toolbar
       'copyBtn','pdfBtn','saveBtn','shareBtn','clearBtn','newWizardBtn','focusModeBtn',
-      // Modals
       'wizardModal','wizardContent','megaModal','histModal','savedModal',
       'settingsModal','confirmModal','confirmMsg','confirmOkBtn','demoModal','demoContent',
-      // Settings
       'nameInput','saveNameBtn','dsStats',
       'exportDataBtn','importBackupBtn','clearDataBtn',
       'defaultLangSel','saveDefaultLangBtn',
-      // History modal
       'histList','histEmpty','histSearchInput','clearHistBtn','exportHistBtn','histBadge',
-      // Saved modal
       'savedList','savedEmpty','savedCount',
-      // Welcome
       'welcomeOverlay','welcomeBackOverlay','welcomeNameInput','welcomeBtn','welcomeSkip',
       'wbName','wbStreak','wbSessions','wbSaved','welcomeBackBtn',
-      // Navigation
       'navWizard','navAll','navHistory','navSaved','navSettings','navFocus',
       'demoReplayBtn','homeLink','dhLogo',
-      // Sidebar content
       'sidebarAvatar','sidebarUserName','sidebarAvatarPicker',
       'sidebarStreakValue','sidebarBestStreak','sidebarSessionsValue',
       'sidebarWordsValue','sidebarHistoryValue','sidebarSavedValue','sidebarLastActive',
       'lpHistList','lpHistAll','lpSavedList','lpSavedAll',
       'aboutToggleBtn','aboutContent','aboutChevron',
-      // Stream overlay
       'streamFullpage','sfpText','sfpScroll','sfpToolIcon','sfpToolName',
       'sfpTopic','sfpLabel','sscProgressBar',
-      // Stage indicators
       'ts0','ts1','ts2','ts3','ts4','ss0','ss1','ss2','ss3','ss4',
-      // Flashcard elements (dynamic — re-cached after render)
       'theCard','fcFront','fcBack','fcCur','fcTot','fcProgBar','fcPct','fcPrev','fcNext',
-      // Quiz elements (dynamic — re-cached after render)
       'quizScoreNum','quizBody','quizReviewSection','quizReviewToggleLabel',
-      // Mega modal
       'megaTopicInput','megaCharCount','megaLangSel','megaDepthSel','megaGenerateBtn',
-      // Particles
       'particleCanvas','toastContainer',
     ];
     IDS.forEach(id => { this.el[id] = g(id); });
@@ -601,9 +487,7 @@ class SavoireApp {
     dy.forEach(id => { this.el[id] = g(id); });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 7: PARTICLES
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── PARTICLES ──────────────────────────────────────────────────────────────
 
   _initParticles() {
     const canvas = this.el.particleCanvas;
@@ -641,11 +525,9 @@ class SavoireApp {
     animate();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 8: HELPERS
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── HELPERS ────────────────────────────────────────────────────────────────
 
-  _el(id) { return document.getElementById(id); }
+  _el(id)   { return document.getElementById(id); }
   _qs(sel)  { return document.querySelector(sel); }
   _qsa(sel) { return document.querySelectorAll(sel); }
   _load(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; } }
@@ -655,11 +537,8 @@ class SavoireApp {
   _esc(s) {
     if (!s) return '';
     return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
   _relTime(ts) {
     if (!ts) return '';
@@ -681,22 +560,18 @@ class SavoireApp {
     return 'Older';
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 9: MARKDOWN RENDERER
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── MARKDOWN RENDERER ──────────────────────────────────────────────────────
 
   _renderMd(text) {
     if (!text) return '';
-    // Use marked.js if available (loaded via CDN in HTML)
     if (window.marked && window.DOMPurify) {
       try {
         if (window.marked.setOptions) {
           window.marked.setOptions({ breaks: true, gfm: true, mangle: false, headerIds: false });
         }
         return DOMPurify.sanitize(window.marked.parse(text));
-      } catch (e) { /* fall through to manual */ }
+      } catch (e) { /* fall through */ }
     }
-    // Manual fallback markdown renderer
     let h = String(text)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     h = h.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
@@ -713,18 +588,14 @@ class SavoireApp {
     h = h.replace(/^---+$/gm,        '<hr>');
     h = h.replace(/^- (.+)$/gm,     '<li class="ul-li">$1</li>');
     h = h.replace(/^(\d+)\. (.+)$/gm,'<li class="ol-li"><span class="ol-num">$1.</span> $2</li>');
-    h = h.replace(/(<li class="ul-li">[\s\S]+?<\/li>)(?!\s*<li class="ul-li">)/g, '<ul>$1</ul>');
-    h = h.replace(/(<li class="ol-li">[\s\S]+?<\/li>)(?!\s*<li class="ol-li">)/g, '<ol>$1</ol>');
     h = h.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
     if (!h.startsWith('<')) h = '<p>' + h + '</p>';
     return h;
   }
 
-  // For live streaming — adds blinking cursor at end
   _renderMdLive(text) {
     if (!text) return '<span class="typing-cursor">▊</span>';
-    const rendered = this._renderMd(text);
-    return rendered + '<span class="typing-cursor">▊</span>';
+    return this._renderMd(text) + '<span class="typing-cursor">▊</span>';
   }
 
   _stripMd(t) {
@@ -743,13 +614,10 @@ class SavoireApp {
       .trim();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 10: WELCOME SYSTEM
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── WELCOME SYSTEM ─────────────────────────────────────────────────────────
 
   _initWelcome() {
     if (!this.userName) {
-      // New user — show welcome screen
       setTimeout(() => {
         if (!this.el.welcomeOverlay) return;
         this.el.welcomeOverlay.style.display = 'flex';
@@ -757,7 +625,6 @@ class SavoireApp {
         setTimeout(() => this.el.welcomeNameInput?.focus(), 450);
       }, 600);
     } else {
-      // Returning user — show welcome back
       setTimeout(() => {
         if (!this.el.welcomeBackOverlay) return;
         if (this.el.wbName)    this.el.wbName.textContent    = this.userName;
@@ -783,7 +650,6 @@ class SavoireApp {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
     }
-    // Notify (fire-and-forget)
     try {
       fetch(`https://ntfy.sh/${SAVOIRÉ.NTFY}`, {
         method: 'POST',
@@ -795,10 +661,8 @@ class SavoireApp {
     this._dismissOverlay('welcomeOverlay');
     this._updateUserUI();
     this._updateAllStats();
-    // Re-send ping with real name now
     this._warmupAndTrack();
     this._toast('success', 'fa-hand-wave', `Welcome, ${name}! Let me show you around 🎓`);
-    // Auto-start demo for new users
     setTimeout(() => this._openDemo(), 800);
   }
 
@@ -814,11 +678,6 @@ class SavoireApp {
     this._warmupAndTrack();
   }
 
-  _skipWelcome_DISABLED() {
-    // Skip is disabled — name entry is now mandatory
-    // This method is kept for reference only
-  }
-
   _dismissOverlay(id) {
     const el = this._el(id);
     if (!el) return;
@@ -832,7 +691,6 @@ class SavoireApp {
     const init  = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
     const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
 
-    // Apply avatar color to all avatar elements
     [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
       if (!el) return;
       el.style.background = color.bg;
@@ -850,20 +708,9 @@ class SavoireApp {
       const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
       this.el.dhGreeting.textContent = `${greet}, ${name}`;
     }
-
-    // Update welcome screen avatar grid initials with the selected color
-    const wGrid = this._el('welcomeAvatarGrid');
-    if (wGrid) {
-      wGrid.querySelectorAll('.wavatarBtn').forEach((btn, i) => {
-        btn.textContent = init;
-        btn.classList.toggle('active', i === this.avatarColorIdx);
-      });
-    }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 11: AVATAR PICKER
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── AVATAR PICKER ──────────────────────────────────────────────────────────
 
   _renderAvatarPicker() {
     const container = this.el.sidebarAvatarPicker;
@@ -873,9 +720,7 @@ class SavoireApp {
       <div class="avatar-picker-grid">
         ${AVATAR_COLORS.map((c, i) => `
           <button class="avatar-color-btn ${i === this.avatarColorIdx ? 'active' : ''}"
-                  data-idx="${i}"
-                  style="background:${c.bg}"
-                  title="${c.name}"
+                  data-idx="${i}" style="background:${c.bg}" title="${c.name}"
                   onclick="window._app._setAvatarColor(${i})">
             ${i === this.avatarColorIdx ? '<i class="fas fa-check"></i>' : ''}
           </button>
@@ -888,12 +733,11 @@ class SavoireApp {
     localStorage.setItem('sv_avatar_color', String(idx));
     this._updateUserUI();
     this._renderAvatarPicker();
+    this._renderAvatarPickerInSettings();
     this._toast('success', 'fa-palette', `Avatar color: ${AVATAR_COLORS[idx].name}!`);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 12: WIZARD SYSTEM — 6 STEPS
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── WIZARD SYSTEM ──────────────────────────────────────────────────────────
 
   _openWizard(presetTool) {
     this.wizardData = {
@@ -952,25 +796,23 @@ class SavoireApp {
             ? '<i class="fas fa-rocket"></i> Generate Now!'
             : 'Next <i class="fas fa-arrow-right"></i>'}
         </button>
-        <button class="wizard-btn wizard-btn-ghost" id="wizDraft">
+        <button class="wizard-btn wizard-btn-ghost" id="wizDraft" title="Save Draft">
           <i class="fas fa-save"></i>
         </button>
       </div>`;
 
-    // Render step body
     const body = document.getElementById('wizardBody');
     if (body) {
       switch (this.wizardStep) {
-        case 0: body.innerHTML = this._wStepTool();     this._bindWTool();    break;
-        case 1: body.innerHTML = this._wStepTopic();    this._bindWTopic();   break;
-        case 2: body.innerHTML = this._wStepLang();     this._bindWLang();    break;
-        case 3: body.innerHTML = this._wStepDepth();    this._bindWDepth();   break;
-        case 4: body.innerHTML = this._wStepStyle();    this._bindWStyle();   break;
-        case 5: body.innerHTML = this._wStepReview();   break;
+        case 0: body.innerHTML = this._wStepTool();   this._bindWTool();  break;
+        case 1: body.innerHTML = this._wStepTopic();  this._bindWTopic(); break;
+        case 2: body.innerHTML = this._wStepLang();   this._bindWLang();  break;
+        case 3: body.innerHTML = this._wStepDepth();  this._bindWDepth(); break;
+        case 4: body.innerHTML = this._wStepStyle();  this._bindWStyle(); break;
+        case 5: body.innerHTML = this._wStepReview(); break;
       }
     }
 
-    // Wire footer buttons
     const prev  = this._el('wizPrev');
     const next  = this._el('wizNext');
     const draft = this._el('wizDraft');
@@ -992,7 +834,6 @@ class SavoireApp {
     };
   }
 
-  // Step 1: Tool Selection
   _wStepTool() {
     return `
       <div class="wizard-step-heading"><i class="fas fa-magic"></i> Choose what you want to create:</div>
@@ -1019,7 +860,6 @@ class SavoireApp {
     });
   }
 
-  // Step 2: Topic
   _wStepTopic() {
     const fn = this.wizardFile ? this.wizardFile.name : '';
     return `
@@ -1089,9 +929,9 @@ Examples:
         };
         r.readAsText(f, 'UTF-8');
       };
-      fz.ondragover = e => { e.preventDefault(); fz.classList.add('drag-over'); };
+      fz.ondragover  = e => { e.preventDefault(); fz.classList.add('drag-over'); };
       fz.ondragleave = () => { fz.classList.remove('drag-over'); };
-      fz.ondrop = e => {
+      fz.ondrop      = e => {
         e.preventDefault(); fz.classList.remove('drag-over');
         const f = e.dataTransfer.files[0];
         if (f && fi) { fi.files = e.dataTransfer.files; fi.dispatchEvent(new Event('change')); }
@@ -1112,7 +952,6 @@ Examples:
     });
   }
 
-  // Step 3: Language
   _wStepLang() {
     const LANGS = [
       ['English','🇬🇧'],['Urdu','🇵🇰'],['Hindi','🇮🇳'],['Arabic','🇸🇦'],['French','🇫🇷'],
@@ -1139,7 +978,6 @@ Examples:
     });
   }
 
-  // Step 4: Depth (SEPARATE STEP)
   _wStepDepth() {
     return `
       <div class="wizard-step-heading"><i class="fas fa-chart-line"></i> How much detail do you need?</div>
@@ -1162,7 +1000,6 @@ Examples:
     });
   }
 
-  // Step 5: Style (SEPARATE STEP — not combined with depth)
   _wStepStyle() {
     return `
       <div class="wizard-step-heading"><i class="fas fa-pen-fancy"></i> How should it be written?</div>
@@ -1183,7 +1020,6 @@ Examples:
     });
   }
 
-  // Step 6: Review
   _wStepReview() {
     const toolCfg  = TOOL_CONFIG[this.wizardData.tool];
     const depthCfg = DEPTH_CONFIG[this.wizardData.depth];
@@ -1192,11 +1028,11 @@ Examples:
       <div class="wizard-review-card">
         <div class="wizard-review-header"><i class="fas fa-clipboard-check"></i> Review Your Choices</div>
         ${[
-          { icon:'fa-magic',      label:'Tool',         val: toolCfg?.label,     sub: this.wizardData.tool === 'all' ? '⚡ ALL 5 TOOLS' : toolCfg?.sfpName },
-          { icon:'fa-pencil-alt', label:'Topic',        val: (this.wizardData.topic || '<em class="dim">Not entered yet</em>').slice(0, 120) + (this.wizardData.topic?.length > 120 ? '…' : '') },
-          { icon:'fa-globe',      label:'Language',     val: this.wizardData.language },
-          { icon:'fa-chart-line', label:'Depth',        val: depthCfg?.label,    sub: depthCfg?.words + ' words · ' + depthCfg?.subDesc },
-          { icon:'fa-pen-fancy',  label:'Style',        val: styleCfg?.label,    sub: styleCfg?.desc },
+          { icon:'fa-magic',      label:'Tool',     val: toolCfg?.label,   sub: this.wizardData.tool === 'all' ? '⚡ ALL 5 TOOLS' : toolCfg?.sfpName },
+          { icon:'fa-pencil-alt', label:'Topic',    val: (this.wizardData.topic || '<em class="dim">Not entered yet</em>').slice(0, 120) + (this.wizardData.topic?.length > 120 ? '…' : '') },
+          { icon:'fa-globe',      label:'Language', val: this.wizardData.language },
+          { icon:'fa-chart-line', label:'Depth',    val: depthCfg?.label,  sub: depthCfg?.words + ' words · ' + depthCfg?.subDesc },
+          { icon:'fa-pen-fancy',  label:'Style',    val: styleCfg?.label,  sub: styleCfg?.desc },
         ].map(r => `
           <div class="wizard-review-item">
             <div class="wizard-review-icon"><i class="fas ${r.icon}"></i></div>
@@ -1234,9 +1070,7 @@ Examples:
     await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 13: MEGA BUNDLE MODAL
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
 
   _openMega() {
     if (this.el.megaTopicInput)  this.el.megaTopicInput.value = '';
@@ -1257,15 +1091,21 @@ Examples:
     this._sendDirect(topic, lang, depth, 'simple', 'all');
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 14: CORE GENERATION PIPELINE
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
   async _sendDirect(text, lang, depth, style, tool) {
     if (this.generating) return;
     this.generating    = true;
     this.streamBuffer  = '';
     this.tool          = tool || 'notes';
+
+    // Reset live accumulators
+    this._liveCards     = [];
+    this._liveQuestions = [];
+    this._liveBranches  = [];
+    this._liveMMCentral = '';
+    this._liveMMConns   = [];
+
     this._showToolbar(false);
     this._showStreamOverlay(text, this.tool);
     this._startStages();
@@ -1298,7 +1138,6 @@ Examples:
     } finally {
       this.generating = false;
       this._stopStages();
-      this._showCancelBtn(false);
     }
   }
 
@@ -1319,28 +1158,15 @@ Examples:
 
   async _callAPI(message, opts) {
     this.streamCtrl = new AbortController();
-    this._showCancelBtn(true);
     try {
       return await this._streamSSE(message, opts);
     } catch (err) {
       if (err.name === 'AbortError') throw err;
-      // Fallback to JSON if SSE fails
       return await this._callAPIJson(message, opts);
     }
   }
 
   async _streamSSE(message, opts) {
-    // ══════════════════════════════════════════════════════════════════════
-    // WORLD-CLASS SSE STREAMING — Handles ALL tool types with live animation
-    // New events handled:
-    //   token    → streaming notes token (render live with markdown)
-    //   card     → one flashcard streamed (animate in one by one)
-    //   question → one quiz question streamed (animate in)
-    //   branch   → one mindmap branch streamed (animate in)
-    //   stage    → progress stage update
-    //   done     → complete final data object
-    //   error    → generation error
-    // ══════════════════════════════════════════════════════════════════════
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({
         message,
@@ -1351,12 +1177,11 @@ Examples:
         options:   { ...opts, stream: true },
       });
 
-      // Accumulated cards (for flashcard/quiz/mindmap live streaming)
-      this._liveCards    = [];
-      this._liveQuestions= [];
-      this._liveBranches = [];
-      this._liveMMCentral= '';
-      this._liveMMConns  = [];
+      this._liveCards     = [];
+      this._liveQuestions = [];
+      this._liveBranches  = [];
+      this._liveMMCentral = '';
+      this._liveMMConns   = [];
 
       fetch(SAVOIRÉ.API_URL, {
         method:  'POST',
@@ -1373,43 +1198,48 @@ Examples:
         if (!ct.includes('text/event-stream')) {
           const d = await res.json();
           if (d.error) reject(new Error(d.error));
-          else this._simulateStream(d, resolve, reject);
+          else resolve(d);
           return;
         }
 
-        // True SSE stream reader
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let lineBuf = '', chars = 0, renderThrottle = 0;
 
-        // ── Live notes rendering (throttled for performance) ──
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 32) return;
+          if (now - renderThrottle < 40) return;
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
-            this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-            this.el.sfpText.classList.add('live-md');
+            const tool = opts.tool || 'notes';
+            // For notes/summary tool: show formatted text
+            if (tool === 'notes' || tool === 'summary') {
+              this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+              this.el.sfpText.classList.add('live-md');
+            } else {
+              // For card tools: only show notes during phase 1
+              if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
+                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+                this.el.sfpText.classList.add('live-md');
+              }
+            }
           } catch {
             this.el.sfpText.textContent = this.streamBuffer;
           }
           if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
         };
 
-        // ── Live flashcard animation ──
         const animateCard = (idx, total, card) => {
           this._liveCards.push(card);
           this._updateLiveCards(idx, total);
         };
 
-        // ── Live quiz question animation ──
         const animateQuestion = (idx, total, q) => {
           this._liveQuestions.push(q);
           this._updateLiveQuestions(idx, total);
         };
 
-        // ── Live mindmap branch animation ──
         const animateBranch = (idx, total, branch) => {
           if (branch.name === '_central_') {
             this._liveMMCentral = branch.value;
@@ -1421,15 +1251,11 @@ Examples:
           }
         };
 
-        // ── SSE pump ──
         const pump = async () => {
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) {
-                reject(new Error('Stream ended without final data'));
-                return;
-              }
+              if (done) { reject(new Error('Stream ended without final data')); return; }
 
               lineBuf += decoder.decode(value, { stream: true });
               const lines = lineBuf.split('\n');
@@ -1441,64 +1267,57 @@ Examples:
                 try {
                   const evt = JSON.parse(raw);
 
-                  // ── Token: notes streaming ──
                   if (evt.t !== undefined) {
                     this.streamBuffer += evt.t;
                     chars += evt.t.length;
                     renderLive();
                     this._updateStageByProgress(chars);
 
-                  // ── Card: one flashcard at a time ──
                   } else if (evt.card !== undefined) {
                     animateCard(evt.idx, evt.total, evt.card);
 
-                  // ── Question: one quiz question at a time ──
                   } else if (evt.q !== undefined) {
                     animateQuestion(evt.idx, evt.total, evt.q);
 
-                  // ── Branch: one mindmap branch at a time ──
                   } else if (evt.branch !== undefined) {
                     animateBranch(evt.idx, evt.total, evt.branch);
 
-                  // ── Stage: progress update ──
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
 
-                  // ── Done: final complete data object ──
                   } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
                     }
-                    // Merge in any live-streamed cards that arrived
+                    // Merge live-streamed cards
                     if (this._liveCards.length)     evt.flashcards     = this._liveCards;
                     if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
                     if (this._liveBranches.length) {
                       evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
                     }
+                    // Attach the streamed notes buffer
+                    if (!evt.ultra_long_notes && this.streamBuffer) {
+                      evt.ultra_long_notes = this.streamBuffer;
+                    }
                     resolve(evt);
                     return;
 
-                  // ── Error ──
                   } else if (evt.error !== undefined) {
                     reject(new Error(evt.error));
                     return;
                   }
-                } catch { /* Ignore malformed SSE JSON */ }
+                } catch { /* ignore bad SSE */ }
               }
             }
           } catch (pumpErr) {
-            if (pumpErr.name === 'AbortError') reject(pumpErr);
-            else reject(pumpErr);
+            reject(pumpErr);
           }
         };
 
         pump();
-      }).catch(err => {
-        if (err.name === 'AbortError') reject(err);
-        else reject(err);
-      });
+      }).catch(err => reject(err));
     });
   }
 
@@ -1508,7 +1327,7 @@ Examples:
     if (!container) return;
 
     const cards = this._liveCards;
-    const pct   = Math.round((cards.length / total) * 100);
+    const pct   = Math.round((cards.length / Math.max(total, 1)) * 100);
 
     container.classList.remove('live-md');
     container.innerHTML = `
@@ -1516,7 +1335,8 @@ Examples:
         <div class="live-cards-header">
           <div class="live-cards-title">
             <i class="fas fa-layer-group" style="color:#bf00ff"></i>
-            Flashcards Being Generated…
+            Flashcards Generating…
+            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(deck being built)</span>
           </div>
           <div class="live-cards-progress">
             <div class="live-cards-prog-bar">
@@ -1525,18 +1345,35 @@ Examples:
             <span class="live-cards-count">${cards.length} / ${total}</span>
           </div>
         </div>
+        <div class="live-deck-visualizer">
+          ${this._buildDeckViz(cards)}
+        </div>
         <div class="live-cards-grid">
           ${cards.map((c, i) => `
-            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}" style="animation-delay:${i * 30}ms">
-              <div class="live-card-num">${i + 1}</div>
+            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}" style="animation-delay:${Math.min(i * 25, 400)}ms">
+              <div class="live-card-num">Card ${i + 1} ${i === cards.length - 1 ? '<span style="color:#bf00ff;font-size:.6rem">● LIVE</span>' : ''}</div>
               <div class="live-card-front">${this._esc(c.front || c.question || '')}</div>
-              <div class="live-card-back">${this._esc((c.back || c.answer || '').slice(0, 80))}${(c.back || c.answer || '').length > 80 ? '…' : ''}</div>
+              <div class="live-card-back">${this._esc((c.back || c.answer || '').slice(0, 100))}${(c.back || c.answer || '').length > 100 ? '…' : ''}</div>
             </div>
           `).join('')}
         </div>
-        ${cards.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more cards…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} flashcards ready!</div>`}
+        ${cards.length < total
+          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more cards… (${total - cards.length} remaining)</div>`
+          : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} flashcards ready! Building interactive deck…</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+  }
+
+  _buildDeckViz(cards) {
+    if (cards.length === 0) return '';
+    const count = Math.min(cards.length, 5);
+    let html = '<div class="deck-viz-wrap">';
+    for (let i = 0; i < count; i++) {
+      const offset = (count - 1 - i) * 3;
+      html += `<div class="deck-card-viz" style="transform:translate(${offset}px,${-offset}px) rotate(${(i - count/2) * 1.5}deg);z-index:${i};opacity:${0.5 + i * 0.1}"></div>`;
+    }
+    html += `<div class="deck-count-badge">${cards.length}</div></div>`;
+    return html;
   }
 
   // ── UPDATE LIVE QUIZ QUESTIONS in stream overlay ──────────────────────────
@@ -1545,7 +1382,7 @@ Examples:
     if (!container) return;
 
     const qs  = this._liveQuestions;
-    const pct = Math.round((qs.length / total) * 100);
+    const pct = Math.round((qs.length / Math.max(total, 1)) * 100);
     const letters = ['A','B','C','D','E'];
 
     container.classList.remove('live-md');
@@ -1554,7 +1391,8 @@ Examples:
         <div class="live-cards-header">
           <div class="live-cards-title">
             <i class="fas fa-question-circle" style="color:#00ff88"></i>
-            Quiz Questions Being Generated…
+            Quiz Questions Generating…
+            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(building rapidly)</span>
           </div>
           <div class="live-cards-progress">
             <div class="live-cards-prog-bar">
@@ -1563,16 +1401,25 @@ Examples:
             <span class="live-cards-count">${qs.length} / ${total}</span>
           </div>
         </div>
+        <div class="live-quiz-speed-track">
+          ${Array.from({length: total}, (_, i) => `<div class="quiz-speed-pip ${i < qs.length ? 'filled' : ''}" style="${i < qs.length ? 'background:#00ff88' : ''}"></div>`).join('')}
+        </div>
         <div class="live-quiz-list">
           ${qs.map((q, i) => `
             <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}">
-              <div class="live-quiz-q-num">Q${i + 1} <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}">${q.difficulty||'medium'}</span></div>
+              <div class="live-quiz-q-num">
+                Q${i + 1}
+                <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}">${q.difficulty||'medium'}</span>
+                ${i === qs.length - 1 ? '<span style="color:#00ff88;font-size:.6rem;margin-left:4px">● LIVE</span>' : ''}
+              </div>
               <div class="live-quiz-q-text">${this._esc(q.question || '')}</div>
               ${q.options ? `<div class="live-quiz-opts">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}">${letters[oi]}. ${this._esc(opt)}</div>`).join('')}</div>` : ''}
             </div>
           `).join('')}
         </div>
-        ${qs.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more questions…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions ready!</div>`}
+        ${qs.length < total
+          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Building questions fast…</div>`
+          : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions ready! Preparing quiz interface…</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
@@ -1584,7 +1431,7 @@ Examples:
 
     const branches = this._liveBranches;
     const central  = this._liveMMCentral;
-    const pct      = idx === -1 ? 5 : Math.round((branches.length / Math.max(total, 1)) * 95) + 5;
+    const pct      = idx === -1 ? 8 : Math.round((branches.length / Math.max(total, 1)) * 90) + 8;
 
     container.classList.remove('live-md');
     container.innerHTML = `
@@ -1592,7 +1439,8 @@ Examples:
         <div class="live-cards-header">
           <div class="live-cards-title">
             <i class="fas fa-project-diagram" style="color:#d4af37"></i>
-            Mind Map Being Generated…
+            Mind Map Growing…
+            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(branches appearing)</span>
           </div>
           <div class="live-cards-progress">
             <div class="live-cards-prog-bar">
@@ -1601,25 +1449,36 @@ Examples:
             <span class="live-cards-count">${branches.length} / ${total}</span>
           </div>
         </div>
-        ${central ? `<div class="live-mm-central"><i class="fas fa-brain"></i> ${this._esc(central)}</div>` : ''}
-        <div class="live-mm-branches">
+        ${central ? `
+          <div class="live-mm-central">
+            <i class="fas fa-brain" style="color:#d4af37"></i>
+            ${this._esc(central)}
+            <span class="live-mm-pulse"></span>
+          </div>` : `<div class="live-mm-central-placeholder"><div class="live-dots"><span></span><span></span><span></span></div> Building central node…</div>`}
+        <div class="live-mm-radial-container">
           ${branches.map((b, i) => `
-            <div class="live-mm-branch ${i === branches.length - 1 ? 'live-card-new' : ''}" style="border-left-color:${b.color||'#d4af37'}">
-              <div class="live-mm-branch-name" style="color:${b.color||'#d4af37'}">
-                <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+            <div class="live-mm-branch ${i === branches.length - 1 ? 'live-card-new' : ''}"
+                 style="border-left-color:${b.color || '#d4af37'};animation-delay:${i * 80}ms">
+              <div class="live-mm-branch-name" style="color:${b.color || '#d4af37'}">
+                <i class="fas fa-sitemap"></i>
+                ${this._esc(b.name)}
+                ${i === branches.length - 1 ? '<span style="font-size:.55rem;opacity:.7;margin-left:4px">● new</span>' : ''}
               </div>
               <div class="live-mm-items">
-                ${(b.items||[]).slice(0,5).map(item => `<span class="live-mm-item">${this._esc(item)}</span>`).join('')}
+                ${(b.items || []).slice(0, 4).map(item => `<span class="live-mm-item">${this._esc(item)}</span>`).join('')}
+                ${(b.items || []).length > 4 ? `<span class="live-mm-item" style="opacity:.5">+${b.items.length - 4} more</span>` : ''}
               </div>
             </div>
           `).join('')}
         </div>
-        ${branches.length < total ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more branches…</div>` : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches ready!</div>`}
+        ${branches.length < total
+          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Growing branches… (${total - branches.length} remaining)</div>`
+          : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches complete! Rendering visual map…</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
-    async _callAPIJson(message, opts) {
+  async _callAPIJson(message, opts) {
     const res = await fetch(SAVOIRÉ.API_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1646,14 +1505,7 @@ Examples:
     if (this.streamCtrl) { this.streamCtrl.abort(); this.streamCtrl = null; }
   }
 
-  _showCancelBtn(show) {
-    // Cancel functionality — currently no explicit cancel button in new UI,
-    // but stream controller is available
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 15: STREAM OVERLAY
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── STREAM OVERLAY ─────────────────────────────────────────────────────────
 
   _showStreamOverlay(topic, tool) {
     const cfg = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
@@ -1683,9 +1535,7 @@ Examples:
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 16: STAGE SYSTEM
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── STAGE SYSTEM ────────────────────────────────────────────────────────────
 
   _startStages() {
     this.stageIdx = 0;
@@ -1736,9 +1586,7 @@ Examples:
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 17: STATE MANAGEMENT
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── STATE MANAGEMENT ────────────────────────────────────────────────────────
 
   _showState(state, errMsg) {
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
@@ -1780,9 +1628,7 @@ Examples:
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 18: RESULT RENDERING
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── RESULT RENDERING ───────────────────────────────────────────────────────
 
   _renderResult(data) {
     if (!this.el.resultArea) return;
@@ -1812,7 +1658,7 @@ Examples:
             <div class="rh-mi"><i class="fas fa-graduation-cap"></i> ${this._esc(data.curriculum_alignment || 'General Study')}</div>
             <div class="rh-mi"><i class="fas fa-calendar-alt"></i> ${new Date().toLocaleDateString()}</div>
             <div class="rh-mi"><i class="fas fa-globe"></i> ${this._esc(lang)}</div>
-            <div class="rh-mi"><i class="fas fa-file-word"></i> ~${wc.toLocaleString()} words</div>
+            ${wc > 0 ? `<div class="rh-mi"><i class="fas fa-file-word"></i> ~${wc.toLocaleString()} words</div>` : ''}
             ${data._quality ? `<div class="rh-mi"><i class="fas fa-robot"></i> ${data._quality === 'ai_generated' ? 'AI Generated' : 'Enhanced'}</div>` : ''}
           </div>
           <div class="rh-powered">
@@ -1883,7 +1729,8 @@ Examples:
 
   _buildNavItems(data) {
     const items = [];
-    if (data.ultra_long_notes)            items.push({ id: 'sec-notes',    label: 'Notes',         icon: 'fas fa-book-open' });
+    const tool  = this.tool;
+    if (data.ultra_long_notes && (tool === 'notes' || tool === 'summary' || tool === 'all')) items.push({ id: 'sec-notes',    label: 'Notes',         icon: 'fas fa-book-open' });
     if (data.flashcards?.length)          items.push({ id: 'sec-fc',       label: 'Flashcards',    icon: 'fas fa-layer-group' });
     if (data.quiz_questions?.length)      items.push({ id: 'sec-quiz',     label: 'Quiz',          icon: 'fas fa-question-circle' });
     if (data.mindmap)                     items.push({ id: 'sec-mm',       label: 'Mind Map',      icon: 'fas fa-project-diagram' });
@@ -1891,13 +1738,10 @@ Examples:
     if (data.key_tricks?.length)          items.push({ id: 'sec-tricks',   label: 'Tricks',        icon: 'fas fa-magic' });
     if (data.practice_questions?.length)  items.push({ id: 'sec-qa',       label: 'Q&A',           icon: 'fas fa-pen-alt' });
     if (data.real_world_applications?.length) items.push({ id: 'sec-apps', label: 'Applications',  icon: 'fas fa-globe' });
-    if (data.common_misconceptions?.length)   items.push({ id: 'sec-misc', label: 'Misconceptions',icon: 'fas fa-exclamation-triangle' });
     return items;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 19: RESULT BUILDERS — NOTES
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── RESULT BUILDERS ────────────────────────────────────────────────────────
 
   _buildNotesHTML(data) {
     let h = '';
@@ -1917,136 +1761,10 @@ Examples:
     if (data.practice_questions?.length)     h += this._secQA(data.practice_questions);
     if (data.real_world_applications?.length)h += this._secApps(data.real_world_applications);
     if (data.common_misconceptions?.length)  h += this._secMisc(data.common_misconceptions);
-    if (data.flashcards?.length)             h += `<div class="study-sec section-anchor" id="sec-fc"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-layer-group"></i> Flashcard Preview</div></div><div class="ss-body">${this._fcMiniList(data.flashcards)}</div></div>`;
-    if (data.quiz_questions?.length)         h += `<div class="study-sec section-anchor" id="sec-quiz"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-question-circle"></i> Quiz Preview</div></div><div class="ss-body">${this._quizMiniList(data.quiz_questions)}</div></div>`;
-    if (data.mindmap)                        h += `<div class="study-sec section-anchor" id="sec-mm"><div class="ss-hdr"><div class="ss-title"><i class="fas fa-project-diagram"></i> Mind Map Preview</div></div><div class="ss-body">${this._mmMini(data.mindmap)}</div></div>`;
     return h || '<div style="padding:24px;text-align:center;color:#d4af37">Study materials generated successfully.</div>';
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 20: ALL-TOOLS MEGA BUNDLE HTML
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-
-  _buildAllHTML(data) {
-    let h = `<div class="mega-result-banner">
-      <i class="fas fa-bolt"></i>
-      ⚡ Mega Study Bundle — All 5 Tools Generated
-      <span class="mega-result-count">
-        ${data.flashcards?.length ? `🃏 ${data.flashcards.length} Cards` : ''}
-        ${data.quiz_questions?.length ? ` · ❓ ${data.quiz_questions.length} Questions` : ''}
-        ${data.mindmap?.branches?.length ? ` · 🗺️ ${data.mindmap.branches.length} Branches` : ''}
-      </span>
-    </div>`;
-
-    // 1. NOTES
-    if (data.ultra_long_notes) {
-      h += `<div class="study-sec section-anchor mega-section" id="sec-notes">
-        <div class="ss-hdr mega-hdr">
-          <div class="ss-title"><span class="mega-num">1</span><i class="fas fa-book-open"></i> Comprehensive Notes</div>
-          <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
-            <i class="fas fa-copy"></i> Copy
-          </button>
-        </div>
-        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-      </div>`;
-    }
-
-    // 2. FLASHCARDS (interactive)
-    if (data.flashcards?.length) {
-      this.fcCards   = data.flashcards;
-      this.fcCurrent = 0;
-      this.fcFlipped = false;
-      h += `<div class="study-sec section-anchor mega-section" id="sec-fc">
-        <div class="ss-hdr mega-hdr">
-          <div class="ss-title"><span class="mega-num">2</span><i class="fas fa-layer-group"></i> Flashcards (${data.flashcards.length} cards)</div>
-        </div>
-        <div class="ss-body">${this._buildFcMode(data.flashcards)}</div>
-      </div>`;
-    }
-
-    // 3. QUIZ (interactive)
-    if (data.quiz_questions?.length) {
-      this.quizData  = data.quiz_questions.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
-      this.quizIdx   = 0;
-      this.quizScore = 0;
-      h += `<div class="study-sec section-anchor mega-section" id="sec-quiz">
-        <div class="ss-hdr mega-hdr">
-          <div class="ss-title"><span class="mega-num">3</span><i class="fas fa-question-circle"></i> Practice Quiz (${data.quiz_questions.length} questions)</div>
-          <div class="quiz-score-display"><i class="fas fa-star"></i> <span id="quizScoreNum">0</span> / ${data.quiz_questions.length}</div>
-        </div>
-        <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
-      </div>`;
-    }
-
-    // 4. SUMMARY
-    if (data.ultra_long_notes) {
-      const paragraphs = data.ultra_long_notes.split('\n\n');
-      const tldr = paragraphs.find(p => p.includes('TL;DR') || p.includes('Summary') || p.includes('Summary')) || paragraphs[0] || '';
-      h += `<div class="study-sec section-anchor mega-section" id="sec-summary">
-        <div class="ss-hdr mega-hdr">
-          <div class="ss-title"><span class="mega-num">4</span><i class="fas fa-align-left"></i> Smart Summary</div>
-        </div>
-        <div class="ss-body">
-          <div class="summary-tldr-box">
-            <div class="summary-tldr-icon"><i class="fas fa-bolt"></i></div>
-            <div class="summary-tldr-content">${this._renderMd(tldr)}</div>
-          </div>
-          ${data.key_concepts?.length ? `<div class="summary-points-list">${data.key_concepts.map((c, i) => `<div class="summary-point"><div class="summary-point-num">${i + 1}</div><div class="summary-point-text">${this._esc(c)}</div></div>`).join('')}</div>` : ''}
-        </div>
-      </div>`;
-    }
-
-    // 5. MIND MAP
-    if (data.mindmap) {
-      h += `<div class="study-sec section-anchor mega-section" id="sec-mm">
-        <div class="ss-hdr mega-hdr">
-          <div class="ss-title"><span class="mega-num">5</span><i class="fas fa-project-diagram"></i> Visual Mind Map</div>
-        </div>
-        <div class="ss-body">
-          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(data.mindmap.central || data.topic || 'Topic')}</div>
-          <div class="mm-branches">
-            ${(data.mindmap.branches || []).map(b => `
-              <div class="mm-branch">
-                <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
-                  <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
-                </div>
-                <div class="mm-nodes-list">
-                  ${(b.items || []).map(item => `
-                    <div class="mm-node">
-                      <span class="mm-node-dot" style="background:${b.color || '#d4af37'}"></span>
-                      <span class="mm-node-text">${this._esc(item)}</span>
-                    </div>`).join('')}
-                </div>
-              </div>`).join('')}
-          </div>
-          ${data.mindmap.connections?.length ? `
-            <div class="mm-connections">
-              <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
-              <div class="mm-conn-list">
-                ${data.mindmap.connections.map(c => `
-                  <div class="mm-conn-item">
-                    <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
-                    ${this._esc(c.description)}
-                  </div>`).join('')}
-              </div>
-            </div>` : ''}
-        </div>
-      </div>`;
-    }
-
-    // Supporting sections
-    if (data.key_tricks?.length)              h += this._secTricks(data.key_tricks);
-    if (data.practice_questions?.length)      h += this._secQA(data.practice_questions);
-    if (data.real_world_applications?.length) h += this._secApps(data.real_world_applications);
-    if (data.common_misconceptions?.length)   h += this._secMisc(data.common_misconceptions);
-
-    return h;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 21: FLASHCARD HTML BUILDER
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-
+  // ── FLASHCARD TOOL OUTPUT — ONLY FLASHCARDS, NO NOTES ──────────────────────
   _buildFcHTML(data) {
     const cards = data.flashcards?.length ? data.flashcards
       : (data.key_concepts || []).slice(0, 15).map(c => ({
@@ -2054,26 +1772,26 @@ Examples:
           back:  c,
         }));
 
-    if (!cards.length) return this._buildNotesHTML(data);
+    if (!cards.length) return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> No flashcards were generated. Please try again.</div>`;
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
     this.fcFlipped = false;
 
-    let h = `<div class="study-sec" id="sec-fc">
-      <div class="ss-hdr">
-        <div class="ss-title"><i class="fas fa-layer-group"></i> Interactive Flashcards (${cards.length} cards)</div>
+    // ONLY show flashcards — no notes section
+    return `
+      <div class="study-sec" id="sec-fc">
+        <div class="ss-hdr">
+          <div class="ss-title"><i class="fas fa-layer-group"></i> Interactive Flashcards</div>
+          <div class="fc-deck-info">
+            <span class="fc-deck-badge">${cards.length} Cards</span>
+            <span class="fc-deck-badge" style="background:rgba(191,0,255,.1);color:#bf00ff;border-color:rgba(191,0,255,.2)">Spaced Repetition Ready</span>
+          </div>
+        </div>
+        <div class="ss-body">${this._buildFcMode(cards)}</div>
       </div>
-      <div class="ss-body">${this._buildFcMode(cards)}</div>
-    </div>`;
-
-    if (data.ultra_long_notes) {
-      h += `<div class="study-sec" id="sec-notes">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Study Notes</div></div>
-        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-      </div>`;
-    }
-    return h;
+      ${data.key_tricks?.length ? this._secTricks(data.key_tricks) : ''}
+      ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}`;
   }
 
   _buildFcMode(cards) {
@@ -2084,9 +1802,9 @@ Examples:
         <div class="fc-top-bar">
           <div class="fc-prog">Card <span id="fcCur">1</span> of <span id="fcTot">${total}</span></div>
           <div class="fc-prog-bar-wrap">
-            <div class="fc-prog-bar-fill" id="fcProgBar" style="width:${(1 / total * 100).toFixed(1)}%"></div>
+            <div class="fc-prog-bar-fill" id="fcProgBar" style="width:${(1/total*100).toFixed(1)}%"></div>
           </div>
-          <div class="fc-prog"><span id="fcPct">${Math.round(1 / total * 100)}</span>%</div>
+          <div class="fc-prog"><span id="fcPct">${Math.round(1/total*100)}</span>%</div>
         </div>
         <div class="fc-wrap" onclick="window._app._fcFlip()" tabindex="0"
              onkeydown="if(event.key===' '){event.preventDefault();window._app._fcFlip();}">
@@ -2140,22 +1858,22 @@ Examples:
     if (card) card.classList.remove('flipped');
 
     const c    = this.fcCards[this.fcCurrent];
-    const fcF  = this._el('fcFront')  || this.el.fcFront;
-    const fcB  = this._el('fcBack')   || this.el.fcBack;
-    const fcC  = this._el('fcCur')    || this.el.fcCur;
-    const fcPc = this._el('fcPct')    || this.el.fcPct;
-    const fcPb = this._el('fcProgBar')|| this.el.fcProgBar;
-    const fcPv = this._el('fcPrev')   || this.el.fcPrev;
-    const fcNx = this._el('fcNext')   || this.el.fcNext;
+    const fcF  = this._el('fcFront')   || this.el.fcFront;
+    const fcB  = this._el('fcBack')    || this.el.fcBack;
+    const fcC  = this._el('fcCur')     || this.el.fcCur;
+    const fcPc = this._el('fcPct')     || this.el.fcPct;
+    const fcPb = this._el('fcProgBar') || this.el.fcProgBar;
+    const fcPv = this._el('fcPrev')    || this.el.fcPrev;
+    const fcNx = this._el('fcNext')    || this.el.fcNext;
 
-    if (fcF) fcF.textContent     = c.front || c.question || '';
-    if (fcB) fcB.innerHTML       = this._renderMd(c.back || c.answer || '');
-    if (fcC) fcC.textContent     = this.fcCurrent + 1;
+    if (fcF) fcF.textContent   = c.front || c.question || '';
+    if (fcB) fcB.innerHTML     = this._renderMd(c.back || c.answer || '');
+    if (fcC) fcC.textContent   = this.fcCurrent + 1;
     const p = ((this.fcCurrent + 1) / this.fcCards.length * 100).toFixed(1);
-    if (fcPc) fcPc.textContent   = Math.round(p);
-    if (fcPb) fcPb.style.width   = `${p}%`;
-    if (fcPv) fcPv.disabled      = this.fcCurrent === 0;
-    if (fcNx) fcNx.disabled      = this.fcCurrent === this.fcCards.length - 1;
+    if (fcPc) fcPc.textContent = Math.round(p);
+    if (fcPb) fcPb.style.width = `${p}%`;
+    if (fcPv) fcPv.disabled    = this.fcCurrent === 0;
+    if (fcNx) fcNx.disabled    = this.fcCurrent === this.fcCards.length - 1;
   }
 
   _fcShuffle() {
@@ -2171,34 +1889,25 @@ Examples:
 
   _fcRestart() { this.fcCurrent = 0; this.fcFlipped = false; this._fcNav(0); }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 22: QUIZ HTML BUILDER
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-
+  // ── QUIZ TOOL OUTPUT — ONLY QUIZ, NO NOTES ─────────────────────────────────
   _buildQuizHTML(data) {
-    const qs = data.quiz_questions || data.practice_questions || [];
-    if (!qs.length) return this._buildNotesHTML(data);
+    const qs = data.quiz_questions || [];
+    if (!qs.length) return `<div class="empty-tool-msg"><i class="fas fa-question-circle"></i> No quiz questions were generated. Please try again.</div>`;
 
     this.quizData  = qs.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
     this.quizIdx   = 0;
     this.quizScore = 0;
 
-    let h = `
+    // ONLY show quiz — no notes
+    return `
       <div class="study-sec" id="quizContainer">
         <div class="ss-hdr">
-          <div class="ss-title"><i class="fas fa-question-circle"></i> Practice Quiz (${this.quizData.length} questions)</div>
+          <div class="ss-title"><i class="fas fa-question-circle"></i> Practice Quiz</div>
           <div class="quiz-score-display"><i class="fas fa-star"></i> <span id="quizScoreNum">0</span> / ${this.quizData.length}</div>
         </div>
         <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
-      </div>`;
-
-    if (data.ultra_long_notes) {
-      h += `<div class="study-sec">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Study Notes</div></div>
-        <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-      </div>`;
-    }
-    return h;
+      </div>
+      ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}`;
   }
 
   _renderQuizQ(idx) {
@@ -2217,7 +1926,7 @@ Examples:
           </div>
           <div class="quiz-top-meta">
             <span class="quiz-q-counter">Q ${idx + 1} / ${this.quizData.length}</span>
-            ${q.difficulty ? `<span class="quiz-diff-badge" style="color:${diffCol}">${q.difficulty}</span>` : ''}
+            ${q.difficulty ? `<span class="quiz-diff-badge" style="color:${diffCol};background:${diffCol}18">${q.difficulty}</span>` : ''}
           </div>
         </div>
         <div class="quiz-question-wrap">
@@ -2255,11 +1964,9 @@ Examples:
       this._toast('info', 'fa-book-open', `✗ Incorrect — see explanation below`);
     }
 
-    // Update score display
     const sn = this._el('quizScoreNum') || this.el.quizScoreNum;
     if (sn) sn.textContent = this.quizScore;
 
-    // Color the options
     const oc = this._el(`quizOpts_${qIdx}`);
     if (oc) {
       oc.querySelectorAll('.quiz-opt-btn').forEach((btn, oi) => {
@@ -2269,7 +1976,6 @@ Examples:
       });
     }
 
-    // Show explanation
     const aa = this._el(`quizAns_${qIdx}`);
     if (aa) {
       aa.style.display = 'block';
@@ -2286,7 +1992,6 @@ Examples:
       setTimeout(() => aa.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
     }
 
-    // Show next button
     const na = this._el(`quizNav_${qIdx}`);
     if (na) na.style.display = 'flex';
   }
@@ -2304,12 +2009,12 @@ Examples:
   }
 
   _renderQuizResult() {
-    const total  = this.quizData.length;
-    const score  = this.quizScore;
-    const pct    = Math.round((score / total) * 100);
-    const emoji  = pct >= 90 ? '🏆' : pct >= 75 ? '🎓' : pct >= 60 ? '📚' : pct >= 40 ? '💪' : '📖';
-    const grade  = pct >= 90 ? 'Outstanding!' : pct >= 75 ? 'Excellent!' : pct >= 60 ? 'Good Progress!' : pct >= 40 ? 'Keep Studying!' : 'More Practice Needed';
-    const color  = pct >= 75 ? '#00ff88' : pct >= 50 ? '#ffae00' : '#ff4444';
+    const total = this.quizData.length;
+    const score = this.quizScore;
+    const pct   = Math.round((score / total) * 100);
+    const emoji = pct >= 90 ? '🏆' : pct >= 75 ? '🎓' : pct >= 60 ? '📚' : pct >= 40 ? '💪' : '📖';
+    const grade = pct >= 90 ? 'Outstanding!' : pct >= 75 ? 'Excellent!' : pct >= 60 ? 'Good Progress!' : pct >= 40 ? 'Keep Studying!' : 'More Practice Needed';
+    const color = pct >= 75 ? '#00ff88' : pct >= 50 ? '#ffae00' : '#ff4444';
 
     if (score === total) this._confetti();
 
@@ -2385,10 +2090,7 @@ Examples:
     if (sn) sn.textContent = '0';
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 23: SUMMARY & MIND MAP HTML
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-
+  // ── SUMMARY — BEAUTIFUL TL;DR ───────────────────────────────────────────────
   _buildSummaryHTML(data) {
     let h = '';
     if (data.ultra_long_notes) {
@@ -2436,15 +2138,16 @@ Examples:
     return h || this._buildNotesHTML(data);
   }
 
+  // ── MINDMAP — ONLY MINDMAP OUTPUT ──────────────────────────────────────────
   _buildMindmapHTML(data) {
     const mm    = data.mindmap;
     const topic = data.topic || 'Topic';
 
     if (mm?.branches?.length) {
       const branchHtml = mm.branches.map(b => `
-        <div class="mm-branch">
+        <div class="mm-branch" style="border-top:3px solid ${b.color || '#d4af37'}">
           <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
-            <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+            <i class="fas fa-sitemap"></i> ${this._esc(b.name)}
           </div>
           <div class="mm-nodes-list">
             ${(b.items || []).map(item => `
@@ -2467,39 +2170,35 @@ Examples:
           </div>
         </div>` : '';
 
-      let h = `
+      // ONLY mindmap — no notes fallback
+      return `
         <div class="study-sec" id="sec-mm">
           <div class="ss-hdr">
             <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(mm.central || topic)}</div>
+            <span style="font-size:.65rem;color:rgba(255,255,255,.4)">${mm.branches.length} branches · ${mm.connections?.length || 0} connections</span>
           </div>
           <div class="ss-body">
             <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm.central || topic)}</div>
             <div class="mm-branches">${branchHtml}</div>
             ${connHtml}
           </div>
-        </div>`;
-
-      if (data.ultra_long_notes) {
-        h += `<div class="study-sec" id="sec-notes">
-          <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Mind Map Notes</div></div>
-          <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
-        </div>`;
-      }
-      return h;
+        </div>
+        ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}
+        ${data.key_tricks?.length ? this._secTricks(data.key_tricks) : ''}`;
     }
 
-    // Fallback mindmap from key_concepts
+    // Fallback mindmap from concepts
     const branches = [
-      { name: 'Core Concepts', items: data.key_concepts || [],            color: '#d4af37' },
-      { name: 'Study Tricks',  items: data.key_tricks || [],              color: '#00ff88' },
-      { name: 'Applications',  items: data.real_world_applications || [], color: '#00d4ff' },
-      { name: 'Misconceptions',items: data.common_misconceptions || [],   color: '#ff4444' },
+      { name: 'Core Concepts',  items: data.key_concepts || [],            color: '#d4af37' },
+      { name: 'Study Tricks',   items: data.key_tricks || [],              color: '#00ff88' },
+      { name: 'Applications',   items: data.real_world_applications || [], color: '#00d4ff' },
+      { name: 'Misconceptions', items: data.common_misconceptions || [],   color: '#ff4444' },
     ].filter(b => b.items.length > 0);
 
     const bh = branches.map(b => `
-      <div class="mm-branch">
+      <div class="mm-branch" style="border-top:3px solid ${b.color}">
         <div class="mm-branch-hdr" style="color:${b.color}">
-          <i class="fas fa-project-diagram"></i> ${this._esc(b.name)}
+          <i class="fas fa-sitemap"></i> ${this._esc(b.name)}
         </div>
         <div class="mm-nodes-list">
           ${b.items.slice(0, 6).map(item => `
@@ -2510,7 +2209,7 @@ Examples:
         </div>
       </div>`).join('');
 
-    let h = `
+    return `
       <div class="study-sec" id="sec-mm">
         <div class="ss-hdr">
           <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(topic)}</div>
@@ -2520,19 +2219,126 @@ Examples:
           <div class="mm-branches">${bh || '<p style="color:rgba(255,255,255,.4);padding:16px">Mind map content generated…</p>'}</div>
         </div>
       </div>`;
+  }
 
+  // ── MEGA BUNDLE — ALL 5 TOOLS ────────────────────────────────────────────────
+  _buildAllHTML(data) {
+    let h = `<div class="mega-result-banner">
+      <i class="fas fa-bolt"></i>
+      ⚡ Mega Study Bundle — All 5 Tools Generated
+      <span class="mega-result-count">
+        ${data.flashcards?.length ? `🃏 ${data.flashcards.length} Cards` : ''}
+        ${data.quiz_questions?.length ? ` · ❓ ${data.quiz_questions.length} Questions` : ''}
+        ${data.mindmap?.branches?.length ? ` · 🗺️ ${data.mindmap.branches.length} Branches` : ''}
+      </span>
+    </div>`;
+
+    // 1. NOTES
     if (data.ultra_long_notes) {
-      h += `<div class="study-sec" id="sec-notes">
-        <div class="ss-hdr"><div class="ss-title"><i class="fas fa-book-open"></i> Notes</div></div>
+      h += `<div class="study-sec section-anchor mega-section" id="sec-notes">
+        <div class="ss-hdr mega-hdr">
+          <div class="ss-title"><span class="mega-num">1</span><i class="fas fa-book-open"></i> Comprehensive Notes</div>
+          <button class="ss-copy-btn" onclick="window._app._copyTxt(this.closest('.study-sec').querySelector('.md-content').innerText)">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+        </div>
         <div class="ss-body"><div class="md-content">${this._renderMd(data.ultra_long_notes)}</div></div>
       </div>`;
     }
+
+    // 2. FLASHCARDS (interactive)
+    if (data.flashcards?.length) {
+      this.fcCards   = data.flashcards;
+      this.fcCurrent = 0;
+      this.fcFlipped = false;
+      h += `<div class="study-sec section-anchor mega-section" id="sec-fc">
+        <div class="ss-hdr mega-hdr">
+          <div class="ss-title"><span class="mega-num">2</span><i class="fas fa-layer-group"></i> Flashcards (${data.flashcards.length} cards)</div>
+        </div>
+        <div class="ss-body">${this._buildFcMode(data.flashcards)}</div>
+      </div>`;
+    }
+
+    // 3. QUIZ (interactive)
+    if (data.quiz_questions?.length) {
+      this.quizData  = data.quiz_questions.map(q => ({ ...q, answered: false, correct: false, selectedIdx: -1 }));
+      this.quizIdx   = 0;
+      this.quizScore = 0;
+      h += `<div class="study-sec section-anchor mega-section" id="sec-quiz">
+        <div class="ss-hdr mega-hdr">
+          <div class="ss-title"><span class="mega-num">3</span><i class="fas fa-question-circle"></i> Practice Quiz (${data.quiz_questions.length} questions)</div>
+          <div class="quiz-score-display"><i class="fas fa-star"></i> <span id="quizScoreNum">0</span> / ${data.quiz_questions.length}</div>
+        </div>
+        <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
+      </div>`;
+    }
+
+    // 4. SUMMARY
+    if (data.ultra_long_notes) {
+      const tldr = data.ultra_long_notes.split('\n\n').find(p => p.includes('TL;DR') || p.includes('Summary')) || data.ultra_long_notes.split('\n\n')[0] || '';
+      h += `<div class="study-sec section-anchor mega-section" id="sec-summary">
+        <div class="ss-hdr mega-hdr">
+          <div class="ss-title"><span class="mega-num">4</span><i class="fas fa-align-left"></i> Smart Summary</div>
+        </div>
+        <div class="ss-body">
+          <div class="summary-tldr-box">
+            <div class="summary-tldr-icon"><i class="fas fa-bolt"></i></div>
+            <div class="summary-tldr-content">${this._renderMd(tldr)}</div>
+          </div>
+          ${data.key_concepts?.length ? `<div class="summary-points-list">${data.key_concepts.map((c, i) => `<div class="summary-point"><div class="summary-point-num">${i + 1}</div><div class="summary-point-text">${this._esc(c)}</div></div>`).join('')}</div>` : ''}
+        </div>
+      </div>`;
+    }
+
+    // 5. MIND MAP
+    if (data.mindmap?.branches?.length) {
+      const mm = data.mindmap;
+      h += `<div class="study-sec section-anchor mega-section" id="sec-mm">
+        <div class="ss-hdr mega-hdr">
+          <div class="ss-title"><span class="mega-num">5</span><i class="fas fa-project-diagram"></i> Visual Mind Map</div>
+        </div>
+        <div class="ss-body">
+          <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm.central || data.topic || 'Topic')}</div>
+          <div class="mm-branches">
+            ${(mm.branches || []).map(b => `
+              <div class="mm-branch" style="border-top:3px solid ${b.color || '#d4af37'}">
+                <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
+                  <i class="fas fa-sitemap"></i> ${this._esc(b.name)}
+                </div>
+                <div class="mm-nodes-list">
+                  ${(b.items || []).map(item => `
+                    <div class="mm-node">
+                      <span class="mm-node-dot" style="background:${b.color || '#d4af37'}"></span>
+                      <span class="mm-node-text">${this._esc(item)}</span>
+                    </div>`).join('')}
+                </div>
+              </div>`).join('')}
+          </div>
+          ${mm.connections?.length ? `
+            <div class="mm-connections">
+              <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
+              <div class="mm-conn-list">
+                ${mm.connections.map(c => `
+                  <div class="mm-conn-item">
+                    <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
+                    ${this._esc(c.description)}
+                  </div>`).join('')}
+              </div>
+            </div>` : ''}
+        </div>
+      </div>`;
+    }
+
+    // Supporting
+    if (data.key_tricks?.length)              h += this._secTricks(data.key_tricks);
+    if (data.practice_questions?.length)      h += this._secQA(data.practice_questions);
+    if (data.real_world_applications?.length) h += this._secApps(data.real_world_applications);
+    if (data.common_misconceptions?.length)   h += this._secMisc(data.common_misconceptions);
+
     return h;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 24: REUSABLE SECTION BUILDERS
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── REUSABLE SECTION BUILDERS ──────────────────────────────────────────────
 
   _secConcepts(arr) {
     return `<div class="study-sec section-anchor" id="sec-concepts">
@@ -2616,53 +2422,7 @@ Examples:
     </div>`;
   }
 
-  _fcMiniList(cards) {
-    const show = cards.slice(0, 5);
-    return `<div class="fc-mini-list">
-      ${show.map((c, i) => `
-        <div class="fc-mini-card">
-          <div class="fc-mini-q"><strong>Q${i + 1}:</strong> ${this._esc(c.front || c.question || '')}</div>
-          <div class="fc-mini-a"><strong>A:</strong> ${this._esc((c.back || c.answer || '').slice(0, 180))}</div>
-        </div>`).join('')}
-      ${cards.length > 5 ? `<div class="fc-mini-more">+ ${cards.length - 5} more — use Flashcards tool for full interactive deck</div>` : ''}
-    </div>`;
-  }
-
-  _quizMiniList(qs) {
-    const show = qs.slice(0, 3);
-    return `<div class="quiz-mini-list">
-      ${show.map((q, i) => `
-        <div class="quiz-mini-card">
-          <div class="quiz-mini-q"><strong>Q${i + 1}:</strong> ${this._esc(q.question?.slice(0, 100))}${q.question?.length > 100 ? '…' : ''}</div>
-          ${q.options ? `<div class="quiz-mini-options">${q.options.map((opt, oi) => `<div class="quiz-mini-opt ${opt === q.correct_answer ? 'correct' : ''}">${String.fromCharCode(65 + oi)}. ${this._esc(opt)}</div>`).join('')}</div>` : ''}
-          <div class="quiz-mini-answer">✓ ${this._esc(q.correct_answer)}</div>
-        </div>`).join('')}
-      ${qs.length > 3 ? `<div class="quiz-mini-more">+ ${qs.length - 3} more — use Quiz tool for full interactive quiz</div>` : ''}
-    </div>`;
-  }
-
-  _mmMini(mm) {
-    if (!mm) return '';
-    return `<div class="mm-mini">
-      <div class="mm-mini-central">🎯 ${this._esc(mm.central)}</div>
-      <div class="mm-mini-branches">
-        ${(mm.branches || []).slice(0, 4).map(b => `
-          <div class="mm-mini-branch">
-            <div class="mm-mini-branch-name" style="color:${b.color || '#d4af37'}">
-              📌 ${this._esc(b.name)}
-            </div>
-            <div class="mm-mini-items">
-              ${(b.items || []).slice(0, 4).map(item => `
-                <span class="mm-mini-item">${this._esc(item)}</span>`).join('')}
-            </div>
-          </div>`).join('')}
-      </div>
-    </div>`;
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 25: WORLD-CLASS PDF GENERATION
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── WORLD-CLASS PDF GENERATION ─────────────────────────────────────────────
 
   _downloadPDF() {
     const data = this.currentData;
@@ -2673,7 +2433,7 @@ Examples:
       const sc    = document.createElement('script');
       sc.src      = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
       sc.onload   = () => setTimeout(() => this._generatePDF(data, this.pdfTheme), 200);
-      sc.onerror  = () => this._toast('error', 'fa-times', 'Could not load PDF library. Check your internet connection.');
+      sc.onerror  = () => this._toast('error', 'fa-times', 'Could not load PDF library.');
       document.head.appendChild(sc);
       return;
     }
@@ -2681,450 +2441,265 @@ Examples:
   }
 
   _generatePDF(data, theme = 'dark') {
-    this._toast('info', 'fa-spinner fa-pulse', `Generating world-class ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
+    this._toast('info', 'fa-spinner fa-pulse', `Generating ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
     try {
       const { jsPDF } = window.jspdf;
       const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
 
-      // ── Page metrics ──
-      const PW = 210, PH = 297, ML = 14, MR = 14, CW = PW - ML - MR;
-      const MT_CONTENT = 26;  // top margin on content pages after mini-header
-      const MB = 16;          // bottom margin (above footer)
+      const PW=210, PH=297, ML=14, MR=14, CW=PW-ML-MR, MT=28, MB=16;
       const isDark = theme !== 'light';
-      let Y = 0, pageNum = 1;
+      let Y=0, pageNum=1;
 
-      // ── Palette ──
       const C = isDark ? {
-        bg:      [7, 12, 32],
-        gold:    [212, 175, 55],
-        blue:    [0, 170, 220],
-        purple:  [160, 60, 220],
-        green:   [0, 180, 100],
-        red:     [210, 55, 55],
-        text:    [195, 198, 210],
-        head:    [238, 240, 255],
-        muted:   [115, 118, 138],
-        card:    [14, 20, 52],
-        hdr:     [20, 30, 72],
-        border:  [28, 40, 88],
-        correct: [0, 170, 90],
+        bg:[7,12,32], gold:[212,175,55], blue:[0,170,220], purple:[160,60,220],
+        green:[0,180,100], red:[210,55,55], text:[185,188,200], head:[238,240,255],
+        muted:[115,118,138], card:[14,20,52], hdr:[20,30,72], border:[28,40,88], correct:[0,170,90],
       } : {
-        bg:      [255, 255, 255],
-        gold:    [170, 135, 30],
-        blue:    [0, 100, 190],
-        purple:  [130, 40, 200],
-        green:   [0, 130, 70],
-        red:     [180, 40, 40],
-        text:    [38, 40, 56],
-        head:    [10, 18, 56],
-        muted:   [100, 106, 126],
-        card:    [244, 246, 255],
-        hdr:     [228, 232, 252],
-        border:  [210, 215, 240],
-        correct: [0, 120, 60],
+        bg:[255,255,255], gold:[170,135,30], blue:[0,100,190], purple:[130,40,200],
+        green:[0,130,70], red:[180,40,40], text:[38,40,56], head:[10,18,56],
+        muted:[100,106,126], card:[244,246,255], hdr:[228,232,252], border:[210,215,240], correct:[0,120,60],
       };
 
-      // ── Helpers ──
-      const setFG = ([r,g,b]) => doc.setTextColor(r,g,b);
-      const setBG = ([r,g,b]) => doc.setFillColor(r,g,b);
-      const setDC = ([r,g,b]) => doc.setDrawColor(r,g,b);
+      const setFG=([r,g,b])=>doc.setTextColor(r,g,b);
+      const setBG=([r,g,b])=>doc.setFillColor(r,g,b);
+      const setDC=([r,g,b])=>doc.setDrawColor(r,g,b);
+      const fillBg=()=>{ if(isDark){setBG(C.bg);doc.rect(0,0,PW,PH,'F');} };
 
-      const fillBg = () => { if(isDark){setBG(C.bg);doc.rect(0,0,PW,PH,'F');} };
-
-      const addPageFooter = () => {
+      const addFooter=()=>{
         setBG(isDark?[10,16,40]:[235,238,252]);
-        doc.rect(0, PH-MB, PW, MB, 'F');
-        setDC(C.gold); doc.setLineWidth(0.25); doc.line(ML, PH-MB, PW-MR, PH-MB);
+        doc.rect(0,PH-MB,PW,MB,'F');
+        setDC(C.gold); doc.setLineWidth(0.25); doc.line(ML,PH-MB,PW-MR,PH-MB);
         doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
         doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE} · "${SAVOIRÉ.TAGLINE}"`, ML, PH-6);
         doc.text(`Page ${pageNum}`, PW-MR, PH-6, {align:'right'});
       };
 
-      const addPageHeader = (subtitle='') => {
-        setBG(C.hdr); doc.rect(0,0,PW,MT_CONTENT-4,'F');
-        setDC(C.gold); doc.setLineWidth(0.25); doc.line(0,MT_CONTENT-4,PW,MT_CONTENT-4);
+      const addHeader=(sub='')=>{
+        setBG(C.hdr); doc.rect(0,0,PW,MT-4,'F');
+        setDC(C.gold); doc.setLineWidth(0.25); doc.line(0,MT-4,PW,MT-4);
         doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG(C.gold);
-        doc.text(SAVOIRÉ.BRAND, ML, MT_CONTENT-9);
+        doc.text(SAVOIRÉ.BRAND, ML, MT-9);
         doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text((subtitle||(data.topic||'')).slice(0,72), PW-MR, MT_CONTENT-9, {align:'right'});
+        doc.text((sub||(data.topic||'')).slice(0,72), PW-MR, MT-9, {align:'right'});
       };
 
-      const newPage = (subtitle) => {
-        addPageFooter();
-        doc.addPage(); pageNum++; Y = MT_CONTENT+2;
-        fillBg(); addPageHeader(subtitle);
+      const newPage=(sub)=>{
+        addFooter(); doc.addPage(); pageNum++; Y=MT+2;
+        fillBg(); addHeader(sub);
       };
 
-      const ck = (need=12) => { if(Y+need > PH-MB-2) newPage(); };
+      const ck=(need=12)=>{ if(Y+need>PH-MB-2)newPage(); };
 
-      // ── Word-wrapped text writer ──
-      const wt = (txt, x, maxW, sz, bold=false, color=C.text, lineH=null) => {
+      const wt=(txt, x, maxW, sz, bold=false, color=C.text, lh=null)=>{
         if(!txt)return;
-        doc.setFontSize(sz); doc.setFont('helvetica', bold?'bold':'normal'); setFG(color);
-        const lines = doc.splitTextToSize(String(txt), maxW);
-        const lh    = lineH || sz * 0.385;
-        ck(lines.length * lh + 1);
-        doc.text(lines, x, Y);
-        Y += lines.length * lh + 0.5;
+        doc.setFontSize(sz); doc.setFont('helvetica',bold?'bold':'normal'); setFG(color);
+        const lines=doc.splitTextToSize(String(txt),maxW);
+        const h=lh||sz*0.385;
+        ck(lines.length*h+1);
+        doc.text(lines,x,Y); Y+=lines.length*h+0.5;
         return lines.length;
       };
 
-      // ── Section header bar ──
-      const secHdr = (label, color=C.gold) => {
-        ck(14);
-        setBG(C.hdr); doc.rect(ML, Y, CW, 9, 'F');
-        setBG(color);  doc.rect(ML, Y, 3, 9, 'F');
+      const secHdr=(label,color=C.gold)=>{
+        ck(14); setBG(C.hdr); doc.rect(ML,Y,CW,9,'F');
+        setBG(color); doc.rect(ML,Y,3,9,'F');
         doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(color);
-        doc.text(label, ML+6, Y+6.2);
-        Y += 13;
+        doc.text(label,ML+6,Y+6.2); Y+=13;
       };
 
-      // ── Rounded card ──
-      const card = (h, fillColor=C.card, borderColor=C.border) => {
-        ck(h+2);
-        setBG(fillColor); doc.roundedRect(ML, Y, CW, h, 2, 2, 'F');
-        setDC(borderColor); doc.setLineWidth(0.18); doc.roundedRect(ML, Y, CW, h, 2, 2, 'S');
-        Y += 3;
-      };
-
-      // ───────────────────────────────────────────────────────────────
       // COVER PAGE
-      // ───────────────────────────────────────────────────────────────
       fillBg();
-
-      // Gold accent bars top+bottom
       setBG(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
-
-      // Logo block
-      setBG([0,140,220]); doc.roundedRect(ML, 14, 22, 22, 4, 4, 'F');
+      setBG([0,140,220]); doc.roundedRect(ML,14,22,22,4,4,'F');
       doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
-      doc.text('Ś', ML+8, 30);
-
-      // App name
+      doc.text('Ś',ML+8,30);
       doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
-      doc.text('SAVOIRÉ AI', ML+28, 22);
+      doc.text('SAVOIRÉ AI',ML+28,22);
       doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text("v2.0 — World's Most Advanced Free AI Study Assistant", ML+28, 29);
-      doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`, ML+28, 36);
+      doc.text("v2.0 — World's Most Advanced Free AI Study Assistant",ML+28,29);
+      doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`,ML+28,36);
+      setDC(C.gold); doc.setLineWidth(0.4); doc.line(ML,43,PW-MR,43);
 
-      // Divider
-      setDC(C.gold); doc.setLineWidth(0.4); doc.line(ML, 43, PW-MR, 43);
-
-      // Tool badge
-      const tCfg = TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes;
-      setBG([0,80,160]); doc.roundedRect(ML, 48, 72, 8, 1.5, 1.5, 'F');
+      const tCfg=TOOL_CONFIG[this.tool]||TOOL_CONFIG.notes;
+      setBG([0,80,160]); doc.roundedRect(ML,48,80,8,1.5,1.5,'F');
       doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG([200,228,255]);
-      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all'?' — ALL 5 TOOLS ⚡':''}`, ML+4, 53.5);
+      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all'?' — ALL 5 TOOLS ⚡':''}`,ML+4,53.5);
 
-      // Main topic title
       doc.setFontSize(20); doc.setFont('helvetica','bold'); setFG(C.head);
-      const titleLines = doc.splitTextToSize(data.topic || 'Study Notes', CW);
-      doc.text(titleLines, ML, 67);
-      let cy = 67 + titleLines.length * 8.5;
+      const titleLines=doc.splitTextToSize(data.topic||'Study Notes',CW);
+      doc.text(titleLines,ML,67);
+      let cy=67+titleLines.length*8.5;
 
-      // Curriculum subtitle
       doc.setFontSize(9.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text(data.curriculum_alignment || 'General Academic Study', ML, cy + 4);
-      cy += 14;
+      doc.text(data.curriculum_alignment||'General Academic Study',ML,cy+4); cy+=14;
 
-      // Stats cards row
-      const wc    = this._wordCount(this._stripMd(data.ultra_long_notes||''));
-      const stats = [
-        { l:'Score',   v:`${data.study_score||97}/100` },
-        { l:'Words',   v:`~${wc.toLocaleString()}` },
-        { l:'Quality', v:data._quality==='ai_generated'?'AI Generated':'Enhanced' },
-        { l:'Lang',    v:data._language||'English' },
-        { l:'Date',    v:new Date().toLocaleDateString() },
-        { l:'Tool',    v:tCfg.sfpName },
+      const wc=this._wordCount(this._stripMd(data.ultra_long_notes||''));
+      const stats=[
+        {l:'Score',v:`${data.study_score||97}/100`},{l:'Words',v:`~${wc.toLocaleString()}`},
+        {l:'Quality',v:data._quality==='ai_generated'?'AI':'Enhanced'},{l:'Lang',v:data._language||'English'},
+        {l:'Date',v:new Date().toLocaleDateString()},{l:'Tool',v:tCfg.sfpName},
       ];
-      const sw = CW / 3;
-      stats.forEach((s,i) => {
-        const sx = ML + (i%3)*sw, sy = cy + Math.floor(i/3)*20;
-        setBG(C.card); doc.roundedRect(sx, sy, sw-2, 17, 2, 2, 'F');
+      const sw=CW/3;
+      stats.forEach((s,i)=>{
+        const sx=ML+(i%3)*sw, sy=cy+Math.floor(i/3)*20;
+        setBG(C.card); doc.roundedRect(sx,sy,sw-2,17,2,2,'F');
         doc.setFontSize(11); doc.setFont('helvetica','bold'); setFG(C.gold);
-        doc.text(s.v, sx+(sw-2)/2, sy+9, {align:'center'});
+        doc.text(s.v,sx+(sw-2)/2,sy+9,{align:'center'});
         doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text(s.l, sx+(sw-2)/2, sy+14.5, {align:'center'});
-      });
-      cy += 44;
+        doc.text(s.l,sx+(sw-2)/2,sy+14.5,{align:'center'});
+      }); cy+=44;
 
-      // Tagline
-      doc.setFontSize(12.5); doc.setFont('helvetica','bolditalic'); setFG(C.gold);
-      doc.text(`"${SAVOIRÉ.TAGLINE}"`, PW/2, cy+6, {align:'center'});
+      doc.setFontSize(12); doc.setFont('helvetica','bolditalic'); setFG(C.gold);
+      doc.text(`"${SAVOIRÉ.TAGLINE}"`,PW/2,cy+6,{align:'center'});
       doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text(`— ${SAVOIRÉ.FOUNDER}`, PW/2, cy+13, {align:'center'});
+      doc.text(`— ${SAVOIRÉ.FOUNDER}`,PW/2,cy+13,{align:'center'});
+      doc.text(`Generated: ${new Date().toLocaleString()} · Theme: ${isDark?'Dark':'Light'}`,PW/2,PH-22,{align:'center'});
+      addFooter();
 
-      // PDF info at bottom
-      doc.text(`Generated: ${new Date().toLocaleString()} · PDF Theme: ${isDark?'Dark':'Light'}`, PW/2, PH-22, {align:'center'});
-      doc.text(`${SAVOIRÉ.WEBSITE}`, PW/2, PH-16, {align:'center'});
-
-      addPageFooter();
-
-      // ───────────────────────────────────────────────────────────────
       // CONTENT PAGES
-      // ───────────────────────────────────────────────────────────────
-      newPage('Study Notes');
+      newPage('Study Content');
 
-      // ── STUDY NOTES ──
       if (data.ultra_long_notes) {
         secHdr('📚  Study Notes', C.gold);
-        const clean  = this._stripMd(data.ultra_long_notes);
-        const lines  = clean.split('\n');
-        let   prevBlank = false;
-
-        for (const raw of lines) {
-          const tr = raw.trim();
-          if (!tr) { if (!prevBlank) Y += 2; prevBlank = true; continue; }
-          prevBlank = false;
-          ck(9);
-
-          if (tr.match(/^#{1,4}/)) {
-            const lv  = (tr.match(/^#+/)||[''])[0].length;
-            const txt = tr.replace(/^#+\s*/,'').replace(/\*+/g,'').replace(/`/g,'');
-            Y += lv<=2 ? 4 : 2;
-            const sz  = lv===1?14 : lv===2?11.5 : lv===3?10 : 9;
-            const col = lv<=2 ? C.gold : lv===3 ? C.blue : C.head;
-            if (lv <= 2) {
-              // Draw accent line for H1/H2
-              setBG(col); doc.rect(ML, Y-1, 3, sz*0.4, 'F');
-              wt(txt, ML+5, CW-5, sz, true, col);
-            } else {
-              wt(txt, ML, CW, sz, true, col);
-            }
-            Y += lv<=2 ? 3 : 1;
-
-          } else if (tr.match(/^[-•*]\s/)) {
-            const txt = tr.replace(/^[-•*]\s*/,'');
-            // Bullet dot
-            setBG(C.gold); doc.circle(ML+2, Y-1.5, 1, 'F');
-            wt(txt, ML+5, CW-5, 8.5, false, C.text);
-            Y += 0.5;
-
-          } else if (tr.match(/^\d+\.\s/)) {
-            wt(tr, ML+4, CW-4, 8.5, false, C.text);
-            Y += 0.5;
-
-          } else if (tr.startsWith('>')) {
-            ck(12);
-            const qText = tr.replace(/^>\s*/,'');
-            setBG(isDark?[12,20,52]:[238,242,255]);
-            doc.rect(ML, Y-2, CW, 10, 'F');
-            setBG(C.gold); doc.rect(ML, Y-2, 2.5, 10, 'F');
-            wt(qText, ML+5, CW-5, 8.5, false, isDark?[220,210,160]:[75,60,10]);
-            Y += 3;
-
-          } else if (tr.startsWith('---')) {
-            setDC(C.border); doc.setLineWidth(0.2);
-            doc.line(ML, Y, PW-MR, Y);
-            Y += 5;
-
-          } else if (tr.includes('**') || tr.includes('`')) {
-            const cleaned = tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/`(.+?)`/g,'[$1]').replace(/\*/g,'');
-            wt(cleaned, ML, CW, 8.5, false, C.text);
-            Y += 1;
+        const clean=this._stripMd(data.ultra_long_notes);
+        let prevBlank=false;
+        for (const raw of clean.split('\n')) {
+          const tr=raw.trim();
+          if(!tr){if(!prevBlank)Y+=2;prevBlank=true;continue;}
+          prevBlank=false; ck(9);
+          if(tr.match(/^#{1,4}/)){
+            const lv=(tr.match(/^#+/)||[''])[0].length;
+            const txt=tr.replace(/^#+\s*/,'').replace(/\*+/g,'').replace(/`/g,'');
+            Y+=lv<=2?4:2;
+            const sz=lv===1?14:lv===2?11.5:lv===3?10:9;
+            const col=lv<=2?C.gold:lv===3?C.blue:C.head;
+            if(lv<=2){setBG(col);doc.rect(ML,Y-1,3,sz*0.4,'F');wt(txt,ML+5,CW-5,sz,true,col);}
+            else wt(txt,ML,CW,sz,true,col);
+            Y+=lv<=2?3:1;
+          } else if(tr.match(/^[-•*]\s/)){
+            const txt=tr.replace(/^[-•*]\s*/,'');
+            setBG(C.gold); doc.circle(ML+2,Y-1.5,1,'F');
+            wt(txt,ML+5,CW-5,8.5,false,C.text); Y+=0.5;
+          } else if(tr.startsWith('>')){
+            ck(12); const qText=tr.replace(/^>\s*/,'');
+            setBG(isDark?[12,20,52]:[238,242,255]); doc.rect(ML,Y-2,CW,10,'F');
+            setBG(C.gold); doc.rect(ML,Y-2,2.5,10,'F');
+            wt(qText,ML+5,CW-5,8.5,false,isDark?[220,210,160]:[75,60,10]); Y+=3;
+          } else if(tr.startsWith('---')){
+            setDC(C.border); doc.setLineWidth(0.2); doc.line(ML,Y,PW-MR,Y); Y+=5;
           } else {
-            wt(tr, ML, CW, 8.5, false, C.text);
-            Y += 1;
+            wt(tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*/g,'').replace(/`(.+?)`/g,'[$1]'),ML,CW,8.5,false,C.text); Y+=1;
           }
         }
-        Y += 6;
+        Y+=6;
       }
 
-      // ── KEY CONCEPTS ──
-      if (data.key_concepts?.length) {
-        secHdr('💡  Key Concepts', C.gold);
-        data.key_concepts.slice(0, 10).forEach((c, i) => {
-          ck(16);
-          setBG(C.card); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'F');
-          setDC(C.border); doc.setLineWidth(0.15); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'S');
-          // Number circle
-          setBG(C.gold); doc.circle(ML+5, Y+7, 3.5, 'F');
+      if(data.key_concepts?.length){
+        secHdr('💡  Key Concepts',C.gold);
+        data.key_concepts.slice(0,10).forEach((c,i)=>{
+          ck(16); setBG(C.card); doc.roundedRect(ML,Y,CW,14,2,2,'F');
+          setBG(C.gold); doc.circle(ML+5,Y+7,3.5,'F');
           doc.setFontSize(7); doc.setFont('helvetica','bold'); setFG([8,14,35]);
-          doc.text(String(i+1), ML+5, Y+8.5, {align:'center'});
-          // Content
-          const cLines = doc.splitTextToSize(String(c).slice(0,220), CW-14);
+          doc.text(String(i+1),ML+5,Y+8.5,{align:'center'});
+          const cLines=doc.splitTextToSize(String(c).slice(0,220),CW-14);
           doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.text);
-          doc.text(cLines.slice(0,2), ML+11, Y+6);
-          Y += 17;
-        });
-        Y += 4;
+          doc.text(cLines.slice(0,2),ML+11,Y+6); Y+=17;
+        }); Y+=4;
       }
 
-      // ── FLASHCARDS ──
-      if (data.flashcards?.length) {
+      if(data.flashcards?.length){
         newPage('Flashcards');
-        secHdr('🃏  Flashcards', C.purple);
-        data.flashcards.forEach((fc, i) => {
+        secHdr('🃏  Flashcards',C.purple);
+        data.flashcards.forEach((fc,i)=>{
           ck(28);
-          // Card background
-          setBG(C.card); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'F');
-          setDC(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML, Y, CW, 26, 2, 2, 'S');
-          // Q label
+          setBG(C.card); doc.roundedRect(ML,Y,CW,26,2,2,'F');
+          setDC(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML,Y,CW,26,2,2,'S');
           doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.purple);
-          doc.text(`Q${i+1}`, ML+2.5, Y+5.5);
-          // Front
-          const fLines = doc.splitTextToSize(String(fc.front||fc.question||'').slice(0,90), CW-18);
+          doc.text(`Q${i+1}`,ML+2.5,Y+5.5);
+          const fLines=doc.splitTextToSize(String(fc.front||fc.question||'').slice(0,90),CW-18);
           doc.setFontSize(8.5); doc.setFont('helvetica','bold'); setFG(C.head);
-          doc.text(fLines.slice(0,2), ML+10, Y+6);
-          // Divider line
-          setDC(C.border); doc.setLineWidth(0.15); doc.line(ML+3, Y+12, PW-MR-3, Y+12);
-          // A label
+          doc.text(fLines.slice(0,2),ML+10,Y+6);
+          setDC(C.border); doc.setLineWidth(0.15); doc.line(ML+3,Y+12,PW-MR-3,Y+12);
           doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.blue);
-          doc.text('A:', ML+2.5, Y+17);
-          // Back
-          const bLines = doc.splitTextToSize(String(fc.back||fc.answer||'').slice(0,160), CW-14);
+          doc.text('A:',ML+2.5,Y+17);
+          const bLines=doc.splitTextToSize(String(fc.back||fc.answer||'').slice(0,160),CW-14);
           doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
-          doc.text(bLines.slice(0,2), ML+10, Y+17);
-          Y += 29;
-        });
-        Y += 4;
+          doc.text(bLines.slice(0,2),ML+10,Y+17); Y+=29;
+        }); Y+=4;
       }
 
-      // ── QUIZ ──
-      if (data.quiz_questions?.length) {
+      if(data.quiz_questions?.length){
         newPage('Practice Quiz');
-        secHdr('❓  Practice Quiz', C.green);
-        const letters = ['A','B','C','D','E'];
-        data.quiz_questions.forEach((q, i) => {
+        secHdr('❓  Practice Quiz',C.green);
+        const letters=['A','B','C','D','E'];
+        data.quiz_questions.forEach((q,i)=>{
           ck(42);
-          // Question number badge
-          setBG(C.green); doc.circle(ML+4, Y+4, 4, 'F');
+          setBG(C.green); doc.circle(ML+4,Y+4,4,'F');
           doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG([255,255,255]);
-          doc.text(String(i+1), ML+4, Y+5.5, {align:'center'});
-          // Difficulty
-          if (q.difficulty) {
-            const dc = q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
-            setBG(dc); doc.roundedRect(ML+10, Y+0.5, 18, 6, 1, 1, 'F');
+          doc.text(String(i+1),ML+4,Y+5.5,{align:'center'});
+          if(q.difficulty){
+            const dc=q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
+            setBG(dc); doc.roundedRect(ML+10,Y+0.5,18,6,1,1,'F');
             doc.setFontSize(5.5); setFG([255,255,255]);
-            doc.text(q.difficulty.toUpperCase(), ML+19, Y+5, {align:'center'});
+            doc.text(q.difficulty.toUpperCase(),ML+19,Y+5,{align:'center'});
           }
-          // Question text
           doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(C.head);
-          const qLines = doc.splitTextToSize(q.question, CW-12);
-          doc.text(qLines.slice(0,3), ML+30, Y+5);
-          Y += Math.min(qLines.length, 3) * 4.5 + 5;
-          // Options
-          (q.options||[]).forEach((opt, oi) => {
+          const qLines=doc.splitTextToSize(q.question,CW-12);
+          doc.text(qLines.slice(0,3),ML+30,Y+5);
+          Y+=Math.min(qLines.length,3)*4.5+5;
+          (q.options||[]).forEach((opt,oi)=>{
             ck(8);
-            const isCorrect = opt === q.correct_answer;
-            if (isCorrect) {
-              setBG(isDark?[0,40,18]:[215,255,228]);
-              doc.roundedRect(ML+2, Y-2, CW-2, 7.5, 1, 1, 'F');
-            }
-            doc.setFontSize(7.5);
-            doc.setFont('helvetica', isCorrect?'bold':'normal');
-            setFG(isCorrect ? C.correct : C.text);
-            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' ✓':''}`, ML+5, Y+3);
-            Y += 8;
+            const isCorrect=opt===q.correct_answer;
+            if(isCorrect){setBG(isDark?[0,40,18]:[215,255,228]);doc.roundedRect(ML+2,Y-2,CW-2,7.5,1,1,'F');}
+            doc.setFontSize(7.5); doc.setFont('helvetica',isCorrect?'bold':'normal'); setFG(isCorrect?C.correct:C.text);
+            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' ✓':''}`,ML+5,Y+3); Y+=8;
           });
-          // Explanation (short)
-          if (q.explanation) {
-            ck(8);
-            doc.setFontSize(6.8); doc.setFont('helvetica','italic'); setFG(C.muted);
-            const expLines = doc.splitTextToSize('Explanation: '+q.explanation.slice(0,140), CW-6);
-            doc.text(expLines.slice(0,2), ML+3, Y+2);
-            Y += expLines.length > 1 ? 12 : 8;
+          if(q.explanation){
+            ck(8); doc.setFontSize(6.8); doc.setFont('helvetica','italic'); setFG(C.muted);
+            const expLines=doc.splitTextToSize('Exp: '+q.explanation.slice(0,140),CW-6);
+            doc.text(expLines.slice(0,2),ML+3,Y+2); Y+=expLines.length>1?12:8;
           }
-          Y += 4;
-          setDC(C.border); doc.setLineWidth(0.12); doc.line(ML+10, Y, PW-MR-10, Y);
-          Y += 6;
+          Y+=4; setDC(C.border); doc.setLineWidth(0.12); doc.line(ML+10,Y,PW-MR-10,Y); Y+=6;
         });
       }
 
-      // ── MIND MAP ──
-      if (data.mindmap?.branches?.length) {
+      if(data.mindmap?.branches?.length){
         newPage('Mind Map');
-        secHdr('🗺️  Mind Map', C.blue);
-        // Central node
-        setBG(C.gold); doc.roundedRect(ML+CW/2-40, Y, 80, 10, 5, 5, 'F');
+        secHdr('🗺️  Mind Map',C.blue);
+        setBG(C.gold); doc.roundedRect(ML+CW/2-40,Y,80,10,5,5,'F');
         doc.setFontSize(9.5); doc.setFont('helvetica','bold'); setFG([8,14,35]);
-        doc.text((data.mindmap.central||data.topic||'').slice(0,30), ML+CW/2, Y+7, {align:'center'});
-        Y += 16;
-        // Branches
-        data.mindmap.branches.forEach(b => {
+        doc.text((data.mindmap.central||data.topic||'').slice(0,30),ML+CW/2,Y+7,{align:'center'}); Y+=16;
+        data.mindmap.branches.forEach(b=>{
           ck(24);
-          const bRGB = b.color ? b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)) : [0,170,220];
+          const bRGB=b.color?b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)):[0,170,220];
           try{setBG(bRGB);}catch{setBG(C.blue);}
-          doc.rect(ML, Y, 3, 9, 'F');
-          setBG(C.card); doc.roundedRect(ML+4, Y, CW-4, 9, 1.5, 1.5, 'F');
+          doc.rect(ML,Y,3,9,'F');
+          setBG(C.card); doc.roundedRect(ML+4,Y,CW-4,9,1.5,1.5,'F');
           try{setFG(bRGB);}catch{setFG(C.blue);}
           doc.setFontSize(9); doc.setFont('helvetica','bold');
-          doc.text(`▸ ${b.name}`, ML+8, Y+6.2);
-          Y += 12;
-          (b.items||[]).slice(0,6).forEach(item => {
-            ck(6); setBG(C.hdr); doc.roundedRect(ML+8, Y, CW-8, 6, 1, 1, 'F');
+          doc.text(`▸ ${b.name}`,ML+8,Y+6.2); Y+=12;
+          (b.items||[]).slice(0,6).forEach(item=>{
+            ck(6); setBG(C.hdr); doc.roundedRect(ML+8,Y,CW-8,6,1,1,'F');
             doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
-            doc.text(`• ${String(item).slice(0,85)}`, ML+12, Y+4.2);
-            Y += 7;
-          });
-          Y += 4;
+            doc.text(`• ${String(item).slice(0,85)}`,ML+12,Y+4.2); Y+=7;
+          }); Y+=4;
         });
       }
 
-      // ── SUMMARY / TLDR ──
-      if (data.ultra_long_notes && (this.tool==='summary'||this.tool==='all')) {
-        const tldr = data.ultra_long_notes.split('\n\n').find(p => p.includes('TL;DR')||p.includes('Summary'))||'';
-        if (tldr) {
-          newPage('Smart Summary');
-          secHdr('⚡  TL;DR Summary', C.gold);
-          setBG(isDark?[12,18,48]:[238,242,255]);
-          ck(4); doc.rect(ML, Y, CW, 2, 'F'); Y += 4;
-          wt(this._stripMd(tldr).slice(0,600), ML, CW, 9, false, C.text, 5.5);
-          Y += 6;
-        }
-      }
+      addFooter();
 
-      // ── KEY TRICKS ──
-      if (data.key_tricks?.length) {
-        ck(18);
-        secHdr('🧠  Study Tricks & Memory Aids', C.gold);
-        data.key_tricks.slice(0,4).forEach((t,i) => {
-          ck(14);
-          wt(`${i+1}. ${String(t).slice(0,220)}`, ML, CW, 8.5, false, C.text);
-          Y += 4;
-        });
-      }
-
-      // ── APPLICATIONS ──
-      if (data.real_world_applications?.length) {
-        ck(18);
-        secHdr('🌍  Real-World Applications', C.blue);
-        data.real_world_applications.slice(0,6).forEach((a,i) => {
-          ck(10);
-          setBG(C.hdr); doc.roundedRect(ML, Y, CW, 8.5, 1, 1, 'F');
-          wt(String(a).slice(0,180), ML+3, CW-3, 8, false, C.text);
-          Y += 10;
-        });
-      }
-
-      // ── MISCONCEPTIONS ──
-      if (data.common_misconceptions?.length) {
-        ck(18);
-        secHdr('⚠️  Common Misconceptions', C.red);
-        data.common_misconceptions.slice(0,4).forEach((m,i) => {
-          ck(10);
-          wt(String(m).slice(0,200), ML, CW, 8, false, C.text);
-          Y += 4;
-        });
-      }
-
-      addPageFooter();
-
-      // ── Save ──
-      const safeName = (data.topic||'Study_Notes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
-      const dateStr  = new Date().toISOString().slice(0,10);
+      const safeName=(data.topic||'Study_Notes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
+      const dateStr=new Date().toISOString().slice(0,10);
       doc.save(`SavoireAI_${safeName}_${dateStr}_${theme}.pdf`);
       this._toast('success','fa-file-pdf', `✓ PDF ready — ${pageNum} page${pageNum>1?'s':''} · ${theme} theme`);
 
     } catch(err) {
       console.error('PDF error:', err);
-      this._toast('error','fa-times', `PDF failed: ${err.message.slice(0,60)}. Please try again.`);
+      this._toast('error','fa-times', `PDF failed: ${err.message.slice(0,60)}`);
     }
   }
 
-      // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 26: COPY / SAVE / SHARE / CLEAR
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── COPY / SAVE / SHARE / CLEAR ────────────────────────────────────────────
 
   _copyResult() {
     if (!this.currentData) { this._toast('info', 'fa-info-circle', 'Nothing to copy.'); return; }
@@ -3132,10 +2707,10 @@ Examples:
     if (this.currentData.topic)            parts.push(`# ${this.currentData.topic}\n`);
     if (this.currentData.ultra_long_notes) parts.push(this._stripMd(this.currentData.ultra_long_notes));
     if (this.currentData.key_concepts?.length) {
-      parts.push('\n\n## Key Concepts\n' + this.currentData.key_concepts.map((c, i) => `${i + 1}. ${c}`).join('\n'));
+      parts.push('\n\n## Key Concepts\n' + this.currentData.key_concepts.map((c, i) => `${i+1}. ${c}`).join('\n'));
     }
     if (this.currentData.flashcards?.length) {
-      parts.push('\n\n## Flashcards\n' + this.currentData.flashcards.map((c, i) => `Q${i+1}: ${c.front || c.question}\nA: ${c.back || c.answer}`).join('\n\n'));
+      parts.push('\n\n## Flashcards\n' + this.currentData.flashcards.map((c, i) => `Q${i+1}: ${c.front||c.question}\nA: ${c.back||c.answer}`).join('\n\n'));
     }
     if (this.currentData.quiz_questions?.length) {
       parts.push('\n\n## Quiz\n' + this.currentData.quiz_questions.map((q, i) => `Q${i+1}: ${q.question}\nAnswer: ${q.correct_answer}`).join('\n\n'));
@@ -3146,10 +2721,8 @@ Examples:
       .catch(() => {
         const ta = document.createElement('textarea');
         ta.value = parts.join('\n');
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
         this._toast('success', 'fa-check', 'Copied!');
       });
   }
@@ -3186,7 +2759,7 @@ Examples:
   _shareResult() {
     if (!this.currentData) { this._toast('info', 'fa-info-circle', 'Nothing to share.'); return; }
     const sd = {
-      title: `${this.currentData.topic || 'Study Notes'} — ${SAVOIRÉ.BRAND}`,
+      title: `${this.currentData.topic||'Study Notes'} — ${SAVOIRÉ.BRAND}`,
       text:  `My study notes on "${this.currentData.topic}" — generated with ${SAVOIRÉ.BRAND}`,
       url:   `https://${SAVOIRÉ.WEBSITE}`,
     };
@@ -3216,9 +2789,7 @@ Examples:
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 27: HISTORY & SAVED
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── HISTORY & SAVED ─────────────────────────────────────────────────────────
 
   _addHistory(item) {
     this.history = this.history.filter(h => !(h.topic === item.topic && h.tool === item.tool));
@@ -3238,8 +2809,8 @@ Examples:
     }
     this.el.lpHistList.innerHTML = this.history.slice(0, 6).map(h => `
       <div class="lp-hist-item" onclick="window._app._loadHistory('${h.id}')">
-        <i class="fas ${ICONS[h.tool] || 'fa-book'} lp-hist-icon" ${h.tool === 'all' ? 'style="color:#d4af37"' : ''}></i>
-        <div class="lp-hist-topic">${this._esc((h.topic || '').slice(0, 28))}</div>
+        <i class="fas ${ICONS[h.tool]||'fa-book'} lp-hist-icon" ${h.tool==='all'?'style="color:#d4af37"':''}></i>
+        <div class="lp-hist-topic">${this._esc((h.topic||'').slice(0,28))}</div>
         <div class="lp-hist-time">${this._relTime(h.ts)}</div>
         <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delHistory('${h.id}')">
           <i class="fas fa-times"></i>
@@ -3256,8 +2827,8 @@ Examples:
     }
     this.el.lpSavedList.innerHTML = this.saved.slice(0, 5).map(s => `
       <div class="lp-hist-item" onclick="window._app._loadSaved('${s.id}')">
-        <i class="fas ${ICONS[s.tool] || 'fa-star'} lp-hist-icon" style="color:#d4af37"></i>
-        <div class="lp-hist-topic">${this._esc((s.topic || '').slice(0, 28))}</div>
+        <i class="fas ${ICONS[s.tool]||'fa-star'} lp-hist-icon" style="color:#d4af37"></i>
+        <div class="lp-hist-topic">${this._esc((s.topic||'').slice(0,28))}</div>
         <div class="lp-hist-time">${this._relTime(s.savedAt)}</div>
         <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delSaved('${s.id}')">
           <i class="fas fa-times"></i>
@@ -3267,12 +2838,12 @@ Examples:
 
   _openHistModal()   { this._renderHistModal(); this._openModal('histModal'); }
 
-  _renderHistModal(filter = 'all', query = '') {
+  _renderHistModal(filter='all', query='') {
     if (!this.el.histList) return;
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram', all:'fa-bolt' };
     let filt = this.history;
     if (filter !== 'all') filt = filt.filter(h => h.tool === filter);
-    if (query) filt = filt.filter(h => (h.topic || '').toLowerCase().includes(query.toLowerCase()));
+    if (query)            filt = filt.filter(h => (h.topic||'').toLowerCase().includes(query.toLowerCase()));
 
     if (!filt.length) {
       this.el.histList.innerHTML = '';
@@ -3288,11 +2859,11 @@ Examples:
       `<div class="hist-group-lbl">${g}</div>
        ${items.map(h => `
          <div class="hist-item" onclick="window._app._loadHistory('${h.id}')">
-           <div class="hist-tool-av" ${h.tool === 'all' ? 'style="color:#d4af37;background:rgba(212,175,55,.1)"' : ''}>
-             <i class="fas ${ICONS[h.tool] || 'fa-book'}"></i>
+           <div class="hist-tool-av" ${h.tool==='all'?'style="color:#d4af37;background:rgba(212,175,55,.1)"':''}>
+             <i class="fas ${ICONS[h.tool]||'fa-book'}"></i>
            </div>
            <div class="hist-info">
-             <div class="hist-topic">${this._esc((h.topic || '').slice(0, 65))}</div>
+             <div class="hist-topic">${this._esc((h.topic||'').slice(0,65))}</div>
              <div class="hist-meta">
                <span class="hist-tag">${h.tool}</span>
                <span class="hist-time">${this._relTime(h.ts)}</span>
@@ -3307,13 +2878,13 @@ Examples:
     ).join('');
   }
 
-  _loadHistory(id)   { const h = this.history.find(x => x.id === id); if (!h?.data) return; this._closeModal('histModal'); this.currentData = h.data; this.tool = h.tool || 'notes'; this._renderResult(h.data); this._showToolbar(true); this._toast('info', 'fa-history', `Loaded: ${(h.topic || '').slice(0, 40)}`); }
-  _delHistory(id)    { this.history = this.history.filter(x => x.id !== id); this._save('sv_history', this.history); this._renderSidebarHistory(); this._updateAllStats(); this._renderHistModal(); }
+  _loadHistory(id)   { const h = this.history.find(x=>x.id===id); if(!h?.data)return; this._closeModal('histModal'); this.currentData=h.data; this.tool=h.tool||'notes'; this._renderResult(h.data); this._showToolbar(true); this._toast('info','fa-history',`Loaded: ${(h.topic||'').slice(0,40)}`); }
+  _delHistory(id)    { this.history=this.history.filter(x=>x.id!==id); this._save('sv_history',this.history); this._renderSidebarHistory(); this._updateAllStats(); this._renderHistModal(); }
   _openSavedModal()  { this._renderSavedModal(); this._openModal('savedModal'); }
 
   _renderSavedModal() {
     if (!this.el.savedList) return;
-    if (this.el.savedCount) this.el.savedCount.textContent = `${this.saved.length} note${this.saved.length !== 1 ? 's' : ''}`;
+    if (this.el.savedCount) this.el.savedCount.textContent = `${this.saved.length} note${this.saved.length!==1?'s':''}`;
     if (!this.saved.length) {
       this.el.savedList.innerHTML = '';
       if (this.el.savedEmpty) this.el.savedEmpty.style.display = 'flex';
@@ -3324,10 +2895,10 @@ Examples:
     this.el.savedList.innerHTML = this.saved.map(s => `
       <div class="hist-item" onclick="window._app._loadSaved('${s.id}')">
         <div class="hist-tool-av" style="color:#d4af37;background:rgba(212,175,55,.1)">
-          <i class="fas ${ICONS[s.tool] || 'fa-star'}"></i>
+          <i class="fas ${ICONS[s.tool]||'fa-star'}"></i>
         </div>
         <div class="hist-info">
-          <div class="hist-topic">${this._esc((s.topic || '').slice(0, 65))}</div>
+          <div class="hist-topic">${this._esc((s.topic||'').slice(0,65))}</div>
           <div class="hist-meta">
             <span class="hist-tag">${s.tool}</span>
             <span class="hist-time">Saved ${this._relTime(s.savedAt)}</span>
@@ -3341,12 +2912,10 @@ Examples:
       </div>`).join('');
   }
 
-  _loadSaved(id)     { const s = this.saved.find(x => x.id === id); if (!s?.data) return; this._closeModal('savedModal'); this.currentData = s.data; this.tool = s.tool || 'notes'; this._renderResult(s.data); this._showToolbar(true); this._toast('success', 'fa-star', 'Loaded saved note!'); }
-  _delSaved(id)      { this.saved = this.saved.filter(x => x.id !== id); this._save('sv_saved', this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); }
+  _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
+  _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 28: SETTINGS
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
   _openSettingsModal() {
     if (this.el.nameInput) this.el.nameInput.value = this.userName;
@@ -3373,7 +2942,6 @@ Examples:
         <div class="ds-stat"><span class="ds-val">${this.streak.bestStreak}</span><div class="ds-lbl">Best</div></div>`;
     }
 
-    // Render avatar picker in settings
     this._renderAvatarPickerInSettings();
     this._openModal('settingsModal');
   }
@@ -3398,7 +2966,7 @@ Examples:
     this.userName = name;
     localStorage.setItem('sv_user', name);
     this._updateUserUI();
-    this._warmupAndTrack(); // Re-send with new name
+    this._warmupAndTrack();
     this._toast('success', 'fa-check', 'Name updated!');
   }
 
@@ -3415,9 +2983,7 @@ Examples:
     this.prefs.pdfTheme = theme;
     this._save('sv_prefs', this.prefs);
     this._qsa('[data-pdf-theme]').forEach(b => b.classList.toggle('active', b.dataset.pdfTheme === theme));
-    // Update PDF button tooltip
-    const pdfBtn = this.el.pdfBtn;
-    if (pdfBtn) pdfBtn.setAttribute('data-theme', theme === 'dark' ? '🌙' : '☀️');
+    if (this.el.pdfBtn) this.el.pdfBtn.setAttribute('data-theme', theme === 'dark' ? '🌙' : '☀️');
     this._toast('info', 'fa-file-pdf', `PDF theme: ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
   }
 
@@ -3440,8 +3006,7 @@ Examples:
     const a    = document.createElement('a');
     a.href     = url;
     a.download = `savoiré-ai-backup-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
+    document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     this._toast('success', 'fa-download', 'Backup exported!');
@@ -3452,13 +3017,13 @@ Examples:
     r.onload = e => {
       try {
         const d = JSON.parse(e.target.result);
-        if (d.history)     this.history   = d.history;
-        if (d.saved)       this.saved     = d.saved;
-        if (d.preferences) this.prefs     = d.preferences;
-        if (d.streak)      this.streak    = d.streak;
-        if (d.userName)    this.userName  = d.userName;
-        if (d.totalWords)  this.totalWords= d.totalWords;
-        if (d.sessions)    this.sessions  = d.sessions;
+        if (d.history)     this.history    = d.history;
+        if (d.saved)       this.saved      = d.saved;
+        if (d.preferences) this.prefs      = d.preferences;
+        if (d.streak)      this.streak     = d.streak;
+        if (d.userName)    this.userName   = d.userName;
+        if (d.totalWords)  this.totalWords = d.totalWords;
+        if (d.sessions)    this.sessions   = d.sessions;
         this._save('sv_history', this.history);
         this._save('sv_saved', this.saved);
         this._save('sv_prefs', this.prefs);
@@ -3472,7 +3037,7 @@ Examples:
         this._updateUserUI();
         this._toast('success', 'fa-check', 'Backup restored! Reloading…');
         setTimeout(() => location.reload(), 1600);
-      } catch { this._toast('error', 'fa-times', 'Invalid backup file. Please check the file format.'); }
+      } catch { this._toast('error', 'fa-times', 'Invalid backup file.'); }
     };
     r.readAsText(file);
   }
@@ -3513,9 +3078,7 @@ Examples:
     if (this.prefs.pdfTheme) this.pdfTheme = this.prefs.pdfTheme;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 29: SIDEBAR & FOCUS MODE
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── SIDEBAR & FOCUS MODE ────────────────────────────────────────────────────
 
   _toggleSidebar() {
     if (!this.el.leftPanel) return;
@@ -3557,9 +3120,7 @@ Examples:
     }, { passive: true });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 30: BACK TO TOP
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── BACK TO TOP ─────────────────────────────────────────────────────────────
 
   _initBackToTop() {
     if (!this.el.outArea || !this.el.backToTopBtn) return;
@@ -3572,36 +3133,28 @@ Examples:
     };
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 31: ABOUT SECTION TOGGLE
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── ABOUT SECTION ───────────────────────────────────────────────────────────
 
   _toggleAbout() {
-    const content  = this.el.aboutContent;
-    const chevron  = this.el.aboutChevron;
+    const content = this.el.aboutContent;
+    const chevron = this.el.aboutChevron;
     if (!content) return;
     const isOpen = content.classList.toggle('open');
     if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 32: DEMO SYSTEM — Professional Spotlight Tour
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── DEMO SYSTEM ─────────────────────────────────────────────────────────────
 
   _initDemoSystem() {
-    // ── DEMO SYSTEM — Professional spotlight tour with canvas cutout ──
-    // Creates a dark overlay with a "hole" cut through to the target element
-
-    // Canvas overlay (draws the dark backdrop with cutout hole)
     this.demoCanvas = document.createElement('canvas');
     this.demoCanvas.id = 'demoCanvas';
     Object.assign(this.demoCanvas.style, {
-      display: 'none', position: 'fixed', inset: '0', width: '100%', height: '100%',
-      zIndex: '9990', pointerEvents: 'all', cursor: 'default',
+      display: 'none', position: 'fixed', inset: '0',
+      width: '100%', height: '100%',
+      zIndex: '9990', pointerEvents: 'all', cursor: 'pointer',
     });
     document.body.appendChild(this.demoCanvas);
 
-    // Tooltip card
     this.demoTooltip = document.createElement('div');
     this.demoTooltip.id = 'demoTooltip';
     Object.assign(this.demoTooltip.style, {
@@ -3609,90 +3162,64 @@ Examples:
       background: 'rgba(5,10,30,.97)',
       border: '1.5px solid rgba(212,175,55,.5)',
       borderRadius: '18px',
-      boxShadow: '0 24px 64px rgba(0,0,0,.7), 0 0 0 1px rgba(212,175,55,.12) inset',
+      boxShadow: '0 24px 64px rgba(0,0,0,.7)',
       padding: '20px', maxWidth: '360px', minWidth: '260px',
       fontFamily: 'Inter,sans-serif',
     });
     document.body.appendChild(this.demoTooltip);
 
-    // Arrow element
-    this.demoArrow = document.createElement('div');
-    this.demoArrow.id = 'demoArrow';
-    Object.assign(this.demoArrow.style, {
-      display: 'none', position: 'fixed', zIndex: '9998',
-      width: '0', height: '0', pointerEvents: 'none',
+    window.addEventListener('resize', () => {
+      if (this.demoCanvas.style.display !== 'none') this._drawDemoSpotlight();
     });
-    document.body.appendChild(this.demoArrow);
-
-    // Resize handler
-    this._demoResizeH = () => { if (this.demoCanvas.style.display !== 'none') this._drawDemoSpotlight(); };
-    window.addEventListener('resize', this._demoResizeH);
   }
 
   _drawDemoSpotlight(rect) {
-    // Draw dark overlay with a bright cutout hole showing the target element
     const canvas = this.demoCanvas;
     if (!canvas) return;
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Dark overlay
     ctx.fillStyle = 'rgba(0,0,8,0.78)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (rect) {
-      const pad = 10, r = 12;
-      const x = rect.left - pad, y = rect.top - pad;
-      const w = rect.width + pad*2, h = rect.height + pad*2;
+      const pad=10, r=12;
+      const x=rect.left-pad, y=rect.top-pad;
+      const w=rect.width+pad*2, h=rect.height+pad*2;
 
-      // Cut out the hole (composite operation)
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
+      ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
       ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-      ctx.lineTo(x+w, y+h-r);
-      ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-      ctx.lineTo(x+r, y+h);
-      ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-      ctx.lineTo(x, y+r);
-      ctx.quadraticCurveTo(x, y, x+r, y);
-      ctx.closePath();
-      ctx.fill();
+      ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+      ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+      ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+      ctx.closePath(); ctx.fill();
 
-      // Gold border around the hole
       ctx.globalCompositeOperation = 'source-over';
       ctx.strokeStyle = 'rgba(212,175,55,0.9)';
       ctx.lineWidth   = 2.5;
       ctx.shadowColor = '#d4af37';
       ctx.shadowBlur  = 18;
       ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.lineTo(x + w - r, y);
+      ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
       ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-      ctx.lineTo(x+w, y+h-r);
-      ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-      ctx.lineTo(x+r, y+h);
-      ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-      ctx.lineTo(x, y+r);
-      ctx.quadraticCurveTo(x, y, x+r, y);
-      ctx.closePath();
-      ctx.stroke();
+      ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+      ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+      ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+      ctx.closePath(); ctx.stroke();
       ctx.shadowBlur = 0;
     }
   }
 
   _openDemo() {
     this.demoStep = 0;
-    if (this.demoCanvas) {
-      this.demoCanvas.width  = window.innerWidth;
-      this.demoCanvas.height = window.innerHeight;
-      this.demoCanvas.style.display = 'block';
-    }
-    if (this.demoTooltip) this.demoTooltip.style.display = 'block';
-    // Add/show click hint
+    this.demoCanvas.width  = window.innerWidth;
+    this.demoCanvas.height = window.innerHeight;
+    this.demoCanvas.style.display  = 'block';
+    this.demoTooltip.style.display = 'block';
+
     let hint = this._el('demoCHint');
     if (!hint) {
       hint = document.createElement('div');
@@ -3702,13 +3229,19 @@ Examples:
       document.body.appendChild(hint);
     }
     hint.style.display = 'block';
+
+    // Canvas click → advance
+    this.demoCanvas.onclick = () => {
+      if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
+      else this._closeDemo();
+    };
+
     this._renderDemoStep();
   }
 
   _closeDemo() {
     if (this.demoCanvas)  this.demoCanvas.style.display  = 'none';
     if (this.demoTooltip) this.demoTooltip.style.display = 'none';
-    if (this.demoArrow)   this.demoArrow.style.display   = 'none';
     const hint = this._el('demoCHint');
     if (hint) hint.style.display = 'none';
     this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
@@ -3720,16 +3253,13 @@ Examples:
     const isLast  = !!step.isLast;
     if (!step || !this.demoTooltip) return;
 
-    // ── Find & highlight target element ──
     this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
     let targetRect = null;
 
     if (step.targetId) {
       const target = this._el(step.targetId);
       if (target) {
-        // Ensure element is visible (scroll into view if needed)
         target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        // Brief delay for scroll, then measure + draw
         setTimeout(() => {
           targetRect = target.getBoundingClientRect();
           this._drawDemoSpotlight(targetRect);
@@ -3742,10 +3272,8 @@ Examples:
       this._placeDemoTooltipCenter();
     }
 
-    // ── Progress bar ──
     const pct = Math.round(((this.demoStep + 1) / DEMO_STEPS.length) * 100);
 
-    // ── Step dots ──
     const dotsHtml = DEMO_STEPS.map((_, i) => {
       const s = i === this.demoStep ? 'active' : i < this.demoStep ? 'done' : 'pending';
       return `<button class="demo-tt-dot demo-dot-${s}" onclick="window._app._jumpDemo(${i})" title="Step ${i+1}">
@@ -3753,28 +3281,24 @@ Examples:
       </button>`;
     }).join('');
 
-    // ── Tips list ──
     const tipsHtml = (step.tips || []).map((t, i) => `
       <div class="demo-tip-item" style="animation-delay:${i*60}ms">
         <div class="demo-tip-ic"><i class="fas ${t.icon}"></i></div>
         <div class="demo-tip-text">${t.text}</div>
       </div>`).join('');
 
-    // ── Action button ──
     const actionBtn = step.action ? `
       <button class="demo-action-btn" onclick="window._app._closeDemo();window._app.${step.action.fn}();return false;">
         <i class="fas fa-play"></i> ${step.action.label}
       </button>` : '';
 
-    // ── Render tooltip ──
     this.demoTooltip.innerHTML = `
       <div class="demo-tt-top">
         <div class="demo-tt-step-badge">Step ${step.step} of ${DEMO_STEPS.length}</div>
-        <button class="demo-tt-x" onclick="window._app._closeDemo()" title="Close demo (Esc)">
+        <button class="demo-tt-x" onclick="window._app._closeDemo()" title="Close (Esc)">
           <i class="fas fa-times"></i>
         </button>
       </div>
-
       <div class="demo-tt-icon-row">
         <div class="demo-tt-icon-wrap" style="--demo-color:${step.color};background:${step.color}18;border:2px solid ${step.color}44">
           <i class="fas ${step.icon}" style="color:${step.color};font-size:1.6rem"></i>
@@ -3784,20 +3308,15 @@ Examples:
           <div class="demo-tt-subtitle">${step.subtitle}</div>
         </div>
       </div>
-
       <div class="demo-tt-progress">
         <div class="demo-tt-prog-bar">
           <div class="demo-tt-prog-fill" style="width:${pct}%;background:${step.color}"></div>
         </div>
         <div class="demo-tt-dots">${dotsHtml}</div>
       </div>
-
       <div class="demo-tt-content">${step.content}</div>
-
       <div class="demo-tt-tips">${tipsHtml}</div>
-
       ${actionBtn}
-
       <div class="demo-tt-footer">
         <button class="demo-btn-prev" onclick="window._app._prevDemo()" ${isFirst ? 'disabled' : ''} title="Previous (←)">
           <i class="fas fa-arrow-left"></i> Back
@@ -3815,73 +3334,55 @@ Examples:
       </div>`;
   }
 
-  _nextDemo() {
-    if (this.demoStep < DEMO_STEPS.length - 1) { this.demoStep++; this._renderDemoStep(); }
-  }
-  _prevDemo() {
-    if (this.demoStep > 0) { this.demoStep--; this._renderDemoStep(); }
-  }
+  _nextDemo() { if (this.demoStep < DEMO_STEPS.length-1) { this.demoStep++; this._renderDemoStep(); } }
+  _prevDemo() { if (this.demoStep > 0)                   { this.demoStep--; this._renderDemoStep(); } }
   _jumpDemo(step) { this.demoStep = step; this._renderDemoStep(); }
 
   _placeDemoTooltip(rect, preferredArrow) {
     if (!this.demoTooltip || !rect) { this._placeDemoTooltipCenter(); return; }
-    const TW = 380, TH = 500, M = 16;
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const w  = Math.min(TW, vw - M*2);
-    this.demoTooltip.style.transform = '';
-    this.demoTooltip.style.width     = w + 'px';
-    this.demoTooltip.style.maxHeight = (vh - M*2) + 'px';
-    this.demoTooltip.style.overflowY = 'auto';
+    const TW=380, TH=500, M=16;
+    const vw=window.innerWidth, vh=window.innerHeight;
+    const w=Math.min(TW, vw-M*2);
+    this.demoTooltip.style.transform='';
+    this.demoTooltip.style.width=w+'px';
+    this.demoTooltip.style.maxHeight=(vh-M*2)+'px';
+    this.demoTooltip.style.overflowY='auto';
 
-    const fits = {
-      below: rect.bottom + TH + M < vh,
-      above: rect.top    - TH - M > 0,
-      right: rect.right  + w  + M < vw,
-      left:  rect.left   - w  - M > 0,
+    const fits={
+      below: rect.bottom+TH+M<vh, above: rect.top-TH-M>0,
+      right:  rect.right+w+M<vw, left:  rect.left-w-M>0,
     };
 
-    let top, left, placed = false;
-    const tryDir = (dir) => {
-      if (dir === 'down'  && fits.below) { top = rect.bottom + M; left = Math.max(M, Math.min(vw-w-M, rect.left + rect.width/2 - w/2)); return true; }
-      if (dir === 'up'    && fits.above) { top = rect.top - TH - M; left = Math.max(M, Math.min(vw-w-M, rect.left + rect.width/2 - w/2)); return true; }
-      if (dir === 'right' && fits.right) { top = Math.max(M, Math.min(vh-TH-M, rect.top + rect.height/2 - TH/2)); left = rect.right + M; return true; }
-      if (dir === 'left'  && fits.left)  { top = Math.max(M, Math.min(vh-TH-M, rect.top + rect.height/2 - TH/2)); left = rect.left - w - M; return true; }
+    let top, left, placed=false;
+    const tryDir=(dir)=>{
+      if(dir==='down' &&fits.below){top=rect.bottom+M;left=Math.max(M,Math.min(vw-w-M,rect.left+rect.width/2-w/2));return true;}
+      if(dir==='up'  &&fits.above){top=rect.top-TH-M;left=Math.max(M,Math.min(vw-w-M,rect.left+rect.width/2-w/2));return true;}
+      if(dir==='right'&&fits.right){top=Math.max(M,Math.min(vh-TH-M,rect.top+rect.height/2-TH/2));left=rect.right+M;return true;}
+      if(dir==='left' &&fits.left) {top=Math.max(M,Math.min(vh-TH-M,rect.top+rect.height/2-TH/2));left=rect.left-w-M;return true;}
       return false;
     };
 
-    // Try preferred direction first, then auto-fallback
-    const order = ['below','right','above','left'];
-    if (preferredArrow) {
-      const mapped = { down:'below', up:'above', right:'right', left:'left' };
-      placed = tryDir(mapped[preferredArrow] || preferredArrow);
-    }
-    if (!placed) {
-      for (const dir of order) { if (tryDir(dir)) { placed = true; break; } }
-    }
-    if (!placed) { this._placeDemoTooltipCenter(); return; }
+    const order=['below','right','above','left'];
+    if(preferredArrow){const mapped={down:'below',up:'above',right:'right',left:'left'};placed=tryDir(mapped[preferredArrow]||preferredArrow);}
+    if(!placed){for(const dir of order){if(tryDir(dir)){placed=true;break;}}}
+    if(!placed){this._placeDemoTooltipCenter();return;}
 
-    this.demoTooltip.style.top    = top  + 'px';
-    this.demoTooltip.style.left   = left + 'px';
-    this.demoTooltip.style.bottom = 'auto';
-    this.demoTooltip.style.right  = 'auto';
+    this.demoTooltip.style.top=top+'px';
+    this.demoTooltip.style.left=left+'px';
+    this.demoTooltip.style.bottom='auto';
+    this.demoTooltip.style.right='auto';
   }
 
   _placeDemoTooltipCenter() {
     if (!this.demoTooltip) return;
-    const w = Math.min(380, window.innerWidth - 32);
+    const w = Math.min(380, window.innerWidth-32);
     Object.assign(this.demoTooltip.style, {
-      width:     w + 'px',
-      top:       '50%',
-      left:      '50%',
-      transform: 'translate(-50%,-50%)',
-      bottom:    'auto',
-      right:     'auto',
+      width: w+'px', top:'50%', left:'50%',
+      transform:'translate(-50%,-50%)', bottom:'auto', right:'auto',
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 33: MODAL SYSTEM
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── MODAL SYSTEM ────────────────────────────────────────────────────────────
 
   _openModal(id) {
     const el = this._el(id);
@@ -3917,13 +3418,10 @@ Examples:
   _toggleDropdown() { if (this.el.avDropdown) this.el.avDropdown.classList.toggle('open'); }
   _closeDropdown()  { if (this.el.avDropdown) this.el.avDropdown.classList.remove('open'); }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 34: TOAST NOTIFICATIONS
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── TOAST NOTIFICATIONS ─────────────────────────────────────────────────────
 
-  _toast(type, icon, msg, dur = 4200) {
+  _toast(type, icon, msg, dur=4200) {
     if (!this.el.toastContainer) return;
-    // Max 4 toasts at once
     while (this.el.toastContainer.children.length >= 4) {
       this.el.toastContainer.removeChild(this.el.toastContainer.firstChild);
     }
@@ -3938,18 +3436,14 @@ Examples:
     }, dur);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
-  // SECTION 35: ALL EVENT BINDINGS
-  // ─────────────────────────────────────────────────────────────────────────────────────────────────
+  // ─── ALL EVENT BINDINGS ──────────────────────────────────────────────────────
 
   _bindAll() {
     const on = (el, ev, fn) => { if (el) el.addEventListener(ev, fn); };
 
-    // ── Sidebar & backdrop ──
     on(this.el.sbToggle,   'click', () => this._toggleSidebar());
     on(this.el.sbBackdrop, 'click', () => this._closeSidebar());
 
-    // ── Navigation ──
     on(this.el.navWizard,  'click', () => this._openWizard());
     on(this.el.navAll,     'click', () => this._openMega());
     on(this.el.navHistory, 'click', () => this._openHistModal());
@@ -3958,35 +3452,34 @@ Examples:
     on(this.el.navFocus,   'click', () => this._toggleFocus());
     on(this.el.demoReplayBtn,'click', () => this._openDemo());
 
-    // ── Header buttons ──
     on(this.el.themeBtn,        'click', () => this._toggleTheme());
     on(this.el.settingsBtn,     'click', () => this._openSettingsModal());
     on(this.el.wizardHeaderBtn, 'click', () => this._openWizard());
     on(this.el.megaHeaderBtn,   'click', () => this._openMega());
-    on(this.el.emptyWizardBtn,  'click', () => this._openWizard());
-    // Feature chips on empty state — each opens wizard with that tool pre-selected
+
+    // Empty state buttons
+    const emptyWizBtn = this._el('emptyWizardBtn');
+    on(emptyWizBtn, 'click', () => this._openWizard());
+    const emptyMegBtn = this._el('emptyMegaBtn');
+    on(emptyMegBtn, 'click', () => this._openMega());
+
+    // Feature chips — each opens wizard with pre-selected tool
     this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
-      chip.addEventListener('click', (e) => {
-        if (e.target.closest('[onclick]') && e.target.dataset.tool === 'all') return; // mega handled by onclick
+      chip.addEventListener('click', () => {
         const tool = chip.dataset.tool;
-        if (tool && tool !== 'all') this._openWizard(tool);
+        if (tool === 'all') this._openMega();
+        else if (tool) this._openWizard(tool);
       });
       chip.style.cursor = 'pointer';
     });
-    on(this.el.emptyMegaBtn,    'click', () => this._openMega());
 
-    // ── Home link / logo ──
     if (this.el.homeLink) this.el.homeLink.addEventListener('click', e => { e.preventDefault(); this._clearOutput(); this._showToolbar(false); });
     if (this.el.dhLogo)   this.el.dhLogo.addEventListener('click', () => { this._clearOutput(); this._showToolbar(false); });
 
-    // ── Sidebar strips ──
     on(this.el.lpHistAll,  'click', () => this._openHistModal());
     on(this.el.lpSavedAll, 'click', () => this._openSavedModal());
-
-    // ── About toggle ──
     on(this.el.aboutToggleBtn, 'click', () => this._toggleAbout());
 
-    // ── Avatar dropdown ──
     on(this.el.avBtn, 'click', e => { e.stopPropagation(); this._toggleDropdown(); });
     on(this.el.avHist,     'click', () => { this._closeDropdown(); this._openHistModal(); });
     on(this.el.avSaved,    'click', () => { this._closeDropdown(); this._openSavedModal(); });
@@ -3996,7 +3489,6 @@ Examples:
       if (!e.target.closest('#avBtn') && !e.target.closest('#avDropdown')) this._closeDropdown();
     });
 
-    // ── Output toolbar ──
     on(this.el.copyBtn,     'click', () => this._copyResult());
     on(this.el.pdfBtn,      'click', () => this._downloadPDF());
     on(this.el.saveBtn,     'click', () => this._saveNote());
@@ -4005,7 +3497,6 @@ Examples:
     on(this.el.newWizardBtn,'click', () => this._openWizard());
     on(this.el.focusModeBtn,'click', () => this._toggleFocus());
 
-    // ── History modal ──
     on(this.el.histSearchInput, 'input', e => {
       const active = this._qs('.hist-filter.active')?.dataset?.filter || 'all';
       this._renderHistModal(active, e.target.value);
@@ -4031,14 +3522,12 @@ Examples:
       });
     });
 
-    // ── Settings ──
     on(this.el.saveNameBtn,       'click', () => this._saveName());
     on(this.el.saveDefaultLangBtn,'click', () => this._saveDefaultLang());
     on(this.el.exportDataBtn,     'click', () => this._exportData());
     on(this.el.importBackupBtn,   'click', () => {
       const inp = document.createElement('input');
-      inp.type   = 'file';
-      inp.accept = '.json';
+      inp.type = 'file'; inp.accept = '.json';
       inp.onchange = e => { if (e.target.files[0]) this._importData(e.target.files[0]); };
       inp.click();
     });
@@ -4047,13 +3536,11 @@ Examples:
     this._qsa('[data-pdf-theme]').forEach(b => b.addEventListener('click', () => this._setPdfTheme(b.dataset.pdfTheme)));
     this._qsa('.font-sz').forEach(b => b.addEventListener('click', () => this._setFontSize(b.dataset.size)));
 
-    // ── Welcome ──
     on(this.el.welcomeBtn,      'click',   () => this._submitWelcome());
-    // Skip removed — name is mandatory. welcomeSkip button hidden in HTML.
+    on(this.el.welcomeSkip,     'click',   () => this._skipWelcome());
     on(this.el.welcomeNameInput,'keydown', e => { if (e.key === 'Enter') this._submitWelcome(); });
     on(this.el.welcomeBackBtn,  'click',   () => this._dismissOverlay('welcomeBackOverlay'));
 
-    // ── Mega modal ──
     if (this.el.megaTopicInput) {
       this.el.megaTopicInput.addEventListener('input', e => {
         const v = e.target.value.slice(0, 4000);
@@ -4072,18 +3559,6 @@ Examples:
       });
     });
 
-    // ── Demo overlay click-to-close ──
-    if (this.demoOverlay) {
-      // Demo canvas click — clicking outside target area advances to next step
-      if (this.demoCanvas) {
-        this.demoCanvas.addEventListener('click', () => {
-          if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
-          else this._closeDemo();
-        });
-      }
-    }
-
-    // ── Modal close buttons & overlay clicks ──
     this._qsa('[data-close]').forEach(b => b.addEventListener('click', () => this._closeModal(b.dataset.close)));
     this._qsa('.modal-close').forEach(b => {
       const ov = b.closest('.modal-overlay');
@@ -4093,19 +3568,16 @@ Examples:
       ov.addEventListener('click', e => { if (e.target === ov) this._closeModal(ov.id); });
     });
 
-    // ── Confirm dialog ──
     on(this.el.confirmOkBtn, 'click', () => {
       this._closeModal('confirmModal');
       if (typeof this.confirmCb === 'function') this.confirmCb();
       this.confirmCb = null;
     });
 
-    // ── Resize ──
     window.addEventListener('resize', () => {
       if (window.innerWidth > 1024) this._closeSidebar();
     });
 
-    // ── Keyboard shortcuts ──
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') { this._closeAllModals(); return; }
       const tag = document.activeElement?.tagName?.toLowerCase();
@@ -4113,50 +3585,47 @@ Examples:
 
       if (e.ctrlKey || e.metaKey) {
         switch (e.key.toLowerCase()) {
-          case 'k': e.preventDefault(); this._openWizard();       break;
-          case 'h': e.preventDefault(); this._openHistModal();    break;
-          case 'b': e.preventDefault(); this._toggleSidebar();    break;
-          case 's': e.preventDefault(); this._saveNote();         break;
-          case 'p': e.preventDefault(); this._downloadPDF();      break;
-          case 'm': e.preventDefault(); this._openMega();         break;
+          case 'k': e.preventDefault(); this._openWizard();    break;
+          case 'h': e.preventDefault(); this._openHistModal(); break;
+          case 'b': e.preventDefault(); this._toggleSidebar(); break;
+          case 's': e.preventDefault(); this._saveNote();      break;
+          case 'p': e.preventDefault(); this._downloadPDF();   break;
+          case 'm': e.preventDefault(); this._openMega();      break;
         }
       }
 
-      // Flashcard keyboard navigation
+      // Demo keyboard nav
+      if (this.demoCanvas?.style.display !== 'none') {
+        if (e.key === 'ArrowRight') this._nextDemo();
+        else if (e.key === 'ArrowLeft') this._prevDemo();
+        return;
+      }
+
+      // Flashcard keyboard
       if (this.fcCards.length) {
         if (e.key === 'ArrowRight') this._fcNav(1);
         else if (e.key === 'ArrowLeft')  this._fcNav(-1);
         else if (e.key === ' ')          { e.preventDefault(); this._fcFlip(); }
         else if (e.key === 's' || e.key === 'S') this._fcShuffle();
       }
-
-      // Demo navigation
-      if (this.demoOverlay?.style.display === 'block') {
-        if (e.key === 'ArrowRight') this._nextDemo();
-        else if (e.key === 'ArrowLeft')  this._prevDemo();
-      }
     });
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // INITIALIZATION
-// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
-// ── Global welcome avatar selector (called from inline onclick in welcome modal) ──
 window._welcomeSetAvatar = function(idx) {
   if (!window._app) return;
   window._app.avatarColorIdx = idx;
   localStorage.setItem('sv_avatar_color', String(idx));
-  // Update all avatar buttons in welcome grid
   document.querySelectorAll('.wavatarBtn').forEach((btn, i) => {
     btn.classList.toggle('active', i === idx);
   });
-  // Update the main UI avatars immediately
   window._app._updateUserUI();
 };
 
-// ── Global welcome name input — show hint when empty ──
 window._welcomeValidateName = function() {
   const inp  = document.getElementById('welcomeNameInput');
   const hint = document.getElementById('welcomeNameHint');
@@ -4180,7 +3649,6 @@ window.addEventListener('DOMContentLoaded', () => {
   window._app = new SavoireApp();
   window._sav = window._app;
 
-  // Wire up welcome name input validation
   const wInp = document.getElementById('welcomeNameInput');
   if (wInp) wInp.addEventListener('input', window._welcomeValidateName);
 
@@ -4189,7 +3657,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
-// END OF FILE — app.js v2.0 WORLD CLASS MAXIMUM LINES
+// END OF FILE — app.js v2.0 WORLD CLASS MAXIMUM LINES — ALL BUGS FIXED
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | "Think Less. Know More."
 // Free forever for every student on Earth.

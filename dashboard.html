@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <meta name="description" content="Savoiré AI v2.0 — World's Most Advanced AI Study Assistant">
+  <meta name="description" content="Savoiré AI v2.0 — World's Most Advanced Free AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
   <meta name="author" content="Sooban Talha Technologies">
   <meta name="theme-color" content="#0a1128">
+  <meta property="og:title" content="Savoiré AI v2.0 — Ultimate AI Study Assistant">
+  <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI — completely free forever.">
   <title>Savoiré AI v2.0 — Ultimate AI Study Assistant</title>
 
+  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -22,21 +26,62 @@
     html,body{height:100%;overflow:hidden}
     body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(135deg,#0a1128 0%,#050814 50%,#000000 100%);color:#c0c0c0;display:flex;flex-direction:column}
     .dash-body{flex:1;display:flex;overflow:hidden;position:relative}
+
+    /* Loading spinner */
     .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border:3px solid rgba(212,175,55,0.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite;z-index:9999}
     @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
     .loaded .loading-spinner{display:none}
-    #particleCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+
+    /* Toast */
     .toast-container{position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 18px;background:rgba(15,23,42,0.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;font-size:.82rem;color:#fff;animation:slideInToast .3s ease;cursor:pointer;max-width:340px}
+    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 18px;background:rgba(15,23,42,0.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;font-size:.82rem;color:#fff;animation:slideInToast .3s ease;cursor:pointer;max-width:340px;min-width:200px}
     .toast.success{border-left:4px solid #00ff88}
-    .toast.error{border-left:4px solid #ff4444}
-    .toast.info{border-left:4px solid #00d4ff}
+    .toast.error  {border-left:4px solid #ff4444}
+    .toast.info   {border-left:4px solid #00d4ff}
     @keyframes slideInToast{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+
+    /* Sidebar backdrop */
     .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:48;cursor:pointer}
     .sb-backdrop.visible{display:block;animation:fadeIn .25s ease}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+
+    /* Empty tool message */
+    .empty-tool-msg{padding:60px 40px;text-align:center;color:rgba(255,255,255,.4);font-size:1.1rem;display:flex;flex-direction:column;align-items:center;gap:16px}
+    .empty-tool-msg i{font-size:3rem;color:rgba(255,255,255,.2)}
+
+    /* Deck visualizer */
+    .deck-viz-wrap{position:relative;width:80px;height:60px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center}
+    .deck-card-viz{position:absolute;width:64px;height:44px;background:linear-gradient(135deg,rgba(191,0,255,.15),rgba(0,212,255,.1));border:1px solid rgba(191,0,255,.3);border-radius:6px;transition:all .3s ease}
+    .deck-count-badge{position:absolute;bottom:-10px;right:-10px;background:linear-gradient(135deg,#bf00ff,#7a00cc);color:#fff;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:20px;z-index:10}
+
+    /* Mindmap pulse */
+    .live-mm-pulse{display:inline-block;width:8px;height:8px;background:#d4af37;border-radius:50%;margin-left:8px;animation:mmPulse 1.5s ease infinite}
+    @keyframes mmPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
+
+    /* Mindmap central placeholder */
+    .live-mm-central-placeholder{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;background:rgba(212,175,55,.06);border:1px dashed rgba(212,175,55,.2);border-radius:30px;color:rgba(212,175,55,.5);font-size:.85rem;margin-bottom:16px}
+    .live-mm-radial-container{display:flex;flex-wrap:wrap;gap:10px;max-height:calc(100vh - 260px);overflow-y:auto}
+
+    /* Quiz speed track */
+    .live-quiz-speed-track{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;padding:8px 12px;background:rgba(0,255,136,.04);border-radius:8px}
+    .quiz-speed-pip{width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,.1);transition:background .3s ease}
+    .quiz-speed-pip.filled{background:rgba(0,255,136,.4)}
+
+    /* Fc deck info */
+    .fc-deck-info{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .fc-deck-badge{padding:3px 10px;background:rgba(191,0,255,.1);border:1px solid rgba(191,0,255,.2);border-radius:20px;font-size:.62rem;color:#bf00ff;font-weight:600}
+
+    /* Result section mega num */
+    .mega-num{width:22px;height:22px;background:linear-gradient(135deg,#d4af37,#b8941f);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:#0a1128;margin-right:6px;flex-shrink:0}
+
+    /* Avatar picker settings */
+    #avatarPickerSettings .avatar-picker-grid{display:flex;flex-wrap:wrap;gap:8px}
+
+    /* Sidebar avatar picker */
+    #sidebarAvatarPicker{padding:12px 20px;border-top:1px solid rgba(255,255,255,.05)}
+
+    /* Welcome name hint */
+    #welcomeNameHint{min-height:18px}
   </style>
 </head>
 <body>
@@ -47,11 +92,11 @@
   </noscript>
 
   <div class="loading-spinner"></div>
-  <canvas id="particleCanvas"></canvas>
+  <canvas id="particleCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
   <div id="toastContainer" class="toast-container"></div>
   <div class="sb-backdrop" id="sbBackdrop"></div>
 
-  <!-- ═══════════ MAIN LAYOUT ═══════════ -->
+  <!-- ═══════════════════════════════════════ MAIN LAYOUT ═══════════════════════════════════════ -->
   <div class="dash-body">
 
     <!-- ═══════════ LEFT PANEL / SIDEBAR ═══════════ -->
@@ -73,7 +118,7 @@
         </div>
       </div>
 
-      <!-- Stats Grid -->
+      <!-- Stats Grid — 4 col on mobile -->
       <div class="stats-grid-sidebar" id="sidebarStats">
         <div class="stat-card-sidebar">
           <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
@@ -113,9 +158,9 @@
           <span class="nav-text">✨ Create Study Material</span>
           <span class="nav-badge new-badge">Wizard</span>
         </div>
-        <!-- ALL TOOLS MEGA -->
+        <!-- MEGA BUNDLE -->
         <div class="nav-item nav-item-mega" data-nav="all" id="navAll">
-          <i class="fas fa-layer-group nav-icon"></i>
+          <i class="fas fa-bolt nav-icon"></i>
           <span class="nav-text">⚡ Mega Study Bundle</span>
           <span class="nav-badge mega-badge">ALL 5</span>
         </div>
@@ -165,6 +210,9 @@
         </div>
       </div>
 
+      <!-- Avatar Picker in Sidebar -->
+      <div id="sidebarAvatarPicker"></div>
+
       <!-- About Section -->
       <div class="sidebar-about">
         <button class="about-toggle-btn" id="aboutToggleBtn">
@@ -178,9 +226,9 @@
           </div>
           <div class="about-text">
             <i class="fas fa-code"></i> Built by <strong>Sooban Talha Technologies</strong><br>
-            <i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank">soobantalhatech.xyz</a>
+            <i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a>
           </div>
-          <div class="about-text" style="color:#d4af37;font-style:italic;font-size:0.72rem;">
+          <div class="about-text" style="color:#d4af37;font-style:italic;font-size:0.72rem">
             "Think Less. Know More." — Sooban Talha
           </div>
           <div class="about-text">
@@ -194,7 +242,7 @@
     <!-- ═══════════ RIGHT PANEL ═══════════ -->
     <main class="right-panel" id="rightPanel">
 
-      <!-- HEADER -->
+      <!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
       <header class="dash-hdr" id="dashHdr">
         <div class="dh-left">
           <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar">
@@ -209,41 +257,40 @@
           </div>
         </div>
 
+        <!-- Stats in header -->
         <div class="dh-stats">
-          <div class="dh-stat dh-stat-streak">
+          <div class="dh-stat dh-stat-streak" id="headerStreakWrap">
             <i class="fas fa-fire"></i>
             <span id="headerStreak" class="dh-streak-val">0</span>
             <span class="dh-stat-lbl">Streak</span>
           </div>
           <div class="dh-stat dh-stat-hide-md">
-            <i class="fas fa-clock"></i> Sessions: <span id="statSessions" class="dh-stat-val">0</span>
+            <i class="fas fa-clock"></i>&nbsp;Sessions: <span id="statSessions" class="dh-stat-val">0</span>
           </div>
           <div class="dh-stat dh-stat-hide-md">
-            <i class="fas fa-history"></i> History: <span id="statHistory" class="dh-stat-val">0</span>
+            <i class="fas fa-history"></i>&nbsp;History: <span id="statHistory" class="dh-stat-val">0</span>
           </div>
           <div class="dh-stat dh-stat-hide-sm">
-            <i class="fas fa-star"></i> Saved: <span id="statSaved" class="dh-stat-val">0</span>
+            <i class="fas fa-star"></i>&nbsp;Saved: <span id="statSaved" class="dh-stat-val">0</span>
           </div>
         </div>
 
         <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think Less. Know More.</div>
 
         <div class="dh-actions">
-          <button class="dh-btn" id="themeBtn" aria-label="Toggle theme">
+          <button class="dh-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle Theme">
             <i class="fas fa-moon" id="themeIcon"></i>
           </button>
-          <button class="dh-btn" id="settingsBtn" aria-label="Settings">
+          <button class="dh-btn" id="settingsBtn" aria-label="Settings" title="Settings">
             <i class="fas fa-cog"></i>
           </button>
-          <!-- Wizard Button in header -->
-          <button class="dh-btn dh-wizard-btn" id="wizardHeaderBtn" aria-label="Open Wizard" title="Create Study Material">
+          <button class="dh-btn dh-wizard-btn" id="wizardHeaderBtn" aria-label="Open Wizard" title="✨ Create Study Material">
             <i class="fas fa-magic"></i>
           </button>
-          <!-- Mega Bundle Button in header -->
-          <button class="dh-btn dh-mega-btn" id="megaHeaderBtn" aria-label="Mega Study Bundle" title="⚡ Mega Study Bundle — All 5 Tools">
-            <i class="fas fa-layer-group"></i>
+          <button class="dh-btn dh-mega-btn" id="megaHeaderBtn" aria-label="Mega Study Bundle" title="⚡ Mega Bundle — All 5 Tools">
+            <i class="fas fa-bolt"></i>
           </button>
-          <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu">
+          <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu" title="User Menu">
             <span id="avInitials">Ś</span>
           </div>
         </div>
@@ -268,15 +315,15 @@
 
       <!-- Output Toolbar (hidden until output ready) -->
       <div class="out-toolbar" id="outToolbar" style="display:none">
-        <button class="otb-btn" id="copyBtn"><i class="fas fa-copy"></i> <span>Copy</span></button>
-        <button class="otb-btn otb-pdf" id="pdfBtn" data-theme="dark"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
-        <button class="otb-btn" id="saveBtn"><i class="fas fa-star"></i> <span>Save</span></button>
-        <button class="otb-btn" id="shareBtn"><i class="fas fa-share-alt"></i> <span>Share</span></button>
-        <button class="otb-btn otb-danger" id="clearBtn"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
+        <button class="otb-btn" id="copyBtn" title="Copy all content"><i class="fas fa-copy"></i> <span>Copy</span></button>
+        <button class="otb-btn otb-pdf" id="pdfBtn" data-theme="🌙" title="Download PDF"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
+        <button class="otb-btn" id="saveBtn" title="Save to library"><i class="fas fa-star"></i> <span>Save</span></button>
+        <button class="otb-btn" id="shareBtn" title="Share"><i class="fas fa-share-alt"></i> <span>Share</span></button>
+        <button class="otb-btn otb-danger" id="clearBtn" title="Clear output"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
         <div class="otb-sep"></div>
-        <button class="otb-btn otb-new" id="newWizardBtn"><i class="fas fa-magic"></i> <span>New</span></button>
-        <button class="otb-btn" id="focusModeBtn"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
-        <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
+        <button class="otb-btn otb-new" id="newWizardBtn" title="New Study Material"><i class="fas fa-magic"></i> <span>New</span></button>
+        <button class="otb-btn" id="focusModeBtn" title="Focus Mode"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
+        <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> wizard · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
       </div>
 
       <!-- Output Area -->
@@ -300,27 +347,43 @@
           </div>
         </div>
 
-        <!-- Empty state -->
+        <!-- ══════════════ EMPTY STATE ══════════════ -->
         <div id="emptyState" class="empty-state">
           <div class="es-mark">✨</div>
           <div class="es-title">Ready to Study Smarter?</div>
           <div class="es-sub">Use the Wizard to generate Notes, Flashcards, Quiz, Summary, or Mind Map — all powered by AI in real-time</div>
+
           <div class="es-cta-row">
             <button class="empty-wizard-btn" id="emptyWizardBtn">
               <i class="fas fa-magic"></i> Open Study Wizard
             </button>
             <button class="empty-mega-btn" id="emptyMegaBtn">
-              <i class="fas fa-layer-group"></i> ⚡ Mega Bundle — All 5
+              <i class="fas fa-bolt"></i> ⚡ Mega Bundle — All 5
             </button>
           </div>
+
+          <!-- Tool chips — each works independently -->
           <div class="es-features">
-            <span class="es-feat"><i class="fas fa-book-open"></i> Notes</span>
-            <span class="es-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
-            <span class="es-feat"><i class="fas fa-question-circle"></i> Quiz</span>
-            <span class="es-feat"><i class="fas fa-align-left"></i> Summary</span>
-            <span class="es-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
-            <span class="es-feat es-feat-mega"><i class="fas fa-bolt"></i> All 5 at Once!</span>
+            <span class="es-feat es-feat-chip" data-tool="notes" title="Generate comprehensive study notes">
+              <i class="fas fa-book-open"></i> Notes
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="flashcards" title="Create 15-20 flashcards">
+              <i class="fas fa-layer-group"></i> Flashcards
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="quiz" title="Build 10-12 quiz questions">
+              <i class="fas fa-question-circle"></i> Quiz
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="summary" title="Create smart TL;DR summary">
+              <i class="fas fa-align-left"></i> Summary
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="mindmap" title="Build visual mind map">
+              <i class="fas fa-project-diagram"></i> Mind Map
+            </span>
+            <span class="es-feat es-feat-chip es-feat-mega" data-tool="all" title="⚡ All 5 tools at once!">
+              <i class="fas fa-bolt"></i> All 5 at Once!
+            </span>
           </div>
+
           <div class="es-shortcuts">
             <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
             <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</div>
@@ -334,12 +397,12 @@
 
       </div>
 
-      <button class="back-to-top" id="backToTopBtn"><i class="fas fa-arrow-up"></i></button>
+      <button class="back-to-top" id="backToTopBtn" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
     </main>
   </div>
 
-  <!-- ═══════════ STREAM OVERLAY ═══════════ -->
+  <!-- ═══════════════════════ STREAM OVERLAY ═══════════════════════ -->
   <div class="stream-overlay" id="streamFullpage" style="display:none">
     <div class="sfp-header">
       <div class="sfp-left">
@@ -359,11 +422,11 @@
           <span id="sfpToolName">Notes</span>
         </div>
         <div class="sfp-stages-row">
-          <span class="ssc-stage" id="ss0">🎯</span>
-          <span class="ssc-stage" id="ss1">📝</span>
-          <span class="ssc-stage" id="ss2">🔍</span>
-          <span class="ssc-stage" id="ss3">✨</span>
-          <span class="ssc-stage" id="ss4">✅</span>
+          <span class="ssc-stage" id="ss0" title="Analysing">🎯</span>
+          <span class="ssc-stage" id="ss1" title="Writing">📝</span>
+          <span class="ssc-stage" id="ss2" title="Building">🔍</span>
+          <span class="ssc-stage" id="ss3" title="Crafting">✨</span>
+          <span class="ssc-stage" id="ss4" title="Finalising">✅</span>
         </div>
       </div>
     </div>
@@ -375,7 +438,7 @@
     </div>
   </div>
 
-  <!-- ═══════════ MODALS ═══════════ -->
+  <!-- ═══════════════════════════════ MODALS ═══════════════════════════════ -->
 
   <!-- Wizard Modal -->
   <div class="modal-overlay" id="wizardModal">
@@ -392,7 +455,7 @@
   <div class="modal-overlay" id="megaModal">
     <div class="modal modal-md">
       <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-layer-group"></i> ⚡ Mega Study Bundle — All 5 Tools</div>
+        <div class="modal-title"><i class="fas fa-bolt"></i> ⚡ Mega Study Bundle — All 5 Tools</div>
         <button class="modal-close" data-close="megaModal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
@@ -409,7 +472,8 @@
         </div>
         <div class="mega-form">
           <label class="mega-label"><i class="fas fa-pencil-alt"></i> What topic should we cover?</label>
-          <textarea class="mega-textarea" id="megaTopicInput" rows="4" placeholder="Enter any topic, concept, or paste text to study… e.g. Photosynthesis, World War II, Machine Learning, Newton's Laws"></textarea>
+          <textarea class="mega-textarea" id="megaTopicInput" rows="4"
+            placeholder="Enter any topic, concept, or paste text to study… e.g. Photosynthesis, World War II, Machine Learning, Newton's Laws"></textarea>
           <div class="mega-char-count" id="megaCharCount">0 / 4000</div>
           <div class="mega-options">
             <div class="mega-opt-group">
@@ -422,6 +486,9 @@
                 <option value="French">🇫🇷 French</option>
                 <option value="German">🇩🇪 German</option>
                 <option value="Spanish">🇪🇸 Spanish</option>
+                <option value="Portuguese">🇧🇷 Portuguese</option>
+                <option value="Russian">🇷🇺 Russian</option>
+                <option value="Chinese (Simplified)">🇨🇳 Chinese</option>
               </select>
             </div>
             <div class="mega-opt-group">
@@ -497,7 +564,7 @@
       <div class="modal-body">
         <div id="savedList" class="saved-list"></div>
         <div id="savedEmpty" class="saved-empty" style="display:none">
-          <i class="fas fa-star"></i><p>No saved notes yet.</p>
+          <i class="fas fa-star"></i><p>No saved notes yet. Save your generated content using the Save button!</p>
         </div>
       </div>
     </div>
@@ -522,6 +589,13 @@
             </div>
           </div>
         </div>
+
+        <!-- Avatar Picker -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-palette"></i> Avatar Color</div>
+          <div id="avatarPickerSettings"></div>
+        </div>
+
         <!-- Appearance -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-palette"></i> Appearance</div>
@@ -544,13 +618,14 @@
             </div>
           </div>
         </div>
+
         <!-- Default Language -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-language"></i> Default Language</div>
           <div class="settings-row">
             <div class="settings-label">Output Language</div>
             <div class="settings-input-group">
-              <select id="defaultLangSel" class="settings-input" style="flex:1;max-width:180px">
+              <select id="defaultLangSel" class="settings-input" style="flex:1;max-width:200px">
                 <option value="English" selected>🇬🇧 English</option>
                 <option value="Urdu">🇵🇰 Urdu</option>
                 <option value="Hindi">🇮🇳 Hindi</option>
@@ -569,6 +644,7 @@
             </div>
           </div>
         </div>
+
         <!-- PDF Style -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-file-pdf"></i> PDF Style</div>
@@ -580,11 +656,13 @@
             </div>
           </div>
         </div>
+
         <!-- Stats -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-chart-bar"></i> Your Statistics</div>
           <div class="stats-grid" id="dsStats"></div>
         </div>
+
         <!-- Backup -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-database"></i> Backup &amp; Restore</div>
@@ -594,6 +672,7 @@
             <button id="clearDataBtn" class="settings-btn danger"><i class="fas fa-trash"></i> Clear All</button>
           </div>
         </div>
+
         <!-- About -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
@@ -616,8 +695,8 @@
               <cite>— Sooban Talha</cite>
             </div>
             <div class="about-links">
-              <a href="https://soobantalhatech.xyz" target="_blank" class="about-link"><i class="fas fa-building"></i> soobantalhatech.xyz</a>
-              <a href="https://savoireai.vercel.app" target="_blank" class="about-link"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a>
+              <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" class="about-link"><i class="fas fa-building"></i> soobantalhatech.xyz</a>
+              <a href="https://savoireai.vercel.app" target="_blank" rel="noopener" class="about-link"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a>
             </div>
           </div>
         </div>
@@ -643,11 +722,12 @@
   </div>
 
   <!-- Welcome Overlay (New User) -->
-  <div class="modal-overlay" id="welcomeOverlay">
+  <div class="modal-overlay" id="welcomeOverlay" style="z-index:3000">
     <div class="modal" style="max-width:460px;text-align:center">
       <div class="modal-body" style="text-align:center;padding:32px">
         <div class="welcome-logo">Ś</div>
-        <h2 class="welcome-title">Welcome to Savoiré AI</h2>
+        <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré AI</span></h2>
+        <p class="welcome-tagline">"Think Less. Know More."</p>
         <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
         <div class="welcome-features">
           <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
@@ -655,19 +735,24 @@
           <span class="welcome-feat"><i class="fas fa-question-circle"></i> Quiz</span>
           <span class="welcome-feat"><i class="fas fa-align-left"></i> Summary</span>
           <span class="welcome-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
-          <span class="welcome-feat" style="border-color:rgba(212,175,55,.4);color:#d4af37"><i class="fas fa-bolt"></i> All 5 at Once!</span>
+          <span class="welcome-feat" style="border-color:rgba(212,175,55,.4);color:#d4af37"><i class="fas fa-bolt"></i> All 5!</span>
         </div>
-        <p class="welcome-quote">"Think Less. Know More."</p>
-        <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started…" autocomplete="given-name">
-        <button id="welcomeBtn" class="welcome-btn">Start Studying →</button>
-        <button id="welcomeSkip" class="welcome-skip">Skip for now</button>
-        <p class="welcome-footer">Free forever · Built by Sooban Talha Technologies</p>
+        <div class="welcome-name-section">
+          <label class="welcome-name-label">Your Name <span class="welcome-name-req">*</span></label>
+          <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started…" autocomplete="given-name">
+          <div id="welcomeNameHint" class="welcome-name-hint"></div>
+        </div>
+        <button id="welcomeBtn" class="welcome-btn">
+          <i class="fas fa-graduation-cap"></i> Start Studying →
+        </button>
+        <button id="welcomeSkip" class="welcome-skip" style="display:none">Skip for now</button>
+        <p class="welcome-footer">Free forever · No login required · Built by Sooban Talha Technologies</p>
       </div>
     </div>
   </div>
 
   <!-- Welcome Back Overlay -->
-  <div class="modal-overlay" id="welcomeBackOverlay">
+  <div class="modal-overlay" id="welcomeBackOverlay" style="z-index:3000">
     <div class="modal" style="max-width:400px;text-align:center">
       <div class="modal-body" style="text-align:center;padding:32px">
         <div class="wb-icon">🎓</div>
@@ -692,35 +777,32 @@
     </div>
   </div>
 
-  <!-- Demo Modal -->
-  <div class="modal-overlay" id="demoModal">
+  <!-- Demo Modal (legacy — kept for compatibility, demo runs via canvas system) -->
+  <div class="modal-overlay" id="demoModal" style="display:none">
     <div class="modal modal-lg">
       <div class="modal-header">
         <div class="modal-title"><i class="fas fa-play-circle"></i> Savoiré AI — Interactive Demo Tour</div>
         <button class="modal-close" data-close="demoModal"><i class="fas fa-times"></i></button>
       </div>
-      <div class="modal-body" id="demoContent">
-        <!-- Filled by JS -->
-      </div>
+      <div class="modal-body" id="demoContent"></div>
     </div>
   </div>
 
   <script>
-    // Theme flash prevention
+    // Theme flash prevention — runs before everything
     (function(){
       try{
         const p=JSON.parse(localStorage.getItem('sv_prefs')||'{}');
-        if(p.theme)document.documentElement.setAttribute('data-theme',p.theme);
-        if(p.fontSize)document.documentElement.setAttribute('data-font',p.fontSize);
+        if(p.theme)    document.documentElement.setAttribute('data-theme',p.theme);
+        if(p.fontSize) document.documentElement.setAttribute('data-font',p.fontSize);
       }catch(e){}
     })();
-    window.addEventListener('load',function(){
+    window.addEventListener('load', function(){
       document.body.classList.add('loaded');
       const s=document.querySelector('.loading-spinner');
       if(s)s.remove();
     });
   </script>
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a05ce6585d238c13',t:'MTc4MDQ3MDg1NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447" integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a060473ebd532141',t:'MTc4MDUwNjI4MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
