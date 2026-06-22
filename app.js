@@ -42,8 +42,8 @@ const SAVOIRÉ = {
   FOUNDER:     'Sooban Talha',
   TAGLINE:     'Think Less. Know More.',
   API_URL:     '/api/study',
-  MAX_HISTORY: 60,
-  MAX_SAVED:   120,
+  MAX_HISTORY: 1000,
+  MAX_SAVED:   1000,
   NTFY:        'savoireai_new_users',
 };
 
@@ -276,7 +276,7 @@ class SavoireApp {
     this.history  = this._load('sv_history', []);
     this.saved    = this._load('sv_saved',   []);
     this.prefs    = this._load('sv_prefs',   {});
-    this.userName = localStorage.getItem('sv_user') || '';
+    this.userName = localStorage.getItem('sv_userName') || localStorage.getItem('sv_user') || '';
 
     this.pdfTheme        = this.prefs.pdfTheme || 'dark';
     this.avatarColorIdx  = this._loadNum('sv_avatar_color', 0);
@@ -460,7 +460,7 @@ class SavoireApp {
       'defaultLangSel','saveDefaultLangBtn',
       'histList','histEmpty','histSearchInput','clearHistBtn','exportHistBtn','histBadge',
       'savedList','savedEmpty','savedCount',
-      'welcomeOverlay','welcomeBackOverlay','welcomeNameInput','welcomeBtn','welcomeSkip',
+      'welcomeOverlay','welcomeBackOverlay','welcomeNameInput','welcomeBtn',
       'wbName','wbStreak','wbSessions','wbSaved','welcomeBackBtn',
       'navWizard','navAll','navHistory','navSaved','navSettings','navFocus',
       'demoReplayBtn','homeLink','dhLogo',
@@ -639,12 +639,15 @@ class SavoireApp {
 
   _submitWelcome() {
     const name = this.el.welcomeNameInput?.value?.trim();
-    if (!name || name.length < 2) {
+    if (!name || name.length < 2 || name.length > 40) {
       this.el.welcomeNameInput?.classList.add('input-shake');
       setTimeout(() => this.el.welcomeNameInput?.classList.remove('input-shake'), 500);
+      this._toast('warning', 'fa-user-edit', name && name.length > 40 ? 'Name must be 40 characters or fewer.' : 'Please enter your name first.');
       return;
     }
+    if (this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
     this.userName = name;
+    localStorage.setItem('sv_userName', name);
     localStorage.setItem('sv_user', name);
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
@@ -667,15 +670,8 @@ class SavoireApp {
   }
 
   _skipWelcome() {
-    this.userName = 'Scholar';
-    localStorage.setItem('sv_user', 'Scholar');
-    if (!this.streak.lastDate) {
-      this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
-      this._saveStreak();
-    }
-    this._dismissOverlay('welcomeOverlay');
-    this._updateUserUI();
-    this._warmupAndTrack();
+    // Savoiré AI v2.0: name is mandatory. No skip path is available.
+    this._toast('warning', 'fa-user-edit', 'Please enter your name to start.');
   }
 
   _dismissOverlay(id) {
@@ -1191,38 +1187,34 @@ Examples:
       }).then(async res => {
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
-          reject(new Error(d.error || `Server error (${res.status})`));
+          reject(new Error(d.message || d.error || `Server error (${res.status})`));
           return;
         }
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('text/event-stream')) {
           const d = await res.json();
-          if (d.error) reject(new Error(d.error));
-          else resolve(d);
+          if (d.error || d.message) reject(new Error(d.message || d.error));
+          else this._simulateStreamFromJSON(d, resolve, reject, opts.tool || 'notes');
           return;
         }
 
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
-        let lineBuf = '', chars = 0, renderThrottle = 0;
+        let sseBuffer = '', chars = 0, renderThrottle = 0, resolved = false;
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 40) return;
+          if (now - renderThrottle < 32) return;
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
-            // For notes/summary tool: show formatted text
             if (tool === 'notes' || tool === 'summary') {
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
-            } else {
-              // For card tools: only show notes during phase 1
-              if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
-                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-                this.el.sfpText.classList.add('live-md');
-              }
+            } else if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
+              this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+              this.el.sfpText.classList.add('live-md');
             }
           } catch {
             this.el.sfpText.textContent = this.streamBuffer;
@@ -1230,18 +1222,10 @@ Examples:
           if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
         };
 
-        const animateCard = (idx, total, card) => {
-          this._liveCards.push(card);
-          this._updateLiveCards(idx, total);
-        };
-
-        const animateQuestion = (idx, total, q) => {
-          this._liveQuestions.push(q);
-          this._updateLiveQuestions(idx, total);
-        };
-
+        const animateCard = (idx, total, card) => { this._liveCards.push(card); this._updateLiveCards(idx, total); };
+        const animateQuestion = (idx, total, q) => { this._liveQuestions.push(q); this._updateLiveQuestions(idx, total); };
         const animateBranch = (idx, total, branch) => {
-          if (branch.name === '_central_') {
+          if (branch?.name === '_central_') {
             this._liveMMCentral = branch.value;
             this._liveMMConns   = branch.connections || [];
             this._updateLiveMindmap(-1, total);
@@ -1251,74 +1235,130 @@ Examples:
           }
         };
 
-        const pump = async () => {
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
-
-              lineBuf += decoder.decode(value, { stream: true });
-              const lines = lineBuf.split('\n');
-              lineBuf = lines.pop() || '';
-
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const raw = line.slice(6).trim();
-                try {
-                  const evt = JSON.parse(raw);
-
-                  if (evt.t !== undefined) {
-                    this.streamBuffer += evt.t;
-                    chars += evt.t.length;
-                    renderLive();
-                    this._updateStageByProgress(chars);
-
-                  } else if (evt.card !== undefined) {
-                    animateCard(evt.idx, evt.total, evt.card);
-
-                  } else if (evt.q !== undefined) {
-                    animateQuestion(evt.idx, evt.total, evt.q);
-
-                  } else if (evt.branch !== undefined) {
-                    animateBranch(evt.idx, evt.total, evt.branch);
-
-                  } else if (evt.idx !== undefined && evt.label !== undefined) {
-                    this._activateStage(evt.idx);
-                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-
-                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
-                    if (this.el.sfpText) {
-                      this.el.sfpText.classList.remove('live-md');
-                      this.el.sfpText.classList.add('done');
-                    }
-                    // Merge live-streamed cards
-                    if (this._liveCards.length)     evt.flashcards     = this._liveCards;
-                    if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
-                    if (this._liveBranches.length) {
-                      evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
-                    }
-                    // Attach the streamed notes buffer
-                    if (!evt.ultra_long_notes && this.streamBuffer) {
-                      evt.ultra_long_notes = this.streamBuffer;
-                    }
-                    resolve(evt);
-                    return;
-
-                  } else if (evt.error !== undefined) {
-                    reject(new Error(evt.error));
-                    return;
-                  }
-                } catch { /* ignore bad SSE */ }
+        const dispatchSSE = (eventName, evt) => {
+          switch (eventName) {
+            case 'heartbeat':
+              return;
+            case 'stage':
+              this._activateStage(Number(evt.idx || 0));
+              if (this.el.sfpLabel && evt.label) this.el.sfpLabel.textContent = evt.label;
+              return;
+            case 'token':
+              if (evt.t !== undefined) {
+                this.streamBuffer += evt.t;
+                chars += String(evt.t).length;
+                renderLive();
+                this._updateStageByProgress(chars);
               }
+              return;
+            case 'card':
+              animateCard(evt.idx, evt.total, evt.card);
+              return;
+            case 'question':
+              animateQuestion(evt.idx, evt.total, evt.q);
+              return;
+            case 'branch':
+              animateBranch(evt.idx, evt.total, evt.branch);
+              return;
+            case 'done': {
+              const final = evt || {};
+              if (this.el.sfpText) {
+                this.el.sfpText.classList.remove('live-md');
+                this.el.sfpText.classList.add('done');
+              }
+              if (this._liveCards.length)     final.flashcards     = this._liveCards;
+              if (this._liveQuestions.length) final.quiz_questions = this._liveQuestions;
+              if (this._liveBranches.length)  final.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+              if (!final.ultra_long_notes && this.streamBuffer) final.ultra_long_notes = this.streamBuffer;
+              resolved = true;
+              resolve(final);
+              return;
             }
-          } catch (pumpErr) {
-            reject(pumpErr);
+            case 'error':
+              resolved = true;
+              reject(new Error(evt.message || 'Savoiré AI stream error.'));
+              return;
+            default:
+              // Compatibility with older server payloads that only used data fields.
+              if (evt.t !== undefined) return dispatchSSE('token', evt);
+              if (evt.card !== undefined) return dispatchSSE('card', evt);
+              if (evt.q !== undefined) return dispatchSSE('question', evt);
+              if (evt.branch !== undefined) return dispatchSSE('branch', evt);
+              if (evt.idx !== undefined && evt.label !== undefined) return dispatchSSE('stage', evt);
+              if (evt.message) return dispatchSSE('error', evt);
+              if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) return dispatchSSE('done', evt);
           }
         };
 
-        pump();
+        const parseMessage = (msg) => {
+          let eventName = 'message';
+          const dataLines = [];
+          for (const rawLine of msg.split(/\r?\n/)) {
+            if (!rawLine || rawLine.startsWith(':')) continue;
+            const colon = rawLine.indexOf(':');
+            const field = colon === -1 ? rawLine : rawLine.slice(0, colon);
+            let value = colon === -1 ? '' : rawLine.slice(colon + 1);
+            if (value.startsWith(' ')) value = value.slice(1);
+            if (field === 'event') eventName = value || 'message';
+            if (field === 'data') dataLines.push(value);
+          }
+          if (!dataLines.length) return;
+          const dataStr = dataLines.join('\n');
+          let evt;
+          try { evt = JSON.parse(dataStr); }
+          catch { evt = { t: dataStr }; }
+          dispatchSSE(eventName, evt);
+        };
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              if (!resolved) reject(new Error('Stream ended before Savoiré AI sent final data.'));
+              return;
+            }
+            sseBuffer += decoder.decode(value, { stream: true });
+            const parts = sseBuffer.split(/\r?\n\r?\n/);
+            sseBuffer = parts.pop() || '';
+            for (const part of parts) {
+              if (resolved) return;
+              parseMessage(part);
+            }
+          }
+        } catch (pumpErr) {
+          if (!resolved) reject(pumpErr);
+        }
       }).catch(err => reject(err));
     });
+  }
+
+  _simulateStreamFromJSON(data, resolve, reject, tool = 'notes') {
+    try {
+      const notes = String(data?.ultra_long_notes || data?.summary || '');
+      const chunks = [];
+      for (let i = 0; i < notes.length; i += 180) chunks.push(notes.slice(i, i + 180));
+      let delay = 0;
+      chunks.forEach((chunk) => {
+        delay += 12;
+        setTimeout(() => {
+          this.streamBuffer += chunk;
+          if (this.el.sfpText) this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+          if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+        }, delay);
+      });
+      if ((tool === 'flashcards' || tool === 'all') && Array.isArray(data.flashcards)) {
+        data.flashcards.forEach((card, i) => { delay += 55; setTimeout(() => { this._liveCards.push(card); this._updateLiveCards(i, data.flashcards.length); }, delay); });
+      }
+      if ((tool === 'quiz' || tool === 'all') && Array.isArray(data.quiz_questions)) {
+        data.quiz_questions.forEach((q, i) => { delay += 65; setTimeout(() => { this._liveQuestions.push(q); this._updateLiveQuestions(i, data.quiz_questions.length); }, delay); });
+      }
+      if ((tool === 'mindmap' || tool === 'all') && data.mindmap?.branches) {
+        delay += 70;
+        setTimeout(() => { this._liveMMCentral = data.mindmap.central || data.topic || 'Mind Map'; this._liveMMConns = data.mindmap.connections || []; this._updateLiveMindmap(-1, data.mindmap.branches.length); }, delay);
+        data.mindmap.branches.forEach((b, i) => { delay += 75; setTimeout(() => { this._liveBranches.push(b); this._updateLiveMindmap(i, data.mindmap.branches.length); }, delay); });
+      }
+      setTimeout(() => resolve(data), delay + 180);
+    } catch (e) { reject(e); }
   }
 
   // ── UPDATE LIVE FLASHCARDS in stream overlay ──────────────────────────────
@@ -1497,8 +1537,8 @@ Examples:
       throw new Error(d.error || `Server error (${res.status})`);
     }
     const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    if (data.error || data.message) throw new Error(data.message || data.error);
+    return await new Promise((resolve, reject) => this._simulateStreamFromJSON(data, resolve, reject, opts.tool || 'notes'));
   }
 
   _cancelGen() {
@@ -1730,14 +1770,30 @@ Examples:
   _buildNavItems(data) {
     const items = [];
     const tool  = this.tool;
-    if (data.ultra_long_notes && (tool === 'notes' || tool === 'summary' || tool === 'all')) items.push({ id: 'sec-notes',    label: 'Notes',         icon: 'fas fa-book-open' });
-    if (data.flashcards?.length)          items.push({ id: 'sec-fc',       label: 'Flashcards',    icon: 'fas fa-layer-group' });
-    if (data.quiz_questions?.length)      items.push({ id: 'sec-quiz',     label: 'Quiz',          icon: 'fas fa-question-circle' });
-    if (data.mindmap)                     items.push({ id: 'sec-mm',       label: 'Mind Map',      icon: 'fas fa-project-diagram' });
-    if (data.key_concepts?.length)        items.push({ id: 'sec-concepts', label: 'Concepts',      icon: 'fas fa-lightbulb' });
-    if (data.key_tricks?.length)          items.push({ id: 'sec-tricks',   label: 'Tricks',        icon: 'fas fa-magic' });
-    if (data.practice_questions?.length)  items.push({ id: 'sec-qa',       label: 'Q&A',           icon: 'fas fa-pen-alt' });
-    if (data.real_world_applications?.length) items.push({ id: 'sec-apps', label: 'Applications',  icon: 'fas fa-globe' });
+    if (tool === 'flashcards') {
+      if (data.flashcards?.length) items.push({ id: 'sec-fc', label: 'Flashcards', icon: 'fas fa-layer-group' });
+      return items;
+    }
+    if (tool === 'quiz') {
+      if (data.quiz_questions?.length) items.push({ id: 'quizContainer', label: 'Quiz', icon: 'fas fa-question-circle' });
+      return items;
+    }
+    if (tool === 'mindmap') {
+      if (data.mindmap) items.push({ id: 'sec-mm', label: 'Mind Map', icon: 'fas fa-project-diagram' });
+      return items;
+    }
+    if (tool === 'summary') {
+      items.push({ id: 'sec-tldr', label: 'Summary', icon: 'fas fa-align-left' });
+      return items;
+    }
+    if (data.ultra_long_notes && (tool === 'notes' || tool === 'all')) items.push({ id: 'sec-notes',    label: 'Notes',         icon: 'fas fa-book-open' });
+    if (tool === 'all' && data.flashcards?.length)      items.push({ id: 'sec-fc',       label: 'Flashcards',    icon: 'fas fa-layer-group' });
+    if (tool === 'all' && data.quiz_questions?.length)  items.push({ id: 'sec-quiz',     label: 'Quiz',          icon: 'fas fa-question-circle' });
+    if (tool === 'all' && data.mindmap)                 items.push({ id: 'sec-mm',       label: 'Mind Map',      icon: 'fas fa-project-diagram' });
+    if (tool === 'notes' && data.key_concepts?.length)  items.push({ id: 'sec-concepts', label: 'Concepts',      icon: 'fas fa-lightbulb' });
+    if (tool === 'notes' && data.key_tricks?.length)    items.push({ id: 'sec-tricks',   label: 'Tricks',        icon: 'fas fa-magic' });
+    if (tool === 'notes' && data.practice_questions?.length)  items.push({ id: 'sec-qa', label: 'Q&A', icon: 'fas fa-pen-alt' });
+    if (tool === 'notes' && data.real_world_applications?.length) items.push({ id: 'sec-apps', label: 'Applications', icon: 'fas fa-globe' });
     return items;
   }
 
@@ -2445,6 +2501,18 @@ Examples:
     try {
       const { jsPDF } = window.jspdf;
       const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
+      const safe = (v) => String(v ?? '')
+        .replace(/[\u0000-\u001F\u007F]/g, ' ')
+        .replace(/[^\x00-\x7E]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const originalText = doc.text.bind(doc);
+      doc.text = (text, x, y, options, transform) => {
+        const cleanText = Array.isArray(text) ? text.map(safe) : safe(text);
+        return originalText(cleanText, x, y, options, transform);
+      };
+      const originalSplit = doc.splitTextToSize.bind(doc);
+      doc.splitTextToSize = (text, size, opts) => originalSplit(safe(text), size, opts);
 
       const PW=210, PH=297, ML=14, MR=14, CW=PW-ML-MR, MT=28, MB=16;
       const isDark = theme !== 'light';
@@ -2964,6 +3032,7 @@ Examples:
     const name = this.el.nameInput?.value?.trim();
     if (!name || name.length < 2) { this._toast('error', 'fa-times', 'Name must be at least 2 characters.'); return; }
     this.userName = name;
+    localStorage.setItem('sv_userName', name);
     localStorage.setItem('sv_user', name);
     this._updateUserUI();
     this._warmupAndTrack();
@@ -3030,7 +3099,7 @@ Examples:
         this._saveStreak();
         this._saveSessions();
         localStorage.setItem('sv_total_words', String(this.totalWords));
-        if (d.userName) localStorage.setItem('sv_user', d.userName);
+        if (d.userName) { localStorage.setItem('sv_userName', d.userName); localStorage.setItem('sv_user', d.userName); }
         this._updateAllStats();
         this._renderSidebarHistory();
         this._renderSidebarSaved();
@@ -3537,7 +3606,6 @@ Examples:
     this._qsa('.font-sz').forEach(b => b.addEventListener('click', () => this._setFontSize(b.dataset.size)));
 
     on(this.el.welcomeBtn,      'click',   () => this._submitWelcome());
-    on(this.el.welcomeSkip,     'click',   () => this._skipWelcome());
     on(this.el.welcomeNameInput,'keydown', e => { if (e.key === 'Enter') this._submitWelcome(); });
     on(this.el.welcomeBackBtn,  'click',   () => this._dismissOverlay('welcomeBackOverlay'));
 
@@ -3629,28 +3697,36 @@ window._welcomeSetAvatar = function(idx) {
 window._welcomeValidateName = function() {
   const inp  = document.getElementById('welcomeNameInput');
   const hint = document.getElementById('welcomeNameHint');
+  const btn  = document.getElementById('welcomeBtn');
   if (!inp || !hint) return;
   const val = inp.value.trim();
   if (val.length === 0) {
     hint.textContent = '';
+    if (btn) btn.disabled = true;
     inp.classList.remove('name-ok', 'name-err');
   } else if (val.length < 2) {
-    hint.textContent = '⚠️ Please enter at least 2 characters';
+    hint.textContent = 'At least 2 characters please';
     hint.style.color = '#ffae00';
+    if (btn) btn.disabled = true;
+    inp.classList.add('name-err'); inp.classList.remove('name-ok');
+  } else if (val.length > 40) {
+    hint.textContent = 'Name too long (max 40 characters)';
+    hint.style.color = '#ffae00';
+    if (btn) btn.disabled = true;
     inp.classList.add('name-err'); inp.classList.remove('name-ok');
   } else {
-    hint.textContent = `✓ Hello, ${val}! Let's get started 🎓`;
+    hint.textContent = `✓ Looking good, ${val}!`;
     hint.style.color = '#00ff88';
+    if (btn) btn.disabled = false;
     inp.classList.add('name-ok'); inp.classList.remove('name-err');
   }
 };
-
 window.addEventListener('DOMContentLoaded', () => {
   window._app = new SavoireApp();
   window._sav = window._app;
 
   const wInp = document.getElementById('welcomeNameInput');
-  if (wInp) wInp.addEventListener('input', window._welcomeValidateName);
+  if (wInp) { wInp.addEventListener('input', window._welcomeValidateName); window._welcomeValidateName(); }
 
   console.log('%c✅ Savoiré AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
   console.log('%c📊 Sessions tracked | 🔥 Streak monitored | 📄 World-class PDF | 📡 Live streaming', 'color:#00d4ff;font-size:11px');
