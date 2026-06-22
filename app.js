@@ -743,7 +743,7 @@ class SavoireApp {
       depth:    'detailed',
       style:    'simple',
     };
-    this.wizardStep = 0;
+    this.wizardStep = presetTool ? 1 : 0;
     this.wizardFile = null;
     this._renderWizardStep();
     this._openModal('wizardModal');
@@ -830,6 +830,18 @@ class SavoireApp {
     };
   }
 
+  _wizardAutoAdvance(nextStep = null) {
+    const target = nextStep === null ? this.wizardStep + 1 : nextStep;
+    const maxStep = 5;
+    if (this._wizardAutoTimer) clearTimeout(this._wizardAutoTimer);
+    this._wizardAutoTimer = setTimeout(() => {
+      if (target <= maxStep) {
+        this.wizardStep = target;
+        this._renderWizardStep();
+      }
+    }, 180);
+  }
+
   _wStepTool() {
     return `
       <div class="wizard-step-heading"><i class="fas fa-magic"></i> Choose what you want to create:</div>
@@ -852,7 +864,7 @@ class SavoireApp {
 
   _bindWTool() {
     this._qsa('.wizard-tool-card').forEach(c => {
-      c.onclick = () => { this.wizardData.tool = c.dataset.tool; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.tool = c.dataset.tool; c.classList.add('selected','wizard-auto-selected'); this._wizardAutoAdvance(1); };
     });
   }
 
@@ -922,6 +934,7 @@ Examples:
           const fn = this._el('wFileName');
           if (fn) fn.textContent = `📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
           this.wizardFile = f;
+          this._wizardAutoAdvance(2);
         };
         r.readAsText(f, 'UTF-8');
       };
@@ -942,7 +955,9 @@ Examples:
           this.wizardData.topic = t;
           if (cc) cc.textContent = `${t.length} / 4000`;
           inp.style.boxShadow = '0 0 0 3px rgba(0,212,255,.3)';
+          b.classList.add('wizard-auto-selected');
           setTimeout(() => { inp.style.boxShadow = ''; }, 700);
+          this._wizardAutoAdvance(2);
         }
       };
     });
@@ -970,7 +985,7 @@ Examples:
 
   _bindWLang() {
     this._qsa('.wizard-language-card').forEach(c => {
-      c.onclick = () => { this.wizardData.language = c.dataset.lang; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.language = c.dataset.lang; c.classList.add('selected','wizard-auto-selected'); this._wizardAutoAdvance(3); };
     });
   }
 
@@ -992,7 +1007,7 @@ Examples:
 
   _bindWDepth() {
     this._qsa('.wizard-depth-card').forEach(c => {
-      c.onclick = () => { this.wizardData.depth = c.dataset.depth; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.depth = c.dataset.depth; c.classList.add('selected','wizard-auto-selected'); this._wizardAutoAdvance(4); };
     });
   }
 
@@ -1012,7 +1027,7 @@ Examples:
 
   _bindWStyle() {
     this._qsa('.wizard-style-card').forEach(c => {
-      c.onclick = () => { this.wizardData.style = c.dataset.style; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.style = c.dataset.style; c.classList.add('selected','wizard-auto-selected'); this._wizardAutoAdvance(5); };
     });
   }
 
