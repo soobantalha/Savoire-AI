@@ -3695,6 +3695,290 @@ Examples:
   }
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADVANCED REAL WORKING FEATURES — COMMAND CENTER + FOCUS TIMER + RESULT FIND
+// These methods extend SavoireApp before DOMContentLoaded creates the app.
+// ─────────────────────────────────────────────────────────────────────────────
+
+(function installSavoireAdvancedProductivityFeatures(){
+  if (typeof SavoireApp === 'undefined') return;
+
+  const originalBindAll = SavoireApp.prototype._bindAll;
+  SavoireApp.prototype._bindAll = function enhancedBindAll(){
+    originalBindAll.call(this);
+    this._initCommandPalette();
+    this._initStudyTimer();
+    this._initResultFindBar();
+    this._installBrandWordmarkObserver();
+  };
+
+  SavoireApp.prototype._commandActions = function(){
+    return [
+      { id:'wizard', icon:'fa-magic', title:'Open Study Wizard', hint:'Create notes, flashcards, quiz, summary or mind map', keys:'Ctrl+K', run:()=>this._openWizard() },
+      { id:'mega', icon:'fa-bolt', title:'Mega Bundle — All 5 Tools', hint:'Generate Notes + Flashcards + Quiz + Summary + Mind Map', keys:'Ctrl+M', run:()=>this._openMega() },
+      { id:'notes', icon:'fa-book-open', title:'New Notes', hint:'Open wizard with Notes selected', keys:'Tool', run:()=>this._openWizard('notes') },
+      { id:'flashcards', icon:'fa-layer-group', title:'New Flashcards', hint:'Open wizard with Flashcards selected', keys:'Tool', run:()=>this._openWizard('flashcards') },
+      { id:'quiz', icon:'fa-question-circle', title:'New Quiz', hint:'Open wizard with Quiz selected', keys:'Tool', run:()=>this._openWizard('quiz') },
+      { id:'summary', icon:'fa-align-left', title:'New Summary', hint:'Open wizard with Summary selected', keys:'Tool', run:()=>this._openWizard('summary') },
+      { id:'mindmap', icon:'fa-project-diagram', title:'New Mind Map', hint:'Open wizard with Mind Map selected', keys:'Tool', run:()=>this._openWizard('mindmap') },
+      { id:'history', icon:'fa-history', title:'Study History', hint:`${this.history?.length||0} generated items saved locally`, keys:'Ctrl+H', run:()=>this._openHistModal() },
+      { id:'saved', icon:'fa-star', title:'Saved Notes', hint:`${this.saved?.length||0} manually saved items`, keys:'Library', run:()=>this._openSavedModal() },
+      { id:'settings', icon:'fa-cog', title:'Settings', hint:'Theme, PDF style, avatar, language and backups', keys:'Gear', run:()=>this._openSettingsModal() },
+      { id:'theme', icon:'fa-circle-half-stroke', title:'Cycle Theme', hint:'Dark → Light → Golden', keys:'Theme', run:()=>this._toggleTheme() },
+      { id:'focus', icon:'fa-expand-alt', title:'Toggle Focus Mode', hint:'Distraction-free fullscreen study layout', keys:'F11', run:()=>this._toggleFocus() },
+      { id:'copy', icon:'fa-copy', title:'Copy Current Output', hint:'Copy generated content to clipboard', keys:'Toolbar', run:()=>this._copyResult() },
+      { id:'pdf', icon:'fa-file-pdf', title:'Download PDF', hint:'Export current study material as safe Helvetica PDF', keys:'Ctrl+P', run:()=>this._downloadPDF() },
+      { id:'save', icon:'fa-bookmark', title:'Save Current Output', hint:'Add current result to Saved Notes', keys:'Ctrl+S', run:()=>this._saveNote() },
+      { id:'find', icon:'fa-magnifying-glass', title:'Find In Output', hint:'Open search bar for current generated content', keys:'/', run:()=>this._openResultFindBar() },
+      { id:'timer', icon:'fa-stopwatch', title:'Show Focus Timer', hint:'Pomodoro timer for deep study sessions', keys:'Timer', run:()=>this._showStudyTimer() },
+      { id:'timer-start', icon:'fa-play', title:'Start Focus Timer', hint:'Start or resume current timer', keys:'Timer', run:()=>{ this._showStudyTimer(); this._startStudyTimer(); } },
+      { id:'timer-reset', icon:'fa-rotate-left', title:'Reset Focus Timer', hint:'Reset the current timer session', keys:'Timer', run:()=>{ this._showStudyTimer(); this._resetStudyTimer(); } },
+      { id:'tour', icon:'fa-route', title:'Watch Feature Tour', hint:'Replay the canvas spotlight demo', keys:'Demo', run:()=>this._openDemo() },
+      { id:'export', icon:'fa-download', title:'Export All Data', hint:'Download local backup JSON', keys:'Data', run:()=>this._exportData() },
+      { id:'clear-output', icon:'fa-trash', title:'Clear Current Output', hint:'Return to the clean empty state', keys:'Clean', run:()=>this._clearOutput() },
+    ];
+  };
+
+  SavoireApp.prototype._initCommandPalette = function(){
+    this.cmd = {
+      overlay: document.getElementById('commandPalette'),
+      input: document.getElementById('cmdSearchInput'),
+      results: document.getElementById('cmdResults'),
+      close: document.getElementById('cmdCloseBtn'),
+      index: 0,
+      visible: false,
+    };
+    if (!this.cmd.overlay || !this.cmd.input || !this.cmd.results) return;
+    this.cmd.close?.addEventListener('click', () => this._closeCommandPalette());
+    this.cmd.overlay.addEventListener('click', e => { if (e.target === this.cmd.overlay) this._closeCommandPalette(); });
+    this.cmd.input.addEventListener('input', () => { this.cmd.index = 0; this._renderCommandPalette(); });
+    this.cmd.input.addEventListener('keydown', e => {
+      const items = this._filteredCommandActions();
+      if (e.key === 'ArrowDown') { e.preventDefault(); this.cmd.index = Math.min(items.length - 1, this.cmd.index + 1); this._renderCommandPalette(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); this.cmd.index = Math.max(0, this.cmd.index - 1); this._renderCommandPalette(); }
+      if (e.key === 'Enter') { e.preventDefault(); this._runCommand(items[this.cmd.index]); }
+      if (e.key === 'Escape') { e.preventDefault(); this._closeCommandPalette(); }
+    });
+    document.addEventListener('keydown', e => {
+      const tag = document.activeElement?.tagName?.toLowerCase();
+      const typing = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault(); this._openCommandPalette(); return;
+      }
+      if (!typing && e.key === '/') {
+        e.preventDefault(); this._openResultFindBar();
+      }
+    });
+  };
+
+  SavoireApp.prototype._filteredCommandActions = function(){
+    const q = (this.cmd?.input?.value || '').trim().toLowerCase();
+    const actions = this._commandActions();
+    if (!q) return actions;
+    return actions.filter(a => [a.id, a.title, a.hint, a.keys].join(' ').toLowerCase().includes(q));
+  };
+
+  SavoireApp.prototype._openCommandPalette = function(){
+    if (!this.cmd?.overlay) return;
+    this.cmd.visible = true;
+    this.cmd.index = 0;
+    this.cmd.overlay.classList.add('visible');
+    this.cmd.overlay.setAttribute('aria-hidden', 'false');
+    this._renderCommandPalette();
+    setTimeout(() => { this.cmd.input.value = ''; this.cmd.input.focus(); this._renderCommandPalette(); }, 40);
+  };
+
+  SavoireApp.prototype._closeCommandPalette = function(){
+    if (!this.cmd?.overlay) return;
+    this.cmd.visible = false;
+    this.cmd.overlay.classList.remove('visible');
+    this.cmd.overlay.setAttribute('aria-hidden', 'true');
+  };
+
+  SavoireApp.prototype._renderCommandPalette = function(){
+    if (!this.cmd?.results) return;
+    const items = this._filteredCommandActions();
+    if (this.cmd.index >= items.length) this.cmd.index = Math.max(0, items.length - 1);
+    this.cmd.results.innerHTML = items.length ? items.map((a, i) => `
+      <button class="cmd-result ${i === this.cmd.index ? 'active' : ''}" data-cmd-id="${this._esc(a.id)}" role="option" aria-selected="${i === this.cmd.index}">
+        <span class="cmd-result-icon"><i class="fas ${a.icon}"></i></span>
+        <span class="cmd-result-text"><strong>${this._esc(a.title)}</strong><em>${this._esc(a.hint)}</em></span>
+        <span class="cmd-result-keys">${this._esc(a.keys || '')}</span>
+      </button>`).join('') : `<div class="cmd-empty"><i class="fas fa-search"></i>No matching command found</div>`;
+    this.cmd.results.querySelectorAll('.cmd-result').forEach((btn, i) => {
+      btn.addEventListener('mouseenter', () => { this.cmd.index = i; this._renderCommandPalette(); });
+      btn.addEventListener('click', () => this._runCommand(items[i]));
+    });
+  };
+
+  SavoireApp.prototype._runCommand = function(action){
+    if (!action || typeof action.run !== 'function') return;
+    this._closeCommandPalette();
+    setTimeout(() => {
+      try { action.run(); }
+      catch (err) { this._toast('error', 'fa-triangle-exclamation', err.message || 'Command failed'); }
+    }, 90);
+  };
+
+  SavoireApp.prototype._initStudyTimer = function(){
+    this.timer = {
+      widget: document.getElementById('studyTimerWidget'),
+      collapse: document.getElementById('timerCollapseBtn'),
+      start: document.getElementById('timerStartBtn'),
+      pause: document.getElementById('timerPauseBtn'),
+      reset: document.getElementById('timerResetBtn'),
+      time: document.getElementById('timerTime'),
+      caption: document.getElementById('timerCaption'),
+      ring: document.getElementById('timerRing'),
+      mode: document.getElementById('timerModeLabel'),
+      presets: document.getElementById('timerPresets'),
+      total: Number(localStorage.getItem('sv_timer_total') || 1500),
+      remaining: Number(localStorage.getItem('sv_timer_remaining') || 1500),
+      running: false,
+      tick: null,
+    };
+    if (!this.timer.widget) return;
+    if (!localStorage.getItem('sv_timer_remaining')) this.timer.remaining = this.timer.total;
+    this.timer.start?.addEventListener('click', () => this._startStudyTimer());
+    this.timer.pause?.addEventListener('click', () => this._pauseStudyTimer());
+    this.timer.reset?.addEventListener('click', () => this._resetStudyTimer());
+    this.timer.collapse?.addEventListener('click', () => this._toggleStudyTimerMinimized());
+    this.timer.presets?.querySelectorAll('[data-min]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mins = Number(btn.dataset.min || 25);
+        this.timer.total = mins * 60;
+        this.timer.remaining = this.timer.total;
+        this._pauseStudyTimer();
+        this.timer.presets.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+        localStorage.setItem('sv_timer_total', String(this.timer.total));
+        localStorage.setItem('sv_timer_remaining', String(this.timer.remaining));
+        this._renderStudyTimer();
+      });
+    });
+    this._renderStudyTimer();
+  };
+
+  SavoireApp.prototype._showStudyTimer = function(){
+    if (!this.timer?.widget) return;
+    this.timer.widget.classList.add('visible');
+    this.timer.widget.classList.remove('minimized');
+  };
+
+  SavoireApp.prototype._toggleStudyTimerMinimized = function(){
+    if (!this.timer?.widget) return;
+    this.timer.widget.classList.toggle('minimized');
+    this.timer.widget.classList.add('visible');
+  };
+
+  SavoireApp.prototype._startStudyTimer = function(){
+    if (!this.timer?.widget) return;
+    this.timer.widget.classList.add('visible');
+    if (this.timer.running) return;
+    this.timer.running = true;
+    this.timer.caption.textContent = 'Studying';
+    this.timer.tick = setInterval(() => {
+      this.timer.remaining = Math.max(0, this.timer.remaining - 1);
+      localStorage.setItem('sv_timer_remaining', String(this.timer.remaining));
+      this._renderStudyTimer();
+      if (this.timer.remaining <= 0) {
+        this._pauseStudyTimer();
+        this._toast('success', 'fa-fire', 'Focus session complete! Great work.');
+        this._confetti?.();
+      }
+    }, 1000);
+    this._renderStudyTimer();
+  };
+
+  SavoireApp.prototype._pauseStudyTimer = function(){
+    if (!this.timer) return;
+    this.timer.running = false;
+    if (this.timer.tick) clearInterval(this.timer.tick);
+    this.timer.tick = null;
+    this._renderStudyTimer();
+  };
+
+  SavoireApp.prototype._resetStudyTimer = function(){
+    if (!this.timer) return;
+    this._pauseStudyTimer();
+    this.timer.remaining = this.timer.total;
+    localStorage.setItem('sv_timer_remaining', String(this.timer.remaining));
+    this._renderStudyTimer();
+  };
+
+  SavoireApp.prototype._renderStudyTimer = function(){
+    if (!this.timer?.time) return;
+    const m = Math.floor(this.timer.remaining / 60);
+    const s = this.timer.remaining % 60;
+    const pct = 100 - Math.round((this.timer.remaining / Math.max(1, this.timer.total)) * 100);
+    this.timer.time.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    this.timer.caption.textContent = this.timer.running ? 'Studying' : (this.timer.remaining === this.timer.total ? 'Ready' : 'Paused');
+    this.timer.ring?.style.setProperty('--timer-pct', String(pct));
+    if (this.timer.mode) this.timer.mode.textContent = `${Math.round(this.timer.total / 60)} minute deep study`;
+    this.timer.start?.classList.toggle('is-running', this.timer.running);
+  };
+
+  SavoireApp.prototype._initResultFindBar = function(){
+    this.findBar = {
+      wrap: document.getElementById('resultFindBar'),
+      input: document.getElementById('resultFindInput'),
+      next: document.getElementById('resultFindNext'),
+      close: document.getElementById('resultFindClose'),
+    };
+    if (!this.findBar.wrap) return;
+    this.findBar.close?.addEventListener('click', () => this._closeResultFindBar());
+    this.findBar.next?.addEventListener('click', () => this._findNextInResult());
+    this.findBar.input?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); this._findNextInResult(); }
+      if (e.key === 'Escape') { e.preventDefault(); this._closeResultFindBar(); }
+    });
+  };
+
+  SavoireApp.prototype._openResultFindBar = function(){
+    if (!this.findBar?.wrap) return;
+    if (!this.currentData) { this._toast('info', 'fa-search', 'Generate content first, then search inside it.'); return; }
+    this.findBar.wrap.classList.add('visible');
+    this.findBar.wrap.setAttribute('aria-hidden', 'false');
+    setTimeout(() => this.findBar.input?.focus(), 50);
+  };
+
+  SavoireApp.prototype._closeResultFindBar = function(){
+    if (!this.findBar?.wrap) return;
+    this.findBar.wrap.classList.remove('visible');
+    this.findBar.wrap.setAttribute('aria-hidden', 'true');
+  };
+
+  SavoireApp.prototype._findNextInResult = function(){
+    const q = this.findBar?.input?.value?.trim();
+    if (!q) return;
+    try {
+      const found = window.find(q, false, false, true, false, true, false);
+      if (!found) this._toast('info', 'fa-search', `No more matches for “${q}”`);
+    } catch {
+      this._toast('info', 'fa-search', 'Browser find is unavailable here.');
+    }
+  };
+
+  SavoireApp.prototype._installBrandWordmarkObserver = function(){
+    this._applyBrandImageClasses(document);
+    if (this._brandObserver) return;
+    this._brandObserver = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        m.addedNodes?.forEach(node => {
+          if (node.nodeType === 1) this._applyBrandImageClasses(node);
+        });
+      }
+    });
+    this._brandObserver.observe(document.body, { childList:true, subtree:true });
+  };
+
+  SavoireApp.prototype._applyBrandImageClasses = function(root){
+    if (!root?.querySelectorAll) return;
+    const selectors = '.dh-name,.lp-brand-wordmark,.welcome-brand,.about-name,.exp-brand,.savoire-wordmark,.savoire-ai-wordmark';
+    root.querySelectorAll(selectors).forEach(el => el.classList.add('savoire-ai-wordmark'));
+  };
+})();
+
 // ─────────────────────────────────────────────────────────────────────────────
 // INITIALIZATION
 // ─────────────────────────────────────────────────────────────────────────────

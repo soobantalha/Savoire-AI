@@ -901,6 +901,21 @@ module.exports = async function handler(req, res) {
   log.info(`[${reqId}] ${req.method} /api/study`);
   setHeaders(res);
   if(req.method==='OPTIONS')return res.status(200).end();
+  if(req.method==='GET'){
+    return res.status(200).json({
+      status:'online',
+      service:SAVOIRÉ.BRAND,
+      version:SAVOIRÉ.VERSION,
+      developer:SAVOIRÉ.DEVELOPER,
+      founder:SAVOIRÉ.FOUNDER,
+      tagline:SAVOIRÉ.TAGLINE,
+      time:getISTDateTime(),
+      models:{stream:MODELS_STREAM.length,structured:MODELS_CARDS.length},
+      tools:['notes','flashcards','quiz','summary','mindmap','all'],
+      streamingEvents:['heartbeat','stage','token','card','question','branch','done','error'],
+      requestId:reqId,
+    });
+  }
   if(req.method!=='POST')return res.status(405).json({error:'Use POST.'});
 
   const body=req.body||{};

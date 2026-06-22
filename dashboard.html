@@ -793,6 +793,67 @@
     </div>
   </div>
 
+
+
+  <!-- Advanced Command Palette: real working UI controlled by app.js -->
+  <div class="command-palette-overlay" id="commandPalette" aria-hidden="true">
+    <div class="command-palette" role="dialog" aria-modal="true" aria-labelledby="cmdTitle">
+      <div class="cmd-header">
+        <div class="cmd-brand-mark" aria-hidden="true"></div>
+        <div class="cmd-heading-wrap">
+          <div class="cmd-title" id="cmdTitle"><span class="savoire-ai-wordmark">Savoiré AI</span> Command Center</div>
+          <div class="cmd-subtitle">Search actions, tools, history, settings, export and focus mode</div>
+        </div>
+        <button class="cmd-close" id="cmdCloseBtn" aria-label="Close command palette"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="cmd-search-row">
+        <i class="fas fa-search"></i>
+        <input id="cmdSearchInput" class="cmd-search-input" type="search" autocomplete="off" spellcheck="false" placeholder="Type: notes, quiz, pdf, timer, theme, history…">
+        <kbd>Esc</kbd>
+      </div>
+      <div class="cmd-results" id="cmdResults" role="listbox"></div>
+      <div class="cmd-footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+        <span><kbd>Enter</kbd> Run</span>
+        <span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> Open</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Study Timer: real working Pomodoro/focus widget controlled by app.js -->
+  <aside class="study-timer-widget" id="studyTimerWidget" aria-label="Study focus timer">
+    <button class="timer-collapse" id="timerCollapseBtn" title="Minimize timer"><i class="fas fa-chevron-down"></i></button>
+    <div class="timer-head">
+      <div class="timer-logo" aria-hidden="true"></div>
+      <div>
+        <div class="timer-title">Focus Timer</div>
+        <div class="timer-sub" id="timerModeLabel">25 minute deep study</div>
+      </div>
+    </div>
+    <div class="timer-ring" id="timerRing" style="--timer-pct:0">
+      <div class="timer-time" id="timerTime">25:00</div>
+      <div class="timer-caption" id="timerCaption">Ready</div>
+    </div>
+    <div class="timer-controls">
+      <button id="timerStartBtn" class="timer-btn primary"><i class="fas fa-play"></i><span>Start</span></button>
+      <button id="timerPauseBtn" class="timer-btn"><i class="fas fa-pause"></i><span>Pause</span></button>
+      <button id="timerResetBtn" class="timer-btn"><i class="fas fa-rotate-left"></i><span>Reset</span></button>
+    </div>
+    <div class="timer-presets" id="timerPresets">
+      <button data-min="15">15m</button>
+      <button data-min="25" class="active">25m</button>
+      <button data-min="45">45m</button>
+      <button data-min="60">60m</button>
+    </div>
+  </aside>
+
+  <!-- Result find bar: real working browser find helper controlled by app.js -->
+  <div class="result-find-bar" id="resultFindBar" aria-hidden="true">
+    <i class="fas fa-magnifying-glass"></i>
+    <input id="resultFindInput" type="search" placeholder="Find in current output…">
+    <button id="resultFindNext"><i class="fas fa-arrow-down"></i></button>
+    <button id="resultFindClose"><i class="fas fa-times"></i></button>
+  </div>
   <script>
     // Theme flash preventifon — runs before everything
     (function(){
@@ -809,5 +870,5 @@
     });
   </script>
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0fa60e21e5bbc88',t:'MTc4MjEyMjEzNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0fa9a61bda04e88',t:'MTc4MjEyNDQ5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
