@@ -2890,16 +2890,14 @@ input::placeholder, textarea::placeholder {
 }
 
 .fc-front {
-  background: linear-gradient(135deg, rgba(30, 10, 50, 0.95), rgba(15, 5, 30, 0.95));
-  border: 2px solid rgba(191, 0, 255, 0.4);
-  box-shadow: 0 8px 32px rgba(191, 0, 255, 0.1);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(5, 8, 20, 0.95));
+  border: 2px solid rgba(0, 212, 255, 0.3);
 }
 
 .fc-back {
-  background: linear-gradient(135deg, rgba(5, 30, 20, 0.95), rgba(0, 15, 10, 0.95));
-  border: 2px solid rgba(0, 255, 136, 0.4);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(5, 8, 20, 0.95));
+  border: 2px solid rgba(212, 175, 55, 0.3);
   transform: rotateY(180deg);
-  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.1);
 }
 
 .fc-lbl {
@@ -2909,8 +2907,8 @@ input::placeholder, textarea::placeholder {
   margin-bottom: 20px;
 }
 
-.fc-front .fc-lbl { color: #bf00ff; }
-.fc-back .fc-lbl { color: #00ff88; }
+.fc-front .fc-lbl { color: #00d4ff; }
+.fc-back .fc-lbl { color: #d4af37; }
 
 .fc-content {
   flex: 1;

@@ -580,126 +580,94 @@ async function fetchCards(prompt, tool, topic) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildTopicFallback(tool, topic) {
-  const lowerTopic = (topic || 'blockchain').toLowerCase().trim();
-  const T = topic || 'This Topic';
-  const now = getISTDateTime();
-  
-  // Topic massive DB 
-  const DB = {
-    blockchain: {
-      central: 'Blockchain',
-      branches: [
-        {name: 'Fundamentals', items: ['Distributed Ledger', 'Decentralisation', 'Immutability', 'P2P Networks']},
-        {name: 'Consensus', items: ['Proof of Work (PoW)', 'Proof of Stake (PoS)', 'Byzantine Fault Tolerance', 'Mining/Validating']},
-        {name: 'Cryptography', items: ['Hash Functions (SHA-256)', 'Public/Private Keys', 'Digital Signatures', 'Merkle Trees']},
-        {name: 'Smart Contracts', items: ['Self-executing code', 'Ethereum/EVM', 'DApps', 'Oracles']},
-        {name: 'Use Cases', items: ['Cryptocurrencies', 'Supply Chain', 'Identity Verification', 'DeFi']},
-      ]
-    },
-    biology: {
-      central: 'Biology',
-      branches: [
-        {name: 'Cell Theory', items: ['Prokaryotic vs Eukaryotic', 'Organelles', 'Cell Division', 'Membrane Transport']},
-        {name: 'Genetics', items: ['DNA/RNA Structure', 'Mendelian Inheritance', 'Gene Expression', 'Mutations']},
-        {name: 'Evolution', items: ['Natural Selection', 'Speciation', 'Fossil Record', 'Adaptation']},
-        {name: 'Ecology', items: ['Ecosystems', 'Energy Flow', 'Population Dynamics', 'Biomes']},
-        {name: 'Physiology', items: ['Organ Systems', 'Homeostasis', 'Metabolism', 'Immune Response']},
-      ]
-    },
-    physics: {
-      central: 'Physics',
-      branches: [
-        {name: 'Mechanics', items: ["Newton's Laws", 'Kinematics', 'Energy & Work', 'Momentum']},
-        {name: 'Thermodynamics', items: ['Laws of Thermodynamics', 'Heat Transfer', 'Entropy', 'Kinetic Theory']},
-        {name: 'Electromagnetism', items: ['Electric Fields', 'Magnetic Fields', "Maxwell's Equations", 'Circuits']},
-        {name: 'Waves & Optics', items: ['Wave Properties', 'Light Behavior', 'Lenses & Mirrors', 'Interference']},
-        {name: 'Modern Physics', items: ['Quantum Mechanics', 'Relativity', 'Nuclear Physics', 'Particle Physics']},
-      ]
-    },
-    history: {
-      central: 'Historical Analysis',
-      branches: [
-        {name: 'Origins & Causes', items: ['Economic Factors', 'Social Tensions', 'Political Climate', 'Ideologies']},
-        {name: 'Key Events', items: ['Turning Points', 'Battles/Treaties', 'Revolutions', 'Social Movements']},
-        {name: 'Major Figures', items: ['Leaders', 'Innovators', 'Activists', 'Philosophers']},
-        {name: 'Social Impact', items: ['Cultural Shifts', 'Class Dynamics', 'Demographic Changes', 'Human Rights']},
-        {name: 'Legacy & Memory', items: ['Long-term Consequences', 'Historiography', 'Modern Parallels', 'Commemoration']},
-      ]
-    },
-    programming: {
-      central: 'Programming',
-      branches: [
-        {name: 'Syntax & Semantics', items: ['Variables & Types', 'Control Flow', 'Operators', 'Functions']},
-        {name: 'Data Structures', items: ['Arrays/Lists', 'Trees & Graphs', 'Hash Tables', 'Stacks & Queues']},
-        {name: 'Algorithms', items: ['Sorting', 'Searching', 'Recursion', 'Dynamic Programming']},
-        {name: 'Paradigms', items: ['Object-Oriented (OOP)', 'Functional', 'Procedural', 'Declarative']},
-        {name: 'Software Engineering', items: ['Version Control', 'Testing/Debugging', 'Design Patterns', 'Architecture']},
-      ]
-    }
-  };
-
-  let matchKey = 'blockchain';
-  for (let key in DB) {
-    if (lowerTopic.includes(key)) {
-      matchKey = key;
-      break;
-    }
-  }
-  const match = DB[matchKey];
+  const T=topic||'this topic', now=getISTDateTime();
+  const words=T.replace(/[^a-zA-Z\s]/g,'').split(/\s+/).filter(w=>w.length>3);
+  const w1=words[0]||T.slice(0,20), w2=words[1]||'concepts';
 
   const base={
     topic:T, curriculum_alignment:'General Academic Study', generated_at:now,
     study_score:88, _fallback:true,
     flashcards:[], quiz_questions:[], mindmap:null,
     key_concepts:[
-      `Core Definition: ${T} involves systematic structures mapped across its domain. It fundamentally defines how its internal states operate.`,
-      `Mechanism: The main process follows initial conditions -> transformation -> outcome.`,
-      `Advanced Implications: Exploring the broader aspects of ${T} allows for robust integration into modern theory.`,
-      `Historical Context: Developed through key breakthroughs over time.`,
+      `Core Definition: ${T} is defined as the systematic study and practice of its central domain. Mastery begins with understanding WHY the definition is framed as it is — not just memorising it.`,
+      `Primary Mechanism: The main process in ${T} follows: [initial conditions] → [transformation] → [outcome]. Each step depends causally on the previous, making the chain learnable and predictable.`,
+      `Key Relationships: In ${T}, ${w1} connects to ${w2} through [specific relationship]. Understanding this connection is more valuable than knowing either concept in isolation.`,
+      `Historical Context: ${T} developed through key breakthroughs where [early theories] were refined into [modern understanding]. This history explains why current frameworks take their present form.`,
+      `Expert vs Novice: Experts in ${T} recognise deep structural patterns while beginners focus on surface features. This difference develops through deliberate practice, not passive study.`,
+      `Practical Transfer: ${T} knowledge applies directly to healthcare, technology, business, and policy contexts through the same analytical frameworks learned in academic study.`,
     ],
     key_tricks:[
-      `🧠 FEYNMAN TECHNIQUE: Explain ${T} aloud to a 12-year-old.`,
-      `📝 ACTIVE RECALL: Write everything you know about ${T} from memory.`,
-      `⏰ SPACED REPETITION: Review ${T} on day 1, 3, 7, 14, and 30.`,
+      `🧠 FEYNMAN TECHNIQUE for ${T}: Close all notes. Explain "${T}" aloud to an imaginary 12-year-old. Every hesitation = a gap. Return to notes ONLY for gaps. Repeat until fluent without notes.`,
+      `📝 ACTIVE RECALL for ${T}: After every study session on ${T}, write everything you remember without looking. The gaps between what you wrote and the actual content = your study targets.`,
+      `⏰ SPACED REPETITION for ${T}: Day 1 → learn. Day 3 → test yourself. Day 7 → consolidate. Day 14 → reinforce. Day 30 → master. Each review must be active retrieval, not re-reading.`,
+      `🎨 MIND MAPPING ${T}: Place "${T}" at centre. Branch to 5-7 major sub-topics. Add 3-5 specific facts per branch. Draw arrows showing cause-and-effect. The map IS the learning — not just a record.`,
     ],
     practice_questions:[
-      {question:`Explain the core mechanisms of ${T}.`,answer:`The core mechanisms involve applying foundational principles step-by-step to achieve a stable system outcome.`},
+      {question:`Explain the foundational principles of ${T} and analyse how they form a coherent framework. Illustrate with two specific examples showing the principles in action.`,answer:`${T} rests on foundational principles that collectively define its scope, methods, and explanatory power. These principles establish key concepts and their logical relationships. The first principle concerns the core subject matter of ${T} and why it is understood as it is. The second principle addresses the primary mechanisms. Understanding both requires grasping WHY principles hold — not just what they state. Example 1 illustrates the first principle in a specific real situation. Example 2 shows the second principle in a different but related context. Together, these demonstrate that ${T} is a structured reasoning framework, not a collection of facts.`},
+      {question:`Describe a realistic professional scenario where deep knowledge of ${T} produces measurably better outcomes than surface familiarity.`,answer:`A professional facing a complex problem involving ${T} approaches it differently depending on depth of understanding. An expert diagnoses the situation using ${T} principles before selecting an approach, systematically analyses the key variables, predicts outcomes under different actions, selects the optimal approach, and verifies the reasoning against known constraints. This systematic process consistently outperforms intuitive pattern-matching. The measurable better outcome comes from: avoiding systematic errors that novices make, anticipating consequences that are invisible without ${T} expertise, and communicating the reasoning clearly to stakeholders.`},
     ],
     real_world_applications:[
-      `Industry: Used to optimize and build secure processes related to ${T}.`,
-      `Research: Forms the baseline for academic inquiries in ${T}.`,
+      `Healthcare: ${T} informs clinical reasoning, diagnostic protocols, and treatment design — enabling practitioners to make more systematic and accurate decisions.`,
+      `Technology: ${T} principles underpin system architecture and engineering decisions, helping teams build more robust and maintainable solutions.`,
+      `Business: Strategic planning and risk assessment draw on ${T} frameworks, enabling better decisions under uncertainty.`,
+      `Policy: Government agencies apply ${T} reasoning to analyse problems and design evidence-based interventions with measurable outcomes.`,
     ],
     common_misconceptions:[
-      {misconception:`${T} is purely theoretical.`,correction:`It has immense practical applications.`},
-      {misconception:`${T} operates in isolation.`,correction:`It is highly interdisciplinary and connects to multiple fields.`},
-    ]
+      `❌ MYTH: Memorising ${T} facts equals understanding. ✅ TRUTH: Real mastery of ${T} means grasping causal relationships and conditional application — not just recalling definitions.`,
+      `❌ MYTH: ${T} is only for specialists. ✅ TRUTH: ${T} reasoning patterns transfer across healthcare, technology, business, and everyday decision-making.`,
+      `❌ MYTH: Re-reading notes is effective for ${T}. ✅ TRUTH: Active retrieval (testing yourself) outperforms re-reading by 200-300% for durable retention of ${T}.`,
+      `❌ MYTH: Once you know ${T} basics, little remains. ✅ TRUTH: Expert-novice gap in ${T} is vast — edge cases, conditional reasoning, and nuances separate introductory from professional mastery.`,
+    ],
   };
 
-  // Generate 15-20 specific Flashcards
-  for(let i=1; i<=15; i++) {
-     base.flashcards.push({
-        front: `What is the significance of concept ${i} in ${T}?`,
-        back: `Concept ${i} provides the structural necessity for ${T}. It ensures stability, handles edge cases, and scales properly in applied scenarios.`
-     });
+  if(tool==='flashcards'||tool==='all'){
+    base.flashcards=[
+      {front:`What is the precise definition of ${T} and why is it defined this way?`,back:`${T} is defined as [its core domain and scope]. The definition specifies exactly what is and isn't included, distinguishing ${T} from related fields. Understanding WHY the definition takes this form — not just memorising it — is the first step to genuine mastery. The key terms in the definition each carry precise meanings that differ from everyday usage.`},
+      {front:`What are the 4–5 most fundamental principles of ${T}?`,back:`The foundational principles of ${T} are: (1) [First principle] — establishes the basic framework; (2) [Second principle] — governs core mechanisms; (3) [Third principle] — determines key relationships; (4) [Fourth principle] — defines limits and conditions; (5) [Fifth principle] — connects ${T} to broader context. Mastering all five gives you the complete framework for understanding everything else in ${T}.`},
+      {front:`Explain the primary mechanism of ${T} step by step.`,back:`The primary mechanism of ${T} operates as: Step 1 → initial conditions are identified and characterised. Step 2 → triggering event or input occurs. Step 3 → primary transformation begins following ${T} rules. Step 4 → intermediate stages form progressively. Step 5 → observable outcome emerges and can be measured. Understanding WHY each step follows the previous is what separates genuine understanding of ${T} from surface familiarity.`},
+      {front:`What are the most important real-world applications of ${T}?`,back:`${T} has significant applications: (1) Healthcare — informs clinical reasoning and diagnosis; (2) Technology — underlies system design decisions; (3) Business — guides strategic planning; (4) Research — provides methodological framework; (5) Policy — shapes evidence-based interventions. The breadth explains why ${T} is studied so widely and valued across disciplines.`},
+      {front:`What distinguishes an expert in ${T} from a beginner?`,back:`Experts in ${T} differ from beginners in five ways: (1) Pattern recognition — experts immediately identify deep structure; beginners see surface features. (2) Conditional reasoning — experts know WHEN each ${T} principle applies and when it doesn't. (3) Chunking — experts organise knowledge into efficient mental units. (4) Transfer — experts apply ${T} to novel situations. (5) Metacognition — experts know precisely what they don't understand yet.`},
+      {front:`What is the most common misconception students have about ${T}?`,back:`The most persistent misconception is that memorising ${T} definitions and facts equals understanding. This fails because: real-world application requires adapting principles to specific conditions that don't match textbook examples; novel exam questions test understanding, not recall; and expertise develops through practice with varied problems, not passive re-reading. True mastery of ${T} means being able to reason from first principles.`},
+      {front:`How does ${T} connect to adjacent fields of knowledge?`,back:`${T} connects to adjacent disciplines through: shared conceptual frameworks enabling transfer of insights; methodological overlap where approaches developed in ${T} apply elsewhere; historical co-development where fields influenced each other; practical integration in professional contexts requiring combined knowledge. The most productive connections are those where ${T} thinking illuminates problems in domains where it wasn't originally studied.`},
+      {front:`What are the boundary conditions where ${T} principles break down?`,back:`Every principle in ${T} holds under specific conditions and breaks down outside them. Key boundary conditions include: [conditions where standard ${T} approaches work reliably]; [conditions where modification is needed]; [edge cases requiring different frameworks]. Expert practitioners maintain a clear mental map of these boundaries — applying ${T} principles conditionally rather than mechanically, which is a primary marker of professional competence.`},
+      {front:`How do you apply ${T} to solve a problem you've never seen before?`,back:`The expert approach: Step 1 — Diagnose: identify which ${T} principles are most relevant by looking for deep structural features, not surface similarities. Step 2 — Select: choose the appropriate framework for this problem type. Step 3 — Analyse: apply systematically, checking boundary conditions. Step 4 — Verify: test the solution against known ${T} constraints. Step 5 — Communicate: explain reasoning using ${T} terminology. This process consistently outperforms trial-and-error.`},
+      {front:`What are the sub-categories or specialisations within ${T}?`,back:`${T} divides into recognised sub-fields: (1) [Sub-field A] — focuses on [what it studies], relevant in [contexts]; (2) [Sub-field B] — specialises in [area], used by [practitioners]; (3) [Sub-field C] — examines [aspect] using [methods]; (4) [Sub-field D] — deals with [area]. Knowing which sub-field applies to a given situation is a marker of practical expertise.`},
+    ];
   }
 
-  // Generate 10-12 specific Quiz Questions
-  for(let i=1; i<=10; i++) {
-     base.quiz_questions.push({
-        id: i,
-        question: `Which of the following correctly describes a major attribute of ${T} (Part ${i})?`,
-        options: ['Accurate primary mechanism', 'A common misconception', 'An unrelated historical fact', 'A statistically invalid approach'],
-        correct_answer: 'Accurate primary mechanism',
-        explanation: `The accurate primary mechanism correctly defines the behavior of ${T}, whereas the other options represent misunderstandings.`,
-        difficulty: i <= 3 ? 'easy' : (i <= 7 ? 'medium' : 'hard')
-     });
+  if(tool==='quiz'||tool==='all'){
+    base.quiz_questions=[
+      {id:1,question:`Which statement BEST describes the central focus of ${T}?`,options:[`A systematic framework for understanding phenomena through evidence-based reasoning`,`A collection of memorised facts and definitions recalled on demand`,`A purely historical record with limited contemporary relevance`,`An intuitive skill developed only through professional experience`],correct_answer:`A systematic framework for understanding phenomena through evidence-based reasoning`,explanation:`${T} is fundamentally about systematic frameworks for reasoning — not fact collection. While some memorisation is necessary, the core is building the ability to reason about problems in this domain. This framework-building is what allows ${T} knowledge to transfer to new situations, which memorisation alone cannot achieve.`,difficulty:'easy'},
+      {id:2,question:`A student has re-read ${T} notes five times and feels confident. What does learning research predict?`,options:[`Excellent performance — thorough re-reading builds strong understanding`,`Potential underperformance — re-reading creates familiarity but not durable knowledge`,`Performance depends entirely on exam question difficulty`,`Strong performance if key passages were highlighted during re-reading`],correct_answer:`Potential underperformance — re-reading creates familiarity but not durable knowledge`,explanation:`Research consistently shows that re-reading ${T} material creates an "illusion of fluency" — material feels familiar, which feels like knowledge, but active retrieval (self-testing) dramatically outperforms re-reading for durable retention. When exam questions require applying ${T} to novel situations, familiarity alone fails.`,difficulty:'medium'},
+      {id:3,question:`When applying ${T} to a complex problem, the expert's FIRST action is:`,options:[`Immediately attempt multiple solutions through trial and error`,`Identify which core ${T} principles are most relevant to this situation`,`Find the most similar textbook example and replicate that solution`,`Simplify until the problem matches a familiar case exactly`],correct_answer:`Identify which core ${T} principles are most relevant to this situation`,explanation:`Expert practitioners of ${T} always begin with principle identification — looking for the deep structural features of the problem, not its surface characteristics. This principled approach works because ${T} principles apply across many superficially different situations, allowing experts to construct appropriate analyses even for problems they've never seen before.`,difficulty:'medium'},
+      {id:4,question:`Which study schedule produces the BEST long-term retention of ${T}?`,options:[`One 8-hour session immediately before the exam`,`Daily 30-minute sessions for two weeks pre-exam`,`Distributed sessions: Day 1 (learn), Day 3, Day 7, Day 14, Day 30`,`Two intensive 4-hour sessions in the final week`],correct_answer:`Distributed sessions: Day 1 (learn), Day 3, Day 7, Day 14, Day 30`,explanation:`Spaced repetition with increasing intervals consistently produces the strongest long-term retention of ${T} concepts. Each review catches material just as it begins to fade, maximising the memory-strengthening effect. Cramming produces short-term performance but poor long-term retention. Daily sessions without spacing are better than cramming but miss the power of the forgetting curve.`,difficulty:'medium'},
+      {id:5,question:`Why does knowledge of ${T} transfer effectively to professional domains beyond academia?`,options:[`Professional licensing bodies require ${T} knowledge in all careers`,`The specific facts of ${T} apply directly as professional information`,`The analytical frameworks and reasoning patterns of ${T} are domain-general`,`All professional problems are fundamentally identical to ${T} academic problems`],correct_answer:`The analytical frameworks and reasoning patterns of ${T} are domain-general`,explanation:`Transfer from ${T} to professional domains occurs because of the thinking skills developed, not the specific factual content. Understanding WHY ${T} principles work allows practitioners to recognise when similar underlying structures appear in unfamiliar domains — even when surface features look completely different. This is why ${T} graduates succeed across diverse career paths.`,difficulty:'hard'},
+      {id:6,question:`What does "conditional application" mean in the context of ${T} expertise?`,options:[`Only applying ${T} when authorised by a supervisor`,`Knowing WHEN each principle applies and when it breaks down`,`Memorising the conditions listed in textbooks alongside each principle`,`Applying ${T} based on personal preference or convenience`],correct_answer:`Knowing WHEN each principle applies and when it breaks down`,explanation:`Conditional application is central to ${T} expertise: knowing not just WHAT a principle states, but WHEN it applies and when it doesn't. Expert practitioners automatically assess situational fit before applying any ${T} principle. Novices often apply principles mechanically regardless of conditions — producing systematic errors that are invisible to them but immediately obvious to experts.`,difficulty:'hard'},
+      {id:7,question:`Which approach to studying ${T} produces genuine understanding rather than the illusion of competence?`,options:[`Reading comprehensive textbooks cover-to-cover multiple times`,`Watching video lectures while taking detailed notes`,`Practising retrieval from memory, then checking against source material`,`Reviewing expert-prepared summaries of ${T} content`],correct_answer:`Practising retrieval from memory, then checking against source material`,explanation:`The testing effect (retrieval practice) is the most robustly supported technique for genuine, durable understanding of ${T}. When you retrieve ${T} content from memory — even imperfectly — you strengthen the neural pathways for future retrieval. Reading, watching, and reviewing are passive. Only retrieval practice reveals actual gaps and strengthens real knowledge.`,difficulty:'medium'},
+      {id:8,question:`An expert and a novice observe the same situation involving ${T}. Research predicts the expert:`,options:[`Perceives more surface-level details`,`Immediately recognises the deep structural features relevant to ${T}`,`Takes longer to analyse by considering more possibilities`,`Perceives the same features but interprets them differently`],correct_answer:`Immediately recognises the deep structural features relevant to ${T}`,explanation:`Expert-novice research consistently shows experts perceive problems through their deep structure — the underlying ${T} principles operating — while beginners focus on surface features. This perceptual difference enables experts to immediately select the most relevant framework and ignore irrelevant details. This deep pattern recognition develops through years of deliberate practice with varied ${T} problems.`,difficulty:'hard'},
+    ];
   }
 
-  // Generate Mind Map
-  base.mindmap = {
-    central: match.central || T,
-    branches: match.branches
-  };
+  if(tool==='mindmap'||tool==='all'){
+    base.mindmap={
+      central:T.split(' ').slice(0,4).join(' ')||T,
+      branches:[
+        {name:'Core Concepts',color:'#00d4ff',items:[`Definition of ${T}`,`Foundational principles`,`Key terminology`,`Historical origins`,`Theoretical framework`,`Boundary conditions`]},
+        {name:'Mechanisms',color:'#bf00ff',items:[`Primary mechanism`,`Step-by-step process`,`Key variables`,`Feedback loops`,`Cause-effect chains`,`System dynamics`]},
+        {name:'Applications',color:'#00ff88',items:[`Professional practice`,`Healthcare uses`,`Technology applications`,`Business strategy`,`Policy implications`,`Everyday relevance`]},
+        {name:'Study Methods',color:'#ffae00',items:[`Active recall`,`Spaced repetition`,`Feynman technique`,`Concept mapping`,`Practice problems`,`Peer teaching`]},
+        {name:'Common Pitfalls',color:'#ff4444',items:[`Memorisation trap`,`Principle misapplication`,`Key misconceptions`,`Overconfidence`,`Passive study illusions`,`Transfer failures`]},
+        {name:'Advanced Topics',color:'#d4af37',items:[`Research frontiers`,`Open questions`,`Expert nuances`,`Interdisciplinary links`,`Future directions`,`Edge cases`]},
+      ],
+      connections:[
+        {from:'Core Concepts',to:'Mechanisms',description:`Principles explain how ${T} mechanisms operate`},
+        {from:'Mechanisms',to:'Applications',description:`${T} mechanisms enable real-world use`},
+        {from:'Common Pitfalls',to:'Study Methods',description:`Knowing ${T} mistakes guides better study approach`},
+        {from:'Core Concepts',to:'Advanced Topics',description:`${T} foundations open advanced understanding`},
+        {from:'Study Methods',to:'Core Concepts',description:`Active study deepens conceptual grasp of ${T}`},
+      ],
+    };
+  }
 
   return base;
 }
