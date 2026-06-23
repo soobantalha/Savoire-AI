@@ -110,14 +110,14 @@ const STAGE_MESSAGES = [
 ];
 
 const AVATAR_COLORS = [
-  { bg: 'linear-gradient(135deg,#d4af37,#ffae00)', fg: '#0a1128', name: 'Gold'   },
-  { bg: 'linear-gradient(135deg,#00d4ff,#0099cc)', fg: '#ffffff', name: 'Blue'   },
-  { bg: 'linear-gradient(135deg,#bf00ff,#7a00cc)', fg: '#ffffff', name: 'Purple' },
-  { bg: 'linear-gradient(135deg,#00ff88,#00cc66)', fg: '#0a1128', name: 'Green'  },
-  { bg: 'linear-gradient(135deg,#ff4444,#cc0000)', fg: '#ffffff', name: 'Red'    },
-  { bg: 'linear-gradient(135deg,#ff6b00,#cc4400)', fg: '#ffffff', name: 'Orange' },
-  { bg: 'linear-gradient(135deg,#e84393,#a0006b)', fg: '#ffffff', name: 'Pink'   },
-  { bg: 'linear-gradient(135deg,#4ecdc4,#2aa198)', fg: '#ffffff', name: 'Teal'   },
+  { bg: 'linear-gradient(135deg,#d4af37,#ffae00)', fg: '#0a1128', name: 'Gold', char: '🎓' },
+  { bg: 'linear-gradient(135deg,#00d4ff,#0099cc)', fg: '#ffffff', name: 'Blue', char: '🧠' },
+  { bg: 'linear-gradient(135deg,#bf00ff,#7a00cc)', fg: '#ffffff', name: 'Purple', char: '📚' },
+  { bg: 'linear-gradient(135deg,#00ff88,#00cc66)', fg: '#0a1128', name: 'Green', char: '🔬' },
+  { bg: 'linear-gradient(135deg,#ff4444,#cc0000)', fg: '#ffffff', name: 'Red', char: '🔭' },
+  { bg: 'linear-gradient(135deg,#e84393,#b83576)', fg: '#ffffff', name: 'Pink', char: '💡' },
+  { bg: 'linear-gradient(135deg,#1f2937,#0f172a)', fg: '#ffffff', name: 'Navy', char: '💻' },
+  { bg: 'linear-gradient(135deg,#f39c12,#d68910)', fg: '#ffffff', name: 'Amber', char: '⚡' },
 ];
 
 const DEMO_STEPS = [
@@ -620,9 +620,31 @@ class SavoireApp {
     if (!this.userName) {
       setTimeout(() => {
         if (!this.el.welcomeOverlay) return;
+        if (this.el.welcomeBtn) this.el.welcomeBtn.disabled = true; // Disable initially
         this.el.welcomeOverlay.style.display = 'flex';
         setTimeout(() => this.el.welcomeOverlay.classList.add('visible'), 60);
-        setTimeout(() => this.el.welcomeNameInput?.focus(), 450);
+        setTimeout(() => {
+           this.el.welcomeNameInput?.focus();
+           if (this.el.welcomeNameInput) {
+             this.el.welcomeNameInput.addEventListener('input', () => {
+                const val = this.el.welcomeNameInput.value.trim();
+                const hint = this.el.welcomeNameHint || document.getElementById('welcomeNameHint');
+                if (val.length === 0) {
+                   if(hint) hint.textContent = '';
+                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
+                } else if (val.length < 2) {
+                   if(hint) { hint.textContent = 'At least 2 characters please'; hint.style.color = '#ffae00'; }
+                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
+                } else if (val.length > 40) {
+                   if(hint) { hint.textContent = 'Name too long (max 40 characters)'; hint.style.color = '#ff4444'; }
+                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
+                } else {
+                   if(hint) { hint.textContent = `✓ Looking good, ${val}!`; hint.style.color = '#00ff88'; }
+                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = false;
+                }
+             });
+           }
+        }, 450);
       }, 600);
     } else {
       setTimeout(() => {
@@ -639,7 +661,7 @@ class SavoireApp {
 
   _submitWelcome() {
     const name = this.el.welcomeNameInput?.value?.trim();
-    if (!name || name.length < 2) {
+    if (!name || name.length < 2 || name.length > 40) {
       this.el.welcomeNameInput?.classList.add('input-shake');
       setTimeout(() => this.el.welcomeNameInput?.classList.remove('input-shake'), 500);
       return;
@@ -650,20 +672,10 @@ class SavoireApp {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
     }
-    try {
-      fetch(`https://ntfy.sh/${SAVOIRÉ.NTFY}`, {
-        method: 'POST',
-        body: `New Savoiré AI user: ${name} — ${new Date().toISOString()}`,
-        headers: { 'Title': 'Savoiré AI New User', 'Priority': '3' },
-      }).catch(() => {});
-    } catch {}
-
-    this._dismissOverlay('welcomeOverlay');
     this._updateUserUI();
-    this._updateAllStats();
-    this._warmupAndTrack();
-    this._toast('success', 'fa-hand-wave', `Welcome, ${name}! Let me show you around 🎓`);
-    setTimeout(() => this._openDemo(), 800);
+    this._dismissOverlay('welcomeOverlay');
+    this._toast('success', 'fa-user-check', `Welcome aboard, ${name}!`);
+    setTimeout(() => this._openDemo(), 800); // Auto-start demo
   }
 
   _skipWelcome() {
@@ -688,7 +700,7 @@ class SavoireApp {
 
   _updateUserUI() {
     const name  = this.userName || 'Scholar';
-    const init  = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
+    const init  = color.char || name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
     const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
 
     [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
@@ -739,7 +751,11 @@ class SavoireApp {
 
   // ─── WIZARD SYSTEM ──────────────────────────────────────────────────────────
 
-  _openWizard(presetTool) {
+  _openWizard(presetTool, skipToTopic=false) {
+    if (presetTool) {
+       this.wizardData.tool = presetTool;
+       if(skipToTopic) this.wizardStep = 1;
+    }
     this.wizardData = {
       tool:     presetTool || this.tool || 'notes',
       topic:    '',
@@ -856,7 +872,7 @@ class SavoireApp {
 
   _bindWTool() {
     this._qsa('.wizard-tool-card').forEach(c => {
-      c.onclick = () => { this.wizardData.tool = c.dataset.tool; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.tool = c.dataset.tool; this.wizardStep = 1; this._renderWizardStep(); };
     });
   }
 
@@ -902,54 +918,32 @@ Examples:
     if (inp) {
       inp.oninput = e => {
         const v = e.target.value.slice(0, 4000);
-        e.target.value = v;
+        inp.value = v;
         this.wizardData.topic = v;
-        if (cc) cc.textContent = `${v.length} / 4000`;
+        if (cc) cc.textContent = v.length;
+        this._save('sv_wiz_draft', this.wizardData);
       };
     }
-
-    const fz  = this._el('wFileZone');
-    const fi  = this._el('wFileInp');
-    if (fz && fi) {
-      fz.onclick = e => { if (e.target !== fi) fi.click(); };
-      fi.onchange = e => {
-        const f = e.target.files[0];
-        if (!f) return;
-        if (!/\.(txt|md|csv)$/i.test(f.name) || f.size > 500000) {
-          this._toast('error', 'fa-times', 'File must be .txt, .md, or .csv — max 500 KB');
-          return;
-        }
-        const r = new FileReader();
-        r.onload = ev => {
-          const txt = ev.target.result.slice(0, 4000);
-          if (inp) { inp.value = txt; this.wizardData.topic = txt; if (cc) cc.textContent = `${txt.length} / 4000`; }
-          const fn = this._el('wFileName');
-          if (fn) fn.textContent = `📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
-          this.wizardFile = f;
-        };
-        r.readAsText(f, 'UTF-8');
-      };
-      fz.ondragover  = e => { e.preventDefault(); fz.classList.add('drag-over'); };
-      fz.ondragleave = () => { fz.classList.remove('drag-over'); };
-      fz.ondrop      = e => {
-        e.preventDefault(); fz.classList.remove('drag-over');
-        const f = e.dataTransfer.files[0];
-        if (f && fi) { fi.files = e.dataTransfer.files; fi.dispatchEvent(new Event('change')); }
-      };
-    }
-
-    this._qsa('.wizard-sugg-pill').forEach(b => {
-      b.onclick = () => {
-        const t = b.dataset.topic;
-        if (t && inp) {
-          inp.value = t;
-          this.wizardData.topic = t;
-          if (cc) cc.textContent = `${t.length} / 4000`;
-          inp.style.boxShadow = '0 0 0 3px rgba(0,212,255,.3)';
-          setTimeout(() => { inp.style.boxShadow = ''; }, 700);
-        }
+    this._qsa('.wizard-sugg-chip').forEach(c => {
+      c.onclick = () => {
+        this.wizardData.topic = c.textContent;
+        this.wizardStep = 2; // Auto-move to next step
+        this._renderWizardStep();
       };
     });
+    const upBtn = this._el('wUploadBtn');
+    const fileInp = this._el('wFileInput');
+    if (upBtn && fileInp) {
+      upBtn.onclick = () => fileInp.click();
+      fileInp.onchange = e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        this.wizardFile = f;
+        this.wizardData.topic = `[File attached: ${f.name}]`;
+        this.wizardStep = 2; // Auto-move after upload
+        this._renderWizardStep();
+      };
+    }
   }
 
   _wStepLang() {
@@ -974,7 +968,7 @@ Examples:
 
   _bindWLang() {
     this._qsa('.wizard-language-card').forEach(c => {
-      c.onclick = () => { this.wizardData.language = c.dataset.lang; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.language = c.dataset.lang; this.wizardStep = 3; this._renderWizardStep(); };
     });
   }
 
@@ -996,7 +990,7 @@ Examples:
 
   _bindWDepth() {
     this._qsa('.wizard-depth-card').forEach(c => {
-      c.onclick = () => { this.wizardData.depth = c.dataset.depth; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.depth = c.dataset.depth; this.wizardStep = 4; this._renderWizardStep(); };
     });
   }
 
@@ -1016,7 +1010,7 @@ Examples:
 
   _bindWStyle() {
     this._qsa('.wizard-style-card').forEach(c => {
-      c.onclick = () => { this.wizardData.style = c.dataset.style; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.style = c.dataset.style; this.wizardStep = 5; this._renderWizardStep(); };
     });
   }
 
@@ -1197,8 +1191,39 @@ Examples:
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('text/event-stream')) {
           const d = await res.json();
-          if (d.error) reject(new Error(d.error));
-          else resolve(d);
+          if (d.error) { reject(new Error(d.error)); return; }
+          
+          // Simulation for JSON fallback
+          const simNotes = (d.ultra_long_notes || '').split(' ');
+          for (let i = 0; i < simNotes.length; i += 10) {
+            this.streamBuffer += (i > 0 ? ' ' : '') + simNotes.slice(i, i + 10).join(' ');
+            if (this.el.sfpText) {
+               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+               this.el.sfpText.classList.add('live-md');
+               if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+            }
+            await new Promise(r => setTimeout(r, 10));
+          }
+          if (d.flashcards) {
+            for (let i = 0; i < d.flashcards.length; i++) {
+               animateCard(i + 1, d.flashcards.length, d.flashcards[i]);
+               await new Promise(r => setTimeout(r, 150));
+            }
+          }
+          if (d.quiz_questions) {
+            for (let i = 0; i < d.quiz_questions.length; i++) {
+               animateQuestion(i + 1, d.quiz_questions.length, d.quiz_questions[i]);
+               await new Promise(r => setTimeout(r, 150));
+            }
+          }
+          if (d.mindmap?.branches) {
+             animateBranch(-1, d.mindmap.branches.length, {name: '_central_', value: d.mindmap.central});
+             for (let i = 0; i < d.mindmap.branches.length; i++) {
+               animateBranch(i + 1, d.mindmap.branches.length, d.mindmap.branches[i]);
+               await new Promise(r => setTimeout(r, 150));
+             }
+          }
+          resolve(d);
           return;
         }
 
@@ -2445,6 +2470,24 @@ Examples:
     try {
       const { jsPDF } = window.jspdf;
       const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
+      
+      const safe = (v) => String(v ?? '')
+        .replace(/[\u0000-\u001F\u007F]/g, ' ')
+        .replace(/[^\x00-\x7E]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+        
+      const origText = doc.text.bind(doc);
+      doc.text = function(text, x, y, options) {
+         if (Array.isArray(text)) text = text.map(safe);
+         else text = safe(text);
+         return origText(text, x, y, options);
+      };
+      
+      const origSplit = doc.splitTextToSize.bind(doc);
+      doc.splitTextToSize = function(text, maxlen, options) {
+         return origSplit(safe(text), maxlen, options);
+      };
 
       const PW=210, PH=297, ML=14, MR=14, CW=PW-ML-MR, MT=28, MB=16;
       const isDark = theme !== 'light';
