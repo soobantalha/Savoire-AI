@@ -700,8 +700,8 @@ class SavoireApp {
 
   _updateUserUI() {
     const name  = this.userName || 'Scholar';
-    const init  = color.char || name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
     const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
+    const init  = color.char || name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
 
     [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
       if (!el) return;
