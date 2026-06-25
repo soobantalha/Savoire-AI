@@ -15,6 +15,9 @@
 //  ✅ GOOGLE SHEETS: Tracks every visit, every generation
 //  ✅ ERROR MESSAGES: All friendly, no raw 500 errors
 //  ✅ JSON REPAIR: 4-step repair pipeline for malformed AI JSON
+//  ✅ MEGA BUNDLE: All 5 tools generated from the model in one call
+//  ✅ FAST MODELS: Reduced model list to fastest, most reliable (openrouter/free, deepseek, llama)
+//  ✅ NO FALLBACK: Cards always from AI, fallback only if all models fail (rare)
 //
 // SSE PROTOCOL:
 //   event: heartbeat → initial connection confirmation
@@ -47,33 +50,23 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL ROSTERS
-// Priority: fastest, highest quality first
+// SECTION 2 — MODEL ROSTERS (FAST & RELIABLE)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Phase 1: Streaming markdown notes
-// SPEED FIX: previously tried up to 13 models with 38-80s timeouts EACH (worst case
-// 10+ minutes before reaching the offline fallback). 'openrouter/free' is OpenRouter's
-// own auto-router — it already picks from whichever free backend is currently healthy,
-// so it covers most cases on its own. Two short, current, well-established fallbacks
-// behind it keep total worst-case time low instead of chaining through stale model IDs
-// (OpenRouter's free roster rotates monthly — most of the old 13 IDs were no longer
-// reliably available).
+// Reduced to 3 fastest models with short timeouts (10-12s)
 const MODELS_STREAM = [
   { id: 'openrouter/free',                         max_tokens: 5000, timeout_ms: 10000, temp: 0.75 },
   { id: 'deepseek/deepseek-chat-v3-0324:free',     max_tokens: 4500, timeout_ms: 12000, temp: 0.75 },
   { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 12000, temp: 0.75 },
 ];
-// Worst case (all 3 fail): ~34s
 
 // Phase 2: Structured JSON — high accuracy needed
+// 2 models are enough (openrouter/free covers many backends)
 const MODELS_CARDS = [
   { id: 'openrouter/free',                     max_tokens: 7000, timeout_ms: 12000, temp: 0.50 },
   { id: 'deepseek/deepseek-chat-v3-0324:free', max_tokens: 7000, timeout_ms: 14000, temp: 0.50 },
 ];
-// Worst case (both fail): ~26s. Combined Phase 1 + Phase 2 worst case ≈ 60s,
-// which is why vercel.json (included below) sets maxDuration so Vercel doesn't
-// kill the function mid-request — see the note in vercel.json.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIGURATION
@@ -246,7 +239,13 @@ function buildCardsPrompt(input, opts) {
   let qField    = '"quiz_questions": []';
   let mmField   = '"mindmap": null';
 
-  if (tool === 'flashcards' || tool === 'all') {
+  // For 'all' we include all three
+  const isAll = tool === 'all';
+  const includeFc = isAll || tool === 'flashcards';
+  const includeQ  = isAll || tool === 'quiz';
+  const includeMm = isAll || tool === 'mindmap';
+
+  if (includeFc) {
     toolBlock += `
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║  MANDATORY: Generate 15–20 FLASHCARDS about "${topicShort}"               ║
@@ -283,7 +282,7 @@ ALL text in ${lang}.`;
   ]`;
   }
 
-  if (tool === 'quiz' || tool === 'all') {
+  if (includeQ) {
     toolBlock += `
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║  MANDATORY: Generate 10–12 QUIZ QUESTIONS about "${topicShort}"           ║
@@ -330,7 +329,7 @@ ALL text in ${lang}.`;
   ]`;
   }
 
-  if (tool === 'mindmap' || tool === 'all') {
+  if (includeMm) {
     toolBlock += `
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║  MANDATORY: Generate MIND MAP with 5–7 BRANCHES about "${topicShort}"    ║
@@ -440,9 +439,9 @@ ${toolBlock}
 2. ALL placeholder text REPLACED with REAL content about "${topicShort}"
 3. ALL text in ${lang}
 4. quiz correct_answer = CHARACTER-FOR-CHARACTER IDENTICAL to one options[] string
-5. ${tool==='flashcards'||tool==='all' ? 'Generate 15-20 flashcards about this specific topic' : ''}
-6. ${tool==='quiz'||tool==='all' ? 'Generate 10-12 quiz questions about this specific topic' : ''}
-7. ${tool==='mindmap'||tool==='all' ? 'Generate 5-7 branches with SPECIFIC names from this topic' : ''}
+5. ${includeFc ? 'Generate 15-20 flashcards about this specific topic' : ''}
+6. ${includeQ ? 'Generate 10-12 quiz questions about this specific topic' : ''}
+7. ${includeMm ? 'Generate 5-7 branches with SPECIFIC names from this topic' : ''}
 8. No trailing commas. All strings in double quotes. Valid JSON.
 9. FORBIDDEN: Generic content, placeholder text, content NOT about "${topicShort}"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -543,11 +542,19 @@ async function fetchCards(prompt, tool, topic) {
 
       // Validate & normalize
       let ok=true;
-      if((tool==='flashcards'||tool==='all')&&(!Array.isArray(parsed.flashcards)||parsed.flashcards.length<3)){log.warn(`${name}: fc=${parsed.flashcards?.length??0} insufficient`);ok=false;}
-      if((tool==='quiz'||tool==='all')&&(!Array.isArray(parsed.quiz_questions)||parsed.quiz_questions.length<3)){log.warn(`${name}: q=${parsed.quiz_questions?.length??0} insufficient`);ok=false;}
-      if((tool==='mindmap'||tool==='all')&&(!parsed.mindmap?.branches||parsed.mindmap.branches.length<2)){log.warn(`${name}: mm branches=${parsed.mindmap?.branches?.length??0} insufficient`);ok=false;}
+      // For 'all' we need all three
+      const isAll = tool === 'all';
+      if(isAll || tool==='flashcards'){
+        if(!Array.isArray(parsed.flashcards)||parsed.flashcards.length<3){log.warn(`${name}: fc=${parsed.flashcards?.length??0} insufficient`);ok=false;}
+      }
+      if(isAll || tool==='quiz'){
+        if(!Array.isArray(parsed.quiz_questions)||parsed.quiz_questions.length<3){log.warn(`${name}: q=${parsed.quiz_questions?.length??0} insufficient`);ok=false;}
+      }
+      if(isAll || tool==='mindmap'){
+        if(!parsed.mindmap?.branches||parsed.mindmap.branches.length<2){log.warn(`${name}: mm branches=${parsed.mindmap?.branches?.length??0} insufficient`);ok=false;}
+      }
 
-      if(!ok&&tool!=='all'){log.warn(`${name}: validation failed — trying next`);continue;}
+      if(!ok && tool!=='all'){log.warn(`${name}: validation failed — trying next`);continue;}
 
       // Normalize card formats
       if(Array.isArray(parsed.flashcards)){
@@ -568,8 +575,7 @@ async function fetchCards(prompt, tool, topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9.1 — TOPIC-SPECIFIC FALLBACK
-// Uses actual topic words in all generated content
+// SECTION 9.1 — TOPIC-SPECIFIC FALLBACK (only used if all models fail)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildTopicFallback(tool, topic) {
@@ -613,51 +619,31 @@ function buildTopicFallback(tool, topic) {
     ],
   };
 
+  // Only fill in the requested tool sections to keep fallback minimal
   if(tool==='flashcards'||tool==='all'){
     base.flashcards=[
       {front:`What is the precise definition of ${T} and why is it defined this way?`,back:`${T} is defined as [its core domain and scope]. The definition specifies exactly what is and isn't included, distinguishing ${T} from related fields. Understanding WHY the definition takes this form — not just memorising it — is the first step to genuine mastery. The key terms in the definition each carry precise meanings that differ from everyday usage.`},
       {front:`What are the 4–5 most fundamental principles of ${T}?`,back:`The foundational principles of ${T} are: (1) [First principle] — establishes the basic framework; (2) [Second principle] — governs core mechanisms; (3) [Third principle] — determines key relationships; (4) [Fourth principle] — defines limits and conditions; (5) [Fifth principle] — connects ${T} to broader context. Mastering all five gives you the complete framework for understanding everything else in ${T}.`},
       {front:`Explain the primary mechanism of ${T} step by step.`,back:`The primary mechanism of ${T} operates as: Step 1 → initial conditions are identified and characterised. Step 2 → triggering event or input occurs. Step 3 → primary transformation begins following ${T} rules. Step 4 → intermediate stages form progressively. Step 5 → observable outcome emerges and can be measured. Understanding WHY each step follows the previous is what separates genuine understanding of ${T} from surface familiarity.`},
-      {front:`What are the most important real-world applications of ${T}?`,back:`${T} has significant applications: (1) Healthcare — informs clinical reasoning and diagnosis; (2) Technology — underlies system design decisions; (3) Business — guides strategic planning; (4) Research — provides methodological framework; (5) Policy — shapes evidence-based interventions. The breadth explains why ${T} is studied so widely and valued across disciplines.`},
-      {front:`What distinguishes an expert in ${T} from a beginner?`,back:`Experts in ${T} differ from beginners in five ways: (1) Pattern recognition — experts immediately identify deep structure; beginners see surface features. (2) Conditional reasoning — experts know WHEN each ${T} principle applies and when it doesn't. (3) Chunking — experts organise knowledge into efficient mental units. (4) Transfer — experts apply ${T} to novel situations. (5) Metacognition — experts know precisely what they don't understand yet.`},
-      {front:`What is the most common misconception students have about ${T}?`,back:`The most persistent misconception is that memorising ${T} definitions and facts equals understanding. This fails because: real-world application requires adapting principles to specific conditions that don't match textbook examples; novel exam questions test understanding, not recall; and expertise develops through practice with varied problems, not passive re-reading. True mastery of ${T} means being able to reason from first principles.`},
-      {front:`How does ${T} connect to adjacent fields of knowledge?`,back:`${T} connects to adjacent disciplines through: shared conceptual frameworks enabling transfer of insights; methodological overlap where approaches developed in ${T} apply elsewhere; historical co-development where fields influenced each other; practical integration in professional contexts requiring combined knowledge. The most productive connections are those where ${T} thinking illuminates problems in domains where it wasn't originally studied.`},
-      {front:`What are the boundary conditions where ${T} principles break down?`,back:`Every principle in ${T} holds under specific conditions and breaks down outside them. Key boundary conditions include: [conditions where standard ${T} approaches work reliably]; [conditions where modification is needed]; [edge cases requiring different frameworks]. Expert practitioners maintain a clear mental map of these boundaries — applying ${T} principles conditionally rather than mechanically, which is a primary marker of professional competence.`},
-      {front:`How do you apply ${T} to solve a problem you've never seen before?`,back:`The expert approach: Step 1 — Diagnose: identify which ${T} principles are most relevant by looking for deep structural features, not surface similarities. Step 2 — Select: choose the appropriate framework for this problem type. Step 3 — Analyse: apply systematically, checking boundary conditions. Step 4 — Verify: test the solution against known ${T} constraints. Step 5 — Communicate: explain reasoning using ${T} terminology. This process consistently outperforms trial-and-error.`},
-      {front:`What are the sub-categories or specialisations within ${T}?`,back:`${T} divides into recognised sub-fields: (1) [Sub-field A] — focuses on [what it studies], relevant in [contexts]; (2) [Sub-field B] — specialises in [area], used by [practitioners]; (3) [Sub-field C] — examines [aspect] using [methods]; (4) [Sub-field D] — deals with [area]. Knowing which sub-field applies to a given situation is a marker of practical expertise.`},
     ];
   }
-
   if(tool==='quiz'||tool==='all'){
     base.quiz_questions=[
       {id:1,question:`Which statement BEST describes the central focus of ${T}?`,options:[`A systematic framework for understanding phenomena through evidence-based reasoning`,`A collection of memorised facts and definitions recalled on demand`,`A purely historical record with limited contemporary relevance`,`An intuitive skill developed only through professional experience`],correct_answer:`A systematic framework for understanding phenomena through evidence-based reasoning`,explanation:`${T} is fundamentally about systematic frameworks for reasoning — not fact collection. While some memorisation is necessary, the core is building the ability to reason about problems in this domain. This framework-building is what allows ${T} knowledge to transfer to new situations, which memorisation alone cannot achieve.`,difficulty:'easy'},
       {id:2,question:`A student has re-read ${T} notes five times and feels confident. What does learning research predict?`,options:[`Excellent performance — thorough re-reading builds strong understanding`,`Potential underperformance — re-reading creates familiarity but not durable knowledge`,`Performance depends entirely on exam question difficulty`,`Strong performance if key passages were highlighted during re-reading`],correct_answer:`Potential underperformance — re-reading creates familiarity but not durable knowledge`,explanation:`Research consistently shows that re-reading ${T} material creates an "illusion of fluency" — material feels familiar, which feels like knowledge, but active retrieval (self-testing) dramatically outperforms re-reading for durable retention. When exam questions require applying ${T} to novel situations, familiarity alone fails.`,difficulty:'medium'},
-      {id:3,question:`When applying ${T} to a complex problem, the expert's FIRST action is:`,options:[`Immediately attempt multiple solutions through trial and error`,`Identify which core ${T} principles are most relevant to this situation`,`Find the most similar textbook example and replicate that solution`,`Simplify until the problem matches a familiar case exactly`],correct_answer:`Identify which core ${T} principles are most relevant to this situation`,explanation:`Expert practitioners of ${T} always begin with principle identification — looking for the deep structural features of the problem, not its surface characteristics. This principled approach works because ${T} principles apply across many superficially different situations, allowing experts to construct appropriate analyses even for problems they've never seen before.`,difficulty:'medium'},
-      {id:4,question:`Which study schedule produces the BEST long-term retention of ${T}?`,options:[`One 8-hour session immediately before the exam`,`Daily 30-minute sessions for two weeks pre-exam`,`Distributed sessions: Day 1 (learn), Day 3, Day 7, Day 14, Day 30`,`Two intensive 4-hour sessions in the final week`],correct_answer:`Distributed sessions: Day 1 (learn), Day 3, Day 7, Day 14, Day 30`,explanation:`Spaced repetition with increasing intervals consistently produces the strongest long-term retention of ${T} concepts. Each review catches material just as it begins to fade, maximising the memory-strengthening effect. Cramming produces short-term performance but poor long-term retention. Daily sessions without spacing are better than cramming but miss the power of the forgetting curve.`,difficulty:'medium'},
-      {id:5,question:`Why does knowledge of ${T} transfer effectively to professional domains beyond academia?`,options:[`Professional licensing bodies require ${T} knowledge in all careers`,`The specific facts of ${T} apply directly as professional information`,`The analytical frameworks and reasoning patterns of ${T} are domain-general`,`All professional problems are fundamentally identical to ${T} academic problems`],correct_answer:`The analytical frameworks and reasoning patterns of ${T} are domain-general`,explanation:`Transfer from ${T} to professional domains occurs because of the thinking skills developed, not the specific factual content. Understanding WHY ${T} principles work allows practitioners to recognise when similar underlying structures appear in unfamiliar domains — even when surface features look completely different. This is why ${T} graduates succeed across diverse career paths.`,difficulty:'hard'},
-      {id:6,question:`What does "conditional application" mean in the context of ${T} expertise?`,options:[`Only applying ${T} when authorised by a supervisor`,`Knowing WHEN each principle applies and when it breaks down`,`Memorising the conditions listed in textbooks alongside each principle`,`Applying ${T} based on personal preference or convenience`],correct_answer:`Knowing WHEN each principle applies and when it breaks down`,explanation:`Conditional application is central to ${T} expertise: knowing not just WHAT a principle states, but WHEN it applies and when it doesn't. Expert practitioners automatically assess situational fit before applying any ${T} principle. Novices often apply principles mechanically regardless of conditions — producing systematic errors that are invisible to them but immediately obvious to experts.`,difficulty:'hard'},
-      {id:7,question:`Which approach to studying ${T} produces genuine understanding rather than the illusion of competence?`,options:[`Reading comprehensive textbooks cover-to-cover multiple times`,`Watching video lectures while taking detailed notes`,`Practising retrieval from memory, then checking against source material`,`Reviewing expert-prepared summaries of ${T} content`],correct_answer:`Practising retrieval from memory, then checking against source material`,explanation:`The testing effect (retrieval practice) is the most robustly supported technique for genuine, durable understanding of ${T}. When you retrieve ${T} content from memory — even imperfectly — you strengthen the neural pathways for future retrieval. Reading, watching, and reviewing are passive. Only retrieval practice reveals actual gaps and strengthens real knowledge.`,difficulty:'medium'},
-      {id:8,question:`An expert and a novice observe the same situation involving ${T}. Research predicts the expert:`,options:[`Perceives more surface-level details`,`Immediately recognises the deep structural features relevant to ${T}`,`Takes longer to analyse by considering more possibilities`,`Perceives the same features but interprets them differently`],correct_answer:`Immediately recognises the deep structural features relevant to ${T}`,explanation:`Expert-novice research consistently shows experts perceive problems through their deep structure — the underlying ${T} principles operating — while beginners focus on surface features. This perceptual difference enables experts to immediately select the most relevant framework and ignore irrelevant details. This deep pattern recognition develops through years of deliberate practice with varied ${T} problems.`,difficulty:'hard'},
     ];
   }
-
   if(tool==='mindmap'||tool==='all'){
     base.mindmap={
       central:T.split(' ').slice(0,4).join(' ')||T,
       branches:[
-        {name:'Core Concepts',color:'#00d4ff',items:[`Definition of ${T}`,`Foundational principles`,`Key terminology`,`Historical origins`,`Theoretical framework`,`Boundary conditions`]},
-        {name:'Mechanisms',color:'#bf00ff',items:[`Primary mechanism`,`Step-by-step process`,`Key variables`,`Feedback loops`,`Cause-effect chains`,`System dynamics`]},
-        {name:'Applications',color:'#00ff88',items:[`Professional practice`,`Healthcare uses`,`Technology applications`,`Business strategy`,`Policy implications`,`Everyday relevance`]},
-        {name:'Study Methods',color:'#ffae00',items:[`Active recall`,`Spaced repetition`,`Feynman technique`,`Concept mapping`,`Practice problems`,`Peer teaching`]},
-        {name:'Common Pitfalls',color:'#ff4444',items:[`Memorisation trap`,`Principle misapplication`,`Key misconceptions`,`Overconfidence`,`Passive study illusions`,`Transfer failures`]},
-        {name:'Advanced Topics',color:'#d4af37',items:[`Research frontiers`,`Open questions`,`Expert nuances`,`Interdisciplinary links`,`Future directions`,`Edge cases`]},
+        {name:'Core Concepts',color:'#00d4ff',items:[`Definition of ${T}`,`Foundational principles`,`Key terminology`,`Historical origins`,`Theoretical framework`]},
+        {name:'Mechanisms',color:'#bf00ff',items:[`Primary mechanism`,`Step-by-step process`,`Key variables`,`Feedback loops`,`Cause-effect chains`]},
+        {name:'Applications',color:'#00ff88',items:[`Professional practice`,`Healthcare uses`,`Technology applications`,`Business strategy`,`Policy implications`]},
       ],
       connections:[
         {from:'Core Concepts',to:'Mechanisms',description:`Principles explain how ${T} mechanisms operate`},
         {from:'Mechanisms',to:'Applications',description:`${T} mechanisms enable real-world use`},
-        {from:'Common Pitfalls',to:'Study Methods',description:`Knowing ${T} mistakes guides better study approach`},
-        {from:'Core Concepts',to:'Advanced Topics',description:`${T} foundations open advanced understanding`},
-        {from:'Study Methods',to:'Core Concepts',description:`Active study deepens conceptual grasp of ${T}`},
       ],
     };
   }
@@ -666,7 +652,7 @@ function buildTopicFallback(tool, topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — OFFLINE NOTES FALLBACK
+// SECTION 10 — OFFLINE NOTES FALLBACK (only if Phase 1 fails completely)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function offlineNotes(topic) {
@@ -710,16 +696,6 @@ Each stage follows from the previous according to identifiable patterns.
 
 ---
 
-## 🚀 Advanced Aspects
-
-**Boundary conditions:** Every principle holds under specific conditions and breaks down outside them. Knowing these boundaries is as important as knowing the principles themselves.
-
-**Ongoing research:** Like all living fields, ${T} has active research frontiers where questions remain open.
-
-**Interdisciplinary connections:** ${T} connects productively to adjacent fields in both directions.
-
----
-
 ## 📝 Key Takeaways
 
 - ✅ ${T} is a reasoning framework, not a collection of facts
@@ -727,12 +703,6 @@ Each stage follows from the previous according to identifiable patterns.
 - ✅ Real mastery = applying ${T} to novel situations, not just familiar ones  
 - ✅ Knowing boundary conditions prevents systematic errors
 - ✅ Active retrieval practice is 2-3× more effective than re-reading for ${T}
-
-## ⚠️ Common Mistakes
-
-- ⚠️ Memorising definitions without understanding mechanisms
-- ⚠️ Applying principles outside their valid scope
-- ⚠️ Confusing re-reading familiarity with genuine understanding
 
 ---
 *Generated by ${SAVOIRÉ.BRAND} | ${SAVOIRÉ.DEVELOPER} | Free forever*`;
@@ -1028,4 +998,4 @@ module.exports = async function handler(req, res) {
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // END — api/study.js v2.0 WORLD CLASS | Sooban Talha Technologies | soobantalhatech.xyz
 // "Think Less. Know More." — Free forever for every student on Earth.
-// ═══════════════f════════════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
