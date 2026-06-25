@@ -1,6 +1,6 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — 5000+ LINES — ALL BUGS FIXED
+   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — MAXIMUM LINES — FINAL ENHANCED
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
@@ -8,30 +8,25 @@
    ALL ISSUES FIXED IN THIS VERSION:
    ═══════════════════════════════════════════════════════════════════════════════════════════════════
 
-   ✅ NOTES:   Live stream = notes only shown. Final output = rendered notes ONLY
+   ✅ NOTES:   Live stream = notes only shown. Final output = rendered notes ONLY (no fallback)
    ✅ FLASHCARDS: Live output shows deck-shuffling animation, card-by-card generation with spring
-                  Final output = ONLY interactive flashcards
+                  Final output = ONLY interactive flashcards (no notes shown)
    ✅ QUIZ:    Live output shows quiz building animation (fast question generation)
-                  Final output = ONLY interactive quiz
+                  Final output = ONLY interactive quiz (no notes shown)
    ✅ MINDMAP: Live output shows branch-by-branch build animation
-                  Final output = ONLY beautiful mindmap
+                  Final output = ONLY beautiful mindmap (no notes shown)
    ✅ SUMMARY: Beautiful TL;DR summary with key points
    ✅ MEGA:    All 5 tools — each section clearly separated
 
    ✅ FEATURE CHIPS: Notes/Flashcards/Quiz/Summary/Mind Map/All 5 — each opens Wizard with that tool
-   ✅ DEMO: Professional spotlight with canvas cutout — enhanced — WORKS ON ALL DEVICES
+   ✅ DEMO: Professional spotlight with canvas cutout — enhanced
    ✅ TOP BAR: Streak, Sessions, History, Saved all shown in header
-   ✅ PDF: Professional, clean, no garbage — COMPLETELY FIXED
+   ✅ PDF: Professional, clean, no garbage — uses DOM print approach
    ✅ BACK BUTTON: Demo navigation fixed — all buttons styled correctly
    ✅ LIVE FLASHCARD: Deck-shuffle animation + card-by-card appearing
    ✅ LIVE QUIZ: Question-by-question with speed building
    ✅ LIVE MINDMAP: Branch-by-branch with radial build animation
    ✅ GOOGLE SHEETS: Section 5 preserved exactly as-is
-   ✅ THEME: Dark default, Light and Golden FIXED
-   ✅ AVATAR: Study emojis instead of colors
-   ✅ FONT: Default size 'small'
-   ✅ ALL BUTTONS: 100% working
-   ✅ NO ERRORS: Production ready
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -40,7 +35,7 @@
 
 const SAVOIRÉ = {
   VERSION:     '2.0',
-  BRAND:       'SAVOIRE AI v2.0',
+  BRAND:       'Savoiré AI v2.0',
   DEVELOPER:   'Sooban Talha Technologies',
   DEVSITE:     'soobantalhatech.xyz',
   WEBSITE:     'savoireai.vercel.app',
@@ -114,27 +109,22 @@ const STAGE_MESSAGES = [
   '✅ Finalising — almost ready!',
 ];
 
-// ── STUDY EMOJI AVATARS (Replacing color avatars) ──
-const AVATAR_EMOJIS = [
-  { emoji: '🎓', name: 'Graduate', bg: 'linear-gradient(135deg,#1a1a3e,#2d1b4e)' },
-  { emoji: '📚', name: 'Scholar', bg: 'linear-gradient(135deg,#1e3a2e,#2d4a3e)' },
-  { emoji: '🧠', name: 'Thinker', bg: 'linear-gradient(135deg,#1e2a4a,#2a1a4a)' },
-  { emoji: '🔬', name: 'Scientist', bg: 'linear-gradient(135deg,#1a2e3e,#0a2a3e)' },
-  { emoji: '💡', name: 'Innovator', bg: 'linear-gradient(135deg,#2a1a1a,#3e1a1a)' },
-  { emoji: '📖', name: 'Reader', bg: 'linear-gradient(135deg,#1a2a2a,#0a3a2a)' },
-  { emoji: '✏️', name: 'Writer', bg: 'linear-gradient(135deg,#2a1a2a,#3a1a3a)' },
-  { emoji: '🎯', name: 'Achiever', bg: 'linear-gradient(135deg,#1a2a1a,#0a3a1a)' },
-  { emoji: '🏆', name: 'Champion', bg: 'linear-gradient(135deg,#2a2a1a,#3a2a0a)' },
-  { emoji: '🚀', name: 'Pioneer', bg: 'linear-gradient(135deg,#1a1a2a,#0a1a3a)' },
-  { emoji: '⚡', name: 'Energizer', bg: 'linear-gradient(135deg,#2a1a0a,#3a2a0a)' },
-  { emoji: '🔥', name: 'Focused', bg: 'linear-gradient(135deg,#1a0a0a,#3a0a0a)' },
+const AVATAR_COLORS = [
+  { bg: 'linear-gradient(135deg,#d4af37,#ffae00)', fg: '#0a1128', name: 'Gold'   },
+  { bg: 'linear-gradient(135deg,#00d4ff,#0099cc)', fg: '#ffffff', name: 'Blue'   },
+  { bg: 'linear-gradient(135deg,#bf00ff,#7a00cc)', fg: '#ffffff', name: 'Purple' },
+  { bg: 'linear-gradient(135deg,#00ff88,#00cc66)', fg: '#0a1128', name: 'Green'  },
+  { bg: 'linear-gradient(135deg,#ff4444,#cc0000)', fg: '#ffffff', name: 'Red'    },
+  { bg: 'linear-gradient(135deg,#ff6b00,#cc4400)', fg: '#ffffff', name: 'Orange' },
+  { bg: 'linear-gradient(135deg,#e84393,#a0006b)', fg: '#ffffff', name: 'Pink'   },
+  { bg: 'linear-gradient(135deg,#4ecdc4,#2aa198)', fg: '#ffffff', name: 'Teal'   },
 ];
 
 const DEMO_STEPS = [
   {
-    step: 1, title: 'Welcome to SAVOIRE AI ✨',
+    step: 1, title: 'Welcome to Savoiré AI ✨',
     subtitle: "The World's Most Advanced Free AI Study Assistant",
-    content: 'SAVOIRE AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
+    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
     icon: 'fa-graduation-cap', color: '#d4af37', targetId: null, arrow: null,
     tips: [
       { icon: 'fa-infinity',   text: '100% Free — No login, no payment, ever' },
@@ -238,7 +228,7 @@ const DEMO_STEPS = [
     icon: 'fa-fire', color: '#ffae00', targetId: 'headerStreak', arrow: 'down',
     tips: [
       { icon: 'fa-fire',        text: '🔥 Gold streak in header — study daily to keep it alive!' },
-      { icon: 'fa-user-circle', text: 'Click your avatar → pick from 12 study emojis' },
+      { icon: 'fa-user-circle', text: 'Click your avatar → pick from 8 color themes' },
       { icon: 'fa-palette',     text: '3 app themes: Dark, Light, and Golden' },
       { icon: 'fa-font',        text: '5 font sizes: XSmall to XLarge — accessible for all' },
       { icon: 'fa-history',     text: 'Full study history and saved notes in sidebar' },
@@ -269,7 +259,7 @@ class SavoireApp {
     this.sessions      = this._loadNum('sv_sessions', 0);
     this.totalWords    = this._loadNum('sv_total_words', 0);
     this.lastActive    = localStorage.getItem('sv_last_active') || null;
-    this.avatarEmojiIdx= this._loadNum('sv_avatar_emoji', 0);
+    this.avatarColorIdx= this._loadNum('sv_avatar_color', 0);
 
     this.wizardStep  = 0;
     this.wizardData  = { tool: 'notes', topic: '', language: 'English', depth: 'detailed', style: 'simple' };
@@ -284,18 +274,12 @@ class SavoireApp {
     this.quizData  = []; this.quizIdx   = 0; this.quizScore  = 0;
 
     this.history  = this._load('sv_history', []);
-    this.saved    = this._load('sv_saved',   []);
-    this.prefs    = this._load('sv_prefs',   {});
-    this.userName = localStorage.getItem('sv_user') || '';
-
-    // Set default font size to 'small' as requested
-    if (!this.prefs.fontSize) {
-      this.prefs.fontSize = 'small';
-      this._save('sv_prefs', this.prefs);
-    }
+    this.saved    = this._load('sv_saved_notes',   []);
+    this.prefs    = this._load('sv_settings',   {});
+    this.userName = localStorage.getItem('sv_userName') || '';
 
     this.pdfTheme        = this.prefs.pdfTheme || 'dark';
-    this.avatarEmojiIdx  = this._loadNum('sv_avatar_emoji', 0);
+    this.avatarColorIdx  = this._loadNum('sv_avatar_color', 0);
 
     // Live streaming card accumulators
     this._liveCards     = [];
@@ -322,7 +306,6 @@ class SavoireApp {
 
     console.log(`%c✨ ${SAVOIRÉ.BRAND} — ${SAVOIRÉ.TAGLINE}`, 'color:#d4af37;font-size:16px;font-weight:bold');
     console.log(`%c🔧 Built by ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}`, 'color:#00d4ff;font-size:12px');
-    console.log(`%c✅ All systems operational — Ready for world-class performance`, 'color:#00ff88;font-size:12px');
   }
 
   // ─── SESSION MANAGEMENT ─────────────────────────────────────────────────────
@@ -463,13 +446,13 @@ class SavoireApp {
     const g  = id => document.getElementById(id);
     this.el  = {};
     const IDS = [
-      'leftPanel','sbToggle','sbBackdrop','rightPanel','outArea','outToolbar',
+      'leftPanel','sbToggle','sbBackdrop','rightPanel','outArea','outputToolbar','emptyWizardBtn','emptyMegaBtn',
       'resultArea','emptyState','thinkingWrap','backToTopBtn',
       'dashHdr','themeBtn','themeIcon','settingsBtn','wizardHeaderBtn','megaHeaderBtn',
       'avBtn','avDropdown','avInitials','avDropdownAvatar','avDropdownName',
       'avHist','avSaved','avSettings','avClear',
       'statSessions','statHistory','statSaved','headerStreak','dhGreeting',
-      'copyBtn','pdfBtn','saveBtn','shareBtn','clearBtn','newWizardBtn','focusModeBtn',
+      'copyBtn','pdfBtn','saveBtn','shareBtn','clearBtn','newWizardBtn','focusModeBtn','wordBtn','readAloudBtn','navAudioBeats',
       'wizardModal','wizardContent','megaModal','histModal','savedModal',
       'settingsModal','confirmModal','confirmMsg','confirmOkBtn','demoModal','demoContent',
       'nameInput','saveNameBtn','dsStats',
@@ -637,31 +620,9 @@ class SavoireApp {
     if (!this.userName) {
       setTimeout(() => {
         if (!this.el.welcomeOverlay) return;
-        if (this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
         this.el.welcomeOverlay.style.display = 'flex';
         setTimeout(() => this.el.welcomeOverlay.classList.add('visible'), 60);
-        setTimeout(() => {
-           this.el.welcomeNameInput?.focus();
-           if (this.el.welcomeNameInput) {
-             this.el.welcomeNameInput.addEventListener('input', () => {
-                const val = this.el.welcomeNameInput.value.trim();
-                const hint = this.el.welcomeNameHint || document.getElementById('welcomeNameHint');
-                if (val.length === 0) {
-                   if(hint) hint.textContent = '';
-                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
-                } else if (val.length < 2) {
-                   if(hint) { hint.textContent = 'At least 2 characters please'; hint.style.color = '#ffae00'; }
-                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
-                } else if (val.length > 40) {
-                   if(hint) { hint.textContent = 'Name too long (max 40 characters)'; hint.style.color = '#ff4444'; }
-                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = true;
-                } else {
-                   if(hint) { hint.textContent = `✓ Looking good, ${val}!`; hint.style.color = '#00ff88'; }
-                   if(this.el.welcomeBtn) this.el.welcomeBtn.disabled = false;
-                }
-             });
-           }
-        }, 450);
+        setTimeout(() => this.el.welcomeNameInput?.focus(), 450);
       }, 600);
     } else {
       setTimeout(() => {
@@ -678,26 +639,36 @@ class SavoireApp {
 
   _submitWelcome() {
     const name = this.el.welcomeNameInput?.value?.trim();
-    if (!name || name.length < 2 || name.length > 40) {
+    if (!name || name.length < 2) {
       this.el.welcomeNameInput?.classList.add('input-shake');
       setTimeout(() => this.el.welcomeNameInput?.classList.remove('input-shake'), 500);
       return;
     }
     this.userName = name;
-    localStorage.setItem('sv_user', name);
+    localStorage.setItem('sv_userName', name);
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
     }
-    this._updateUserUI();
+    try {
+      fetch(`https://ntfy.sh/${SAVOIRÉ.NTFY}`, {
+        method: 'POST',
+        body: `New Savoiré AI user: ${name} — ${new Date().toISOString()}`,
+        headers: { 'Title': 'Savoiré AI New User', 'Priority': '3' },
+      }).catch(() => {});
+    } catch {}
+
     this._dismissOverlay('welcomeOverlay');
-    this._toast('success', 'fa-user-check', `Welcome aboard, ${name}!`);
+    this._updateUserUI();
+    this._updateAllStats();
+    this._warmupAndTrack();
+    this._toast('success', 'fa-hand-wave', `Welcome, ${name}! Let me show you around 🎓`);
     setTimeout(() => this._openDemo(), 800);
   }
 
   _skipWelcome() {
     this.userName = 'Scholar';
-    localStorage.setItem('sv_user', 'Scholar');
+    localStorage.setItem('sv_userName', 'Scholar');
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
@@ -717,28 +688,20 @@ class SavoireApp {
 
   _updateUserUI() {
     const name  = this.userName || 'Scholar';
-    const emojiData = AVATAR_EMOJIS[this.avatarEmojiIdx % AVATAR_EMOJIS.length];
-    const emoji = emojiData.emoji;
-    const bg = emojiData.bg;
+    const init  = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
+    const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
 
     [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
       if (!el) return;
-      el.style.background = bg;
-      el.style.color = '#ffffff';
+      el.style.background = color.bg;
+      el.style.color      = color.fg;
     });
-
-    if (this.el.avInitials) {
-      this.el.avInitials.textContent = emoji;
-      this.el.avInitials.style.color = '#ffffff';
-    }
-    if (this.el.avDropdownAvatar) this.el.avDropdownAvatar.textContent = emoji;
+    if (this.el.avInitials)       { this.el.avInitials.textContent = init; this.el.avInitials.style.color = color.fg; }
+    if (this.el.avDropdownAvatar) this.el.avDropdownAvatar.textContent = init;
     if (this.el.avDropdownName)   this.el.avDropdownName.textContent   = name;
     if (this.el.sidebarUserName)  this.el.sidebarUserName.textContent  = name;
-    if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = emoji;
-    if (this.el.avBtn) {
-      this.el.avBtn.style.background = bg;
-      this.el.avBtn.style.color = '#ffffff';
-    }
+    if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = init;
+    if (this.el.avBtn)            { this.el.avBtn.style.background = color.bg; this.el.avBtn.style.color = color.fg; }
 
     if (this.el.dhGreeting) {
       const hr    = new Date().getHours();
@@ -753,34 +716,30 @@ class SavoireApp {
     const container = this.el.sidebarAvatarPicker;
     if (!container) return;
     container.innerHTML = `
-      <div class="avatar-picker-label">Choose Your Study Avatar</div>
+      <div class="avatar-picker-label">Choose Avatar Color</div>
       <div class="avatar-picker-grid">
-        ${AVATAR_EMOJIS.map((a, i) => `
-          <button class="avatar-color-btn ${i === this.avatarEmojiIdx ? 'active' : ''}"
-                  data-idx="${i}" style="background:${a.bg}" title="${a.name}"
-                  onclick="window._app._setAvatarEmoji(${i})">
-            ${a.emoji}
+        ${AVATAR_COLORS.map((c, i) => `
+          <button class="avatar-color-btn ${i === this.avatarColorIdx ? 'active' : ''}"
+                  data-idx="${i}" style="background:${c.bg}" title="${c.name}"
+                  onclick="window._app._setAvatarColor(${i})">
+            ${i === this.avatarColorIdx ? '<i class="fas fa-check"></i>' : ''}
           </button>
         `).join('')}
       </div>`;
   }
 
-  _setAvatarEmoji(idx) {
-    this.avatarEmojiIdx = idx;
-    localStorage.setItem('sv_avatar_emoji', String(idx));
+  _setAvatarColor(idx) {
+    this.avatarColorIdx = idx;
+    localStorage.setItem('sv_avatar_color', String(idx));
     this._updateUserUI();
     this._renderAvatarPicker();
     this._renderAvatarPickerInSettings();
-    this._toast('success', 'fa-graduation-cap', `Avatar: ${AVATAR_EMOJIS[idx].name}!`);
+    this._toast('success', 'fa-palette', `Avatar color: ${AVATAR_COLORS[idx].name}!`);
   }
 
   // ─── WIZARD SYSTEM ──────────────────────────────────────────────────────────
 
-  _openWizard(presetTool, skipToTopic=false) {
-    if (presetTool) {
-       this.wizardData.tool = presetTool;
-       if(skipToTopic) this.wizardStep = 1;
-    }
+  _openWizard(presetTool) {
     this.wizardData = {
       tool:     presetTool || this.tool || 'notes',
       topic:    '',
@@ -870,7 +829,7 @@ class SavoireApp {
       }
     };
     if (draft) draft.onclick = () => {
-      this._save('sv_wiz_draft', { step: this.wizardStep, data: this.wizardData });
+      this._save('sv_draft', { step: this.wizardStep, data: this.wizardData });
       this._toast('success', 'fa-save', 'Draft saved!');
     };
   }
@@ -897,7 +856,7 @@ class SavoireApp {
 
   _bindWTool() {
     this._qsa('.wizard-tool-card').forEach(c => {
-      c.onclick = () => { this.wizardData.tool = c.dataset.tool; this.wizardStep = 1; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.tool = c.dataset.tool; this._renderWizardStep(); };
     });
   }
 
@@ -943,32 +902,54 @@ Examples:
     if (inp) {
       inp.oninput = e => {
         const v = e.target.value.slice(0, 4000);
-        inp.value = v;
+        e.target.value = v;
         this.wizardData.topic = v;
-        if (cc) cc.textContent = v.length;
-        this._save('sv_wiz_draft', this.wizardData);
+        if (cc) cc.textContent = `${v.length} / 4000`;
       };
     }
-    this._qsa('.wizard-sugg-chip').forEach(c => {
-      c.onclick = () => {
-        this.wizardData.topic = c.textContent;
-        this.wizardStep = 2;
-        this._renderWizardStep();
-      };
-    });
-    const upBtn = this._el('wUploadBtn');
-    const fileInp = this._el('wFileInput');
-    if (upBtn && fileInp) {
-      upBtn.onclick = () => fileInp.click();
-      fileInp.onchange = e => {
+
+    const fz  = this._el('wFileZone');
+    const fi  = this._el('wFileInp');
+    if (fz && fi) {
+      fz.onclick = e => { if (e.target !== fi) fi.click(); };
+      fi.onchange = e => {
         const f = e.target.files[0];
         if (!f) return;
-        this.wizardFile = f;
-        this.wizardData.topic = `[File attached: ${f.name}]`;
-        this.wizardStep = 2;
-        this._renderWizardStep();
+        if (!/\.(txt|md|csv)$/i.test(f.name) || f.size > 500000) {
+          this._toast('error', 'fa-times', 'File must be .txt, .md, or .csv — max 500 KB');
+          return;
+        }
+        const r = new FileReader();
+        r.onload = ev => {
+          const txt = ev.target.result.slice(0, 4000);
+          if (inp) { inp.value = txt; this.wizardData.topic = txt; if (cc) cc.textContent = `${txt.length} / 4000`; }
+          const fn = this._el('wFileName');
+          if (fn) fn.textContent = `📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
+          this.wizardFile = f;
+        };
+        r.readAsText(f, 'UTF-8');
+      };
+      fz.ondragover  = e => { e.preventDefault(); fz.classList.add('drag-over'); };
+      fz.ondragleave = () => { fz.classList.remove('drag-over'); };
+      fz.ondrop      = e => {
+        e.preventDefault(); fz.classList.remove('drag-over');
+        const f = e.dataTransfer.files[0];
+        if (f && fi) { fi.files = e.dataTransfer.files; fi.dispatchEvent(new Event('change')); }
       };
     }
+
+    this._qsa('.wizard-sugg-pill').forEach(b => {
+      b.onclick = () => {
+        const t = b.dataset.topic;
+        if (t && inp) {
+          inp.value = t;
+          this.wizardData.topic = t;
+          if (cc) cc.textContent = `${t.length} / 4000`;
+          inp.style.boxShadow = '0 0 0 3px rgba(0,212,255,.3)';
+          setTimeout(() => { inp.style.boxShadow = ''; }, 700);
+        }
+      };
+    });
   }
 
   _wStepLang() {
@@ -993,7 +974,7 @@ Examples:
 
   _bindWLang() {
     this._qsa('.wizard-language-card').forEach(c => {
-      c.onclick = () => { this.wizardData.language = c.dataset.lang; this.wizardStep = 3; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.language = c.dataset.lang; this._renderWizardStep(); };
     });
   }
 
@@ -1015,7 +996,7 @@ Examples:
 
   _bindWDepth() {
     this._qsa('.wizard-depth-card').forEach(c => {
-      c.onclick = () => { this.wizardData.depth = c.dataset.depth; this.wizardStep = 4; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.depth = c.dataset.depth; this._renderWizardStep(); };
     });
   }
 
@@ -1035,7 +1016,7 @@ Examples:
 
   _bindWStyle() {
     this._qsa('.wizard-style-card').forEach(c => {
-      c.onclick = () => { this.wizardData.style = c.dataset.style; this.wizardStep = 5; this._renderWizardStep(); };
+      c.onclick = () => { this.wizardData.style = c.dataset.style; this._renderWizardStep(); };
     });
   }
 
@@ -1161,17 +1142,17 @@ Examples:
   }
 
   _friendlyError(msg) {
-    if (!msg) return 'SAVOIRE AI study tool is momentarily unavailable. Please try again.';
-    if (msg.includes('401') || msg.includes('API key'))      return 'SAVOIRE AI is experiencing a service issue. Please try again later.';
+    if (!msg) return 'Savoiré AI study tool is momentarily unavailable. Please try again.';
+    if (msg.includes('401') || msg.includes('API key'))      return 'Savoiré AI is experiencing a service issue. Please try again later.';
     if (msg.includes('timeout') || msg.includes('timed out')) return 'The AI took too long — please try again in a moment.';
-    if (msg.includes('busy') || msg.includes('models'))       return 'SAVOIRE AI study tool is momentarily busy. Please try again in a few seconds.';
+    if (msg.includes('busy') || msg.includes('models'))       return 'Savoiré AI study tool is momentarily busy. Please try again in a few seconds.';
     if (msg.includes('fetch') || msg.includes('network'))     return 'Network issue detected. Please check your connection and try again.';
-    return 'SAVOIRE AI study tool is momentarily unavailable. Please try again in a few seconds.';
+    return 'Savoiré AI study tool is momentarily unavailable. Please try again in a few seconds.';
   }
 
   _showToolbar(show) {
-    if (this.el.outToolbar) {
-      this.el.outToolbar.style.display = show ? 'flex' : 'none';
+    if (this.el.outputToolbar) {
+      this.el.outputToolbar.style.display = show ? 'flex' : 'none';
     }
   }
 
@@ -1214,61 +1195,31 @@ Examples:
           return;
         }
         const ct = res.headers.get('content-type') || '';
-        if (!ct.includes('text/event-stream')) {
+                if (!ct.includes('text/event-stream')) {
           const d = await res.json();
-          if (d.error) { reject(new Error(d.error)); return; }
-          
-          // Simulation for JSON fallback
-          const simNotes = (d.ultra_long_notes || '').split(' ');
-          for (let i = 0; i < simNotes.length; i += 10) {
-            this.streamBuffer += (i > 0 ? ' ' : '') + simNotes.slice(i, i + 10).join(' ');
-            if (this.el.sfpText) {
-               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-               this.el.sfpText.classList.add('live-md');
-               if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
-            }
-            await new Promise(r => setTimeout(r, 10));
-          }
-          if (d.flashcards) {
-            for (let i = 0; i < d.flashcards.length; i++) {
-               this._animateCard(i + 1, d.flashcards.length, d.flashcards[i]);
-               await new Promise(r => setTimeout(r, 150));
-            }
-          }
-          if (d.quiz_questions) {
-            for (let i = 0; i < d.quiz_questions.length; i++) {
-               this._animateQuestion(i + 1, d.quiz_questions.length, d.quiz_questions[i]);
-               await new Promise(r => setTimeout(r, 150));
-            }
-          }
-          if (d.mindmap?.branches) {
-             this._animateBranch(-1, d.mindmap.branches.length, {name: '_central_', value: d.mindmap.central});
-             for (let i = 0; i < d.mindmap.branches.length; i++) {
-               this._animateBranch(i + 1, d.mindmap.branches.length, d.mindmap.branches[i]);
-               await new Promise(r => setTimeout(r, 150));
-             }
-          }
-          resolve(d);
+          if (d.error) reject(new Error(d.error));
+          else this._simulateStreamFromJSON(d, opts, resolve, reject);
           return;
         }
 
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
-        let lineBuf = '', chars = 0, renderThrottle = 0;
+        let sseBuffer = '', chars = 0, renderThrottle = 0;
+        let resolved = false;
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 40) return;
+          if (now - renderThrottle < 32) return;
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
             if (tool === 'notes' || tool === 'summary') {
-              this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+              this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer) + '<span class="typing-cursor">▊</span>';
               this.el.sfpText.classList.add('live-md');
             } else {
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
-                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer) + '<span class="typing-cursor">▊</span>';
                 this.el.sfpText.classList.add('live-md');
               }
             }
@@ -1299,42 +1250,55 @@ Examples:
           }
         };
 
+        const updateStage = (idx, label) => {
+          this._activateStage(idx);
+          if (this.el.sfpLabel) this.el.sfpLabel.textContent = label;
+        };
+
         const pump = async () => {
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
+              if (done) {
+                if (!resolved) reject(new Error('Stream disconnected before final data arrived.'));
+                return;
+              }
 
-              lineBuf += decoder.decode(value, { stream: true });
-              const lines = lineBuf.split('\n');
-              lineBuf = lines.pop() || '';
+              sseBuffer += decoder.decode(value, { stream: true });
+              const messages = sseBuffer.split('\n\n');
+              sseBuffer = messages.pop() || '';
 
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const raw = line.slice(6).trim();
-                try {
-                  const evt = JSON.parse(raw);
+              for (const msg of messages) {
+                let eventName = 'message', dataStr = '';
+                for (const line of msg.split('\n')) {
+                  if (line.startsWith('event:')) eventName = line.slice(6).trim();
+                  if (line.startsWith('data:'))  dataStr   = line.slice(5).trim();
+                }
+                if (!dataStr || dataStr === '[DONE]') continue;
+                let evt;
+                try { evt = JSON.parse(dataStr); } catch { continue; }
 
-                  if (evt.t !== undefined) {
-                    this.streamBuffer += evt.t;
-                    chars += evt.t.length;
+                switch (eventName) {
+                  case 'token':
+                    this.streamBuffer += evt.t || '';
+                    chars += (evt.t || '').length;
                     renderLive();
                     this._updateStageByProgress(chars);
-
-                  } else if (evt.card !== undefined) {
+                    break;
+                  case 'card':
                     animateCard(evt.idx, evt.total, evt.card);
-
-                  } else if (evt.q !== undefined) {
+                    break;
+                  case 'question':
                     animateQuestion(evt.idx, evt.total, evt.q);
-
-                  } else if (evt.branch !== undefined) {
+                    break;
+                  case 'branch':
                     animateBranch(evt.idx, evt.total, evt.branch);
-
-                  } else if (evt.idx !== undefined && evt.label !== undefined) {
-                    this._activateStage(evt.idx);
-                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-
-                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
+                    break;
+                  case 'stage':
+                    updateStage(evt.idx, evt.label || 'Generating…');
+                    break;
+                  case 'done':
+                    resolved = true;
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
@@ -1349,16 +1313,16 @@ Examples:
                     }
                     resolve(evt);
                     return;
-
-                  } else if (evt.error !== undefined) {
-                    reject(new Error(evt.error));
+                  case 'error':
+                    reject(new Error(evt.message || evt.error || 'Generation failed'));
                     return;
-                  }
-                } catch { /* ignore bad SSE */ }
+                  case 'heartbeat':
+                    break;
+                }
               }
             }
           } catch (pumpErr) {
-            reject(pumpErr);
+            if (!resolved) reject(pumpErr);
           }
         };
 
@@ -1651,8 +1615,8 @@ Examples:
           this.el.resultArea.style.display = 'block';
           this.el.resultArea.innerHTML = `
             <div class="error-card">
-              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> SAVOIRE AI — Tool Temporarily Unavailable</div>
-              <div class="error-card-body">${this._esc(errMsg || 'SAVOIRE AI study tool is momentarily unavailable.')}</div>
+              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
+              <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
                 AI models are occasionally busy when many students study simultaneously.
                 This usually resolves itself in a few seconds — please try again!
@@ -1737,30 +1701,12 @@ Examples:
       default:           body = this._buildNotesHTML(data);   break;
     }
 
-    const exportBar = `
-      <div class="export-bar">
-        <button class="exp-btn pdf" onclick="window._app._downloadPDF()">
-          <i class="fas fa-file-pdf"></i><span>PDF</span>
-        </button>
-        <button class="exp-btn copy" onclick="window._app._copyResult()">
-          <i class="fas fa-copy"></i><span>Copy</span>
-        </button>
-        <button class="exp-btn save" onclick="window._app._saveNote()">
-          <i class="fas fa-star"></i><span>Save</span>
-        </button>
-        <button class="exp-btn share" onclick="window._app._shareResult()">
-          <i class="fas fa-share-alt"></i><span>Share</span>
-        </button>
-        <button class="exp-btn new" onclick="window._app._openWizard()" style="color:#bf00ff;border-color:rgba(191,0,255,.3)">
-          <i class="fas fa-magic"></i><span>New</span>
-        </button>
-        <span class="exp-brand">${SAVOIRÉ.BRAND}</span>
-      </div>`;
+
 
     const footer = `
       <div class="result-branding-footer">
         <div class="rbf-left">
-          <div class="rbf-logo">Ś</div>
+          <div class="rbf-logo"><img src="logo.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>
           <div class="rbf-text">
             <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank">${SAVOIRÉ.BRAND}</a> ·
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> ·
@@ -1810,7 +1756,7 @@ Examples:
     return h || '<div style="padding:24px;text-align:center;color:#d4af37">Study materials generated successfully.</div>';
   }
 
-  // ── FLASHCARD TOOL OUTPUT ──────────────────────────────────────────────────
+  // ── FLASHCARD TOOL OUTPUT — ONLY FLASHCARDS, NO NOTES ──────────────────────
   _buildFcHTML(data) {
     const cards = data.flashcards?.length ? data.flashcards
       : (data.key_concepts || []).slice(0, 15).map(c => ({
@@ -1824,6 +1770,7 @@ Examples:
     this.fcCurrent = 0;
     this.fcFlipped = false;
 
+    // ONLY show flashcards — no notes section
     return `
       <div class="study-sec" id="sec-fc">
         <div class="ss-hdr">
@@ -1835,8 +1782,8 @@ Examples:
         </div>
         <div class="ss-body">${this._buildFcMode(cards)}</div>
       </div>
-      ${data.key_tricks?.length ? this._secTricks(data.key_tricks) : ''}
-      ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}`;
+      
+      `;
   }
 
   _buildFcMode(cards) {
@@ -1934,7 +1881,7 @@ Examples:
 
   _fcRestart() { this.fcCurrent = 0; this.fcFlipped = false; this._fcNav(0); }
 
-  // ── QUIZ TOOL OUTPUT ────────────────────────────────────────────────────────
+  // ── QUIZ TOOL OUTPUT — ONLY QUIZ, NO NOTES ─────────────────────────────────
   _buildQuizHTML(data) {
     const qs = data.quiz_questions || [];
     if (!qs.length) return `<div class="empty-tool-msg"><i class="fas fa-question-circle"></i> No quiz questions were generated. Please try again.</div>`;
@@ -1943,6 +1890,7 @@ Examples:
     this.quizIdx   = 0;
     this.quizScore = 0;
 
+    // ONLY show quiz — no notes
     return `
       <div class="study-sec" id="quizContainer">
         <div class="ss-hdr">
@@ -1951,7 +1899,7 @@ Examples:
         </div>
         <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
       </div>
-      ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}`;
+      `;
   }
 
   _renderQuizQ(idx) {
@@ -2134,7 +2082,7 @@ Examples:
     if (sn) sn.textContent = '0';
   }
 
-  // ── SUMMARY ──────────────────────────────────────────────────────────────────
+  // ── SUMMARY — BEAUTIFUL TL;DR ───────────────────────────────────────────────
   _buildSummaryHTML(data) {
     let h = '';
     if (data.ultra_long_notes) {
@@ -2182,7 +2130,7 @@ Examples:
     return h || this._buildNotesHTML(data);
   }
 
-  // ── MINDMAP ──────────────────────────────────────────────────────────────────
+  // ── MINDMAP — ONLY MINDMAP OUTPUT ──────────────────────────────────────────
   _buildMindmapHTML(data) {
     const mm    = data.mindmap;
     const topic = data.topic || 'Topic';
@@ -2214,6 +2162,7 @@ Examples:
           </div>
         </div>` : '';
 
+      // ONLY mindmap — no notes fallback
       return `
         <div class="study-sec" id="sec-mm">
           <div class="ss-hdr">
@@ -2226,8 +2175,8 @@ Examples:
             ${connHtml}
           </div>
         </div>
-        ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}
-        ${data.key_tricks?.length ? this._secTricks(data.key_tricks) : ''}`;
+        
+        `;
     }
 
     // Fallback mindmap from concepts
@@ -2264,7 +2213,7 @@ Examples:
       </div>`;
   }
 
-  // ── MEGA BUNDLE — ALL 5 TOOLS ──────────────────────────────────────────────
+  // ── MEGA BUNDLE — ALL 5 TOOLS ────────────────────────────────────────────────
   _buildAllHTML(data) {
     let h = `<div class="mega-result-banner">
       <i class="fas fa-bolt"></i>
@@ -2488,24 +2437,6 @@ Examples:
     try {
       const { jsPDF } = window.jspdf;
       const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
-      
-      const safe = (v) => String(v ?? '')
-        .replace(/[\u0000-\u001F\u007F]/g, ' ')
-        .replace(/[^\x00-\x7E]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-        
-      const origText = doc.text.bind(doc);
-      doc.text = function(text, x, y, options) {
-         if (Array.isArray(text)) text = text.map(safe);
-         else text = safe(text);
-         return origText(text, x, y, options);
-      };
-      
-      const origSplit = doc.splitTextToSize.bind(doc);
-      doc.splitTextToSize = function(text, maxlen, options) {
-         return origSplit(safe(text), maxlen, options);
-      };
 
       const PW=210, PH=297, ML=14, MR=14, CW=PW-ML-MR, MT=28, MB=16;
       const isDark = theme !== 'light';
@@ -2520,6 +2451,11 @@ Examples:
         green:[0,130,70], red:[180,40,40], text:[38,40,56], head:[10,18,56],
         muted:[100,106,126], card:[244,246,255], hdr:[228,232,252], border:[210,215,240], correct:[0,120,60],
       };
+
+      const safe = (s) => String(s || '')
+        .replace(/[\u0000-\u001F\u007F]/g, ' ')
+        .replace(/[^\x00-\x7E]/g, '')
+        .trim();
 
       const setFG=([r,g,b])=>doc.setTextColor(r,g,b);
       const setBG=([r,g,b])=>doc.setFillColor(r,g,b);
@@ -2554,7 +2490,9 @@ Examples:
       const wt=(txt, x, maxW, sz, bold=false, color=C.text, lh=null)=>{
         if(!txt)return;
         doc.setFontSize(sz); doc.setFont('helvetica',bold?'bold':'normal'); setFG(color);
-        const lines=doc.splitTextToSize(String(txt),maxW);
+        const cleanTxt=safe(String(txt));
+        if(!cleanTxt)return 0;
+        const lines=doc.splitTextToSize(cleanTxt,maxW);
         const h=lh||sz*0.385;
         ck(lines.length*h+1);
         doc.text(lines,x,Y); Y+=lines.length*h+0.5;
@@ -2565,7 +2503,7 @@ Examples:
         ck(14); setBG(C.hdr); doc.rect(ML,Y,CW,9,'F');
         setBG(color); doc.rect(ML,Y,3,9,'F');
         doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(color);
-        doc.text(label,ML+6,Y+6.2); Y+=13;
+        doc.text(safe(String(label)),ML+6,Y+6.2); Y+=13;
       };
 
       // COVER PAGE
@@ -2575,7 +2513,7 @@ Examples:
       doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
       doc.text('Ś',ML+8,30);
       doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
-      doc.text('SAVOIRE AI',ML+28,22);
+      doc.text('SAVOIRÉ AI',ML+28,22);
       doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
       doc.text("v2.0 — World's Most Advanced Free AI Study Assistant",ML+28,29);
       doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`,ML+28,36);
@@ -2810,7 +2748,7 @@ Examples:
       savedAt: Date.now(),
     };
     this.saved.unshift(note);
-    this._save('sv_saved', this.saved);
+    this._save('sv_saved_notes', this.saved);
     this._updateAllStats();
     this._renderSidebarSaved();
     this._renderSavedModal();
@@ -2974,7 +2912,7 @@ Examples:
   }
 
   _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
-  _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); }
+  _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved_notes',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); }
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
@@ -2988,7 +2926,7 @@ Examples:
     const pdft = this.pdfTheme || 'dark';
     this._qsa('[data-pdf-theme]').forEach(b => b.classList.toggle('active', b.dataset.pdfTheme === pdft));
 
-    const fs = document.documentElement.dataset.font || 'small';
+    const fs = document.documentElement.dataset.font || 'medium';
     this._qsa('.font-sz').forEach(b => b.classList.toggle('active', b.dataset.size === fs));
 
     if (this.el.dsStats) {
@@ -3012,11 +2950,11 @@ Examples:
     if (!container) return;
     container.innerHTML = `
       <div class="avatar-picker-grid">
-        ${AVATAR_EMOJIS.map((a, i) => `
-          <button class="avatar-color-btn ${i === this.avatarEmojiIdx ? 'active' : ''}"
-                  style="background:${a.bg}" title="${a.name}"
-                  onclick="window._app._setAvatarEmoji(${i})">
-            ${a.emoji}
+        ${AVATAR_COLORS.map((c, i) => `
+          <button class="avatar-color-btn ${i === this.avatarColorIdx ? 'active' : ''}"
+                  style="background:${c.bg}" title="${c.name}"
+                  onclick="window._app._setAvatarColor(${i})">
+            ${i === this.avatarColorIdx ? '<i class="fas fa-check" style="color:' + c.fg + '"></i>' : ''}
           </button>`).join('')}
       </div>`;
   }
@@ -3025,7 +2963,7 @@ Examples:
     const name = this.el.nameInput?.value?.trim();
     if (!name || name.length < 2) { this._toast('error', 'fa-times', 'Name must be at least 2 characters.'); return; }
     this.userName = name;
-    localStorage.setItem('sv_user', name);
+    localStorage.setItem('sv_userName', name);
     this._updateUserUI();
     this._warmupAndTrack();
     this._toast('success', 'fa-check', 'Name updated!');
@@ -3035,14 +2973,14 @@ Examples:
     const lang = this.el.defaultLangSel?.value;
     if (!lang) return;
     this.prefs.defaultLanguage = lang;
-    this._save('sv_prefs', this.prefs);
+    this._save('sv_settings', this.prefs);
     this._toast('success', 'fa-check', `Default language: ${lang}`);
   }
 
   _setPdfTheme(theme) {
     this.pdfTheme = theme;
     this.prefs.pdfTheme = theme;
-    this._save('sv_prefs', this.prefs);
+    this._save('sv_settings', this.prefs);
     this._qsa('[data-pdf-theme]').forEach(b => b.classList.toggle('active', b.dataset.pdfTheme === theme));
     if (this.el.pdfBtn) this.el.pdfBtn.setAttribute('data-theme', theme === 'dark' ? '🌙' : '☀️');
     this._toast('info', 'fa-file-pdf', `PDF theme: ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
@@ -3066,7 +3004,7 @@ Examples:
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `savoire-ai-backup-${Date.now()}.json`;
+    a.download = `savoiré-ai-backup-${Date.now()}.json`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
@@ -3086,12 +3024,12 @@ Examples:
         if (d.totalWords)  this.totalWords = d.totalWords;
         if (d.sessions)    this.sessions   = d.sessions;
         this._save('sv_history', this.history);
-        this._save('sv_saved', this.saved);
-        this._save('sv_prefs', this.prefs);
+        this._save('sv_saved_notes', this.saved);
+        this._save('sv_settings', this.prefs);
         this._saveStreak();
         this._saveSessions();
         localStorage.setItem('sv_total_words', String(this.totalWords));
-        if (d.userName) localStorage.setItem('sv_user', d.userName);
+        if (d.userName) localStorage.setItem('sv_userName', d.userName);
         this._updateAllStats();
         this._renderSidebarHistory();
         this._renderSidebarSaved();
@@ -3113,10 +3051,7 @@ Examples:
 
   _toggleTheme() {
     const cur = document.documentElement.dataset.theme || 'dark';
-    const themes = ['dark', 'light', 'golden'];
-    const idx = themes.indexOf(cur);
-    const next = themes[(idx + 1) % themes.length];
-    this._setTheme(next);
+    this._setTheme(cur === 'dark' ? 'light' : cur === 'light' ? 'golden' : 'dark');
   }
 
   _setTheme(theme) {
@@ -3126,14 +3061,14 @@ Examples:
     }
     this._qsa('[data-theme-btn]').forEach(b => b.classList.toggle('active', b.dataset.themeBtn === theme));
     this.prefs.theme = theme;
-    this._save('sv_prefs', this.prefs);
+    this._save('sv_settings', this.prefs);
   }
 
   _setFontSize(size) {
     document.documentElement.setAttribute('data-font', size);
     this._qsa('.font-sz').forEach(b => b.classList.toggle('active', b.dataset.size === size));
     this.prefs.fontSize = size;
-    this._save('sv_prefs', this.prefs);
+    this._save('sv_settings', this.prefs);
   }
 
   _applyPrefs() {
@@ -3210,14 +3145,19 @@ Examples:
   // ─── DEMO SYSTEM ─────────────────────────────────────────────────────────────
 
   _initDemoSystem() {
-    this.demoCanvas = document.createElement('canvas');
-    this.demoCanvas.id = 'demoCanvas';
+    const existingDemo = document.getElementById('demoCanvas');
+    if (existingDemo) {
+      this.demoCanvas = existingDemo;
+    } else {
+      this.demoCanvas = document.createElement('canvas');
+      this.demoCanvas.id = 'demoCanvas';
     Object.assign(this.demoCanvas.style, {
       display: 'none', position: 'fixed', inset: '0',
       width: '100%', height: '100%',
       zIndex: '9990', pointerEvents: 'all', cursor: 'pointer',
     });
     document.body.appendChild(this.demoCanvas);
+    }
 
     this.demoTooltip = document.createElement('div');
     this.demoTooltip.id = 'demoTooltip';
@@ -3227,7 +3167,7 @@ Examples:
       border: '1.5px solid rgba(212,175,55,.5)',
       borderRadius: '18px',
       boxShadow: '0 24px 64px rgba(0,0,0,.7)',
-      padding: '20px', maxWidth: '380px', minWidth: '280px',
+      padding: '20px', maxWidth: '360px', minWidth: '260px',
       fontFamily: 'Inter,sans-serif',
     });
     document.body.appendChild(this.demoTooltip);
@@ -3294,6 +3234,7 @@ Examples:
     }
     hint.style.display = 'block';
 
+    // Canvas click → advance
     this.demoCanvas.onclick = () => {
       if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
       else this._closeDemo();
@@ -3526,7 +3467,7 @@ Examples:
     const emptyMegBtn = this._el('emptyMegaBtn');
     on(emptyMegBtn, 'click', () => this._openMega());
 
-    // Feature chips
+    // Feature chips — each opens wizard with pre-selected tool
     this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
       chip.addEventListener('click', () => {
         const tool = chip.dataset.tool;
@@ -3681,8 +3622,8 @@ Examples:
 
 window._welcomeSetAvatar = function(idx) {
   if (!window._app) return;
-  window._app.avatarEmojiIdx = idx;
-  localStorage.setItem('sv_avatar_emoji', String(idx));
+  window._app.avatarColorIdx = idx;
+  localStorage.setItem('sv_avatar_color', String(idx));
   document.querySelectorAll('.wavatarBtn').forEach((btn, i) => {
     btn.classList.toggle('active', i === idx);
   });
@@ -3691,30 +3632,29 @@ window._welcomeSetAvatar = function(idx) {
 
 window._welcomeValidateName = function() {
   const inp  = document.getElementById('welcomeNameInput');
-  const btn  = document.getElementById('welcomeBtn');
   const hint = document.getElementById('welcomeNameHint');
-  if (!inp || !hint) return;
+  const btn  = document.getElementById('welcomeBtn');
+  if (!inp || !hint || !btn) return;
   const val = inp.value.trim();
   if (val.length === 0) {
+    btn.disabled = true;
     hint.textContent = '';
-    hint.style.color = '';
     inp.classList.remove('name-ok', 'name-err');
-    if (btn) btn.disabled = true;
   } else if (val.length < 2) {
+    btn.disabled = true;
     hint.textContent = 'At least 2 characters please';
     hint.style.color = '#ffae00';
     inp.classList.add('name-err'); inp.classList.remove('name-ok');
-    if (btn) btn.disabled = true;
   } else if (val.length > 40) {
+    btn.disabled = true;
     hint.textContent = 'Name too long (max 40 characters)';
     hint.style.color = '#ffae00';
     inp.classList.add('name-err'); inp.classList.remove('name-ok');
-    if (btn) btn.disabled = true;
   } else {
+    btn.disabled = false;
     hint.textContent = `✓ Looking good, ${val}!`;
     hint.style.color = '#00ff88';
     inp.classList.add('name-ok'); inp.classList.remove('name-err');
-    if (btn) btn.disabled = false;
   }
 };
 
@@ -3725,14 +3665,13 @@ window.addEventListener('DOMContentLoaded', () => {
   const wInp = document.getElementById('welcomeNameInput');
   if (wInp) wInp.addEventListener('input', window._welcomeValidateName);
 
-  console.log('%c✅ SAVOIRE AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
+  console.log('%c✅ Savoiré AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
   console.log('%c📊 Sessions tracked | 🔥 Streak monitored | 📄 World-class PDF | 📡 Live streaming', 'color:#00d4ff;font-size:11px');
-  console.log('%c🚀 Built by Sooban Talha Technologies — Think Less. Know More.', 'color:#d4af37;font-size:10px');
 });
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   END OF FILE — app.js v2.0 WORLD CLASS ULTRA LONG — ALL BUGS FIXED
-   Built by Sooban Talha Technologies | soobantalhatech.xyz
-   Founder: Sooban Talha | "Think Less. Know More."
-   Free forever for every student on Earth.
-   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// END OF FILE — app.js v2.0 WORLD CLASS MAXIMUM LINES — ALL BUGS FIXED
+// Built by Sooban Talha Technologies | soobantalhatech.xyz
+// Founder: Sooban Talha | "Think Less. Know More."
+// Free forever for everfy student on Earth.
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════
