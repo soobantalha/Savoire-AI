@@ -274,9 +274,9 @@ class SavoireApp {
     this.quizData  = []; this.quizIdx   = 0; this.quizScore  = 0;
 
     this.history  = this._load('sv_history', []);
-    this.saved    = this._load('sv_saved_notes',   []);
-    this.prefs    = this._load('sv_settings',   {});
-    this.userName = localStorage.getItem('sv_userName') || '';
+    this.saved    = this._load('sv_saved',   []);
+    this.prefs    = this._load('sv_prefs',   {});
+    this.userName = localStorage.getItem('sv_user') || '';
 
     this.pdfTheme        = this.prefs.pdfTheme || 'dark';
     this.avatarColorIdx  = this._loadNum('sv_avatar_color', 0);
@@ -446,13 +446,13 @@ class SavoireApp {
     const g  = id => document.getElementById(id);
     this.el  = {};
     const IDS = [
-      'leftPanel','sbToggle','sbBackdrop','rightPanel','outArea','outputToolbar','emptyWizardBtn','emptyMegaBtn',
+      'leftPanel','sbToggle','sbBackdrop','rightPanel','outArea','outToolbar',
       'resultArea','emptyState','thinkingWrap','backToTopBtn',
       'dashHdr','themeBtn','themeIcon','settingsBtn','wizardHeaderBtn','megaHeaderBtn',
       'avBtn','avDropdown','avInitials','avDropdownAvatar','avDropdownName',
       'avHist','avSaved','avSettings','avClear',
       'statSessions','statHistory','statSaved','headerStreak','dhGreeting',
-      'copyBtn','pdfBtn','saveBtn','shareBtn','clearBtn','newWizardBtn','focusModeBtn','wordBtn','readAloudBtn','navAudioBeats',
+      'copyBtn','pdfBtn','saveBtn','shareBtn','clearBtn','newWizardBtn','focusModeBtn',
       'wizardModal','wizardContent','megaModal','histModal','savedModal',
       'settingsModal','confirmModal','confirmMsg','confirmOkBtn','demoModal','demoContent',
       'nameInput','saveNameBtn','dsStats',
@@ -645,7 +645,7 @@ class SavoireApp {
       return;
     }
     this.userName = name;
-    localStorage.setItem('sv_userName', name);
+    localStorage.setItem('sv_user', name);
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
@@ -668,7 +668,7 @@ class SavoireApp {
 
   _skipWelcome() {
     this.userName = 'Scholar';
-    localStorage.setItem('sv_userName', 'Scholar');
+    localStorage.setItem('sv_user', 'Scholar');
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
@@ -829,7 +829,7 @@ class SavoireApp {
       }
     };
     if (draft) draft.onclick = () => {
-      this._save('sv_draft', { step: this.wizardStep, data: this.wizardData });
+      this._save('sv_wiz_draft', { step: this.wizardStep, data: this.wizardData });
       this._toast('success', 'fa-save', 'Draft saved!');
     };
   }
@@ -1151,8 +1151,8 @@ Examples:
   }
 
   _showToolbar(show) {
-    if (this.el.outputToolbar) {
-      this.el.outputToolbar.style.display = show ? 'flex' : 'none';
+    if (this.el.outToolbar) {
+      this.el.outToolbar.style.display = show ? 'flex' : 'none';
     }
   }
 
@@ -1195,31 +1195,32 @@ Examples:
           return;
         }
         const ct = res.headers.get('content-type') || '';
-                if (!ct.includes('text/event-stream')) {
+        if (!ct.includes('text/event-stream')) {
           const d = await res.json();
           if (d.error) reject(new Error(d.error));
-          else this._simulateStreamFromJSON(d, opts, resolve, reject);
+          else resolve(d);
           return;
         }
 
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
-        let sseBuffer = '', chars = 0, renderThrottle = 0;
-        let resolved = false;
+        let lineBuf = '', chars = 0, renderThrottle = 0;
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 32) return;
+          if (now - renderThrottle < 40) return;
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
+            // For notes/summary tool: show formatted text
             if (tool === 'notes' || tool === 'summary') {
-              this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer) + '<span class="typing-cursor">▊</span>';
+              this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
+              // For card tools: only show notes during phase 1
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
-                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer) + '<span class="typing-cursor">▊</span>';
+                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
                 this.el.sfpText.classList.add('live-md');
               }
             }
@@ -1250,79 +1251,68 @@ Examples:
           }
         };
 
-        const updateStage = (idx, label) => {
-          this._activateStage(idx);
-          if (this.el.sfpLabel) this.el.sfpLabel.textContent = label;
-        };
-
         const pump = async () => {
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) {
-                if (!resolved) reject(new Error('Stream disconnected before final data arrived.'));
-                return;
-              }
+              if (done) { reject(new Error('Stream ended without final data')); return; }
 
-              sseBuffer += decoder.decode(value, { stream: true });
-              const messages = sseBuffer.split('\n\n');
-              sseBuffer = messages.pop() || '';
+              lineBuf += decoder.decode(value, { stream: true });
+              const lines = lineBuf.split('\n');
+              lineBuf = lines.pop() || '';
 
-              for (const msg of messages) {
-                let eventName = 'message', dataStr = '';
-                for (const line of msg.split('\n')) {
-                  if (line.startsWith('event:')) eventName = line.slice(6).trim();
-                  if (line.startsWith('data:'))  dataStr   = line.slice(5).trim();
-                }
-                if (!dataStr || dataStr === '[DONE]') continue;
-                let evt;
-                try { evt = JSON.parse(dataStr); } catch { continue; }
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const raw = line.slice(6).trim();
+                try {
+                  const evt = JSON.parse(raw);
 
-                switch (eventName) {
-                  case 'token':
-                    this.streamBuffer += evt.t || '';
-                    chars += (evt.t || '').length;
+                  if (evt.t !== undefined) {
+                    this.streamBuffer += evt.t;
+                    chars += evt.t.length;
                     renderLive();
                     this._updateStageByProgress(chars);
-                    break;
-                  case 'card':
+
+                  } else if (evt.card !== undefined) {
                     animateCard(evt.idx, evt.total, evt.card);
-                    break;
-                  case 'question':
+
+                  } else if (evt.q !== undefined) {
                     animateQuestion(evt.idx, evt.total, evt.q);
-                    break;
-                  case 'branch':
+
+                  } else if (evt.branch !== undefined) {
                     animateBranch(evt.idx, evt.total, evt.branch);
-                    break;
-                  case 'stage':
-                    updateStage(evt.idx, evt.label || 'Generating…');
-                    break;
-                  case 'done':
-                    resolved = true;
+
+                  } else if (evt.idx !== undefined && evt.label !== undefined) {
+                    this._activateStage(evt.idx);
+                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+
+                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
                     }
+                    // Merge live-streamed cards
                     if (this._liveCards.length)     evt.flashcards     = this._liveCards;
                     if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
                     if (this._liveBranches.length) {
                       evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
                     }
+                    // Attach the streamed notes buffer
                     if (!evt.ultra_long_notes && this.streamBuffer) {
                       evt.ultra_long_notes = this.streamBuffer;
                     }
                     resolve(evt);
                     return;
-                  case 'error':
-                    reject(new Error(evt.message || evt.error || 'Generation failed'));
+
+                  } else if (evt.error !== undefined) {
+                    reject(new Error(evt.error));
                     return;
-                  case 'heartbeat':
-                    break;
-                }
+                  }
+                } catch { /* ignore bad SSE */ }
               }
             }
           } catch (pumpErr) {
-            if (!resolved) reject(pumpErr);
+            reject(pumpErr);
           }
         };
 
@@ -1701,12 +1691,30 @@ Examples:
       default:           body = this._buildNotesHTML(data);   break;
     }
 
-
+    const exportBar = `
+      <div class="export-bar">
+        <button class="exp-btn pdf" onclick="window._app._downloadPDF()">
+          <i class="fas fa-file-pdf"></i><span>PDF</span>
+        </button>
+        <button class="exp-btn copy" onclick="window._app._copyResult()">
+          <i class="fas fa-copy"></i><span>Copy</span>
+        </button>
+        <button class="exp-btn save" onclick="window._app._saveNote()">
+          <i class="fas fa-star"></i><span>Save</span>
+        </button>
+        <button class="exp-btn share" onclick="window._app._shareResult()">
+          <i class="fas fa-share-alt"></i><span>Share</span>
+        </button>
+        <button class="exp-btn new" onclick="window._app._openWizard()" style="color:#bf00ff;border-color:rgba(191,0,255,.3)">
+          <i class="fas fa-magic"></i><span>New</span>
+        </button>
+        <span class="exp-brand">${SAVOIRÉ.BRAND}</span>
+      </div>`;
 
     const footer = `
       <div class="result-branding-footer">
         <div class="rbf-left">
-          <div class="rbf-logo"><img src="logo.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>
+          <div class="rbf-logo">Ś</div>
           <div class="rbf-text">
             <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank">${SAVOIRÉ.BRAND}</a> ·
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> ·
@@ -1782,8 +1790,8 @@ Examples:
         </div>
         <div class="ss-body">${this._buildFcMode(cards)}</div>
       </div>
-      
-      `;
+      ${data.key_tricks?.length ? this._secTricks(data.key_tricks) : ''}
+      ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}`;
   }
 
   _buildFcMode(cards) {
@@ -1899,7 +1907,7 @@ Examples:
         </div>
         <div class="ss-body" id="quizBody">${this._renderQuizQ(0)}</div>
       </div>
-      `;
+      ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}`;
   }
 
   _renderQuizQ(idx) {
@@ -2175,8 +2183,8 @@ Examples:
             ${connHtml}
           </div>
         </div>
-        
-        `;
+        ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}
+        ${data.key_tricks?.length ? this._secTricks(data.key_tricks) : ''}`;
     }
 
     // Fallback mindmap from concepts
@@ -2452,11 +2460,6 @@ Examples:
         muted:[100,106,126], card:[244,246,255], hdr:[228,232,252], border:[210,215,240], correct:[0,120,60],
       };
 
-      const safe = (s) => String(s || '')
-        .replace(/[\u0000-\u001F\u007F]/g, ' ')
-        .replace(/[^\x00-\x7E]/g, '')
-        .trim();
-
       const setFG=([r,g,b])=>doc.setTextColor(r,g,b);
       const setBG=([r,g,b])=>doc.setFillColor(r,g,b);
       const setDC=([r,g,b])=>doc.setDrawColor(r,g,b);
@@ -2490,9 +2493,7 @@ Examples:
       const wt=(txt, x, maxW, sz, bold=false, color=C.text, lh=null)=>{
         if(!txt)return;
         doc.setFontSize(sz); doc.setFont('helvetica',bold?'bold':'normal'); setFG(color);
-        const cleanTxt=safe(String(txt));
-        if(!cleanTxt)return 0;
-        const lines=doc.splitTextToSize(cleanTxt,maxW);
+        const lines=doc.splitTextToSize(String(txt),maxW);
         const h=lh||sz*0.385;
         ck(lines.length*h+1);
         doc.text(lines,x,Y); Y+=lines.length*h+0.5;
@@ -2503,7 +2504,7 @@ Examples:
         ck(14); setBG(C.hdr); doc.rect(ML,Y,CW,9,'F');
         setBG(color); doc.rect(ML,Y,3,9,'F');
         doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(color);
-        doc.text(safe(String(label)),ML+6,Y+6.2); Y+=13;
+        doc.text(label,ML+6,Y+6.2); Y+=13;
       };
 
       // COVER PAGE
@@ -2748,7 +2749,7 @@ Examples:
       savedAt: Date.now(),
     };
     this.saved.unshift(note);
-    this._save('sv_saved_notes', this.saved);
+    this._save('sv_saved', this.saved);
     this._updateAllStats();
     this._renderSidebarSaved();
     this._renderSavedModal();
@@ -2912,7 +2913,7 @@ Examples:
   }
 
   _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
-  _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved_notes',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); }
+  _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); }
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
@@ -2963,7 +2964,7 @@ Examples:
     const name = this.el.nameInput?.value?.trim();
     if (!name || name.length < 2) { this._toast('error', 'fa-times', 'Name must be at least 2 characters.'); return; }
     this.userName = name;
-    localStorage.setItem('sv_userName', name);
+    localStorage.setItem('sv_user', name);
     this._updateUserUI();
     this._warmupAndTrack();
     this._toast('success', 'fa-check', 'Name updated!');
@@ -2973,14 +2974,14 @@ Examples:
     const lang = this.el.defaultLangSel?.value;
     if (!lang) return;
     this.prefs.defaultLanguage = lang;
-    this._save('sv_settings', this.prefs);
+    this._save('sv_prefs', this.prefs);
     this._toast('success', 'fa-check', `Default language: ${lang}`);
   }
 
   _setPdfTheme(theme) {
     this.pdfTheme = theme;
     this.prefs.pdfTheme = theme;
-    this._save('sv_settings', this.prefs);
+    this._save('sv_prefs', this.prefs);
     this._qsa('[data-pdf-theme]').forEach(b => b.classList.toggle('active', b.dataset.pdfTheme === theme));
     if (this.el.pdfBtn) this.el.pdfBtn.setAttribute('data-theme', theme === 'dark' ? '🌙' : '☀️');
     this._toast('info', 'fa-file-pdf', `PDF theme: ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
@@ -3024,12 +3025,12 @@ Examples:
         if (d.totalWords)  this.totalWords = d.totalWords;
         if (d.sessions)    this.sessions   = d.sessions;
         this._save('sv_history', this.history);
-        this._save('sv_saved_notes', this.saved);
-        this._save('sv_settings', this.prefs);
+        this._save('sv_saved', this.saved);
+        this._save('sv_prefs', this.prefs);
         this._saveStreak();
         this._saveSessions();
         localStorage.setItem('sv_total_words', String(this.totalWords));
-        if (d.userName) localStorage.setItem('sv_userName', d.userName);
+        if (d.userName) localStorage.setItem('sv_user', d.userName);
         this._updateAllStats();
         this._renderSidebarHistory();
         this._renderSidebarSaved();
@@ -3061,14 +3062,14 @@ Examples:
     }
     this._qsa('[data-theme-btn]').forEach(b => b.classList.toggle('active', b.dataset.themeBtn === theme));
     this.prefs.theme = theme;
-    this._save('sv_settings', this.prefs);
+    this._save('sv_prefs', this.prefs);
   }
 
   _setFontSize(size) {
     document.documentElement.setAttribute('data-font', size);
     this._qsa('.font-sz').forEach(b => b.classList.toggle('active', b.dataset.size === size));
     this.prefs.fontSize = size;
-    this._save('sv_settings', this.prefs);
+    this._save('sv_prefs', this.prefs);
   }
 
   _applyPrefs() {
@@ -3145,19 +3146,14 @@ Examples:
   // ─── DEMO SYSTEM ─────────────────────────────────────────────────────────────
 
   _initDemoSystem() {
-    const existingDemo = document.getElementById('demoCanvas');
-    if (existingDemo) {
-      this.demoCanvas = existingDemo;
-    } else {
-      this.demoCanvas = document.createElement('canvas');
-      this.demoCanvas.id = 'demoCanvas';
+    this.demoCanvas = document.createElement('canvas');
+    this.demoCanvas.id = 'demoCanvas';
     Object.assign(this.demoCanvas.style, {
       display: 'none', position: 'fixed', inset: '0',
       width: '100%', height: '100%',
       zIndex: '9990', pointerEvents: 'all', cursor: 'pointer',
     });
     document.body.appendChild(this.demoCanvas);
-    }
 
     this.demoTooltip = document.createElement('div');
     this.demoTooltip.id = 'demoTooltip';
@@ -3633,26 +3629,17 @@ window._welcomeSetAvatar = function(idx) {
 window._welcomeValidateName = function() {
   const inp  = document.getElementById('welcomeNameInput');
   const hint = document.getElementById('welcomeNameHint');
-  const btn  = document.getElementById('welcomeBtn');
-  if (!inp || !hint || !btn) return;
+  if (!inp || !hint) return;
   const val = inp.value.trim();
   if (val.length === 0) {
-    btn.disabled = true;
     hint.textContent = '';
     inp.classList.remove('name-ok', 'name-err');
   } else if (val.length < 2) {
-    btn.disabled = true;
-    hint.textContent = 'At least 2 characters please';
-    hint.style.color = '#ffae00';
-    inp.classList.add('name-err'); inp.classList.remove('name-ok');
-  } else if (val.length > 40) {
-    btn.disabled = true;
-    hint.textContent = 'Name too long (max 40 characters)';
+    hint.textContent = '⚠️ Please enter at least 2 characters';
     hint.style.color = '#ffae00';
     inp.classList.add('name-err'); inp.classList.remove('name-ok');
   } else {
-    btn.disabled = false;
-    hint.textContent = `✓ Looking good, ${val}!`;
+    hint.textContent = `✓ Hello, ${val}! Let's get started 🎓`;
     hint.style.color = '#00ff88';
     inp.classList.add('name-ok'); inp.classList.remove('name-err');
   }

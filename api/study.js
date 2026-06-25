@@ -154,7 +154,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
     else log.warn(`Sheets HTTP ${res.status}`);
     return res.ok;
   } catch (err) {
-    log.warn('Sheets error (non-fatal): ' + err.message);
+    log.warn(`Sheets error (non-fatal): ${err.message}`);
     return false;
   }
 }
@@ -652,19 +652,19 @@ function buildTopicFallback(tool, topic) {
     base.mindmap={
       central:T.split(' ').slice(0,4).join(' ')||T,
       branches:[
-        {name:`${T} Fundamentals`,color:'#00d4ff',items:[`Definition of ${T}`,`Foundational principles`,`Key terminology`,`Historical origins`,`Theoretical framework`,`Boundary conditions`]},
-        {name:`${T} Core Architecture`,color:'#bf00ff',items:[`Primary structure`,`Step-by-step framework`,`Key variables`,`Feedback loops`,`Operational dynamics`,`System interactions`]},
-        {name:`${T} Real-World Applications`,color:'#00ff88',items:[`Professional practice`,`Industry uses`,`Technology deployments`,`Strategic implementation`,`Practical scenarios`,`Everyday relevance`]},
-        {name:`${T} Strategic Mastery`,color:'#ffae00',items:[`Active recall protocols`,`Spaced repetition models`,`Analytical techniques`,`Concept mapping`,`Practice workflows`,`Metacognitive checks`]},
-        {name:`${T} Critical Misconceptions`,color:'#ff4444',items:[`Memorisation trap`,`Principle misapplication`,`Common errors`,`Overconfidence bias`,`Passive study illusions`,`Transfer failures`]},
-        {name:`${T} Advanced Frontiers`,color:'#d4af37',items:[`Research frontiers`,`Open questions`,`Expert nuances`,`Interdisciplinary links`,`Future directions`,`Edge cases`]},
+        {name:'Core Concepts',color:'#00d4ff',items:[`Definition of ${T}`,`Foundational principles`,`Key terminology`,`Historical origins`,`Theoretical framework`,`Boundary conditions`]},
+        {name:'Mechanisms',color:'#bf00ff',items:[`Primary mechanism`,`Step-by-step process`,`Key variables`,`Feedback loops`,`Cause-effect chains`,`System dynamics`]},
+        {name:'Applications',color:'#00ff88',items:[`Professional practice`,`Healthcare uses`,`Technology applications`,`Business strategy`,`Policy implications`,`Everyday relevance`]},
+        {name:'Study Methods',color:'#ffae00',items:[`Active recall`,`Spaced repetition`,`Feynman technique`,`Concept mapping`,`Practice problems`,`Peer teaching`]},
+        {name:'Common Pitfalls',color:'#ff4444',items:[`Memorisation trap`,`Principle misapplication`,`Key misconceptions`,`Overconfidence`,`Passive study illusions`,`Transfer failures`]},
+        {name:'Advanced Topics',color:'#d4af37',items:[`Research frontiers`,`Open questions`,`Expert nuances`,`Interdisciplinary links`,`Future directions`,`Edge cases`]},
       ],
       connections:[
-        {from:`${T} Fundamentals`,to:`${T} Core Architecture`,description:`Foundational principles define architectural behavior`},
-        {from:`${T} Core Architecture`,to:`${T} Real-World Applications`,description:`Structure directly enables practical deployment`},
-        {from:`${T} Critical Misconceptions`,to:`${T} Strategic Mastery`,description:`Analysing pitfalls guides targeted mastery`},
-        {from:`${T} Fundamentals`,to:`${T} Advanced Frontiers`,description:`Basic principles unlock research frontiers`},
-        {from:`${T} Strategic Mastery`,to:`${T} Fundamentals`,description:`Active study deepens conceptual grasp`},
+        {from:'Core Concepts',to:'Mechanisms',description:`Principles explain how ${T} mechanisms operate`},
+        {from:'Mechanisms',to:'Applications',description:`${T} mechanisms enable real-world use`},
+        {from:'Common Pitfalls',to:'Study Methods',description:`Knowing ${T} mistakes guides better study approach`},
+        {from:'Core Concepts',to:'Advanced Topics',description:`${T} foundations open advanced understanding`},
+        {from:'Study Methods',to:'Core Concepts',description:`Active study deepens conceptual grasp of ${T}`},
       ],
     };
   }

@@ -12,7 +12,7 @@
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -104,7 +104,7 @@
 
       <div class="lp-hdr">
         <div class="lp-hdr-row">
-          <span class="lp-title" id="sidebarBrand"><span class="brand-savoire">SAVOIRÉ</span><span class="brand-ai">AI</span></span>
+          <span class="lp-title">MENU</span>
           <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
         </div>
       </div>
@@ -181,11 +181,6 @@
           <i class="fas fa-expand-alt nav-icon"></i>
           <span class="nav-text">Focus Mode</span>
         </div>
-        <div class="nav-item" data-nav="audioBeats" id="navAudioBeats">
-          <i class="fas fa-headphones nav-icon" style="color:#00d4ff"></i>
-          <span class="nav-text">🎧 40Hz Focus Audio</span>
-          <span class="nav-badge" style="background:rgba(0,212,255,.15);color:#00d4ff;border:1px solid rgba(0,212,255,.3)">Binaural</span>
-        </div>
       </nav>
 
       <!-- Demo Button -->
@@ -254,9 +249,9 @@
             <i class="fas fa-bars"></i>
           </button>
           <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home">
-            <div class="dh-mark"><img src="logo.png" alt="Savoiré AI Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"></div>
+            <div class="dh-mark">Ś</div>
             <div class="dh-text">
-              <span class="dh-name"><span class="brand-savoire">SAVOIRÉ</span><span class="brand-ai">AI</span></span>
+              <span class="dh-name">Savoiré AI</span>
               <span class="dh-ver">v2.0</span>
             </div>
           </div>
@@ -318,22 +313,17 @@
         <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i> Clear All Data</button>
       </div>
 
-      <!-- Output Toolbar (Section 14 — sticky after generation) -->
-      <div class="output-toolbar" id="outputToolbar" style="display:none;">
-        <div class="ot-left">
-          <span class="ot-brand"><span class="brand-savoire">SAVOIRÉ</span><span class="brand-ai">AI</span></span>
-        </div>
-        <div class="ot-actions">
-          <button class="ot-btn" id="copyBtn" title="Copy Content"><i class="fas fa-copy"></i> Copy</button>
-          <button class="ot-btn ot-btn-pdf" id="pdfBtn" title="Download PDF"><i class="fas fa-file-pdf"></i> PDF <span class="pdf-theme-badge">📄</span></button>
-          <button class="ot-btn" id="wordBtn" title="Export Word DOC"><i class="fas fa-file-word" style="color:#00d4ff"></i> Word</button>
-          <button class="ot-btn" id="readAloudBtn" title="AI Voice Read Aloud"><i class="fas fa-volume-up" style="color:#00ff88"></i> Listen</button>
-          <button class="ot-btn" id="saveBtn" title="Save Note"><i class="fas fa-star"></i> Save</button>
-          <button class="ot-btn" id="shareBtn" title="Share"><i class="fas fa-share-alt"></i> Share</button>
-          <button class="ot-btn ot-btn-clear" id="clearBtn" title="Clear"><i class="fas fa-trash"></i> Clear</button>
-          <button class="ot-btn ot-btn-new" id="newWizardBtn" title="New Study"><i class="fas fa-magic"></i> New</button>
-          <button class="ot-btn" id="focusModeBtn" title="Focus Mode"><i class="fas fa-expand-alt"></i> Focus</button>
-        </div>
+      <!-- Output Toolbar (hidden until output ready) -->
+      <div class="out-toolbar" id="outToolbar" style="display:none">
+        <button class="otb-btn" id="copyBtn" title="Copy all content"><i class="fas fa-copy"></i> <span>Copy</span></button>
+        <button class="otb-btn otb-pdf" id="pdfBtn" data-theme="🌙" title="Download PDF"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
+        <button class="otb-btn" id="saveBtn" title="Save to library"><i class="fas fa-star"></i> <span>Save</span></button>
+        <button class="otb-btn" id="shareBtn" title="Share"><i class="fas fa-share-alt"></i> <span>Share</span></button>
+        <button class="otb-btn otb-danger" id="clearBtn" title="Clear output"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
+        <div class="otb-sep"></div>
+        <button class="otb-btn otb-new" id="newWizardBtn" title="New Study Material"><i class="fas fa-magic"></i> <span>New</span></button>
+        <button class="otb-btn" id="focusModeBtn" title="Focus Mode"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
+        <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> wizard · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
       </div>
 
       <!-- Output Area -->
@@ -394,16 +384,10 @@
             </span>
           </div>
 
-                    <div class="es-highlights-grid">
-            <div class="es-hl-card"><i class="fas fa-brain"></i> <span><strong>14+ AI Models</strong><br>OpenRouter Powered</span></div>
-            <div class="es-hl-card"><i class="fas fa-globe"></i> <span><strong>22 Languages</strong><br>Multilingual Study</span></div>
-            <div class="es-hl-card"><i class="fas fa-tools"></i> <span><strong>5 Study Tools</strong><br>Notes, Quiz &amp; More</span></div>
-            <div class="es-hl-card"><i class="fas fa-gift"></i> <span><strong>100% Free</strong><br>Forever for Students</span></div>
-          </div>
           <div class="es-shortcuts">
             <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
-            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>M</kbd> Mega Bundle</div>
             <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</div>
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save note</div>
             <div class="shortcut"><kbd>Esc</kbd> Close</div>
           </div>
         </div>
@@ -693,8 +677,8 @@
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
           <div class="about-card-settings">
-            <div class="about-logo"><img src="logo.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;"></div>
-            <div class="about-name"><span class="brand-savoire">SAVOIRÉ</span><span class="brand-ai">AI</span> v2.0</div>
+            <div class="about-logo">Ś</div>
+            <div class="about-name">Savoiré AI v2.0</div>
             <div class="about-tagline">"Think Less. Know More."</div>
             <div class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</div>
             <div class="about-founder">
@@ -741,8 +725,8 @@
   <div class="modal-overlay" id="welcomeOverlay" style="z-index:3000">
     <div class="modal" style="max-width:460px;text-align:center">
       <div class="modal-body" style="text-align:center;padding:32px">
-        <div class="welcome-logo"><img src="logo.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:14px;"></div>
-        <h2 class="welcome-title">Welcome to <span class="welcome-brand"><span class="brand-savoire">SAVOIRÉ</span><span class="brand-ai">AI</span></span></h2>
+        <div class="welcome-logo">Ś</div>
+        <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré AI</span></h2>
         <p class="welcome-tagline">"Think Less. Know More."</p>
         <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
         <div class="welcome-features">
@@ -754,27 +738,14 @@
           <span class="welcome-feat" style="border-color:rgba(212,175,55,.4);color:#d4af37"><i class="fas fa-bolt"></i> All 5!</span>
         </div>
         <div class="welcome-name-section">
-                    <div class="welcome-avatar-picker" id="welcomeAvatarPicker">
-            <div class="wavatar-label" style="font-size:0.8rem;color:#d4af37;margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Select Avatar Color</div>
-            <div class="wavatar-grid" style="display:flex;justify-content:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
-              <button class="wavatarBtn active" style="width:44px;height:44px;border-radius:50%;border:2px solid #fff;background:linear-gradient(135deg,#d4af37,#ffae00);color:#0a1128;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(0)">Ś</button>
-              <button class="wavatarBtn" style="width:44px;height:44px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#00d4ff,#0099cc);color:#fff;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(1)">Ś</button>
-              <button class="wavatarBtn" style="width:44px;height:44px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#bf00ff,#7a00cc);color:#fff;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(2)">Ś</button>
-              <button class="wavatarBtn" style="width:44px;height:44px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#00ff88,#00cc66);color:#0a1128;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(3)">Ś</button>
-              <button class="wavatarBtn" style="width:44px;height:44px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#ff4444,#cc0000);color:#fff;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(4)">Ś</button>
-              <button class="wavatarBtn" style="width:44px;height:44px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#ff6b00,#cc4400);color:#fff;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(5)">Ś</button>
-              <button class="wavatarBtn" style="width:44px;height:44px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#e84393,#a0006b);color:#fff;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(6)">Ś</button>
-              <button class="wavatarBtn" style="width:44px;height:44px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#4ecdc4,#2aa198);color:#fff;font-weight:700;cursor:pointer;transition:transform 0.2s;display:flex;align-items:center;justify-content:center" onclick="window._welcomeSetAvatar(7)">Ś</button>
-            </div>
-          </div>
-          <label class="welcome-name-label">Your Name <i class="fas fa-graduation-cap" style="color:#d4af37;margin-left:6px;"></i></label>
+          <label class="welcome-name-label">Your Name <span class="welcome-name-req">*</span></label>
           <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started…" autocomplete="given-name">
           <div id="welcomeNameHint" class="welcome-name-hint"></div>
         </div>
-        <button id="welcomeBtn" class="welcome-btn" disabled>
+        <button id="welcomeBtn" class="welcome-btn">
           <i class="fas fa-graduation-cap"></i> Start Studying →
         </button>
-        
+        <button id="welcomeSkip" class="welcome-skip" style="display:none">Skip for now</button>
         <p class="welcome-footer">Free forever · No login required · Built by Sooban Talha Technologies</p>
       </div>
     </div>
@@ -810,7 +781,7 @@
   <div class="modal-overlay" id="demoModal" style="display:none">
     <div class="modal modal-lg">
       <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-play-circle" style="color:#d4af37"></i> <span class="brand-savoire">SAVOIRÉ</span><span class="brand-ai">AI</span> — Interactive Demo Tour</div>
+        <div class="modal-title"><i class="fas fa-play-circle"></i> Savoiré AI — Interactive Demo Tour</div>
         <button class="modal-close" data-close="demoModal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body" id="demoContent"></div>
@@ -833,5 +804,5 @@
     });
   </script>
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a060473ebd532141',t:'MTc4MDUwNjI4MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1130498d807b7d1',t:'MTc4MjM4MDUwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a060473ebd532141',t:'MTc4MDUwNjI4MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
