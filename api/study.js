@@ -52,35 +52,28 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Phase 1: Streaming markdown notes
+// SPEED FIX: previously tried up to 13 models with 38-80s timeouts EACH (worst case
+// 10+ minutes before reaching the offline fallback). 'openrouter/free' is OpenRouter's
+// own auto-router — it already picks from whichever free backend is currently healthy,
+// so it covers most cases on its own. Two short, current, well-established fallbacks
+// behind it keep total worst-case time low instead of chaining through stale model IDs
+// (OpenRouter's free roster rotates monthly — most of the old 13 IDs were no longer
+// reliably available).
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',                max_tokens: 5000, timeout_ms: 55000, temp: 0.75 },
-  { id: 'google/gemini-flash-1.5-8b:free',                 max_tokens: 4500, timeout_ms: 45000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',             max_tokens: 5000, timeout_ms: 55000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',          max_tokens: 4500, timeout_ms: 50000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                           max_tokens: 4000, timeout_ms: 42000, temp: 0.75 },
-  { id: 'qwen/qwen3-8b:free',                              max_tokens: 4000, timeout_ms: 40000, temp: 0.75 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',       max_tokens: 5000, timeout_ms: 65000, temp: 0.72 },
-  { id: 'cognitivecomputations/dolphin-mixtral-8x7b:free', max_tokens: 4500, timeout_ms: 55000, temp: 0.72 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',         max_tokens: 3500, timeout_ms: 38000, temp: 0.75 },
-  { id: 'openchat/openchat-7b:free',                       max_tokens: 3500, timeout_ms: 38000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',         max_tokens: 3500, timeout_ms: 38000, temp: 0.75 },
-  { id: 'upstage/solar-1-mini-chat:free',                  max_tokens: 3500, timeout_ms: 38000, temp: 0.75 },
-  { id: 'cohere/command-r-plus:free',                      max_tokens: 4000, timeout_ms: 48000, temp: 0.72 },
+  { id: 'openrouter/free',                         max_tokens: 5000, timeout_ms: 10000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',     max_tokens: 4500, timeout_ms: 12000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 12000, temp: 0.75 },
 ];
+// Worst case (all 3 fail): ~34s
 
 // Phase 2: Structured JSON — high accuracy needed
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',                max_tokens: 8000, timeout_ms: 75000, temp: 0.50 },
-  { id: 'google/gemini-flash-1.5-8b:free',                 max_tokens: 7000, timeout_ms: 65000, temp: 0.50 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',             max_tokens: 8000, timeout_ms: 75000, temp: 0.50 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',          max_tokens: 7000, timeout_ms: 68000, temp: 0.52 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',       max_tokens: 8000, timeout_ms: 80000, temp: 0.48 },
-  { id: 'cognitivecomputations/dolphin-mixtral-8x7b:free', max_tokens: 6000, timeout_ms: 68000, temp: 0.50 },
-  { id: 'z-ai/glm-4.5-air:free',                           max_tokens: 6000, timeout_ms: 60000, temp: 0.50 },
-  { id: 'qwen/qwen3-8b:free',                              max_tokens: 5500, timeout_ms: 58000, temp: 0.50 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',         max_tokens: 5000, timeout_ms: 55000, temp: 0.50 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',         max_tokens: 4500, timeout_ms: 50000, temp: 0.50 },
+  { id: 'openrouter/free',                     max_tokens: 7000, timeout_ms: 12000, temp: 0.50 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free', max_tokens: 7000, timeout_ms: 14000, temp: 0.50 },
 ];
+// Worst case (both fail): ~26s. Combined Phase 1 + Phase 2 worst case ≈ 60s,
+// which is why vercel.json (included below) sets maxDuration so Vercel doesn't
+// kill the function mid-request — see the note in vercel.json.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIGURATION
@@ -886,9 +879,9 @@ module.exports = async function handler(req, res) {
 
     // Stage timers (notes tools stream faster, cards tools need more time)
     const stageTimers=[
-      setTimeout(()=>sse('stage',{idx:1,label:'📝 Writing your content…'}),2500),
-      setTimeout(()=>sse('stage',{idx:2,label:'🔍 Building sections…'}),7000),
-      setTimeout(()=>sse('stage',{idx:3,label:'🃏 Generating interactive cards…'}),14000),
+      setTimeout(()=>sse('stage',{idx:1,label:'📝 Writing your content…'}),1500),
+      setTimeout(()=>sse('stage',{idx:2,label:'🔍 Building sections…'}),4000),
+      setTimeout(()=>sse('stage',{idx:3,label:'🃏 Generating interactive cards…'}),9000),
     ];
     const clearStages=()=>stageTimers.forEach(clearTimeout);
 

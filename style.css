@@ -146,6 +146,7 @@ body {
   --font-heading: 'Playfair Display', 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', 'Montserrat', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-brand: 'Orbitron', 'Inter', system-ui, -apple-system, sans-serif; /* matches NAME.png logo */
   
   /* ── Font Sizes ── */
   --text-xs: 0.75rem;
@@ -1168,13 +1169,16 @@ input::placeholder, textarea::placeholder {
 }
 
 .dh-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
+  font-family: var(--font-brand);
+  font-size: 0.95rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #ffffff, #d4af37);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.dh-name-ai {
+  color: #00d4ff;
 }
 
 .dh-ver {
@@ -4601,14 +4605,27 @@ input::placeholder, textarea::placeholder {
 }
 
 .about-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  font-family: var(--font-heading);
-  background: linear-gradient(135deg, #ffffff, #d4af37);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
   margin-bottom: 4px;
+}
+
+.about-name-ai {
+  color: #00d4ff;
+}
+
+.about-name-ver {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.45);
+  vertical-align: middle;
 }
 
 .about-tagline {
@@ -8575,11 +8592,15 @@ input::placeholder, textarea::placeholder {
 
 /* ── Welcome brand name ── */
 .welcome-brand {
-  background: linear-gradient(135deg, #d4af37, #00d4ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-weight: 900;
+  font-family: var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.welcome-brand-ai {
+  color: #00d4ff;
 }
 
 .welcome-tagline {
@@ -9196,9 +9217,11 @@ input::placeholder, textarea::placeholder {
 
 /* ── WELCOME BRAND GRADIENT ── */
 .welcome-brand {
-  background: linear-gradient(135deg,#d4af37,#00d4ff);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-  font-weight: 900;
+  font-family: var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  font-weight: 800;
 }
 .welcome-tagline { font-size: .9rem; font-style: italic; color: #d4af37; margin-bottom: 6px; }
 .welcome-name-section { text-align: left; margin-bottom: 16px; }
