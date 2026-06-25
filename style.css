@@ -69,7 +69,7 @@ html {
 }
 
 body {
-  font-family: 'Inter', 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #0a1128 0%, #050814 50%, #000000 100%);
   color: #c0c0c0;
   line-height: 1.6;
@@ -143,8 +143,9 @@ body {
   --border-green: rgba(0, 255, 136, 0.3);
   
   /* ── Typography ── */
-  --font-heading: 'Playfair Display', 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
-  --font-body: 'Inter', 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Orbitron', 'Rajdhani', system-ui, -apple-system, sans-serif;
+  --font-subheading: 'Rajdhani', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   
   /* ── Font Sizes ── */
@@ -1168,13 +1169,39 @@ input::placeholder, textarea::placeholder {
 }
 
 .dh-name {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Orbitron', monospace;
   font-size: 1rem;
   font-weight: 700;
+  letter-spacing: 0.12em;
   background: linear-gradient(135deg, #ffffff, #d4af37);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Brand name Orbitron styles — matches NAME.png exactly */
+.dh-brand-name {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+.dh-brand-savoire {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+.dh-brand-ai {
+  color: #00d4ff;
+  font-size: 0.9rem;
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  letter-spacing: 0.12em;
 }
 
 .dh-ver {
@@ -9385,4 +9412,157 @@ input::placeholder, textarea::placeholder {
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
    END SECTION 52 — SAVOIRÉ AI v2.0 FINALf
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   SECTION 53 — SAVOIRE AI BRAND NAME — ORBITRON FONT (Matches NAME.png exactly)
+   SAVOIRE = white Orbitron 700 | AI = #00d4ff Orbitron 700 | Letter-spacing: 0.12em
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Core brand font class — used everywhere SAVOIRE AI appears ── */
+.brand-orbitron {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+}
+
+/* ── Header logo brand name ── */
+.dh-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.dh-logo-img {
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.dh-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1;
+}
+.dh-brand-name {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+.dh-brand-savoire {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  color: #ffffff !important;
+  font-size: 0.88rem;
+}
+.dh-brand-ai {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  color: #00d4ff !important;
+  font-size: 0.88rem;
+}
+.dh-ver {
+  font-size: 0.58rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 1px;
+  letter-spacing: 0.04em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Welcome screen brand title ── */
+.welcome-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.welcome-brand-text {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  white-space: nowrap;
+}
+.welcome-brand-savoire {
+  font-family: 'Orbitron', monospace !important;
+  color: #ffffff !important;
+}
+.welcome-brand-ai {
+  font-family: 'Orbitron', monospace !important;
+  color: #00d4ff !important;
+}
+
+/* ── About section brand text (in settings modal) ── */
+.about-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.about-brand-text {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+}
+.about-brand-savoire {
+  font-family: 'Orbitron', monospace !important;
+  color: #ffffff !important;
+}
+.about-brand-ai {
+  font-family: 'Orbitron', monospace !important;
+  color: #00d4ff !important;
+}
+
+/* ── Sidebar about section brand text ── */
+.sb-brand-text {
+  font-family: 'Orbitron', monospace !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  white-space: nowrap;
+}
+.sb-brand-savoire {
+  font-family: 'Orbitron', monospace !important;
+  color: #ffffff !important;
+}
+.sb-brand-ai {
+  font-family: 'Orbitron', monospace !important;
+  color: #00d4ff !important;
+}
+
+/* ── Light theme brand name overrides ── */
+[data-theme="light"] .dh-brand-savoire { color: #1a1f3a !important; }
+[data-theme="light"] .welcome-brand-savoire { color: #1a1f3a !important; }
+
+/* ── Golden theme brand name overrides ── */
+[data-theme="golden"] .dh-brand-savoire { color: #ffffff !important; }
+[data-theme="golden"] .dh-brand-ai { color: #00d4ff !important; }
+
+/* ── Remove old dh-mark (Ś square) if present — replaced by logo image ── */
+.dh-mark { display: none !important; }
+
+/* ── Ensure Orbitron loads correctly on all platforms ── */
+@supports (font-family: 'Orbitron') {
+  .dh-brand-name,
+  .dh-brand-savoire,
+  .dh-brand-ai,
+  .welcome-brand-text,
+  .about-brand-text,
+  .sb-brand-text {
+    font-display: swap;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════
+   END SECTION 53 — SAVOIRE AI BRAND NAME STYLES
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */

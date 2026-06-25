@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <meta name="description" content="Savoiré AI v2.0 — World's Most Advanced Free AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
+  <meta name="description" content="SAVOIRE AI v2.0 — World's Most Advanced Free AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
   <meta name="author" content="Sooban Talha Technologies">
   <meta name="theme-color" content="#0a1128">
-  <meta property="og:title" content="Savoiré AI v2.0 — Ultimate AI Study Assistant">
+  <meta property="og:title" content="SAVOIRE AI v2.0 — Ultimate AI Study Assistant">
   <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI — completely free forever.">
-  <title>Savoiré AI v2.0 — Ultimate AI Study Assistant</title>
+  <title>SAVOIRE AI v2.0 — Ultimate AI Study Assistant</title>
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -80,6 +80,49 @@
     /* Sidebar avatar picker */
     #sidebarAvatarPicker{padding:12px 20px;border-top:1px solid rgba(255,255,255,.05)}
 
+    /* Brand Name — Orbitron font exactly matching NAME.png */
+    .dh-brand-name {
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      display: flex;
+      align-items: center;
+      line-height: 1;
+    }
+    .dh-brand-savoire { color: #ffffff; font-size: 0.95rem; }
+    .dh-brand-ai { color: #00d4ff; font-size: 0.95rem; }
+    .dh-logo { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .dh-logo-img { height: 32px; object-fit: contain; }
+    .dh-text { display: flex; flex-direction: column; gap: 1px; }
+
+    /* Welcome brand text */
+    .welcome-brand-text {
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+    .welcome-brand-savoire { color: #ffffff; }
+    .welcome-brand-ai { color: #00d4ff; }
+
+    /* About brand text in settings */
+    .about-brand-text {
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .about-brand-savoire { color: #ffffff; }
+    .about-brand-ai { color: #00d4ff; }
+
+    /* Sidebar brand */
+    .sb-brand-text {
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      font-size: 1rem;
+    }
+    .sb-brand-savoire { color: #ffffff; }
+    .sb-brand-ai { color: #00d4ff; }
+
     /* Welcome name hint */
     #welcomeNameHint{min-height:18px}
   </style>
@@ -87,7 +130,7 @@
 <body>
   <noscript>
     <div style="position:fixed;inset:0;background:#0a1128;display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;text-align:center;padding:20px">
-      <div><h1>⚠️ JavaScript Required</h1><p>Savoiré AI requires JavaScript to function. Please enable it in your browser.</p></div>
+      <div><h1>⚠️ JavaScript Required</h1><p>SAVOIRE AI requires JavaScript to function. Please enable it in your browser.</p></div>
     </div>
   </noscript>
 
@@ -216,12 +259,12 @@
       <!-- About Section -->
       <div class="sidebar-about">
         <button class="about-toggle-btn" id="aboutToggleBtn">
-          <i class="fas fa-info-circle"></i> About Savoiré AI
+          <i class="fas fa-info-circle"></i> About <span class="sb-brand-text"><span class="sb-brand-savoire">SAVOIRE</span><span class="sb-brand-ai"> AI</span></span>
           <i class="fas fa-chevron-down about-chevron" id="aboutChevron"></i>
         </button>
         <div class="about-content" id="aboutContent">
           <div class="about-text">
-            <strong>Savoiré AI v2.0</strong> — World's most advanced AI study assistant.
+            <span class="sb-brand-text" style="font-size:0.85rem"><span class="sb-brand-savoire">SAVOIRE</span><span class="sb-brand-ai"> AI</span></span> <strong>v2.0</strong> — World's most advanced AI study assistant.
             Generate notes, flashcards, quizzes, summaries &amp; mind maps.
           </div>
           <div class="about-text">
@@ -248,11 +291,11 @@
           <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar">
             <i class="fas fa-bars"></i>
           </button>
-          <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home" style="gap: 12px;">
-            <img src="logo.png" alt="Logo" style="height: 36px; width: 36px; object-fit: contain;">
-            <div class="dh-text" style="display: flex; flex-direction: column; justify-content: center; align-items: flex-start;">
-              <img src="NAME.png" alt="Savoiré AI" class="dh-name" style="height: 18px; object-fit: contain; margin-bottom: 2px;">
-              <span class="dh-ver" style="font-size: 0.65rem; color: #00d4ff; line-height: 1;">v2.0</span>
+          <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home">
+            <img src="logo.png" alt="Logo" class="dh-logo-img" style="height:32px; object-fit:contain;">
+            <div class="dh-text">
+              <span class="dh-brand-name"><span class="dh-brand-savoire">SAVOIRE</span><span class="dh-brand-ai"> AI</span></span>
+              <span class="dh-ver">v2.0</span>
             </div>
           </div>
         </div>
@@ -302,7 +345,7 @@
           <div class="av-u-av" id="avDropdownAvatar">Ś</div>
           <div>
             <div class="av-u-name" id="avDropdownName">Scholar</div>
-            <div class="av-u-sub">Savoiré AI Member</div>
+            <div class="av-u-sub">SAVOIRE AI Member</div>
           </div>
         </div>
         <div class="av-divider"></div>
@@ -334,7 +377,7 @@
           <div class="thinking-card">
             <div class="th-av"><i class="fas fa-brain"></i></div>
             <div class="th-body">
-              <div class="th-title">Savoiré AI is generating your study materials…</div>
+              <div class="th-title">SAVOIRE AI is generating your study materials…</div>
               <div class="th-dots"><span></span><span></span><span></span></div>
               <div class="th-stages">
                 <span class="ths" id="ts0">🎯 Analysing</span>
@@ -677,8 +720,8 @@
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
           <div class="about-card-settings">
-            <div class="about-logo" style="background: transparent; border: none; box-shadow: none;"><img src="logo.png" alt="Logo" style="height:64px; object-fit:contain;"></div>
-            <div class="about-name" style="display: flex; align-items: center; justify-content: center; gap: 8px;"><img src="NAME.png" alt="Savoiré AI" style="height: 24px; object-fit: contain;"> <span style="font-size: 0.8em; color: #00d4ff;">v2.0</span></div>
+            <div class="about-logo"><img src="logo.png" alt="Logo" style="height:48px; object-fit:contain;"></div>
+            <div class="about-name"><span class="about-brand-text"><span class="about-brand-savoire">SAVOIRE</span><span class="about-brand-ai"> AI</span></span> <span style="font-size: 0.8em; margin-left: 8px; color: rgba(255,255,255,0.5);">v2.0</span></div>
             <div class="about-tagline">"Think Less. Know More."</div>
             <div class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</div>
             <div class="about-founder">
@@ -691,7 +734,7 @@
             </div>
             <div class="about-quote">
               <i class="fas fa-quote-left"></i>
-              "I built Savoiré AI because great learning tools shouldn't cost anything."
+              "I built SAVOIRE AI because great learning tools shouldn't cost anything."
               <cite>— Sooban Talha</cite>
             </div>
             <div class="about-links">
@@ -725,8 +768,8 @@
   <div class="modal-overlay" id="welcomeOverlay" style="z-index:3000">
     <div class="modal" style="max-width:460px;text-align:center">
       <div class="modal-body" style="text-align:center;padding:32px">
-        <div class="welcome-logo" style="background: transparent; border: none; box-shadow: none;"><img src="logo.png" alt="Logo" style="height:80px; object-fit:contain;"></div>
-        <h2 class="welcome-title" style="display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;">Welcome to <img src="NAME.png" alt="Savoiré AI" class="welcome-brand" style="height: 32px; object-fit: contain;"></h2>
+        <div class="welcome-logo"><img src="logo.png" alt="Logo" style="height:64px; object-fit:contain;"></div>
+        <h2 class="welcome-title">Welcome to <span class="welcome-brand-text"><span class="welcome-brand-savoire">SAVOIRE</span><span class="welcome-brand-ai"> AI</span></span></h2>
         <p class="welcome-tagline">"Think Less. Know More."</p>
         <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
         <div class="welcome-features">
@@ -738,8 +781,8 @@
           <span class="welcome-feat" style="border-color:rgba(212,175,55,.4);color:#d4af37"><i class="fas fa-bolt"></i> All 5!</span>
         </div>
         <div class="welcome-name-section">
-          <label class="welcome-name-label">Your Name </label>
-          <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started…" autocomplete="given-name">
+          <label class="welcome-name-label">Your Name</label>
+          <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="e.g. Ahmed, Sara, Priya, John…" autocomplete="given-name" maxlength="40">
           <div id="welcomeNameHint" class="welcome-name-hint"></div>
         </div>
         <button id="welcomeBtn" class="welcome-btn" disabled>
@@ -781,7 +824,7 @@
   <div class="modal-overlay" id="demoModal" style="display:none">
     <div class="modal modal-lg">
       <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-play-circle"></i> Savoiré AI — Interactive Demo Tour</div>
+        <div class="modal-title"><i class="fas fa-play-circle"></i> SAVOIRE AI — Interactive Demo Tour</div>
         <button class="modal-close" data-close="demoModal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body" id="demoContent"></div>
@@ -789,7 +832,7 @@
   </div>
 
   <script>
-    // Theme flash preventifon — runs before everything
+    // Theme flash prevention — runs before everything
     (function(){
       try{
         const p=JSON.parse(localStorage.getItem('sv_prefs')||'{}');
@@ -804,5 +847,5 @@
     });
   </script>
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a060473ebd532141',t:'MTc4MDUwNjI4MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

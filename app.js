@@ -35,7 +35,7 @@
 
 const SAVOIRÉ = {
   VERSION:     '2.0',
-  BRAND:       'Savoiré AI v2.0',
+  BRAND:       'SAVOIRE AI v2.0',
   DEVELOPER:   'Sooban Talha Technologies',
   DEVSITE:     'soobantalhatech.xyz',
   WEBSITE:     'savoireai.vercel.app',
@@ -122,9 +122,9 @@ const AVATAR_COLORS = [
 
 const DEMO_STEPS = [
   {
-    step: 1, title: 'Welcome to Savoiré AI ✨',
+    step: 1, title: 'Welcome to SAVOIRE AI ✨',
     subtitle: "The World's Most Advanced Free AI Study Assistant",
-    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
+    content: 'SAVOIRE AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
     icon: 'fa-graduation-cap', color: '#d4af37', targetId: null, arrow: null,
     tips: [
       { icon: 'fa-infinity',   text: '100% Free — No login, no payment, ever' },
@@ -700,8 +700,8 @@ class SavoireApp {
 
   _updateUserUI() {
     const name  = this.userName || 'Scholar';
-    const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
     const init  = color.char || name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
+    const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
 
     [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
       if (!el) return;
@@ -1136,12 +1136,12 @@ Examples:
   }
 
   _friendlyError(msg) {
-    if (!msg) return 'Savoiré AI study tool is momentarily unavailable. Please try again.';
-    if (msg.includes('401') || msg.includes('API key'))      return 'Savoiré AI is experiencing a service issue. Please try again later.';
+    if (!msg) return 'SAVOIRE AI study tool is momentarily unavailable. Please try again.';
+    if (msg.includes('401') || msg.includes('API key'))      return 'SAVOIRE AI is experiencing a service issue. Please try again later.';
     if (msg.includes('timeout') || msg.includes('timed out')) return 'The AI took too long — please try again in a moment.';
-    if (msg.includes('busy') || msg.includes('models'))       return 'Savoiré AI study tool is momentarily busy. Please try again in a few seconds.';
+    if (msg.includes('busy') || msg.includes('models'))       return 'SAVOIRE AI study tool is momentarily busy. Please try again in a few seconds.';
     if (msg.includes('fetch') || msg.includes('network'))     return 'Network issue detected. Please check your connection and try again.';
-    return 'Savoiré AI study tool is momentarily unavailable. Please try again in a few seconds.';
+    return 'SAVOIRE AI study tool is momentarily unavailable. Please try again in a few seconds.';
   }
 
   _showToolbar(show) {
@@ -1630,8 +1630,8 @@ Examples:
           this.el.resultArea.style.display = 'block';
           this.el.resultArea.innerHTML = `
             <div class="error-card">
-              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
-              <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
+              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> SAVOIRE AI — Tool Temporarily Unavailable</div>
+              <div class="error-card-body">${this._esc(errMsg || 'SAVOIRE AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
                 AI models are occasionally busy when many students study simultaneously.
                 This usually resolves itself in a few seconds — please try again!
@@ -2557,7 +2557,7 @@ Examples:
       doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
       doc.text('Ś',ML+8,30);
       doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
-      doc.text('SAVOIRÉ AI',ML+28,22);
+      doc.text('SAVOIRE AI',ML+28,22);
       doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
       doc.text("v2.0 — World's Most Advanced Free AI Study Assistant",ML+28,29);
       doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`,ML+28,36);
@@ -3048,7 +3048,7 @@ Examples:
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `savoiré-ai-backup-${Date.now()}.json`;
+    a.download = `savoire-ai-backup-${Date.now()}.json`;
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
@@ -3671,20 +3671,30 @@ window._welcomeSetAvatar = function(idx) {
 
 window._welcomeValidateName = function() {
   const inp  = document.getElementById('welcomeNameInput');
+  const btn  = document.getElementById('welcomeBtn');
   const hint = document.getElementById('welcomeNameHint');
   if (!inp || !hint) return;
   const val = inp.value.trim();
   if (val.length === 0) {
     hint.textContent = '';
+    hint.style.color = '';
     inp.classList.remove('name-ok', 'name-err');
+    if (btn) btn.disabled = true;
   } else if (val.length < 2) {
-    hint.textContent = '⚠️ Please enter at least 2 characters';
+    hint.textContent = 'At least 2 characters please';
     hint.style.color = '#ffae00';
     inp.classList.add('name-err'); inp.classList.remove('name-ok');
+    if (btn) btn.disabled = true;
+  } else if (val.length > 40) {
+    hint.textContent = 'Name too long (max 40 characters)';
+    hint.style.color = '#ffae00';
+    inp.classList.add('name-err'); inp.classList.remove('name-ok');
+    if (btn) btn.disabled = true;
   } else {
-    hint.textContent = `✓ Hello, ${val}! Let's get started 🎓`;
+    hint.textContent = `✓ Looking good, ${val}!`;
     hint.style.color = '#00ff88';
     inp.classList.add('name-ok'); inp.classList.remove('name-err');
+    if (btn) btn.disabled = false;
   }
 };
 
@@ -3695,7 +3705,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const wInp = document.getElementById('welcomeNameInput');
   if (wInp) wInp.addEventListener('input', window._welcomeValidateName);
 
-  console.log('%c✅ Savoiré AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
+  console.log('%c✅ SAVOIRE AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
   console.log('%c📊 Sessions tracked | 🔥 Streak monitored | 📄 World-class PDF | 📡 Live streaming', 'color:#00d4ff;font-size:11px');
 });
 

@@ -32,7 +32,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
-  BRAND:     'Savoiré AI v2.0',
+  BRAND:     'SAVOIRE AI v2.0',
   DEVELOPER: 'Sooban Talha Technologies',
   DEVSITE:   'soobantalhatech.xyz',
   WEBSITE:   'savoireai.vercel.app',
@@ -65,7 +65,7 @@ const MODELS_STREAM = [
   { id: 'openchat/openchat-7b:free',                       max_tokens: 3500, timeout_ms: 38000, temp: 0.75 },
   { id: 'microsoft/phi-3-mini-128k-instruct:free',         max_tokens: 3500, timeout_ms: 38000, temp: 0.75 },
   { id: 'upstage/solar-1-mini-chat:free',                  max_tokens: 3500, timeout_ms: 38000, temp: 0.75 },
-  { id: 'cohere/command-r-plus:free',                      max_tokens: 4000, timeout_ms: 48000, temp: 0.72 }
+  { id: 'cohere/command-r-plus:free',                      max_tokens: 4000, timeout_ms: 48000, temp: 0.72 },
 ];
 
 // Phase 2: Structured JSON — high accuracy needed
@@ -79,7 +79,7 @@ const MODELS_CARDS = [
   { id: 'z-ai/glm-4.5-air:free',                           max_tokens: 6000, timeout_ms: 60000, temp: 0.50 },
   { id: 'qwen/qwen3-8b:free',                              max_tokens: 5500, timeout_ms: 58000, temp: 0.50 },
   { id: 'microsoft/phi-3-mini-128k-instruct:free',         max_tokens: 5000, timeout_ms: 55000, temp: 0.50 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',         max_tokens: 4500, timeout_ms: 50000, temp: 0.50 }
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',         max_tokens: 4500, timeout_ms: 50000, temp: 0.50 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -129,9 +129,7 @@ function getISTDate() { return getISTDateTime().split(' ')[0]; }
 // SECTION 5 — GOOGLE SHEETS — TRACKS EVERY VISIT & TOOL USE
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function sendToGoogleSheets(
-  userName, streak, sessions, tool, topic, status, durationMs, sessionId
-) {
+async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
   if (!GOOGLE_WEBHOOK_URL) return false;
   try {
     const payload = {
@@ -152,11 +150,11 @@ async function sendToGoogleSheets(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (res.ok) log.ok('Sheets OK');
-    else log.warn('Sheets HTTP ' + res.status);
+    if (res.ok) log.ok(`📊 Sheets ← ${userName} | ${tool} | ${status} | sessions:${sessions}`);
+    else log.warn(`Sheets HTTP ${res.status}`);
     return res.ok;
   } catch (err) {
-    log.warn('Sheets error (non-fatal): ' + err.message);
+    log.warn(`Sheets error (non-fatal): ${err.message}`);
     return false;
   }
 }
@@ -501,7 +499,7 @@ async function streamNotes(prompt, onChunk, tool) {
       if(err.message?.includes('401'))throw err;
     }
   }
-  throw new Error(`Savoiré AI is momentarily busy. Please try again. (${lastErr})`);
+  throw new Error(`SAVOIRE AI is momentarily busy. Please try again. (${lastErr})`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -893,7 +891,7 @@ module.exports = async function handler(req, res) {
 
   if(!process.env.OPENROUTER_API_KEY){
     log.error('OPENROUTER_API_KEY not set!');
-    return res.status(500).json({error:'Savoiré AI service is temporarily unavailable. Please try again later.'});
+    return res.status(500).json({error:'SAVOIRE AI service is temporarily unavailable. Please try again later.'});
   }
 
   sendToGoogleSheets(userName,userStreak,userSessions,opts.tool,message,'started',0,sessionId).catch(()=>{});
@@ -1016,7 +1014,7 @@ module.exports = async function handler(req, res) {
     } catch(fatal){
       clearInterval(kap); clearStages();
       log.error(`[${reqId}] Fatal: ${fatal.message}`);
-      sse('error',{message:'Savoiré AI is momentarily unavailable. Please try again in a few seconds.',requestId:reqId});
+      sse('error',{message:'SAVOIRE AI is momentarily unavailable. Please try again in a few seconds.',requestId:reqId});
       sendToGoogleSheets(userName,userStreak,userSessions,opts.tool,message,'failed',Date.now()-startTime,sessionId).catch(()=>{});
     }
 
@@ -1063,7 +1061,7 @@ module.exports = async function handler(req, res) {
   }catch(err){
     log.error(`[${reqId}] Error: ${err.message}`);
     sendToGoogleSheets(userName,userStreak,userSessions,opts.tool,message,'failed',Date.now()-startTime,sessionId).catch(()=>{});
-    return res.status(500).json({error:'Savoiré AI is momentarily unavailable. Please try again.',_request_id:reqId});
+    return res.status(500).json({error:'SAVOIRE AI is momentarily unavailable. Please try again.',_request_id:reqId});
   }
 };
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
