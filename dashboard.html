@@ -33,11 +33,13 @@
     .loaded .loading-spinner{display:none}
 
     /* Toast */
-    .toast-container{position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 18px;background:rgba(15,23,42,0.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;font-size:.82rem;color:#fff;animation:slideInToast .3s ease;cursor:pointer;max-width:340px;min-width:200px}
+    .toast-container{position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:400px;width:calc(100% - 40px)}
+    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(15,23,42,0.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);border-radius:14px;font-size:.82rem;color:#fff;animation:slideInToast .3s ease;cursor:pointer;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
     .toast.success{border-left:4px solid #00ff88}
     .toast.error  {border-left:4px solid #ff4444}
     .toast.info   {border-left:4px solid #00d4ff}
+    .toast i{font-size:1rem;flex-shrink:0}
+    .toast span{flex:1;word-break:break-word}
     @keyframes slideInToast{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
 
     /* Sidebar backdrop */
@@ -125,6 +127,55 @@
 
     /* Welcome name hint */
     #welcomeNameHint{min-height:18px}
+    
+    /* Focus mode fix */
+    .left-panel.collapsed ~ .right-panel {
+      margin-left: 0 !important;
+    }
+    
+    /* Mobile responsive fixes */
+    @media (max-width: 768px) {
+      .left-panel { width: 290px; }
+      .stats-grid-sidebar { grid-template-columns: repeat(4, 1fr); }
+      .wizard-tool-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid-sidebar { grid-template-columns: repeat(3, 1fr); }
+      .wizard-tool-grid { grid-template-columns: 1fr; }
+    }
+    
+    /* Avatar button styles */
+    .avatar-color-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .avatar-color-btn:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.4); }
+    .avatar-color-btn.active { border-color: #ffffff; transform: scale(1.1); box-shadow: 0 0 14px rgba(255,255,255,0.3); }
+    
+    /* Demo highlight */
+    .demo-highlighted {
+      position: relative;
+      z-index: 9999 !important;
+      outline: 3px solid #d4af37 !important;
+      outline-offset: 4px;
+      border-radius: 8px;
+      box-shadow: 0 0 0 4px rgba(212,175,55,0.3), 0 0 30px rgba(212,175,55,0.4) !important;
+      animation: demoPulse 1.5s ease infinite;
+    }
+    @keyframes demoPulse {
+      0%,100% { box-shadow: 0 0 0 4px rgba(212,175,55,0.3), 0 0 30px rgba(212,175,55,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(212,175,55,0.15), 0 0 50px rgba(212,175,55,0.6); }
+    }
   </style>
 </head>
 <body>
@@ -154,7 +205,7 @@
 
       <!-- User Profile -->
       <div class="user-profile-sidebar">
-        <div class="user-avatar-sidebar" id="sidebarAvatar">Ś</div>
+        <div class="user-avatar-sidebar" id="sidebarAvatar">🎓</div>
         <div class="user-info-sidebar">
           <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
           <div class="user-tagline-sidebar">Think Less. Know More.</div>
@@ -292,7 +343,7 @@
             <i class="fas fa-bars"></i>
           </button>
           <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home">
-            <img src="logo.png" alt="Logo" class="dh-logo-img" style="height:32px; object-fit:contain;">
+            <img src="logo.png" alt="SAVOIRE AI Logo" class="dh-logo-img" onerror="this.style.display='none'">
             <div class="dh-text">
               <span class="dh-brand-name"><span class="dh-brand-savoire">SAVOIRE</span><span class="dh-brand-ai"> AI</span></span>
               <span class="dh-ver">v2.0</span>
@@ -334,7 +385,7 @@
             <i class="fas fa-bolt"></i>
           </button>
           <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu" title="User Menu">
-            <span id="avInitials">Ś</span>
+            <span id="avInitials">🎓</span>
           </div>
         </div>
       </header>
@@ -342,7 +393,7 @@
       <!-- Avatar Dropdown -->
       <div class="av-dropdown" id="avDropdown">
         <div class="av-user">
-          <div class="av-u-av" id="avDropdownAvatar">Ś</div>
+          <div class="av-u-av" id="avDropdownAvatar">🎓</div>
           <div>
             <div class="av-u-name" id="avDropdownName">Scholar</div>
             <div class="av-u-sub">SAVOIRE AI Member</div>
@@ -682,6 +733,9 @@
                 <option value="Chinese (Simplified)">🇨🇳 Chinese</option>
                 <option value="Japanese">🇯🇵 Japanese</option>
                 <option value="Korean">🇰🇷 Korean</option>
+                <option value="Italian">🇮🇹 Italian</option>
+                <option value="Dutch">🇳🇱 Dutch</option>
+                <option value="Swedish">🇸🇪 Swedish</option>
               </select>
               <button id="saveDefaultLangBtn" class="settings-btn">Save</button>
             </div>
@@ -720,7 +774,7 @@
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
           <div class="about-card-settings">
-            <div class="about-logo"><img src="logo.png" alt="Logo" style="height:48px; object-fit:contain;"></div>
+            <div class="about-logo"><img src="logo.png" alt="SAVOIRE AI Logo" style="height:48px; object-fit:contain;" onerror="this.style.display='none';this.parentElement.innerHTML='Ś'"></div>
             <div class="about-name"><span class="about-brand-text"><span class="about-brand-savoire">SAVOIRE</span><span class="about-brand-ai"> AI</span></span> <span style="font-size: 0.8em; margin-left: 8px; color: rgba(255,255,255,0.5);">v2.0</span></div>
             <div class="about-tagline">"Think Less. Know More."</div>
             <div class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</div>
@@ -768,7 +822,7 @@
   <div class="modal-overlay" id="welcomeOverlay" style="z-index:3000">
     <div class="modal" style="max-width:460px;text-align:center">
       <div class="modal-body" style="text-align:center;padding:32px">
-        <div class="welcome-logo"><img src="logo.png" alt="Logo" style="height:64px; object-fit:contain;"></div>
+        <div class="welcome-logo"><img src="logo.png" alt="SAVOIRE AI Logo" style="height:64px; object-fit:contain;" onerror="this.style.display='none';this.parentElement.innerHTML='🎓'"></div>
         <h2 class="welcome-title">Welcome to <span class="welcome-brand-text"><span class="welcome-brand-savoire">SAVOIRE</span><span class="welcome-brand-ai"> AI</span></span></h2>
         <p class="welcome-tagline">"Think Less. Know More."</p>
         <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
