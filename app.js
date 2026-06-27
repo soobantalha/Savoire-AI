@@ -749,7 +749,8 @@ class SavoireApp {
       depth:    'detailed',
       style:    'simple',
     };
-    this.wizardStep = 0;
+    // If a tool is already pre-selected, skip step 0 (tool selection) and go straight to topic
+    this.wizardStep = presetTool ? 1 : 0;
     this.wizardFile = null;
     this._renderWizardStep();
     this._openModal('wizardModal');
@@ -858,7 +859,16 @@ class SavoireApp {
 
   _bindWTool() {
     this._qsa('.wizard-tool-card').forEach(c => {
-      c.onclick = () => { this.wizardData.tool = c.dataset.tool; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.tool = c.dataset.tool;
+        // Highlight selected card immediately for visual feedback
+        this._qsa('.wizard-tool-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Auto-advance to next step after brief delay (max step = 5)
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 320);
+      };
     });
   }
 
@@ -948,7 +958,13 @@ Examples:
           this.wizardData.topic = t;
           if (cc) cc.textContent = `${t.length} / 4000`;
           inp.style.boxShadow = '0 0 0 3px rgba(0,212,255,.3)';
-          setTimeout(() => { inp.style.boxShadow = ''; }, 700);
+          b.style.background = 'rgba(0,212,255,.2)';
+          b.style.borderColor = 'rgba(0,212,255,.5)';
+          // Auto-advance to next step after brief visual feedback (max step = 5)
+          setTimeout(() => {
+            inp.style.boxShadow = '';
+            if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+          }, 500);
         }
       };
     });
@@ -976,7 +992,16 @@ Examples:
 
   _bindWLang() {
     this._qsa('.wizard-language-card').forEach(c => {
-      c.onclick = () => { this.wizardData.language = c.dataset.lang; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.language = c.dataset.lang;
+        // Highlight selected card immediately
+        this._qsa('.wizard-language-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Auto-advance to next step after brief delay (max step = 5)
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 280);
+      };
     });
   }
 
@@ -998,7 +1023,16 @@ Examples:
 
   _bindWDepth() {
     this._qsa('.wizard-depth-card').forEach(c => {
-      c.onclick = () => { this.wizardData.depth = c.dataset.depth; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.depth = c.dataset.depth;
+        // Highlight selected card immediately
+        this._qsa('.wizard-depth-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Auto-advance to next step after brief delay (max step = 5)
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 280);
+      };
     });
   }
 
@@ -1018,7 +1052,16 @@ Examples:
 
   _bindWStyle() {
     this._qsa('.wizard-style-card').forEach(c => {
-      c.onclick = () => { this.wizardData.style = c.dataset.style; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.style = c.dataset.style;
+        // Highlight selected card immediately
+        this._qsa('.wizard-style-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Auto-advance to review step after brief delay (max step = 5)
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 280);
+      };
     });
   }
 
@@ -1160,12 +1203,8 @@ Examples:
 
   async _callAPI(message, opts) {
     this.streamCtrl = new AbortController();
-    try {
-      return await this._streamSSE(message, opts);
-    } catch (err) {
-      if (err.name === 'AbortError') throw err;
-      return await this._callAPIJson(message, opts);
-    }
+    // Always stream — no JSON fallback (would return generic offline content)
+    return await this._streamSSE(message, opts);
   }
 
   async _streamSSE(message, opts) {
@@ -1257,7 +1296,7 @@ Examples:
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
+              if (done) { reject(new Error('Connection dropped. Please check your internet and try again.')); return; }
 
               lineBuf += decoder.decode(value, { stream: true });
               const lines = lineBuf.split('\n');
@@ -1336,31 +1375,40 @@ Examples:
       <div class="live-cards-wrapper">
         <div class="live-cards-header">
           <div class="live-cards-title">
-            <i class="fas fa-layer-group" style="color:#bf00ff"></i>
-            Flashcards Generating…
-            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(deck being built)</span>
+            <i class="fas fa-layer-group" style="color:#bf00ff;animation:pulse-purple 0.6s ease-in-out infinite alternate"></i>
+            <span style="font-weight:800;color:#bf00ff">FLASHCARDS BUILDING</span>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:6px">— deck shuffling ⚡</span>
           </div>
           <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%"></div>
+            <div class="live-cards-prog-bar" style="height:8px;border-radius:4px">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#bf00ff,#ff6bb5);height:8px;border-radius:4px;box-shadow:0 0 10px rgba(191,0,255,.5);transition:width .2s ease"></div>
             </div>
-            <span class="live-cards-count">${cards.length} / ${total}</span>
+            <span class="live-cards-count" style="color:#bf00ff;font-weight:700">${cards.length}<span style="color:rgba(255,255,255,.3)"> / ${total}</span></span>
           </div>
         </div>
-        <div class="live-deck-visualizer">
+        <div class="live-deck-visualizer" style="display:flex;align-items:center;justify-content:center;padding:16px 0 8px">
           ${this._buildDeckViz(cards)}
+          <div style="margin-left:20px;text-align:left">
+            <div style="font-size:1.8rem;font-weight:900;color:#bf00ff;line-height:1">${cards.length}</div>
+            <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em">cards ready</div>
+            <div style="font-size:.65rem;color:rgba(191,0,255,.5);margin-top:2px">${total - cards.length} remaining</div>
+          </div>
         </div>
-        <div class="live-cards-grid">
+        <div class="live-cards-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:260px;overflow-y:auto">
           ${cards.map((c, i) => `
-            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}" style="animation-delay:${Math.min(i * 25, 400)}ms">
-              <div class="live-card-num">Card ${i + 1} ${i === cards.length - 1 ? '<span style="color:#bf00ff;font-size:.6rem">● LIVE</span>' : ''}</div>
-              <div class="live-card-front">${this._esc(c.front || c.question || '')}</div>
-              <div class="live-card-back">${this._esc((c.back || c.answer || '').slice(0, 100))}${(c.back || c.answer || '').length > 100 ? '…' : ''}</div>
+            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}"
+                 style="animation-duration:${i===cards.length-1?'.2s':'0s'};border:1px solid ${i===cards.length-1?'rgba(191,0,255,.5)':'rgba(255,255,255,.06)'};border-left:3px solid ${i===cards.length-1?'#bf00ff':'rgba(191,0,255,.2)'}">
+              <div class="live-card-num" style="display:flex;align-items:center;gap:4px">
+                <span style="background:${i===cards.length-1?'#bf00ff':'rgba(191,0,255,.15)'};color:${i===cards.length-1?'#fff':'#bf00ff'};font-size:.6rem;padding:1px 5px;border-radius:8px;font-weight:700">Card ${i + 1}</span>
+                ${i === cards.length - 1 ? '<span style="color:#bf00ff;font-size:.55rem;animation:blink-live 0.5s infinite">⚡</span>' : ''}
+              </div>
+              <div class="live-card-front" style="font-size:.76rem;font-weight:600;margin:3px 0 2px;line-height:1.3">${this._esc((c.front || c.question || '').slice(0,70))}${(c.front||c.question||'').length>70?'…':''}</div>
+              <div class="live-card-back" style="font-size:.68rem;color:rgba(255,255,255,.45);line-height:1.3">${this._esc((c.back || c.answer || '').slice(0, 55))}${(c.back || c.answer || '').length > 55 ? '…' : ''}</div>
             </div>
           `).join('')}
         </div>
         ${cards.length < total
-          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more cards… (${total - cards.length} remaining)</div>`
+          ? `<div class="live-cards-loading" style="margin-top:10px"><div class="live-dots"><span></span><span></span><span></span></div> <span style="color:#bf00ff;font-weight:600">Generating card ${cards.length+1}…</span></div>`
           : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} flashcards ready! Building interactive deck…</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
@@ -1386,42 +1434,50 @@ Examples:
     const qs  = this._liveQuestions;
     const pct = Math.round((qs.length / Math.max(total, 1)) * 100);
     const letters = ['A','B','C','D','E'];
+    const speed = qs.length > 0 ? Math.round((qs.length / total) * 100) : 0;
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-quiz-wrapper">
         <div class="live-cards-header">
           <div class="live-cards-title">
-            <i class="fas fa-question-circle" style="color:#00ff88"></i>
-            Quiz Questions Generating…
-            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(building rapidly)</span>
+            <i class="fas fa-bolt" style="color:#00ff88;animation:pulse-green 0.4s ease-in-out infinite alternate"></i>
+            <span style="font-weight:800;font-size:.95rem;color:#00ff88">QUIZ BUILDING</span>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.5);margin-left:6px">— rapid fire mode ⚡</span>
           </div>
           <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff)"></div>
+            <div class="live-cards-prog-bar" style="height:10px;border-radius:5px;background:rgba(255,255,255,.06)">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff);height:10px;border-radius:5px;transition:width .15s ease;box-shadow:0 0 8px rgba(0,255,136,.5)"></div>
             </div>
-            <span class="live-cards-count">${qs.length} / ${total}</span>
+            <span class="live-cards-count" style="color:#00ff88;font-weight:700">${qs.length}<span style="color:rgba(255,255,255,.3);font-weight:400"> / ${total}</span></span>
           </div>
         </div>
-        <div class="live-quiz-speed-track">
-          ${Array.from({length: total}, (_, i) => `<div class="quiz-speed-pip ${i < qs.length ? 'filled' : ''}" style="${i < qs.length ? 'background:#00ff88' : ''}"></div>`).join('')}
+        <div class="live-quiz-speed-track" style="display:flex;gap:3px;padding:8px 0;flex-wrap:wrap">
+          ${Array.from({length: total}, (_, i) => `
+            <div style="
+              width:${Math.floor(100/total) - 1}%;min-width:18px;height:6px;border-radius:3px;
+              background:${i < qs.length ? '#00ff88' : 'rgba(255,255,255,.08)'};
+              box-shadow:${i < qs.length ? '0 0 6px rgba(0,255,136,.6)' : 'none'};
+              transition:background .1s ease,box-shadow .1s ease;
+            "></div>`).join('')}
         </div>
-        <div class="live-quiz-list">
+        <div style="display:grid;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px">
           ${qs.map((q, i) => `
-            <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}">
-              <div class="live-quiz-q-num">
-                Q${i + 1}
-                <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}">${q.difficulty||'medium'}</span>
-                ${i === qs.length - 1 ? '<span style="color:#00ff88;font-size:.6rem;margin-left:4px">● LIVE</span>' : ''}
+            <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}"
+                 style="animation-duration:${i === qs.length-1 ? '.25s' : '0s'};border-left:3px solid ${i===qs.length-1?'#00ff88':'rgba(0,255,136,.2)'}">
+              <div class="live-quiz-q-num" style="display:flex;align-items:center;gap:6px">
+                <span style="background:${i===qs.length-1?'#00ff88':'rgba(0,255,136,.15)'};color:${i===qs.length-1?'#000':'#00ff88'};font-weight:700;font-size:.75rem;padding:2px 7px;border-radius:10px;min-width:28px;text-align:center">Q${i + 1}</span>
+                <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}" style="font-size:.6rem">${q.difficulty||'medium'}</span>
+                ${i === qs.length - 1 ? '<span style="color:#00ff88;font-size:.6rem;margin-left:auto;animation:blink-live 0.5s infinite">⚡ LIVE</span>' : ''}
               </div>
-              <div class="live-quiz-q-text">${this._esc(q.question || '')}</div>
-              ${q.options ? `<div class="live-quiz-opts">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}">${letters[oi]}. ${this._esc(opt)}</div>`).join('')}</div>` : ''}
+              <div class="live-quiz-q-text" style="font-size:.82rem;margin:4px 0 4px;font-weight:600;line-height:1.4">${this._esc(q.question || '')}</div>
+              ${q.options ? `<div class="live-quiz-opts" style="display:grid;grid-template-columns:1fr 1fr;gap:3px">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}" style="font-size:.72rem;padding:3px 7px">${letters[oi]}. ${this._esc(opt.slice(0,40))}${opt.length>40?'…':''}</div>`).join('')}</div>` : ''}
             </div>
           `).join('')}
         </div>
         ${qs.length < total
-          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Building questions fast…</div>`
-          : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions ready! Preparing quiz interface…</div>`}
+          ? `<div class="live-cards-loading" style="margin-top:8px"><div class="live-dots" style="display:inline-flex"><span></span><span></span><span></span></div> <span style="color:#00ff88;font-weight:600">Generating Q${qs.length+1}…</span> <span style="color:rgba(255,255,255,.4);font-size:.75rem">(${total - qs.length} remaining)</span></div>`
+          : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions generated! Launching quiz interface…</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
@@ -1434,73 +1490,64 @@ Examples:
     const branches = this._liveBranches;
     const central  = this._liveMMCentral;
     const pct      = idx === -1 ? 8 : Math.round((branches.length / Math.max(total, 1)) * 90) + 8;
+    const branchColors = ['#00d4ff','#bf00ff','#00ff88','#ffae00','#ff4444','#d4af37','#ff6bb5'];
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-mm-wrapper">
         <div class="live-cards-header">
           <div class="live-cards-title">
-            <i class="fas fa-project-diagram" style="color:#d4af37"></i>
-            Mind Map Growing…
-            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(branches appearing)</span>
+            <i class="fas fa-project-diagram" style="color:#d4af37;animation:spin-slow 3s linear infinite"></i>
+            <span style="font-weight:800;color:#d4af37">MIND MAP GROWING</span>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:6px">— branches appearing 🌿</span>
           </div>
           <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00)"></div>
+            <div class="live-cards-prog-bar" style="height:8px;border-radius:4px">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00);height:8px;border-radius:4px;box-shadow:0 0 10px rgba(212,175,55,.4);transition:width .3s ease"></div>
             </div>
-            <span class="live-cards-count">${branches.length} / ${total}</span>
+            <span class="live-cards-count" style="color:#d4af37;font-weight:700">${branches.length}<span style="color:rgba(255,255,255,.3)"> / ${total}</span></span>
           </div>
         </div>
         ${central ? `
-          <div class="live-mm-central">
-            <i class="fas fa-brain" style="color:#d4af37"></i>
-            ${this._esc(central)}
-            <span class="live-mm-pulse"></span>
-          </div>` : `<div class="live-mm-central-placeholder"><div class="live-dots"><span></span><span></span><span></span></div> Building central node…</div>`}
-        <div class="live-mm-radial-container">
+          <div class="live-mm-central" style="text-align:center;margin:12px 0 8px;position:relative">
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,.12);border:2px solid rgba(212,175,55,.4);border-radius:50px;padding:8px 20px;box-shadow:0 0 20px rgba(212,175,55,.15)">
+              <i class="fas fa-brain" style="color:#d4af37;font-size:.9rem"></i>
+              <span style="font-weight:800;color:#d4af37;font-size:.9rem">${this._esc(central)}</span>
+              <span class="live-mm-pulse" style="width:8px;height:8px;border-radius:50%;background:#d4af37;animation:pulse-gold 1s ease infinite"></span>
+            </div>
+            ${branches.length > 0 ? `<div style="position:absolute;left:50%;top:100%;width:2px;height:12px;background:rgba(212,175,55,.3);transform:translateX(-50%)"></div>` : ''}
+          </div>` : `
+          <div style="text-align:center;padding:12px 0 8px">
+            <div class="live-dots"><span style="background:#d4af37"></span><span style="background:#d4af37"></span><span style="background:#d4af37"></span></div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.4);margin-top:4px">Building central topic node…</div>
+          </div>`}
+        <div class="live-mm-radial-container" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:280px;overflow-y:auto">
           ${branches.map((b, i) => `
             <div class="live-mm-branch ${i === branches.length - 1 ? 'live-card-new' : ''}"
-                 style="border-left-color:${b.color || '#d4af37'};animation-delay:${i * 80}ms">
-              <div class="live-mm-branch-name" style="color:${b.color || '#d4af37'}">
-                <i class="fas fa-sitemap"></i>
+                 style="border-left:3px solid ${b.color || branchColors[i % branchColors.length]};animation-duration:${i===branches.length-1?'.25s':'0s'}">
+              <div class="live-mm-branch-name" style="color:${b.color || branchColors[i % branchColors.length]};display:flex;align-items:center;gap:5px;font-weight:700;font-size:.78rem">
+                <i class="fas fa-sitemap" style="font-size:.65rem;opacity:.7"></i>
                 ${this._esc(b.name)}
-                ${i === branches.length - 1 ? '<span style="font-size:.55rem;opacity:.7;margin-left:4px">● new</span>' : ''}
+                ${i === branches.length - 1 ? '<span style="font-size:.55rem;color:#d4af37;margin-left:auto;animation:blink-live .5s infinite">🌿 NEW</span>' : ''}
               </div>
-              <div class="live-mm-items">
-                ${(b.items || []).slice(0, 4).map(item => `<span class="live-mm-item">${this._esc(item)}</span>`).join('')}
-                ${(b.items || []).length > 4 ? `<span class="live-mm-item" style="opacity:.5">+${b.items.length - 4} more</span>` : ''}
+              <div class="live-mm-items" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">
+                ${(b.items || []).slice(0, 4).map(item => `<span class="live-mm-item" style="font-size:.65rem;padding:2px 6px">${this._esc(item)}</span>`).join('')}
+                ${(b.items || []).length > 4 ? `<span style="font-size:.6rem;color:rgba(255,255,255,.3);padding:2px 4px">+${b.items.length - 4}</span>` : ''}
               </div>
             </div>
           `).join('')}
         </div>
         ${branches.length < total
-          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Growing branches… (${total - branches.length} remaining)</div>`
+          ? `<div class="live-cards-loading" style="margin-top:10px"><div class="live-dots"><span style="background:#d4af37"></span><span style="background:#d4af37"></span><span style="background:#d4af37"></span></div> <span style="color:#d4af37;font-weight:600">Growing branch ${branches.length+1}…</span> <span style="color:rgba(255,255,255,.4);font-size:.75rem">(${total - branches.length} more)</span></div>`
           : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches complete! Rendering visual map…</div>`}
-      </div>`;
+      </div>`
+    ;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
   async _callAPIJson(message, opts) {
-    const res = await fetch(SAVOIRÉ.API_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        message,
-        userName:  this.userName || 'Anonymous',
-        streak:    this.streak.count,
-        sessions:  this.sessions,
-        sessionId: this._currentSessionId || this._genId(),
-        options:   { ...opts, stream: false },
-      }),
-      signal: this.streamCtrl?.signal,
-    });
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      throw new Error(d.error || `Server error (${res.status})`);
-    }
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    // Non-streaming fallback is no longer supported — always use SSE streaming
+    throw new Error('AI is momentarily unavailable. Please try again in a few seconds.');
   }
 
   _cancelGen() {

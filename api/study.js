@@ -570,8 +570,8 @@ async function fetchCards(prompt, tool, topic) {
       if(err.message?.includes('401'))throw err;
     }
   }
-  log.warn(`All P2 models failed for ${tool} — using topic-specific fallback`);
-  return buildTopicFallback(tool, topic);
+  log.warn(`All P2 models failed for ${tool} — throwing error (no fallback)`);
+  throw new Error(`Could not generate ${tool} content from any AI model. Please try again in a few seconds.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -892,11 +892,10 @@ module.exports = async function handler(req, res) {
         p1ok=true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } catch(e1){
-        log.error(`[${reqId}] P1 failed: ${e1.message} — using offline notes`);
-        sse('stage',{idx:2,label:'📚 Loading enhanced content…'});
-        notes=offlineNotes(message);
-        // Stream offline notes in chunks
-        for(let i=0;i<notes.length;i+=200){sse('token',{t:notes.slice(i,i+200)});await sleep(5);}
+        // Phase 1 failed — do NOT use offline fallback, surface real error to user
+        log.error(`[${reqId}] P1 failed: ${e1.message} — all AI models busy`);
+        sse('stage',{idx:2,label:'⚠️ AI temporarily busy — please try again…'});
+        throw new Error(`AI is momentarily busy. Please try again in a few seconds.`);
       }
 
       // ── PHASE 2: Fetch structured cards (ALL tools) ───────────────────────
@@ -911,9 +910,10 @@ module.exports = async function handler(req, res) {
         p2ok=!cardsData?._fallback;
         log.ok(`[${reqId}] P2 done — fc:${cardsData?.flashcards?.length||0} q:${cardsData?.quiz_questions?.length||0} mm:${cardsData?.mindmap?.branches?.length||0}`);
       } catch(e2){
+        // Phase 2 cards failed — do NOT use generic fallback content
         log.error(`[${reqId}] P2 failed: ${e2.message}`);
-        cardsData=buildTopicFallback(opts.tool,message);
-        p2ok=false;
+        // Re-throw so user sees a real error, not generic placeholder cards
+        throw new Error(`Could not generate ${opts.tool} content. Please try again.`);
       }
 
       // ── STREAM INDIVIDUAL CARDS LIVE (one-by-one with animation signals) ──
@@ -923,7 +923,7 @@ module.exports = async function handler(req, res) {
         sse('stage',{idx:3,label:`🃏 Streaming ${cardsData.flashcards.length} flashcards…`});
         for(let i=0;i<cardsData.flashcards.length;i++){
           sse('card',{idx:i, total:cardsData.flashcards.length, card:cardsData.flashcards[i]});
-          await sleep(80); // 80ms between cards = smooth animation
+          await sleep(50); // 50ms between cards = fast smooth animation
         }
         log.ok(`[${reqId}] Streamed ${cardsData.flashcards.length} flashcards`);
       }
@@ -932,7 +932,7 @@ module.exports = async function handler(req, res) {
         sse('stage',{idx:3,label:`❓ Streaming ${cardsData.quiz_questions.length} quiz questions…`});
         for(let i=0;i<cardsData.quiz_questions.length;i++){
           sse('question',{idx:i, total:cardsData.quiz_questions.length, q:cardsData.quiz_questions[i]});
-          await sleep(100);
+          await sleep(60); // fast quiz question streaming
         }
         log.ok(`[${reqId}] Streamed ${cardsData.quiz_questions.length} questions`);
       }
@@ -944,7 +944,7 @@ module.exports = async function handler(req, res) {
         await sleep(150);
         for(let i=0;i<cardsData.mindmap.branches.length;i++){
           sse('branch',{idx:i, total:cardsData.mindmap.branches.length, branch:cardsData.mindmap.branches[i]});
-          await sleep(120);
+          await sleep(70); // fast mindmap branch streaming
         }
         log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
       }
@@ -978,47 +978,10 @@ module.exports = async function handler(req, res) {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // NON-STREAMING FALLBACK (stream:false) — JSON response
-  // ══════════════════════════════════════════════════════════════════════════
-
-  try {
-    // P1: notes
-    let notes='';
-    const np=buildNotesPrompt(message,opts);
-    for(const model of MODELS_STREAM){
-      const ctrl=new AbortController(), timer=setTimeout(()=>ctrl.abort(),model.timeout_ms);
-      try{
-        const r=await fetch(OPENROUTER_BASE,{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${process.env.OPENROUTER_API_KEY}`,'HTTP-Referer':HTTP_REFERER,'X-Title':APP_TITLE},body:JSON.stringify({model:model.id,max_tokens:DEPTH_MAP[opts.depth]?.maxTokens||3800,temperature:model.temp||0.75,stream:false,messages:[{role:'user',content:np}]})});
-        clearTimeout(timer);
-        if(!r.ok)continue;
-        const d=await r.json(), c=d?.choices?.[0]?.message?.content?.trim();
-        if(c&&c.length>200){notes=c;log.ok(`P1 sync OK — ${c.length}ch`);break;}
-      }catch{clearTimeout(timer);}
-    }
-    if(!notes){notes=offlineNotes(message);}
-
-    // P2: cards
-    let cardsData;
-    try{
-      cardsData=await fetchCards(buildCardsPrompt(message,opts),opts.tool,message);
-      if(!cardsData)cardsData=buildTopicFallback(opts.tool,message);
-    }catch{cardsData=buildTopicFallback(opts.tool,message);}
-
-    const final=mergeCards(cardsData,notes,message,opts);
-    final._duration_ms=Date.now()-startTime;
-    final._request_id=reqId;
-    final.topic_fact=buildTopicFact(message);
-    final.powered_by=`${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
-
-    log.ok(`[${reqId}] Sync done — ${final._duration_ms}ms`);
-    sendToGoogleSheets(userName,userStreak,userSessions,opts.tool,message,'completed',final._duration_ms,sessionId).catch(()=>{});
-    return res.status(200).json(final);
-
-  }catch(err){
-    log.error(`[${reqId}] Error: ${err.message}`);
-    sendToGoogleSheets(userName,userStreak,userSessions,opts.tool,message,'failed',Date.now()-startTime,sessionId).catch(()=>{});
-    return res.status(500).json({error:'Savoiré AI is momentarily unavailable. Please try again.',_request_id:reqId});
-  }
+  // NON-STREAMING (stream:false) — redirect to streaming in client; return error if called directly
+  // Note: frontend always uses stream:true, this is only a safety net
+  log.warn(`[${reqId}] Non-streaming request — streaming is required`);
+  return res.status(400).json({error:'Please use streaming mode (stream:true). Savoiré AI requires SSE streaming for real AI content.', _request_id:reqId});
 };
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // END — api/study.js v2.0 WORLD CLASS | Sooban Talha Technologies | soobantalhatech.xyz

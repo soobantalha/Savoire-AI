@@ -9407,3 +9407,49 @@ input::placeholder, textarea::placeholder {
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
    END SECTION 52 — SAVOIRÉ AI v2.0 FINALf
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ── LIVE ANIMATION ADDITIONS — SAVOIRÉ AI v2.0 PATCH ── */
+@keyframes pulse-green {
+  from { opacity: .6; transform: scale(.9); }
+  to   { opacity: 1;  transform: scale(1.1); }
+}
+@keyframes pulse-purple {
+  from { opacity: .6; transform: scale(.9); text-shadow: 0 0 4px rgba(191,0,255,.3); }
+  to   { opacity: 1;  transform: scale(1.1); text-shadow: 0 0 12px rgba(191,0,255,.8); }
+}
+@keyframes pulse-gold {
+  0%   { box-shadow: 0 0 0 0 rgba(212,175,55,.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(212,175,55,0); }
+  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+}
+@keyframes blink-live {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Auto-advance wizard: flash the selected card */
+.wizard-tool-card.selected,
+.wizard-language-card.selected,
+.wizard-depth-card.selected,
+.wizard-style-card.selected {
+  animation: selectedFlash .28s ease;
+}
+@keyframes selectedFlash {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); box-shadow: 0 0 0 3px rgba(0,212,255,.5); }
+  100% { transform: scale(1); }
+}
+
+/* Wizard auto-advance shimmer on selected */
+.wizard-tool-card.selected .wizard-tool-icon,
+.wizard-language-card.selected .wlang-flag {
+  animation: selectedShimmer .3s ease;
+}
+@keyframes selectedShimmer {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
+  100% { filter: brightness(1); }
+}
