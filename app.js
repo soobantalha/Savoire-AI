@@ -1188,10 +1188,17 @@ Examples:
 
   _friendlyError(msg) {
     if (!msg) return 'Savoiré AI study tool is momentarily unavailable. Please try again.';
-    if (msg.includes('401') || msg.includes('API key'))      return 'Savoiré AI is experiencing a service issue. Please try again later.';
-    if (msg.includes('timeout') || msg.includes('timed out')) return 'The AI took too long — please try again in a moment.';
-    if (msg.includes('busy') || msg.includes('models'))       return 'Savoiré AI study tool is momentarily busy. Please try again in a few seconds.';
-    if (msg.includes('fetch') || msg.includes('network'))     return 'Network issue detected. Please check your connection and try again.';
+    if (msg.includes('API key') || msg.includes('OPENROUTER_API_KEY'))
+      return '🔑 API Key Issue: ' + msg;
+    if (msg.includes('timeout') || msg.includes('timed out'))
+      return '⏱️ The AI took too long — please try again in a moment.';
+    if (msg.includes('All') && msg.includes('models failed'))
+      return '🤖 ' + msg;
+    if (msg.includes('busy') || msg.includes('models'))
+      return '🔄 Savoiré AI is momentarily busy. Please try again in a few seconds.';
+    if (msg.includes('fetch') || msg.includes('network'))
+      return '🌐 Network issue detected. Please check your connection and try again.';
+    if (msg.length > 20 && msg.length < 300) return msg; // show real error if informative
     return 'Savoiré AI study tool is momentarily unavailable. Please try again in a few seconds.';
   }
 
@@ -1741,19 +1748,25 @@ Examples:
           this.el.resultArea.style.display = 'block';
           this.el.resultArea.innerHTML = `
             <div class="error-card">
-              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
+              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Generation Failed</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                AI models are occasionally busy when many students study simultaneously.
-                This usually resolves itself in a few seconds — please try again!
+                <strong>Quick fixes to try:</strong><br>
+                1. Wait 5–10 seconds and try again — free AI models are occasionally busy<br>
+                2. Try a shorter or different topic<br>
+                3. Check your Vercel logs for the exact error (it's logged server-side)<br>
+                4. Visit <a href="/api/study?debug=1" target="_blank" style="color:#00d4ff">/api/study?debug=1</a> to check your API key setup
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
                 <button class="btn btn-primary" onclick="window._app._openWizard()">
-                  <i class="fas fa-magic"></i> Try Again with Wizard
+                  <i class="fas fa-redo"></i> Try Again
                 </button>
                 <button class="btn btn-gold" onclick="window._app._openMega()">
                   <i class="fas fa-bolt"></i> Try Mega Bundle
                 </button>
+                <a class="btn" href="/api/study?debug=1" target="_blank" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);padding:10px 20px;border-radius:12px;text-decoration:none;font-size:.85rem">
+                  <i class="fas fa-bug"></i> Debug Info
+                </a>
               </div>
             </div>`;
         }

@@ -53,22 +53,29 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // SECTION 2 — MODEL ROSTERS (FAST & RELIABLE)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Phase 1: Streaming markdown notes — ONLY TRULY FREE MODELS (no cost ever)
+// Phase 1: Streaming markdown notes — PROVEN FREE MODELS ON OPENROUTER
+// These are consistently available as :free tier — no cost, no auth issues
 const MODELS_STREAM = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',          max_tokens: 4500, timeout_ms: 20000, temp: 0.75 },
-  { id: 'google/gemma-3-27b-it:free',                       max_tokens: 4500, timeout_ms: 20000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct:free',               max_tokens: 4000, timeout_ms: 18000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',          max_tokens: 4000, timeout_ms: 18000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1-0528:free',                   max_tokens: 4000, timeout_ms: 25000, temp: 0.70 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',               max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct:free',                   max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
+  { id: 'qwen/qwen-2.5-72b-instruct:free',                     max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
+  { id: 'google/gemma-3-12b-it:free',                          max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',             max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',                 max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
+  { id: 'tngtech/deepseek-r1t-chimera:free',                   max_tokens: 4000, timeout_ms: 30000, temp: 0.70 },
 ];
 
-// Phase 2: Structured JSON — ONLY TRULY FREE MODELS
+// Phase 2: Structured JSON — PROVEN FREE MODELS
 const MODELS_CARDS = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',          max_tokens: 7000, timeout_ms: 25000, temp: 0.45 },
-  { id: 'google/gemma-3-27b-it:free',                       max_tokens: 7000, timeout_ms: 25000, temp: 0.45 },
-  { id: 'deepseek/deepseek-r1-0528:free',                   max_tokens: 7000, timeout_ms: 30000, temp: 0.40 },
-  { id: 'mistralai/mistral-7b-instruct:free',               max_tokens: 6000, timeout_ms: 22000, temp: 0.45 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',          max_tokens: 6000, timeout_ms: 22000, temp: 0.45 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
+  { id: 'qwen/qwen-2.5-72b-instruct:free',                     max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',               max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
+  { id: 'mistralai/mistral-7b-instruct:free',                   max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',                 max_tokens: 7000, timeout_ms: 35000, temp: 0.40 },
+  { id: 'tngtech/deepseek-r1t-chimera:free',                   max_tokens: 7000, timeout_ms: 35000, temp: 0.40 },
+  { id: 'google/gemma-3-12b-it:free',                          max_tokens: 5000, timeout_ms: 28000, temp: 0.45 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',             max_tokens: 5000, timeout_ms: 28000, temp: 0.45 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -457,44 +464,78 @@ ${toolBlock}
 
 async function streamNotes(prompt, onChunk, tool) {
   let lastErr = 'No models responded';
+  let attemptedModels = 0;
   for (const model of MODELS_STREAM) {
     const name  = model.id.split('/').pop().replace(':free', '');
     const ctrl  = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
     const t0    = Date.now();
+    attemptedModels++;
     try {
-      log.info(`P1 (${tool}) → ${name}`);
+      log.info(`P1 (${tool}) → ${model.id}`);
       const res = await fetch(OPENROUTER_BASE, {
         method: 'POST',
-        headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${process.env.OPENROUTER_API_KEY}`, 'HTTP-Referer':HTTP_REFERER, 'X-Title':APP_TITLE },
-        body: JSON.stringify({ model:model.id, max_tokens:model.max_tokens, temperature:model.temp||0.75, stream:true, messages:[{role:'user',content:prompt}] }),
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'HTTP-Referer':  HTTP_REFERER,
+          'X-Title':       APP_TITLE,
+        },
+        body: JSON.stringify({
+          model:       model.id,
+          max_tokens:  model.max_tokens,
+          temperature: model.temp || 0.75,
+          stream:      true,
+          messages:    [{ role: 'user', content: prompt }],
+        }),
         signal: ctrl.signal,
       });
       clearTimeout(timer);
-      if (!res.ok) { const t=await res.text().catch(()=>''); log.warn(`P1 HTTP ${res.status} ${name}: ${trunc(t,80)}`); if(res.status===401)throw new Error('Invalid API key'); if(res.status===429){await sleep(800);continue;} continue; }
-      const reader=res.body.getReader(), decoder=new TextDecoder('utf-8');
-      let lineBuf='', full='', tokens=0;
-      while(true){
-        const{done,value}=await reader.read(); if(done)break;
-        lineBuf+=decoder.decode(value,{stream:true});
-        const lines=lineBuf.split('\n'); lineBuf=lines.pop()||'';
-        for(const line of lines){
-          if(!line.startsWith('data: '))continue;
-          const raw=line.slice(6).trim(); if(raw==='[DONE]'||!raw)continue;
-          try{ const delta=JSON.parse(raw)?.choices?.[0]?.delta?.content; if(delta){full+=delta;tokens++;onChunk(delta);} } catch (_e) {}
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        log.warn(`P1 HTTP ${res.status} ${model.id}: ${trunc(errBody, 200)}`);
+        if (res.status === 401) throw new Error('Invalid OpenRouter API key — please check your OPENROUTER_API_KEY environment variable.');
+        if (res.status === 402) { log.warn(`${model.id}: payment required — skipping`); continue; }
+        if (res.status === 403) { log.warn(`${model.id}: access denied — skipping`); continue; }
+        if (res.status === 404) { log.warn(`${model.id}: model not found — skipping`); continue; }
+        if (res.status === 429) { await sleep(1200); continue; }
+        if (res.status >= 500)  { await sleep(500); continue; }
+        continue;
+      }
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let lineBuf = '', full = '', tokens = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        lineBuf += decoder.decode(value, { stream: true });
+        const lines = lineBuf.split('\n');
+        lineBuf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]' || !raw) continue;
+          try {
+            const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+            if (delta) { full += delta; tokens++; onChunk(delta); }
+          } catch (_e) {}
         }
       }
-      if(full.trim().length<150){log.warn(`${name}: too short (${full.length})`);continue;}
-      log.ok(`P1 OK — ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now()-t0}ms`);
+      if (full.trim().length < 100) {
+        log.warn(`${model.id}: response too short (${full.length} chars) — trying next`);
+        lastErr = `${name}: response too short`;
+        continue;
+      }
+      log.ok(`P1 OK — ${model.id} | ${tokens} tokens | ${full.length}ch | ${Date.now()-t0}ms`);
       return full;
-    } catch(err){
+    } catch (err) {
       clearTimeout(timer);
-      lastErr=err.name==='AbortError'?`${name} timed out`:`${name}: ${err.message}`;
+      lastErr = err.name === 'AbortError' ? `${name} timed out after ${model.timeout_ms}ms` : `${name}: ${err.message}`;
       log.warn(`P1 fail — ${lastErr}`);
-      if(err.message?.includes('401'))throw err;
+      if (err.message?.includes('Invalid OpenRouter')) throw err;
     }
   }
-  throw new Error(`Savoiré AI is momentarily busy. Please try again. (${lastErr})`);
+  throw new Error(`All ${attemptedModels} AI models failed. Last error: ${lastErr}. Please check server logs and try again.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -505,87 +546,118 @@ async function streamNotes(prompt, onChunk, tool) {
 async function fetchCards(prompt, tool, topic) {
   let lastErr = 'No models responded';
   for (const model of MODELS_CARDS) {
-    const name=model.id.split('/').pop().replace(':free',''), ctrl=new AbortController(), timer=setTimeout(()=>ctrl.abort(),model.timeout_ms), t0=Date.now();
+    const name = model.id.split('/').pop().replace(':free','');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+    const t0 = Date.now();
     try {
-      log.info(`P2 (${tool}) → ${name}`);
-      const res=await fetch(OPENROUTER_BASE,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${process.env.OPENROUTER_API_KEY}`,'HTTP-Referer':HTTP_REFERER,'X-Title':APP_TITLE},body:JSON.stringify({model:model.id,max_tokens:model.max_tokens,temperature:model.temp||0.50,stream:false,messages:[{role:'user',content:prompt}]}),signal:ctrl.signal});
+      log.info(`P2 (${tool}) → ${model.id}`);
+      const res = await fetch(OPENROUTER_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'HTTP-Referer':  HTTP_REFERER,
+          'X-Title':       APP_TITLE,
+        },
+        body: JSON.stringify({
+          model:       model.id,
+          max_tokens:  model.max_tokens,
+          temperature: model.temp || 0.50,
+          stream:      false,
+          messages:    [{ role: 'user', content: prompt }],
+        }),
+        signal: ctrl.signal,
+      });
       clearTimeout(timer);
-      if(!res.ok){const t=await res.text().catch(()=>'');log.warn(`P2 HTTP ${res.status} ${name}: ${trunc(t,80)}`);if(res.status===401)throw new Error('Invalid API key');if(res.status===429){await sleep(800);continue;}continue;}
-      const data=await res.json(); let content=data?.choices?.[0]?.message?.content?.trim();
-      if(!content||content.length<50){log.warn(`${name}: empty`);continue;}
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        log.warn(`P2 HTTP ${res.status} ${model.id}: ${trunc(errBody, 200)}`);
+        if (res.status === 401) throw new Error('Invalid OpenRouter API key');
+        if (res.status === 402) { continue; }
+        if (res.status === 403) { continue; }
+        if (res.status === 404) { log.warn(`${model.id}: not found — skip`); continue; }
+        if (res.status === 429) { await sleep(1200); continue; }
+        if (res.status >= 500)  { await sleep(500); continue; }
+        continue;
+      }
+      const data = await res.json();
+      let content = data?.choices?.[0]?.message?.content?.trim();
+      if (!content || content.length < 30) { log.warn(`${model.id}: empty response`); lastErr = `${name}: empty`; continue; }
 
-      // Strip code fences
-      content=content.replace(/^```(?:json)?\s*/im,'').replace(/\s*```\s*$/im,'').trim();
+      // Strip code fences and extract JSON
+      content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+      // Handle thinking models that output <think>...</think> blocks
+      content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+      if (jS === -1 || jE <= jS) { log.warn(`${model.id}: no JSON found in response`); lastErr = `${name}: no JSON`; continue; }
+      let jsonStr = content.slice(jS, jE + 1);
 
-      // Extract JSON bounds
-      const jS=content.indexOf('{'), jE=content.lastIndexOf('}');
-      if(jS===-1||jE<=jS){log.warn(`${name}: no JSON`);continue;}
-      let jsonStr=content.slice(jS,jE+1);
-
-      // 4-step repair
+      // 4-step JSON repair pipeline
       let parsed;
-      try{parsed=JSON.parse(jsonStr);}
-      catch(_e){try{parsed=JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1'));}
-      catch(_e){try{parsed=JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3').replace(/:\s*'([^']*)'/g,': "$1"'));}
-      catch(_e){try{parsed=JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g,' ').replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3'));}
-      catch(e4){log.warn(`${name}: JSON repair failed — ${e4.message.slice(0,60)}`);continue;}}}}
+      try { parsed = JSON.parse(jsonStr); }
+      catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+      catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3').replace(/:\s*'([^']*)'/g, ': "$1"')); }
+      catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ').replace(/,(\s*[}\]])/g, '$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')); }
+      catch (e4) { log.warn(`${model.id}: JSON repair failed — ${e4.message.slice(0, 80)}`); lastErr = `${name}: JSON parse failed`; continue; }}}}
 
       // Auto-fix quiz correct_answer mismatches
-      if(Array.isArray(parsed.quiz_questions)){
-        parsed.quiz_questions=parsed.quiz_questions.map((q,i)=>{
-          if(!q.options||!q.correct_answer)return{...q,id:q.id||i+1};
-          if(!q.options.includes(q.correct_answer)){
-            const lower=q.correct_answer.toLowerCase();
-            const fix=q.options.find(o=>o.toLowerCase()===lower)||q.options.find(o=>o.toLowerCase().includes(lower)||lower.includes(o.toLowerCase()))||q.options[0];
-            if(fix){log.info(`${name}: auto-fixed Q${i+1} correct_answer`);return{...q,correct_answer:fix,id:q.id||i+1};}
+      if (Array.isArray(parsed.quiz_questions)) {
+        parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+          if (!q.options || !q.correct_answer) return { ...q, id: q.id || i + 1 };
+          if (!q.options.includes(q.correct_answer)) {
+            const lower = q.correct_answer.toLowerCase();
+            const fix = q.options.find(o => o.toLowerCase() === lower)
+              || q.options.find(o => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase()))
+              || q.options[0];
+            if (fix) { log.info(`${model.id}: auto-fixed Q${i+1} correct_answer`); return { ...q, correct_answer: fix, id: q.id || i + 1 }; }
           }
-          return{...q,id:q.id||i+1};
+          return { ...q, id: q.id || i + 1 };
         });
       }
 
-      // Validate & normalize — be very lenient for 'all' tool
-      let ok=true;
+      // Validate — lenient minimums
       const isAll = tool === 'all';
-      let allMissing = 0;
-      if(isAll || tool==='flashcards'){
-        if(!Array.isArray(parsed.flashcards)||parsed.flashcards.length<2){
-          log.warn(`${name}: fc=${parsed.flashcards?.length??0} insufficient`);
-          if(isAll){allMissing++;parsed.flashcards=parsed.flashcards||[];}else ok=false;
+      let ok = true, allMissing = 0;
+      if (isAll || tool === 'flashcards') {
+        if (!Array.isArray(parsed.flashcards) || parsed.flashcards.length < 2) {
+          log.warn(`${model.id}: fc=${parsed.flashcards?.length ?? 0}`);
+          if (isAll) { allMissing++; parsed.flashcards = parsed.flashcards || []; } else ok = false;
         }
       }
-      if(isAll || tool==='quiz'){
-        if(!Array.isArray(parsed.quiz_questions)||parsed.quiz_questions.length<2){
-          log.warn(`${name}: q=${parsed.quiz_questions?.length??0} insufficient`);
-          if(isAll){allMissing++;parsed.quiz_questions=parsed.quiz_questions||[];}else ok=false;
+      if (isAll || tool === 'quiz') {
+        if (!Array.isArray(parsed.quiz_questions) || parsed.quiz_questions.length < 2) {
+          log.warn(`${model.id}: q=${parsed.quiz_questions?.length ?? 0}`);
+          if (isAll) { allMissing++; parsed.quiz_questions = parsed.quiz_questions || []; } else ok = false;
         }
       }
-      if(isAll || tool==='mindmap'){
-        if(!parsed.mindmap?.branches||parsed.mindmap.branches.length<1){
-          log.warn(`${name}: mm branches=${parsed.mindmap?.branches?.length??0} insufficient`);
-          if(isAll){allMissing++;}else ok=false;
+      if (isAll || tool === 'mindmap') {
+        if (!parsed.mindmap?.branches || parsed.mindmap.branches.length < 1) {
+          log.warn(`${model.id}: mm=${parsed.mindmap?.branches?.length ?? 0}`);
+          if (isAll) { allMissing++; } else ok = false;
         }
       }
+      if (isAll && allMissing >= 3) { log.warn(`${model.id}: all sections missing`); lastErr = `${name}: all sections empty`; continue; }
+      if (!isAll && !ok) { log.warn(`${model.id}: validation failed`); lastErr = `${name}: validation failed`; continue; }
 
-      // For 'all': fail only if ALL three sections are missing; for single tools: must pass validation
-      if(isAll && allMissing>=3){log.warn(`${name}: all sections failed for 'all' tool`);continue;}
-      if(!isAll && !ok){log.warn(`${name}: validation failed — trying next`);continue;}
-
-      // Normalize card formats
-      if(Array.isArray(parsed.flashcards)){
-        parsed.flashcards=parsed.flashcards.filter(c=>(c.front||c.question)&&(c.back||c.answer)).map(c=>({front:String(c.front||c.question||'').trim(),back:String(c.back||c.answer||'').trim()}));
+      // Normalize flashcard format
+      if (Array.isArray(parsed.flashcards)) {
+        parsed.flashcards = parsed.flashcards
+          .filter(c => (c.front || c.question) && (c.back || c.answer))
+          .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
       }
 
-      log.ok(`P2 OK — ${name} | ${tool} | fc:${parsed.flashcards?.length||0} | q:${parsed.quiz_questions?.length||0} | mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+      log.ok(`P2 OK — ${model.id} | ${tool} | fc:${parsed.flashcards?.length||0} | q:${parsed.quiz_questions?.length||0} | mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
       return parsed;
-    } catch(err){
+    } catch (err) {
       clearTimeout(timer);
-      lastErr=err.name==='AbortError'?`${name} timed out`:`${name}: ${err.message}`;
+      lastErr = err.name === 'AbortError' ? `${name} timed out` : `${name}: ${err.message}`;
       log.warn(`P2 fail — ${lastErr}`);
-      if(err.message?.includes('401'))throw err;
+      if (err.message?.includes('Invalid OpenRouter')) throw err;
     }
   }
-  log.warn(`All P2 models failed for ${tool} — throwing error (no fallback)`);
-  throw new Error(`Could not generate ${tool} content from any AI model. Please try again in a few seconds.`);
+  log.warn(`All P2 models failed for ${tool}: ${lastErr}`);
+  throw new Error(`Could not generate ${tool} structured content. Last error: ${lastErr}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -858,7 +930,24 @@ module.exports = async function handler(req, res) {
 
   if(!process.env.OPENROUTER_API_KEY){
     log.error('OPENROUTER_API_KEY not set!');
-    return res.status(500).json({error:'Savoiré AI service is temporarily unavailable. Please try again later.'});
+    return res.status(500).json({error:'Savoiré AI: OPENROUTER_API_KEY environment variable is not set. Please add it to your Vercel project settings under Settings → Environment Variables.'});
+  }
+
+  // DEBUG endpoint — GET /api/study?debug=1
+  if (req.method === 'GET' && req.query?.debug === '1') {
+    const keyPreview = process.env.OPENROUTER_API_KEY
+      ? `sk-or-...${process.env.OPENROUTER_API_KEY.slice(-6)} (length: ${process.env.OPENROUTER_API_KEY.length})`
+      : 'NOT SET';
+    return res.status(200).json({
+      status: 'debug',
+      api_key_set: !!process.env.OPENROUTER_API_KEY,
+      api_key_preview: keyPreview,
+      model_count_stream: MODELS_STREAM.length,
+      model_count_cards:  MODELS_CARDS.length,
+      models_stream: MODELS_STREAM.map(m => m.id),
+      models_cards:  MODELS_CARDS.map(m => m.id),
+      service: SAVOIRÉ.BRAND,
+    });
   }
 
   sendToGoogleSheets(userName,userStreak,userSessions,opts.tool,message,'started',0,sessionId).catch(()=>{});
@@ -906,10 +995,15 @@ module.exports = async function handler(req, res) {
         p1ok=true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } catch(e1){
-        // Phase 1 failed — do NOT use offline fallback, surface real error to user
-        log.error(`[${reqId}] P1 failed: ${e1.message} — all AI models busy`);
-        sse('stage',{idx:2,label:'⚠️ AI temporarily busy — please try again…'});
-        throw new Error(`AI is momentarily busy. Please try again in a few seconds.`);
+        log.error(`[${reqId}] P1 failed: ${e1.message}`);
+        sse('stage',{idx:2,label:'⚠️ AI models busy — retrying…'});
+        // Surface the real error message so user/dev can diagnose
+        const errMsg = e1.message.includes('Invalid OpenRouter')
+          ? 'Invalid API key — please check your OPENROUTER_API_KEY in Vercel settings.'
+          : e1.message.includes('API key')
+          ? 'OpenRouter API key issue — please check your environment variables.'
+          : 'All AI models are currently busy. Please wait a few seconds and try again.';
+        throw new Error(errMsg);
       }
 
       // ── PHASE 2: Fetch structured cards (ALL tools) ───────────────────────
@@ -987,7 +1081,10 @@ module.exports = async function handler(req, res) {
     } catch(fatal){
       clearInterval(kap); clearStages();
       log.error(`[${reqId}] Fatal: ${fatal.message}`);
-      sse('error',{message:'Savoiré AI is momentarily unavailable. Please try again in a few seconds.',requestId:reqId});
+      const userMsg = fatal.message.length > 20 && !fatal.message.includes('momentarily')
+        ? fatal.message
+        : 'Savoiré AI is momentarily unavailable. Please try again in a few seconds.';
+      sse('error',{message: userMsg, requestId:reqId});
       sendToGoogleSheets(userName,userStreak,userSessions,opts.tool,message,'failed',Date.now()-startTime,sessionId).catch(()=>{});
     }
 
