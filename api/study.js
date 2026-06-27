@@ -58,21 +58,24 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // renamed, rate-limited upstream, or pulled entirely without notice. Several IDs
 // that used to live here (mistral-7b-instruct:free as primary, phi-3-mini-128k-instruct:free,
 // qwen-2.5-72b-instruct:free, deepseek-chat-v3-0324:free, deepseek-r1t-chimera:free)
-// are confirmed stale/unreliable as of mid-2026. The list below uses currently-live
-// IDs, and — critically — ends with 'openrouter/free', OpenRouter's own self-updating
-// free-router that picks from whatever free models are actually up right now. That
-// last entry is what keeps this list from going stale again the same way.
+// are confirmed stale/unreliable as of mid-2026.
+// 'openrouter/free' goes FIRST here — for free-form streamed text (no JSON needed),
+// letting OpenRouter's own self-updating free-router pick whatever is actually live
+// right now is the most resilient option. Named models below are backups.
 const MODELS_STREAM = [
+  { id: 'openrouter/free',                                     max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
   { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
   { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
   { id: 'deepseek/deepseek-chat-v3.1:free',                    max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
   { id: 'google/gemma-3-12b-it:free',                          max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
   { id: 'qwen/qwen3-235b-a22b:free',                           max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
   { id: 'mistralai/mistral-7b-instruct:free',                  max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
-  { id: 'openrouter/free',                                     max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
 ];
 
-// Phase 2: Structured JSON — FREE MODELS (same staleness note as above)
+// Phase 2: Structured JSON — FREE MODELS
+// Named models go FIRST here on purpose: Phase 2 needs reliable JSON-mode compliance,
+// and 'openrouter/free' picks a random underlying model each call, which is a gamble
+// for structured output. It's kept as the LAST-resort fallback instead of the first pick.
 const MODELS_CARDS = [
   { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
   { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
@@ -606,6 +609,20 @@ async function fetchCards(prompt, tool, topic) {
       catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ').replace(/,(\s*[}\]])/g, '$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')); }
       catch (e4) { log.warn(`${model.id}: JSON repair failed — ${e4.message.slice(0, 80)}`); lastErr = `${name}: JSON parse failed`; continue; }}}}
 
+      // Detect literal placeholder brackets the model copied from the prompt's
+      // example skeleton instead of replacing with real content (a known failure
+      // mode of weaker free models like Mistral-7B / Gemma under token pressure).
+      // Patterns like "[SPECIFIC question about X]" or "[55-80 word explanation...]"
+      // are valid JSON strings, so they sail right through JSON.parse — only an
+      // explicit text scan catches them.
+      const flatText = JSON.stringify(parsed);
+      const placeholderHits = (flatText.match(/\[(?:SPECIFIC|Specific|GOOD|BAD|Name of|Second|Third|Fourth|Fifth|Sixth|Option [A-D]|Branch name|Item \d|Specific fact|CORRECT answer|Plausible wrong|\d+[\-–]\d+ word)/g) || []).length;
+      if (placeholderHits >= 2) {
+        log.warn(`${model.id}: ${placeholderHits} literal placeholder brackets detected — rejecting response`);
+        lastErr = `${name}: returned template placeholders instead of real content`;
+        continue;
+      }
+
       // Auto-fix quiz correct_answer mismatches
       if (Array.isArray(parsed.quiz_questions)) {
         parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
@@ -663,83 +680,6 @@ async function fetchCards(prompt, tool, topic) {
   }
   log.warn(`All P2 models failed for ${tool}: ${lastErr}`);
   throw new Error(`Could not generate ${tool} structured content. Last error: ${lastErr}`);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9.1 — TOPIC-SPECIFIC FALLBACK (only used if all models fail)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function buildTopicFallback(tool, topic) {
-  const T=topic||'this topic', now=getISTDateTime();
-  const words=T.replace(/[^a-zA-Z\s]/g,'').split(/\s+/).filter(w=>w.length>3);
-  const w1=words[0]||T.slice(0,20), w2=words[1]||'concepts';
-
-  const base={
-    topic:T, curriculum_alignment:'General Academic Study', generated_at:now,
-    study_score:88, _fallback:true,
-    flashcards:[], quiz_questions:[], mindmap:null,
-    key_concepts:[
-      `Core Definition: ${T} is defined as the systematic study and practice of its central domain. Mastery begins with understanding WHY the definition is framed as it is — not just memorising it.`,
-      `Primary Mechanism: The main process in ${T} follows: [initial conditions] → [transformation] → [outcome]. Each step depends causally on the previous, making the chain learnable and predictable.`,
-      `Key Relationships: In ${T}, ${w1} connects to ${w2} through [specific relationship]. Understanding this connection is more valuable than knowing either concept in isolation.`,
-      `Historical Context: ${T} developed through key breakthroughs where [early theories] were refined into [modern understanding]. This history explains why current frameworks take their present form.`,
-      `Expert vs Novice: Experts in ${T} recognise deep structural patterns while beginners focus on surface features. This difference develops through deliberate practice, not passive study.`,
-      `Practical Transfer: ${T} knowledge applies directly to healthcare, technology, business, and policy contexts through the same analytical frameworks learned in academic study.`,
-    ],
-    key_tricks:[
-      `🧠 FEYNMAN TECHNIQUE for ${T}: Close all notes. Explain "${T}" aloud to an imaginary 12-year-old. Every hesitation = a gap. Return to notes ONLY for gaps. Repeat until fluent without notes.`,
-      `📝 ACTIVE RECALL for ${T}: After every study session on ${T}, write everything you remember without looking. The gaps between what you wrote and the actual content = your study targets.`,
-      `⏰ SPACED REPETITION for ${T}: Day 1 → learn. Day 3 → test yourself. Day 7 → consolidate. Day 14 → reinforce. Day 30 → master. Each review must be active retrieval, not re-reading.`,
-      `🎨 MIND MAPPING ${T}: Place "${T}" at centre. Branch to 5-7 major sub-topics. Add 3-5 specific facts per branch. Draw arrows showing cause-and-effect. The map IS the learning — not just a record.`,
-    ],
-    practice_questions:[
-      {question:`Explain the foundational principles of ${T} and analyse how they form a coherent framework. Illustrate with two specific examples showing the principles in action.`,answer:`${T} rests on foundational principles that collectively define its scope, methods, and explanatory power. These principles establish key concepts and their logical relationships. The first principle concerns the core subject matter of ${T} and why it is understood as it is. The second principle addresses the primary mechanisms. Understanding both requires grasping WHY principles hold — not just what they state. Example 1 illustrates the first principle in a specific real situation. Example 2 shows the second principle in a different but related context. Together, these demonstrate that ${T} is a structured reasoning framework, not a collection of facts.`},
-      {question:`Describe a realistic professional scenario where deep knowledge of ${T} produces measurably better outcomes than surface familiarity.`,answer:`A professional facing a complex problem involving ${T} approaches it differently depending on depth of understanding. An expert diagnoses the situation using ${T} principles before selecting an approach, systematically analyses the key variables, predicts outcomes under different actions, selects the optimal approach, and verifies the reasoning against known constraints. This systematic process consistently outperforms intuitive pattern-matching. The measurable better outcome comes from: avoiding systematic errors that novices make, anticipating consequences that are invisible without ${T} expertise, and communicating the reasoning clearly to stakeholders.`},
-    ],
-    real_world_applications:[
-      `Healthcare: ${T} informs clinical reasoning, diagnostic protocols, and treatment design — enabling practitioners to make more systematic and accurate decisions.`,
-      `Technology: ${T} principles underpin system architecture and engineering decisions, helping teams build more robust and maintainable solutions.`,
-      `Business: Strategic planning and risk assessment draw on ${T} frameworks, enabling better decisions under uncertainty.`,
-      `Policy: Government agencies apply ${T} reasoning to analyse problems and design evidence-based interventions with measurable outcomes.`,
-    ],
-    common_misconceptions:[
-      `❌ MYTH: Memorising ${T} facts equals understanding. ✅ TRUTH: Real mastery of ${T} means grasping causal relationships and conditional application — not just recalling definitions.`,
-      `❌ MYTH: ${T} is only for specialists. ✅ TRUTH: ${T} reasoning patterns transfer across healthcare, technology, business, and everyday decision-making.`,
-      `❌ MYTH: Re-reading notes is effective for ${T}. ✅ TRUTH: Active retrieval (testing yourself) outperforms re-reading by 200-300% for durable retention of ${T}.`,
-      `❌ MYTH: Once you know ${T} basics, little remains. ✅ TRUTH: Expert-novice gap in ${T} is vast — edge cases, conditional reasoning, and nuances separate introductory from professional mastery.`,
-    ],
-  };
-
-  // Only fill in the requested tool sections to keep fallback minimal
-  if(tool==='flashcards'||tool==='all'){
-    base.flashcards=[
-      {front:`What is the precise definition of ${T} and why is it defined this way?`,back:`${T} is defined as [its core domain and scope]. The definition specifies exactly what is and isn't included, distinguishing ${T} from related fields. Understanding WHY the definition takes this form — not just memorising it — is the first step to genuine mastery. The key terms in the definition each carry precise meanings that differ from everyday usage.`},
-      {front:`What are the 4–5 most fundamental principles of ${T}?`,back:`The foundational principles of ${T} are: (1) [First principle] — establishes the basic framework; (2) [Second principle] — governs core mechanisms; (3) [Third principle] — determines key relationships; (4) [Fourth principle] — defines limits and conditions; (5) [Fifth principle] — connects ${T} to broader context. Mastering all five gives you the complete framework for understanding everything else in ${T}.`},
-      {front:`Explain the primary mechanism of ${T} step by step.`,back:`The primary mechanism of ${T} operates as: Step 1 → initial conditions are identified and characterised. Step 2 → triggering event or input occurs. Step 3 → primary transformation begins following ${T} rules. Step 4 → intermediate stages form progressively. Step 5 → observable outcome emerges and can be measured. Understanding WHY each step follows the previous is what separates genuine understanding of ${T} from surface familiarity.`},
-    ];
-  }
-  if(tool==='quiz'||tool==='all'){
-    base.quiz_questions=[
-      {id:1,question:`Which statement BEST describes the central focus of ${T}?`,options:[`A systematic framework for understanding phenomena through evidence-based reasoning`,`A collection of memorised facts and definitions recalled on demand`,`A purely historical record with limited contemporary relevance`,`An intuitive skill developed only through professional experience`],correct_answer:`A systematic framework for understanding phenomena through evidence-based reasoning`,explanation:`${T} is fundamentally about systematic frameworks for reasoning — not fact collection. While some memorisation is necessary, the core is building the ability to reason about problems in this domain. This framework-building is what allows ${T} knowledge to transfer to new situations, which memorisation alone cannot achieve.`,difficulty:'easy'},
-      {id:2,question:`A student has re-read ${T} notes five times and feels confident. What does learning research predict?`,options:[`Excellent performance — thorough re-reading builds strong understanding`,`Potential underperformance — re-reading creates familiarity but not durable knowledge`,`Performance depends entirely on exam question difficulty`,`Strong performance if key passages were highlighted during re-reading`],correct_answer:`Potential underperformance — re-reading creates familiarity but not durable knowledge`,explanation:`Research consistently shows that re-reading ${T} material creates an "illusion of fluency" — material feels familiar, which feels like knowledge, but active retrieval (self-testing) dramatically outperforms re-reading for durable retention. When exam questions require applying ${T} to novel situations, familiarity alone fails.`,difficulty:'medium'},
-    ];
-  }
-  if(tool==='mindmap'||tool==='all'){
-    base.mindmap={
-      central:T.split(' ').slice(0,4).join(' ')||T,
-      branches:[
-        {name:'Core Concepts',color:'#00d4ff',items:[`Definition of ${T}`,`Foundational principles`,`Key terminology`,`Historical origins`,`Theoretical framework`]},
-        {name:'Mechanisms',color:'#bf00ff',items:[`Primary mechanism`,`Step-by-step process`,`Key variables`,`Feedback loops`,`Cause-effect chains`]},
-        {name:'Applications',color:'#00ff88',items:[`Professional practice`,`Healthcare uses`,`Technology applications`,`Business strategy`,`Policy implications`]},
-      ],
-      connections:[
-        {from:'Core Concepts',to:'Mechanisms',description:`Principles explain how ${T} mechanisms operate`},
-        {from:'Mechanisms',to:'Applications',description:`${T} mechanisms enable real-world use`},
-      ],
-    };
-  }
-
-  return base;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -851,13 +791,17 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if(Array.isArray(cardsRaw?.quiz_questions)&&cardsRaw.quiz_questions.length) merged.quiz_questions=cardsRaw.quiz_questions;
   if(cardsRaw?.mindmap?.branches?.length)                                 merged.mindmap=cardsRaw.mindmap;
 
+  // Safety net ONLY for notes/summary (flashcards/quiz/mindmap/all throw a real
+  // error on Phase 2 failure instead of reaching this point — see handler).
+  // This is intentionally labeled as generic rather than dressed up as specific
+  // AI-generated insight, since it isn't.
   if(!merged.key_concepts?.length){
     merged.key_concepts=[
-      `Core Principles: ${topic} rests on fundamental principles connecting theory to practice. Mastery requires understanding WHY not just WHAT.`,
-      `Key Mechanisms: Primary processes follow identifiable patterns that can be learned and applied systematically.`,
-      `Practical Transfer: ${topic} knowledge applies directly to healthcare, technology, business, and research contexts.`,
-      `Expert Thinking: Experts in ${topic} differ from beginners in pattern recognition, conditional reasoning, and metacognition.`,
-      `Learning Strategy: Active retrieval practice is 2-3× more effective than re-reading for mastering ${topic}.`,
+      `(Generic placeholder — AI key-concept generation was unavailable for this request) ${topic} rests on fundamental principles connecting theory to practice. Mastery requires understanding WHY, not just WHAT.`,
+      `(Generic placeholder) Primary processes in ${topic} follow identifiable patterns that can be learned and applied systematically.`,
+      `(Generic placeholder) ${topic} knowledge applies directly to healthcare, technology, business, and research contexts.`,
+      `(Generic placeholder) Experts in ${topic} differ from beginners in pattern recognition, conditional reasoning, and metacognition.`,
+      `(Generic placeholder) Active retrieval practice is more effective than re-reading for mastering ${topic}. Try regenerating for AI-written key concepts.`,
     ];
   }
   return merged;
@@ -1023,14 +967,17 @@ module.exports = async function handler(req, res) {
         p2ok=!cardsData?._fallback;
         log.ok(`[${reqId}] P2 done — fc:${cardsData?.flashcards?.length||0} q:${cardsData?.quiz_questions?.length||0} mm:${cardsData?.mindmap?.branches?.length||0}`);
       } catch(e2){
-        // Phase 2 failed — don't throw, return notes + empty cards so user still gets something
-        log.warn(`[${reqId}] P2 failed (non-fatal): ${e2.message}`);
+        log.warn(`[${reqId}] P2 failed: ${e2.message}`);
+        // For card-PRIMARY tools (flashcards/quiz/mindmap/all), the cards ARE the
+        // deliverable — notes succeeding doesn't matter, an empty tool is still a
+        // broken result for the user. Throw so they get a clear error and can retry,
+        // instead of silently rendering a blank flashcard/quiz/mindmap screen.
+        if (opts.tool === 'flashcards' || opts.tool === 'quiz' || opts.tool === 'mindmap' || opts.tool === 'all') {
+          throw new Error(`Could not generate ${opts.tool} content (all AI models failed). Please try again in a few seconds. Last error: ${e2.message}`);
+        }
+        // For notes/summary, cards are just enrichment — degrade gracefully instead of failing the whole request
         sse('stage',{idx:3,label:'⚠️ Cards partially unavailable — delivering notes…'});
         cardsData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null };
-        // For card-only tools, still surface notes — don't throw
-        if (opts.tool !== 'notes' && opts.tool !== 'summary' && !notes) {
-          throw new Error(`Could not generate ${opts.tool} content. Please try again.`);
-        }
       }
 
       // ── STREAM INDIVIDUAL CARDS LIVE (one-by-one with animation signals) ──
