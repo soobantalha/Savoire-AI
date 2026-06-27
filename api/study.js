@@ -53,19 +53,22 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // SECTION 2 — MODEL ROSTERS (FAST & RELIABLE)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Phase 1: Streaming markdown notes
-// Reduced to 3 fastest models with short timeouts (10-12s)
+// Phase 1: Streaming markdown notes — ONLY TRULY FREE MODELS (no cost ever)
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                         max_tokens: 5000, timeout_ms: 10000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',     max_tokens: 4500, timeout_ms: 12000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 12000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',          max_tokens: 4500, timeout_ms: 20000, temp: 0.75 },
+  { id: 'google/gemma-3-27b-it:free',                       max_tokens: 4500, timeout_ms: 20000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct:free',               max_tokens: 4000, timeout_ms: 18000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',          max_tokens: 4000, timeout_ms: 18000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1-0528:free',                   max_tokens: 4000, timeout_ms: 25000, temp: 0.70 },
 ];
 
-// Phase 2: Structured JSON — high accuracy needed
-// 2 models are enough (openrouter/free covers many backends)
+// Phase 2: Structured JSON — ONLY TRULY FREE MODELS
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                     max_tokens: 7000, timeout_ms: 12000, temp: 0.50 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free', max_tokens: 7000, timeout_ms: 14000, temp: 0.50 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',          max_tokens: 7000, timeout_ms: 25000, temp: 0.45 },
+  { id: 'google/gemma-3-27b-it:free',                       max_tokens: 7000, timeout_ms: 25000, temp: 0.45 },
+  { id: 'deepseek/deepseek-r1-0528:free',                   max_tokens: 7000, timeout_ms: 30000, temp: 0.40 },
+  { id: 'mistralai/mistral-7b-instruct:free',               max_tokens: 6000, timeout_ms: 22000, temp: 0.45 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',          max_tokens: 6000, timeout_ms: 22000, temp: 0.45 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -540,19 +543,27 @@ async function fetchCards(prompt, tool, topic) {
         });
       }
 
-      // Validate & normalize
+      // Validate & normalize — be very lenient for 'all' tool
       let ok=true;
-      // For 'all' we need all three; be lenient — accept if at least 1 section succeeded
       const isAll = tool === 'all';
       let allMissing = 0;
       if(isAll || tool==='flashcards'){
-        if(!Array.isArray(parsed.flashcards)||parsed.flashcards.length<3){log.warn(`${name}: fc=${parsed.flashcards?.length??0} insufficient`);if(isAll){allMissing++;parsed.flashcards=parsed.flashcards||[];}else ok=false;}
+        if(!Array.isArray(parsed.flashcards)||parsed.flashcards.length<2){
+          log.warn(`${name}: fc=${parsed.flashcards?.length??0} insufficient`);
+          if(isAll){allMissing++;parsed.flashcards=parsed.flashcards||[];}else ok=false;
+        }
       }
       if(isAll || tool==='quiz'){
-        if(!Array.isArray(parsed.quiz_questions)||parsed.quiz_questions.length<3){log.warn(`${name}: q=${parsed.quiz_questions?.length??0} insufficient`);if(isAll){allMissing++;parsed.quiz_questions=parsed.quiz_questions||[];}else ok=false;}
+        if(!Array.isArray(parsed.quiz_questions)||parsed.quiz_questions.length<2){
+          log.warn(`${name}: q=${parsed.quiz_questions?.length??0} insufficient`);
+          if(isAll){allMissing++;parsed.quiz_questions=parsed.quiz_questions||[];}else ok=false;
+        }
       }
       if(isAll || tool==='mindmap'){
-        if(!parsed.mindmap?.branches||parsed.mindmap.branches.length<2){log.warn(`${name}: mm branches=${parsed.mindmap?.branches?.length??0} insufficient`);if(isAll){allMissing++;}else ok=false;}
+        if(!parsed.mindmap?.branches||parsed.mindmap.branches.length<1){
+          log.warn(`${name}: mm branches=${parsed.mindmap?.branches?.length??0} insufficient`);
+          if(isAll){allMissing++;}else ok=false;
+        }
       }
 
       // For 'all': fail only if ALL three sections are missing; for single tools: must pass validation
@@ -917,7 +928,7 @@ module.exports = async function handler(req, res) {
         log.warn(`[${reqId}] P2 failed (non-fatal): ${e2.message}`);
         sse('stage',{idx:3,label:'⚠️ Cards partially unavailable — delivering notes…'});
         cardsData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null };
-        // For card-only tools (not notes/summary) where there are no notes context, throw
+        // For card-only tools, still surface notes — don't throw
         if (opts.tool !== 'notes' && opts.tool !== 'summary' && !notes) {
           throw new Error(`Could not generate ${opts.tool} content. Please try again.`);
         }

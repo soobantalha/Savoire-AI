@@ -1251,17 +1251,17 @@ Examples:
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 40) return;
+          if (now - renderThrottle < 16) return; // 60fps rendering
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
-            // For notes/summary tool: show formatted text
+            // For notes/summary tool: show formatted text with live animation
             if (tool === 'notes' || tool === 'summary') {
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
-              // For card tools: show notes during phase 1, show waiting message during phase 2 transition
+              // For card tools: show notes during phase 1
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
                 this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
                 this.el.sfpText.classList.add('live-md');
@@ -1917,13 +1917,13 @@ Examples:
 
   // ── FLASHCARD TOOL OUTPUT — ONLY FLASHCARDS, NO NOTES ──────────────────────
   _buildFcHTML(data) {
-    const cards = data.flashcards?.length ? data.flashcards
-      : (data.key_concepts || []).slice(0, 15).map(c => ({
-          front: c.split(':')[0]?.trim() || c.slice(0, 60),
-          back:  c,
-        }));
+    // Use flashcards from data (already merged with live cards in _streamSSE done handler)
+    // Also check app-level _liveCards as extra safety net
+    let cards = data.flashcards?.length ? data.flashcards : this._liveCards;
 
-    if (!cards.length) return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> No flashcards were generated. Please try again.</div>`;
+    if (!cards || !cards.length) {
+      return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> Flashcards are still loading or could not be generated. Please try again.</div>`;
+    }
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
@@ -2308,7 +2308,12 @@ Examples:
 
   // ── MINDMAP — ONLY MINDMAP OUTPUT ──────────────────────────────────────────
   _buildMindmapHTML(data) {
-    const mm    = data.mindmap;
+    // Use mindmap from data (already merged with live branches in _streamSSE done handler)
+    // Also check app-level _liveBranches as extra safety net
+    let mm = data.mindmap;
+    if (!mm?.branches?.length && this._liveBranches?.length) {
+      mm = { central: this._liveMMCentral || data.topic, branches: this._liveBranches, connections: this._liveMMConns || [] };
+    }
     const topic = data.topic || 'Topic';
 
     if (mm?.branches?.length) {
@@ -2391,6 +2396,13 @@ Examples:
 
   // ── MEGA BUNDLE — ALL 5 TOOLS ────────────────────────────────────────────────
   _buildAllHTML(data) {
+    // Safety net: merge any live-accumulated data not yet in data object
+    if (!data.flashcards?.length && this._liveCards?.length)    data.flashcards     = this._liveCards;
+    if (!data.quiz_questions?.length && this._liveQuestions?.length) data.quiz_questions = this._liveQuestions;
+    if (!data.mindmap?.branches?.length && this._liveBranches?.length) {
+      data.mindmap = { central: this._liveMMCentral || data.topic, branches: this._liveBranches, connections: this._liveMMConns || [] };
+    }
+
     const hasFlashcards = data.flashcards?.length > 0;
     const hasQuiz       = data.quiz_questions?.length > 0;
     const hasMindmap    = data.mindmap?.branches?.length > 0;
