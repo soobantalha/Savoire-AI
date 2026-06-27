@@ -478,7 +478,7 @@ async function streamNotes(prompt, onChunk, tool) {
         for(const line of lines){
           if(!line.startsWith('data: '))continue;
           const raw=line.slice(6).trim(); if(raw==='[DONE]'||!raw)continue;
-          try{ const delta=JSON.parse(raw)?.choices?.[0]?.delta?.content; if(delta){full+=delta;tokens++;onChunk(delta);} }catch{}
+          try{ const delta=JSON.parse(raw)?.choices?.[0]?.delta?.content; if(delta){full+=delta;tokens++;onChunk(delta);} } catch (_e) {}
         }
       }
       if(full.trim().length<150){log.warn(`${name}: too short (${full.length})`);continue;}
@@ -522,9 +522,9 @@ async function fetchCards(prompt, tool, topic) {
       // 4-step repair
       let parsed;
       try{parsed=JSON.parse(jsonStr);}
-      catch{try{parsed=JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1'));}
-      catch{try{parsed=JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3').replace(/:\s*'([^']*)'/g,': "$1"'));}
-      catch{try{parsed=JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g,' ').replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3'));}
+      catch(_e){try{parsed=JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1'));}
+      catch(_e){try{parsed=JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3').replace(/:\s*'([^']*)'/g,': "$1"'));}
+      catch(_e){try{parsed=JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g,' ').replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3'));}
       catch(e4){log.warn(`${name}: JSON repair failed — ${e4.message.slice(0,60)}`);continue;}}}}
 
       // Auto-fix quiz correct_answer mismatches
@@ -785,7 +785,7 @@ function makeSSE(res) {
     try{
       res.write(`event: ${event}\ndata: ${typeof data==='string'?data:JSON.stringify(data)}\n\n`);
       if(typeof res.flush==='function')res.flush();
-    }catch{}
+    } catch (_e) {}
   };
   return sse;
 }
@@ -869,7 +869,7 @@ module.exports = async function handler(req, res) {
     const kap=setInterval(()=>{
       if(res.writableEnded){clearInterval(kap);return;}
       try{res.write(`: ping ${Date.now()}\n\n`);if(typeof res.flush==='function')res.flush();}
-      catch{clearInterval(kap);}
+      catch(_e){clearInterval(kap);}
     },14000);
 
     // Stage timers (notes tools stream faster, cards tools need more time)
