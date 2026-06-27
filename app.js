@@ -1246,6 +1246,8 @@ Examples:
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let lineBuf = '', chars = 0, renderThrottle = 0;
+        let currentEvent = ''; // track SSE event type
+        let resolved = false;  // prevent double-resolve
 
         const renderLive = () => {
           const now = Date.now();
@@ -1259,7 +1261,7 @@ Examples:
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
-              // For card tools: only show notes during phase 1
+              // For card tools: show notes during phase 1, show waiting message during phase 2 transition
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
                 this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
                 this.el.sfpText.classList.add('live-md');
@@ -1269,6 +1271,26 @@ Examples:
             this.el.sfpText.textContent = this.streamBuffer;
           }
           if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+        };
+
+        // Show "building cards…" transition panel between notes phase and cards phase
+        const showPhase2Transition = (tool) => {
+          if (!this.el.sfpText) return;
+          if (this._liveCards.length > 0 || this._liveQuestions.length > 0 || this._liveBranches.length > 0) return;
+          const toolLabel = tool === 'flashcards' ? 'flashcards' : tool === 'quiz' ? 'quiz questions' : tool === 'mindmap' ? 'mind map branches' : 'study materials';
+          const toolColor = tool === 'flashcards' ? '#bf00ff' : tool === 'quiz' ? '#00ff88' : tool === 'mindmap' ? '#d4af37' : '#00d4ff';
+          this.el.sfpText.classList.remove('live-md');
+          this.el.sfpText.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;text-align:center;gap:16px">
+              <div style="width:52px;height:52px;border-radius:50%;background:${toolColor}18;border:2px solid ${toolColor}44;display:flex;align-items:center;justify-content:center;animation:pulse-glow 1.2s ease infinite alternate">
+                <div style="width:14px;height:14px;border-radius:50%;background:${toolColor};animation:scale-pulse .6s ease infinite alternate"></div>
+              </div>
+              <div>
+                <div style="font-size:1rem;font-weight:800;color:${toolColor};letter-spacing:.03em">AI is building your ${toolLabel}</div>
+                <div style="font-size:.78rem;color:rgba(255,255,255,.4);margin-top:6px">Notes complete ✓ — generating interactive content…</div>
+              </div>
+              <div class="live-dots" style="margin-top:4px"><span style="background:${toolColor}"></span><span style="background:${toolColor}"></span><span style="background:${toolColor}"></span></div>
+            </div>`;
         };
 
         const animateCard = (idx, total, card) => {
@@ -1296,64 +1318,129 @@ Examples:
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) { reject(new Error('Connection dropped. Please check your internet and try again.')); return; }
+              if (done) {
+                // Stream ended — if we already resolved via 'done' event, this is fine
+                if (!resolved) reject(new Error('Connection dropped. Please check your internet and try again.'));
+                return;
+              }
 
               lineBuf += decoder.decode(value, { stream: true });
               const lines = lineBuf.split('\n');
               lineBuf = lines.pop() || '';
 
               for (const line of lines) {
+                // Track SSE event type
+                if (line.startsWith('event: ')) {
+                  currentEvent = line.slice(7).trim();
+                  continue;
+                }
+                // Skip non-data lines (comments, blank lines)
                 if (!line.startsWith('data: ')) continue;
                 const raw = line.slice(6).trim();
+
+                // Handle 'done' event — this is the final complete data object
+                if (currentEvent === 'done') {
+                  currentEvent = '';
+                  try {
+                    const evt = JSON.parse(raw);
+                    if (!resolved) {
+                      resolved = true;
+                      if (this.el.sfpText) {
+                        this.el.sfpText.classList.remove('live-md');
+                        this.el.sfpText.classList.add('done');
+                      }
+                      // Merge live-streamed cards into final data
+                      if (this._liveCards.length)    evt.flashcards     = this._liveCards;
+                      if (this._liveQuestions.length) evt.quiz_questions = this._liveQuestions;
+                      if (this._liveBranches.length) {
+                        evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+                      }
+                      // Attach streamed notes buffer if not present
+                      if (!evt.ultra_long_notes && this.streamBuffer) {
+                        evt.ultra_long_notes = this.streamBuffer;
+                      }
+                      // Store live output for "view live output" feature
+                      evt._liveNotesBuffer = this.streamBuffer;
+                      resolve(evt);
+                    }
+                  } catch { /* ignore parse error on done */ }
+                  continue;
+                }
+
+                // Handle 'error' event
+                if (currentEvent === 'error') {
+                  currentEvent = '';
+                  try {
+                    const evt = JSON.parse(raw);
+                    if (!resolved) { resolved = true; reject(new Error(evt.message || 'AI generation failed. Please try again.')); }
+                  } catch { if (!resolved) { resolved = true; reject(new Error('AI generation failed. Please try again.')); } }
+                  return;
+                }
+
+                // Reset event type for next event
+                const evtType = currentEvent;
+                currentEvent = '';
+
                 try {
                   const evt = JSON.parse(raw);
 
-                  if (evt.t !== undefined) {
-                    this.streamBuffer += evt.t;
-                    chars += evt.t.length;
-                    renderLive();
-                    this._updateStageByProgress(chars);
-
-                  } else if (evt.card !== undefined) {
-                    animateCard(evt.idx, evt.total, evt.card);
-
-                  } else if (evt.q !== undefined) {
-                    animateQuestion(evt.idx, evt.total, evt.q);
-
-                  } else if (evt.branch !== undefined) {
-                    animateBranch(evt.idx, evt.total, evt.branch);
-
-                  } else if (evt.idx !== undefined && evt.label !== undefined) {
-                    this._activateStage(evt.idx);
-                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-
-                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
-                    if (this.el.sfpText) {
-                      this.el.sfpText.classList.remove('live-md');
-                      this.el.sfpText.classList.add('done');
+                  // 'token' event — streaming notes text
+                  if (evtType === 'token' || evt.t !== undefined) {
+                    if (evt.t !== undefined) {
+                      this.streamBuffer += evt.t;
+                      chars += evt.t.length;
+                      renderLive();
+                      this._updateStageByProgress(chars);
                     }
-                    // Merge live-streamed cards
-                    if (this._liveCards.length)     evt.flashcards     = this._liveCards;
-                    if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
-                    if (this._liveBranches.length) {
-                      evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
-                    }
-                    // Attach the streamed notes buffer
-                    if (!evt.ultra_long_notes && this.streamBuffer) {
-                      evt.ultra_long_notes = this.streamBuffer;
-                    }
-                    resolve(evt);
-                    return;
 
-                  } else if (evt.error !== undefined) {
-                    reject(new Error(evt.error));
-                    return;
+                  // 'card' event — one flashcard streamed
+                  } else if (evtType === 'card' || evt.card !== undefined) {
+                    if (evt.card !== undefined) animateCard(evt.idx, evt.total, evt.card);
+
+                  // 'question' event — one quiz question
+                  } else if (evtType === 'question' || evt.q !== undefined) {
+                    if (evt.q !== undefined) animateQuestion(evt.idx, evt.total, evt.q);
+
+                  // 'branch' event — one mindmap branch
+                  } else if (evtType === 'branch' || evt.branch !== undefined) {
+                    if (evt.branch !== undefined) animateBranch(evt.idx, evt.total, evt.branch);
+
+                  // 'stage' event — progress update
+                  } else if (evtType === 'stage' || (evt.idx !== undefined && evt.label !== undefined)) {
+                    if (evt.idx !== undefined) this._activateStage(evt.idx);
+                    if (evt.label && this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+                    // If stage 3 fires and we have notes but no cards yet, show transition panel
+                    if (evt.idx >= 3 && this.streamBuffer && opts.tool !== 'notes' && opts.tool !== 'summary') {
+                      showPhase2Transition(opts.tool || 'all');
+                    }
+
+                  // 'heartbeat' / 'fact' events — ignore
+                  } else if (evtType === 'heartbeat' || evtType === 'fact') {
+                    // no-op
+
+                  // Fallback: check for final data object (older protocol compatibility)
+                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt.flashcards !== undefined) {
+                    if (!resolved) {
+                      resolved = true;
+                      if (this.el.sfpText) {
+                        this.el.sfpText.classList.remove('live-md');
+                        this.el.sfpText.classList.add('done');
+                      }
+                      if (this._liveCards.length)    evt.flashcards     = this._liveCards;
+                      if (this._liveQuestions.length) evt.quiz_questions = this._liveQuestions;
+                      if (this._liveBranches.length) {
+                        evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+                      }
+                      if (!evt.ultra_long_notes && this.streamBuffer) evt.ultra_long_notes = this.streamBuffer;
+                      evt._liveNotesBuffer = this.streamBuffer;
+                      resolve(evt);
+                    }
                   }
-                } catch { /* ignore bad SSE */ }
+                } catch { /* ignore bad SSE data */ }
               }
             }
           } catch (pumpErr) {
-            reject(pumpErr);
+            if (!resolved) reject(pumpErr);
           }
         };
 
@@ -1740,6 +1827,12 @@ Examples:
       default:           body = this._buildNotesHTML(data);   break;
     }
 
+    const liveOutputBtn = data._liveNotesBuffer
+      ? `<button class="exp-btn live-out" onclick="window._app._toggleLiveOutput()" id="liveOutBtn" title="View live streaming notes">
+           <i class="fas fa-stream"></i><span>Live Notes</span>
+         </button>`
+      : '';
+
     const exportBar = `
       <div class="export-bar">
         <button class="exp-btn pdf" onclick="window._app._downloadPDF()">
@@ -1754,10 +1847,19 @@ Examples:
         <button class="exp-btn share" onclick="window._app._shareResult()">
           <i class="fas fa-share-alt"></i><span>Share</span>
         </button>
+        ${liveOutputBtn}
         <button class="exp-btn new" onclick="window._app._openWizard()" style="color:#bf00ff;border-color:rgba(191,0,255,.3)">
           <i class="fas fa-magic"></i><span>New</span>
         </button>
         <span class="exp-brand">${SAVOIRÉ.BRAND}</span>
+      </div>
+      <div id="liveOutputPanel" style="display:none;margin:0 0 24px;border:1px solid rgba(0,212,255,.2);border-radius:16px;overflow:hidden">
+        <div style="background:rgba(0,212,255,.08);padding:10px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(0,212,255,.15)">
+          <i class="fas fa-stream" style="color:#00d4ff"></i>
+          <span style="font-weight:700;color:#00d4ff;font-size:.85rem">Live Streaming Notes — Raw Output</span>
+          <button onclick="window._app._toggleLiveOutput()" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:1rem"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="liveOutputContent" class="md-content" style="padding:20px;max-height:480px;overflow-y:auto;font-size:.85rem;line-height:1.7"></div>
       </div>`;
 
     const footer = `
@@ -2120,7 +2222,24 @@ Examples:
       </div>`;
   }
 
-  _quizToggleReview() {
+  _toggleLiveOutput() {
+    const panel = this._el('liveOutputPanel');
+    const btn   = this._el('liveOutBtn');
+    if (!panel) return;
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    if (isHidden && btn) btn.style.borderColor = 'rgba(0,212,255,.4)';
+    if (!isHidden && btn) btn.style.borderColor = '';
+    if (isHidden) {
+      const content = this._el('liveOutputContent');
+      if (content && this.currentData?._liveNotesBuffer) {
+        content.innerHTML = this._renderMd(this.currentData._liveNotesBuffer);
+      }
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+
     const rs = this._el('quizReviewSection') || this.el.quizReviewSection;
     const rl = this._el('quizReviewToggleLabel') || this.el.quizReviewToggleLabel;
     if (!rs) return;

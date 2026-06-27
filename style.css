@@ -9453,3 +9453,113 @@ input::placeholder, textarea::placeholder {
   50%  { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
   100% { filter: brightness(1); }
 }
+
+/* ── MISSING ANIMATIONS FOR LIVE OUTPUT ───────────────────────────────────── */
+
+@keyframes scale-pulse {
+  0%   { transform: scale(0.8); }
+  100% { transform: scale(1.2); }
+}
+
+@keyframes pulse-glow {
+  0%   { box-shadow: 0 0 0 0 rgba(0,212,255,.4); opacity: .8; }
+  100% { box-shadow: 0 0 0 12px rgba(0,212,255,0); opacity: 1; }
+}
+
+/* ── LIVE OUTPUT PANEL ─────────────────────────────────────────────────────── */
+.exp-btn.live-out {
+  color: #00d4ff;
+  border-color: rgba(0,212,255,.2);
+}
+.exp-btn.live-out:hover {
+  background: rgba(0,212,255,.1);
+  border-color: rgba(0,212,255,.4);
+}
+
+#liveOutputPanel {
+  animation: fadeIn .3s ease;
+}
+
+/* ── PHASE2 TRANSITION ANIMATIONS ──────────────────────────────────────────── */
+.phase2-transition {
+  animation: fadeIn .4s ease;
+}
+
+/* ── ENSURE LIVE CARD/QUIZ/MINDMAP ARE FAST & ANIMATED ────────────────────── */
+.live-card-item {
+  animation: slideInUp .2s ease;
+  background: rgba(191,0,255,.04);
+  border-radius: 8px;
+  padding: 8px 10px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.live-quiz-item {
+  animation: slideInUp .25s ease;
+  background: rgba(0,255,136,.03);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.live-mm-branch {
+  animation: slideInUp .25s ease;
+  background: rgba(212,175,55,.03);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+/* ── LIVE QUIZ DIFFICULTY BADGES ───────────────────────────────────────────── */
+.live-diff-easy   { background: rgba(0,255,136,.15); color: #00ff88; padding: 1px 6px; border-radius: 8px; font-weight: 700; }
+.live-diff-medium { background: rgba(255,174,0,.15);  color: #ffae00; padding: 1px 6px; border-radius: 8px; font-weight: 700; }
+.live-diff-hard   { background: rgba(255,68,68,.15);  color: #ff4444; padding: 1px 6px; border-radius: 8px; font-weight: 700; }
+
+/* ── LIVE CORRECT ANSWER HIGHLIGHT ─────────────────────────────────────────── */
+.live-quiz-correct {
+  background: rgba(0,255,136,.12) !important;
+  border-left-color: #00ff88 !important;
+  font-weight: 700;
+}
+
+/* ── LIVE CARDS PROG BAR ────────────────────────────────────────────────────── */
+.live-cards-prog-bar {
+  background: rgba(255,255,255,.06);
+  border-radius: 4px;
+  overflow: hidden;
+  flex: 1;
+  min-width: 80px;
+}
+
+/* ── DECK VIZ ────────────────────────────────────────────────────────────────── */
+.deck-viz-wrap {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+.deck-card-viz {
+  position: absolute;
+  width: 44px;
+  height: 60px;
+  border: 2px solid rgba(191,0,255,.35);
+  border-radius: 8px;
+  background: rgba(191,0,255,.06);
+  left: 50%;
+  top: 50%;
+  transform-origin: center;
+  transition: all .2s ease;
+}
+.deck-count-badge {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: #bf00ff;
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 10px;
+  z-index: 10;
+  box-shadow: 0 0 8px rgba(191,0,255,.5);
+}
+
+/* ── FAST FINAL RENDER ─────────────────────────────────────────────────────── */
+.result-wrap {
+  animation: fadeIn .35s ease;
+}

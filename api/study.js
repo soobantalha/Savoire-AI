@@ -542,19 +542,22 @@ async function fetchCards(prompt, tool, topic) {
 
       // Validate & normalize
       let ok=true;
-      // For 'all' we need all three
+      // For 'all' we need all three; be lenient — accept if at least 1 section succeeded
       const isAll = tool === 'all';
+      let allMissing = 0;
       if(isAll || tool==='flashcards'){
-        if(!Array.isArray(parsed.flashcards)||parsed.flashcards.length<3){log.warn(`${name}: fc=${parsed.flashcards?.length??0} insufficient`);ok=false;}
+        if(!Array.isArray(parsed.flashcards)||parsed.flashcards.length<3){log.warn(`${name}: fc=${parsed.flashcards?.length??0} insufficient`);if(isAll){allMissing++;parsed.flashcards=parsed.flashcards||[];}else ok=false;}
       }
       if(isAll || tool==='quiz'){
-        if(!Array.isArray(parsed.quiz_questions)||parsed.quiz_questions.length<3){log.warn(`${name}: q=${parsed.quiz_questions?.length??0} insufficient`);ok=false;}
+        if(!Array.isArray(parsed.quiz_questions)||parsed.quiz_questions.length<3){log.warn(`${name}: q=${parsed.quiz_questions?.length??0} insufficient`);if(isAll){allMissing++;parsed.quiz_questions=parsed.quiz_questions||[];}else ok=false;}
       }
       if(isAll || tool==='mindmap'){
-        if(!parsed.mindmap?.branches||parsed.mindmap.branches.length<2){log.warn(`${name}: mm branches=${parsed.mindmap?.branches?.length??0} insufficient`);ok=false;}
+        if(!parsed.mindmap?.branches||parsed.mindmap.branches.length<2){log.warn(`${name}: mm branches=${parsed.mindmap?.branches?.length??0} insufficient`);if(isAll){allMissing++;}else ok=false;}
       }
 
-      if(!ok && tool!=='all'){log.warn(`${name}: validation failed — trying next`);continue;}
+      // For 'all': fail only if ALL three sections are missing; for single tools: must pass validation
+      if(isAll && allMissing>=3){log.warn(`${name}: all sections failed for 'all' tool`);continue;}
+      if(!isAll && !ok){log.warn(`${name}: validation failed — trying next`);continue;}
 
       // Normalize card formats
       if(Array.isArray(parsed.flashcards)){
@@ -910,10 +913,14 @@ module.exports = async function handler(req, res) {
         p2ok=!cardsData?._fallback;
         log.ok(`[${reqId}] P2 done — fc:${cardsData?.flashcards?.length||0} q:${cardsData?.quiz_questions?.length||0} mm:${cardsData?.mindmap?.branches?.length||0}`);
       } catch(e2){
-        // Phase 2 cards failed — do NOT use generic fallback content
-        log.error(`[${reqId}] P2 failed: ${e2.message}`);
-        // Re-throw so user sees a real error, not generic placeholder cards
-        throw new Error(`Could not generate ${opts.tool} content. Please try again.`);
+        // Phase 2 failed — don't throw, return notes + empty cards so user still gets something
+        log.warn(`[${reqId}] P2 failed (non-fatal): ${e2.message}`);
+        sse('stage',{idx:3,label:'⚠️ Cards partially unavailable — delivering notes…'});
+        cardsData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null };
+        // For card-only tools (not notes/summary) where there are no notes context, throw
+        if (opts.tool !== 'notes' && opts.tool !== 'summary' && !notes) {
+          throw new Error(`Could not generate ${opts.tool} content. Please try again.`);
+        }
       }
 
       // ── STREAM INDIVIDUAL CARDS LIVE (one-by-one with animation signals) ──
