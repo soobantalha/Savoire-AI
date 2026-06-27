@@ -35,7 +35,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
-  BRAND:     'Savoiré AI v2.0',
+  BRAND:     'Savoiré AI ',
   DEVELOPER: 'Sooban Talha Technologies',
   DEVSITE:   'soobantalhatech.xyz',
   WEBSITE:   'savoireai.vercel.app',
@@ -56,7 +56,7 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // Phase 1: Streaming markdown notes — PROVEN FREE MODELS ON OPENROUTER
 // These are consistently available as :free tier — no cost, no auth issues
 const MODELS_STREAM = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
+  { id: 'nvidia/llama-nemotron-rerank-vl-1b-v2:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
   { id: 'meta-llama/llama-3.1-8b-instruct:free',               max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
   { id: 'mistralai/mistral-7b-instruct:free',                   max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
   { id: 'qwen/qwen-2.5-72b-instruct:free',                     max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
@@ -68,7 +68,7 @@ const MODELS_STREAM = [
 
 // Phase 2: Structured JSON — PROVEN FREE MODELS
 const MODELS_CARDS = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
+  { id: 'nvidia/llama-nemotron-rerank-vl-1b-v2:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
   { id: 'qwen/qwen-2.5-72b-instruct:free',                     max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
   { id: 'meta-llama/llama-3.1-8b-instruct:free',               max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
   { id: 'mistralai/mistral-7b-instruct:free',                   max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
