@@ -355,7 +355,7 @@ class SavoireApp {
 
   _loadStreak() {
     try { const s = localStorage.getItem('sv_streak'); if (s) return JSON.parse(s); }
-    catch {}
+    catch (_e) {}
     return { count: 0, lastDate: null, bestStreak: 0 };
   }
 
@@ -363,7 +363,7 @@ class SavoireApp {
 
   _loadNum(key, def) {
     try { const v = localStorage.getItem(key); return v ? parseInt(v, 10) : def; }
-    catch { return def; }
+    catch (_e) { return def; }
   }
 
   _checkStreak() {
@@ -531,8 +531,8 @@ class SavoireApp {
   _el(id)   { return document.getElementById(id); }
   _qs(sel)  { return document.querySelector(sel); }
   _qsa(sel) { return document.querySelectorAll(sel); }
-  _load(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; } }
-  _save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+  _load(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch (_e) { return def; } }
+  _save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (_e) {} }
   _genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
   _wordCount(text) { return text?.trim().split(/\s+/).filter(Boolean).length || 0; }
   _esc(s) {
@@ -657,7 +657,7 @@ class SavoireApp {
         body: `New Savoiré AI user: ${name} — ${new Date().toISOString()}`,
         headers: { 'Title': 'Savoiré AI New User', 'Priority': '3' },
       }).catch(() => {});
-    } catch {}
+    } catch (_e) {}
 
     this._dismissOverlay('welcomeOverlay');
     this._updateUserUI();
@@ -1267,7 +1267,7 @@ Examples:
                 this.el.sfpText.classList.add('live-md');
               }
             }
-          } catch {
+          } catch (_e) {
             this.el.sfpText.textContent = this.streamBuffer;
           }
           if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
@@ -1363,7 +1363,7 @@ Examples:
                       evt._liveNotesBuffer = this.streamBuffer;
                       resolve(evt);
                     }
-                  } catch { /* ignore parse error on done */ }
+                  } catch (_e) { /* ignore parse error on done */ }
                   continue;
                 }
 
@@ -1373,7 +1373,7 @@ Examples:
                   try {
                     const evt = JSON.parse(raw);
                     if (!resolved) { resolved = true; reject(new Error(evt.message || 'AI generation failed. Please try again.')); }
-                  } catch { if (!resolved) { resolved = true; reject(new Error('AI generation failed. Please try again.')); } }
+                  } catch (_e) { if (!resolved) { resolved = true; reject(new Error('AI generation failed. Please try again.')); } }
                   return;
                 }
 
@@ -1436,7 +1436,7 @@ Examples:
                       resolve(evt);
                     }
                   }
-                } catch { /* ignore bad SSE data */ }
+                } catch (_e) { /* ignore bad SSE data */ }
               }
             }
           } catch (pumpErr) {
@@ -2239,7 +2239,7 @@ Examples:
     }
   }
 
-
+  _quizToggleReview() {
     const rs = this._el('quizReviewSection') || this.el.quizReviewSection;
     const rl = this._el('quizReviewToggleLabel') || this.el.quizReviewToggleLabel;
     if (!rs) return;
@@ -2846,10 +2846,10 @@ Examples:
         data.mindmap.branches.forEach(b=>{
           ck(24);
           const bRGB=b.color?b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)):[0,170,220];
-          try{setBG(bRGB);}catch{setBG(C.blue);}
+          try{setBG(bRGB);} catch (_e) {setBG(C.blue);}
           doc.rect(ML,Y,3,9,'F');
           setBG(C.card); doc.roundedRect(ML+4,Y,CW-4,9,1.5,1.5,'F');
-          try{setFG(bRGB);}catch{setFG(C.blue);}
+          try{setFG(bRGB);} catch (_e) {setFG(C.blue);}
           doc.setFontSize(9); doc.setFont('helvetica','bold');
           doc.text(`▸ ${b.name}`,ML+8,Y+6.2); Y+=12;
           (b.items||[]).slice(0,6).forEach(item=>{
@@ -3210,7 +3210,7 @@ Examples:
         this._updateUserUI();
         this._toast('success', 'fa-check', 'Backup restored! Reloading…');
         setTimeout(() => location.reload(), 1600);
-      } catch { this._toast('error', 'fa-times', 'Invalid backup file.'); }
+      } catch (_e) { this._toast('error', 'fa-times', 'Invalid backup file.'); }
     };
     r.readAsText(file);
   }
