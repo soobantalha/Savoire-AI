@@ -1461,6 +1461,7 @@ Examples:
     this.generating    = true;
     this.streamBuffer  = '';
     this.tool          = tool || 'notes';
+    this._lastRequest  = { text, lang, depth, style, tool: this.tool }; // for one-click retry on error
 
     // Reset live accumulators
     this._liveCards     = [];
@@ -1502,6 +1503,14 @@ Examples:
       this.generating = false;
       this._stopStages();
     }
+  }
+
+  _retryLastRequest() {
+    if (this.generating) return;
+    const r = this._lastRequest;
+    if (!r || !r.text) { this._openWizard(); return; }
+    this._checkStreak();
+    this._sendDirect(r.text, r.lang, r.depth, r.style, r.tool);
   }
 
   _friendlyError(msg) {
@@ -1655,6 +1664,28 @@ Examples:
                 // Skip non-data lines (comments, blank lines)
                 if (!line.startsWith('data: ')) continue;
                 const raw = line.slice(6).trim();
+
+                // Handle 'reset' event — backend aborted a degenerating model
+                // mid-stream and is retrying with a different one. Clear the
+                // live buffer so garbage tokens already shown don't linger
+                // mixed in with the next (hopefully good) model's output.
+                if (currentEvent === 'reset') {
+                  currentEvent = '';
+                  try {
+                    const evt = JSON.parse(raw);
+                    this.streamBuffer = '';
+                    chars = 0;
+                    if (this.el.sfpText) {
+                      this.el.sfpText.classList.remove('live-md');
+                      this.el.sfpText.innerHTML = `
+                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;text-align:center;gap:16px">
+                          <div class="live-dots"><span></span><span></span><span></span></div>
+                          <div style="font-size:.9rem;color:rgba(255,255,255,.5)">${this._esc(evt.label || 'Switching to a different AI model…')}</div>
+                        </div>`;
+                    }
+                  } catch (_e) {}
+                  continue;
+                }
 
                 // Handle 'done' event — this is the final complete data object
                 if (currentEvent === 'done') {
@@ -2066,7 +2097,10 @@ Examples:
                 This usually resolves itself in a few seconds — please try again!
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
-                <button class="btn btn-primary" onclick="window._app._openWizard()">
+                <button class="btn btn-primary" onclick="window._app._retryLastRequest()">
+                  <i class="fas fa-redo"></i> Retry Same Request
+                </button>
+                <button class="btn btn-outline" onclick="window._app._openWizard()">
                   <i class="fas fa-magic"></i> Try Again with Wizard
                 </button>
                 <button class="btn btn-gold" onclick="window._app._openMega()">

@@ -59,31 +59,31 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // that used to live here (mistral-7b-instruct:free as primary, phi-3-mini-128k-instruct:free,
 // qwen-2.5-72b-instruct:free, deepseek-chat-v3-0324:free, deepseek-r1t-chimera:free)
 // are confirmed stale/unreliable as of mid-2026.
-// 'openrouter/free' goes FIRST here — for free-form streamed text (no JSON needed),
-// letting OpenRouter's own self-updating free-router pick whatever is actually live
-// right now is the most resilient option. Named models below are backups.
+// IMPORTANT: 'openrouter/free' is LAST, not first. It randomly picks ANY available
+// free model — including very weak/small ones — which caused visible repetition-
+// collapse garbage output ("Mastery achieved. Conclusion concludes...") in testing.
+// Named, known-decent models go first; openrouter/free is only the final safety net.
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                                     max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3.1:free',                    max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
-  { id: 'google/gemma-3-12b-it:free',                          max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'qwen/qwen3-235b-a22b:free',                           max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct:free',                  max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 4000, timeout_ms: 25000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',                    max_tokens: 4000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'google/gemma-3-12b-it:free',                          max_tokens: 3500, timeout_ms: 25000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'qwen/qwen3-235b-a22b:free',                           max_tokens: 4000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'mistralai/mistral-7b-instruct:free',                  max_tokens: 4000, timeout_ms: 25000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'openrouter/free',                                     max_tokens: 4000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
 ];
 
 // Phase 2: Structured JSON — FREE MODELS
-// Named models go FIRST here on purpose: Phase 2 needs reliable JSON-mode compliance,
-// and 'openrouter/free' picks a random underlying model each call, which is a gamble
-// for structured output. It's kept as the LAST-resort fallback instead of the first pick.
+// 'openrouter/free' stays last here too — same reasoning, plus JSON-mode compliance
+// is also a gamble with a randomly-picked model.
 const MODELS_CARDS = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
-  { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
-  { id: 'deepseek/deepseek-chat-v3.1:free',                    max_tokens: 7000, timeout_ms: 35000, temp: 0.40 },
-  { id: 'qwen/qwen3-235b-a22b:free',                           max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
-  { id: 'google/gemma-3-12b-it:free',                          max_tokens: 5000, timeout_ms: 28000, temp: 0.45 },
-  { id: 'mistralai/mistral-7b-instruct:free',                  max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
-  { id: 'openrouter/free',                                     max_tokens: 6000, timeout_ms: 35000, temp: 0.45 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.4, freq_pen: 0.2 },
+  { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 6000, timeout_ms: 28000, temp: 0.4, freq_pen: 0.2 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',                    max_tokens: 7000, timeout_ms: 35000, temp: 0.4, freq_pen: 0.2 },
+  { id: 'qwen/qwen3-235b-a22b:free',                           max_tokens: 7000, timeout_ms: 35000, temp: 0.4, freq_pen: 0.2 },
+  { id: 'google/gemma-3-12b-it:free',                          max_tokens: 5000, timeout_ms: 28000, temp: 0.4, freq_pen: 0.2 },
+  { id: 'mistralai/mistral-7b-instruct:free',                  max_tokens: 6000, timeout_ms: 28000, temp: 0.4, freq_pen: 0.2 },
+  { id: 'openrouter/free',                                     max_tokens: 6000, timeout_ms: 35000, temp: 0.4, freq_pen: 0.2 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -128,6 +128,51 @@ function getISTDateTime() {
 }
 
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 4.1 — DEGENERATE OUTPUT DETECTION
+// Weak or overloaded free models can collapse into a wall of short, uniform
+// declarative sentences ("Mastery achieved. Conclusion concludes properly.
+// All covered thoroughly...") instead of real content. This is syntactically
+// valid prose — it passes every markdown/JSON check — but it's useless filler.
+// Detected via THREE independent signals, flagged only when 2+ agree (keeps
+// false positives low on legitimately concise/punchy real content):
+//   1. Average sentence length — collapse produces very short sentences (<6.5 words avg)
+//   2. Sentence-length uniformity — collapse clusters tightly around one short length
+//   3. Trigram repetition — collapse reuses the same 3-word sequences constantly
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isDegenerateText(text) {
+  const clean = String(text || '').trim();
+  if (clean.length < 400) return false; // too short to judge reliably either way
+
+  const sentences = clean.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+  if (sentences.length < 10) return false; // too few sentences to judge reliably
+
+  const words = clean.toLowerCase().match(/[a-z']+/g) || [];
+  if (words.length < 60) return false;
+
+  const avgWordsPerSentence = words.length / sentences.length;
+
+  const trigrams = [];
+  for (let i = 0; i < words.length - 2; i++) trigrams.push(words[i] + ' ' + words[i + 1] + ' ' + words[i + 2]);
+  const trigramCounts = {};
+  for (const t of trigrams) trigramCounts[t] = (trigramCounts[t] || 0) + 1;
+  const repeatedTrigramOccurrences = Object.values(trigramCounts).filter(c => c > 1).reduce((a, c) => a + c, 0);
+  const trigramRepeatRatio = trigrams.length ? repeatedTrigramOccurrences / trigrams.length : 0;
+
+  const lens = sentences.map(s => (s.match(/[a-zA-Z']+/g) || []).length);
+  const meanLen = lens.reduce((a, l) => a + l, 0) / lens.length;
+  const variance = lens.reduce((a, l) => a + (l - meanLen) ** 2, 0) / lens.length;
+  const stdDev = Math.sqrt(variance);
+
+  const veryShortAvg   = avgWordsPerSentence < 6.5;
+  const highTrigramRep = trigramRepeatRatio > 0.35;
+  const lowVariance     = stdDev < 2.2 && meanLen < 8;
+
+  const signalCount = [veryShortAvg, highTrigramRep, lowVariance].filter(Boolean).length;
+  return signalCount >= 2;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 5 — GOOGLE SHEETS — TRACKS EVERY VISIT & TOOL USE
@@ -470,7 +515,7 @@ ${toolBlock}
 // SECTION 8 — PHASE 1: STREAM NOTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function streamNotes(prompt, onChunk, tool) {
+async function streamNotes(prompt, onChunk, tool, onReset) {
   let lastErr = 'No models responded';
   let attemptedModels = 0;
   for (const model of MODELS_STREAM) {
@@ -490,11 +535,13 @@ async function streamNotes(prompt, onChunk, tool) {
           'X-Title':       APP_TITLE,
         },
         body: JSON.stringify({
-          model:       model.id,
-          max_tokens:  model.max_tokens,
-          temperature: model.temp || 0.75,
-          stream:      true,
-          messages:    [{ role: 'user', content: prompt }],
+          model:             model.id,
+          max_tokens:        model.max_tokens,
+          temperature:       model.temp || 0.75,
+          frequency_penalty: model.freq_pen ?? 0.3,
+          presence_penalty:  0.2,
+          stream:            true,
+          messages:          [{ role: 'user', content: prompt }],
         }),
         signal: ctrl.signal,
       });
@@ -513,6 +560,7 @@ async function streamNotes(prompt, onChunk, tool) {
       const reader  = res.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let lineBuf = '', full = '', tokens = 0;
+      let degenerateCheckDone = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -528,10 +576,38 @@ async function streamNotes(prompt, onChunk, tool) {
             if (delta) { full += delta; tokens++; onChunk(delta); }
           } catch (_e) {}
         }
+        // ── EARLY REPETITION-COLLAPSE GUARD ─────────────────────────────────
+        // Weak/overloaded free models sometimes degenerate into short repeated
+        // declarative sentences ("X achieved. Y completed. Z finalized...") for
+        // thousands of words. Streaming means the user already SEES whatever we
+        // send via onChunk — so we check as soon as we have ~600 chars (before
+        // too much garbage has reached the screen) and abort this model's
+        // stream immediately if it's degenerating, falling through to the next
+        // model. We don't keep re-checking every chunk after that — one check
+        // early is enough to catch it before it spirals further.
+        if (!degenerateCheckDone && full.length > 600) {
+          degenerateCheckDone = true;
+          if (isDegenerateText(full)) {
+            log.warn(`${model.id}: repetition-collapse detected early (${full.length}ch) — aborting stream, trying next model`);
+            try { reader.cancel(); } catch (_e) {}
+            lastErr = `${name}: degenerate/repetitive output`;
+            if (typeof onReset === 'function') onReset(); // tell frontend to clear its garbage-filled live buffer
+            full = '__DEGENERATE__'; // sentinel so the post-loop check below also rejects this
+            break;
+          }
+        }
       }
+      if (full === '__DEGENERATE__') continue;
       if (full.trim().length < 100) {
         log.warn(`${model.id}: response too short (${full.length} chars) — trying next`);
         lastErr = `${name}: response too short`;
+        continue;
+      }
+      // Backstop check in case collapse started after the early-check point
+      if (isDegenerateText(full)) {
+        log.warn(`${model.id}: repetition-collapse detected on full output (${full.length}ch) — trying next model`);
+        lastErr = `${name}: degenerate/repetitive output`;
+        if (typeof onReset === 'function') onReset();
         continue;
       }
       log.ok(`P1 OK — ${model.id} | ${tokens} tokens | ${full.length}ch | ${Date.now()-t0}ms`);
@@ -569,11 +645,13 @@ async function fetchCards(prompt, tool, topic) {
           'X-Title':       APP_TITLE,
         },
         body: JSON.stringify({
-          model:       model.id,
-          max_tokens:  model.max_tokens,
-          temperature: model.temp || 0.50,
-          stream:      false,
-          messages:    [{ role: 'user', content: prompt }],
+          model:             model.id,
+          max_tokens:        model.max_tokens,
+          temperature:       model.temp || 0.50,
+          frequency_penalty: model.freq_pen ?? 0.2,
+          presence_penalty:  0.1,
+          stream:            false,
+          messages:          [{ role: 'user', content: prompt }],
         }),
         signal: ctrl.signal,
       });
@@ -620,6 +698,23 @@ async function fetchCards(prompt, tool, topic) {
       if (placeholderHits >= 2) {
         log.warn(`${model.id}: ${placeholderHits} literal placeholder brackets detected — rejecting response`);
         lastErr = `${name}: returned template placeholders instead of real content`;
+        continue;
+      }
+
+      // Same repetition-collapse check used in Phase 1 — applied to the
+      // long-form text fields (key_concepts, key_tricks, practice_questions,
+      // applications, misconceptions) where a weak model could similarly
+      // degenerate into repeated stock phrases instead of real content.
+      const longTextBlob = [
+        ...(parsed.key_concepts || []),
+        ...(parsed.key_tricks || []),
+        ...(parsed.real_world_applications || []),
+        ...(parsed.common_misconceptions || []),
+        ...((parsed.practice_questions || []).map(q => `${q.question || ''} ${q.answer || ''}`)),
+      ].join(' ');
+      if (longTextBlob.length > 400 && isDegenerateText(longTextBlob)) {
+        log.warn(`${model.id}: repetition-collapse detected in structured content — rejecting response`);
+        lastErr = `${name}: degenerate/repetitive structured content`;
         continue;
       }
 
@@ -940,7 +1035,12 @@ module.exports = async function handler(req, res) {
       // ── PHASE 1: Stream notes (ALL tools get notes first) ─────────────────
       const notesPrompt=buildNotesPrompt(message,opts);
       try {
-        notes=await streamNotes(notesPrompt,c=>sse('token',{t:c}),opts.tool);
+        notes=await streamNotes(
+          notesPrompt,
+          c=>sse('token',{t:c}),
+          opts.tool,
+          () => sse('reset', {reason:'degenerate_output', label:'⚠️ Switching to a different AI model…'})
+        );
         p1ok=true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } catch(e1){
