@@ -49,7 +49,35 @@ const SAVOIRÉ = {
   MAX_HISTORY: 60,
   MAX_SAVED:   120,
   NTFY:        'savoireai_new_users',
+  // OpenRouter direct-call config (key loaded from backend at startup)
+  OR_BASE:     'https://openrouter.ai/api/v1/chat/completions',
+  OR_KEY:      '', // filled at runtime from /api/study GET
 };
+
+// ── FREE MODEL ROSTERS — called directly from browser, no Vercel timeout ────
+// Phase 1: Streaming notes — fastest free models first
+const MODELS_STREAM = [
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 55000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',     max_tokens: 4000, timeout_ms: 45000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct:free',         max_tokens: 4000, timeout_ms: 45000, temp: 0.75 },
+  { id: 'qwen/qwen-2.5-72b-instruct:free',           max_tokens: 4000, timeout_ms: 55000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 55000, temp: 0.75 },
+  { id: 'google/gemma-3-12b-it:free',                max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
+  { id: 'nousresearch/hermes-3-llama-3.1-8b:free',   max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
+];
+
+// Phase 2: JSON cards — models that follow JSON instructions well
+const MODELS_CARDS = [
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 60000, temp: 0.45 },
+  { id: 'qwen/qwen-2.5-72b-instruct:free',           max_tokens: 7000, timeout_ms: 60000, temp: 0.45 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 60000, temp: 0.40 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',     max_tokens: 6000, timeout_ms: 50000, temp: 0.45 },
+  { id: 'mistralai/mistral-7b-instruct:free',         max_tokens: 6000, timeout_ms: 50000, temp: 0.45 },
+  { id: 'google/gemma-3-12b-it:free',                max_tokens: 5000, timeout_ms: 50000, temp: 0.45 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 50000, temp: 0.45 },
+  { id: 'nousresearch/hermes-3-llama-3.1-8b:free',   max_tokens: 5000, timeout_ms: 50000, temp: 0.45 },
+];
 
 const TOOL_CONFIG = {
   notes: {
@@ -112,6 +140,296 @@ const STAGE_MESSAGES = [
   '✨ Generating cards and data…',
   '✅ Finalising — almost ready!',
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BROWSER-SIDE AI ENGINE — Calls OpenRouter directly, no Vercel timeout!
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AI = {
+  // ── Config ────────────────────────────────────────────────────────────────
+  DEPTH_MAP: {
+    standard:      { wordRange: '600–900 words',   maxTokens: 2800 },
+    detailed:      { wordRange: '1000–1500 words', maxTokens: 3800 },
+    comprehensive: { wordRange: '1500–2200 words', maxTokens: 5000 },
+    expert:        { wordRange: '2200–3500 words', maxTokens: 6500 },
+  },
+  STYLE_MAP: {
+    simple:   'Write in clear, beginner-friendly language. Short sentences. Everyday analogies. Define all jargon immediately.',
+    academic: 'Write in formal academic language. Precise scholarly terminology. Objective, third-person tone.',
+    detailed: 'Maximum exhaustive detail. Numerous specific examples. Thorough step-by-step explanations.',
+    exam:     'Exam-focused. Mark-scheme phrasing. Highlight must-know points. Flag common mistakes. Include exam tips.',
+    visual:   'Vivid analogies and metaphors for everything. Mental models. Spatial descriptions. Make abstract concrete.',
+  },
+
+  // ── Prompt builders ────────────────────────────────────────────────────────
+  buildNotesPrompt(input, opts) {
+    const depth = this.DEPTH_MAP[opts.depth] || this.DEPTH_MAP.detailed;
+    const style = this.STYLE_MAP[opts.style] || this.STYLE_MAP.simple;
+    const lang  = opts.language || 'English';
+    const tool  = opts.tool || 'notes';
+    const sectionMap = {
+      notes:      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Summary & Key Takeaways',
+      flashcards: '## 📖 Overview\n\n## 🎯 Core Concepts (Q&A pairs)\n\n## ⚙️ Mechanisms\n\n## 💡 Examples\n\n## 🎯 Quick Summary',
+      quiz:       '## 📚 Topic Introduction\n\n## ✏️ Core Concepts\n\n## ⚙️ Mechanisms\n\n## 📝 Exam Questions & Answers\n\n## 🎯 Must-Remember Points',
+      summary:    '## 🚀 TL;DR (3–5 sentences)\n\n## 🎯 Core Concepts\n\n## ⚙️ Key Mechanisms\n\n## ✅ Revision Checklist',
+      mindmap:    '## 🧠 Central Topic\n\n## 🌿 Branch 1: Foundations\n\n## 🌿 Branch 2: Mechanisms\n\n## 🌿 Branch 3: Examples\n\n## 🌿 Branch 4: Applications\n\n## 🔗 Key Connections',
+      all:        '## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ Mechanisms\n\n## 💡 Examples\n\n## 🚀 Advanced\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Checklist',
+    };
+    return `You are ${SAVOIRÉ.BRAND}, the world's best AI study assistant.
+TOPIC: "${input}"
+LANGUAGE: ${lang} — write EVERY word in ${lang}
+LENGTH: ${depth.wordRange}
+STYLE: ${style}
+
+STRUCTURE — use exactly these headings:
+${sectionMap[tool] || sectionMap.notes}
+
+FORMATTING: ## headings, **bold** key terms, - bullets, > definitions, --- between sections
+Write in ${lang} only. Start immediately with the first ## heading.`;
+  },
+
+  buildCardsPrompt(input, opts) {
+    const lang = opts.language || 'English';
+    const tool = opts.tool || 'notes';
+    const T    = String(input).slice(0, 120);
+    const isAll = tool === 'all', includeFc = isAll || tool === 'flashcards';
+    const includeQ = isAll || tool === 'quiz', includeMm = isAll || tool === 'mindmap';
+
+    let block = '';
+    if (includeFc) block += `\nGenerate 15 FLASHCARDS about "${T}". Each: "front" (specific question, 10-40 words in ${lang}), "back" (detailed answer 60-150 words in ${lang} with example).`;
+    if (includeQ)  block += `\nGenerate 10 QUIZ QUESTIONS about "${T}". Each: "question", "options" (4 strings), "correct_answer" (EXACT MATCH to one option), "explanation" (50-100 words), "difficulty" (easy/medium/hard).`;
+    if (includeMm) block += `\nGenerate MINDMAP about "${T}": "central" (3-6 word topic essence), "branches" (5-7 objects with "name","color","items":[5 specific facts]), "connections" (3 objects with "from","to","description").`;
+
+    return `You are ${SAVOIRÉ.BRAND}. Generate JSON about: "${input}"
+Language: ${lang} (ALL text in ${lang})
+${block}
+
+Also generate:
+- "key_concepts": 6 strings (50-80 words each, specific to topic)
+- "key_tricks": 4 strings (memory aids, 70-100 words each)
+- "practice_questions": 3 objects with "question" and "answer" (150+ words)
+- "real_world_applications": 5 strings (60-80 words each)
+- "common_misconceptions": 4 strings starting with "❌ MYTH:" then "✅ TRUTH:"
+
+OUTPUT ONLY VALID JSON. Start with {. End with }. No markdown fences.
+{
+  "topic": "clean title",
+  "curriculum_alignment": "e.g. A-Level, University, Grade 11",
+  "study_score": 97,
+  ${includeFc ? '"flashcards": [{"front":"...","back":"..."}],' : '"flashcards": [],'}
+  ${includeQ  ? '"quiz_questions": [{"question":"...","options":["A","B","C","D"],"correct_answer":"A","explanation":"...","difficulty":"medium"}],' : '"quiz_questions": [],'}
+  ${includeMm ? '"mindmap": {"central":"...","branches":[{"name":"...","color":"#00d4ff","items":["...","...","...","...","..."]}],"connections":[{"from":"...","to":"...","description":"..."}]},' : '"mindmap": null,'}
+  "key_concepts": ["..."],
+  "key_tricks": ["..."],
+  "practice_questions": [{"question":"...","answer":"..."}],
+  "real_world_applications": ["..."],
+  "common_misconceptions": ["..."]
+}`;
+  },
+
+  // ── Stream notes from OpenRouter directly in browser ──────────────────────
+  async streamNotes(prompt, onChunk, abortSignal) {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let lastErr = 'No models tried';
+    for (const model of MODELS_STREAM) {
+      const name = model.id.split('/').pop().replace(':free','');
+      const ctrl = new AbortController();
+      // Combine external abort with model timeout
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      if (abortSignal) abortSignal.addEventListener('abort', () => ctrl.abort());
+      const t0 = Date.now();
+      try {
+        console.log(`[AI] P1 streaming → ${model.id}`);
+        const res = await fetch(SAVOIRÉ.OR_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${SAVOIRÉ.OR_KEY}`,
+            'HTTP-Referer':  `https://${SAVOIRÉ.WEBSITE}`,
+            'X-Title':       SAVOIRÉ.BRAND,
+          },
+          body: JSON.stringify({
+            model:       model.id,
+            max_tokens:  model.max_tokens,
+            temperature: model.temp || 0.75,
+            stream:      true,
+            messages:    [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          console.warn(`[AI] P1 HTTP ${res.status} ${model.id}: ${errText.slice(0,150)}`);
+          if (res.status === 401) throw new Error(`OpenRouter API key rejected (401). Please check your OPENROUTER_API_KEY in Vercel.`);
+          if (res.status === 402) { console.warn(`[AI] ${model.id}: credits required — skip`); continue; }
+          if (res.status === 403 || res.status === 404) { console.warn(`[AI] ${model.id}: ${res.status} — skip`); continue; }
+          if (res.status === 429) { await sleep(2000); continue; }
+          await sleep(500); continue;
+        }
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '', full = '', tokens = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n'); buf = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]' || !raw) continue;
+            try {
+              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+              if (delta) { full += delta; tokens++; onChunk(delta); }
+            } catch (_e) {}
+          }
+        }
+        if (full.trim().length < 80) { console.warn(`[AI] ${model.id}: too short (${full.length}ch)`); lastErr = `${name}: response too short`; continue; }
+        console.log(`[AI] P1 OK — ${model.id} | ${tokens} tokens | ${full.length}ch | ${Date.now()-t0}ms`);
+        return full;
+      } catch (err) {
+        clearTimeout(timer);
+        lastErr = err.name === 'AbortError' ? `${name}: timed out` : `${name}: ${err.message}`;
+        console.warn(`[AI] P1 fail — ${lastErr}`);
+        if (err.message?.includes('401') || err.message?.includes('API key')) throw err;
+        if (abortSignal?.aborted) throw new Error('Cancelled');
+      }
+    }
+    throw new Error(`All AI models failed. Last error: ${lastErr}`);
+  },
+
+  // ── Fetch structured JSON cards from OpenRouter ───────────────────────────
+  async fetchCards(prompt, tool, abortSignal) {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    let lastErr = 'No models tried';
+    for (const model of MODELS_CARDS) {
+      const name = model.id.split('/').pop().replace(':free','');
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      if (abortSignal) abortSignal.addEventListener('abort', () => ctrl.abort());
+      const t0 = Date.now();
+      try {
+        console.log(`[AI] P2 cards → ${model.id}`);
+        const res = await fetch(SAVOIRÉ.OR_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${SAVOIRÉ.OR_KEY}`,
+            'HTTP-Referer':  `https://${SAVOIRÉ.WEBSITE}`,
+            'X-Title':       SAVOIRÉ.BRAND,
+          },
+          body: JSON.stringify({
+            model:       model.id,
+            max_tokens:  model.max_tokens,
+            temperature: model.temp || 0.45,
+            stream:      false,
+            messages:    [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
+        clearTimeout(timer);
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          console.warn(`[AI] P2 HTTP ${res.status} ${model.id}: ${errText.slice(0,150)}`);
+          if (res.status === 401) throw new Error(`OpenRouter API key rejected (401).`);
+          if (res.status === 402 || res.status === 403 || res.status === 404) { console.warn(`[AI] skip ${res.status}`); continue; }
+          if (res.status === 429) { await sleep(2000); continue; }
+          await sleep(500); continue;
+        }
+        const data    = await res.json();
+        let content   = data?.choices?.[0]?.message?.content?.trim() || '';
+        if (!content || content.length < 20) { lastErr = `${name}: empty`; continue; }
+
+        // Strip thinking tags (DeepSeek-R1 etc), code fences
+        content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+
+        // Extract JSON
+        const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+        if (jS === -1 || jE <= jS) { lastErr = `${name}: no JSON`; console.warn(`[AI] P2 no JSON from ${model.id}`); continue; }
+        let jsonStr = content.slice(jS, jE + 1);
+
+        // 4-step repair
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); }
+        catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1')); }
+        catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3')); }
+        catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g,' ').replace(/,(\s*[}\]])/g,'$1')); }
+        catch (e4) { lastErr = `${name}: JSON parse failed`; console.warn(`[AI] P2 JSON repair failed ${model.id}:`, e4.message.slice(0,80)); continue; }}}}
+
+        // Auto-fix quiz correct_answer
+        if (Array.isArray(parsed.quiz_questions)) {
+          parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+            if (!q.options || !q.correct_answer) return { ...q, id: i+1 };
+            if (!q.options.includes(q.correct_answer)) {
+              const low = q.correct_answer.toLowerCase();
+              const fix = q.options.find(o => o.toLowerCase() === low)
+                || q.options.find(o => o.toLowerCase().includes(low) || low.includes(o.toLowerCase()))
+                || q.options[0];
+              if (fix) return { ...q, correct_answer: fix, id: i+1 };
+            }
+            return { ...q, id: i+1 };
+          });
+        }
+
+        // Validate — lenient
+        const isAll = tool === 'all'; let ok = true, missing = 0;
+        if (isAll || tool==='flashcards') { if (!Array.isArray(parsed.flashcards) || parsed.flashcards.length < 2) { if(isAll){missing++;parsed.flashcards=parsed.flashcards||[];}else ok=false; } }
+        if (isAll || tool==='quiz')       { if (!Array.isArray(parsed.quiz_questions) || parsed.quiz_questions.length < 2) { if(isAll){missing++;parsed.quiz_questions=parsed.quiz_questions||[];}else ok=false; } }
+        if (isAll || tool==='mindmap')    { if (!parsed.mindmap?.branches?.length) { if(isAll){missing++;}else ok=false; } }
+        if (isAll && missing >= 3) { lastErr = `${name}: all sections empty`; continue; }
+        if (!isAll && !ok) { lastErr = `${name}: validation failed`; console.warn(`[AI] P2 validation fail ${model.id}`); continue; }
+
+        // Normalize flashcards
+        if (Array.isArray(parsed.flashcards)) {
+          parsed.flashcards = parsed.flashcards
+            .filter(c => (c.front || c.question) && (c.back || c.answer))
+            .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+        }
+
+        console.log(`[AI] P2 OK — ${model.id} | fc:${parsed.flashcards?.length||0} | q:${parsed.quiz_questions?.length||0} | mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+        return parsed;
+      } catch (err) {
+        clearTimeout(timer);
+        lastErr = err.name === 'AbortError' ? `${name}: timed out` : `${name}: ${err.message}`;
+        console.warn(`[AI] P2 fail — ${lastErr}`);
+        if (err.message?.includes('401') || err.message?.includes('API key')) throw err;
+        if (abortSignal?.aborted) throw new Error('Cancelled');
+      }
+    }
+    throw new Error(`Cards generation failed. Last: ${lastErr}`);
+  },
+
+  // ── Merge cards + notes into final data object ────────────────────────────
+  merge(cardsRaw, notes, topic, opts) {
+    const isFallback = !!cardsRaw?._fallback;
+    const merged = {
+      topic:                   topic || cardsRaw?.topic || 'Study Material',
+      curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
+      ultra_long_notes:        notes,
+      key_concepts:            cardsRaw?.key_concepts || [],
+      key_tricks:              cardsRaw?.key_tricks || [],
+      practice_questions:      cardsRaw?.practice_questions || [],
+      real_world_applications: cardsRaw?.real_world_applications || [],
+      common_misconceptions:   cardsRaw?.common_misconceptions || [],
+      study_score:             cardsRaw?.study_score || 95,
+      generated_at:            new Date().toLocaleString(),
+      _version:                SAVOIRÉ.VERSION,
+      _tool:                   opts.tool,
+      _language:               opts.language || 'English',
+      _depth:                  opts.depth || 'detailed',
+      _style:                  opts.style || 'simple',
+      _quality:                isFallback ? 'enhanced_fallback' : 'ai_generated',
+      _fallback:               isFallback,
+      powered_by:              `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
+    };
+    if (Array.isArray(cardsRaw?.flashcards) && cardsRaw.flashcards.length)    merged.flashcards     = cardsRaw.flashcards;
+    if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
+    if (cardsRaw?.mindmap?.branches?.length)                                   merged.mindmap        = cardsRaw.mindmap;
+    return merged;
+  },
+}; // end AI engine
 
 // Emoji avatars for user profile display
 const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','🎯','📚','🌈','🏆','💡','🎨','🌙','⭐'];
@@ -1188,17 +1506,10 @@ Examples:
 
   _friendlyError(msg) {
     if (!msg) return 'Savoiré AI study tool is momentarily unavailable. Please try again.';
-    if (msg.includes('API key') || msg.includes('OPENROUTER_API_KEY'))
-      return '🔑 API Key Issue: ' + msg;
-    if (msg.includes('timeout') || msg.includes('timed out'))
-      return '⏱️ The AI took too long — please try again in a moment.';
-    if (msg.includes('All') && msg.includes('models failed'))
-      return '🤖 ' + msg;
-    if (msg.includes('busy') || msg.includes('models'))
-      return '🔄 Savoiré AI is momentarily busy. Please try again in a few seconds.';
-    if (msg.includes('fetch') || msg.includes('network'))
-      return '🌐 Network issue detected. Please check your connection and try again.';
-    if (msg.length > 20 && msg.length < 300) return msg; // show real error if informative
+    if (msg.includes('401') || msg.includes('API key'))      return 'Savoiré AI is experiencing a service issue. Please try again later.';
+    if (msg.includes('timeout') || msg.includes('timed out')) return 'The AI took too long — please try again in a moment.';
+    if (msg.includes('busy') || msg.includes('models'))       return 'Savoiré AI study tool is momentarily busy. Please try again in a few seconds.';
+    if (msg.includes('fetch') || msg.includes('network'))     return 'Network issue detected. Please check your connection and try again.';
     return 'Savoiré AI study tool is momentarily unavailable. Please try again in a few seconds.';
   }
 
@@ -1258,17 +1569,17 @@ Examples:
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 16) return; // 60fps rendering
+          if (now - renderThrottle < 40) return;
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
-            // For notes/summary tool: show formatted text with live animation
+            // For notes/summary tool: show formatted text
             if (tool === 'notes' || tool === 'summary') {
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
-              // For card tools: show notes during phase 1
+              // For card tools: show notes during phase 1, show waiting message during phase 2 transition
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
                 this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
                 this.el.sfpText.classList.add('live-md');
@@ -1748,25 +2059,19 @@ Examples:
           this.el.resultArea.style.display = 'block';
           this.el.resultArea.innerHTML = `
             <div class="error-card">
-              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Generation Failed</div>
+              <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                <strong>Quick fixes to try:</strong><br>
-                1. Wait 5–10 seconds and try again — free AI models are occasionally busy<br>
-                2. Try a shorter or different topic<br>
-                3. Check your Vercel logs for the exact error (it's logged server-side)<br>
-                4. Visit <a href="/api/study?debug=1" target="_blank" style="color:#00d4ff">/api/study?debug=1</a> to check your API key setup
+                AI models are occasionally busy when many students study simultaneously.
+                This usually resolves itself in a few seconds — please try again!
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
                 <button class="btn btn-primary" onclick="window._app._openWizard()">
-                  <i class="fas fa-redo"></i> Try Again
+                  <i class="fas fa-magic"></i> Try Again with Wizard
                 </button>
                 <button class="btn btn-gold" onclick="window._app._openMega()">
                   <i class="fas fa-bolt"></i> Try Mega Bundle
                 </button>
-                <a class="btn" href="/api/study?debug=1" target="_blank" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);padding:10px 20px;border-radius:12px;text-decoration:none;font-size:.85rem">
-                  <i class="fas fa-bug"></i> Debug Info
-                </a>
               </div>
             </div>`;
         }
@@ -1930,13 +2235,13 @@ Examples:
 
   // ── FLASHCARD TOOL OUTPUT — ONLY FLASHCARDS, NO NOTES ──────────────────────
   _buildFcHTML(data) {
-    // Use flashcards from data (already merged with live cards in _streamSSE done handler)
-    // Also check app-level _liveCards as extra safety net
-    let cards = data.flashcards?.length ? data.flashcards : this._liveCards;
+    const cards = data.flashcards?.length ? data.flashcards
+      : (data.key_concepts || []).slice(0, 15).map(c => ({
+          front: c.split(':')[0]?.trim() || c.slice(0, 60),
+          back:  c,
+        }));
 
-    if (!cards || !cards.length) {
-      return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> Flashcards are still loading or could not be generated. Please try again.</div>`;
-    }
+    if (!cards.length) return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> No flashcards were generated. Please try again.</div>`;
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
@@ -2321,12 +2626,7 @@ Examples:
 
   // ── MINDMAP — ONLY MINDMAP OUTPUT ──────────────────────────────────────────
   _buildMindmapHTML(data) {
-    // Use mindmap from data (already merged with live branches in _streamSSE done handler)
-    // Also check app-level _liveBranches as extra safety net
-    let mm = data.mindmap;
-    if (!mm?.branches?.length && this._liveBranches?.length) {
-      mm = { central: this._liveMMCentral || data.topic, branches: this._liveBranches, connections: this._liveMMConns || [] };
-    }
+    const mm    = data.mindmap;
     const topic = data.topic || 'Topic';
 
     if (mm?.branches?.length) {
@@ -2409,13 +2709,6 @@ Examples:
 
   // ── MEGA BUNDLE — ALL 5 TOOLS ────────────────────────────────────────────────
   _buildAllHTML(data) {
-    // Safety net: merge any live-accumulated data not yet in data object
-    if (!data.flashcards?.length && this._liveCards?.length)    data.flashcards     = this._liveCards;
-    if (!data.quiz_questions?.length && this._liveQuestions?.length) data.quiz_questions = this._liveQuestions;
-    if (!data.mindmap?.branches?.length && this._liveBranches?.length) {
-      data.mindmap = { central: this._liveMMCentral || data.topic, branches: this._liveBranches, connections: this._liveMMConns || [] };
-    }
-
     const hasFlashcards = data.flashcards?.length > 0;
     const hasQuiz       = data.quiz_questions?.length > 0;
     const hasMindmap    = data.mindmap?.branches?.length > 0;
