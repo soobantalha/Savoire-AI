@@ -53,29 +53,34 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // SECTION 2 — MODEL ROSTERS (FAST & RELIABLE)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Phase 1: Streaming markdown notes — PROVEN FREE MODELS ON OPENROUTER
-// These are consistently available as :free tier — no cost, no auth issues
+// Phase 1: Streaming markdown notes — FREE MODELS ON OPENROUTER
+// NOTE (updated): OpenRouter's free-tier roster rotates constantly — models get
+// renamed, rate-limited upstream, or pulled entirely without notice. Several IDs
+// that used to live here (mistral-7b-instruct:free as primary, phi-3-mini-128k-instruct:free,
+// qwen-2.5-72b-instruct:free, deepseek-chat-v3-0324:free, deepseek-r1t-chimera:free)
+// are confirmed stale/unreliable as of mid-2026. The list below uses currently-live
+// IDs, and — critically — ends with 'openrouter/free', OpenRouter's own self-updating
+// free-router that picks from whatever free models are actually up right now. That
+// last entry is what keeps this list from going stale again the same way.
 const MODELS_STREAM = [
-  { id: 'nvidia/llama-nemotron-rerank-vl-1b-v2:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',               max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct:free',                   max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
-  { id: 'qwen/qwen-2.5-72b-instruct:free',                     max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
+  { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',                    max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
   { id: 'google/gemma-3-12b-it:free',                          max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',             max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',                 max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
-  { id: 'tngtech/deepseek-r1t-chimera:free',                   max_tokens: 4000, timeout_ms: 30000, temp: 0.70 },
+  { id: 'qwen/qwen3-235b-a22b:free',                           max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct:free',                  max_tokens: 4000, timeout_ms: 25000, temp: 0.75 },
+  { id: 'openrouter/free',                                     max_tokens: 4000, timeout_ms: 30000, temp: 0.75 },
 ];
 
-// Phase 2: Structured JSON — PROVEN FREE MODELS
+// Phase 2: Structured JSON — FREE MODELS (same staleness note as above)
 const MODELS_CARDS = [
-  { id: 'nvidia/llama-nemotron-rerank-vl-1b-v2:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
-  { id: 'qwen/qwen-2.5-72b-instruct:free',                     max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',               max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
-  { id: 'mistralai/mistral-7b-instruct:free',                   max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',                 max_tokens: 7000, timeout_ms: 35000, temp: 0.40 },
-  { id: 'tngtech/deepseek-r1t-chimera:free',                   max_tokens: 7000, timeout_ms: 35000, temp: 0.40 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',              max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
+  { id: 'meta-llama/llama-4-scout:free',                       max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',                    max_tokens: 7000, timeout_ms: 35000, temp: 0.40 },
+  { id: 'qwen/qwen3-235b-a22b:free',                           max_tokens: 7000, timeout_ms: 35000, temp: 0.45 },
   { id: 'google/gemma-3-12b-it:free',                          max_tokens: 5000, timeout_ms: 28000, temp: 0.45 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',             max_tokens: 5000, timeout_ms: 28000, temp: 0.45 },
+  { id: 'mistralai/mistral-7b-instruct:free',                  max_tokens: 6000, timeout_ms: 28000, temp: 0.45 },
+  { id: 'openrouter/free',                                     max_tokens: 6000, timeout_ms: 35000, temp: 0.45 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -498,8 +503,8 @@ async function streamNotes(prompt, onChunk, tool) {
         if (res.status === 402) { log.warn(`${model.id}: payment required — skipping`); continue; }
         if (res.status === 403) { log.warn(`${model.id}: access denied — skipping`); continue; }
         if (res.status === 404) { log.warn(`${model.id}: model not found — skipping`); continue; }
-        if (res.status === 429) { await sleep(1200); continue; }
-        if (res.status >= 500)  { await sleep(500); continue; }
+        if (res.status === 429) { log.warn(`${model.id}: rate-limited — skipping to next model`); continue; }
+        if (res.status >= 500)  { log.warn(`${model.id}: server error ${res.status} — skipping to next model`); continue; }
         continue;
       }
       const reader  = res.body.getReader();
@@ -577,8 +582,8 @@ async function fetchCards(prompt, tool, topic) {
         if (res.status === 402) { continue; }
         if (res.status === 403) { continue; }
         if (res.status === 404) { log.warn(`${model.id}: not found — skip`); continue; }
-        if (res.status === 429) { await sleep(1200); continue; }
-        if (res.status >= 500)  { await sleep(500); continue; }
+        if (res.status === 429) { log.warn(`${model.id}: rate-limited — skipping to next model`); continue; }
+        if (res.status >= 500)  { log.warn(`${model.id}: server error ${res.status} — skipping to next model`); continue; }
         continue;
       }
       const data = await res.json();
