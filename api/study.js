@@ -34,12 +34,12 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  { id: 'openrouter/auto', max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
+  { id: 'openrouter/free', max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
 ];
 
 // ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'openrouter/auto', max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'openrouter/free', max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
 ];
 
 
