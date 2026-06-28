@@ -31,28 +31,29 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // Specific models as fallbacks. Timeouts generous for free tier (slow cold starts).
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1-0528:free',            max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'google/gemma-3-27b-it:free',                max_tokens: 3500, timeout_ms: 90000, temp: 0.75 },
-  { id: 'microsoft/phi-4-reasoning-plus:free',       max_tokens: 3500, timeout_ms: 90000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct:free',        max_tokens: 3000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'qwen/qwen3-8b:free',                        max_tokens: 3000, timeout_ms: 90000, temp: 0.75 },
-];
-
+  // Fastest, best quality free models
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
+  { id: 'google/gemini-flash-1.5-8b:free',           max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-32b-instruct:free',            max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
+  // ✅ Guaranteed to work (auto-selection, free only if no credits)
+ 
+]
+// ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
 const MODELS_CARDS = [
-  
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1-0528:free',            max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
-  { id: 'google/gemma-3-27b-it:free',                max_tokens: 5000, timeout_ms: 90000, temp: 0.30 },
-  { id: 'microsoft/phi-4-reasoning-plus:free',       max_tokens: 5000, timeout_ms: 90000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct:free',        max_tokens: 4000, timeout_ms: 90000, temp: 0.30 },
-  { id: 'qwen/qwen3-8b:free',                        max_tokens: 4000, timeout_ms: 90000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 6000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 7500, timeout_ms: 120000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
