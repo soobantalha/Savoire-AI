@@ -32,7 +32,7 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MODELS_STREAM = [
-  { id: 'openrouter/auto',                            max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
+  
   { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
   { id: 'deepseek/deepseek-r1-0528:free',            max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
   { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
@@ -44,7 +44,7 @@ const MODELS_STREAM = [
 ];
 
 const MODELS_CARDS = [
-  { id: 'openrouter/auto',                            max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
+  
   { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
   { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
   { id: 'deepseek/deepseek-r1-0528:free',            max_tokens: 6000, timeout_ms: 90000, temp: 0.30 },
