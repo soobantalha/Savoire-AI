@@ -9454,231 +9454,62 @@ input::placeholder, textarea::placeholder {
   100% { filter: brightness(1); }
 }
 
-/* ── MISSING ANIMATIONS FOR LIVE OUTPUT ───────────────────────────────────── */
-
-@keyframes scale-pulse {
-  0%   { transform: scale(0.8); }
-  100% { transform: scale(1.2); }
+/* ── FAST LIVE CARD ANIMATIONS v2.1 ── */
+.live-card-new {
+  animation: liveCardPop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) both !important;
+}
+@keyframes liveCardPop {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.97); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes pulse-glow {
-  0%   { box-shadow: 0 0 0 0 rgba(0,212,255,.4); opacity: .8; }
-  100% { box-shadow: 0 0 0 12px rgba(0,212,255,0); opacity: 1; }
+/* ── LIVE QUIZ QUESTION FAST ENTRY ── */
+.live-quiz-item.live-card-new {
+  animation: liveQuizPop 0.15s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+@keyframes liveQuizPop {
+  0%   { opacity: 0; transform: translateX(-6px); border-left-color: transparent; }
+  100% { opacity: 1; transform: translateX(0);   border-left-color: #00ff88; }
 }
 
-/* ── LIVE OUTPUT PANEL ─────────────────────────────────────────────────────── */
-.exp-btn.live-out {
-  color: #00d4ff;
-  border-color: rgba(0,212,255,.2);
+/* ── LIVE MINDMAP BRANCH ENTRY ── */
+.live-mm-branch.live-card-new {
+  animation: liveBranchSlide 0.18s ease-out both !important;
 }
-.exp-btn.live-out:hover {
-  background: rgba(0,212,255,.1);
-  border-color: rgba(0,212,255,.4);
-}
-
-#liveOutputPanel {
-  animation: fadeIn .3s ease;
+@keyframes liveBranchSlide {
+  0%   { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: translateX(0); }
 }
 
-/* ── PHASE2 TRANSITION ANIMATIONS ──────────────────────────────────────────── */
-.phase2-transition {
-  animation: fadeIn .4s ease;
-}
-
-/* ── ENSURE LIVE CARD/QUIZ/MINDMAP ARE FAST & ANIMATED ────────────────────── */
-.live-card-item {
-  animation: slideInUp .2s ease;
-  background: rgba(191,0,255,.04);
-  border-radius: 8px;
-  padding: 8px 10px;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.live-quiz-item {
-  animation: slideInUp .25s ease;
-  background: rgba(0,255,136,.03);
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-.live-mm-branch {
-  animation: slideInUp .25s ease;
-  background: rgba(212,175,55,.03);
-  border-radius: 8px;
-  padding: 8px 12px;
-}
-
-/* ── LIVE QUIZ DIFFICULTY BADGES ───────────────────────────────────────────── */
-.live-diff-easy   { background: rgba(0,255,136,.15); color: #00ff88; padding: 1px 6px; border-radius: 8px; font-weight: 700; }
-.live-diff-medium { background: rgba(255,174,0,.15);  color: #ffae00; padding: 1px 6px; border-radius: 8px; font-weight: 700; }
-.live-diff-hard   { background: rgba(255,68,68,.15);  color: #ff4444; padding: 1px 6px; border-radius: 8px; font-weight: 700; }
-
-/* ── LIVE CORRECT ANSWER HIGHLIGHT ─────────────────────────────────────────── */
-.live-quiz-correct {
-  background: rgba(0,255,136,.12) !important;
-  border-left-color: #00ff88 !important;
-  font-weight: 700;
-}
-
-/* ── LIVE CARDS PROG BAR ────────────────────────────────────────────────────── */
-.live-cards-prog-bar {
-  background: rgba(255,255,255,.06);
-  border-radius: 4px;
-  overflow: hidden;
-  flex: 1;
-  min-width: 80px;
-}
-
-/* ── DECK VIZ ────────────────────────────────────────────────────────────────── */
-.deck-viz-wrap {
-  position: relative;
-  width: 60px;
-  height: 60px;
-}
-.deck-card-viz {
-  position: absolute;
-  width: 44px;
-  height: 60px;
-  border: 2px solid rgba(191,0,255,.35);
-  border-radius: 8px;
-  background: rgba(191,0,255,.06);
-  left: 50%;
-  top: 50%;
-  transform-origin: center;
-  transition: all .2s ease;
-}
-.deck-count-badge {
-  position: absolute;
-  bottom: -8px;
-  right: -8px;
-  background: #bf00ff;
-  color: #fff;
-  font-size: .65rem;
-  font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 10px;
-  z-index: 10;
-  box-shadow: 0 0 8px rgba(191,0,255,.5);
-}
-
-/* ── FAST FINAL RENDER ─────────────────────────────────────────────────────── */
-.result-wrap {
-  animation: fadeIn .35s ease;
-}
-/* ── ENHANCED LIVE STREAM ANIMATIONS ─────────────────────────────────────── */
-/* Smooth token-by-token text appearing animation */
-.sfp-text.live-md {
-  animation: none;
-}
-.sfp-text.live-md p:last-child,
-.sfp-text.live-md li:last-child,
-.sfp-text.live-md h1:last-child,
-.sfp-text.live-md h2:last-child,
-.sfp-text.live-md h3:last-child {
-  animation: fadeTokenIn 0.12s ease-out;
-}
-@keyframes fadeTokenIn {
-  from { opacity: 0.3; transform: translateY(2px); }
-  to   { opacity: 1;   transform: translateY(0); }
-}
-
-/* Typing cursor blinking animation — enhanced */
-.typing-cursor {
+/* ── STREAM OVERLAY TEXT — blinking cursor on live notes ── */
+.live-md::after {
+  content: '▊';
   display: inline-block;
   color: #00d4ff;
-  animation: blinkCursor 0.65s step-end infinite;
-  font-weight: 100;
+  animation: cursorBlink 0.6s step-end infinite;
+  font-size: 1em;
+  vertical-align: baseline;
   margin-left: 2px;
-  text-shadow: 0 0 8px rgba(0,212,255,0.8);
 }
-@keyframes blinkCursor {
+@keyframes cursorBlink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
 
-/* Live card appear animation — spring bounce */
-.live-card-new {
-  animation: cardSpringIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+/* ── LIVE NOTES MODAL ── */
+#liveNotesModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  display: none;
 }
-@keyframes cardSpringIn {
-  from { opacity: 0; transform: scale(0.85) translateY(8px); }
-  to   { opacity: 1; transform: scale(1)    translateY(0); }
-}
-
-/* Live quiz question appear */
-.live-quiz-item.live-card-new {
-  animation: slideInQuestion 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-@keyframes slideInQuestion {
-  from { opacity: 0; transform: translateX(-12px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* Live mindmap branch appear */
-.live-mm-branch.live-card-new {
-  animation: branchGrow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-@keyframes branchGrow {
-  from { opacity: 0; transform: scale(0.9) translateY(6px); }
-  to   { opacity: 1; transform: scale(1)   translateY(0); }
-}
-
-/* Mindmap final output — branch reveal */
-.mm-branch {
-  animation: mmBranchReveal 0.3s ease-out both;
-}
-@keyframes mmBranchReveal {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.mm-branch:nth-child(1) { animation-delay: 0.05s; }
-.mm-branch:nth-child(2) { animation-delay: 0.12s; }
-.mm-branch:nth-child(3) { animation-delay: 0.19s; }
-.mm-branch:nth-child(4) { animation-delay: 0.26s; }
-.mm-branch:nth-child(5) { animation-delay: 0.33s; }
-.mm-branch:nth-child(6) { animation-delay: 0.40s; }
-.mm-branch:nth-child(7) { animation-delay: 0.47s; }
-
-/* Flashcard final output — card reveal */
-.fc-mode {
-  animation: fcReveal 0.35s ease-out;
-}
-@keyframes fcReveal {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-/* Study section reveal animation */
-.study-sec {
-  animation: sectionReveal 0.3s ease-out both;
-}
-@keyframes sectionReveal {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.study-sec:nth-child(1) { animation-delay: 0s; }
-.study-sec:nth-child(2) { animation-delay: 0.08s; }
-.study-sec:nth-child(3) { animation-delay: 0.16s; }
-.study-sec:nth-child(4) { animation-delay: 0.24s; }
-.study-sec:nth-child(5) { animation-delay: 0.32s; }
-
-/* Quiz option click feedback */
-.quiz-opt-btn.correct { animation: correctFlash 0.4s ease; }
-.quiz-opt-btn.wrong   { animation: wrongFlash   0.4s ease; }
-@keyframes correctFlash {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.03); background: rgba(0,255,136,0.25); }
-  100% { transform: scale(1); }
-}
-@keyframes wrongFlash {
-  0%,100% { transform: translateX(0); }
-  25%     { transform: translateX(-4px); }
-  75%     { transform: translateX(4px); }
-}
-
-/* Concept card reveal */
-.concept-card {
-  animation: conceptReveal 0.25s ease-out both;
-}
-@keyframes conceptReveal {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+#liveNotesModal .modal-box {
+  background: var(--card-bg, #1a1a2e);
+  border: 1px solid rgba(0,255,136,.2);
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(0,255,136,.08), 0 30px 80px rgba(0,0,0,.6);
+  animation: modalPop .22s cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -49,35 +49,7 @@ const SAVOIRÉ = {
   MAX_HISTORY: 60,
   MAX_SAVED:   120,
   NTFY:        'savoireai_new_users',
-  // OpenRouter direct-call config (key loaded from backend at startup)
-  OR_BASE:     'https://openrouter.ai/api/v1/chat/completions',
-  OR_KEY:      '', // filled at runtime from /api/study GET
 };
-
-// ── FREE MODEL ROSTERS — called directly from browser, no Vercel timeout ────
-// Phase 1: Streaming notes — fastest free models first
-const MODELS_STREAM = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 55000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',     max_tokens: 4000, timeout_ms: 45000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct:free',         max_tokens: 4000, timeout_ms: 45000, temp: 0.75 },
-  { id: 'qwen/qwen-2.5-72b-instruct:free',           max_tokens: 4000, timeout_ms: 55000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 55000, temp: 0.75 },
-  { id: 'google/gemma-3-12b-it:free',                max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
-  { id: 'nousresearch/hermes-3-llama-3.1-8b:free',   max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
-];
-
-// Phase 2: JSON cards — models that follow JSON instructions well
-const MODELS_CARDS = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 60000, temp: 0.45 },
-  { id: 'qwen/qwen-2.5-72b-instruct:free',           max_tokens: 7000, timeout_ms: 60000, temp: 0.45 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 60000, temp: 0.40 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',     max_tokens: 6000, timeout_ms: 50000, temp: 0.45 },
-  { id: 'mistralai/mistral-7b-instruct:free',         max_tokens: 6000, timeout_ms: 50000, temp: 0.45 },
-  { id: 'google/gemma-3-12b-it:free',                max_tokens: 5000, timeout_ms: 50000, temp: 0.45 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 50000, temp: 0.45 },
-  { id: 'nousresearch/hermes-3-llama-3.1-8b:free',   max_tokens: 5000, timeout_ms: 50000, temp: 0.45 },
-];
 
 const TOOL_CONFIG = {
   notes: {
@@ -140,296 +112,6 @@ const STAGE_MESSAGES = [
   '✨ Generating cards and data…',
   '✅ Finalising — almost ready!',
 ];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// BROWSER-SIDE AI ENGINE — Calls OpenRouter directly, no Vercel timeout!
-// ─────────────────────────────────────────────────────────────────────────────
-
-const AI = {
-  // ── Config ────────────────────────────────────────────────────────────────
-  DEPTH_MAP: {
-    standard:      { wordRange: '600–900 words',   maxTokens: 2800 },
-    detailed:      { wordRange: '1000–1500 words', maxTokens: 3800 },
-    comprehensive: { wordRange: '1500–2200 words', maxTokens: 5000 },
-    expert:        { wordRange: '2200–3500 words', maxTokens: 6500 },
-  },
-  STYLE_MAP: {
-    simple:   'Write in clear, beginner-friendly language. Short sentences. Everyday analogies. Define all jargon immediately.',
-    academic: 'Write in formal academic language. Precise scholarly terminology. Objective, third-person tone.',
-    detailed: 'Maximum exhaustive detail. Numerous specific examples. Thorough step-by-step explanations.',
-    exam:     'Exam-focused. Mark-scheme phrasing. Highlight must-know points. Flag common mistakes. Include exam tips.',
-    visual:   'Vivid analogies and metaphors for everything. Mental models. Spatial descriptions. Make abstract concrete.',
-  },
-
-  // ── Prompt builders ────────────────────────────────────────────────────────
-  buildNotesPrompt(input, opts) {
-    const depth = this.DEPTH_MAP[opts.depth] || this.DEPTH_MAP.detailed;
-    const style = this.STYLE_MAP[opts.style] || this.STYLE_MAP.simple;
-    const lang  = opts.language || 'English';
-    const tool  = opts.tool || 'notes';
-    const sectionMap = {
-      notes:      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Summary & Key Takeaways',
-      flashcards: '## 📖 Overview\n\n## 🎯 Core Concepts (Q&A pairs)\n\n## ⚙️ Mechanisms\n\n## 💡 Examples\n\n## 🎯 Quick Summary',
-      quiz:       '## 📚 Topic Introduction\n\n## ✏️ Core Concepts\n\n## ⚙️ Mechanisms\n\n## 📝 Exam Questions & Answers\n\n## 🎯 Must-Remember Points',
-      summary:    '## 🚀 TL;DR (3–5 sentences)\n\n## 🎯 Core Concepts\n\n## ⚙️ Key Mechanisms\n\n## ✅ Revision Checklist',
-      mindmap:    '## 🧠 Central Topic\n\n## 🌿 Branch 1: Foundations\n\n## 🌿 Branch 2: Mechanisms\n\n## 🌿 Branch 3: Examples\n\n## 🌿 Branch 4: Applications\n\n## 🔗 Key Connections',
-      all:        '## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ Mechanisms\n\n## 💡 Examples\n\n## 🚀 Advanced\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Checklist',
-    };
-    return `You are ${SAVOIRÉ.BRAND}, the world's best AI study assistant.
-TOPIC: "${input}"
-LANGUAGE: ${lang} — write EVERY word in ${lang}
-LENGTH: ${depth.wordRange}
-STYLE: ${style}
-
-STRUCTURE — use exactly these headings:
-${sectionMap[tool] || sectionMap.notes}
-
-FORMATTING: ## headings, **bold** key terms, - bullets, > definitions, --- between sections
-Write in ${lang} only. Start immediately with the first ## heading.`;
-  },
-
-  buildCardsPrompt(input, opts) {
-    const lang = opts.language || 'English';
-    const tool = opts.tool || 'notes';
-    const T    = String(input).slice(0, 120);
-    const isAll = tool === 'all', includeFc = isAll || tool === 'flashcards';
-    const includeQ = isAll || tool === 'quiz', includeMm = isAll || tool === 'mindmap';
-
-    let block = '';
-    if (includeFc) block += `\nGenerate 15 FLASHCARDS about "${T}". Each: "front" (specific question, 10-40 words in ${lang}), "back" (detailed answer 60-150 words in ${lang} with example).`;
-    if (includeQ)  block += `\nGenerate 10 QUIZ QUESTIONS about "${T}". Each: "question", "options" (4 strings), "correct_answer" (EXACT MATCH to one option), "explanation" (50-100 words), "difficulty" (easy/medium/hard).`;
-    if (includeMm) block += `\nGenerate MINDMAP about "${T}": "central" (3-6 word topic essence), "branches" (5-7 objects with "name","color","items":[5 specific facts]), "connections" (3 objects with "from","to","description").`;
-
-    return `You are ${SAVOIRÉ.BRAND}. Generate JSON about: "${input}"
-Language: ${lang} (ALL text in ${lang})
-${block}
-
-Also generate:
-- "key_concepts": 6 strings (50-80 words each, specific to topic)
-- "key_tricks": 4 strings (memory aids, 70-100 words each)
-- "practice_questions": 3 objects with "question" and "answer" (150+ words)
-- "real_world_applications": 5 strings (60-80 words each)
-- "common_misconceptions": 4 strings starting with "❌ MYTH:" then "✅ TRUTH:"
-
-OUTPUT ONLY VALID JSON. Start with {. End with }. No markdown fences.
-{
-  "topic": "clean title",
-  "curriculum_alignment": "e.g. A-Level, University, Grade 11",
-  "study_score": 97,
-  ${includeFc ? '"flashcards": [{"front":"...","back":"..."}],' : '"flashcards": [],'}
-  ${includeQ  ? '"quiz_questions": [{"question":"...","options":["A","B","C","D"],"correct_answer":"A","explanation":"...","difficulty":"medium"}],' : '"quiz_questions": [],'}
-  ${includeMm ? '"mindmap": {"central":"...","branches":[{"name":"...","color":"#00d4ff","items":["...","...","...","...","..."]}],"connections":[{"from":"...","to":"...","description":"..."}]},' : '"mindmap": null,'}
-  "key_concepts": ["..."],
-  "key_tricks": ["..."],
-  "practice_questions": [{"question":"...","answer":"..."}],
-  "real_world_applications": ["..."],
-  "common_misconceptions": ["..."]
-}`;
-  },
-
-  // ── Stream notes from OpenRouter directly in browser ──────────────────────
-  async streamNotes(prompt, onChunk, abortSignal) {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    let lastErr = 'No models tried';
-    for (const model of MODELS_STREAM) {
-      const name = model.id.split('/').pop().replace(':free','');
-      const ctrl = new AbortController();
-      // Combine external abort with model timeout
-      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      if (abortSignal) abortSignal.addEventListener('abort', () => ctrl.abort());
-      const t0 = Date.now();
-      try {
-        console.log(`[AI] P1 streaming → ${model.id}`);
-        const res = await fetch(SAVOIRÉ.OR_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${SAVOIRÉ.OR_KEY}`,
-            'HTTP-Referer':  `https://${SAVOIRÉ.WEBSITE}`,
-            'X-Title':       SAVOIRÉ.BRAND,
-          },
-          body: JSON.stringify({
-            model:       model.id,
-            max_tokens:  model.max_tokens,
-            temperature: model.temp || 0.75,
-            stream:      true,
-            messages:    [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
-        clearTimeout(timer);
-        if (!res.ok) {
-          const errText = await res.text().catch(() => '');
-          console.warn(`[AI] P1 HTTP ${res.status} ${model.id}: ${errText.slice(0,150)}`);
-          if (res.status === 401) throw new Error(`OpenRouter API key rejected (401). Please check your OPENROUTER_API_KEY in Vercel.`);
-          if (res.status === 402) { console.warn(`[AI] ${model.id}: credits required — skip`); continue; }
-          if (res.status === 403 || res.status === 404) { console.warn(`[AI] ${model.id}: ${res.status} — skip`); continue; }
-          if (res.status === 429) { await sleep(2000); continue; }
-          await sleep(500); continue;
-        }
-        const reader  = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buf = '', full = '', tokens = 0;
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buf += decoder.decode(value, { stream: true });
-          const lines = buf.split('\n'); buf = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const raw = line.slice(6).trim();
-            if (raw === '[DONE]' || !raw) continue;
-            try {
-              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-              if (delta) { full += delta; tokens++; onChunk(delta); }
-            } catch (_e) {}
-          }
-        }
-        if (full.trim().length < 80) { console.warn(`[AI] ${model.id}: too short (${full.length}ch)`); lastErr = `${name}: response too short`; continue; }
-        console.log(`[AI] P1 OK — ${model.id} | ${tokens} tokens | ${full.length}ch | ${Date.now()-t0}ms`);
-        return full;
-      } catch (err) {
-        clearTimeout(timer);
-        lastErr = err.name === 'AbortError' ? `${name}: timed out` : `${name}: ${err.message}`;
-        console.warn(`[AI] P1 fail — ${lastErr}`);
-        if (err.message?.includes('401') || err.message?.includes('API key')) throw err;
-        if (abortSignal?.aborted) throw new Error('Cancelled');
-      }
-    }
-    throw new Error(`All AI models failed. Last error: ${lastErr}`);
-  },
-
-  // ── Fetch structured JSON cards from OpenRouter ───────────────────────────
-  async fetchCards(prompt, tool, abortSignal) {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    let lastErr = 'No models tried';
-    for (const model of MODELS_CARDS) {
-      const name = model.id.split('/').pop().replace(':free','');
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      if (abortSignal) abortSignal.addEventListener('abort', () => ctrl.abort());
-      const t0 = Date.now();
-      try {
-        console.log(`[AI] P2 cards → ${model.id}`);
-        const res = await fetch(SAVOIRÉ.OR_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${SAVOIRÉ.OR_KEY}`,
-            'HTTP-Referer':  `https://${SAVOIRÉ.WEBSITE}`,
-            'X-Title':       SAVOIRÉ.BRAND,
-          },
-          body: JSON.stringify({
-            model:       model.id,
-            max_tokens:  model.max_tokens,
-            temperature: model.temp || 0.45,
-            stream:      false,
-            messages:    [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
-        clearTimeout(timer);
-        if (!res.ok) {
-          const errText = await res.text().catch(() => '');
-          console.warn(`[AI] P2 HTTP ${res.status} ${model.id}: ${errText.slice(0,150)}`);
-          if (res.status === 401) throw new Error(`OpenRouter API key rejected (401).`);
-          if (res.status === 402 || res.status === 403 || res.status === 404) { console.warn(`[AI] skip ${res.status}`); continue; }
-          if (res.status === 429) { await sleep(2000); continue; }
-          await sleep(500); continue;
-        }
-        const data    = await res.json();
-        let content   = data?.choices?.[0]?.message?.content?.trim() || '';
-        if (!content || content.length < 20) { lastErr = `${name}: empty`; continue; }
-
-        // Strip thinking tags (DeepSeek-R1 etc), code fences
-        content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
-        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-
-        // Extract JSON
-        const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-        if (jS === -1 || jE <= jS) { lastErr = `${name}: no JSON`; console.warn(`[AI] P2 no JSON from ${model.id}`); continue; }
-        let jsonStr = content.slice(jS, jE + 1);
-
-        // 4-step repair
-        let parsed;
-        try { parsed = JSON.parse(jsonStr); }
-        catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1')); }
-        catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g,'$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g,'$1"$2"$3')); }
-        catch (_e) { try { parsed = JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g,' ').replace(/,(\s*[}\]])/g,'$1')); }
-        catch (e4) { lastErr = `${name}: JSON parse failed`; console.warn(`[AI] P2 JSON repair failed ${model.id}:`, e4.message.slice(0,80)); continue; }}}}
-
-        // Auto-fix quiz correct_answer
-        if (Array.isArray(parsed.quiz_questions)) {
-          parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-            if (!q.options || !q.correct_answer) return { ...q, id: i+1 };
-            if (!q.options.includes(q.correct_answer)) {
-              const low = q.correct_answer.toLowerCase();
-              const fix = q.options.find(o => o.toLowerCase() === low)
-                || q.options.find(o => o.toLowerCase().includes(low) || low.includes(o.toLowerCase()))
-                || q.options[0];
-              if (fix) return { ...q, correct_answer: fix, id: i+1 };
-            }
-            return { ...q, id: i+1 };
-          });
-        }
-
-        // Validate — lenient
-        const isAll = tool === 'all'; let ok = true, missing = 0;
-        if (isAll || tool==='flashcards') { if (!Array.isArray(parsed.flashcards) || parsed.flashcards.length < 2) { if(isAll){missing++;parsed.flashcards=parsed.flashcards||[];}else ok=false; } }
-        if (isAll || tool==='quiz')       { if (!Array.isArray(parsed.quiz_questions) || parsed.quiz_questions.length < 2) { if(isAll){missing++;parsed.quiz_questions=parsed.quiz_questions||[];}else ok=false; } }
-        if (isAll || tool==='mindmap')    { if (!parsed.mindmap?.branches?.length) { if(isAll){missing++;}else ok=false; } }
-        if (isAll && missing >= 3) { lastErr = `${name}: all sections empty`; continue; }
-        if (!isAll && !ok) { lastErr = `${name}: validation failed`; console.warn(`[AI] P2 validation fail ${model.id}`); continue; }
-
-        // Normalize flashcards
-        if (Array.isArray(parsed.flashcards)) {
-          parsed.flashcards = parsed.flashcards
-            .filter(c => (c.front || c.question) && (c.back || c.answer))
-            .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
-        }
-
-        console.log(`[AI] P2 OK — ${model.id} | fc:${parsed.flashcards?.length||0} | q:${parsed.quiz_questions?.length||0} | mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
-        return parsed;
-      } catch (err) {
-        clearTimeout(timer);
-        lastErr = err.name === 'AbortError' ? `${name}: timed out` : `${name}: ${err.message}`;
-        console.warn(`[AI] P2 fail — ${lastErr}`);
-        if (err.message?.includes('401') || err.message?.includes('API key')) throw err;
-        if (abortSignal?.aborted) throw new Error('Cancelled');
-      }
-    }
-    throw new Error(`Cards generation failed. Last: ${lastErr}`);
-  },
-
-  // ── Merge cards + notes into final data object ────────────────────────────
-  merge(cardsRaw, notes, topic, opts) {
-    const isFallback = !!cardsRaw?._fallback;
-    const merged = {
-      topic:                   topic || cardsRaw?.topic || 'Study Material',
-      curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
-      ultra_long_notes:        notes,
-      key_concepts:            cardsRaw?.key_concepts || [],
-      key_tricks:              cardsRaw?.key_tricks || [],
-      practice_questions:      cardsRaw?.practice_questions || [],
-      real_world_applications: cardsRaw?.real_world_applications || [],
-      common_misconceptions:   cardsRaw?.common_misconceptions || [],
-      study_score:             cardsRaw?.study_score || 95,
-      generated_at:            new Date().toLocaleString(),
-      _version:                SAVOIRÉ.VERSION,
-      _tool:                   opts.tool,
-      _language:               opts.language || 'English',
-      _depth:                  opts.depth || 'detailed',
-      _style:                  opts.style || 'simple',
-      _quality:                isFallback ? 'enhanced_fallback' : 'ai_generated',
-      _fallback:               isFallback,
-      powered_by:              `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
-    };
-    if (Array.isArray(cardsRaw?.flashcards) && cardsRaw.flashcards.length)    merged.flashcards     = cardsRaw.flashcards;
-    if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
-    if (cardsRaw?.mindmap?.branches?.length)                                   merged.mindmap        = cardsRaw.mindmap;
-    return merged;
-  },
-}; // end AI engine
 
 // Emoji avatars for user profile display
 const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','🎯','📚','🌈','🏆','💡','🎨','🌙','⭐'];
@@ -673,7 +355,7 @@ class SavoireApp {
 
   _loadStreak() {
     try { const s = localStorage.getItem('sv_streak'); if (s) return JSON.parse(s); }
-    catch (_e) {}
+    catch {}
     return { count: 0, lastDate: null, bestStreak: 0 };
   }
 
@@ -681,7 +363,7 @@ class SavoireApp {
 
   _loadNum(key, def) {
     try { const v = localStorage.getItem(key); return v ? parseInt(v, 10) : def; }
-    catch (_e) { return def; }
+    catch { return def; }
   }
 
   _checkStreak() {
@@ -849,8 +531,8 @@ class SavoireApp {
   _el(id)   { return document.getElementById(id); }
   _qs(sel)  { return document.querySelector(sel); }
   _qsa(sel) { return document.querySelectorAll(sel); }
-  _load(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch (_e) { return def; } }
-  _save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (_e) {} }
+  _load(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; } }
+  _save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
   _genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
   _wordCount(text) { return text?.trim().split(/\s+/).filter(Boolean).length || 0; }
   _esc(s) {
@@ -975,7 +657,7 @@ class SavoireApp {
         body: `New Savoiré AI user: ${name} — ${new Date().toISOString()}`,
         headers: { 'Title': 'Savoiré AI New User', 'Priority': '3' },
       }).catch(() => {});
-    } catch (_e) {}
+    } catch {}
 
     this._dismissOverlay('welcomeOverlay');
     this._updateUserUI();
@@ -1461,7 +1143,6 @@ Examples:
     this.generating    = true;
     this.streamBuffer  = '';
     this.tool          = tool || 'notes';
-    this._lastRequest  = { text, lang, depth, style, tool: this.tool }; // for one-click retry on error
 
     // Reset live accumulators
     this._liveCards     = [];
@@ -1503,14 +1184,6 @@ Examples:
       this.generating = false;
       this._stopStages();
     }
-  }
-
-  _retryLastRequest() {
-    if (this.generating) return;
-    const r = this._lastRequest;
-    if (!r || !r.text) { this._openWizard(); return; }
-    this._checkStreak();
-    this._sendDirect(r.text, r.lang, r.depth, r.style, r.tool);
   }
 
   _friendlyError(msg) {
@@ -1573,12 +1246,10 @@ Examples:
         const reader  = res.body.getReader();
         const decoder = new TextDecoder();
         let lineBuf = '', chars = 0, renderThrottle = 0;
-        let currentEvent = ''; // track SSE event type
-        let resolved = false;  // prevent double-resolve
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 40) return;
+          if (now - renderThrottle < 16) return; // 60fps render
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
@@ -1588,36 +1259,16 @@ Examples:
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
-              // For card tools: show notes during phase 1, show waiting message during phase 2 transition
+              // For card tools: only show notes during phase 1
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
                 this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
                 this.el.sfpText.classList.add('live-md');
               }
             }
-          } catch (_e) {
+          } catch {
             this.el.sfpText.textContent = this.streamBuffer;
           }
           if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
-        };
-
-        // Show "building cards…" transition panel between notes phase and cards phase
-        const showPhase2Transition = (tool) => {
-          if (!this.el.sfpText) return;
-          if (this._liveCards.length > 0 || this._liveQuestions.length > 0 || this._liveBranches.length > 0) return;
-          const toolLabel = tool === 'flashcards' ? 'flashcards' : tool === 'quiz' ? 'quiz questions' : tool === 'mindmap' ? 'mind map branches' : 'study materials';
-          const toolColor = tool === 'flashcards' ? '#bf00ff' : tool === 'quiz' ? '#00ff88' : tool === 'mindmap' ? '#d4af37' : '#00d4ff';
-          this.el.sfpText.classList.remove('live-md');
-          this.el.sfpText.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;text-align:center;gap:16px">
-              <div style="width:52px;height:52px;border-radius:50%;background:${toolColor}18;border:2px solid ${toolColor}44;display:flex;align-items:center;justify-content:center;animation:pulse-glow 1.2s ease infinite alternate">
-                <div style="width:14px;height:14px;border-radius:50%;background:${toolColor};animation:scale-pulse .6s ease infinite alternate"></div>
-              </div>
-              <div>
-                <div style="font-size:1rem;font-weight:800;color:${toolColor};letter-spacing:.03em">AI is building your ${toolLabel}</div>
-                <div style="font-size:.78rem;color:rgba(255,255,255,.4);margin-top:6px">Notes complete ✓ — generating interactive content…</div>
-              </div>
-              <div class="live-dots" style="margin-top:4px"><span style="background:${toolColor}"></span><span style="background:${toolColor}"></span><span style="background:${toolColor}"></span></div>
-            </div>`;
         };
 
         const animateCard = (idx, total, card) => {
@@ -1645,9 +1296,28 @@ Examples:
           try {
             while (true) {
               const { done, value } = await reader.read();
+
+              // When stream ends (done=true), flush remaining buffer
               if (done) {
-                // Stream ended — if we already resolved via 'done' event, this is fine
-                if (!resolved) reject(new Error('Connection dropped. Please check your internet and try again.'));
+                // Process any remaining data in lineBuf
+                if (lineBuf.trim()) {
+                  const line = lineBuf.trim();
+                  if (line.startsWith('data: ')) {
+                    try {
+                      const evt = JSON.parse(line.slice(6).trim());
+                      if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
+                        if (!evt.ultra_long_notes && this.streamBuffer) evt.ultra_long_notes = this.streamBuffer;
+                        if (this._liveCards.length)    evt.flashcards    = this._liveCards;
+                        if (this._liveQuestions.length) evt.quiz_questions = this._liveQuestions;
+                        if (this._liveBranches.length)  evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+                        resolve(evt); return;
+                      }
+                    } catch { /* ignore */ }
+                  }
+                }
+                // If we already resolved (stream ended after done event was received), that's fine
+                // Otherwise reject with connection error
+                reject(new Error('AI stream closed unexpectedly. Please try again.'));
                 return;
               }
 
@@ -1656,140 +1326,78 @@ Examples:
               lineBuf = lines.pop() || '';
 
               for (const line of lines) {
-                // Track SSE event type
+                // Track SSE event type (event: token, event: done, etc.)
+                // We read the event: line to detect the 'done' event properly
                 if (line.startsWith('event: ')) {
-                  currentEvent = line.slice(7).trim();
-                  continue;
+                  continue; // handled via data: payload content
                 }
-                // Skip non-data lines (comments, blank lines)
                 if (!line.startsWith('data: ')) continue;
                 const raw = line.slice(6).trim();
-
-                // Handle 'reset' event — backend aborted a degenerating model
-                // mid-stream and is retrying with a different one. Clear the
-                // live buffer so garbage tokens already shown don't linger
-                // mixed in with the next (hopefully good) model's output.
-                if (currentEvent === 'reset') {
-                  currentEvent = '';
-                  try {
-                    const evt = JSON.parse(raw);
-                    this.streamBuffer = '';
-                    chars = 0;
-                    if (this.el.sfpText) {
-                      this.el.sfpText.classList.remove('live-md');
-                      this.el.sfpText.innerHTML = `
-                        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;text-align:center;gap:16px">
-                          <div class="live-dots"><span></span><span></span><span></span></div>
-                          <div style="font-size:.9rem;color:rgba(255,255,255,.5)">${this._esc(evt.label || 'Switching to a different AI model…')}</div>
-                        </div>`;
-                    }
-                  } catch (_e) {}
-                  continue;
-                }
-
-                // Handle 'done' event — this is the final complete data object
-                if (currentEvent === 'done') {
-                  currentEvent = '';
-                  try {
-                    const evt = JSON.parse(raw);
-                    if (!resolved) {
-                      resolved = true;
-                      if (this.el.sfpText) {
-                        this.el.sfpText.classList.remove('live-md');
-                        this.el.sfpText.classList.add('done');
-                      }
-                      // Merge live-streamed cards into final data
-                      if (this._liveCards.length)    evt.flashcards     = this._liveCards;
-                      if (this._liveQuestions.length) evt.quiz_questions = this._liveQuestions;
-                      if (this._liveBranches.length) {
-                        evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
-                      }
-                      // Attach streamed notes buffer if not present
-                      if (!evt.ultra_long_notes && this.streamBuffer) {
-                        evt.ultra_long_notes = this.streamBuffer;
-                      }
-                      // Store live output for "view live output" feature
-                      evt._liveNotesBuffer = this.streamBuffer;
-                      resolve(evt);
-                    }
-                  } catch (_e) { /* ignore parse error on done */ }
-                  continue;
-                }
-
-                // Handle 'error' event
-                if (currentEvent === 'error') {
-                  currentEvent = '';
-                  try {
-                    const evt = JSON.parse(raw);
-                    if (!resolved) { resolved = true; reject(new Error(evt.message || 'AI generation failed. Please try again.')); }
-                  } catch (_e) { if (!resolved) { resolved = true; reject(new Error('AI generation failed. Please try again.')); } }
-                  return;
-                }
-
-                // Reset event type for next event
-                const evtType = currentEvent;
-                currentEvent = '';
-
+                if (!raw) continue;
                 try {
                   const evt = JSON.parse(raw);
 
-                  // 'token' event — streaming notes text
-                  if (evtType === 'token' || evt.t !== undefined) {
-                    if (evt.t !== undefined) {
-                      this.streamBuffer += evt.t;
-                      chars += evt.t.length;
-                      renderLive();
-                      this._updateStageByProgress(chars);
+                  // token — live notes streaming
+                  if (evt.t !== undefined) {
+                    this.streamBuffer += evt.t;
+                    chars += evt.t.length;
+                    renderLive();
+                    this._updateStageByProgress(chars);
+
+                  // card — flashcard streamed live
+                  } else if (evt.card !== undefined) {
+                    animateCard(evt.idx, evt.total, evt.card);
+
+                  // q — quiz question streamed live
+                  } else if (evt.q !== undefined) {
+                    animateQuestion(evt.idx, evt.total, evt.q);
+
+                  // branch — mindmap branch streamed live
+                  } else if (evt.branch !== undefined) {
+                    animateBranch(evt.idx, evt.total, evt.branch);
+
+                  // stage — progress update
+                  } else if (evt.idx !== undefined && evt.label !== undefined) {
+                    this._activateStage(evt.idx);
+                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+
+                  // fact — floating topic fact pill
+                  } else if (evt.fact !== undefined) {
+                    if (this.el.sfpFact) this.el.sfpFact.textContent = evt.fact;
+
+                  // done / final data object — topic or ultra_long_notes or _tool field present
+                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
+                    if (this.el.sfpText) {
+                      this.el.sfpText.classList.remove('live-md');
+                      this.el.sfpText.classList.add('done');
                     }
-
-                  // 'card' event — one flashcard streamed
-                  } else if (evtType === 'card' || evt.card !== undefined) {
-                    if (evt.card !== undefined) animateCard(evt.idx, evt.total, evt.card);
-
-                  // 'question' event — one quiz question
-                  } else if (evtType === 'question' || evt.q !== undefined) {
-                    if (evt.q !== undefined) animateQuestion(evt.idx, evt.total, evt.q);
-
-                  // 'branch' event — one mindmap branch
-                  } else if (evtType === 'branch' || evt.branch !== undefined) {
-                    if (evt.branch !== undefined) animateBranch(evt.idx, evt.total, evt.branch);
-
-                  // 'stage' event — progress update
-                  } else if (evtType === 'stage' || (evt.idx !== undefined && evt.label !== undefined)) {
-                    if (evt.idx !== undefined) this._activateStage(evt.idx);
-                    if (evt.label && this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-                    // If stage 3 fires and we have notes but no cards yet, show transition panel
-                    if (evt.idx >= 3 && this.streamBuffer && opts.tool !== 'notes' && opts.tool !== 'summary') {
-                      showPhase2Transition(opts.tool || 'all');
+                    // Merge live-streamed cards into final object
+                    if (this._liveCards.length)     evt.flashcards     = this._liveCards;
+                    if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
+                    if (this._liveBranches.length) {
+                      evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
                     }
-
-                  // 'heartbeat' / 'fact' events — ignore
-                  } else if (evtType === 'heartbeat' || evtType === 'fact') {
-                    // no-op
-
-                  // Fallback: check for final data object (older protocol compatibility)
-                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt.flashcards !== undefined) {
-                    if (!resolved) {
-                      resolved = true;
-                      if (this.el.sfpText) {
-                        this.el.sfpText.classList.remove('live-md');
-                        this.el.sfpText.classList.add('done');
-                      }
-                      if (this._liveCards.length)    evt.flashcards     = this._liveCards;
-                      if (this._liveQuestions.length) evt.quiz_questions = this._liveQuestions;
-                      if (this._liveBranches.length) {
-                        evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
-                      }
-                      if (!evt.ultra_long_notes && this.streamBuffer) evt.ultra_long_notes = this.streamBuffer;
-                      evt._liveNotesBuffer = this.streamBuffer;
-                      resolve(evt);
+                    // Preserve the streamed notes buffer
+                    if (!evt.ultra_long_notes && this.streamBuffer) {
+                      evt.ultra_long_notes = this.streamBuffer;
                     }
+                    // Save live notes for "View Live Notes" button
+                    evt._live_notes_buffer = this.streamBuffer;
+                    resolve(evt);
+                    return;
+
+                  // error event — {error:'...'} from backend
+                  } else if (evt.error !== undefined) {
+                    reject(new Error(evt.error));
+                    return;
                   }
-                } catch (_e) { /* ignore bad SSE data */ }
+                  // heartbeat — ignore silently
+                } catch { /* ignore malformed SSE lines */ }
               }
             }
           } catch (pumpErr) {
-            if (!resolved) reject(pumpErr);
+            if (pumpErr.name === 'AbortError') { reject(pumpErr); return; }
+            reject(new Error('Stream error: ' + pumpErr.message));
           }
         };
 
@@ -2097,10 +1705,7 @@ Examples:
                 This usually resolves itself in a few seconds — please try again!
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
-                <button class="btn btn-primary" onclick="window._app._retryLastRequest()">
-                  <i class="fas fa-redo"></i> Retry Same Request
-                </button>
-                <button class="btn btn-outline" onclick="window._app._openWizard()">
+                <button class="btn btn-primary" onclick="window._app._openWizard()">
                   <i class="fas fa-magic"></i> Try Again with Wizard
                 </button>
                 <button class="btn btn-gold" onclick="window._app._openMega()">
@@ -2179,12 +1784,6 @@ Examples:
       default:           body = this._buildNotesHTML(data);   break;
     }
 
-    const liveOutputBtn = data._liveNotesBuffer
-      ? `<button class="exp-btn live-out" onclick="window._app._toggleLiveOutput()" id="liveOutBtn" title="View live streaming notes">
-           <i class="fas fa-stream"></i><span>Live Notes</span>
-         </button>`
-      : '';
-
     const exportBar = `
       <div class="export-bar">
         <button class="exp-btn pdf" onclick="window._app._downloadPDF()">
@@ -2199,19 +1798,14 @@ Examples:
         <button class="exp-btn share" onclick="window._app._shareResult()">
           <i class="fas fa-share-alt"></i><span>Share</span>
         </button>
-        ${liveOutputBtn}
+        ${data._live_notes_buffer && data._live_notes_buffer.length > 50 ? `
+        <button class="exp-btn live-notes-btn" onclick="window._app._showLiveNotesModal()" style="color:#00ff88;border-color:rgba(0,255,136,.3)" title="View the live notes streamed during generation">
+          <i class="fas fa-bolt"></i><span>Live Notes</span>
+        </button>` : ''}
         <button class="exp-btn new" onclick="window._app._openWizard()" style="color:#bf00ff;border-color:rgba(191,0,255,.3)">
           <i class="fas fa-magic"></i><span>New</span>
         </button>
         <span class="exp-brand">${SAVOIRÉ.BRAND}</span>
-      </div>
-      <div id="liveOutputPanel" style="display:none;margin:0 0 24px;border:1px solid rgba(0,212,255,.2);border-radius:16px;overflow:hidden">
-        <div style="background:rgba(0,212,255,.08);padding:10px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(0,212,255,.15)">
-          <i class="fas fa-stream" style="color:#00d4ff"></i>
-          <span style="font-weight:700;color:#00d4ff;font-size:.85rem">Live Streaming Notes — Raw Output</span>
-          <button onclick="window._app._toggleLiveOutput()" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:1rem"><i class="fas fa-times"></i></button>
-        </div>
-        <div id="liveOutputContent" class="md-content" style="padding:20px;max-height:480px;overflow-y:auto;font-size:.85rem;line-height:1.7"></div>
       </div>`;
 
     const footer = `
@@ -2572,23 +2166,6 @@ Examples:
           </div>
         </div>
       </div>`;
-  }
-
-  _toggleLiveOutput() {
-    const panel = this._el('liveOutputPanel');
-    const btn   = this._el('liveOutBtn');
-    if (!panel) return;
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'block' : 'none';
-    if (isHidden && btn) btn.style.borderColor = 'rgba(0,212,255,.4)';
-    if (!isHidden && btn) btn.style.borderColor = '';
-    if (isHidden) {
-      const content = this._el('liveOutputContent');
-      if (content && this.currentData?._liveNotesBuffer) {
-        content.innerHTML = this._renderMd(this.currentData._liveNotesBuffer);
-      }
-      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   }
 
   _quizToggleReview() {
@@ -3198,10 +2775,10 @@ Examples:
         data.mindmap.branches.forEach(b=>{
           ck(24);
           const bRGB=b.color?b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)):[0,170,220];
-          try{setBG(bRGB);} catch (_e) {setBG(C.blue);}
+          try{setBG(bRGB);}catch{setBG(C.blue);}
           doc.rect(ML,Y,3,9,'F');
           setBG(C.card); doc.roundedRect(ML+4,Y,CW-4,9,1.5,1.5,'F');
-          try{setFG(bRGB);} catch (_e) {setFG(C.blue);}
+          try{setFG(bRGB);}catch{setFG(C.blue);}
           doc.setFontSize(9); doc.setFont('helvetica','bold');
           doc.text(`▸ ${b.name}`,ML+8,Y+6.2); Y+=12;
           (b.items||[]).slice(0,6).forEach(item=>{
@@ -3257,6 +2834,50 @@ Examples:
     navigator.clipboard.writeText(text || '')
       .then(() => this._toast('success', 'fa-check', 'Section copied!'))
       .catch(() => this._toast('error', 'fa-times', 'Copy failed.'));
+  }
+
+  // ── LIVE NOTES MODAL — shows the streaming notes from generation ───────────
+  _showLiveNotesModal() {
+    const notes = this.currentData?._live_notes_buffer || this.currentData?.ultra_long_notes || '';
+    if (!notes || notes.length < 10) { this._toast('info', 'fa-info-circle', 'No live notes available.'); return; }
+
+    // Create or reuse modal
+    let modal = document.getElementById('liveNotesModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'liveNotesModal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-box" style="max-width:820px;width:95%;max-height:88vh;display:flex;flex-direction:column">
+          <div class="modal-hdr" style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
+            <i class="fas fa-bolt" style="color:#00ff88"></i>
+            <span style="font-weight:700;font-size:1rem;color:#00ff88">Live Stream Notes</span>
+            <span style="font-size:.75rem;color:rgba(255,255,255,.4);margin-left:4px">— exactly as streamed from the AI</span>
+            <button onclick="document.getElementById('liveNotesModal').style.display='none'"
+                    style="margin-left:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">
+              ✕ Close
+            </button>
+          </div>
+          <div id="liveNotesContent" style="flex:1;overflow-y:auto;padding:20px 24px;line-height:1.7"></div>
+          <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px">
+            <button onclick="window._app._copyTxt(document.getElementById('liveNotesContent').innerText)"
+                    style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:#00ff88;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.8rem">
+              <i class="fas fa-copy"></i> Copy Notes
+            </button>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.3);margin-left:auto;align-self:center">
+              ${notes.length.toLocaleString()} characters
+            </span>
+          </div>
+        </div>`;
+      modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+      document.body.appendChild(modal);
+    }
+
+    const contentEl = document.getElementById('liveNotesContent');
+    if (contentEl) contentEl.innerHTML = this._renderMd(notes);
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
   }
 
   _saveNote() {
@@ -3562,7 +3183,7 @@ Examples:
         this._updateUserUI();
         this._toast('success', 'fa-check', 'Backup restored! Reloading…');
         setTimeout(() => location.reload(), 1600);
-      } catch (_e) { this._toast('error', 'fa-times', 'Invalid backup file.'); }
+      } catch { this._toast('error', 'fa-times', 'Invalid backup file.'); }
     };
     r.readAsText(file);
   }
