@@ -32,38 +32,14 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
+// ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  // Top performers
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'google/gemini-flash-1.5-8b:free',           max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-32b-instruct:free',            max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
-  // Additional reliable free models
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free', max_tokens: 5000, timeout_ms: 120000, temp: 0.72 },
-  { id: 'cognitivecomputations/dolphin-mixtral-8x7b:free', max_tokens: 4500, timeout_ms: 120000, temp: 0.72 },
-  { id: 'cohere/command-r-plus:free',                max_tokens: 4000, timeout_ms: 120000, temp: 0.72 },
-  { id: 'upstage/solar-1-mini-chat:free',            max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
-  { id: 'openchat/openchat-7b:free',                 max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
+  { id: 'openrouter/free', max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
 ];
 
 // ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 6000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 7500, timeout_ms: 120000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free', max_tokens: 8000, timeout_ms: 120000, temp: 0.28 },
-  { id: 'cognitivecomputations/dolphin-mixtral-8x7b:free', max_tokens: 7000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'cohere/command-r-plus:free',                max_tokens: 6000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'upstage/solar-1-mini-chat:free',            max_tokens: 5000, timeout_ms: 120000, temp: 0.30 },
-  { id: 'openchat/openchat-7b:free',                 max_tokens: 5000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'openrouter/free', max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
 ];
 
 
