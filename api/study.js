@@ -33,7 +33,7 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  // Fastest, best quality free models
+  // Top performers
   { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
   { id: 'google/gemini-flash-1.5-8b:free',           max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
   { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
@@ -43,9 +43,14 @@ const MODELS_STREAM = [
   { id: 'qwen/qwen2.5-32b-instruct:free',            max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
   { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
   { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
-  // ✅ Guaranteed to work (auto-selection, free only if no credits)
- 
-]
+  // Additional reliable free models
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free', max_tokens: 5000, timeout_ms: 120000, temp: 0.72 },
+  { id: 'cognitivecomputations/dolphin-mixtral-8x7b:free', max_tokens: 4500, timeout_ms: 120000, temp: 0.72 },
+  { id: 'cohere/command-r-plus:free',                max_tokens: 4000, timeout_ms: 120000, temp: 0.72 },
+  { id: 'upstage/solar-1-mini-chat:free',            max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
+  { id: 'openchat/openchat-7b:free',                 max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
+];
+
 // ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
 const MODELS_CARDS = [
   { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
@@ -54,26 +59,13 @@ const MODELS_CARDS = [
   { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 6000, timeout_ms: 120000, temp: 0.30 },
   { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 7500, timeout_ms: 120000, temp: 0.30 },
   { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free', max_tokens: 8000, timeout_ms: 120000, temp: 0.28 },
+  { id: 'cognitivecomputations/dolphin-mixtral-8x7b:free', max_tokens: 7000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'cohere/command-r-plus:free',                max_tokens: 6000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'upstage/solar-1-mini-chat:free',            max_tokens: 5000, timeout_ms: 120000, temp: 0.30 },
+  { id: 'openchat/openchat-7b:free',                 max_tokens: 5000, timeout_ms: 120000, temp: 0.30 },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS
-// ─────────────────────────────────────────────────────────────────────────────
-
-const DEPTH_MAP = {
-  standard:      { wordRange: '600–900 words',   maxTokens: 2500 },
-  detailed:      { wordRange: '1000–1500 words', maxTokens: 3500 },
-  comprehensive: { wordRange: '1500–2200 words', maxTokens: 4500 },
-  expert:        { wordRange: '2200–3000 words', maxTokens: 5500 },
-};
-
-const STYLE_MAP = {
-  simple:   'Clear, beginner-friendly language. Short sentences. Everyday analogies. Define all jargon.',
-  academic: 'Formal academic language. Precise terminology. Objective third-person tone.',
-  detailed: 'Maximum detail. Numerous specific examples. Thorough step-by-step explanations.',
-  exam:     'Exam-focused. Mark-scheme phrasing. Highlight must-know points. Include exam tips.',
-  visual:   'Vivid analogies and metaphors. Mental models. Make abstract concrete.',
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 4 — UTILITIES
