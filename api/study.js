@@ -683,10 +683,7 @@ function setHeaders(res) {
 // SECTION 13 — MAIN HANDLER (unchanged — your existing handler)
 // ─────────────────────────────────────────────────────────────────────────────
 
-module.exports = async function handler(req, res) {
-  // ... (your existing handler code — keep it)
-  // The only change is the model lists above.
-};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 13 — MAIN HANDLER
 // ─────────────────────────────────────────────────────────────────────────────
