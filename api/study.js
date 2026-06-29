@@ -1,10 +1,11 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTRA FAST, NO FALLBACK
+// SAVOIRÉ AI v2.0 — api/study.js — FAST, NO FALLBACK, MEGA FIXED
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// ─── BRAND CONSTANTS ──────────────────────────────────────────────────────────
 const SAVOIRÉ = {
   BRAND:     'Savoiré AI v2.0',
   DEVELOPER: 'Sooban Talha Technologies',
@@ -20,21 +21,31 @@ const HTTP_REFERER       = `https://${SAVOIRÉ.WEBSITE}`;
 const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
-// ─── FAST MODEL LISTS (prioritise openrouter/free, lower tokens for speed) ──
+// ─── MODEL LISTS (faster timeouts, lower tokens) ─────────────────────────────
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                           max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
+  { id: 'openrouter/free',                           max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 90000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 3500, timeout_ms: 90000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
 ];
 
+// ─── CARDS MODEL LIST (faster) ──────────────────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                           max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
+  { id: 'openrouter/free',                           max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
 ];
 
+// ─── CONFIG MAPS ──────────────────────────────────────────────────────────────
 const DEPTH_MAP = {
   standard:      { wordRange: '600–900 words',   maxTokens: 2500 },
   detailed:      { wordRange: '1000–1500 words', maxTokens: 3500 },
@@ -70,6 +81,7 @@ function getISTDateTime() {
 }
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
+// ─── GOOGLE SHEETS ──────────────────────────────────────────────────────────
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
   if (!GOOGLE_WEBHOOK_URL) return false;
   try {
@@ -88,7 +100,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
   } catch (err) { log.warn(`Sheets non-fatal: ${err.message}`); return false; }
 }
 
-// ─── PROMPT BUILDERS ─────────────────────────────────────────────────────────
+// ─── PROMPT BUILDERS ────────────────────────────────────────────────────────
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -152,6 +164,7 @@ function buildCardsPrompt(input, opts, toolOverride) {
   const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
   const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
   const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
+  // Use wizard-selected counts
   const fcCount    = opts.cardCount   || 15;
   const qCount     = opts.quizCount   || 10;
   const mmCount    = opts.branchCount || 6;
@@ -180,11 +193,11 @@ Each question:
 • "id": sequential number
 • "question": specific question about "${topicShort}" (in ${lang})
 • "options": array of EXACTLY 4 strings (one correct, three plausible wrong)
-• "correct_answer": MUST be the EXACT TEXT of the correct option (NOT the letter like "A" or "B"). It must be character-for-character identical to one of the options strings.
+• "correct_answer": MUST be CHARACTER-FOR-CHARACTER identical to one of the options strings
 • "explanation": 60-100 words explaining why correct, referencing "${topicShort}" (in ${lang})
 • "difficulty": "easy" | "medium" | "hard"
 DIFFICULTY RULE: ${qDiffInstr}
-CRITICAL: correct_answer must be the exact text from the options array (e.g., if the correct option is "Photosynthesis", set correct_answer to "Photosynthesis", not "A").` : '';
+CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.` : '';
 
   const mmInstr = includeMm ? `
 ═══════════════════════════════════════════════════
@@ -248,16 +261,19 @@ No markdown. No code fences. No explanations before or after.
 OUTPUT JSON NOW — start with { immediately:`;
 }
 
-// ─── AI CALL FUNCTIONS (NEVER throw, return partial data or null) ──────────
-async function streamNotesWithRetry(prompt, onChunk, tool) {
+// ─── PHASE 1: STREAM NOTES (loops through models) ──────────────────────────
+async function streamNotes(prompt, onChunk, tool) {
   for (const model of MODELS_STREAM) {
     const name  = model.id.split('/').pop();
     let retries = 3;
     while (retries > 0) {
       const ctrl  = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0    = Date.now();
+
       try {
-        log.info(`📝 Notes → ${name} (attempt ${4-retries}/3)`);
+        log.info(`P1 → ${name} | tool:${tool} (attempt ${4 - retries}/3)`);
+
         const res = await fetch(OPENROUTER_BASE, {
           method: 'POST',
           headers: {
@@ -275,14 +291,31 @@ async function streamNotesWithRetry(prompt, onChunk, tool) {
           }),
           signal: ctrl.signal,
         });
+
         clearTimeout(timer);
 
-        if (res.status === 429) { retries--; await sleep(3000); continue; }
-        if (!res.ok) { retries--; await sleep(1000); continue; }
+        if (res.status === 429) {
+          retries--;
+          log.warn(`P1 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
+          await sleep(3000);
+          continue;
+        }
+
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          log.warn(`P1 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+          if (res.status === 401 || res.status === 403) {
+            throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+          }
+          retries--;
+          await sleep(1000);
+          continue;
+        }
 
         const reader  = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
-        let lineBuf = '', full = '';
+        let lineBuf = '', full = '', tokens = 0;
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -297,38 +330,55 @@ async function streamNotesWithRetry(prompt, onChunk, tool) {
               const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
               if (delta) {
                 full += delta;
-                onChunk(delta); // stream immediately
+                tokens++;
+                onChunk(delta);
               }
             } catch { /* ignore */ }
           }
         }
-        if (full.trim().length > 50) {
-          log.ok(`✅ Notes → ${name} | ${full.length}ch`);
-          return full;
+
+        if (full.trim().length < 80) {
+          log.warn(`${name}: response too short (${full.length}ch) — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
         }
-        retries--;
-        await sleep(1000);
+
+        log.ok(`P1 ✅ ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now() - t0}ms`);
+        return full;
+
       } catch (err) {
         clearTimeout(timer);
-        log.warn(`⚠️ Notes ${name}: ${err.message}`);
-        retries--;
+        if (err.name === 'AbortError') {
+          log.warn(`P1 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+          retries--;
+        } else {
+          log.warn(`P1 ✗ ${name}: ${err.message}`);
+          retries--;
+        }
+        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
         await sleep(1000);
       }
     }
   }
-  log.warn('❌ All notes models failed');
-  return ''; // empty on failure
+
+  log.error(`P1 ALL MODELS FAILED`);
+  throw new Error(`All AI attempts failed for notes.`);
 }
 
-async function fetchCardsWithRetry(prompt, tool) {
+// ─── PHASE 2: FETCH CARDS (loops through models, faster) ──────────────────
+async function fetchCards(prompt, tool) {
   for (const model of MODELS_CARDS) {
     const name  = model.id.split('/').pop();
     let retries = 3;
     while (retries > 0) {
       const ctrl  = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0    = Date.now();
+
       try {
-        log.info(`🃏 Cards → ${name} (attempt ${4-retries}/3) for ${tool}`);
+        log.info(`P2 → ${name} | tool:${tool} (attempt ${4 - retries}/3)`);
+
         const res = await fetch(OPENROUTER_BASE, {
           method: 'POST',
           headers: {
@@ -346,136 +396,154 @@ async function fetchCardsWithRetry(prompt, tool) {
           }),
           signal: ctrl.signal,
         });
+
         clearTimeout(timer);
 
-        if (res.status === 429) { retries--; await sleep(3000); continue; }
-        if (!res.ok) { retries--; await sleep(1000); continue; }
+        if (res.status === 429) {
+          retries--;
+          log.warn(`P2 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
+          await sleep(3000);
+          continue;
+        }
 
-        const data = await res.json();
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          log.warn(`P2 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+          if (res.status === 401 || res.status === 403) {
+            throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+          }
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+
+        const data    = await res.json();
         let content = data?.choices?.[0]?.message?.content?.trim();
-        if (!content || content.length < 20) { retries--; await sleep(1000); continue; }
 
-        // Aggressively clean JSON
+        if (!content || content.length < 20) {
+          log.warn(`${name}: empty response — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+
+        // Strip code fences
         content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-        // Find the first { and last }
+
         const jS = content.indexOf('{');
         const jE = content.lastIndexOf('}');
-        if (jS === -1 || jE <= jS) { retries--; await sleep(1000); continue; }
+        if (jS === -1 || jE <= jS) {
+          log.warn(`${name}: no JSON object — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
+        }
         let jsonStr = content.slice(jS, jE + 1);
 
-        // Try multiple repair strategies
-        let parsed = null;
-        const repairs = [
-          () => JSON.parse(jsonStr),
-          () => JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')), // trailing commas
-          () => JSON.parse(jsonStr.replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')), // unquoted keys
-          () => JSON.parse(jsonStr.replace(/:\s*'([^']*)'/g, ': "$1"')), // single quotes
-          () => JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')) // control characters
-        ];
-        for (const fn of repairs) {
-          try { parsed = fn(); break; } catch {}
-        }
-        if (!parsed) { retries--; await sleep(1000); continue; }
-
-        // Fix quiz correct_answer
-        if (Array.isArray(parsed.quiz_questions)) {
-          parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-            q.id = q.id || i + 1;
-            if (q.options && q.correct_answer) {
-              // If correct_answer is a letter (A-D), map to the actual text
-              if (/^[A-D]$/i.test(q.correct_answer.trim())) {
-                const idx = q.correct_answer.toUpperCase().charCodeAt(0) - 65;
-                if (q.options[idx]) q.correct_answer = q.options[idx];
+        // 4-step repair
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); }
+        catch {
+          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+          catch {
+            try {
+              parsed = JSON.parse(
+                jsonStr
+                  .replace(/,(\s*[}\]])/g, '$1')
+                  .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                  .replace(/:\s*'([^']*)'/g, ': "$1"')
+              );
+            }
+            catch {
+              try {
+                parsed = JSON.parse(
+                  jsonStr
+                    .replace(/[\x00-\x1F\x7F]/g, ' ')
+                    .replace(/,(\s*[}\]])/g, '$1')
+                    .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                );
               }
-              // If it doesn't match any option, find case-insensitive match
-              if (!q.options.includes(q.correct_answer)) {
-                const lo = q.correct_answer.toLowerCase();
-                const match = q.options.find(o => o.toLowerCase() === lo);
-                if (match) q.correct_answer = match;
-                else q.correct_answer = q.options[0]; // fallback to first
+              catch (e4) {
+                log.warn(`${name}: JSON repair failed — ${e4.message.slice(0, 80)} — retrying`);
+                retries--;
+                await sleep(1000);
+                continue;
               }
             }
-            return q;
-          });
-          // Ensure we have exactly qCount questions (trim if more)
-          const expectedQ = tool === 'all' ? 8 : (opts.quizCount || 10);
-          if (parsed.quiz_questions.length > expectedQ) {
-            parsed.quiz_questions = parsed.quiz_questions.slice(0, expectedQ);
           }
         }
 
-        // Normalize flashcards
+        // Fix quiz correct_answer (letter → text)
+        if (Array.isArray(parsed.quiz_questions)) {
+          parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+            q.id = q.id || i + 1;
+            if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+              const lo  = q.correct_answer.toLowerCase();
+              const fix = q.options.find(o => o.toLowerCase() === lo)
+                       || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
+                       || q.options[0];
+              if (fix) { q.correct_answer = fix; log.info(`${name}: fixed Q${i+1} correct_answer`); }
+            }
+            return q;
+          });
+        }
+
+        // Normalize flashcard formats
         if (Array.isArray(parsed.flashcards)) {
           parsed.flashcards = parsed.flashcards
             .filter(c => (c.front || c.question) && (c.back || c.answer))
             .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
-          const expectedFc = tool === 'all' ? 12 : (opts.cardCount || 15);
-          if (parsed.flashcards.length > expectedFc) {
-            parsed.flashcards = parsed.flashcards.slice(0, expectedFc);
-          }
         }
 
-        // Ensure mindmap branches count
-        if (parsed.mindmap && parsed.mindmap.branches) {
-          const expectedMm = tool === 'all' ? 6 : (opts.branchCount || 6);
-          if (parsed.mindmap.branches.length > expectedMm) {
-            parsed.mindmap.branches = parsed.mindmap.branches.slice(0, expectedMm);
-          }
-        }
-
-        // Accept if we have at least one flashcard or quiz question or mindmap branch
-        const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 1;
-        const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 1;
-        const hasMm = parsed.mindmap?.branches?.length >= 1;
+        // ─── FIXED VALIDATION: for flashcards_quiz accept either ──────────
+        const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+        const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
+        const hasMm = parsed.mindmap?.branches?.length >= 2;
         const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
 
-        if (hasFc || hasQ || hasMm || hasKc) {
-          log.ok(`✅ Cards → ${name} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
-          return parsed;
+        let valid;
+        if (['flashcards','flashcards_quiz'].includes(tool)) {
+          valid = hasFc || hasQ;  // ✅ Either flashcards OR quiz is enough
+        } else if (tool === 'quiz') {
+          valid = hasQ;
+        } else if (['mindmap','mindmap_only'].includes(tool)) {
+          valid = hasMm;
+        } else if (tool === 'all') {
+          valid = hasFc || hasQ || hasMm || hasKc;
+        } else {
+          valid = hasKc;
         }
-        retries--;
-        await sleep(1000);
+
+        if (!valid) {
+          log.warn(`${name}: validation failed — fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+
+        log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+        return parsed;
+
       } catch (err) {
         clearTimeout(timer);
-        log.warn(`⚠️ Cards ${name}: ${err.message}`);
-        retries--;
+        if (err.name === 'AbortError') {
+          log.warn(`P2 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+          retries--;
+        } else {
+          log.warn(`P2 ✗ ${name}: ${err.message}`);
+          retries--;
+        }
+        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
         await sleep(1000);
       }
     }
   }
-  log.warn('❌ All cards models failed');
-  return null; // null = no cards generated
+
+  log.error(`P2 ALL MODELS FAILED for ${tool}`);
+  return null; // Return null, we will not use fallback
 }
 
-// ─── MERGE (no fallback, just use what we have) ──────────────────────────
-function mergeCards(cardsRaw, notes, topic, opts) {
-  const now = getISTDateTime();
-  const merged = {
-    topic:                   String(topic || cardsRaw?.topic || 'Study Material').slice(0, 200),
-    curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
-    ultra_long_notes:        notes || 'Notes generation failed. Please try again.',
-    key_concepts:            cardsRaw?.key_concepts            || [],
-    key_tricks:              cardsRaw?.key_tricks              || [],
-    practice_questions:      cardsRaw?.practice_questions      || [],
-    real_world_applications: cardsRaw?.real_world_applications || [],
-    common_misconceptions:   cardsRaw?.common_misconceptions   || [],
-    study_score:             cardsRaw?.study_score             || 95,
-    powered_by:              `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
-    generated_at:            now,
-    _version:                SAVOIRÉ.VERSION,
-    _tool:                   opts.tool,
-    _language:               opts.language || 'English',
-    _depth:                  opts.depth    || 'detailed',
-    _style:                  opts.style    || 'simple',
-    _quality:                'ai_generated',
-  };
-  if (Array.isArray(cardsRaw?.flashcards) && cardsRaw.flashcards.length) merged.flashcards = cardsRaw.flashcards;
-  if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
-  if (cardsRaw?.mindmap?.branches?.length) merged.mindmap = cardsRaw.mindmap;
-
-  // Do NOT add fallback key_concepts – if none, they stay empty.
-  return merged;
-}
+// ─── NO FALLBACK FUNCTIONS — removed offlineNotes & buildTopicFallback ────
 
 // ─── TOPIC FACT ──────────────────────────────────────────────────────────────
 const FACT_TEMPLATES = [
@@ -495,7 +563,37 @@ function buildTopicFact(topic) {
   return FACT_TEMPLATES[idx](t);
 }
 
-// ─── SSE HELPER ──────────────────────────────────────────────────────────────
+// ─── MERGE ──────────────────────────────────────────────────────────────────
+function mergeCards(cardsRaw, notes, topic, opts) {
+  const now        = getISTDateTime();
+  const merged = {
+    topic:                   String(topic || cardsRaw?.topic || 'Study Material').slice(0, 200),
+    curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
+    ultra_long_notes:        notes || '',
+    key_concepts:            cardsRaw?.key_concepts            || [],
+    key_tricks:              cardsRaw?.key_tricks              || [],
+    practice_questions:      cardsRaw?.practice_questions      || [],
+    real_world_applications: cardsRaw?.real_world_applications || [],
+    common_misconceptions:   cardsRaw?.common_misconceptions   || [],
+    study_score:             cardsRaw?.study_score             || 95,
+    powered_by:              `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
+    generated_at:            now,
+    _version:                SAVOIRÉ.VERSION,
+    _tool:                   opts.tool,
+    _language:               opts.language || 'English',
+    _depth:                  opts.depth    || 'detailed',
+    _style:                  opts.style    || 'simple',
+    _quality:                cardsRaw ? 'ai_generated' : 'ai_generated', // no fallback
+  };
+  if (Array.isArray(cardsRaw?.flashcards)    && cardsRaw.flashcards.length)    merged.flashcards     = cardsRaw.flashcards;
+  if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
+  if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
+
+  // No fallback key_concepts – if missing, they stay empty.
+  return merged;
+}
+
+// ─── SSE HELPER + SECURITY HEADERS ──────────────────────────────────────────
 function makeSSE(res) {
   return (event, data) => {
     if (res.writableEnded) return;
@@ -530,7 +628,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
   if (!process.env.OPENROUTER_API_KEY) {
-    log.error('[FATAL] OPENROUTER_API_KEY not set');
+    log.error('[FATAL] OPENROUTER_API_KEY not set in environment variables!');
     return res.status(500).json({ error: 'Savoiré AI service is misconfigured — OPENROUTER_API_KEY missing. Contact the administrator.' });
   }
 
@@ -566,7 +664,7 @@ module.exports = async function handler(req, res) {
     branchCount: Number(rawOpts.branchCount) || 6,
   };
 
-  log.info(`[${reqId}] tool:${opts.tool} | depth:${opts.depth} | lang:${opts.language} | stream:${opts.stream}`);
+  log.info(`[${reqId}] tool:${opts.tool} | depth:${opts.depth} | lang:${opts.language} | stream:${opts.stream} | user:${userName}`);
 
   if (!opts.stream) {
     return res.status(400).json({ error: 'Non-streaming mode is not supported. The client must send options.stream=true.' });
@@ -583,7 +681,6 @@ module.exports = async function handler(req, res) {
 
   const sse = makeSSE(res);
 
-  // Keep-alive ping
   const kap = setInterval(() => {
     if (res.writableEnded) { clearInterval(kap); return; }
     try {
@@ -592,11 +689,10 @@ module.exports = async function handler(req, res) {
     } catch { clearInterval(kap); }
   }, 10000);
 
-  // Stage timers
   const stageTimers = [
-    setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2000),
-    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            5000),
-    setTimeout(() => sse('stage', { idx: 3, label: '🃏 Generating interactive cards…' }), 12000),
+    setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2500),
+    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            7000),
+    setTimeout(() => sse('stage', { idx: 3, label: '🃏 Generating interactive cards…' }), 18000),
   ];
   const clearStages = () => stageTimers.forEach(clearTimeout);
 
@@ -605,108 +701,140 @@ module.exports = async function handler(req, res) {
   sse('fact',      { fact: buildTopicFact(message) });
   sse('token',     { t: '' });
 
+  let notes = '', p1ok = false;
+
   try {
-    const notesPrompt = buildNotesPrompt(message, opts);
+    // ╔══════════════════════════════════╗
+    // ║  PHASE 1 — STREAM NOTES          ║
+    // ╚══════════════════════════════════╝
+    sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
-    // ── Start notes streaming ──
-    const notesPromise = streamNotesWithRetry(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool)
-      .then(notes => notes || '');
-
-    // ── Start cards fetching ──
-    let cardsPromise;
-    if (opts.tool === 'all') {
-      const fcqPromise = fetchCardsWithRetry(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz')
-        .then(fcq => fcq || {});
-      const mmPromise = fetchCardsWithRetry(buildCardsPrompt(message, opts, 'mindmap_only'), 'mindmap_only')
-        .then(mm => mm || {});
-      cardsPromise = Promise.all([fcqPromise, mmPromise])
-        .then(([fcq, mm]) => {
-          const merged = { ...fcq };
-          if (mm.mindmap) merged.mindmap = mm.mindmap;
-          if (mm.key_concepts && !merged.key_concepts) merged.key_concepts = mm.key_concepts;
-          return merged;
-        });
-    } else {
-      cardsPromise = fetchCardsWithRetry(buildCardsPrompt(message, opts), opts.tool)
-        .then(result => result || {});
-    }
-
-    // ── Wait for both ──
-    let notes, cardsData;
     try {
-      [notes, cardsData] = await Promise.all([notesPromise, cardsPromise]);
-    } catch (err) {
+      const notesPrompt = buildNotesPrompt(message, opts);
+      notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+      p1ok  = true;
+      log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
+      sse('stage', { idx: 2, label: '✅ Notes streamed! Building interactive cards…' });
+    } catch (e1) {
+      log.error(`[${reqId}] P1 FAILED: ${e1.message}`);
+      // No fallback – we'll send empty notes, but we still try cards.
       notes = '';
+      p1ok = false;
+      sse('stage', { idx: 2, label: '⚠️ Notes failed, generating cards…' });
+    }
+
+    // ╔══════════════════════════════════════════╗
+    // ║  PHASE 2 — FETCH CARDS (no fallback)    ║
+    // ╚══════════════════════════════════════════╝
+    let cardsData = null, p2ok = false;
+
+    if (opts.tool === 'all') {
+      // MEGA BUNDLE
+      sse('stage', { idx: 3, label: '⚡ Building mega bundle — flashcards + quiz + mindmap…' });
+      const [fcqRes, mmRes] = await Promise.allSettled([
+        fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz'),
+        fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only'),
+      ]);
       cardsData = {};
+      if (fcqRes.status === 'fulfilled' && fcqRes.value) {
+        const v = fcqRes.value;
+        if (v.flashcards?.length)              cardsData.flashcards             = v.flashcards;
+        if (v.quiz_questions?.length)          cardsData.quiz_questions         = v.quiz_questions;
+        if (v.key_concepts?.length)            cardsData.key_concepts           = v.key_concepts;
+        if (v.key_tricks?.length)              cardsData.key_tricks             = v.key_tricks;
+        if (v.practice_questions?.length)      cardsData.practice_questions     = v.practice_questions;
+        if (v.real_world_applications?.length) cardsData.real_world_applications= v.real_world_applications;
+        if (v.common_misconceptions?.length)   cardsData.common_misconceptions  = v.common_misconceptions;
+        if (v.topic)                           cardsData.topic                  = v.topic;
+        if (v.study_score)                     cardsData.study_score            = v.study_score;
+      } else {
+        log.warn(`[${reqId}] Mega flashcards+quiz failed`);
+      }
+
+      if (mmRes.status === 'fulfilled' && mmRes.value?.mindmap) {
+        cardsData.mindmap = mmRes.value.mindmap;
+        if (!cardsData.key_concepts?.length && mmRes.value.key_concepts?.length)
+          cardsData.key_concepts = mmRes.value.key_concepts;
+      } else {
+        log.warn(`[${reqId}] Mega mindmap failed`);
+      }
+
+      p2ok = !!(cardsData.flashcards?.length || cardsData.quiz_questions?.length || cardsData.mindmap);
+      // No fallback: if p2ok false, cardsData remains as is (might be empty)
+
+    } else {
+      // SINGLE TOOL
+      const label = { flashcards:'flashcards', quiz:'quiz questions', mindmap:'mind map', summary:'summary cards', notes:'study cards' }[opts.tool] || 'cards';
+      sse('stage', { idx: 3, label: `🃏 Building ${label}…` });
+      try {
+        cardsData = await fetchCards(buildCardsPrompt(message, opts), opts.tool);
+        p2ok = true;
+      } catch (e2) {
+        log.error(`[${reqId}] P2 FAILED: ${e2.message}`);
+        cardsData = {};
+        p2ok = false;
+      }
     }
 
-    log.ok(`[${reqId}] Notes: ${notes.length}ch, Cards keys: ${Object.keys(cardsData).join(', ')}`);
+    // ╔═══════════════════════════════════════════╗
+    // ║  PHASE 3 — STREAM CARDS LIVE              ║
+    // ╚═══════════════════════════════════════════╝
 
-    // ── Send card events ──
-    const sseCard = (event, data) => {
-      sse(event, data);
-      return new Promise(r => setTimeout(r, 60));
-    };
-
-    if (cardsData.flashcards && cardsData.flashcards.length) {
-      sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards…` });
+    if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
+      sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
-        await sseCard('card', { idx: i, total: cardsData.flashcards.length, card: cardsData.flashcards[i] });
+        sse('card', { idx: i, total: cardsData.flashcards.length, card: cardsData.flashcards[i] });
+        await sleep(80);
       }
+      log.ok(`[${reqId}] Streamed ${cardsData.flashcards.length} flashcards`);
     }
 
-    if (cardsData.quiz_questions && cardsData.quiz_questions.length) {
-      sse('stage', { idx: 3, label: `❓ Streaming ${cardsData.quiz_questions.length} quiz questions…` });
+    if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all')) {
+      sse('stage', { idx: 3, label: `❓ Streaming ${cardsData.quiz_questions.length} quiz questions live…` });
       for (let i = 0; i < cardsData.quiz_questions.length; i++) {
-        await sseCard('question', { idx: i, total: cardsData.quiz_questions.length, q: cardsData.quiz_questions[i] });
+        sse('question', { idx: i, total: cardsData.quiz_questions.length, q: cardsData.quiz_questions[i] });
+        await sleep(100);
       }
+      log.ok(`[${reqId}] Streamed ${cardsData.quiz_questions.length} questions`);
     }
 
-    if (cardsData.mindmap && cardsData.mindmap.branches && cardsData.mindmap.branches.length) {
-      sse('stage', { idx: 3, label: `🗺️ Streaming ${cardsData.mindmap.branches.length} mind map branches…` });
+    if (cardsData?.mindmap?.branches?.length && (opts.tool === 'mindmap' || opts.tool === 'all')) {
+      sse('stage', { idx: 3, label: `🗺️ Streaming ${cardsData.mindmap.branches.length} mind map branches live…` });
       sse('branch', { idx: -1, total: cardsData.mindmap.branches.length, branch: { name: '_central_', value: cardsData.mindmap.central, connections: cardsData.mindmap.connections || [] } });
-      await sleep(60);
+      await sleep(80);
       for (let i = 0; i < cardsData.mindmap.branches.length; i++) {
-        await sseCard('branch', { idx: i, total: cardsData.mindmap.branches.length, branch: cardsData.mindmap.branches[i] });
+        sse('branch', { idx: i, total: cardsData.mindmap.branches.length, branch: cardsData.mindmap.branches[i] });
+        await sleep(120);
       }
+      log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }
 
-    // ── Send final done ──
+    // ╔═══════════════════╗
+    // ║  SEND FINAL DATA  ║
+    // ╚═══════════════════╝
     clearInterval(kap);
     clearStages();
 
-    const topic = cardsData.topic || message;
-    const final = mergeCards(cardsData, notes, topic, opts);
-    final._duration_ms = Date.now() - startTime;
-    final._request_id  = reqId;
-    final._phase1_ok   = notes.length > 50;
-    final._phase2_ok   = !!(cardsData.flashcards || cardsData.quiz_questions || cardsData.mindmap);
-    final._notes_only  = !final._phase2_ok;
-    final.topic_fact   = buildTopicFact(message);
-    final.powered_by   = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
+    const final = mergeCards(cardsData, notes, message, opts);
+    final._duration_ms  = Date.now() - startTime;
+    final._request_id   = reqId;
+    final._phase1_ok    = p1ok;
+    final._phase2_ok    = p2ok;
+    final._notes_only   = !p2ok;
+    final.topic_fact    = buildTopicFact(message);
+    final.powered_by    = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
     sse('stage', { idx: 4, label: '✅ Complete! All study materials ready.', done: true });
     sse('done',  final);
 
-    log.ok(`[${reqId}] ✅ COMPLETE — ${final._duration_ms}ms | tool:${opts.tool}`);
+    log.ok(`[${reqId}] ✅ COMPLETE — ${final._duration_ms}ms | p1:${p1ok} | p2:${p2ok} | tool:${opts.tool}`);
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'completed', final._duration_ms, sessionId).catch(() => {});
 
   } catch (fatal) {
-    // This catch should never be reached because our functions always resolve,
-    // but we keep it as a safety net.
     clearInterval(kap);
     clearStages();
-    log.error(`[${reqId}] FATAL (unexpected): ${fatal.message}`);
-    const fallback = {
-      topic: message,
-      ultra_long_notes: `Sorry, we encountered an unexpected error: ${fatal.message}. Please try again.`,
-      powered_by: `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
-      generated_at: getISTDateTime(),
-      _tool: opts.tool,
-      _quality: 'error_fallback',
-    };
-    sse('stage', { idx: 4, label: '⚠️ Error occurred. Please try again.', done: true });
-    sse('done', fallback);
+    log.error(`[${reqId}] FATAL: ${fatal.message}`);
+    sse('error', { error: 'Savoiré AI is momentarily unavailable. Please try again in a few seconds.', requestId: reqId });
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
   }
 
