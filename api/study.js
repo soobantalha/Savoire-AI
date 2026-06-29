@@ -191,8 +191,17 @@ function buildCardsPrompt(input, opts, toolOverride) {
   const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
   const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
   const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
-  const fcCount    = tool === 'all' ? 12 : 15;
-  const qCount     = tool === 'all' ?  8 : 10;
+  // Use wizard-selected counts, fall back to defaults
+  const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
+  const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
+  const mmCount    = opts.branchCount || 6;
+  const quizType   = opts.quizType   || 'mixed';
+  // Quiz difficulty instruction based on type
+  const qDiffInstr = quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
+                     quizType === 'medium'  ? 'ALL questions must be medium difficulty (core exam level).' :
+                     quizType === 'hard'    ? 'ALL questions must be hard (advanced analysis, application).' :
+                     quizType === 'exam'    ? 'ALL questions must be exam-style (past-paper format, mark-scheme phrasing, tricky distractors).' :
+                     'Difficulty mix: 30% easy, 50% medium, 20% hard.';
 
   const fcInstr = includeFc ? `
 ═══════════════════════════════════════════════════
@@ -215,19 +224,19 @@ Each question:
 • "correct_answer": MUST be CHARACTER-FOR-CHARACTER identical to one of the options strings
 • "explanation": 60-100 words explaining why correct, referencing "${topicShort}" (in ${lang})
 • "difficulty": "easy" | "medium" | "hard"
-Mix: 30% easy, 50% medium, 20% hard.
+DIFFICULTY RULE: ${qDiffInstr}
 CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.` : '';
 
   const mmInstr = includeMm ? `
 ═══════════════════════════════════════════════════
-MIND MAP — generate central + 5 branches
+MIND MAP — generate central + ${mmCount} branches
 ═══════════════════════════════════════════════════
 • "central": 3-5 word essence of "${topicShort}" (in ${lang})
-• "branches": array of 5 objects, each with:
-  - "name": specific branch name from "${topicShort}" (NOT generic like "Introduction")
+• "branches": array of EXACTLY ${mmCount} objects, each with:
+  - "name": specific branch name from "${topicShort}" (NOT generic like "Introduction" or "Overview")
   - "color": one of "#00d4ff","#bf00ff","#00ff88","#ffae00","#d4af37","#ff4444","#e84393"
   - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
-• "connections": array of 3 objects {from, to, description} showing relationships` : '';
+• "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
 
   return `You are ${SAVOIRÉ.BRAND}. Generate structured study content as valid JSON.
 
