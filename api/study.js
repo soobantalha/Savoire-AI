@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTRA RELIABLE, FAST, NO ERRORS
+// SAVOIRÉ AI v2.0 — api/study.js — ULTRA FAST, NO FALLBACK
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -20,19 +20,19 @@ const HTTP_REFERER       = `https://${SAVOIRÉ.WEBSITE}`;
 const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
-// ─── FAST MODEL LISTS (prioritise openrouter/free, then Gemini, DeepSeek) ──
+// ─── FAST MODEL LISTS (prioritise openrouter/free, lower tokens for speed) ──
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                           max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'openrouter/free',                           max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3000, timeout_ms: 60000, temp: 0.75 },
 ];
 
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                           max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openrouter/free',                           max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 2000, timeout_ms: 45000, temp: 0.30 },
 ];
 
 const DEPTH_MAP = {
@@ -88,7 +88,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
   } catch (err) { log.warn(`Sheets non-fatal: ${err.message}`); return false; }
 }
 
-// ─── PROMPT BUILDERS (respect user counts) ─────────────────────────────────
+// ─── PROMPT BUILDERS ─────────────────────────────────────────────────────────
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -152,7 +152,6 @@ function buildCardsPrompt(input, opts, toolOverride) {
   const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
   const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
   const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
-  // Use the exact counts from wizard (fallback to defaults)
   const fcCount    = opts.cardCount   || 15;
   const qCount     = opts.quizCount   || 10;
   const mmCount    = opts.branchCount || 6;
@@ -298,7 +297,7 @@ async function streamNotesWithRetry(prompt, onChunk, tool) {
               const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
               if (delta) {
                 full += delta;
-                onChunk(delta);
+                onChunk(delta); // stream immediately
               }
             } catch { /* ignore */ }
           }
@@ -356,55 +355,75 @@ async function fetchCardsWithRetry(prompt, tool) {
         let content = data?.choices?.[0]?.message?.content?.trim();
         if (!content || content.length < 20) { retries--; await sleep(1000); continue; }
 
+        // Aggressively clean JSON
         content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+        // Find the first { and last }
         const jS = content.indexOf('{');
         const jE = content.lastIndexOf('}');
         if (jS === -1 || jE <= jS) { retries--; await sleep(1000); continue; }
         let jsonStr = content.slice(jS, jE + 1);
 
-        let parsed;
-        try { parsed = JSON.parse(jsonStr); }
-        catch {
-          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-          catch {
-            try {
-              parsed = JSON.parse(
-                jsonStr
-                  .replace(/,(\s*[}\]])/g, '$1')
-                  .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                  .replace(/:\s*'([^']*)'/g, ': "$1"')
-              );
-            } catch { retries--; await sleep(1000); continue; }
-          }
+        // Try multiple repair strategies
+        let parsed = null;
+        const repairs = [
+          () => JSON.parse(jsonStr),
+          () => JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')), // trailing commas
+          () => JSON.parse(jsonStr.replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')), // unquoted keys
+          () => JSON.parse(jsonStr.replace(/:\s*'([^']*)'/g, ': "$1"')), // single quotes
+          () => JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')) // control characters
+        ];
+        for (const fn of repairs) {
+          try { parsed = fn(); break; } catch {}
         }
+        if (!parsed) { retries--; await sleep(1000); continue; }
 
         // Fix quiz correct_answer
         if (Array.isArray(parsed.quiz_questions)) {
           parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
             q.id = q.id || i + 1;
             if (q.options && q.correct_answer) {
+              // If correct_answer is a letter (A-D), map to the actual text
               if (/^[A-D]$/i.test(q.correct_answer.trim())) {
                 const idx = q.correct_answer.toUpperCase().charCodeAt(0) - 65;
                 if (q.options[idx]) q.correct_answer = q.options[idx];
               }
+              // If it doesn't match any option, find case-insensitive match
               if (!q.options.includes(q.correct_answer)) {
                 const lo = q.correct_answer.toLowerCase();
                 const match = q.options.find(o => o.toLowerCase() === lo);
                 if (match) q.correct_answer = match;
-                else q.correct_answer = q.options[0]; // fallback
+                else q.correct_answer = q.options[0]; // fallback to first
               }
             }
             return q;
           });
+          // Ensure we have exactly qCount questions (trim if more)
+          const expectedQ = tool === 'all' ? 8 : (opts.quizCount || 10);
+          if (parsed.quiz_questions.length > expectedQ) {
+            parsed.quiz_questions = parsed.quiz_questions.slice(0, expectedQ);
+          }
         }
 
+        // Normalize flashcards
         if (Array.isArray(parsed.flashcards)) {
           parsed.flashcards = parsed.flashcards
             .filter(c => (c.front || c.question) && (c.back || c.answer))
             .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+          const expectedFc = tool === 'all' ? 12 : (opts.cardCount || 15);
+          if (parsed.flashcards.length > expectedFc) {
+            parsed.flashcards = parsed.flashcards.slice(0, expectedFc);
+          }
         }
 
-        // Accept any content, even minimal
+        // Ensure mindmap branches count
+        if (parsed.mindmap && parsed.mindmap.branches) {
+          const expectedMm = tool === 'all' ? 6 : (opts.branchCount || 6);
+          if (parsed.mindmap.branches.length > expectedMm) {
+            parsed.mindmap.branches = parsed.mindmap.branches.slice(0, expectedMm);
+          }
+        }
+
+        // Accept if we have at least one flashcard or quiz question or mindmap branch
         const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 1;
         const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 1;
         const hasMm = parsed.mindmap?.branches?.length >= 1;
@@ -425,10 +444,10 @@ async function fetchCardsWithRetry(prompt, tool) {
     }
   }
   log.warn('❌ All cards models failed');
-  return null;
+  return null; // null = no cards generated
 }
 
-// ─── MERGE (no fallback flag) ──────────────────────────────────────────────
+// ─── MERGE (no fallback, just use what we have) ──────────────────────────
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now = getISTDateTime();
   const merged = {
@@ -454,15 +473,7 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length) merged.mindmap = cardsRaw.mindmap;
 
-  if (!merged.key_concepts?.length) {
-    merged.key_concepts = [
-      `Core Principles: ${topic} rests on fundamental principles connecting theory to practice. Understanding WHY matters more than memorising WHAT.`,
-      `Key Mechanisms: Primary processes follow identifiable patterns that can be learned and systematically applied.`,
-      `Practical Transfer: ${topic} knowledge applies to healthcare, technology, business, and research contexts.`,
-      `Expert Thinking: Experts in ${topic} differ from beginners in pattern recognition, conditional reasoning, and metacognition.`,
-      `Learning Strategy: Active retrieval practice is 2–3× more effective than re-reading for mastering ${topic}.`,
-    ];
-  }
+  // Do NOT add fallback key_concepts – if none, they stay empty.
   return merged;
 }
 
@@ -508,7 +519,7 @@ function setHeaders(res) {
   res.setHeader('X-Frame-Options',        'DENY');
 }
 
-// ─── MAIN HANDLER (never throws) ────────────────────────────────────────────
+// ─── MAIN HANDLER ────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   const reqId     = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const startTime = Date.now();
@@ -583,9 +594,9 @@ module.exports = async function handler(req, res) {
 
   // Stage timers
   const stageTimers = [
-    setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2500),
-    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            7000),
-    setTimeout(() => sse('stage', { idx: 3, label: '🃏 Generating interactive cards…' }), 18000),
+    setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2000),
+    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            5000),
+    setTimeout(() => sse('stage', { idx: 3, label: '🃏 Generating interactive cards…' }), 12000),
   ];
   const clearStages = () => stageTimers.forEach(clearTimeout);
 
@@ -634,7 +645,7 @@ module.exports = async function handler(req, res) {
     // ── Send card events ──
     const sseCard = (event, data) => {
       sse(event, data);
-      return new Promise(r => setTimeout(r, 80));
+      return new Promise(r => setTimeout(r, 60));
     };
 
     if (cardsData.flashcards && cardsData.flashcards.length) {
@@ -654,7 +665,7 @@ module.exports = async function handler(req, res) {
     if (cardsData.mindmap && cardsData.mindmap.branches && cardsData.mindmap.branches.length) {
       sse('stage', { idx: 3, label: `🗺️ Streaming ${cardsData.mindmap.branches.length} mind map branches…` });
       sse('branch', { idx: -1, total: cardsData.mindmap.branches.length, branch: { name: '_central_', value: cardsData.mindmap.central, connections: cardsData.mindmap.connections || [] } });
-      await sleep(80);
+      await sleep(60);
       for (let i = 0; i < cardsData.mindmap.branches.length; i++) {
         await sseCard('branch', { idx: i, total: cardsData.mindmap.branches.length, branch: cardsData.mindmap.branches[i] });
       }
