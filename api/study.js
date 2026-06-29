@@ -1,13 +1,9 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — FAST, ROBUST, NO FALLBACK
+// SAVOIRÉ AI v2.0 — api/study.js — ULTRA RELIABLE, FAST, NO ERRORS
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 1 — BRAND CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
   BRAND:     'Savoiré AI v2.0',
@@ -24,29 +20,20 @@ const HTTP_REFERER       = `https://${SAVOIRÉ.WEBSITE}`;
 const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LISTS (prioritise reliable free models)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── FAST MODEL LISTS (prioritise openrouter/free, then Gemini, DeepSeek) ──
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                           max_tokens: 6000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 6000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 6000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'openrouter/free',                           max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4000, timeout_ms: 90000, temp: 0.75 },
 ];
 
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                           max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openrouter/free',                           max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3000, timeout_ms: 60000, temp: 0.30 },
 ];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
   standard:      { wordRange: '600–900 words',   maxTokens: 2500 },
@@ -63,10 +50,7 @@ const STYLE_MAP = {
   visual:   'Vivid analogies and metaphors. Mental models. Make abstract concrete.',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — UTILITIES
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── UTILITIES ──────────────────────────────────────────────────────────────
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const log = {
@@ -86,10 +70,6 @@ function getISTDateTime() {
 }
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — GOOGLE SHEETS (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
-
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
   if (!GOOGLE_WEBHOOK_URL) return false;
   try {
@@ -108,10 +88,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
   } catch (err) { log.warn(`Sheets non-fatal: ${err.message}`); return false; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (updated to use counts from opts)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── PROMPT BUILDERS (respect user counts) ─────────────────────────────────
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -272,10 +249,7 @@ No markdown. No code fences. No explanations before or after.
 OUTPUT JSON NOW — start with { immediately:`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — AI CALL FUNCTIONS (NEVER throw, return partial data or null)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── AI CALL FUNCTIONS (NEVER throw, return partial data or null) ──────────
 async function streamNotesWithRetry(prompt, onChunk, tool) {
   for (const model of MODELS_STREAM) {
     const name  = model.id.split('/').pop();
@@ -454,10 +428,7 @@ async function fetchCardsWithRetry(prompt, tool) {
   return null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — MERGE (no fallback flag)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── MERGE (no fallback flag) ──────────────────────────────────────────────
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now = getISTDateTime();
   const merged = {
@@ -495,10 +466,7 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   return merged;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — TOPIC FACT (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── TOPIC FACT ──────────────────────────────────────────────────────────────
 const FACT_TEMPLATES = [
   t => `💡 Did you know? People who actively quiz themselves on "${t}" retain 2–3× more than those who just re-read notes.`,
   t => `🧠 Fun fact: Explaining "${t}" out loud (even to an imaginary student) is one of the fastest ways to find gaps.`,
@@ -516,10 +484,7 @@ function buildTopicFact(topic) {
   return FACT_TEMPLATES[idx](t);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — SSE HELPER + SECURITY HEADERS
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── SSE HELPER ──────────────────────────────────────────────────────────────
 function makeSSE(res) {
   return (event, data) => {
     if (res.writableEnded) return;
@@ -543,10 +508,7 @@ function setHeaders(res) {
   res.setHeader('X-Frame-Options',        'DENY');
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MAIN HANDLER (parallel, live streaming, no errors)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── MAIN HANDLER (never throws) ────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   const reqId     = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const startTime = Date.now();
@@ -619,7 +581,7 @@ module.exports = async function handler(req, res) {
     } catch { clearInterval(kap); }
   }, 10000);
 
-  // Stage timers (visual feedback)
+  // Stage timers
   const stageTimers = [
     setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2500),
     setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            7000),
@@ -642,7 +604,6 @@ module.exports = async function handler(req, res) {
     // ── Start cards fetching ──
     let cardsPromise;
     if (opts.tool === 'all') {
-      // Mega: fetch flashcards+quiz and mindmap in parallel
       const fcqPromise = fetchCardsWithRetry(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz')
         .then(fcq => fcq || {});
       const mmPromise = fetchCardsWithRetry(buildCardsPrompt(message, opts, 'mindmap_only'), 'mindmap_only')
@@ -670,13 +631,12 @@ module.exports = async function handler(req, res) {
 
     log.ok(`[${reqId}] Notes: ${notes.length}ch, Cards keys: ${Object.keys(cardsData).join(', ')}`);
 
-    // ── Send card events (flashcards, quiz, mindmap) ──
+    // ── Send card events ──
     const sseCard = (event, data) => {
       sse(event, data);
-      return new Promise(r => setTimeout(r, 80)); // slight delay for visual effect
+      return new Promise(r => setTimeout(r, 80));
     };
 
-    // Flashcards
     if (cardsData.flashcards && cardsData.flashcards.length) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
@@ -684,7 +644,6 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Quiz
     if (cardsData.quiz_questions && cardsData.quiz_questions.length) {
       sse('stage', { idx: 3, label: `❓ Streaming ${cardsData.quiz_questions.length} quiz questions…` });
       for (let i = 0; i < cardsData.quiz_questions.length; i++) {
@@ -692,10 +651,8 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Mindmap
     if (cardsData.mindmap && cardsData.mindmap.branches && cardsData.mindmap.branches.length) {
       sse('stage', { idx: 3, label: `🗺️ Streaming ${cardsData.mindmap.branches.length} mind map branches…` });
-      // central node
       sse('branch', { idx: -1, total: cardsData.mindmap.branches.length, branch: { name: '_central_', value: cardsData.mindmap.central, connections: cardsData.mindmap.connections || [] } });
       await sleep(80);
       for (let i = 0; i < cardsData.mindmap.branches.length; i++) {
@@ -724,7 +681,8 @@ module.exports = async function handler(req, res) {
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'completed', final._duration_ms, sessionId).catch(() => {});
 
   } catch (fatal) {
-    // This should never happen because our functions never reject
+    // This catch should never be reached because our functions always resolve,
+    // but we keep it as a safety net.
     clearInterval(kap);
     clearStages();
     log.error(`[${reqId}] FATAL (unexpected): ${fatal.message}`);
