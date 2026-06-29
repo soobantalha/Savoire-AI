@@ -294,111 +294,107 @@ OUTPUT JSON NOW — start with { immediately:`;
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
-  // Try each model in sequence — if one fails/times out, move to next
-  for (let modelIdx = 0; modelIdx < MODELS_STREAM.length; modelIdx++) {
-    const model = MODELS_STREAM[modelIdx];
-    const name  = model.id.split('/').pop();
-    let retries = modelIdx === 0 ? 3 : 2; // fewer retries on fallback models
+  const model = MODELS_STREAM[0];
+  const name  = model.id.split('/').pop();
+  let retries = 5;
 
-    while (retries > 0) {
-      const ctrl  = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      const t0    = Date.now();
+  while (retries > 0) {
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+    const t0    = Date.now();
 
-      try {
-        log.info(`P1 → ${name} (model ${modelIdx + 1}/${MODELS_STREAM.length}) | tool:${tool} | retry ${4 - retries}/3`);
+    try {
+      log.info(`P1 → ${name} | tool:${tool} (retry ${6 - retries}/5)`);
 
-        const res = await fetch(OPENROUTER_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer':  HTTP_REFERER,
-            'X-Title':       APP_TITLE,
-          },
-          body: JSON.stringify({
-            model:       model.id,
-            max_tokens:  model.max_tokens,
-            temperature: model.temp || 0.75,
-            stream:      true,
-            messages:    [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
+      const res = await fetch(OPENROUTER_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'HTTP-Referer':  HTTP_REFERER,
+          'X-Title':       APP_TITLE,
+        },
+        body: JSON.stringify({
+          model:       model.id,
+          max_tokens:  model.max_tokens,
+          temperature: model.temp || 0.75,
+          stream:      true,
+          messages:    [{ role: 'user', content: prompt }],
+        }),
+        signal: ctrl.signal,
+      });
 
-        clearTimeout(timer);
+      clearTimeout(timer);
 
-        if (res.status === 429) {
-          retries--;
-          log.warn(`P1 ⏳ 429 on ${name} — waiting 2s, retries left ${retries}`);
-          await sleep(2000);
-          continue;
-        }
-
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          log.warn(`P1 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-          if (res.status === 401 || res.status === 403) {
-            throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-          }
-          retries--;
-          await sleep(800);
-          continue;
-        }
-
-        const reader  = res.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let lineBuf = '', full = '', tokens = 0;
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          lineBuf += decoder.decode(value, { stream: true });
-          const lines = lineBuf.split('\n');
-          lineBuf = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const raw = line.slice(6).trim();
-            if (raw === '[DONE]' || !raw) continue;
-            try {
-              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-              if (delta) {
-                full += delta;
-                tokens++;
-                onChunk(delta);
-              }
-            } catch { /* ignore */ }
-          }
-        }
-
-        if (full.trim().length < 80) {
-          log.warn(`${name}: response too short (${full.length}ch) — trying next`);
-          retries--;
-          await sleep(500);
-          continue;
-        }
-
-        log.ok(`P1 ✅ ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now() - t0}ms`);
-        return full;
-
-      } catch (err) {
-        clearTimeout(timer);
-        if (err.name === 'AbortError') {
-          log.warn(`P1 ⏱️ ${name} timed out (${model.timeout_ms}ms) — trying next model`);
-          retries = 0; // timeout = skip to next model immediately
-        } else {
-          log.warn(`P1 ✗ ${name}: ${err.message}`);
-          retries--;
-        }
-        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
-        await sleep(500);
+      if (res.status === 429) {
+        retries--;
+        log.warn(`P1 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
+        await sleep(3000);
+        continue;
       }
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        log.warn(`P1 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+        }
+        retries--;
+        await sleep(1000);
+        continue;
+      }
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let lineBuf = '', full = '', tokens = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        lineBuf += decoder.decode(value, { stream: true });
+        const lines = lineBuf.split('\n');
+        lineBuf = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]' || !raw) continue;
+          try {
+            const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+            if (delta) {
+              full += delta;
+              tokens++;
+              onChunk(delta);
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      if (full.trim().length < 80) {
+        log.warn(`${name}: response too short (${full.length}ch) — retrying`);
+        retries--;
+        await sleep(1000);
+        continue;
+      }
+
+      log.ok(`P1 ✅ ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now() - t0}ms`);
+      return full;
+
+    } catch (err) {
+      clearTimeout(timer);
+      if (err.name === 'AbortError') {
+        log.warn(`P1 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+        retries--;
+      } else {
+        log.warn(`P1 ✗ ${name}: ${err.message}`);
+        retries--;
+      }
+      if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
+      await sleep(1000);
     }
-    log.warn(`P1 → ${name} exhausted, trying next model…`);
   }
 
-  log.error(`P1 ALL MODELS FAILED`);
-  throw new Error(`All AI streaming models failed`);
+  log.error(`P1 ALL RETRIES FAILED for ${model.id}`);
+  throw new Error(`All AI attempts failed: ${model.id}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -406,197 +402,171 @@ async function streamNotes(prompt, onChunk, tool) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool) {
-  // Try each model in sequence — real fallback chain
-  for (let modelIdx = 0; modelIdx < MODELS_CARDS.length; modelIdx++) {
-    const model = MODELS_CARDS[modelIdx];
-    const name  = model.id.split('/').pop();
-    let retries = modelIdx === 0 ? 3 : 2;
+  const model = MODELS_CARDS[0];
+  const name  = model.id.split('/').pop();
+  let retries = 5;
 
-    while (retries > 0) {
-      const ctrl  = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      const t0    = Date.now();
+  while (retries > 0) {
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+    const t0    = Date.now();
 
-      try {
-        log.info(`P2 → ${name} (model ${modelIdx + 1}/${MODELS_CARDS.length}) | tool:${tool} | retry ${4 - retries}/3`);
+    try {
+      log.info(`P2 → ${name} | tool:${tool} (retry ${6 - retries}/5)`);
 
-        // Use streaming=true for faster time-to-first-byte, accumulate full response
-        const res = await fetch(OPENROUTER_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer':  HTTP_REFERER,
-            'X-Title':       APP_TITLE,
-          },
-          body: JSON.stringify({
-            model:       model.id,
-            max_tokens:  model.max_tokens,
-            temperature: model.temp || 0.30,
-            stream:      true,
-            messages:    [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
+      const res = await fetch(OPENROUTER_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'HTTP-Referer':  HTTP_REFERER,
+          'X-Title':       APP_TITLE,
+        },
+        body: JSON.stringify({
+          model:       model.id,
+          max_tokens:  model.max_tokens,
+          temperature: model.temp || 0.30,
+          stream:      false,
+          messages:    [{ role: 'user', content: prompt }],
+        }),
+        signal: ctrl.signal,
+      });
 
-        clearTimeout(timer);
+      clearTimeout(timer);
 
-        if (res.status === 429) {
-          retries--;
-          log.warn(`P2 ⏳ 429 on ${name} — waiting 2s, retries left ${retries}`);
-          await sleep(2000);
-          continue;
+      if (res.status === 429) {
+        retries--;
+        log.warn(`P2 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
+        await sleep(3000);
+        continue;
+      }
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        log.warn(`P2 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+        if (res.status === 401 || res.status === 403) {
+          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
         }
+        retries--;
+        await sleep(1000);
+        continue;
+      }
 
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          log.warn(`P2 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-          if (res.status === 401 || res.status === 403) {
-            throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-          }
-          retries--;
-          await sleep(800);
-          continue;
-        }
+      const data    = await res.json();
+      let content = data?.choices?.[0]?.message?.content?.trim();
 
-        // Accumulate streaming response into full string
-        const reader  = res.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let lineBuf = '', full = '';
+      if (!content || content.length < 20) {
+        log.warn(`${name}: empty response — retrying`);
+        retries--;
+        await sleep(1000);
+        continue;
+      }
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          lineBuf += decoder.decode(value, { stream: true });
-          const lines = lineBuf.split('\n');
-          lineBuf = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const raw = line.slice(6).trim();
-            if (raw === '[DONE]' || !raw) continue;
-            try {
-              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-              if (delta) full += delta;
-            } catch { /* ignore */ }
-          }
-        }
+      // Strip code fences
+      content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
 
-        let content = full.trim();
+      const jS = content.indexOf('{');
+      const jE = content.lastIndexOf('}');
+      if (jS === -1 || jE <= jS) {
+        log.warn(`${name}: no JSON object — retrying`);
+        retries--;
+        await sleep(1000);
+        continue;
+      }
+      let jsonStr = content.slice(jS, jE + 1);
 
-        if (!content || content.length < 20) {
-          log.warn(`${name}: empty response — trying next`);
-          retries--;
-          await sleep(500);
-          continue;
-        }
-
-        // Strip code fences
-        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-
-        const jS = content.indexOf('{');
-        const jE = content.lastIndexOf('}');
-        if (jS === -1 || jE <= jS) {
-          log.warn(`${name}: no JSON object — trying next`);
-          retries--;
-          await sleep(500);
-          continue;
-        }
-        let jsonStr = content.slice(jS, jE + 1);
-
-        // 4-step repair
-        let parsed;
-        try { parsed = JSON.parse(jsonStr); }
+      // 4-step repair
+      let parsed;
+      try { parsed = JSON.parse(jsonStr); }
+      catch {
+        try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
         catch {
-          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+          try {
+            parsed = JSON.parse(
+              jsonStr
+                .replace(/,(\s*[}\]])/g, '$1')
+                .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                .replace(/:\s*'([^']*)'/g, ': "$1"')
+            );
+          }
           catch {
             try {
               parsed = JSON.parse(
                 jsonStr
+                  .replace(/[\x00-\x1F\x7F]/g, ' ')
                   .replace(/,(\s*[}\]])/g, '$1')
                   .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                  .replace(/:\s*'([^']*)'/g, ': "$1"')
               );
             }
-            catch {
-              try {
-                parsed = JSON.parse(
-                  jsonStr
-                    .replace(/[\x00-\x1F\x7F]/g, ' ')
-                    .replace(/,(\s*[}\]])/g, '$1')
-                    .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                );
-              }
-              catch (e4) {
-                log.warn(`${name}: JSON repair failed — ${e4.message.slice(0, 80)} — trying next`);
-                retries--;
-                await sleep(500);
-                continue;
-              }
+            catch (e4) {
+              log.warn(`${name}: JSON repair failed — ${e4.message.slice(0, 80)} — retrying`);
+              retries--;
+              await sleep(1000);
+              continue;
             }
           }
         }
-
-        // Auto-fix quiz correct_answer
-        if (Array.isArray(parsed.quiz_questions)) {
-          parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-            q.id = q.id || i + 1;
-            if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-              const lo  = q.correct_answer.toLowerCase();
-              const fix = q.options.find(o => o.toLowerCase() === lo)
-                       || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
-                       || q.options[0];
-              if (fix) { q.correct_answer = fix; log.info(`${name}: fixed Q${i+1} correct_answer`); }
-            }
-            return q;
-          });
-        }
-
-        // Normalize flashcard formats
-        if (Array.isArray(parsed.flashcards)) {
-          parsed.flashcards = parsed.flashcards
-            .filter(c => (c.front || c.question) && (c.back || c.answer))
-            .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
-        }
-
-        // Lenient validation
-        const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
-        const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-        const hasMm = parsed.mindmap?.branches?.length >= 2;
-        const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
-
-        const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
-                    : tool === 'quiz'                                    ? hasQ
-                    : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
-                    : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
-                    : hasKc;
-
-        if (!valid) {
-          log.warn(`${name}: validation failed — fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} — trying next`);
-          retries--;
-          await sleep(500);
-          continue;
-        }
-
-        log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
-        return parsed;
-
-      } catch (err) {
-        clearTimeout(timer);
-        if (err.name === 'AbortError') {
-          log.warn(`P2 ⏱️ ${name} timed out (${model.timeout_ms}ms) — trying next model`);
-          retries = 0; // timeout = skip to next model
-        } else {
-          log.warn(`P2 ✗ ${name}: ${err.message}`);
-          retries--;
-        }
-        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
-        await sleep(500);
       }
+
+      // Auto-fix quiz correct_answer
+      if (Array.isArray(parsed.quiz_questions)) {
+        parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+          q.id = q.id || i + 1;
+          if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+            const lo  = q.correct_answer.toLowerCase();
+            const fix = q.options.find(o => o.toLowerCase() === lo)
+                     || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
+                     || q.options[0];
+            if (fix) { q.correct_answer = fix; log.info(`${name}: fixed Q${i+1} correct_answer`); }
+          }
+          return q;
+        });
+      }
+
+      // Normalize flashcard formats
+      if (Array.isArray(parsed.flashcards)) {
+        parsed.flashcards = parsed.flashcards
+          .filter(c => (c.front || c.question) && (c.back || c.answer))
+          .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+      }
+
+      // Lenient validation
+      const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+      const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
+      const hasMm = parsed.mindmap?.branches?.length >= 2;
+      const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
+
+      const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
+                  : tool === 'quiz'                                    ? hasQ
+                  : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
+                  : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
+                  : hasKc;
+
+      if (!valid) {
+        log.warn(`${name}: validation failed — fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} — retrying`);
+        retries--;
+        await sleep(1000);
+        continue;
+      }
+
+      log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+      return parsed;
+
+    } catch (err) {
+      clearTimeout(timer);
+      if (err.name === 'AbortError') {
+        log.warn(`P2 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+        retries--;
+      } else {
+        log.warn(`P2 ✗ ${name}: ${err.message}`);
+        retries--;
+      }
+      if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
+      await sleep(1000);
     }
-    log.warn(`P2 → ${name} exhausted, trying next model…`);
   }
 
-  throw new Error(`P2 all models failed`);
+  throw new Error(`P2 all retries failed for ${model.id}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
