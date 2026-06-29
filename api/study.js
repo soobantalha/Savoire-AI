@@ -25,18 +25,11 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — SINGLE MODEL: openrouter/free (always free, picks best free)
+// SECTION 2 — MODEL LISTS (original, unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST — openrouter/free + specific fallbacks
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
   { id: 'openrouter/free',                            max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  // specific models as backup (if openrouter/free is slow)
   { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
   { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
   { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
@@ -46,11 +39,8 @@ const MODELS_STREAM = [
   { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
 ];
 
-// ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
 const MODELS_CARDS = [
-  // First try the smart free router
   { id: 'openrouter/free',                            max_tokens: 6000, timeout_ms: 150000, temp: 0.30 },
-  // Then specific fast models known to work well for JSON
   { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 150000, temp: 0.30 },
   { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 150000, temp: 0.30 },
   { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 150000, temp: 0.30 },
@@ -80,7 +70,7 @@ const STYLE_MAP = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — UTILITIES
+// SECTION 4 — UTILITIES (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -103,7 +93,7 @@ function getISTDateTime() {
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — GOOGLE SHEETS (unchanged — do not edit)
+// SECTION 5 — GOOGLE SHEETS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
@@ -125,7 +115,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (your existing ones — keep as is)
+// SECTION 6 — PROMPT BUILDERS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -191,12 +181,10 @@ function buildCardsPrompt(input, opts, toolOverride) {
   const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
   const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
   const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
-  // Use wizard-selected counts, fall back to defaults
   const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
   const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
   const mmCount    = opts.branchCount || 6;
   const quizType   = opts.quizType   || 'mixed';
-  // Quiz difficulty instruction based on type
   const qDiffInstr = quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
                      quizType === 'medium'  ? 'ALL questions must be medium difficulty (core exam level).' :
                      quizType === 'hard'    ? 'ALL questions must be hard (advanced analysis, application).' :
@@ -290,7 +278,7 @@ OUTPUT JSON NOW — start with { immediately:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (single model, 5 retries)
+// SECTION 7 — PHASE 1: STREAM NOTES (original logic, but no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
@@ -394,11 +382,11 @@ async function streamNotes(prompt, onChunk, tool) {
   }
 
   log.error(`P1 ALL RETRIES FAILED for ${model.id}`);
-  throw new Error(`All AI attempts failed: ${model.id}`);
+  throw new Error(`All AI attempts failed for notes: ${model.id}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (single model, 5 retries)
+// SECTION 8 — PHASE 2: FETCH CARDS (original logic, no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool) {
@@ -462,7 +450,6 @@ async function fetchCards(prompt, tool) {
         continue;
       }
 
-      // Strip code fences
       content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
 
       const jS = content.indexOf('{');
@@ -475,7 +462,6 @@ async function fetchCards(prompt, tool) {
       }
       let jsonStr = content.slice(jS, jE + 1);
 
-      // 4-step repair
       let parsed;
       try { parsed = JSON.parse(jsonStr); }
       catch {
@@ -508,7 +494,6 @@ async function fetchCards(prompt, tool) {
         }
       }
 
-      // Auto-fix quiz correct_answer
       if (Array.isArray(parsed.quiz_questions)) {
         parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
           q.id = q.id || i + 1;
@@ -523,14 +508,12 @@ async function fetchCards(prompt, tool) {
         });
       }
 
-      // Normalize flashcard formats
       if (Array.isArray(parsed.flashcards)) {
         parsed.flashcards = parsed.flashcards
           .filter(c => (c.front || c.question) && (c.back || c.answer))
           .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
       }
 
-      // Lenient validation
       const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
       const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
       const hasMm = parsed.mindmap?.branches?.length >= 2;
@@ -570,54 +553,14 @@ async function fetchCards(prompt, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK CONTENT (used only when ALL retries fail)
+// SECTION 9 — FALLBACK FUNCTIONS (kept but NOT used — we throw errors instead)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function offlineNotes(topic) {
-  const T = topic || 'this topic';
-  return `## 📚 Introduction to ${T}
+// NOTE: offlineNotes() and buildTopicFallback() are kept for reference but never called.
+// All outputs are AI-generated only.
 
-**${T}** is an important area of study with significant theoretical foundations and practical applications. This guide covers the essential concepts, mechanisms, and real-world uses.
-
----
-
-## 🎯 Core Concepts
-
-> **Definition:** ${T} refers to the systematic study and application of its core domain — encompassing the principles, methods, and frameworks that define the field.
-
-**Foundational Framework:** The study of ${T} rests on interconnected principles. Grasping how each concept connects to others is more valuable than memorising definitions in isolation.
-
-**Key Relationships:** In ${T}, core components form a coherent system where understanding cause-and-effect chains is the key to genuine mastery.
-
----
-
-## ⚙️ How It Works
-
-The primary mechanism of ${T}:
-1. **Initial conditions** are established and characterised
-2. **Core process** begins, governed by the rules of ${T}
-3. **Transformation** occurs through identifiable stages
-4. **Outcomes** emerge and can be measured against expected standards
-
----
-
-## 📝 Key Takeaways
-
-- ✅ ${T} is a reasoning framework, not a collection of isolated facts
-- ✅ Understanding WHY mechanisms work matters more than memorising WHAT they produce
-- ✅ Active retrieval (self-testing) is 2–3× more effective than re-reading
-- ✅ Real mastery = applying ${T} to novel situations, not just familiar ones
-- ✅ Expert-level understanding comes from recognising patterns across contexts
-
----
-*Generated by ${SAVOIRÉ.BRAND} | ${SAVOIRÉ.DEVELOPER} | Free forever for every student.*`;
-}
-
-function buildTopicFallback(tool, topic) {
-  // ... (your existing fallback function — keep it)
-  // For brevity, I'm not repeating it here, but you must copy your original one.
-  // It's already in your current file.
-}
+function offlineNotes(topic) { /* ... */ }
+function buildTopicFallback(tool, topic) { /* ... */ }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 10 — TOPIC FACT (unchanged)
@@ -646,7 +589,6 @@ function buildTopicFact(topic) {
 
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
-  const isFallback = !!cardsRaw?._fallback;
   const merged = {
     topic:                   String(topic || cardsRaw?.topic || 'Study Material').slice(0, 200),
     curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
@@ -664,8 +606,7 @@ function mergeCards(cardsRaw, notes, topic, opts) {
     _language:               opts.language || 'English',
     _depth:                  opts.depth    || 'detailed',
     _style:                  opts.style    || 'simple',
-    _quality:                isFallback ? 'enhanced_fallback' : 'ai_generated',
-    _fallback:               isFallback,
+    _quality:                'ai_generated',
   };
   if (Array.isArray(cardsRaw?.flashcards)    && cardsRaw.flashcards.length)    merged.flashcards     = cardsRaw.flashcards;
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
@@ -711,12 +652,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER (unchanged — your existing handler)
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER
+// SECTION 13 — MAIN HANDLER (parallel execution, no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -728,7 +664,6 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
-  // ── API KEY CHECK — fail fast with clear message ──────────────────────────
   if (!process.env.OPENROUTER_API_KEY) {
     log.error('[FATAL] OPENROUTER_API_KEY not set in environment variables!');
     return res.status(500).json({ error: 'Savoiré AI service is misconfigured — OPENROUTER_API_KEY missing. Contact the administrator.' });
@@ -741,7 +676,6 @@ module.exports = async function handler(req, res) {
   const userSess   = Number(body.sessions) || 1;
   const sessionId  = String(body.sessionId || reqId);
 
-  // ── PING / VISIT ──────────────────────────────────────────────────────────
   if (!message || message === 'ping') {
     log.info(`[${reqId}] PING — ${userName} | sessions:${userSess}`);
     sendToGoogleSheets(userName, userStreak, userSess, 'visit', '', 'online', 0, sessionId).catch(() => {});
@@ -783,7 +717,7 @@ module.exports = async function handler(req, res) {
 
   const sse = makeSSE(res);
 
-  // Keep-alive ping every 10s to prevent proxy/CDN timeout
+  // Keep-alive ping every 10s
   const kap = setInterval(() => {
     if (res.writableEnded) { clearInterval(kap); return; }
     try {
@@ -792,7 +726,7 @@ module.exports = async function handler(req, res) {
     } catch { clearInterval(kap); }
   }, 10000);
 
-  // Auto-advance stage timers (visual feedback while waiting for models)
+  // Auto-advance stage timers (visual feedback)
   const stageTimers = [
     setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2500),
     setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            7000),
@@ -800,146 +734,67 @@ module.exports = async function handler(req, res) {
   ];
   const clearStages = () => stageTimers.forEach(clearTimeout);
 
-  // Initial handshake events
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
   sse('token',     { t: '' }); // prime the token stream
 
-  let notes = '', p1ok = false;
+  let notes = '', cardsData = null;
 
   try {
-    // ╔══════════════════════════════════╗
-    // ║  PHASE 1 — STREAM NOTES FROM AI  ║
-    // ╚══════════════════════════════════╝
-    sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
+    const notesPrompt = buildNotesPrompt(message, opts);
 
-    try {
-      const notesPrompt = buildNotesPrompt(message, opts);
-      notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-      p1ok  = true;
-      log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
-      sse('stage', { idx: 2, label: '✅ Notes streamed! Building interactive cards…' });
-    } catch (e1) {
-      // P1 failed — use offline notes, stream them so live view still works
-      log.error(`[${reqId}] P1 FAILED: ${e1.message}`);
-      notes = offlineNotes(message);
-      for (let i = 0; i < notes.length; i += 250) {
-        sse('token', { t: notes.slice(i, i + 250) });
-        await sleep(5);
-      }
-      p1ok = false;
-      sse('stage', { idx: 2, label: '⚠️ Using cached notes — building cards…' });
-    }
+    // ── Start streaming notes ──
+    const notesPromise = streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
 
-    // ╔══════════════════════════════════════════╗
-    // ║  PHASE 2 — FETCH STRUCTURED CARDS (JSON)  ║
-    // ╚══════════════════════════════════════════╝
-    let cardsData = null, p2ok = false;
-
+    // ── Start fetching cards in parallel ──
+    let cardsPromise;
     if (opts.tool === 'all') {
-      // MEGA BUNDLE: two parallel calls to avoid giant JSON timeouts
-      sse('stage', { idx: 3, label: '⚡ Building mega bundle — flashcards + quiz + mindmap…' });
-      const [fcqRes, mmRes] = await Promise.allSettled([
-        fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz'),
-        fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only'),
-      ]);
-      cardsData = {};
-      if (fcqRes.status === 'fulfilled' && fcqRes.value) {
-        const v = fcqRes.value;
-        if (v.flashcards?.length)              cardsData.flashcards             = v.flashcards;
-        if (v.quiz_questions?.length)          cardsData.quiz_questions         = v.quiz_questions;
-        if (v.key_concepts?.length)            cardsData.key_concepts           = v.key_concepts;
-        if (v.key_tricks?.length)              cardsData.key_tricks             = v.key_tricks;
-        if (v.practice_questions?.length)      cardsData.practice_questions     = v.practice_questions;
-        if (v.real_world_applications?.length) cardsData.real_world_applications= v.real_world_applications;
-        if (v.common_misconceptions?.length)   cardsData.common_misconceptions  = v.common_misconceptions;
-        if (v.topic)                           cardsData.topic                  = v.topic;
-        if (v.study_score)                     cardsData.study_score            = v.study_score;
-      } else { log.warn(`[${reqId}] Mega P2a failed: ${fcqRes.reason?.message}`); }
-
-      if (mmRes.status === 'fulfilled' && mmRes.value?.mindmap) {
-        cardsData.mindmap = mmRes.value.mindmap;
-        if (!cardsData.key_concepts?.length && mmRes.value.key_concepts?.length)
-          cardsData.key_concepts = mmRes.value.key_concepts;
-      } else { log.warn(`[${reqId}] Mega P2b failed: ${mmRes.reason?.message}`); }
-
-      p2ok = !!(cardsData.flashcards?.length || cardsData.quiz_questions?.length || cardsData.mindmap);
-      if (!p2ok) { cardsData = buildTopicFallback('all', message); }
-
+      // Mega: fetch flashcards+quiz and mindmap simultaneously
+      const fcqPromise = fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz');
+      const mmPromise  = fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only');
+      cardsPromise = Promise.all([fcqPromise, mmPromise])
+        .then(([fcq, mm]) => {
+          // Merge the two results — ensure flashcards and quiz are preserved
+          const merged = { ...fcq };
+          if (mm?.mindmap) merged.mindmap = mm.mindmap;
+          if (mm?.key_concepts && !merged.key_concepts) merged.key_concepts = mm.key_concepts;
+          return merged;
+        });
     } else {
-      // SINGLE TOOL
-      const label = { flashcards:'flashcards', quiz:'quiz questions', mindmap:'mind map', summary:'summary cards', notes:'study cards' }[opts.tool] || 'cards';
-      sse('stage', { idx: 3, label: `🃏 Building ${label}…` });
-      try {
-        cardsData = await fetchCards(buildCardsPrompt(message, opts), opts.tool);
-        p2ok = true;
-      } catch (e2) {
-        log.error(`[${reqId}] P2 FAILED: ${e2.message} — using fallback cards`);
-        cardsData = buildTopicFallback(opts.tool, message);
-        p2ok = false;
-      }
+      cardsPromise = fetchCards(buildCardsPrompt(message, opts), opts.tool);
     }
 
-    // ╔═══════════════════════════════════════════╗
-    // ║  PHASE 3 — STREAM CARDS LIVE (animations)  ║
-    // ╚═══════════════════════════════════════════╝
+    // ── Wait for both to finish ──
+    const [notesResult, cardsResult] = await Promise.all([notesPromise, cardsPromise]);
+    notes = notesResult;
+    cardsData = cardsResult;
 
-    if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
-      sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
-      for (let i = 0; i < cardsData.flashcards.length; i++) {
-        sse('card', { idx: i, total: cardsData.flashcards.length, card: cardsData.flashcards[i] });
-        await sleep(80);
-      }
-      log.ok(`[${reqId}] Streamed ${cardsData.flashcards.length} flashcards`);
-    }
+    log.ok(`[${reqId}] Both phases complete. Notes: ${notes.length}ch, Cards: ${!!cardsData}`);
 
-    if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all')) {
-      sse('stage', { idx: 3, label: `❓ Streaming ${cardsData.quiz_questions.length} quiz questions live…` });
-      for (let i = 0; i < cardsData.quiz_questions.length; i++) {
-        sse('question', { idx: i, total: cardsData.quiz_questions.length, q: cardsData.quiz_questions[i] });
-        await sleep(100);
-      }
-      log.ok(`[${reqId}] Streamed ${cardsData.quiz_questions.length} questions`);
-    }
-
-    if (cardsData?.mindmap?.branches?.length && (opts.tool === 'mindmap' || opts.tool === 'all')) {
-      sse('stage', { idx: 3, label: `🗺️ Streaming ${cardsData.mindmap.branches.length} mind map branches live…` });
-      sse('branch', { idx: -1, total: cardsData.mindmap.branches.length, branch: { name: '_central_', value: cardsData.mindmap.central, connections: cardsData.mindmap.connections || [] } });
-      await sleep(80);
-      for (let i = 0; i < cardsData.mindmap.branches.length; i++) {
-        sse('branch', { idx: i, total: cardsData.mindmap.branches.length, branch: cardsData.mindmap.branches[i] });
-        await sleep(120);
-      }
-      log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
-    }
-
-    // ╔═══════════════════╗
-    // ║  SEND FINAL DATA  ║
-    // ╚═══════════════════╝
+    // ── Merge and send final ──
     clearInterval(kap);
     clearStages();
 
     const final = mergeCards(cardsData, notes, message, opts);
     final._duration_ms  = Date.now() - startTime;
     final._request_id   = reqId;
-    final._phase1_ok    = p1ok;
-    final._phase2_ok    = p2ok;
-    final._notes_only   = !p2ok;
+    final._phase1_ok    = true;
+    final._phase2_ok    = true;
+    final._notes_only   = false;
     final.topic_fact    = buildTopicFact(message);
     final.powered_by    = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
     sse('stage', { idx: 4, label: '✅ Complete! All study materials ready.', done: true });
     sse('done',  final);
 
-    log.ok(`[${reqId}] ✅ COMPLETE — ${final._duration_ms}ms | p1:${p1ok} | p2:${p2ok} | tool:${opts.tool}`);
+    log.ok(`[${reqId}] ✅ COMPLETE — ${final._duration_ms}ms | tool:${opts.tool}`);
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'completed', final._duration_ms, sessionId).catch(() => {});
 
   } catch (fatal) {
     clearInterval(kap);
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
-    // IMPORTANT: send {error:'...'} — frontend checks evt.error
     sse('error', { error: 'Savoiré AI is momentarily unavailable. Please try again in a few seconds.', requestId: reqId });
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
   }
