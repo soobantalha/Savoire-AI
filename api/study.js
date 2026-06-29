@@ -742,4 +742,4 @@ module.exports = async function handler(req, res) {
   }
 
   if (!res.writableEnded) res.end();
-};
+};''
