@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — SINGLE MODEL: openrouter/free
+// SAVOIRÉ AI v2.0 — api/study.js — ROBUST & FAST
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -25,29 +25,25 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LISTS (original, unchanged)
+// SECTION 2 — MODEL LISTS (free models, ordered by speed)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// For streaming notes (long-form text)
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 120000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 5000, timeout_ms: 120000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 3500, timeout_ms: 120000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 120000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 6000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 6000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
+  { id: 'openrouter/free',                           max_tokens: 5000, timeout_ms: 90000, temp: 0.75 },
 ];
 
+// For structured JSON (flashcards, quiz, mindmap) – faster, lower tokens
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 6000, timeout_ms: 150000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 150000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 150000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 150000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 6000, timeout_ms: 150000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 7500, timeout_ms: 150000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 150000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8000, timeout_ms: 150000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openrouter/free',                           max_tokens: 4000, timeout_ms: 60000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,7 +66,7 @@ const STYLE_MAP = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — UTILITIES (unchanged)
+// SECTION 4 — UTILITIES
 // ─────────────────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -115,7 +111,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (unchanged)
+// SECTION 6 — PROMPT BUILDERS (updated quiz correct_answer instruction)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -209,11 +205,11 @@ Each question:
 • "id": sequential number
 • "question": specific question about "${topicShort}" (in ${lang})
 • "options": array of EXACTLY 4 strings (one correct, three plausible wrong)
-• "correct_answer": MUST be CHARACTER-FOR-CHARACTER identical to one of the options strings
+• "correct_answer": MUST be the EXACT TEXT of the correct option (NOT the letter like "A" or "B"). It must be character-for-character identical to one of the options strings.
 • "explanation": 60-100 words explaining why correct, referencing "${topicShort}" (in ${lang})
 • "difficulty": "easy" | "medium" | "hard"
 DIFFICULTY RULE: ${qDiffInstr}
-CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.` : '';
+CRITICAL: correct_answer must be the exact text from the options array (e.g., if the correct option is "Photosynthesis", set correct_answer to "Photosynthesis", not "A").` : '';
 
   const mmInstr = includeMm ? `
 ═══════════════════════════════════════════════════
@@ -278,289 +274,303 @@ OUTPUT JSON NOW — start with { immediately:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (original logic, but no fallback)
+// SECTION 7 — PHASE 1: STREAM NOTES (robust, retries across all models)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
-  const model = MODELS_STREAM[0];
-  const name  = model.id.split('/').pop();
-  let retries = 5;
+  // Try each model in order with retries
+  for (const model of MODELS_STREAM) {
+    const name  = model.id.split('/').pop();
+    let retries = 3;
+    while (retries > 0) {
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0    = Date.now();
 
-  while (retries > 0) {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-    const t0    = Date.now();
+      try {
+        log.info(`P1 → ${name} | tool:${tool} (attempt ${4 - retries}/3)`);
 
-    try {
-      log.info(`P1 → ${name} | tool:${tool} (retry ${6 - retries}/5)`);
+        const res = await fetch(OPENROUTER_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer':  HTTP_REFERER,
+            'X-Title':       APP_TITLE,
+          },
+          body: JSON.stringify({
+            model:       model.id,
+            max_tokens:  model.max_tokens,
+            temperature: model.temp || 0.75,
+            stream:      true,
+            messages:    [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
 
-      const res = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer':  HTTP_REFERER,
-          'X-Title':       APP_TITLE,
-        },
-        body: JSON.stringify({
-          model:       model.id,
-          max_tokens:  model.max_tokens,
-          temperature: model.temp || 0.75,
-          stream:      true,
-          messages:    [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
+        clearTimeout(timer);
 
-      clearTimeout(timer);
-
-      if (res.status === 429) {
-        retries--;
-        log.warn(`P1 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
-        await sleep(3000);
-        continue;
-      }
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        log.warn(`P1 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-        if (res.status === 401 || res.status === 403) {
-          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+        if (res.status === 429) {
+          retries--;
+          log.warn(`P1 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
+          await sleep(3000);
+          continue;
         }
-        retries--;
-        await sleep(1000);
-        continue;
-      }
 
-      const reader  = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let lineBuf = '', full = '', tokens = 0;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        lineBuf += decoder.decode(value, { stream: true });
-        const lines = lineBuf.split('\n');
-        lineBuf = lines.pop() || '';
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]' || !raw) continue;
-          try {
-            const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-            if (delta) {
-              full += delta;
-              tokens++;
-              onChunk(delta);
-            }
-          } catch { /* ignore */ }
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          log.warn(`P1 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+          if (res.status === 401 || res.status === 403) {
+            throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+          }
+          retries--;
+          await sleep(1000);
+          continue;
         }
-      }
 
-      if (full.trim().length < 80) {
-        log.warn(`${name}: response too short (${full.length}ch) — retrying`);
-        retries--;
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let lineBuf = '', full = '', tokens = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          lineBuf += decoder.decode(value, { stream: true });
+          const lines = lineBuf.split('\n');
+          lineBuf = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]' || !raw) continue;
+            try {
+              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+              if (delta) {
+                full += delta;
+                tokens++;
+                onChunk(delta);
+              }
+            } catch { /* ignore */ }
+          }
+        }
+
+        if (full.trim().length < 80) {
+          log.warn(`${name}: response too short (${full.length}ch) — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+
+        log.ok(`P1 ✅ ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now() - t0}ms`);
+        return full;
+
+      } catch (err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') {
+          log.warn(`P1 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+          retries--;
+        } else {
+          log.warn(`P1 ✗ ${name}: ${err.message}`);
+          retries--;
+        }
+        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
         await sleep(1000);
-        continue;
       }
-
-      log.ok(`P1 ✅ ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now() - t0}ms`);
-      return full;
-
-    } catch (err) {
-      clearTimeout(timer);
-      if (err.name === 'AbortError') {
-        log.warn(`P1 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
-        retries--;
-      } else {
-        log.warn(`P1 ✗ ${name}: ${err.message}`);
-        retries--;
-      }
-      if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
-      await sleep(1000);
     }
   }
 
-  log.error(`P1 ALL RETRIES FAILED for ${model.id}`);
-  throw new Error(`All AI attempts failed for notes: ${model.id}`);
+  log.error(`P1 ALL MODELS FAILED for notes`);
+  throw new Error(`All AI models failed to generate notes.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (original logic, no fallback)
+// SECTION 8 — PHASE 2: FETCH CARDS (robust, retries across models)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool) {
-  const model = MODELS_CARDS[0];
-  const name  = model.id.split('/').pop();
-  let retries = 5;
+  for (const model of MODELS_CARDS) {
+    const name  = model.id.split('/').pop();
+    let retries = 3;
+    while (retries > 0) {
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0    = Date.now();
 
-  while (retries > 0) {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-    const t0    = Date.now();
+      try {
+        log.info(`P2 → ${name} | tool:${tool} (attempt ${4 - retries}/3)`);
 
-    try {
-      log.info(`P2 → ${name} | tool:${tool} (retry ${6 - retries}/5)`);
+        const res = await fetch(OPENROUTER_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer':  HTTP_REFERER,
+            'X-Title':       APP_TITLE,
+          },
+          body: JSON.stringify({
+            model:       model.id,
+            max_tokens:  model.max_tokens,
+            temperature: model.temp || 0.30,
+            stream:      false,
+            messages:    [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
 
-      const res = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer':  HTTP_REFERER,
-          'X-Title':       APP_TITLE,
-        },
-        body: JSON.stringify({
-          model:       model.id,
-          max_tokens:  model.max_tokens,
-          temperature: model.temp || 0.30,
-          stream:      false,
-          messages:    [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
+        clearTimeout(timer);
 
-      clearTimeout(timer);
-
-      if (res.status === 429) {
-        retries--;
-        log.warn(`P2 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
-        await sleep(3000);
-        continue;
-      }
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        log.warn(`P2 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-        if (res.status === 401 || res.status === 403) {
-          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+        if (res.status === 429) {
+          retries--;
+          log.warn(`P2 ⏳ 429 on ${name} — waiting 3s, retries left ${retries}`);
+          await sleep(3000);
+          continue;
         }
-        retries--;
-        await sleep(1000);
-        continue;
-      }
 
-      const data    = await res.json();
-      let content = data?.choices?.[0]?.message?.content?.trim();
-
-      if (!content || content.length < 20) {
-        log.warn(`${name}: empty response — retrying`);
-        retries--;
-        await sleep(1000);
-        continue;
-      }
-
-      content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-
-      const jS = content.indexOf('{');
-      const jE = content.lastIndexOf('}');
-      if (jS === -1 || jE <= jS) {
-        log.warn(`${name}: no JSON object — retrying`);
-        retries--;
-        await sleep(1000);
-        continue;
-      }
-      let jsonStr = content.slice(jS, jE + 1);
-
-      let parsed;
-      try { parsed = JSON.parse(jsonStr); }
-      catch {
-        try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-        catch {
-          try {
-            parsed = JSON.parse(
-              jsonStr
-                .replace(/,(\s*[}\]])/g, '$1')
-                .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                .replace(/:\s*'([^']*)'/g, ': "$1"')
-            );
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          log.warn(`P2 HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+          if (res.status === 401 || res.status === 403) {
+            throw new Error('OPENROUTER_API_KEY is invalid or missing.');
           }
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+
+        const data    = await res.json();
+        let content = data?.choices?.[0]?.message?.content?.trim();
+
+        if (!content || content.length < 20) {
+          log.warn(`${name}: empty response — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+
+        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+
+        const jS = content.indexOf('{');
+        const jE = content.lastIndexOf('}');
+        if (jS === -1 || jE <= jS) {
+          log.warn(`${name}: no JSON object — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+        let jsonStr = content.slice(jS, jE + 1);
+
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); }
+        catch {
+          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
           catch {
             try {
               parsed = JSON.parse(
                 jsonStr
-                  .replace(/[\x00-\x1F\x7F]/g, ' ')
                   .replace(/,(\s*[}\]])/g, '$1')
                   .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                  .replace(/:\s*'([^']*)'/g, ': "$1"')
               );
             }
-            catch (e4) {
-              log.warn(`${name}: JSON repair failed — ${e4.message.slice(0, 80)} — retrying`);
-              retries--;
-              await sleep(1000);
-              continue;
+            catch {
+              try {
+                parsed = JSON.parse(
+                  jsonStr
+                    .replace(/[\x00-\x1F\x7F]/g, ' ')
+                    .replace(/,(\s*[}\]])/g, '$1')
+                    .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                );
+              }
+              catch {
+                log.warn(`${name}: JSON repair failed — retrying`);
+                retries--;
+                await sleep(1000);
+                continue;
+              }
             }
           }
         }
-      }
 
-      if (Array.isArray(parsed.quiz_questions)) {
-        parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-          q.id = q.id || i + 1;
-          if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-            const lo  = q.correct_answer.toLowerCase();
-            const fix = q.options.find(o => o.toLowerCase() === lo)
-                     || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
-                     || q.options[0];
-            if (fix) { q.correct_answer = fix; log.info(`${name}: fixed Q${i+1} correct_answer`); }
-          }
-          return q;
-        });
-      }
+        // Fix quiz correct_answer: ensure it's the actual text, not a letter
+        if (Array.isArray(parsed.quiz_questions)) {
+          parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+            q.id = q.id || i + 1;
+            if (q.options && q.correct_answer) {
+              // If correct_answer is a letter (like "A"), map to the actual option text
+              if (/^[A-D]$/i.test(q.correct_answer.trim())) {
+                const idx = q.correct_answer.toUpperCase().charCodeAt(0) - 65;
+                if (q.options[idx]) {
+                  q.correct_answer = q.options[idx];
+                  log.info(`${name}: converted correct_answer letter to text for Q${i+1}`);
+                }
+              }
+              // Ensure it matches one of the options exactly (case-insensitive)
+              if (!q.options.includes(q.correct_answer)) {
+                const lo = q.correct_answer.toLowerCase();
+                const match = q.options.find(o => o.toLowerCase() === lo);
+                if (match) {
+                  q.correct_answer = match;
+                  log.info(`${name}: fixed correct_answer case for Q${i+1}`);
+                } else {
+                  // Fallback: set correct_answer to first option
+                  q.correct_answer = q.options[0];
+                  log.warn(`${name}: forced correct_answer to first option for Q${i+1}`);
+                }
+              }
+            }
+            return q;
+          });
+        }
 
-      if (Array.isArray(parsed.flashcards)) {
-        parsed.flashcards = parsed.flashcards
-          .filter(c => (c.front || c.question) && (c.back || c.answer))
-          .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
-      }
+        // Normalize flashcards
+        if (Array.isArray(parsed.flashcards)) {
+          parsed.flashcards = parsed.flashcards
+            .filter(c => (c.front || c.question) && (c.back || c.answer))
+            .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+        }
 
-      const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
-      const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-      const hasMm = parsed.mindmap?.branches?.length >= 2;
-      const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
+        // Validation
+        const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+        const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
+        const hasMm = parsed.mindmap?.branches?.length >= 2;
+        const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
 
-      const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
-                  : tool === 'quiz'                                    ? hasQ
-                  : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
-                  : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
-                  : hasKc;
+        const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
+                    : tool === 'quiz'                                    ? hasQ
+                    : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
+                    : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
+                    : hasKc;
 
-      if (!valid) {
-        log.warn(`${name}: validation failed — fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} — retrying`);
-        retries--;
+        if (!valid) {
+          log.warn(`${name}: validation failed — fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} — retrying`);
+          retries--;
+          await sleep(1000);
+          continue;
+        }
+
+        log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+        return parsed;
+
+      } catch (err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') {
+          log.warn(`P2 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+          retries--;
+        } else {
+          log.warn(`P2 ✗ ${name}: ${err.message}`);
+          retries--;
+        }
+        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
         await sleep(1000);
-        continue;
       }
-
-      log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
-      return parsed;
-
-    } catch (err) {
-      clearTimeout(timer);
-      if (err.name === 'AbortError') {
-        log.warn(`P2 ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
-        retries--;
-      } else {
-        log.warn(`P2 ✗ ${name}: ${err.message}`);
-        retries--;
-      }
-      if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
-      await sleep(1000);
     }
   }
 
-  throw new Error(`P2 all retries failed for ${model.id}`);
+  throw new Error(`All AI models failed to generate ${tool}.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK FUNCTIONS (kept but NOT used — we throw errors instead)
+// SECTION 9 — FALLBACK REMOVED (no fallback used)
 // ─────────────────────────────────────────────────────────────────────────────
-
-// NOTE: offlineNotes() and buildTopicFallback() are kept for reference but never called.
-// All outputs are AI-generated only.
-
-function offlineNotes(topic) { /* ... */ }
-function buildTopicFallback(tool, topic) { /* ... */ }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 10 — TOPIC FACT (unchanged)
@@ -584,7 +594,7 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MERGE (unchanged)
+// SECTION 11 — MERGE
 // ─────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
@@ -652,7 +662,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER (parallel execution, no fallback)
+// SECTION 13 — MAIN HANDLER (parallel, allSettled, robust error handling)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -705,10 +715,7 @@ module.exports = async function handler(req, res) {
 
   sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'started', 0, sessionId).catch(() => {});
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SSE STREAMING RESPONSE
-  // ══════════════════════════════════════════════════════════════════════════
-
+  // ─── SSE setup ──────────────────────────────────────────────────────────────
   res.setHeader('Content-Type',      'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control',     'no-cache, no-store, must-revalidate, no-transform');
   res.setHeader('Connection',        'keep-alive');
@@ -726,7 +733,7 @@ module.exports = async function handler(req, res) {
     } catch { clearInterval(kap); }
   }, 10000);
 
-  // Auto-advance stage timers (visual feedback)
+  // Stage timers
   const stageTimers = [
     setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2500),
     setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            7000),
@@ -737,51 +744,98 @@ module.exports = async function handler(req, res) {
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
-  sse('token',     { t: '' }); // prime the token stream
+  sse('token',     { t: '' });
 
-  let notes = '', cardsData = null;
+  let notes = '';
+  let cardsData = null;
+  let notesOk = false, cardsOk = false;
 
   try {
     const notesPrompt = buildNotesPrompt(message, opts);
 
     // ── Start streaming notes ──
-    const notesPromise = streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+    const notesPromise = streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool)
+      .then(result => {
+        notes = result;
+        notesOk = true;
+        return result;
+      })
+      .catch(err => {
+        log.error(`[${reqId}] Notes failed: ${err.message}`);
+        // We still continue, but notes will be empty
+        return '';
+      });
 
-    // ── Start fetching cards in parallel ──
+    // ── Start cards fetching ──
     let cardsPromise;
     if (opts.tool === 'all') {
-      // Mega: fetch flashcards+quiz and mindmap simultaneously
-      const fcqPromise = fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz');
-      const mmPromise  = fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only');
+      // Mega: fetch flashcards+quiz and mindmap in parallel, using allSettled to ignore failures
+      const fcqPromise = fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz')
+        .catch(err => {
+          log.error(`[${reqId}] Flashcards+Quiz failed: ${err.message}`);
+          return null;
+        });
+      const mmPromise = fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'), 'mindmap_only')
+        .catch(err => {
+          log.error(`[${reqId}] Mindmap failed: ${err.message}`);
+          return null;
+        });
       cardsPromise = Promise.all([fcqPromise, mmPromise])
         .then(([fcq, mm]) => {
-          // Merge the two results — ensure flashcards and quiz are preserved
-          const merged = { ...fcq };
-          if (mm?.mindmap) merged.mindmap = mm.mindmap;
-          if (mm?.key_concepts && !merged.key_concepts) merged.key_concepts = mm.key_concepts;
-          return merged;
+          const merged = {};
+          if (fcq) {
+            Object.assign(merged, fcq);
+          }
+          if (mm) {
+            if (mm.mindmap) merged.mindmap = mm.mindmap;
+            if (mm.key_concepts && !merged.key_concepts) merged.key_concepts = mm.key_concepts;
+          }
+          // Ensure we have at least some data
+          if (merged.flashcards || merged.quiz_questions || merged.mindmap || merged.key_concepts) {
+            cardsOk = true;
+            return merged;
+          } else {
+            throw new Error('No cards data generated for Mega bundle.');
+          }
         });
     } else {
-      cardsPromise = fetchCards(buildCardsPrompt(message, opts), opts.tool);
+      cardsPromise = fetchCards(buildCardsPrompt(message, opts), opts.tool)
+        .then(result => {
+          cardsData = result;
+          cardsOk = true;
+          return result;
+        })
+        .catch(err => {
+          log.error(`[${reqId}] Cards failed: ${err.message}`);
+          return null;
+        });
     }
 
-    // ── Wait for both to finish ──
+    // ── Wait for both (notes will resolve, cards may resolve or null) ──
     const [notesResult, cardsResult] = await Promise.all([notesPromise, cardsPromise]);
-    notes = notesResult;
-    cardsData = cardsResult;
+    notes = notesResult || '';
+    cardsData = cardsResult || {};
 
-    log.ok(`[${reqId}] Both phases complete. Notes: ${notes.length}ch, Cards: ${!!cardsData}`);
+    // If both failed, throw error
+    if (!notesOk && !cardsOk) {
+      throw new Error('Both notes and cards generation failed. Please try again.');
+    }
+
+    // If notes failed, we still have cards; if cards failed, we still have notes.
+    log.ok(`[${reqId}] Phases complete. Notes: ${notes.length}ch, Cards: ${!!cardsData}`);
 
     // ── Merge and send final ──
     clearInterval(kap);
     clearStages();
 
-    const final = mergeCards(cardsData, notes, message, opts);
+    // Ensure we have a topic from either
+    const topic = cardsData.topic || message;
+    const final = mergeCards(cardsData, notes, topic, opts);
     final._duration_ms  = Date.now() - startTime;
     final._request_id   = reqId;
-    final._phase1_ok    = true;
-    final._phase2_ok    = true;
-    final._notes_only   = false;
+    final._phase1_ok    = notesOk;
+    final._phase2_ok    = cardsOk;
+    final._notes_only   = !cardsOk;
     final.topic_fact    = buildTopicFact(message);
     final.powered_by    = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
