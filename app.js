@@ -39,7 +39,7 @@
 
 const SAVOIRÉ = {
   VERSION:     '2.0',
-  BRAND:       'Savoiré AI v2.0',
+  BRAND:       'Savoiré AI ',
   DEVELOPER:   'Sooban Talha Technologies',
   DEVSITE:     'soobantalhatech.xyz',
   WEBSITE:     'savoireai.vercel.app',
