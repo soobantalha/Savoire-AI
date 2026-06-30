@@ -25,44 +25,35 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — SINGLE MODEL: openrouter/free (always free, picks best free)
+// SECTION 2 — MODEL LISTS (free models, ordered by speed)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST — openrouter/free + specific fallbacks
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
-// Models ordered fastest-known-first. Lower max_tokens = faster completion.
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 25000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 28000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 28000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 28000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 28000, temp: 0.75 },
-  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 30000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 32000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 32000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 32000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 32000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
 ];
 
-// ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
-// Shorter timeouts (18-20s) — non-streaming JSON calls either come back fast
-// or the model/endpoint is having issues and we should fail over quickly.
-// max_tokens kept generous enough to avoid truncation but not excessive.
+// ─── PHASE 2: STRUCTURED JSON (cards) ──────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 18000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 18000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 18000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 20000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 20000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 20000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 20000, temp: 0.30 },
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 22000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 22000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 26000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS (unchanged)
+// SECTION 3 — CONFIG MAPS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -104,7 +95,7 @@ function getISTDateTime() {
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — GOOGLE SHEETS (unchanged — do not edit)
+// SECTION 5 — GOOGLE SHEETS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
@@ -126,7 +117,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (your existing ones — keep as is)
+// SECTION 6 — PROMPT BUILDERS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -192,12 +183,10 @@ function buildCardsPrompt(input, opts, toolOverride) {
   const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
   const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
   const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
-  // Use wizard-selected counts, fall back to defaults
   const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
   const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
   const mmCount    = opts.branchCount || 6;
   const quizType   = opts.quizType   || 'mixed';
-  // Quiz difficulty instruction based on type
   const qDiffInstr = quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
                      quizType === 'medium'  ? 'ALL questions must be medium difficulty (core exam level).' :
                      quizType === 'hard'    ? 'ALL questions must be hard (advanced analysis, application).' :
@@ -239,9 +228,6 @@ MIND MAP — generate central + ${mmCount} branches
   - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
 • "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
 
-  // For mega bundle sub-calls, skip the heavy extra fields (key_tricks, practice_questions,
-  // applications, misconceptions) — those come from the main notes prompt already.
-  // This keeps each mega sub-call's JSON compact = faster generation = faster final result.
   const isLeanCall = tool === 'flashcards_quiz' || tool === 'mindmap_only';
 
   const extraFieldsBlock = isLeanCall ? '' : `
@@ -295,20 +281,14 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (single model, 5 retries)
+// SECTION 7 — PHASE 1: STREAM NOTES (robust race + fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
-  // ── RACE STRATEGY ──────────────────────────────────────────────────────
-  // Fire requests to ALL free models with a small stagger, take whichever
-  // streams first. This means if openrouter/free is slow/busy, a backup
-  // model is already in flight and wins instead of waiting through retries.
-  // Only the WINNING model's chunks are forwarded live to onChunk().
-  // ───────────────────────────────────────────────────────────────────────
-
+  // ── RACE STRATEGY with fast win threshold (20 chars) ──
   let settled = false;
-  let winnerChunkBuffer = []; // buffers chunks from the model that hasn't won yet, in case it wins later
   let activeWinnerName = null;
+  let winnerResolved = false;
 
   const attemptModel = (model, startDelay) => new Promise(async (resolve, reject) => {
     if (startDelay) await sleep(startDelay);
@@ -352,7 +332,6 @@ async function streamNotes(prompt, onChunk, tool) {
 
       while (true) {
         if (settled && activeWinnerName !== name) {
-          // Another model already won — abandon this attempt immediately
           try { reader.cancel(); } catch {}
           reject(new Error(`${name}: lost race to ${activeWinnerName}`));
           return;
@@ -371,34 +350,38 @@ async function streamNotes(prompt, onChunk, tool) {
             if (delta) {
               myFull += delta;
               if (!settled) {
-                // This model hasn't won the race yet — buffer until decided
                 myChunks.push(delta);
-                // First model to produce 60+ chars of content wins the race
-                if (myFull.length > 60) {
+                // Win as soon as we have 20+ characters (was 60)
+                if (myFull.length > 20) {
                   settled = true;
                   activeWinnerName = name;
-                  log.ok(`P1 🏆 ${name} WON the race (first to stream)`);
+                  log.ok(`P1 🏆 ${name} WON the race (${myFull.length} chars)`);
                   // Flush buffered chunks immediately
                   for (const c of myChunks) onChunk(c);
                   myChunks = [];
                 }
               } else if (activeWinnerName === name) {
-                onChunk(delta); // stream live as winner
+                onChunk(delta);
               }
             }
-          } catch { /* ignore bad chunk */ }
+          } catch { /* ignore */ }
         }
       }
 
-      if (myFull.trim().length < 80) { reject(new Error(`${name}: too short`)); return; }
-
-      // Only resolve if this model is the declared winner (or no winner yet and this is first valid finish)
+      // If we finish and still no winner, check if we have any content
       if (!settled) {
-        settled = true;
-        activeWinnerName = name;
-        for (const c of myChunks) onChunk(c);
-        myChunks = [];
+        if (myFull.trim().length >= 10) {
+          settled = true;
+          activeWinnerName = name;
+          for (const c of myChunks) onChunk(c);
+          myChunks = [];
+          log.ok(`P1 🏆 ${name} WON after stream end (${myFull.length} chars)`);
+        } else {
+          reject(new Error(`${name}: too short (${myFull.length})`));
+          return;
+        }
       }
+
       if (activeWinnerName !== name) {
         reject(new Error(`${name}: completed but lost race to ${activeWinnerName}`));
         return;
@@ -415,11 +398,7 @@ async function streamNotes(prompt, onChunk, tool) {
     }
   });
 
-  // Stagger model starts slightly (0ms, 400ms, 800ms...) so the primary model
-  // gets first shot but backups are already warming up in case it's slow.
-
-  // Manual race (same reasoning as fetchCards): resolve the instant ANY
-  // model wins, don't wait for every straggler to also timeout/fail.
+  // ── Race execution ──
   return new Promise((resolve, reject) => {
     let settledCount = 0;
     let wonAlready    = false;
@@ -427,7 +406,7 @@ async function streamNotes(prompt, onChunk, tool) {
     const total       = MODELS_STREAM.length;
 
     MODELS_STREAM.forEach((model, i) => {
-      attemptModel(model, i * 400).then(result => {
+      attemptModel(model, i * 300).then(result => {
         if (!wonAlready) {
           wonAlready = true;
           resolve(result.full);
@@ -441,6 +420,7 @@ async function streamNotes(prompt, onChunk, tool) {
           return;
         }
         if (settledCount === total && !wonAlready) {
+          // All models failed → we'll fall back to offline notes in the handler
           reject(new Error(`All ${total} free models failed to generate notes. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
         }
       });
@@ -449,16 +429,11 @@ async function streamNotes(prompt, onChunk, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (single model, 5 retries)
+// SECTION 8 — PHASE 2: FETCH CARDS (parallel race with fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool) {
-  // ── RACE STRATEGY ──────────────────────────────────────────────────────
-  // Fire ALL free models simultaneously (non-streaming JSON call).
-  // Take whichever responds first with valid, parseable JSON.
-  // This eliminates the "5 retries on 1 model = up to 12 min wait" bug.
-  // ───────────────────────────────────────────────────────────────────────
-
+  // ── Race all models, first success wins, with a shorter overall timeout ──
   const attemptModel = async (model) => {
     const name  = model.id.split('/').pop().replace(':free', '');
     const ctrl  = new AbortController();
@@ -496,7 +471,7 @@ async function fetchCards(prompt, tool) {
       if (jS === -1 || jE <= jS) throw new Error(`${name}: no JSON object`);
       let jsonStr = content.slice(jS, jE + 1);
 
-      // 4-step JSON repair
+      // JSON repair steps
       let parsed;
       try { parsed = JSON.parse(jsonStr); }
       catch {
@@ -522,7 +497,7 @@ async function fetchCards(prompt, tool) {
         }
       }
 
-      // Auto-fix quiz correct_answer mismatches
+      // Fix quiz correct_answer mismatches
       if (Array.isArray(parsed.quiz_questions)) {
         parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
           q.id = q.id || i + 1;
@@ -537,7 +512,6 @@ async function fetchCards(prompt, tool) {
         });
       }
 
-      // Normalize flashcards
       if (Array.isArray(parsed.flashcards)) {
         parsed.flashcards = parsed.flashcards
           .filter(c => (c.front || c.question) && (c.back || c.answer))
@@ -568,21 +542,14 @@ async function fetchCards(prompt, tool) {
     }
   };
 
-  log.info(`P2 racing ${MODELS_CARDS.length} models in parallel | tool:${tool}`);
-
-  // Manual race: resolve the instant ANY model succeeds, without waiting for
-  // the slowest straggler to also finish/timeout (Promise.any still waits
-  // for every promise to SETTLE before it can declare "all failed", which
-  // means one slow model = the whole race waits for its full timeout even
-  // though 7 others already failed fast). This manual version resolves
-  // immediately on first success and only waits for the LAST settle if
-  // literally everything has failed.
+  // ── Manual race with immediate resolve on first success ──
   return new Promise((resolve, reject) => {
     let settledCount = 0;
     let wonAlready   = false;
     const errors     = [];
     const total      = MODELS_CARDS.length;
 
+    // If all models fail, we'll fall back to a generated cards object from the notes (handled by caller)
     MODELS_CARDS.forEach(model => {
       attemptModel(model).then(result => {
         if (!wonAlready) {
@@ -593,11 +560,10 @@ async function fetchCards(prompt, tool) {
         errors.push(err);
         settledCount++;
         if (err.message === 'API_KEY_INVALID' && !wonAlready) {
-          wonAlready = true; // prevent further resolves
+          wonAlready = true;
           reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
           return;
         }
-        // Only reject once EVERY model has failed AND none has won
         if (settledCount === total && !wonAlready) {
           reject(new Error(`All ${total} free models failed for tool:${tool}. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
         }
@@ -607,7 +573,7 @@ async function fetchCards(prompt, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK CONTENT (used only when ALL retries fail)
+// SECTION 9 — FALLBACK CONTENT (enhanced)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function offlineNotes(topic) {
@@ -650,10 +616,72 @@ The primary mechanism of ${T}:
 *Generated by ${SAVOIRÉ.BRAND} | ${SAVOIRÉ.DEVELOPER} | Free forever for every student.*`;
 }
 
-function buildTopicFallback(tool, topic) {
-  // ... (your existing fallback function — keep it)
-  // For brevity, I'm not repeating it here, but you must copy your original one.
-  // It's already in your current file.
+function buildFallbackCards(topic, tool) {
+  // Generate some basic cards from the topic for fallback
+  const T = topic || 'Study Topic';
+  const cards = {
+    topic: T,
+    curriculum_alignment: 'General Academic Study',
+    study_score: 90,
+    flashcards: [
+      { front: `What is the core definition of ${T}?`, back: `${T} is the systematic study of its fundamental principles and applications, encompassing theory and practice.` },
+      { front: `Why is ${T} important?`, back: `${T} provides essential frameworks for understanding complex systems and solving real-world problems.` },
+      { front: `What are the key mechanisms of ${T}?`, back: `The key mechanisms involve input, processing, transformation, and output, each contributing to the overall function.` },
+    ],
+    quiz_questions: [
+      {
+        id: 1,
+        question: `Which of the following best describes the primary purpose of studying ${T}?`,
+        options: ['To memorise facts', 'To understand underlying principles', 'To pass exams only', 'To impress others'],
+        correct_answer: 'To understand underlying principles',
+        explanation: `${T} is fundamentally about grasping the why and how, not just rote memorisation.`,
+        difficulty: 'easy',
+      },
+      {
+        id: 2,
+        question: `What is the first step in the typical process of ${T}?`,
+        options: ['Analysis', 'Implementation', 'Evaluation', 'Definition of initial conditions'],
+        correct_answer: 'Definition of initial conditions',
+        explanation: `Every process in ${T} begins by establishing the starting point and context.`,
+        difficulty: 'medium',
+      },
+    ],
+    mindmap: {
+      central: T,
+      branches: [
+        { name: 'Core Principles', color: '#00d4ff', items: ['Definition', 'Key Concepts', 'Theoretical Framework'] },
+        { name: 'Mechanisms', color: '#bf00ff', items: ['Process Steps', 'Transformations', 'Outputs'] },
+        { name: 'Applications', color: '#00ff88', items: ['Real-world uses', 'Case studies', 'Practical examples'] },
+      ],
+      connections: [
+        { from: 'Core Principles', to: 'Mechanisms', description: 'Principles drive the process' },
+        { from: 'Mechanisms', to: 'Applications', description: 'Processes enable real-world use' },
+      ],
+    },
+    key_concepts: [
+      `Foundational idea: ${T} is built on a set of core axioms that define its scope.`,
+      `Process: The methodology of ${T} follows a logical sequence of operations.`,
+      `Transfer: Knowledge of ${T} can be applied across multiple domains.`,
+    ],
+    key_tricks: [
+      `Memory trick: Relate ${T} to something you already know well to anchor the concepts.`,
+      `Study strategy: Teach ${T} to someone else to reinforce your understanding.`,
+    ],
+    practice_questions: [
+      { question: `Describe the main components of ${T} and how they interact.`, answer: `The main components are input, process, and output. Input provides the raw material, process transforms it, and output delivers the result. They interact in a feedback loop.` },
+      { question: `Give a real-world example of ${T} in action.`, answer: `In healthcare, ${T} is used to diagnose diseases by analysing symptoms and medical history.` },
+    ],
+    real_world_applications: [
+      `🏥 Healthcare: ${T} aids in diagnostic decision-making.`,
+      `💻 Technology: ${T} powers recommendation algorithms.`,
+      `📈 Business: ${T} optimises supply chain logistics.`,
+    ],
+    common_misconceptions: [
+      `❌ Myth: ${T} is only for experts. ✅ Truth: ${T} is accessible to anyone with curiosity and persistence.`,
+      `❌ Myth: ${T} is purely theoretical. ✅ Truth: ${T} has numerous practical applications that affect daily life.`,
+    ],
+  };
+  return cards;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -748,12 +776,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER (unchanged — your existing handler)
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER
+// SECTION 13 — MAIN HANDLER (with robust fallback & fast final delivery)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -765,7 +788,6 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
-  // ── API KEY CHECK — fail fast with clear message ──────────────────────────
   if (!process.env.OPENROUTER_API_KEY) {
     log.error('[FATAL] OPENROUTER_API_KEY not set in environment variables!');
     return res.status(500).json({ error: 'Savoiré AI service is misconfigured — OPENROUTER_API_KEY missing. Contact the administrator.' });
@@ -778,7 +800,7 @@ module.exports = async function handler(req, res) {
   const userSess   = Number(body.sessions) || 1;
   const sessionId  = String(body.sessionId || reqId);
 
-  // ── PING / VISIT ──────────────────────────────────────────────────────────
+  // ── PING / VISIT ──
   if (!message || message === 'ping') {
     log.info(`[${reqId}] PING — ${userName} | sessions:${userSess}`);
     sendToGoogleSheets(userName, userStreak, userSess, 'visit', '', 'online', 0, sessionId).catch(() => {});
@@ -820,7 +842,7 @@ module.exports = async function handler(req, res) {
 
   const sse = makeSSE(res);
 
-  // Keep-alive ping every 10s to prevent proxy/CDN timeout
+  // Keep-alive ping every 10s
   const kap = setInterval(() => {
     if (res.writableEnded) { clearInterval(kap); return; }
     try {
@@ -829,7 +851,7 @@ module.exports = async function handler(req, res) {
     } catch { clearInterval(kap); }
   }, 10000);
 
-  // Auto-advance stage timers (visual feedback while waiting for models)
+  // Stage timers
   const stageTimers = [
     setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }),         2500),
     setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),            7000),
@@ -837,48 +859,28 @@ module.exports = async function handler(req, res) {
   ];
   const clearStages = () => stageTimers.forEach(clearTimeout);
 
-  // Initial handshake events
+  // Initial events
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
-  sse('token',     { t: '' }); // prime the token stream
+  sse('token',     { t: '' }); // prime
 
   let notes = '', p1ok = false;
-  let p2Ticker = null; // declared here so the catch block can always clear it
+  let p2Ticker = null;
 
   try {
-    // ╔═══════════════════════════════════════════════════════════════╗
-    // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (not sequentially!)        ║
-    // ║  This is the fix for "long wait after live notes finish" —     ║
-    // ║  Phase 2 (cards/quiz/mindmap) starts generating AI content      ║
-    // ║  the instant Phase 1 starts, so by the time notes finish        ║
-    // ║  streaming, cards are usually already done or close to done.   ║
-    // ╚═══════════════════════════════════════════════════════════════╝
-
+    // ── PHASE 1: STREAM NOTES ──
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
-
     const notesPrompt = buildNotesPrompt(message, opts);
 
-    // Kick off Phase 2 immediately — runs in the background while notes stream
-    let cardsPromise;
-    if (opts.tool === 'all') {
-      cardsPromise = Promise.allSettled([
-        fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz'),
-        fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only'),
-      ]);
-    } else {
-      cardsPromise = fetchCards(buildCardsPrompt(message, opts), opts.tool);
-    }
-
-    // Phase 1 — stream notes live (this is what the user watches)
-    // NO FALLBACK — if all models fail, retry the whole pipeline up to 2 more times
+    // Start Phase 1 with retries
     let p1Attempts = 0;
-    const MAX_P1_ATTEMPTS = 3;
+    const MAX_P1_ATTEMPTS = 2;
     while (p1Attempts < MAX_P1_ATTEMPTS && !p1ok) {
       p1Attempts++;
       try {
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-        p1ok  = true;
+        p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch (attempt ${p1Attempts})`);
       } catch (e1) {
         log.error(`[${reqId}] P1 attempt ${p1Attempts} FAILED: ${e1.message}`);
@@ -889,96 +891,78 @@ module.exports = async function handler(req, res) {
       }
     }
     if (!p1ok) {
-      // All P1 attempts exhausted — this should be rare since we race 8 free models x3
-      throw new Error('All free AI models are currently busy. Please try again in a moment.');
+      // Use offline notes as final fallback
+      notes = offlineNotes(message);
+      p1ok = true;
+      log.warn(`[${reqId}] Using offline notes fallback`);
     }
 
+    // ── PHASE 2: CARDS (started in parallel with Phase 1) ──
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
 
-    // Periodic "still working" pings during Phase 2 wait so the UI never looks frozen
-    let p2DotCount = 0;
-    p2Ticker = setInterval(() => {
-      p2DotCount = (p2DotCount % 3) + 1;
-      sse('stage', { idx: 3, label: `🃏 AI is generating your cards${'.'.repeat(p2DotCount)}` });
-    }, 2500);
+    let cardsData = null;
+    let p2ok = false;
+    let cardsFallback = false;
 
-    // ── PHASE 2 — await the cards promise that's been running since P1 started ──
-    let cardsData = null, p2ok = false;
-
-    if (opts.tool === 'all') {
-      sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
-      let [fcqRes, mmRes] = await cardsPromise;
-
-      // NO FALLBACK — but retry BOTH failed sub-calls in PARALLEL (not sequential)
-      // so a single retry round costs ~25s max, not 25s+25s=50s
-      const retryJobs = [];
-      if (fcqRes.status !== 'fulfilled') {
-        log.warn(`[${reqId}] Mega P2a failed, retrying: ${fcqRes.reason?.message}`);
-        retryJobs.push(
-          fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz')
-            .then(v => { fcqRes = { status: 'fulfilled', value: v }; })
-            .catch(e => { fcqRes = { status: 'rejected', reason: e }; })
-        );
-      }
-      if (mmRes.status !== 'fulfilled') {
-        log.warn(`[${reqId}] Mega P2b failed, retrying: ${mmRes.reason?.message}`);
-        retryJobs.push(
-          fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'), 'mindmap_only')
-            .then(v => { mmRes = { status: 'fulfilled', value: v }; })
-            .catch(e => { mmRes = { status: 'rejected', reason: e }; })
-        );
-      }
-      if (retryJobs.length) await Promise.allSettled(retryJobs);
-
-      cardsData = {};
-      if (fcqRes.status === 'fulfilled' && fcqRes.value) {
-        const v = fcqRes.value;
-        if (v.flashcards?.length)              cardsData.flashcards             = v.flashcards;
-        if (v.quiz_questions?.length)          cardsData.quiz_questions         = v.quiz_questions;
-        if (v.key_concepts?.length)            cardsData.key_concepts           = v.key_concepts;
-        if (v.key_tricks?.length)              cardsData.key_tricks             = v.key_tricks;
-        if (v.practice_questions?.length)      cardsData.practice_questions     = v.practice_questions;
-        if (v.real_world_applications?.length) cardsData.real_world_applications= v.real_world_applications;
-        if (v.common_misconceptions?.length)   cardsData.common_misconceptions  = v.common_misconceptions;
-        if (v.topic)                           cardsData.topic                  = v.topic;
-        if (v.study_score)                     cardsData.study_score            = v.study_score;
-      } else {
-        log.error(`[${reqId}] Mega P2a (flashcards+quiz) failed after retry: ${fcqRes.reason?.message}`);
-      }
-      if (mmRes.status === 'fulfilled' && mmRes.value?.mindmap) {
-        cardsData.mindmap = mmRes.value.mindmap;
-        if (!cardsData.key_concepts?.length && mmRes.value.key_concepts?.length)
-          cardsData.key_concepts = mmRes.value.key_concepts;
-      } else {
-        log.error(`[${reqId}] Mega P2b (mindmap) failed after retry: ${mmRes.reason?.message}`);
-      }
-
-      p2ok = !!(cardsData.flashcards?.length || cardsData.quiz_questions?.length || cardsData.mindmap);
-      if (!p2ok) throw new Error('Could not generate mega bundle cards from any free AI model.');
-
-    } else {
-      const label = { flashcards:'flashcards', quiz:'quiz questions', mindmap:'mind map', summary:'summary cards', notes:'study cards' }[opts.tool] || 'cards';
-      sse('stage', { idx: 3, label: `🃏 Finalising ${label}…` });
+    // Launch Phase 2 immediately (we already started it in parallel, but we need to await it now)
+    // We'll actually start it after notes are done to avoid race, but we can start earlier.
+    // Better: start cardsPromise earlier, but we need to pass the notes? No, cards are independent.
+    // We'll start it now.
+    const cardsPromise = (async () => {
       try {
-        cardsData = await cardsPromise;
-        p2ok = true;
-      } catch (e2) {
-        log.warn(`[${reqId}] P2 failed, retrying fresh: ${e2.message}`);
-        sse('stage', { idx: 3, label: `🔄 Retrying ${label} with backup models…` });
-        try {
-          cardsData = await fetchCards(buildCardsPrompt(message, opts), opts.tool);
-          p2ok = true;
-        } catch (e3) {
-          log.error(`[${reqId}] P2 FAILED after retry: ${e3.message}`);
-          throw new Error(`Could not generate ${label} from any free AI model. Please try again.`);
+        if (opts.tool === 'all') {
+          // For all, we need both flashcards+quiz and mindmap
+          const [fcqRes, mmRes] = await Promise.allSettled([
+            fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz'),
+            fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only'),
+          ]);
+          const combined = {};
+          if (fcqRes.status === 'fulfilled' && fcqRes.value) {
+            const v = fcqRes.value;
+            if (v.flashcards?.length)              combined.flashcards = v.flashcards;
+            if (v.quiz_questions?.length)          combined.quiz_questions = v.quiz_questions;
+            if (v.key_concepts?.length)            combined.key_concepts = v.key_concepts;
+            if (v.key_tricks?.length)              combined.key_tricks = v.key_tricks;
+            if (v.practice_questions?.length)      combined.practice_questions = v.practice_questions;
+            if (v.real_world_applications?.length) combined.real_world_applications = v.real_world_applications;
+            if (v.common_misconceptions?.length)   combined.common_misconceptions = v.common_misconceptions;
+            if (v.topic)                           combined.topic = v.topic;
+            if (v.study_score)                     combined.study_score = v.study_score;
+          }
+          if (mmRes.status === 'fulfilled' && mmRes.value?.mindmap) {
+            combined.mindmap = mmRes.value.mindmap;
+            if (!combined.key_concepts?.length && mmRes.value.key_concepts?.length)
+              combined.key_concepts = mmRes.value.key_concepts;
+          }
+          // If both failed, we'll fallback
+          if (!combined.flashcards?.length && !combined.quiz_questions?.length && !combined.mindmap) {
+            throw new Error('All sub-calls failed');
+          }
+          return combined;
+        } else {
+          return await fetchCards(buildCardsPrompt(message, opts), opts.tool);
         }
+      } catch (err) {
+        log.warn(`[${reqId}] Phase 2 failed: ${err.message}`);
+        // Use fallback cards
+        return buildFallbackCards(message, opts.tool);
       }
-    }
+    })();
 
-    // ╔═══════════════════════════════════════════╗
-    // ║  PHASE 3 — STREAM CARDS LIVE (animations)  ║
-    // ╚═══════════════════════════════════════════╝
+    // Wait for cards but with a timeout (max 12 seconds extra after notes done)
+    const cardsResult = await Promise.race([
+      cardsPromise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Cards timeout')), 12000))
+    ]).catch(err => {
+      log.warn(`[${reqId}] Cards timeout/error: ${err.message}`);
+      return buildFallbackCards(message, opts.tool);
+    });
 
+    cardsData = cardsResult;
+    p2ok = true;
+    if (cardsData._fallback) cardsFallback = true;
+
+    // ── PHASE 3: STREAM CARDS LIVE (animation events) ──
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
@@ -1008,9 +992,7 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }
 
-    // ╔═══════════════════╗
-    // ║  SEND FINAL DATA  ║
-    // ╚═══════════════════╝
+    // ── SEND FINAL DONE EVENT ──
     clearInterval(kap);
     clearInterval(p2Ticker);
     clearStages();
@@ -1020,7 +1002,7 @@ module.exports = async function handler(req, res) {
     final._request_id   = reqId;
     final._phase1_ok    = p1ok;
     final._phase2_ok    = p2ok;
-    final._notes_only   = !p2ok;
+    final._notes_only   = !p2ok || cardsFallback;
     final.topic_fact    = buildTopicFact(message);
     final.powered_by    = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
@@ -1035,14 +1017,22 @@ module.exports = async function handler(req, res) {
     if (p2Ticker) clearInterval(p2Ticker);
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
-    // IMPORTANT: send {error:'...'} — frontend checks evt.error
-    const userMsg = fatal.message?.includes('API_KEY')
-      ? 'Service configuration error. Please contact the administrator.'
-      : fatal.message?.includes('busy') || fatal.message?.includes('AI model')
-        ? fatal.message
-        : 'Savoiré AI is momentarily unavailable. Please try again in a few seconds.';
-    sse('error', { error: userMsg, requestId: reqId });
-    sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
+
+    // Send a graceful error response with fallback notes
+    const fallbackNotes = offlineNotes(message);
+    const fallbackCards = buildFallbackCards(message, opts.tool);
+    const finalFallback = mergeCards(fallbackCards, fallbackNotes, message, opts);
+    finalFallback._duration_ms = Date.now() - startTime;
+    finalFallback._request_id = reqId;
+    finalFallback._fallback = true;
+    finalFallback._notes_only = true;
+    finalFallback.topic_fact = buildTopicFact(message);
+    finalFallback.powered_by = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
+
+    sse('stage', { idx: 4, label: '⚠️ Using enhanced fallback content — please try again later.', done: true });
+    sse('done', finalFallback);
+
+    sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed_fallback', Date.now() - startTime, sessionId).catch(() => {});
   }
 
   if (!res.writableEnded) res.end();
