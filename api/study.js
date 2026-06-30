@@ -117,23 +117,167 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (keep your existing ones – unchanged)
+// SECTION 6 — PROMPT BUILDERS
 // ─────────────────────────────────────────────────────────────────────────────
 
-// (Your existing buildNotesPrompt and buildCardsPrompt functions go here.
-//  For brevity, they are omitted because they are the same as before.
-//  Please copy them from your current file or use the ones below.)
-
 function buildNotesPrompt(input, opts) {
-  // ... (your existing code)
-  // I'll include a minimal version for completeness, but you should use your own.
-  // Since this is a long response, I'll provide the full functions as they were.
-  // To save space, I'll assume you have them already.
-  // Actually, I'll include them fully below.
+  const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
+  const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
+  const lang  = opts.language || 'English';
+  const tool  = opts.tool || 'notes';
+
+  const sectionMap = {
+    notes:      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples with Walkthroughs\n\n## 🚀 Advanced Aspects & Nuances\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways & Revision Checklist',
+    flashcards: '## 📖 Overview & Context\n\n## 🎯 Core Concepts (as Q&A pairs)\n\n## ⚙️ Mechanisms & Processes\n\n## 💡 Examples & Applications\n\n## ⚠️ Common Misconceptions\n\n## 🎯 Quick Summary',
+    quiz:       '## 📚 Topic Introduction\n\n## ✏️ Core Concepts (exam-ready format)\n\n## ⚙️ Mechanisms (exam-style)\n\n## 📝 Must-Remember Points for Exam',
+    summary:    '## 🚀 TL;DR — 3 to 5 sentences maximum\n\n## 🎯 Core Concepts — one bullet each\n\n## ⚙️ Key Mechanisms — ultra-short\n\n## ✅ Final Revision Checklist',
+    mindmap:    '## 🧠 Central Topic Overview\n\n## 🌿 Branch 1: Foundations & Definitions\n\n## 🌿 Branch 2: Core Mechanisms\n\n## 🌿 Branch 3: Key Examples\n\n## 🌿 Branch 4: Real-World Applications\n\n## 🌿 Branch 5: Common Pitfalls\n\n## 🔗 Key Connections',
+    all:        '## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Summary & Checklist',
+  };
+
+  const sections  = sectionMap[tool] || sectionMap.notes;
+  const toolGoals = {
+    notes:      'Generate comprehensive, well-structured study notes covering every important aspect.',
+    flashcards: 'Generate notes structured as clear Q&A pairs — each concept as a distinct question/answer.',
+    quiz:       'Generate exam-focused notes emphasising examinable points and common question patterns.',
+    summary:    'Generate a concise smart summary: TL;DR first, then bullet key points, scannable.',
+    mindmap:    'Generate hierarchically structured notes suitable for mind map conversion.',
+    all:        'Generate the ULTIMATE comprehensive study package covering every angle of this topic.',
+  };
+  const toolGoal = toolGoals[tool] || toolGoals.notes;
+
+  return `You are ${SAVOIRÉ.BRAND}, the world's most advanced AI study assistant.
+Creator: ${SAVOIRÉ.DEVELOPER} | Founder: ${SAVOIRÉ.FOUNDER}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK: ${toolGoal}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — write EVERY word in ${lang}. Zero exceptions.
+LENGTH: ${depth.wordRange} — aim for upper end. Be thorough.
+STYLE: ${style}
+
+REQUIRED SECTIONS (use exactly these headings):
+${sections}
+
+FORMATTING RULES:
+• ## for all section headings
+• **bold** every key term first mention
+• - for bullet lists
+• Numbered lists for sequential steps
+• > for definitions / key statements
+• --- between major sections
+• At least 3 real-world examples specific to "${input}"
+• ⚠️ Common Mistakes / Misconceptions section
+• 🎯 Key Takeaways (5–8 bullets) at end
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
 function buildCardsPrompt(input, opts, toolOverride) {
-  // ... (your existing code)
+  const lang       = opts.language || 'English';
+  const tool       = toolOverride  || opts.tool || 'notes';
+  const topicShort = String(input).slice(0, 100);
+
+  const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
+  const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
+  const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
+  const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
+  const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
+  const mmCount    = opts.branchCount || 6;
+  const quizType   = opts.quizType   || 'mixed';
+  const qDiffInstr = quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
+                     quizType === 'medium'  ? 'ALL questions must be medium difficulty (core exam level).' :
+                     quizType === 'hard'    ? 'ALL questions must be hard (advanced analysis, application).' :
+                     quizType === 'exam'    ? 'ALL questions must be exam-style (past-paper format, mark-scheme phrasing, tricky distractors).' :
+                     'Difficulty mix: 30% easy, 50% medium, 20% hard.';
+
+  const fcInstr = includeFc ? `
+═══════════════════════════════════════════════════
+FLASHCARDS — generate exactly ${fcCount} cards
+═══════════════════════════════════════════════════
+Each card:
+• "front": specific question about "${topicShort}" (10-40 words, in ${lang})
+• "back": detailed answer 60-150 words about "${topicShort}" (in ${lang})
+Include: definition cards, mechanism cards, comparison cards, application cards, misconception cards.
+ALL content specifically about "${topicShort}". Zero generic filler.` : '';
+
+  const qInstr = includeQ ? `
+═══════════════════════════════════════════════════
+QUIZ QUESTIONS — generate exactly ${qCount} questions
+═══════════════════════════════════════════════════
+Each question:
+• "id": sequential number
+• "question": specific question about "${topicShort}" (in ${lang})
+• "options": array of EXACTLY 4 strings (one correct, three plausible wrong)
+• "correct_answer": MUST be CHARACTER-FOR-CHARACTER identical to one of the options strings
+• "explanation": 60-100 words explaining why correct, referencing "${topicShort}" (in ${lang})
+• "difficulty": "easy" | "medium" | "hard"
+DIFFICULTY RULE: ${qDiffInstr}
+CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.` : '';
+
+  const mmInstr = includeMm ? `
+═══════════════════════════════════════════════════
+MIND MAP — generate central + ${mmCount} branches
+═══════════════════════════════════════════════════
+• "central": 3-5 word essence of "${topicShort}" (in ${lang})
+• "branches": array of EXACTLY ${mmCount} objects, each with:
+  - "name": specific branch name from "${topicShort}" (NOT generic like "Introduction" or "Overview")
+  - "color": one of "#00d4ff","#bf00ff","#00ff88","#ffae00","#d4af37","#ff4444","#e84393"
+  - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
+• "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
+
+  const isLeanCall = tool === 'flashcards_quiz' || tool === 'mindmap_only';
+
+  const extraFieldsBlock = isLeanCall ? '' : `
+  "key_tricks": [
+    "🧠 Memory trick for ${topicShort}: 60-90 words in ${lang}",
+    "📝 Study strategy for ${topicShort}: 60-90 words in ${lang}",
+    "⏰ Recall technique: 60-90 words in ${lang}"
+  ],
+  "practice_questions": [
+    {"question": "analytical question about ${topicShort} in ${lang}", "answer": "200+ word answer in ${lang}"},
+    {"question": "application question about ${topicShort} in ${lang}", "answer": "200+ word answer in ${lang}"}
+  ],
+  "real_world_applications": [
+    "🏥 Healthcare: specific application of ${topicShort}",
+    "💻 Technology: specific tech use of ${topicShort}",
+    "📈 Business: specific business application",
+    "🌍 Society: social impact of ${topicShort}"
+  ],
+  "common_misconceptions": [
+    "❌ MYTH about ${topicShort}. ✅ TRUTH: 50-80 word correction in ${lang}",
+    "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}",
+    "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}"
+  ]`;
+
+  return `You are ${SAVOIRÉ.BRAND}. Generate structured study content as valid JSON.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — ALL text must be in ${lang}.
+${fcInstr}
+${qInstr}
+${mmInstr}
+
+OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
+No markdown. No code fences. No explanations before or after. Keep it compact — no filler.
+
+{
+  "topic": "clean title for ${topicShort} in ${lang}",
+  "curriculum_alignment": "appropriate level e.g. A-Level, GCSE, University",
+  "study_score": 97,
+  ${includeFc  ? `"flashcards": [{"front":"...","back":"..."}],`       : '"flashcards": [],'}
+  ${includeQ   ? `"quiz_questions": [{"id":1,"question":"...","options":["A","B","C","D"],"correct_answer":"...","explanation":"...","difficulty":"medium"}],` : '"quiz_questions": [],'}
+  ${includeMm  ? `"mindmap": {"central":"...","branches":[{"name":"...","color":"#00d4ff","items":["...","...","...","..."]}],"connections":[{"from":"...","to":"...","description":"..."}]},` : '"mindmap": null,'}
+  "key_concepts": [
+    "Concept Name: 60-80 word explanation specific to ${topicShort} in ${lang}",
+    "Concept Name: 60-80 word explanation",
+    "Concept Name: 60-80 word explanation"
+  ]${extraFieldsBlock}
+}
+
+OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
