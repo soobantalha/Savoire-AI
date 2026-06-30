@@ -9648,3 +9648,35 @@ input::placeholder, textarea::placeholder {
 .wizard-footer-action {
   display: flex; justify-content: flex-end;
 }
+
+/* ── ERROR CARD TECHNICAL DETAILS (debugging info) ── */
+.error-tech-details {
+  margin-top: 16px;
+  text-align: left;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,68,68,.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.error-tech-details summary {
+  cursor: pointer;
+  font-size: .8rem;
+  font-weight: 600;
+  color: rgba(255,150,150,.8);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.error-tech-details summary:hover { color: #ff8888; }
+.error-tech-details pre {
+  margin: 10px 0 2px;
+  font-size: .72rem;
+  line-height: 1.5;
+  color: rgba(255,255,255,.55);
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'SF Mono', Consolas, monospace;
+  max-height: 200px;
+  overflow-y: auto;
+}

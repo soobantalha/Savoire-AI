@@ -340,7 +340,7 @@ async function streamNotes(prompt, onChunk, tool) {
         const txt = await res.text().catch(() => '');
         log.warn(`P1 ✗ ${name}: HTTP ${res.status} — ${trunc(txt, 150)}`);
         if (res.status === 401 || res.status === 403) { reject(new Error('API_KEY_INVALID')); return; }
-        reject(new Error(`${name}: HTTP ${res.status} ${trunc(txt, 60)}`));
+        reject(new Error(`${name}: HTTP ${res.status} ${trunc(txt, 200)}`));
         return;
       }
 
@@ -439,7 +439,7 @@ async function streamNotes(prompt, onChunk, tool) {
           return;
         }
         if (settledCount === total && !wonAlready) {
-          reject(new Error(`All ${total} free models failed to generate notes. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
+          reject(new Error(`All ${total} free models failed to generate notes.\n${errors.map(e=>'• '+e.message).join('\n')}`));
         }
       });
     });
@@ -484,7 +484,7 @@ async function fetchCards(prompt, tool) {
         const txt = await res.text().catch(() => '');
         log.warn(`P2 ✗ ${name}: HTTP ${res.status} — ${trunc(txt, 150)}`);
         if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-        throw new Error(`${name}: HTTP ${res.status}`);
+        throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 200)}`);
       }
 
       const data    = await res.json();
@@ -599,7 +599,7 @@ async function fetchCards(prompt, tool) {
         }
         // Only reject once EVERY model has failed AND none has won
         if (settledCount === total && !wonAlready) {
-          reject(new Error(`All ${total} free models failed for tool:${tool}. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
+          reject(new Error(`All ${total} free models failed for tool:${tool}.\n${errors.map(e=>'• '+e.message).join('\n')}`));
         }
       });
     });
