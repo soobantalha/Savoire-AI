@@ -39,13 +39,6 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FREE_MODELS = [
-  'deepseek/deepseek-chat-v3-0324:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'deepseek/deepseek-r1-0528:free',
-  'qwen/qwen-2.5-72b-instruct:free',
-  'mistralai/mistral-small-3.1-24b-instruct:free',
-  'google/gemma-3-12b-it:free',
-  'meta-llama/llama-4-scout:free',
   'openrouter/free',
 ];
 
@@ -58,10 +51,10 @@ const CARDS_TUNING  = { max_tokens: 7000, timeout_ms: 25000, temp: 0.30 };
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
-  standard:      { wordRange: '600–900 words',   maxTokens: 2500 },
-  detailed:      { wordRange: '1000–1500 words', maxTokens: 3500 },
-  comprehensive: { wordRange: '1500–2200 words', maxTokens: 4500 },
-  expert:        { wordRange: '2200–3000 words', maxTokens: 5500 },
+  standard:      { wordRange: '600–900 words',   maxTokens: 500 },
+  detailed:      { wordRange: '1000–1500 words', maxTokens: 1500 },
+  comprehensive: { wordRange: '1500–2200 words', maxTokens: 2500 },
+  expert:        { wordRange: '2200–3000 words', maxTokens: 3500 },
 };
 
 const STYLE_MAP = {
