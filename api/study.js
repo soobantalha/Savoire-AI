@@ -597,7 +597,7 @@ async function fetchCardsFromModel(model, prompt, tool) {
     if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
 
     log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
-    return parsed;1
+    return parsed;
 
   } catch (err) {
     clearTimeout(timer);
