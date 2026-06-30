@@ -47,18 +47,18 @@ const MODELS_STREAM = [
 ];
 
 // ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
-// max_tokens kept generous (7-8k) so large JSON payloads (flashcards+quiz+
-// key_concepts+tricks+applications) never get truncated mid-generation —
-// truncated JSON = guaranteed parse failure across every model.
+// Shorter timeouts (18-20s) — non-streaming JSON calls either come back fast
+// or the model/endpoint is having issues and we should fail over quickly.
+// max_tokens kept generous enough to avoid truncation but not excessive.
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 30000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 30000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 30000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 7500, timeout_ms: 32000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 6000, timeout_ms: 32000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 6000, timeout_ms: 32000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 7500, timeout_ms: 32000, temp: 0.30 },
-  { id: 'openrouter/free',                            max_tokens: 7500, timeout_ms: 35000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 18000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 18000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 18000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 20000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 20000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 20000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 20000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 22000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -417,18 +417,35 @@ async function streamNotes(prompt, onChunk, tool) {
 
   // Stagger model starts slightly (0ms, 400ms, 800ms...) so the primary model
   // gets first shot but backups are already warming up in case it's slow.
-  const attempts = MODELS_STREAM.map((model, i) => attemptModel(model, i * 400));
 
-  try {
-    // Promise.any = resolves with the FIRST successful model result
-    const result = await Promise.any(attempts);
-    return result.full;
-  } catch (aggErr) {
-    if (aggErr?.errors?.some(e => e.message === 'API_KEY_INVALID')) {
-      throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-    }
-    throw new Error(`All ${MODELS_STREAM.length} free models failed to generate notes.`);
-  }
+  // Manual race (same reasoning as fetchCards): resolve the instant ANY
+  // model wins, don't wait for every straggler to also timeout/fail.
+  return new Promise((resolve, reject) => {
+    let settledCount = 0;
+    let wonAlready    = false;
+    const errors      = [];
+    const total       = MODELS_STREAM.length;
+
+    MODELS_STREAM.forEach((model, i) => {
+      attemptModel(model, i * 400).then(result => {
+        if (!wonAlready) {
+          wonAlready = true;
+          resolve(result.full);
+        }
+      }).catch(err => {
+        errors.push(err);
+        settledCount++;
+        if (err.message === 'API_KEY_INVALID' && !wonAlready) {
+          wonAlready = true;
+          reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
+          return;
+        }
+        if (settledCount === total && !wonAlready) {
+          reject(new Error(`All ${total} free models failed to generate notes. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
+        }
+      });
+    });
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -552,15 +569,41 @@ async function fetchCards(prompt, tool) {
   };
 
   log.info(`P2 racing ${MODELS_CARDS.length} models in parallel | tool:${tool}`);
-  try {
-    // Promise.any = resolves with the FIRST model to return valid JSON
-    return await Promise.any(MODELS_CARDS.map(m => attemptModel(m)));
-  } catch (aggErr) {
-    if (aggErr?.errors?.some(e => e.message === 'API_KEY_INVALID')) {
-      throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-    }
-    throw new Error(`All ${MODELS_CARDS.length} free models failed for tool:${tool}`);
-  }
+
+  // Manual race: resolve the instant ANY model succeeds, without waiting for
+  // the slowest straggler to also finish/timeout (Promise.any still waits
+  // for every promise to SETTLE before it can declare "all failed", which
+  // means one slow model = the whole race waits for its full timeout even
+  // though 7 others already failed fast). This manual version resolves
+  // immediately on first success and only waits for the LAST settle if
+  // literally everything has failed.
+  return new Promise((resolve, reject) => {
+    let settledCount = 0;
+    let wonAlready   = false;
+    const errors     = [];
+    const total      = MODELS_CARDS.length;
+
+    MODELS_CARDS.forEach(model => {
+      attemptModel(model).then(result => {
+        if (!wonAlready) {
+          wonAlready = true;
+          resolve(result);
+        }
+      }).catch(err => {
+        errors.push(err);
+        settledCount++;
+        if (err.message === 'API_KEY_INVALID' && !wonAlready) {
+          wonAlready = true; // prevent further resolves
+          reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
+          return;
+        }
+        // Only reject once EVERY model has failed AND none has won
+        if (settledCount === total && !wonAlready) {
+          reject(new Error(`All ${total} free models failed for tool:${tool}. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
+        }
+      });
+    });
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
