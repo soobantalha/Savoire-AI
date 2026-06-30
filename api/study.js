@@ -34,27 +34,31 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
+// Models ordered fastest-known-first. Lower max_tokens = faster completion.
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 5000, timeout_ms: 45000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 45000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 45000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 45000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 4000, timeout_ms: 45000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 5000, timeout_ms: 45000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, timeout_ms: 45000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 25000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 28000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 28000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 28000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 28000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
 ];
 
 // ─── PHASE 2: STRUCTURED JSON ────────────────────────────────────────────
+// max_tokens kept generous (7-8k) so large JSON payloads (flashcards+quiz+
+// key_concepts+tricks+applications) never get truncated mid-generation —
+// truncated JSON = guaranteed parse failure across every model.
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 6000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 6000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 7500, timeout_ms: 45000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 45000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8000, timeout_ms: 45000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 30000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 30000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 30000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 7500, timeout_ms: 32000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 6000, timeout_ms: 32000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 6000, timeout_ms: 32000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 7500, timeout_ms: 32000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 7500, timeout_ms: 35000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -235,32 +239,12 @@ MIND MAP — generate central + ${mmCount} branches
   - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
 • "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
 
-  return `You are ${SAVOIRÉ.BRAND}. Generate structured study content as valid JSON.
+  // For mega bundle sub-calls, skip the heavy extra fields (key_tricks, practice_questions,
+  // applications, misconceptions) — those come from the main notes prompt already.
+  // This keeps each mega sub-call's JSON compact = faster generation = faster final result.
+  const isLeanCall = tool === 'flashcards_quiz' || tool === 'mindmap_only';
 
-TOPIC: "${input}"
-LANGUAGE: ${lang} — ALL text must be in ${lang}.
-${fcInstr}
-${qInstr}
-${mmInstr}
-
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown. No code fences. No explanations before or after.
-
-{
-  "topic": "clean title for ${topicShort} in ${lang}",
-  "curriculum_alignment": "appropriate level e.g. A-Level, GCSE, University",
-  "study_score": 97,
-  "generated_at": "${getISTDateTime()}",
-  ${includeFc  ? `"flashcards": [{"front":"...","back":"..."}],`       : '"flashcards": [],'}
-  ${includeQ   ? `"quiz_questions": [{"id":1,"question":"...","options":["A","B","C","D"],"correct_answer":"...","explanation":"...","difficulty":"medium"}],` : '"quiz_questions": [],'}
-  ${includeMm  ? `"mindmap": {"central":"...","branches":[{"name":"...","color":"#00d4ff","items":["...","...","...","..."]}],"connections":[{"from":"...","to":"...","description":"..."}]},` : '"mindmap": null,'}
-  "key_concepts": [
-    "Concept Name: 60-80 word explanation specific to ${topicShort} in ${lang}",
-    "Concept Name: 60-80 word explanation",
-    "Concept Name: 60-80 word explanation",
-    "Concept Name: 60-80 word explanation",
-    "Concept Name: 60-80 word explanation"
-  ],
+  const extraFieldsBlock = isLeanCall ? '' : `
   "key_tricks": [
     "🧠 Memory trick for ${topicShort}: 60-90 words in ${lang}",
     "📝 Study strategy for ${topicShort}: 60-90 words in ${lang}",
@@ -280,10 +264,34 @@ No markdown. No code fences. No explanations before or after.
     "❌ MYTH about ${topicShort}. ✅ TRUTH: 50-80 word correction in ${lang}",
     "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}",
     "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}"
-  ]
+  ]`;
+
+  return `You are ${SAVOIRÉ.BRAND}. Generate structured study content as valid JSON.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — ALL text must be in ${lang}.
+${fcInstr}
+${qInstr}
+${mmInstr}
+
+OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
+No markdown. No code fences. No explanations before or after. Keep it compact — no filler.
+
+{
+  "topic": "clean title for ${topicShort} in ${lang}",
+  "curriculum_alignment": "appropriate level e.g. A-Level, GCSE, University",
+  "study_score": 97,
+  ${includeFc  ? `"flashcards": [{"front":"...","back":"..."}],`       : '"flashcards": [],'}
+  ${includeQ   ? `"quiz_questions": [{"id":1,"question":"...","options":["A","B","C","D"],"correct_answer":"...","explanation":"...","difficulty":"medium"}],` : '"quiz_questions": [],'}
+  ${includeMm  ? `"mindmap": {"central":"...","branches":[{"name":"...","color":"#00d4ff","items":["...","...","...","..."]}],"connections":[{"from":"...","to":"...","description":"..."}]},` : '"mindmap": null,'}
+  "key_concepts": [
+    "Concept Name: 60-80 word explanation specific to ${topicShort} in ${lang}",
+    "Concept Name: 60-80 word explanation",
+    "Concept Name: 60-80 word explanation"
+  ]${extraFieldsBlock}
 }
 
-OUTPUT JSON NOW — start with { immediately:`;
+OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -793,6 +801,7 @@ module.exports = async function handler(req, res) {
   sse('token',     { t: '' }); // prime the token stream
 
   let notes = '', p1ok = false;
+  let p2Ticker = null; // declared here so the catch block can always clear it
 
   try {
     // ╔═══════════════════════════════════════════════════════════════╗
@@ -843,6 +852,13 @@ module.exports = async function handler(req, res) {
 
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
 
+    // Periodic "still working" pings during Phase 2 wait so the UI never looks frozen
+    let p2DotCount = 0;
+    p2Ticker = setInterval(() => {
+      p2DotCount = (p2DotCount % 3) + 1;
+      sse('stage', { idx: 3, label: `🃏 AI is generating your cards${'.'.repeat(p2DotCount)}` });
+    }, 2500);
+
     // ── PHASE 2 — await the cards promise that's been running since P1 started ──
     let cardsData = null, p2ok = false;
 
@@ -850,17 +866,26 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
       let [fcqRes, mmRes] = await cardsPromise;
 
-      // NO FALLBACK — retry failed mega sub-calls with fresh model race
+      // NO FALLBACK — but retry BOTH failed sub-calls in PARALLEL (not sequential)
+      // so a single retry round costs ~25s max, not 25s+25s=50s
+      const retryJobs = [];
       if (fcqRes.status !== 'fulfilled') {
         log.warn(`[${reqId}] Mega P2a failed, retrying: ${fcqRes.reason?.message}`);
-        try { fcqRes = { status: 'fulfilled', value: await fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz') }; }
-        catch (e) { fcqRes = { status: 'rejected', reason: e }; }
+        retryJobs.push(
+          fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz')
+            .then(v => { fcqRes = { status: 'fulfilled', value: v }; })
+            .catch(e => { fcqRes = { status: 'rejected', reason: e }; })
+        );
       }
       if (mmRes.status !== 'fulfilled') {
         log.warn(`[${reqId}] Mega P2b failed, retrying: ${mmRes.reason?.message}`);
-        try { mmRes = { status: 'fulfilled', value: await fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'), 'mindmap_only') }; }
-        catch (e) { mmRes = { status: 'rejected', reason: e }; }
+        retryJobs.push(
+          fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'), 'mindmap_only')
+            .then(v => { mmRes = { status: 'fulfilled', value: v }; })
+            .catch(e => { mmRes = { status: 'rejected', reason: e }; })
+        );
       }
+      if (retryJobs.length) await Promise.allSettled(retryJobs);
 
       cardsData = {};
       if (fcqRes.status === 'fulfilled' && fcqRes.value) {
@@ -944,6 +969,7 @@ module.exports = async function handler(req, res) {
     // ║  SEND FINAL DATA  ║
     // ╚═══════════════════╝
     clearInterval(kap);
+    clearInterval(p2Ticker);
     clearStages();
 
     const final = mergeCards(cardsData, notes, message, opts);
@@ -963,6 +989,7 @@ module.exports = async function handler(req, res) {
 
   } catch (fatal) {
     clearInterval(kap);
+    if (p2Ticker) clearInterval(p2Ticker);
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
     // IMPORTANT: send {error:'...'} — frontend checks evt.error
