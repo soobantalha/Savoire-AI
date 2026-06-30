@@ -29,25 +29,24 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MODELS_PROSE = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 5000, timeout_ms: 40000, temp: 0.75 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 4000, timeout_ms: 40000, temp: 0.75 },
-  { id: 'openrouter/free',                          max_tokens: 5000, timeout_ms: 55000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 50000, timeout_ms: 40000, temp: 0.75 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 45000, timeout_ms: 40000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 45000, timeout_ms: 40000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 35000, timeout_ms: 35000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 35000, timeout_ms: 35000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 45000, timeout_ms: 40000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 40000, timeout_ms: 40000, temp: 0.75 },
+  { id: 'openrouter/free',                          max_tokens: 50000, timeout_ms: 55000, temp: 0.75 },
 ];
 
 const MODELS_JSON = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3000, timeout_ms: 30000, temp: 0.25 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 30000, temp: 0.25 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 45000, temp: 0.25 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 50000, timeout_ms: 35000, temp: 0.25 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 45000, timeout_ms: 35000, temp: 0.25 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 45000, timeout_ms: 35000, temp: 0.25 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 35000, timeout_ms: 30000, temp: 
+  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 35000, timeout_ms: 35000, temp: 0.25 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 35000, timeout_ms: 35000, temp: 0.25 },
+  { id: 'openrouter/free',                          max_tokens: 35000, timeout_ms: 45000, temp: 0.25 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
