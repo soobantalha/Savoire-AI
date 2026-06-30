@@ -45,26 +45,12 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 30000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 30000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 30000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 30000, temp: 0.75 },
-];
+  { id: 'openrouter/free',                            max_tokens: 35000, timeout_ms: 30000, temp: 0.75 },
+  ];
 
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 28000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 28000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 28000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 28000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 28000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 28000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 28000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 28000, temp: 0.30 },
-];
+  { id: 'openrouter/free',                            max_tokens: 65000, timeout_ms: 28000, temp: 0.30 },
+  ];
 
 // (Pool-size constants kept for backward compatibility / readability but
 // are no longer used — both streamNotes() and fetchCards() now run
@@ -72,8 +58,8 @@ const MODELS_CARDS = [
 
 // How many models to race SIMULTANEOUSLY (rest are sequential fallback only).
 // Keeping this small avoids self-inflicted rate-limiting on OpenRouter free tier.
-const STREAM_RACE_POOL_SIZE = 3;
-const CARDS_RACE_POOL_SIZE  = 3;
+const STREAM_RACE_POOL_SIZE = 10;
+const CARDS_RACE_POOL_SIZE  = 10;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS (unchanged)
@@ -337,8 +323,8 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 //     content. With 8 models in the list this is exceptionally rare.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 16000; // generous — free-tier models can be slow to start (cold queues)
-const FULL_STREAM_TIMEOUT_MS = 60000; // safety ceiling once a model has committed (long notes can take a while)
+const FIRST_TOKEN_TIMEOUT_MS = 160000; // generous — free-tier models can be slow to start (cold queues)
+const FULL_STREAM_TIMEOUT_MS = 600000; // safety ceiling once a model has committed (long notes can take a while)
 
 async function streamOneModel(model, prompt, onChunk, tool) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -363,7 +349,7 @@ async function streamOneModel(model, prompt, onChunk, tool) {
         'X-Title':       APP_TITLE,
       },
       body: JSON.stringify({
-        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
+        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 5.0,
         stream: true, messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
