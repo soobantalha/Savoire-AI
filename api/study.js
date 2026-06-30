@@ -833,10 +833,14 @@ module.exports = async function handler(req, res) {
   ];
   const clearStages = () => stageTimers.forEach(clearTimeout);
 
+  const toolLabels = { notes:'Notes', flashcards:'Flashcards', quiz:'Quiz', summary:'Summary', mindmap:'Mind Map', all:'Mega Bundle' };
+  const toolLabel = toolLabels[opts.tool] || 'Content';
+
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
-  sse('token',     { t: '' }); // prime the token stream
+  // Send VISIBLE first token so user sees content within seconds
+  sse('token',     { t: `✨ **${toolLabel} generation started!**\n\n> 🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"…\n\n---\n\n` });
 
   // For JSON-only tools (flashcards/quiz/mindmap), this drives BOTH the
   // visible live-output text AND the SSE keep-alive activity, so the
@@ -846,7 +850,8 @@ module.exports = async function handler(req, res) {
     let elapsed = 0;
     return (dots) => {
       elapsed += 1.2;
-      sse('token', { t: '' }); // keep-alive pulse, no visible text change needed
+      // Send VISIBLE progress text so the live overlay stays alive with content
+      sse('token', { t: `> ⏳ ${label} generating${dots} ${elapsed.toFixed(0)}s — AI models are racing…\n\n` });
       sse('stage', { idx: 3, label: `🤖 ${label} generating${dots} (${elapsed.toFixed(0)}s)` });
     };
   };
@@ -873,6 +878,14 @@ module.exports = async function handler(req, res) {
       case 'flashcards': {
         sse('stage', { idx: 1, label: '🃏 Generating your flashcards…' });
         const fc = await generateFlashcards(message, opts, makeHeartbeatEmitter('Flashcards'));
+        // Emit individual card events so frontend can animate them appearing one-by-one
+        if (fc.flashcards?.length) {
+          sse('stage', { idx: 2, label: `🃏 Building ${fc.flashcards.length} flashcards…` });
+          for (let i = 0; i < fc.flashcards.length; i++) {
+            sse('card', { idx: i, total: fc.flashcards.length, card: fc.flashcards[i] });
+            await sleep(50);
+          }
+        }
         result = assembleResult({ topic: fc.topic || message, opts, flashcards: fc });
         break;
       }
@@ -880,6 +893,14 @@ module.exports = async function handler(req, res) {
       case 'quiz': {
         sse('stage', { idx: 1, label: '❓ Generating your quiz…' });
         const q = await generateQuiz(message, opts, makeHeartbeatEmitter('Quiz'));
+        // Emit individual question events so frontend can animate them appearing
+        if (q.quiz_questions?.length) {
+          sse('stage', { idx: 2, label: `❓ Building ${q.quiz_questions.length} questions…` });
+          for (let i = 0; i < q.quiz_questions.length; i++) {
+            sse('q', { idx: i, total: q.quiz_questions.length, q: q.quiz_questions[i] });
+            await sleep(50);
+          }
+        }
         result = assembleResult({ topic: q.topic || message, opts, quiz: q });
         break;
       }
