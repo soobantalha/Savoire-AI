@@ -30,26 +30,26 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 30000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 30000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 32000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 32000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 32000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 32000, temp: 0.75 },
-  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 40000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 40000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 40000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 42000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 42000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 42000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 42000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
 ];
 
 // ─── PHASE 2: STRUCTURED JSON (cards) ──────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 22000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 26000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 30000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 30000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 30000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 32000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 32000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 32000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 32000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 35000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -281,14 +281,13 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (robust race + fallback)
+// SECTION 7 — PHASE 1: STREAM NOTES (robust race, no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
-  // ── RACE STRATEGY with fast win threshold (20 chars) ──
+  // ── RACE with fast win (15 chars) ──
   let settled = false;
   let activeWinnerName = null;
-  let winnerResolved = false;
 
   const attemptModel = (model, startDelay) => new Promise(async (resolve, reject) => {
     if (startDelay) await sleep(startDelay);
@@ -351,12 +350,11 @@ async function streamNotes(prompt, onChunk, tool) {
               myFull += delta;
               if (!settled) {
                 myChunks.push(delta);
-                // Win as soon as we have 20+ characters (was 60)
-                if (myFull.length > 20) {
+                // Win after 15 chars (faster)
+                if (myFull.length > 15) {
                   settled = true;
                   activeWinnerName = name;
-                  log.ok(`P1 🏆 ${name} WON the race (${myFull.length} chars)`);
-                  // Flush buffered chunks immediately
+                  log.ok(`P1 🏆 ${name} WON (${myFull.length} chars)`);
                   for (const c of myChunks) onChunk(c);
                   myChunks = [];
                 }
@@ -368,7 +366,6 @@ async function streamNotes(prompt, onChunk, tool) {
         }
       }
 
-      // If we finish and still no winner, check if we have any content
       if (!settled) {
         if (myFull.trim().length >= 10) {
           settled = true;
@@ -398,7 +395,7 @@ async function streamNotes(prompt, onChunk, tool) {
     }
   });
 
-  // ── Race execution ──
+  // ── Execute race ──
   return new Promise((resolve, reject) => {
     let settledCount = 0;
     let wonAlready    = false;
@@ -420,8 +417,8 @@ async function streamNotes(prompt, onChunk, tool) {
           return;
         }
         if (settledCount === total && !wonAlready) {
-          // All models failed → we'll fall back to offline notes in the handler
-          reject(new Error(`All ${total} free models failed to generate notes. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
+          // No fallback – throw error
+          reject(new Error(`All ${total} free models failed to generate notes. Last error: ${errors[errors.length-1]?.message || 'unknown'}`));
         }
       });
     });
@@ -429,11 +426,10 @@ async function streamNotes(prompt, onChunk, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (parallel race with fallback)
+// SECTION 8 — PHASE 2: FETCH CARDS (parallel race, no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool) {
-  // ── Race all models, first success wins, with a shorter overall timeout ──
   const attemptModel = async (model) => {
     const name  = model.id.split('/').pop().replace(':free', '');
     const ctrl  = new AbortController();
@@ -471,7 +467,6 @@ async function fetchCards(prompt, tool) {
       if (jS === -1 || jE <= jS) throw new Error(`${name}: no JSON object`);
       let jsonStr = content.slice(jS, jE + 1);
 
-      // JSON repair steps
       let parsed;
       try { parsed = JSON.parse(jsonStr); }
       catch {
@@ -542,14 +537,13 @@ async function fetchCards(prompt, tool) {
     }
   };
 
-  // ── Manual race with immediate resolve on first success ──
+  // ── Manual race ──
   return new Promise((resolve, reject) => {
     let settledCount = 0;
     let wonAlready   = false;
     const errors     = [];
     const total      = MODELS_CARDS.length;
 
-    // If all models fail, we'll fall back to a generated cards object from the notes (handled by caller)
     MODELS_CARDS.forEach(model => {
       attemptModel(model).then(result => {
         if (!wonAlready) {
@@ -565,7 +559,7 @@ async function fetchCards(prompt, tool) {
           return;
         }
         if (settledCount === total && !wonAlready) {
-          reject(new Error(`All ${total} free models failed for tool:${tool}. Errors: ${errors.slice(0,3).map(e=>e.message).join(' | ')}`));
+          reject(new Error(`All ${total} free models failed for tool:${tool}. Last error: ${errors[errors.length-1]?.message || 'unknown'}`));
         }
       });
     });
@@ -573,119 +567,7 @@ async function fetchCards(prompt, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK CONTENT (enhanced)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function offlineNotes(topic) {
-  const T = topic || 'this topic';
-  return `## 📚 Introduction to ${T}
-
-**${T}** is an important area of study with significant theoretical foundations and practical applications. This guide covers the essential concepts, mechanisms, and real-world uses.
-
----
-
-## 🎯 Core Concepts
-
-> **Definition:** ${T} refers to the systematic study and application of its core domain — encompassing the principles, methods, and frameworks that define the field.
-
-**Foundational Framework:** The study of ${T} rests on interconnected principles. Grasping how each concept connects to others is more valuable than memorising definitions in isolation.
-
-**Key Relationships:** In ${T}, core components form a coherent system where understanding cause-and-effect chains is the key to genuine mastery.
-
----
-
-## ⚙️ How It Works
-
-The primary mechanism of ${T}:
-1. **Initial conditions** are established and characterised
-2. **Core process** begins, governed by the rules of ${T}
-3. **Transformation** occurs through identifiable stages
-4. **Outcomes** emerge and can be measured against expected standards
-
----
-
-## 📝 Key Takeaways
-
-- ✅ ${T} is a reasoning framework, not a collection of isolated facts
-- ✅ Understanding WHY mechanisms work matters more than memorising WHAT they produce
-- ✅ Active retrieval (self-testing) is 2–3× more effective than re-reading
-- ✅ Real mastery = applying ${T} to novel situations, not just familiar ones
-- ✅ Expert-level understanding comes from recognising patterns across contexts
-
----
-*Generated by ${SAVOIRÉ.BRAND} | ${SAVOIRÉ.DEVELOPER} | Free forever for every student.*`;
-}
-
-function buildFallbackCards(topic, tool) {
-  // Generate some basic cards from the topic for fallback
-  const T = topic || 'Study Topic';
-  const cards = {
-    topic: T,
-    curriculum_alignment: 'General Academic Study',
-    study_score: 90,
-    flashcards: [
-      { front: `What is the core definition of ${T}?`, back: `${T} is the systematic study of its fundamental principles and applications, encompassing theory and practice.` },
-      { front: `Why is ${T} important?`, back: `${T} provides essential frameworks for understanding complex systems and solving real-world problems.` },
-      { front: `What are the key mechanisms of ${T}?`, back: `The key mechanisms involve input, processing, transformation, and output, each contributing to the overall function.` },
-    ],
-    quiz_questions: [
-      {
-        id: 1,
-        question: `Which of the following best describes the primary purpose of studying ${T}?`,
-        options: ['To memorise facts', 'To understand underlying principles', 'To pass exams only', 'To impress others'],
-        correct_answer: 'To understand underlying principles',
-        explanation: `${T} is fundamentally about grasping the why and how, not just rote memorisation.`,
-        difficulty: 'easy',
-      },
-      {
-        id: 2,
-        question: `What is the first step in the typical process of ${T}?`,
-        options: ['Analysis', 'Implementation', 'Evaluation', 'Definition of initial conditions'],
-        correct_answer: 'Definition of initial conditions',
-        explanation: `Every process in ${T} begins by establishing the starting point and context.`,
-        difficulty: 'medium',
-      },
-    ],
-    mindmap: {
-      central: T,
-      branches: [
-        { name: 'Core Principles', color: '#00d4ff', items: ['Definition', 'Key Concepts', 'Theoretical Framework'] },
-        { name: 'Mechanisms', color: '#bf00ff', items: ['Process Steps', 'Transformations', 'Outputs'] },
-        { name: 'Applications', color: '#00ff88', items: ['Real-world uses', 'Case studies', 'Practical examples'] },
-      ],
-      connections: [
-        { from: 'Core Principles', to: 'Mechanisms', description: 'Principles drive the process' },
-        { from: 'Mechanisms', to: 'Applications', description: 'Processes enable real-world use' },
-      ],
-    },
-    key_concepts: [
-      `Foundational idea: ${T} is built on a set of core axioms that define its scope.`,
-      `Process: The methodology of ${T} follows a logical sequence of operations.`,
-      `Transfer: Knowledge of ${T} can be applied across multiple domains.`,
-    ],
-    key_tricks: [
-      `Memory trick: Relate ${T} to something you already know well to anchor the concepts.`,
-      `Study strategy: Teach ${T} to someone else to reinforce your understanding.`,
-    ],
-    practice_questions: [
-      { question: `Describe the main components of ${T} and how they interact.`, answer: `The main components are input, process, and output. Input provides the raw material, process transforms it, and output delivers the result. They interact in a feedback loop.` },
-      { question: `Give a real-world example of ${T} in action.`, answer: `In healthcare, ${T} is used to diagnose diseases by analysing symptoms and medical history.` },
-    ],
-    real_world_applications: [
-      `🏥 Healthcare: ${T} aids in diagnostic decision-making.`,
-      `💻 Technology: ${T} powers recommendation algorithms.`,
-      `📈 Business: ${T} optimises supply chain logistics.`,
-    ],
-    common_misconceptions: [
-      `❌ Myth: ${T} is only for experts. ✅ Truth: ${T} is accessible to anyone with curiosity and persistence.`,
-      `❌ Myth: ${T} is purely theoretical. ✅ Truth: ${T} has numerous practical applications that affect daily life.`,
-    ],
-  };
-  return cards;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — TOPIC FACT (unchanged)
+// SECTION 9 — TOPIC FACT (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
@@ -706,12 +588,11 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MERGE (unchanged)
+// SECTION 10 — MERGE (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
-  const isFallback = !!cardsRaw?._fallback;
   const merged = {
     topic:                   String(topic || cardsRaw?.topic || 'Study Material').slice(0, 200),
     curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
@@ -729,8 +610,8 @@ function mergeCards(cardsRaw, notes, topic, opts) {
     _language:               opts.language || 'English',
     _depth:                  opts.depth    || 'detailed',
     _style:                  opts.style    || 'simple',
-    _quality:                isFallback ? 'enhanced_fallback' : 'ai_generated',
-    _fallback:               isFallback,
+    _quality:                'ai_generated',
+    _fallback:               false,
   };
   if (Array.isArray(cardsRaw?.flashcards)    && cardsRaw.flashcards.length)    merged.flashcards     = cardsRaw.flashcards;
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
@@ -749,7 +630,7 @@ function mergeCards(cardsRaw, notes, topic, opts) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — SSE HELPER + SECURITY HEADERS
+// SECTION 11 — SSE HELPER + SECURITY HEADERS
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeSSE(res) {
@@ -776,7 +657,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER (with robust fallback & fast final delivery)
+// SECTION 12 — MAIN HANDLER (no fallback, retries, fast final)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -842,7 +723,7 @@ module.exports = async function handler(req, res) {
 
   const sse = makeSSE(res);
 
-  // Keep-alive ping every 10s
+  // Keep-alive
   const kap = setInterval(() => {
     if (res.writableEnded) { clearInterval(kap); return; }
     try {
@@ -869,13 +750,12 @@ module.exports = async function handler(req, res) {
   let p2Ticker = null;
 
   try {
-    // ── PHASE 1: STREAM NOTES ──
+    // ── PHASE 1: STREAM NOTES with retries ──
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
     const notesPrompt = buildNotesPrompt(message, opts);
 
-    // Start Phase 1 with retries
     let p1Attempts = 0;
-    const MAX_P1_ATTEMPTS = 2;
+    const MAX_P1_ATTEMPTS = 4; // more retries
     while (p1Attempts < MAX_P1_ATTEMPTS && !p1ok) {
       p1Attempts++;
       try {
@@ -886,32 +766,25 @@ module.exports = async function handler(req, res) {
         log.error(`[${reqId}] P1 attempt ${p1Attempts} FAILED: ${e1.message}`);
         if (p1Attempts < MAX_P1_ATTEMPTS) {
           sse('stage', { idx: 1, label: `🔄 Retrying with backup AI models… (attempt ${p1Attempts + 1})` });
-          await sleep(800);
+          await sleep(1000);
         }
       }
     }
     if (!p1ok) {
-      // Use offline notes as final fallback
-      notes = offlineNotes(message);
-      p1ok = true;
-      log.warn(`[${reqId}] Using offline notes fallback`);
+      // No fallback – throw
+      throw new Error('All AI models failed to generate notes after multiple retries.');
     }
 
-    // ── PHASE 2: CARDS (started in parallel with Phase 1) ──
+    // ── PHASE 2: CARDS (started now, but we also start earlier in parallel? We'll start it now and wait) ──
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
 
     let cardsData = null;
     let p2ok = false;
-    let cardsFallback = false;
 
-    // Launch Phase 2 immediately (we already started it in parallel, but we need to await it now)
-    // We'll actually start it after notes are done to avoid race, but we can start earlier.
-    // Better: start cardsPromise earlier, but we need to pass the notes? No, cards are independent.
-    // We'll start it now.
+    // Launch cards in parallel with a small delay so notes can finish
     const cardsPromise = (async () => {
       try {
         if (opts.tool === 'all') {
-          // For all, we need both flashcards+quiz and mindmap
           const [fcqRes, mmRes] = await Promise.allSettled([
             fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz'),
             fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only'),
@@ -934,35 +807,35 @@ module.exports = async function handler(req, res) {
             if (!combined.key_concepts?.length && mmRes.value.key_concepts?.length)
               combined.key_concepts = mmRes.value.key_concepts;
           }
-          // If both failed, we'll fallback
           if (!combined.flashcards?.length && !combined.quiz_questions?.length && !combined.mindmap) {
             throw new Error('All sub-calls failed');
           }
           return combined;
         } else {
-          return await fetchCards(buildCardsPrompt(message, opts), opts.tool);
+          // Retry cards once if needed
+          try {
+            return await fetchCards(buildCardsPrompt(message, opts), opts.tool);
+          } catch (err) {
+            log.warn(`[${reqId}] Cards first attempt failed, retrying...`);
+            return await fetchCards(buildCardsPrompt(message, opts), opts.tool);
+          }
         }
       } catch (err) {
-        log.warn(`[${reqId}] Phase 2 failed: ${err.message}`);
-        // Use fallback cards
-        return buildFallbackCards(message, opts.tool);
+        log.error(`[${reqId}] Cards generation failed: ${err.message}`);
+        throw err; // no fallback
       }
     })();
 
-    // Wait for cards but with a timeout (max 12 seconds extra after notes done)
+    // Wait for cards with a generous timeout (20 seconds after notes done)
     const cardsResult = await Promise.race([
       cardsPromise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Cards timeout')), 12000))
-    ]).catch(err => {
-      log.warn(`[${reqId}] Cards timeout/error: ${err.message}`);
-      return buildFallbackCards(message, opts.tool);
-    });
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Cards generation timed out')), 20000))
+    ]);
 
     cardsData = cardsResult;
     p2ok = true;
-    if (cardsData._fallback) cardsFallback = true;
 
-    // ── PHASE 3: STREAM CARDS LIVE (animation events) ──
+    // ── PHASE 3: STREAM CARDS LIVE ──
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
@@ -1002,7 +875,7 @@ module.exports = async function handler(req, res) {
     final._request_id   = reqId;
     final._phase1_ok    = p1ok;
     final._phase2_ok    = p2ok;
-    final._notes_only   = !p2ok || cardsFallback;
+    final._notes_only   = false;
     final.topic_fact    = buildTopicFact(message);
     final.powered_by    = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
@@ -1018,21 +891,15 @@ module.exports = async function handler(req, res) {
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
 
-    // Send a graceful error response with fallback notes
-    const fallbackNotes = offlineNotes(message);
-    const fallbackCards = buildFallbackCards(message, opts.tool);
-    const finalFallback = mergeCards(fallbackCards, fallbackNotes, message, opts);
-    finalFallback._duration_ms = Date.now() - startTime;
-    finalFallback._request_id = reqId;
-    finalFallback._fallback = true;
-    finalFallback._notes_only = true;
-    finalFallback.topic_fact = buildTopicFact(message);
-    finalFallback.powered_by = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
+    // Send error to frontend – no fallback
+    const userMsg = fatal.message?.includes('API_KEY')
+      ? 'Service configuration error. Please contact the administrator.'
+      : fatal.message?.includes('timed out') || fatal.message?.includes('failed')
+        ? 'AI models are currently busy. Please try again in a few seconds.'
+        : 'Savoiré AI is momentarily unavailable. Please try again.';
 
-    sse('stage', { idx: 4, label: '⚠️ Using enhanced fallback content — please try again later.', done: true });
-    sse('done', finalFallback);
-
-    sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed_fallback', Date.now() - startTime, sessionId).catch(() => {});
+    sse('error', { error: userMsg, requestId: reqId });
+    sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
   }
 
   if (!res.writableEnded) res.end();
