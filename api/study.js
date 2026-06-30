@@ -30,13 +30,17 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  { id: 'openrouter/free',          max_tokens: 7000, timeout_ms: 25000, temp: 0.75 }
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 20000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 20000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 20000, temp: 0.75 },
 ];
 
 // ─── PHASE 2: STRUCTURED JSON (cards) ──────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'openrouter/free',          max_tokens: 7000, timeout_ms: 25000, temp: 0.75 }
-];;
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 25000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 25000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 25000, temp: 0.30 },
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS (unchanged)
@@ -272,7 +276,7 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 
 async function streamNotes(prompt, onChunk, tool) {
   // Try each model sequentially, with retries on failure
-  const maxAttempts = 100; // total attempts across all models
+  const maxAttempts = 3; // total attempts across all models
   let attempt = 0;
   let lastError = null;
 
