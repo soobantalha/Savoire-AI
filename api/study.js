@@ -53,29 +53,34 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // skipped quickly instead of hanging the whole request.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// NOTE (updated): gemini-2.0-flash-exp:free was DEPRECATED June 1, 2026 — it was
+// FIRST in the old list, meaning every single request wasted its first attempt
+// on a dead model before ever reaching a working one. phi-3-mini-128k-instruct:free,
+// mistral-7b-instruct-v0.3:free, and qwen2.5-72b-instruct:free are also stale/
+// unreliable as of mid-2026. Replaced with currently-live models, verified June 2026:
+// Llama 3.3 70B, Llama 4 Scout, Gemini 2.5 Flash, Gemma 3 12B, DeepSeek Chat v3.1.
+// 'openrouter/free' (OpenRouter's own self-updating free router) is kept LAST in
+// each list as a safety net — it randomly picks ANY available free model including
+// weak ones, which can cause repetition-collapse garbage, so it's a last resort,
+// not a first pick.
 const MODELS_PROSE = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 5000, timeout_ms: 40000, temp: 0.75 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 4000, timeout_ms: 40000, temp: 0.75 },
-  { id: 'openrouter/free',                          max_tokens: 5000, timeout_ms: 55000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'meta-llama/llama-4-scout:free',           max_tokens: 4000, timeout_ms: 25000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'google/gemini-2.5-flash:free',            max_tokens: 5000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'google/gemma-3-12b-it:free',              max_tokens: 3500, timeout_ms: 25000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',        max_tokens: 4000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'openrouter/free',                          max_tokens: 4000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
 ];
 
-// JSON tools get smaller max_tokens than before (each call only generates ONE
-// content type now, so it needs far fewer tokens than the old "everything at
-// once" prompt did) — this alone massively cuts timeout/truncation risk.
+// JSON tools get smaller max_tokens (each call only generates ONE content type)
+// — needs far fewer tokens than the old "everything at once" prompt did.
 const MODELS_JSON = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3000, timeout_ms: 30000, temp: 0.25 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 30000, temp: 0.25 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 45000, temp: 0.25 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 28000, temp: 0.3, freq_pen: 0.2 },
+  { id: 'meta-llama/llama-4-scout:free',           max_tokens: 3000, timeout_ms: 25000, temp: 0.3, freq_pen: 0.2 },
+  { id: 'google/gemini-2.5-flash:free',            max_tokens: 3500, timeout_ms: 28000, temp: 0.3, freq_pen: 0.2 },
+  { id: 'google/gemma-3-12b-it:free',              max_tokens: 3000, timeout_ms: 25000, temp: 0.3, freq_pen: 0.2 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',        max_tokens: 3500, timeout_ms: 28000, temp: 0.3, freq_pen: 0.2 },
+  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 30000, temp: 0.3, freq_pen: 0.2 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,6 +124,59 @@ function getISTDateTime() {
   return `${ist.getFullYear()}-${p(ist.getMonth()+1)}-${p(ist.getDate())} ${p(ist.getHours())}:${p(ist.getMinutes())}:${p(ist.getSeconds())}`;
 }
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 4.1 — DEGENERATE OUTPUT DETECTION
+// Weak or overloaded free models can collapse into a wall of short, uniform
+// declarative sentences ("Mastery achieved. Conclusion concludes properly.
+// All covered thoroughly...") instead of real content. This is syntactically
+// valid text — it passes every markdown/JSON check — but it's useless filler.
+// Detected via THREE independent signals, flagged only when 2+ agree (keeps
+// false positives low on legitimately concise/punchy real content):
+//   1. Average sentence length — collapse produces very short sentences (<6.5 words avg)
+//   2. Sentence-length uniformity — collapse clusters tightly around one short length
+//   3. Trigram repetition — collapse reuses the same 3-word sequences constantly
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isDegenerateText(text) {
+  const clean = String(text || '').trim();
+  if (clean.length < 400) return false; // too short to judge reliably either way
+
+  const sentences = clean.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+  if (sentences.length < 10) return false;
+
+  const words = clean.toLowerCase().match(/[a-z']+/g) || [];
+  if (words.length < 60) return false;
+
+  const avgWordsPerSentence = words.length / sentences.length;
+
+  const trigrams = [];
+  for (let i = 0; i < words.length - 2; i++) trigrams.push(words[i] + ' ' + words[i + 1] + ' ' + words[i + 2]);
+  const trigramCounts = {};
+  for (const t of trigrams) trigramCounts[t] = (trigramCounts[t] || 0) + 1;
+  const repeatedTrigramOccurrences = Object.values(trigramCounts).filter(c => c > 1).reduce((a, c) => a + c, 0);
+  const trigramRepeatRatio = trigrams.length ? repeatedTrigramOccurrences / trigrams.length : 0;
+
+  const lens = sentences.map(s => (s.match(/[a-zA-Z']+/g) || []).length);
+  const meanLen = lens.reduce((a, l) => a + l, 0) / lens.length;
+  const variance = lens.reduce((a, l) => a + (l - meanLen) ** 2, 0) / lens.length;
+  const stdDev = Math.sqrt(variance);
+
+  const veryShortAvg   = avgWordsPerSentence < 6.5;
+  const highTrigramRep = trigramRepeatRatio > 0.35;
+  const lowVariance     = stdDev < 2.2 && meanLen < 8;
+
+  const signalCount = [veryShortAvg, highTrigramRep, lowVariance].filter(Boolean).length;
+  return signalCount >= 2;
+}
+
+// Detects literal placeholder brackets a model copied from a prompt's example
+// skeleton instead of replacing with real content (e.g. "[SPECIFIC question
+// about X]"). Valid JSON/text, so only an explicit scan catches it.
+function hasPlaceholderBrackets(text) {
+  const hits = (String(text || '').match(/\[(?:SPECIFIC|Specific|GOOD|BAD|Name of|Second|Third|Fourth|Fifth|Sixth|Option [A-D]|Branch name|Item \d|Specific fact|CORRECT answer|Plausible wrong|\d+[\-–]\d+ word)/g) || []).length;
+  return hits >= 2;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 5 — GOOGLE SHEETS (unchanged)
@@ -350,99 +408,116 @@ OUTPUT JSON NOW — start with { immediately:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — GENERIC PROSE STREAMER
-// Single implementation used by both "notes" and "summary" — sequential
-// trial across every model in MODELS_PROSE, 3 passes with exponential
-// backoff between passes if an entire pass finds nothing.
+// SECTION 7 — GENERIC PROSE GENERATOR (PARALLEL RACING)
+// Used by both "notes" and "summary". Instead of trying models one at a time
+// (slow — up to 24 sequential dead-ends across 3 passes before failing), this
+// fires several models SIMULTANEOUSLY per wave and takes whichever responds
+// first with valid, non-degenerate content — the rest are aborted immediately.
+//
+// Each racer call uses stream:false internally (we need the FULL text before
+// we can validate it isn't degenerate/garbage — see SECTION 4.1). Once a
+// winner is picked, its text is "fast-replayed" to the user via onChunk in
+// small pieces so the live-typing UX is preserved, just sourced from an
+// already-validated response instead of raw unvalidated live tokens.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function streamProse(prompt, onChunk, label) {
-  const MAX_PASSES = 3;
+const RACE_SIZE = 3; // how many models to fire at once per wave
 
-  for (let pass = 0; pass < MAX_PASSES; pass++) {
-    if (pass > 0) {
-      const backoff = Math.min(1000 * Math.pow(2, pass), 4000);
-      log.warn(`${label} ↻ Pass ${pass + 1}/${MAX_PASSES} — backing off ${backoff}ms`);
-      await sleep(backoff);
+async function fetchProseOnce(model, prompt, label) {
+  const name  = model.id.split('/').pop();
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+  const t0    = Date.now();
+
+  try {
+    const res = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
+      },
+      body: JSON.stringify({
+        model:             model.id,
+        max_tokens:        model.max_tokens,
+        temperature:       model.temp || 0.75,
+        frequency_penalty: model.freq_pen ?? 0.3,
+        presence_penalty:  0.2,
+        stream:            false,
+        messages:          [{ role: 'user', content: prompt }],
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+      return { ok: false, name };
     }
 
-    for (const model of MODELS_PROSE) {
-      const name  = model.id.split('/').pop();
-      const ctrl  = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      const t0    = Date.now();
+    const data = await res.json();
+    const full = data?.choices?.[0]?.message?.content?.trim() || '';
 
-      try {
-        log.info(`${label} → ${name} (pass ${pass + 1}/${MAX_PASSES})`);
+    if (full.length < 80) { log.warn(`${label} ✗ ${name}: too short (${full.length}ch)`); return { ok: false, name }; }
+    if (isDegenerateText(full)) { log.warn(`${label} ✗ ${name}: degenerate/repetitive output`); return { ok: false, name }; }
 
-        const res = await fetch(OPENROUTER_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer':  HTTP_REFERER,
-            'X-Title':       APP_TITLE,
-          },
-          body: JSON.stringify({
-            model:       model.id,
-            max_tokens:  model.max_tokens,
-            temperature: model.temp || 0.75,
-            stream:      true,
-            messages:    [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
+    log.ok(`${label} ✅ ${name} | ${full.length}ch | ${Date.now() - t0}ms`);
+    return { ok: true, name, full };
 
-        clearTimeout(timer);
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
+    if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+    else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
+    return { ok: false, name };
+  }
+}
 
-        if (res.status === 429) { log.warn(`${label} ⏳ 429 on ${name} — next model`); continue; }
-        if (res.status === 404) { log.warn(`${label} ⚠️ 404 on ${name} — skipping`); continue; }
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-          if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-          continue;
-        }
+// Fast-replay validated text to the user in small chunks so the live-typing
+// streaming UX is preserved even though generation itself wasn't streamed.
+async function replayAsStream(text, onChunk) {
+  const CHUNK = 6; // characters per tick — small enough to feel like real streaming
+  for (let i = 0; i < text.length; i += CHUNK) {
+    onChunk(text.slice(i, i + CHUNK));
+    if (i % (CHUNK * 8) === 0) await sleep(8); // tiny yield so it reads as a stream, not a dump
+  }
+}
 
-        const reader  = res.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let lineBuf = '', full = '', tokens = 0;
+async function streamProse(prompt, onChunk, label) {
+  const MAX_WAVES = Math.ceil(MODELS_PROSE.length / RACE_SIZE) + 1; // +1 lets the final wave retry once
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          lineBuf += decoder.decode(value, { stream: true });
-          const lines = lineBuf.split('\n');
-          lineBuf = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const raw = line.slice(6).trim();
-            if (raw === '[DONE]' || !raw) continue;
-            try {
-              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-              if (delta) { full += delta; tokens++; onChunk(delta); }
-            } catch { /* ignore */ }
-          }
-        }
+  let attempted = 0;
+  for (let wave = 0; attempted < MODELS_PROSE.length && wave < MAX_WAVES; wave++) {
+    const batch = MODELS_PROSE.slice(attempted, attempted + RACE_SIZE);
+    if (batch.length === 0) break;
+    attempted += batch.length;
 
-        if (full.trim().length < 80) {
-          log.warn(`${name}: response too short (${full.length}ch) — next model`);
-          continue;
-        }
+    log.info(`${label} 🏁 Racing wave ${wave + 1}: [${batch.map(m => m.id.split('/').pop()).join(', ')}]`);
 
-        log.ok(`${label} ✅ ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now() - t0}ms`);
-        return full;
+    const results = await Promise.allSettled(batch.map(m => fetchProseOnce(m, prompt, label)));
 
-      } catch (err) {
-        clearTimeout(timer);
-        if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
-        else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
-        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
+    // Surface a hard auth failure immediately — retrying won't help
+    for (const r of results) {
+      if (r.status === 'rejected' && (r.reason?.message?.includes('API_KEY') || r.reason?.message?.includes('invalid'))) {
+        throw r.reason;
       }
     }
+
+    const winner = results.find(r => r.status === 'fulfilled' && r.value.ok);
+    if (winner) {
+      const { name, full } = winner.value;
+      log.ok(`${label} 🏆 Winner: ${name}`);
+      await replayAsStream(full, onChunk);
+      return full;
+    }
+
+    log.warn(`${label} wave ${wave + 1} — no winner, trying next wave`);
   }
 
-  log.error(`${label} ALL MODELS FAILED across ${MAX_PASSES} passes`);
+  log.error(`${label} ALL MODELS FAILED across all waves`);
   throw new Error(`All AI models are currently busy. Please try again in a moment.`);
 }
 
@@ -459,119 +534,141 @@ async function streamProse(prompt, onChunk, label) {
 // (e.g. quiz correct_answer normalization) before validation.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function fetchJSON(prompt, label, validateFn, repairFn) {
-  const MAX_PASSES = 3;
+async function fetchJSONOnce(model, prompt, label, validateFn, repairFn) {
+  const name  = model.id.split('/').pop();
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+  const t0    = Date.now();
 
-  for (let pass = 0; pass < MAX_PASSES; pass++) {
-    if (pass > 0) {
-      const backoff = Math.min(1000 * Math.pow(2, pass), 4000);
-      log.warn(`${label} ↻ Pass ${pass + 1}/${MAX_PASSES} — backing off ${backoff}ms`);
-      await sleep(backoff);
+  try {
+    const res = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
+      },
+      body: JSON.stringify({
+        model:             model.id,
+        max_tokens:        model.max_tokens,
+        temperature:       model.temp || 0.25,
+        frequency_penalty: model.freq_pen ?? 0.2,
+        presence_penalty:  0.1,
+        stream:            false,
+        messages:          [{ role: 'user', content: prompt }],
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+      return { ok: false, name };
     }
 
-    for (const model of MODELS_JSON) {
-      const name  = model.id.split('/').pop();
-      const ctrl  = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      const t0    = Date.now();
+    const data = await res.json();
+    let content = data?.choices?.[0]?.message?.content?.trim();
+    if (!content || content.length < 20) { log.warn(`${label} ✗ ${name}: empty response`); return { ok: false, name }; }
 
-      try {
-        log.info(`${label} → ${name} (pass ${pass + 1}/${MAX_PASSES})`);
+    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+    const jS = content.indexOf('{');
+    const jE = content.lastIndexOf('}');
+    if (jS === -1 || jE <= jS) { log.warn(`${label} ✗ ${name}: no JSON object`); return { ok: false, name }; }
+    let jsonStr = content.slice(jS, jE + 1);
 
-        const res = await fetch(OPENROUTER_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer':  HTTP_REFERER,
-            'X-Title':       APP_TITLE,
-          },
-          body: JSON.stringify({
-            model:       model.id,
-            max_tokens:  model.max_tokens,
-            temperature: model.temp || 0.25,
-            stream:      false,
-            messages:    [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
-
-        clearTimeout(timer);
-
-        if (res.status === 429) { log.warn(`${label} ⏳ 429 on ${name} — next model`); continue; }
-        if (res.status === 404) { log.warn(`${label} ⚠️ 404 on ${name} — skipping`); continue; }
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-          if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-          continue;
+    let parsed;
+    try { parsed = JSON.parse(jsonStr); }
+    catch {
+      try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+      catch {
+        try {
+          parsed = JSON.parse(
+            jsonStr
+              .replace(/,(\s*[}\]])/g, '$1')
+              .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+              .replace(/:\s*'([^']*)'/g, ': "$1"')
+          );
         }
-
-        const data    = await res.json();
-        let content = data?.choices?.[0]?.message?.content?.trim();
-
-        if (!content || content.length < 20) { log.warn(`${name}: empty response — next model`); continue; }
-
-        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-
-        const jS = content.indexOf('{');
-        const jE = content.lastIndexOf('}');
-        if (jS === -1 || jE <= jS) { log.warn(`${name}: no JSON object — next model`); continue; }
-        let jsonStr = content.slice(jS, jE + 1);
-
-        let parsed;
-        try { parsed = JSON.parse(jsonStr); }
         catch {
-          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-          catch {
-            try {
-              parsed = JSON.parse(
-                jsonStr
-                  .replace(/,(\s*[}\]])/g, '$1')
-                  .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                  .replace(/:\s*'([^']*)'/g, ': "$1"')
-              );
-            }
-            catch {
-              try {
-                parsed = JSON.parse(
-                  jsonStr
-                    .replace(/[\x00-\x1F\x7F]/g, ' ')
-                    .replace(/,(\s*[}\]])/g, '$1')
-                    .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                );
-              }
-              catch (e4) {
-                log.warn(`${name}: JSON repair failed — ${e4.message.slice(0, 80)} — next model`);
-                continue;
-              }
-            }
+          try {
+            parsed = JSON.parse(
+              jsonStr
+                .replace(/[\x00-\x1F\x7F]/g, ' ')
+                .replace(/,(\s*[}\]])/g, '$1')
+                .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+            );
+          }
+          catch (e4) {
+            log.warn(`${label} ✗ ${name}: JSON repair failed — ${e4.message.slice(0, 80)}`);
+            return { ok: false, name };
           }
         }
-
-        if (typeof repairFn === 'function') {
-          try { parsed = repairFn(parsed, name) || parsed; }
-          catch (repairErr) { log.warn(`${name}: repairFn threw — ${repairErr.message}`); }
-        }
-
-        if (!validateFn(parsed)) {
-          log.warn(`${name}: validation failed for ${label} — next model`);
-          continue;
-        }
-
-        log.ok(`${label} ✅ ${name} | ${Date.now() - t0}ms`);
-        return parsed;
-
-      } catch (err) {
-        clearTimeout(timer);
-        if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
-        else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
-        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
       }
     }
+
+    if (hasPlaceholderBrackets(JSON.stringify(parsed))) {
+      log.warn(`${label} ✗ ${name}: literal placeholder brackets detected`);
+      return { ok: false, name };
+    }
+
+    if (typeof repairFn === 'function') {
+      try { parsed = repairFn(parsed, name) || parsed; }
+      catch (repairErr) { log.warn(`${name}: repairFn threw — ${repairErr.message}`); }
+    }
+
+    if (!validateFn(parsed)) { log.warn(`${label} ✗ ${name}: validation failed`); return { ok: false, name }; }
+
+    // Degenerate/repetition-collapse check on the concatenated long-text fields
+    const longTextBlob = JSON.stringify(parsed);
+    if (longTextBlob.length > 400 && isDegenerateText(longTextBlob)) {
+      log.warn(`${label} ✗ ${name}: degenerate/repetitive structured content`);
+      return { ok: false, name };
+    }
+
+    log.ok(`${label} ✅ ${name} | ${Date.now() - t0}ms`);
+    return { ok: true, name, parsed };
+
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
+    if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+    else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
+    return { ok: false, name };
+  }
+}
+
+async function fetchJSON(prompt, label, validateFn, repairFn) {
+  const MAX_WAVES = Math.ceil(MODELS_JSON.length / RACE_SIZE) + 1;
+
+  let attempted = 0;
+  for (let wave = 0; attempted < MODELS_JSON.length && wave < MAX_WAVES; wave++) {
+    const batch = MODELS_JSON.slice(attempted, attempted + RACE_SIZE);
+    if (batch.length === 0) break;
+    attempted += batch.length;
+
+    log.info(`${label} 🏁 Racing wave ${wave + 1}: [${batch.map(m => m.id.split('/').pop()).join(', ')}]`);
+
+    const results = await Promise.allSettled(batch.map(m => fetchJSONOnce(m, prompt, label, validateFn, repairFn)));
+
+    for (const r of results) {
+      if (r.status === 'rejected' && (r.reason?.message?.includes('API_KEY') || r.reason?.message?.includes('invalid'))) {
+        throw r.reason;
+      }
+    }
+
+    const winner = results.find(r => r.status === 'fulfilled' && r.value.ok);
+    if (winner) {
+      log.ok(`${label} 🏆 Winner: ${winner.value.name}`);
+      return winner.value.parsed;
+    }
+
+    log.warn(`${label} wave ${wave + 1} — no winner, trying next wave`);
   }
 
-  log.error(`${label} ALL MODELS FAILED across ${MAX_PASSES} passes`);
+  log.error(`${label} ALL MODELS FAILED across all waves`);
   throw new Error(`${label}_FAILED`); // sentinel — caller decides how to surface this
 }
 
