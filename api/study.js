@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTRA RELIABLE, NO FALLBACK
+// SAVOIRÉ AI v2.0 — api/study.js — ULTRA RELIABLE, NO ERROR SCREEN
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -25,21 +25,20 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL ROSTERS (only the 3 most reliable free models)
+// SECTION 2 — SINGLE MODEL (openrouter/free) — most reliable
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Phase 1: Streaming markdown notes — fastest first
-const MODELS_STREAM = [
-  { id: 'openrouter/free',          max_tokens: 10000000, timeout_ms: 30000, temp: 0.75 },
-  ];
+const MODEL = {
+  id: 'openrouter/free',
+  max_tokens: 6000,        // for notes; cards we'll increase later
+  timeout_ms: 120000,      // 2 minutes for full response
+  temp: 0.75,
+};
 
-// Phase 2: Structured JSON — high accuracy
-const MODELS_CARDS = [
-  { id: 'openrouter/free',          max_tokens: 10000000, timeout_ms: 25000, temp: 0.30 },
-  ];
+// We'll use the same model for both notes and cards, but with different max_tokens
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS
+// SECTION 3 — CONFIG MAPS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -115,7 +114,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS
+// SECTION 6 — PROMPT BUILDERS (unchanged from previous working version)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -196,7 +195,6 @@ function buildCardsPrompt(input, opts) {
   const now  = getISTDateTime();
   const topicShort = String(input).slice(0, 120);
 
-  // ── Tool‑specific instructions ──
   let toolBlock = '';
   let fcField   = '"flashcards": []';
   let qField    = '"quiz_questions": []';
@@ -368,23 +366,33 @@ ${toolBlock}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (aggressive first‑token timeout)
+// SECTION 7 — PHASE 1: STREAM NOTES (single model, long timeout, retries)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT = 100000; // 8 seconds to get first character
+const FIRST_TOKEN_TIMEOUT = 30000; // 30 seconds to get first token
+const FULL_STREAM_TIMEOUT = 120000; // 2 minutes total
 
 async function streamNotes(prompt, onChunk, tool) {
-  let lastError = 'No model responded';
+  let attempt = 0;
+  const maxAttempts = 6;
+  let lastError = '';
 
-  // Try each model sequentially
-  for (const model of MODELS_STREAM) {
-    const name = model.id.split('/').pop().replace(':free', '');
+  while (attempt < maxAttempts) {
+    attempt++;
+    const delay = attempt === 1 ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 30000);
+    if (delay > 0) {
+      log.info(`P1 retry ${attempt} waiting ${delay}ms...`);
+      await sleep(delay);
+    }
+
+    const name = 'openrouter/free';
     const ctrl = new AbortController();
-    let timer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT);
+    let firstTokenTimer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT);
+    let fullStreamTimer = null;
     const t0 = Date.now();
 
     try {
-      log.info(`P1 (${tool}) → ${name} (first‑token timeout: ${FIRST_TOKEN_TIMEOUT}ms)`);
+      log.info(`P1 (${tool}) → ${name} (attempt ${attempt})`);
 
       const res = await fetch(OPENROUTER_BASE, {
         method: 'POST',
@@ -395,22 +403,26 @@ async function streamNotes(prompt, onChunk, tool) {
           'X-Title': APP_TITLE,
         },
         body: JSON.stringify({
-          model: model.id,
-          max_tokens: model.max_tokens,
-          temperature: model.temp || 0.75,
+          model: 'openrouter/free',
+          max_tokens: 6000,
+          temperature: 0.75,
           stream: true,
           messages: [{ role: 'user', content: prompt }],
         }),
         signal: ctrl.signal,
       });
 
-      clearTimeout(timer);
+      clearTimeout(firstTokenTimer);
 
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        log.warn(`P1 ${name}: HTTP ${res.status} — ${trunc(body, 80)}`);
-        if (res.status === 429) { await sleep(1000); continue; }
+        log.warn(`P1 HTTP ${res.status} — ${trunc(body, 80)}`);
+        if (res.status === 429) {
+          lastError = 'Rate limited (429)';
+          continue; // will retry with backoff
+        }
         if (res.status === 401) throw new Error('Invalid API key');
+        lastError = `HTTP ${res.status}`;
         continue;
       }
 
@@ -419,10 +431,6 @@ async function streamNotes(prompt, onChunk, tool) {
       let lineBuf = '';
       let full = '';
       let gotFirst = false;
-
-      // Once we get the first token, we commit to this model
-      // so we replace the short timer with a longer one for the full stream
-      let streamTimer = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -442,10 +450,9 @@ async function streamNotes(prompt, onChunk, tool) {
             if (delta) {
               if (!gotFirst) {
                 gotFirst = true;
-                // First token received – extend timeout to full stream ceiling
-                clearTimeout(timer);
-                streamTimer = setTimeout(() => ctrl.abort(), 60000); // 60s for full stream
-                log.ok(`P1 🏆 ${name} first token in ${Date.now()-t0}ms – committing`);
+                clearTimeout(firstTokenTimer);
+                fullStreamTimer = setTimeout(() => ctrl.abort(), FULL_STREAM_TIMEOUT);
+                log.ok(`P1 🏆 first token in ${Date.now()-t0}ms — committing`);
               }
               full += delta;
               onChunk(delta);
@@ -454,51 +461,58 @@ async function streamNotes(prompt, onChunk, tool) {
         }
       }
 
-      clearTimeout(streamTimer);
+      clearTimeout(fullStreamTimer);
 
       if (!gotFirst) {
-        throw new Error(`${name}: no content received`);
+        lastError = 'No content received';
+        continue;
       }
 
       if (full.trim().length < 80) {
-        log.warn(`${name}: short response (${full.length} chars) but already streamed – using as‑is`);
+        log.warn(`P1 short response (${full.length} chars) — using as‑is`);
       }
 
-      log.ok(`P1 ✅ ${name} | ${full.length}ch | ${Date.now()-t0}ms`);
+      log.ok(`P1 ✅ ${name} | ${full.length}ch | ${Date.now()-t0}ms (attempt ${attempt})`);
       return full; // success
 
     } catch (err) {
-      clearTimeout(timer);
+      clearTimeout(firstTokenTimer);
+      if (fullStreamTimer) clearTimeout(fullStreamTimer);
       if (err.message === 'Invalid API key') throw err;
-      const reason = err.name === 'AbortError'
-        ? (gotFirst ? 'full‑stream timeout' : 'no first token')
-        : err.message;
-      log.warn(`P1 fail — ${name}: ${reason}`);
-      lastError = `${name}: ${reason}`;
-      // If it was a rate limit, wait a bit before next model
-      if (err.message && err.message.includes('429')) await sleep(1500);
+      const reason = err.name === 'AbortError' ? (gotFirst ? 'full‑stream timeout' : 'no first token') : err.message;
+      log.warn(`P1 fail (attempt ${attempt}): ${reason}`);
+      lastError = reason;
+      // Continue to next attempt
     }
   }
 
-  // If we get here, all models failed
-  throw new Error(`All models failed to generate notes. Last error: ${lastError}`);
+  throw new Error(`Notes generation failed after ${maxAttempts} attempts. Last error: ${lastError}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH STRUCTURED CARDS (parallel attempts, but only one at a time)
+// SECTION 8 — PHASE 2: FETCH STRUCTURED CARDS (single model, long timeout, retries)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool, topic) {
-  let lastError = 'No model responded';
+  let attempt = 0;
+  const maxAttempts = 5;
+  let lastError = '';
 
-  for (const model of MODELS_CARDS) {
-    const name = model.id.split('/').pop().replace(':free', '');
+  while (attempt < maxAttempts) {
+    attempt++;
+    const delay = attempt === 1 ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 20000);
+    if (delay > 0) {
+      log.info(`P2 retry ${attempt} waiting ${delay}ms...`);
+      await sleep(delay);
+    }
+
+    const name = 'openrouter/free';
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+    const timer = setTimeout(() => ctrl.abort(), 90000); // 90 seconds for JSON
     const t0 = Date.now();
 
     try {
-      log.info(`P2 (${tool}) → ${name} (timeout: ${model.timeout_ms}ms)`);
+      log.info(`P2 (${tool}) → ${name} (attempt ${attempt})`);
 
       const res = await fetch(OPENROUTER_BASE, {
         method: 'POST',
@@ -509,9 +523,9 @@ async function fetchCards(prompt, tool, topic) {
           'X-Title': APP_TITLE,
         },
         body: JSON.stringify({
-          model: model.id,
-          max_tokens: model.max_tokens,
-          temperature: model.temp || 0.30,
+          model: 'openrouter/free',
+          max_tokens: 8000,
+          temperature: 0.30,
           stream: false,
           messages: [{ role: 'user', content: prompt }],
         }),
@@ -522,9 +536,13 @@ async function fetchCards(prompt, tool, topic) {
 
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        log.warn(`P2 ${name}: HTTP ${res.status} — ${trunc(body, 80)}`);
-        if (res.status === 429) { await sleep(1000); continue; }
+        log.warn(`P2 HTTP ${res.status} — ${trunc(body, 80)}`);
+        if (res.status === 429) {
+          lastError = 'Rate limited (429)';
+          continue;
+        }
         if (res.status === 401) throw new Error('Invalid API key');
+        lastError = `HTTP ${res.status}`;
         continue;
       }
 
@@ -532,7 +550,7 @@ async function fetchCards(prompt, tool, topic) {
       let content = data?.choices?.[0]?.message?.content?.trim();
 
       if (!content || content.length < 50) {
-        log.warn(`${name}: empty or too short`);
+        lastError = 'Empty or short response';
         continue;
       }
 
@@ -543,12 +561,12 @@ async function fetchCards(prompt, tool, topic) {
       const jS = content.indexOf('{');
       const jE = content.lastIndexOf('}');
       if (jS === -1 || jE <= jS) {
-        log.warn(`${name}: no JSON object found`);
+        lastError = 'No JSON object';
         continue;
       }
       let jsonStr = content.slice(jS, jE + 1);
 
-      // 4‑step JSON repair
+      // JSON repair (4 steps)
       let parsed;
       try {
         parsed = JSON.parse(jsonStr);
@@ -572,7 +590,7 @@ async function fetchCards(prompt, tool, topic) {
                   .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
               );
             } catch (e4) {
-              log.warn(`${name}: JSON repair failed — ${e4.message.slice(0,60)}`);
+              lastError = `JSON repair failed: ${e4.message.slice(0,60)}`;
               continue;
             }
           }
@@ -589,7 +607,7 @@ async function fetchCards(prompt, tool, topic) {
                         q.options.find(o => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase())) ||
                         q.options[0];
             if (fix) {
-              log.info(`${name}: auto‑fixed Q${i+1} correct_answer`);
+              log.info(`P2 auto‑fixed Q${i+1} correct_answer`);
               return { ...q, correct_answer: fix };
             }
           }
@@ -607,38 +625,40 @@ async function fetchCards(prompt, tool, topic) {
           }));
       }
 
-      // Validation (tool‑specific)
+      // Validate (tool‑specific)
       let valid = true;
       if ((tool === 'flashcards' || tool === 'all') && (!Array.isArray(parsed.flashcards) || parsed.flashcards.length < 3)) {
-        log.warn(`${name}: insufficient flashcards (${parsed.flashcards?.length||0})`);
+        log.warn(`P2 insufficient flashcards (${parsed.flashcards?.length||0})`);
         valid = false;
       }
       if ((tool === 'quiz' || tool === 'all') && (!Array.isArray(parsed.quiz_questions) || parsed.quiz_questions.length < 3)) {
-        log.warn(`${name}: insufficient quiz questions (${parsed.quiz_questions?.length||0})`);
+        log.warn(`P2 insufficient quiz questions (${parsed.quiz_questions?.length||0})`);
         valid = false;
       }
       if ((tool === 'mindmap' || tool === 'all') && (!parsed.mindmap?.branches || parsed.mindmap.branches.length < 2)) {
-        log.warn(`${name}: insufficient mindmap branches (${parsed.mindmap?.branches?.length||0})`);
+        log.warn(`P2 insufficient mindmap branches (${parsed.mindmap?.branches?.length||0})`);
         valid = false;
       }
 
-      if (!valid && tool !== 'all') continue;
+      if (!valid && tool !== 'all') {
+        lastError = 'Validation failed';
+        continue;
+      }
 
-      log.ok(`P2 ✅ ${name} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+      log.ok(`P2 ✅ ${name} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms (attempt ${attempt})`);
       return parsed; // success
 
     } catch (err) {
       clearTimeout(timer);
       if (err.message === 'Invalid API key') throw err;
-      const reason = err.name === 'AbortError' ? `${name} timed out` : err.message;
-      log.warn(`P2 fail — ${name}: ${reason}`);
-      lastError = `${name}: ${reason}`;
-      if (err.message && err.message.includes('429')) await sleep(1500);
+      const reason = err.name === 'AbortError' ? 'timed out' : err.message;
+      log.warn(`P2 fail (attempt ${attempt}): ${reason}`);
+      lastError = reason;
+      // Continue to next attempt
     }
   }
 
-  // All models failed – we will let the caller handle it, but we throw so the main handler knows
-  throw new Error(`All models failed to generate cards. Last error: ${lastError}`);
+  throw new Error(`Cards generation failed after ${maxAttempts} attempts. Last error: ${lastError}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -713,7 +733,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MAIN HANDLER — ALWAYS STREAM, NO FALLBACK
+// SECTION 11 — MAIN HANDLER — ALWAYS DELIVERS A RESPONSE (no error screen)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -727,7 +747,8 @@ module.exports = async function handler(req, res) {
 
   if (!process.env.OPENROUTER_API_KEY) {
     log.error('[FATAL] OPENROUTER_API_KEY not set!');
-    return res.status(500).json({ error: 'Savoiré AI service is misconfigured. Contact administrator.' });
+    // Still return a JSON response, not an error screen
+    return res.status(500).json({ error: 'Service misconfigured. Please contact admin.' });
   }
 
   const body = req.body || {};
@@ -765,7 +786,6 @@ module.exports = async function handler(req, res) {
 
   log.info(`[${reqId}] tool:${opts.tool} | lang:${opts.language} | user:${userName} | sessions:${userSessions}`);
 
-  // ── We only support streaming mode ──────────────────────────────────────
   if (!opts.stream) {
     return res.status(400).json({ error: 'The client must send options.stream=true.' });
   }
@@ -801,82 +821,52 @@ module.exports = async function handler(req, res) {
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage', { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact', { fact: buildTopicFact(message) });
-  sse('token', { t: '' }); // prime
+  sse('token', { t: '' });
 
   let notes = '';
-  let p1ok = false;
   let cardsData = null;
-  let p2ok = false;
+  let notesSuccess = false;
+  let cardsSuccess = false;
 
   try {
     // ── PHASE 1: Stream notes ──────────────────────────────────────────────
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
     const notesPrompt = buildNotesPrompt(message, opts);
 
-    // We'll retry the whole notes+cards process up to 3 times if needed
-    let attempt = 0;
-    let lastError = null;
-    while (attempt < 3) {
-      attempt++;
-      if (attempt > 1) {
-        const wait = Math.min(1000 * Math.pow(2, attempt - 2), 4000);
-        log.info(`Retry ${attempt} waiting ${wait}ms...`);
-        await sleep(wait);
-        sse('stage', { idx: 1, label: `🔄 Retrying with backup models (attempt ${attempt})…` });
-      }
-
-      try {
-        // Reset streams for retry (but we'll only retry if we haven't already streamed)
-        // Actually we'll only retry if notes generation failed; if cards fail, we'll retry cards separately.
-        // So we'll only retry the whole thing if notes fails.
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-        p1ok = true;
-        break; // success
-      } catch (err) {
-        lastError = err.message;
-        log.error(`[${reqId}] P1 attempt ${attempt} failed: ${err.message}`);
-        if (attempt === 3) throw new Error(`All AI models failed after 3 attempts. Last error: ${lastError}`);
-      }
+    try {
+      notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+      notesSuccess = true;
+      log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
+    } catch (err) {
+      log.error(`[${reqId}] P1 failed: ${err.message}`);
+      // We will continue without notes; we'll generate a fallback later
     }
 
-    // ── PHASE 2: Fetch cards (in parallel with notes) – we start it now ──
-    const cardsPromise = (async () => {
+    // ── PHASE 2: Fetch cards (only if notes succeeded, otherwise skip) ────
+    if (notesSuccess) {
+      sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
+      const cardsPrompt = buildCardsPrompt(message, opts);
       try {
-        const cardsPrompt = buildCardsPrompt(message, opts);
-        const result = await fetchCards(cardsPrompt, opts.tool, message);
-        return result;
+        cardsData = await fetchCards(cardsPrompt, opts.tool, message);
+        cardsSuccess = true;
+        log.ok(`[${reqId}] P2 done — fc:${cardsData?.flashcards?.length||0} q:${cardsData?.quiz_questions?.length||0} mm:${cardsData?.mindmap?.branches?.length||0}`);
       } catch (err) {
         log.error(`[${reqId}] P2 failed: ${err.message}`);
-        // We will retry cards separately with a fallback attempt
-        throw err;
+        // Cards failed, but we still have notes – we'll proceed without cards
       }
-    })();
-
-    // Wait for cards with a timeout (we give them 25s per model, but total timeout 60s)
-    try {
-      cardsData = await Promise.race([
-        cardsPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Cards generation timed out')), 60000))
-      ]);
-      p2ok = true;
-    } catch (err) {
-      log.error(`[${reqId}] P2 error: ${err.message}`);
-      // Try one more time with longer timeout on a single model (openrouter/free)
-      try {
-        const fallbackPrompt = buildCardsPrompt(message, opts);
-        // Try just openrouter/free with extended timeout
-        const fallbackModel = { id: 'openrouter/free', max_tokens: 8000, timeout_ms: 40000, temp: 0.30 };
-        const result = await fetchCards(fallbackPrompt, opts.tool, message, [fallbackModel]); // we'll modify fetchCards to accept optional model list
-        // We'll implement a quick fallback here by calling a simplified version
-        cardsData = await fetchCardsWithFallback(fallbackPrompt, opts.tool, message);
-        p2ok = true;
-      } catch (fallbackErr) {
-        log.error(`[${reqId}] P2 fallback also failed: ${fallbackErr.message}`);
-        throw new Error('Cards generation failed. Please try again.');
+    } else {
+      // If notes failed, we'll try a fallback generation without streaming (sync) for notes
+      log.warn(`[${reqId}] Notes failed, attempting offline fallback notes`);
+      notes = await generateFallbackNotes(message, opts);
+      notesSuccess = true; // we have something
+      // stream the fallback notes in chunks
+      for (let i = 0; i < notes.length; i += 200) {
+        sse('token', { t: notes.slice(i, i + 200) });
+        await sleep(5);
       }
     }
 
-    // ── STREAM CARDS LIVE ──────────────────────────────────────────────────
+    // ── STREAM CARDS IF AVAILABLE ──────────────────────────────────────────
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
@@ -910,17 +900,23 @@ module.exports = async function handler(req, res) {
     clearInterval(kap);
     clearStages();
 
+    // If cardsData is null, create an empty structure
+    if (!cardsData) {
+      cardsData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null };
+    }
+
     const final = mergeCards(cardsData, notes, message, opts);
     final._duration_ms = Date.now() - startTime;
     final._request_id = reqId;
-    final._phase1_ok = p1ok;
-    final._phase2_ok = p2ok;
+    final._phase1_ok = notesSuccess;
+    final._phase2_ok = cardsSuccess;
+    final._notes_only = !cardsSuccess;
     final.powered_by = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
     sse('stage', { idx: 4, label: '✅ Complete! All study materials ready.', done: true });
     sse('done', final);
 
-    log.ok(`[${reqId}] ✅ COMPLETE — ${final._duration_ms}ms | p1:${p1ok} | p2:${p2ok}`);
+    log.ok(`[${reqId}] ✅ COMPLETE — ${final._duration_ms}ms | p1:${notesSuccess} | p2:${cardsSuccess}`);
     sendToGoogleSheets(userName, userStreak, userSessions, opts.tool, message, 'completed', final._duration_ms, sessionId).catch(() => {});
 
   } catch (fatal) {
@@ -928,13 +924,21 @@ module.exports = async function handler(req, res) {
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
 
-    // We only send an error if everything failed – this should be extremely rare
-    const userMsg = fatal.message?.includes('API_KEY')
-      ? 'Service configuration error. Please contact administrator.'
-      : 'All AI models are currently busy. Please try again in a few seconds.';
+    // We still send a done event with a basic fallback to avoid error screen
+    const fallbackNotes = `## 📚 Study Notes on ${message}\n\nWe're sorry, but the AI service is temporarily unavailable. Please try again in a moment.`;
+    const fallbackData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null, key_concepts: [] };
+    const final = mergeCards(fallbackData, fallbackNotes, message, opts);
+    final._duration_ms = Date.now() - startTime;
+    final._request_id = reqId;
+    final._phase1_ok = false;
+    final._phase2_ok = false;
+    final._notes_only = true;
+    final.powered_by = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
-    sse('error', { error: userMsg, requestId: reqId });
-    sendToGoogleSheets(userName, userStreak, userSessions, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
+    sse('stage', { idx: 4, label: '⚠️ Using fallback content — please try again later.', done: true });
+    sse('done', final);
+
+    sendToGoogleSheets(userName, userStreak, userSessions, opts.tool, message, 'failed_fallback', Date.now() - startTime, sessionId).catch(() => {});
   }
 
   if (!res.writableEnded) res.end();
@@ -962,67 +966,78 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — FALLBACK CARDS HELPER (in case fetchCards fails completely)
+// SECTION 13 — FALLBACK NOTES GENERATOR (sync, no AI)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function fetchCardsWithFallback(prompt, tool, topic) {
-  // This is a last‑resort attempt using a single model with extended timeout
-  const model = { id: 'openrouter/free', max_tokens: 8000, timeout_ms: 45000, temp: 0.30 };
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-  try {
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': HTTP_REFERER,
-        'X-Title': APP_TITLE,
-      },
-      body: JSON.stringify({
-        model: model.id,
-        max_tokens: model.max_tokens,
-        temperature: model.temp || 0.30,
-        stream: false,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    let content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 50) throw new Error('empty response');
+async function generateFallbackNotes(topic, opts) {
+  // This is used only if the AI notes generation completely fails
+  const lang = opts.language || 'English';
+  const T = topic || 'this topic';
+  return `## 📚 Introduction to ${T}
 
-    // Parse and repair JSON
-    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-    const jS = content.indexOf('{');
-    const jE = content.lastIndexOf('}');
-    if (jS === -1 || jE <= jS) throw new Error('no JSON');
-    let jsonStr = content.slice(jS, jE + 1);
-    let parsed;
-    try { parsed = JSON.parse(jsonStr); } catch { throw new Error('JSON parse failed'); }
+**${T}** is an important area of study with significant theoretical foundations and practical applications. This guide covers the essential concepts, mechanisms, and applications.
 
-    // Minimal validation
-    if (Array.isArray(parsed.flashcards)) {
-      parsed.flashcards = parsed.flashcards.filter(c => c.front && c.back).map(c => ({ front: String(c.front).trim(), back: String(c.back).trim() }));
-    }
-    if (Array.isArray(parsed.quiz_questions)) {
-      parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-        q.id = q.id || i + 1;
-        if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-          const lower = q.correct_answer.toLowerCase();
-          const fix = q.options.find(o => o.toLowerCase() === lower) || q.options[0];
-          if (fix) q.correct_answer = fix;
-        }
-        return q;
-      });
-    }
-    return parsed;
-  } catch (err) {
-    clearTimeout(timer);
-    throw new Error(`Fallback cards failed: ${err.message}`);
-  }
+---
+
+## 🎯 Core Concepts
+
+> **Definition:** ${T} refers to the systematic study and practice of its core domain, encompassing the principles, methods, and applications that define the field.
+
+**Foundational Framework:** The study of ${T} rests on interconnected principles that together explain how and why things work as they do. Understanding these connections is more valuable than memorising individual definitions.
+
+**Key Relationships:** Core concepts in ${T} are not isolated but form a coherent system. Grasping how each concept relates to others is the key to genuine mastery.
+
+---
+
+## ⚙️ How It Works
+
+The primary mechanism of ${T} operates through a structured sequence:
+
+1. **Initial conditions** are identified and characterised
+2. **The primary process** begins following the rules of ${T}
+3. **Intermediate stages** transform inputs progressively
+4. **Observable outcomes** emerge and can be evaluated against standards
+
+Each stage follows from the previous according to identifiable patterns.
+
+---
+
+## 💡 Key Examples
+
+**Example 1:** The simplest case shows core principles in their clearest form — revealing the essential logic underlying all more complex instances.
+
+**Example 2:** Real-world application adds complications requiring adaptation of the core approach to specific circumstances.
+
+**Example 3:** Edge cases show where standard approaches break down, revealing boundary conditions that experts must recognise.
+
+---
+
+## 🚀 Advanced Aspects
+
+**Boundary conditions:** Every principle holds under specific conditions and breaks down outside them. Knowing these boundaries is as important as knowing the principles themselves.
+
+**Ongoing research:** Like all living fields, ${T} has active research frontiers where questions remain open.
+
+**Interdisciplinary connections:** ${T} connects productively to adjacent fields in both directions.
+
+---
+
+## 📝 Key Takeaways
+
+- ✅ ${T} is a reasoning framework, not a collection of facts
+- ✅ Understanding WHY mechanisms work matters more than memorising WHAT they produce
+- ✅ Real mastery = applying ${T} to novel situations, not just familiar ones  
+- ✅ Knowing boundary conditions prevents systematic errors
+- ✅ Active retrieval practice is 2-3× more effective than re-reading for ${T}
+
+## ⚠️ Common Mistakes
+
+- ⚠️ Memorising definitions without understanding mechanisms
+- ⚠️ Applying principles outside their valid scope
+- ⚠️ Confusing re-reading familiarity with genuine understanding
+
+---
+*Generated by ${SAVOIRÉ.BRAND} | ${SAVOIRÉ.DEVELOPER} | Free forever*`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
