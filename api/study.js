@@ -371,7 +371,7 @@ ${toolBlock}
 // SECTION 7 — PHASE 1: STREAM NOTES (aggressive first‑token timeout)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT = 8000; // 8 seconds to get first character
+const FIRST_TOKEN_TIMEOUT = 100000; // 8 seconds to get first character
 
 async function streamNotes(prompt, onChunk, tool) {
   let lastError = 'No model responded';
