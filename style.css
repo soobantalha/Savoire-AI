@@ -146,7 +146,6 @@ body {
   --font-heading: 'Playfair Display', 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', 'Montserrat', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-brand: 'Orbitron', 'Inter', system-ui, -apple-system, sans-serif; /* matches NAME.png logo */
   
   /* ── Font Sizes ── */
   --text-xs: 0.75rem;
@@ -1169,16 +1168,13 @@ input::placeholder, textarea::placeholder {
 }
 
 .dh-name {
-  font-family: var(--font-brand);
-  font-size: 0.95rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #ffffff;
-}
-
-.dh-name-ai {
-  color: #00d4ff;
+  background: linear-gradient(135deg, #ffffff, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .dh-ver {
@@ -4605,27 +4601,14 @@ input::placeholder, textarea::placeholder {
 }
 
 .about-name {
-  font-size: 1.15rem;
-  font-weight: 800;
-  font-family: var(--font-brand);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  background: linear-gradient(135deg, #ffffff, #d4af37);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   margin-bottom: 4px;
-}
-
-.about-name-ai {
-  color: #00d4ff;
-}
-
-.about-name-ver {
-  font-family: var(--font-body);
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: normal;
-  text-transform: none;
-  color: rgba(255, 255, 255, 0.45);
-  vertical-align: middle;
 }
 
 .about-tagline {
@@ -8592,15 +8575,11 @@ input::placeholder, textarea::placeholder {
 
 /* ── Welcome brand name ── */
 .welcome-brand {
-  font-family: var(--font-brand);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #ffffff;
-  font-weight: 800;
-}
-
-.welcome-brand-ai {
-  color: #00d4ff;
+  background: linear-gradient(135deg, #d4af37, #00d4ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 900;
 }
 
 .welcome-tagline {
@@ -9217,11 +9196,9 @@ input::placeholder, textarea::placeholder {
 
 /* ── WELCOME BRAND GRADIENT ── */
 .welcome-brand {
-  font-family: var(--font-brand);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #ffffff;
-  font-weight: 800;
+  background: linear-gradient(135deg,#d4af37,#00d4ff);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-weight: 900;
 }
 .welcome-tagline { font-size: .9rem; font-style: italic; color: #d4af37; margin-bottom: 6px; }
 .welcome-name-section { text-align: left; margin-bottom: 16px; }
@@ -9407,109 +9384,3 @@ input::placeholder, textarea::placeholder {
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
    END SECTION 52 — SAVOIRÉ AI v2.0 FINALf
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
-/* ── LIVE ANIMATION ADDITIONS — SAVOIRÉ AI v2.0 PATCH ── */
-@keyframes pulse-green {
-  from { opacity: .6; transform: scale(.9); }
-  to   { opacity: 1;  transform: scale(1.1); }
-}
-@keyframes pulse-purple {
-  from { opacity: .6; transform: scale(.9); text-shadow: 0 0 4px rgba(191,0,255,.3); }
-  to   { opacity: 1;  transform: scale(1.1); text-shadow: 0 0 12px rgba(191,0,255,.8); }
-}
-@keyframes pulse-gold {
-  0%   { box-shadow: 0 0 0 0 rgba(212,175,55,.6); }
-  70%  { box-shadow: 0 0 0 8px rgba(212,175,55,0); }
-  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
-}
-@keyframes blink-live {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
-}
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-/* Auto-advance wizard: flash the selected card */
-.wizard-tool-card.selected,
-.wizard-language-card.selected,
-.wizard-depth-card.selected,
-.wizard-style-card.selected {
-  animation: selectedFlash .28s ease;
-}
-@keyframes selectedFlash {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.04); box-shadow: 0 0 0 3px rgba(0,212,255,.5); }
-  100% { transform: scale(1); }
-}
-
-/* Wizard auto-advance shimmer on selected */
-.wizard-tool-card.selected .wizard-tool-icon,
-.wizard-language-card.selected .wlang-flag {
-  animation: selectedShimmer .3s ease;
-}
-@keyframes selectedShimmer {
-  0%   { filter: brightness(1); }
-  50%  { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
-  100% { filter: brightness(1); }
-}
-
-/* ── FAST LIVE CARD ANIMATIONS v2.1 ── */
-.live-card-new {
-  animation: liveCardPop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) both !important;
-}
-@keyframes liveCardPop {
-  0%   { opacity: 0; transform: translateY(8px) scale(0.97); }
-  60%  { opacity: 1; transform: translateY(-2px) scale(1.01); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-/* ── LIVE QUIZ QUESTION FAST ENTRY ── */
-.live-quiz-item.live-card-new {
-  animation: liveQuizPop 0.15s cubic-bezier(0.22, 1, 0.36, 1) both !important;
-}
-@keyframes liveQuizPop {
-  0%   { opacity: 0; transform: translateX(-6px); border-left-color: transparent; }
-  100% { opacity: 1; transform: translateX(0);   border-left-color: #00ff88; }
-}
-
-/* ── LIVE MINDMAP BRANCH ENTRY ── */
-.live-mm-branch.live-card-new {
-  animation: liveBranchSlide 0.18s ease-out both !important;
-}
-@keyframes liveBranchSlide {
-  0%   { opacity: 0; transform: translateX(-8px); }
-  100% { opacity: 1; transform: translateX(0); }
-}
-
-/* ── STREAM OVERLAY TEXT — blinking cursor on live notes ── */
-.live-md::after {
-  content: '▊';
-  display: inline-block;
-  color: #00d4ff;
-  animation: cursorBlink 0.6s step-end infinite;
-  font-size: 1em;
-  vertical-align: baseline;
-  margin-left: 2px;
-}
-@keyframes cursorBlink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
-}
-
-/* ── LIVE NOTES MODAL ── */
-#liveNotesModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.75);
-  backdrop-filter: blur(6px);
-  z-index: 99999;
-  display: none;
-}
-#liveNotesModal .modal-box {
-  background: var(--card-bg, #1a1a2e);
-  border: 1px solid rgba(0,255,136,.2);
-  border-radius: 16px;
-  box-shadow: 0 0 60px rgba(0,255,136,.08), 0 30px 80px rgba(0,0,0,.6);
-  animation: modalPop .22s cubic-bezier(0.22, 1, 0.36, 1);
-}
