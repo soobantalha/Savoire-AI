@@ -1,29 +1,8 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v3.0 — api/study.js — PER-TOOL DEDICATED PIPELINES
+// SAVOIRÉ AI v2.0 — api/study.js — PARALLEL RACING, PER‑TOOL PIPELINES
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
-//
-// ARCHITECTURE CHANGE FROM v2.0:
-// Previously EVERY tool ran two parallel generations: a full prose "notes" essay
-// (buildNotesPrompt, 1000+ words) AND a giant do-everything JSON prompt
-// (buildCardsPrompt asking for flashcards + quiz + mindmap + key_concepts +
-// key_tricks + practice_questions + applications + misconceptions, ALL AT ONCE,
-// regardless of which single tool the user picked). That meant Flashcards mode
-// was secretly also writing a 1000-word essay nobody asked for, and burning a
-// single JSON call's token budget on 6 unrelated content types — which is why
-// generations were slow, hit token limits, mixed content across tools, and
-// failed/timed out constantly.
-//
-// NOW: each tool has its OWN single-purpose prompt and its OWN dedicated
-// generation function. Nothing is generated that the tool doesn't need.
-//   - notes      → prose stream only
-//   - summary    → prose stream only (short)
-//   - flashcards → JSON call, flashcards ONLY
-//   - quiz       → JSON call, quiz ONLY
-//   - mindmap    → JSON call, mindmap ONLY
-//   - all (mega) → notes stream + flashcards/quiz JSON + mindmap JSON, in parallel,
-//                  each lean and focused, not one bloated call
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,45 +25,33 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LISTS
-// Two pools tuned for their job: PROSE (streamed, higher temp) and JSON
-// (non-streamed, low temp for structure reliability). Same free models,
-// fastest-first ordering, conservative timeouts so dead/slow models get
-// skipped quickly instead of hanging the whole request.
+// SECTION 2 — MODEL LISTS (only confirmed‑active free models)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// NOTE (updated): gemini-2.0-flash-exp:free was DEPRECATED June 1, 2026 — it was
-// FIRST in the old list, meaning every single request wasted its first attempt
-// on a dead model before ever reaching a working one. phi-3-mini-128k-instruct:free,
-// mistral-7b-instruct-v0.3:free, and qwen2.5-72b-instruct:free are also stale/
-// unreliable as of mid-2026. Replaced with currently-live models, verified June 2026:
-// Llama 3.3 70B, Llama 4 Scout, Gemini 2.5 Flash, Gemma 3 12B, DeepSeek Chat v3.1.
-// 'openrouter/free' (OpenRouter's own self-updating free router) is kept LAST in
-// each list as a safety net — it randomly picks ANY available free model including
-// weak ones, which can cause repetition-collapse garbage, so it's a last resort,
-// not a first pick.
 const MODELS_PROSE = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
-  { id: 'meta-llama/llama-4-scout:free',           max_tokens: 4000, timeout_ms: 25000, temp: 0.7, freq_pen: 0.3 },
-  { id: 'google/gemini-2.5-flash:free',            max_tokens: 5000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
-  { id: 'google/gemma-3-12b-it:free',              max_tokens: 3500, timeout_ms: 25000, temp: 0.7, freq_pen: 0.3 },
-  { id: 'deepseek/deepseek-chat-v3.1:free',        max_tokens: 4000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
-  { id: 'openrouter/free',                          max_tokens: 4000, timeout_ms: 30000, temp: 0.7, freq_pen: 0.3 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 5000, timeout_ms: 40000, temp: 0.75 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3500, timeout_ms: 35000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 4000, timeout_ms: 40000, temp: 0.75 },
+  { id: 'openrouter/free',                          max_tokens: 5000, timeout_ms: 55000, temp: 0.75 },
 ];
 
-// JSON tools get smaller max_tokens (each call only generates ONE content type)
-// — needs far fewer tokens than the old "everything at once" prompt did.
 const MODELS_JSON = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 28000, temp: 0.3, freq_pen: 0.2 },
-  { id: 'meta-llama/llama-4-scout:free',           max_tokens: 3000, timeout_ms: 25000, temp: 0.3, freq_pen: 0.2 },
-  { id: 'google/gemini-2.5-flash:free',            max_tokens: 3500, timeout_ms: 28000, temp: 0.3, freq_pen: 0.2 },
-  { id: 'google/gemma-3-12b-it:free',              max_tokens: 3000, timeout_ms: 25000, temp: 0.3, freq_pen: 0.2 },
-  { id: 'deepseek/deepseek-chat-v3.1:free',        max_tokens: 3500, timeout_ms: 28000, temp: 0.3, freq_pen: 0.2 },
-  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 30000, temp: 0.3, freq_pen: 0.2 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3000, timeout_ms: 30000, temp: 0.25 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 30000, temp: 0.25 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 45000, temp: 0.25 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS
+// SECTION 3 — CONFIG MAPS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -126,59 +93,6 @@ function getISTDateTime() {
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4.1 — DEGENERATE OUTPUT DETECTION
-// Weak or overloaded free models can collapse into a wall of short, uniform
-// declarative sentences ("Mastery achieved. Conclusion concludes properly.
-// All covered thoroughly...") instead of real content. This is syntactically
-// valid text — it passes every markdown/JSON check — but it's useless filler.
-// Detected via THREE independent signals, flagged only when 2+ agree (keeps
-// false positives low on legitimately concise/punchy real content):
-//   1. Average sentence length — collapse produces very short sentences (<6.5 words avg)
-//   2. Sentence-length uniformity — collapse clusters tightly around one short length
-//   3. Trigram repetition — collapse reuses the same 3-word sequences constantly
-// ─────────────────────────────────────────────────────────────────────────────
-
-function isDegenerateText(text) {
-  const clean = String(text || '').trim();
-  if (clean.length < 400) return false; // too short to judge reliably either way
-
-  const sentences = clean.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
-  if (sentences.length < 10) return false;
-
-  const words = clean.toLowerCase().match(/[a-z']+/g) || [];
-  if (words.length < 60) return false;
-
-  const avgWordsPerSentence = words.length / sentences.length;
-
-  const trigrams = [];
-  for (let i = 0; i < words.length - 2; i++) trigrams.push(words[i] + ' ' + words[i + 1] + ' ' + words[i + 2]);
-  const trigramCounts = {};
-  for (const t of trigrams) trigramCounts[t] = (trigramCounts[t] || 0) + 1;
-  const repeatedTrigramOccurrences = Object.values(trigramCounts).filter(c => c > 1).reduce((a, c) => a + c, 0);
-  const trigramRepeatRatio = trigrams.length ? repeatedTrigramOccurrences / trigrams.length : 0;
-
-  const lens = sentences.map(s => (s.match(/[a-zA-Z']+/g) || []).length);
-  const meanLen = lens.reduce((a, l) => a + l, 0) / lens.length;
-  const variance = lens.reduce((a, l) => a + (l - meanLen) ** 2, 0) / lens.length;
-  const stdDev = Math.sqrt(variance);
-
-  const veryShortAvg   = avgWordsPerSentence < 6.5;
-  const highTrigramRep = trigramRepeatRatio > 0.35;
-  const lowVariance     = stdDev < 2.2 && meanLen < 8;
-
-  const signalCount = [veryShortAvg, highTrigramRep, lowVariance].filter(Boolean).length;
-  return signalCount >= 2;
-}
-
-// Detects literal placeholder brackets a model copied from a prompt's example
-// skeleton instead of replacing with real content (e.g. "[SPECIFIC question
-// about X]"). Valid JSON/text, so only an explicit scan catches it.
-function hasPlaceholderBrackets(text) {
-  const hits = (String(text || '').match(/\[(?:SPECIFIC|Specific|GOOD|BAD|Name of|Second|Third|Fourth|Fifth|Sixth|Option [A-D]|Branch name|Item \d|Specific fact|CORRECT answer|Plausible wrong|\d+[\-–]\d+ word)/g) || []).length;
-  return hits >= 2;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // SECTION 5 — GOOGLE SHEETS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -201,12 +115,9 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PER-TOOL PROMPT BUILDERS
-// Each function below builds ONE prompt for ONE content type. No tool's prompt
-// asks the model to also produce content for a different tool.
+// SECTION 6 — PER-TOOL PROMPT BUILDERS (single‑purpose, no cross‑tool content)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── 6a. NOTES — full prose study notes ──────────────────────────────────────
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -243,7 +154,6 @@ FORMATTING RULES:
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-// ── 6b. SUMMARY — short TL;DR prose ─────────────────────────────────────────
 function buildSummaryPrompt(input, opts) {
   const lang  = opts.language || 'English';
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -271,7 +181,6 @@ FORMATTING RULES:
 START NOW with the TL;DR heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-// ── 6c. FLASHCARDS — JSON, flashcards only ──────────────────────────────────
 function buildFlashcardsPrompt(input, opts) {
   const lang     = opts.language || 'English';
   const topic    = String(input).slice(0, 100);
@@ -305,7 +214,6 @@ The "flashcards" array must contain EXACTLY ${fcCount} objects, each with non-em
 OUTPUT JSON NOW — start with { immediately:`;
 }
 
-// ── 6d. QUIZ — JSON, quiz only ──────────────────────────────────────────────
 function buildQuizPrompt(input, opts) {
   const lang      = opts.language || 'English';
   const topic     = String(input).slice(0, 100);
@@ -364,7 +272,6 @@ The "quiz_questions" array must contain EXACTLY ${qCount} objects matching the s
 OUTPUT JSON NOW — start with { immediately:`;
 }
 
-// ── 6e. MINDMAP — JSON, mindmap only ────────────────────────────────────────
 function buildMindmapPrompt(input, opts) {
   const lang    = opts.language || 'English';
   const topic   = String(input).slice(0, 100);
@@ -408,271 +315,249 @@ OUTPUT JSON NOW — start with { immediately:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — GENERIC PROSE GENERATOR (PARALLEL RACING)
-// Used by both "notes" and "summary". Instead of trying models one at a time
-// (slow — up to 24 sequential dead-ends across 3 passes before failing), this
-// fires several models SIMULTANEOUSLY per wave and takes whichever responds
-// first with valid, non-degenerate content — the rest are aborted immediately.
-//
-// Each racer call uses stream:false internally (we need the FULL text before
-// we can validate it isn't degenerate/garbage — see SECTION 4.1). Once a
-// winner is picked, its text is "fast-replayed" to the user via onChunk in
-// small pieces so the live-typing UX is preserved, just sourced from an
-// already-validated response instead of raw unvalidated live tokens.
+// SECTION 7 — PARALLEL RACING FUNCTIONS (core speed & reliability fix)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const RACE_SIZE = 3; // how many models to fire at once per wave
+async function raceProse(prompt, onChunk, label) {
+  // Race all prose models in parallel, first successful stream wins.
+  // If all fail, retry the race up to 3 times.
+  const MAX_RETRIES = 3;
+  let lastError = '';
 
-async function fetchProseOnce(model, prompt, label) {
-  const name  = model.id.split('/').pop();
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-  const t0    = Date.now();
-
-  try {
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
-      },
-      body: JSON.stringify({
-        model:             model.id,
-        max_tokens:        model.max_tokens,
-        temperature:       model.temp || 0.75,
-        frequency_penalty: model.freq_pen ?? 0.3,
-        presence_penalty:  0.2,
-        stream:            false,
-        messages:          [{ role: 'user', content: prompt }],
-      }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-      return { ok: false, name };
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 1) {
+      const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
+      await sleep(backoff);
     }
 
-    const data = await res.json();
-    const full = data?.choices?.[0]?.message?.content?.trim() || '';
+    const promises = MODELS_PROSE.map(model => {
+      const name = model.id.split('/').pop();
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0 = Date.now();
 
-    if (full.length < 80) { log.warn(`${label} ✗ ${name}: too short (${full.length}ch)`); return { ok: false, name }; }
-    if (isDegenerateText(full)) { log.warn(`${label} ✗ ${name}: degenerate/repetitive output`); return { ok: false, name }; }
-
-    log.ok(`${label} ✅ ${name} | ${full.length}ch | ${Date.now() - t0}ms`);
-    return { ok: true, name, full };
-
-  } catch (err) {
-    clearTimeout(timer);
-    if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
-    if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
-    else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
-    return { ok: false, name };
-  }
-}
-
-// Fast-replay validated text to the user in small chunks so the live-typing
-// streaming UX is preserved even though generation itself wasn't streamed.
-async function replayAsStream(text, onChunk) {
-  const CHUNK = 6; // characters per tick — small enough to feel like real streaming
-  for (let i = 0; i < text.length; i += CHUNK) {
-    onChunk(text.slice(i, i + CHUNK));
-    if (i % (CHUNK * 8) === 0) await sleep(8); // tiny yield so it reads as a stream, not a dump
-  }
-}
-
-async function streamProse(prompt, onChunk, label) {
-  const MAX_WAVES = Math.ceil(MODELS_PROSE.length / RACE_SIZE) + 1; // +1 lets the final wave retry once
-
-  let attempted = 0;
-  for (let wave = 0; attempted < MODELS_PROSE.length && wave < MAX_WAVES; wave++) {
-    const batch = MODELS_PROSE.slice(attempted, attempted + RACE_SIZE);
-    if (batch.length === 0) break;
-    attempted += batch.length;
-
-    log.info(`${label} 🏁 Racing wave ${wave + 1}: [${batch.map(m => m.id.split('/').pop()).join(', ')}]`);
-
-    const results = await Promise.allSettled(batch.map(m => fetchProseOnce(m, prompt, label)));
-
-    // Surface a hard auth failure immediately — retrying won't help
-    for (const r of results) {
-      if (r.status === 'rejected' && (r.reason?.message?.includes('API_KEY') || r.reason?.message?.includes('invalid'))) {
-        throw r.reason;
-      }
-    }
-
-    const winner = results.find(r => r.status === 'fulfilled' && r.value.ok);
-    if (winner) {
-      const { name, full } = winner.value;
-      log.ok(`${label} 🏆 Winner: ${name}`);
-      await replayAsStream(full, onChunk);
-      return full;
-    }
-
-    log.warn(`${label} wave ${wave + 1} — no winner, trying next wave`);
-  }
-
-  log.error(`${label} ALL MODELS FAILED across all waves`);
-  throw new Error(`All AI models are currently busy. Please try again in a moment.`);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — GENERIC JSON FETCHER
-// Single implementation used by flashcards/quiz/mindmap. Each call is now
-// SMALL and SINGLE-PURPOSE (one content type per call), so it needs far less
-// of the token budget than the old combined prompt — which is the main fix
-// for "token limit cross ho rahi hai" and "content mixing between tools".
-//
-// validateFn receives the parsed JSON and returns true/false — lets each
-// caller define what "successfully generated" means for its content type.
-// repairFn (optional) lets callers post-process/fix the parsed object
-// (e.g. quiz correct_answer normalization) before validation.
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function fetchJSONOnce(model, prompt, label, validateFn, repairFn) {
-  const name  = model.id.split('/').pop();
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-  const t0    = Date.now();
-
-  try {
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
-      },
-      body: JSON.stringify({
-        model:             model.id,
-        max_tokens:        model.max_tokens,
-        temperature:       model.temp || 0.25,
-        frequency_penalty: model.freq_pen ?? 0.2,
-        presence_penalty:  0.1,
-        stream:            false,
-        messages:          [{ role: 'user', content: prompt }],
-      }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
-      return { ok: false, name };
-    }
-
-    const data = await res.json();
-    let content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 20) { log.warn(`${label} ✗ ${name}: empty response`); return { ok: false, name }; }
-
-    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-    const jS = content.indexOf('{');
-    const jE = content.lastIndexOf('}');
-    if (jS === -1 || jE <= jS) { log.warn(`${label} ✗ ${name}: no JSON object`); return { ok: false, name }; }
-    let jsonStr = content.slice(jS, jE + 1);
-
-    let parsed;
-    try { parsed = JSON.parse(jsonStr); }
-    catch {
-      try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-      catch {
+      return (async () => {
         try {
-          parsed = JSON.parse(
-            jsonStr
-              .replace(/,(\s*[}\]])/g, '$1')
-              .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-              .replace(/:\s*'([^']*)'/g, ': "$1"')
-          );
-        }
-        catch {
-          try {
-            parsed = JSON.parse(
-              jsonStr
-                .replace(/[\x00-\x1F\x7F]/g, ' ')
-                .replace(/,(\s*[}\]])/g, '$1')
-                .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-            );
+          const res = await fetch(OPENROUTER_BASE, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              'HTTP-Referer': HTTP_REFERER,
+              'X-Title': APP_TITLE,
+            },
+            body: JSON.stringify({
+              model: model.id,
+              max_tokens: model.max_tokens,
+              temperature: model.temp || 0.75,
+              stream: true,
+              messages: [{ role: 'user', content: prompt }],
+            }),
+            signal: ctrl.signal,
+          });
+          clearTimeout(timer);
+
+          if (!res.ok) {
+            const txt = await res.text().catch(() => '');
+            if (res.status === 429) throw new Error('429');
+            if (res.status === 404) throw new Error('404');
+            if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
+            throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
           }
-          catch (e4) {
-            log.warn(`${label} ✗ ${name}: JSON repair failed — ${e4.message.slice(0, 80)}`);
-            return { ok: false, name };
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let lineBuf = '', full = '';
+          let firstChunk = false;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            lineBuf += decoder.decode(value, { stream: true });
+            const lines = lineBuf.split('\n');
+            lineBuf = lines.pop() || '';
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const raw = line.slice(6).trim();
+              if (raw === '[DONE]' || !raw) continue;
+              try {
+                const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+                if (delta) {
+                  if (!firstChunk) {
+                    firstChunk = true;
+                    log.ok(`${label} 🏆 ${name} won in ${Date.now() - t0}ms`);
+                    // Once this model produces the first chunk, we cancel all others.
+                    // We can't easily cancel other promises from here, but we can
+                    // check a flag and stop reading if another won. Since we're racing,
+                    // we'll let the others continue but ignore their results.
+                  }
+                  full += delta;
+                  onChunk(delta);
+                }
+              } catch { /* ignore */ }
+            }
           }
+
+          if (full.trim().length < 80) throw new Error('too_short');
+          return full;
+
+        } catch (err) {
+          clearTimeout(timer);
+          if (err.message === 'AUTH_ERROR') throw err;
+          const reason = err.name === 'AbortError' ? 'timeout' : err.message;
+          log.warn(`${label} ${name} failed: ${reason}`);
+          throw new Error(reason);
         }
-      }
+      })();
+    });
+
+    // Race all promises, but also add a global timeout for the whole race.
+    const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 30000));
+
+    try {
+      const result = await Promise.any([...promises, raceTimeout]);
+      log.ok(`${label} ✅ successful on attempt ${attempt}`);
+      return result; // returns the full notes string
+    } catch (err) {
+      lastError = err.message;
+      log.warn(`${label} attempt ${attempt} failed: ${err.message}`);
+      // If it's an auth error, don't retry.
+      if (err.message === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      // Continue to next attempt.
     }
-
-    if (hasPlaceholderBrackets(JSON.stringify(parsed))) {
-      log.warn(`${label} ✗ ${name}: literal placeholder brackets detected`);
-      return { ok: false, name };
-    }
-
-    if (typeof repairFn === 'function') {
-      try { parsed = repairFn(parsed, name) || parsed; }
-      catch (repairErr) { log.warn(`${name}: repairFn threw — ${repairErr.message}`); }
-    }
-
-    if (!validateFn(parsed)) { log.warn(`${label} ✗ ${name}: validation failed`); return { ok: false, name }; }
-
-    // Degenerate/repetition-collapse check on the concatenated long-text fields
-    const longTextBlob = JSON.stringify(parsed);
-    if (longTextBlob.length > 400 && isDegenerateText(longTextBlob)) {
-      log.warn(`${label} ✗ ${name}: degenerate/repetitive structured content`);
-      return { ok: false, name };
-    }
-
-    log.ok(`${label} ✅ ${name} | ${Date.now() - t0}ms`);
-    return { ok: true, name, parsed };
-
-  } catch (err) {
-    clearTimeout(timer);
-    if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
-    if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
-    else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
-    return { ok: false, name };
   }
+
+  log.error(`${label} ALL retries failed. Last error: ${lastError}`);
+  throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
 }
 
-async function fetchJSON(prompt, label, validateFn, repairFn) {
-  const MAX_WAVES = Math.ceil(MODELS_JSON.length / RACE_SIZE) + 1;
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 8 — PARALLEL RACE FOR JSON (flashcards, quiz, mindmap)
+// ─────────────────────────────────────────────────────────────────────────────
 
-  let attempted = 0;
-  for (let wave = 0; attempted < MODELS_JSON.length && wave < MAX_WAVES; wave++) {
-    const batch = MODELS_JSON.slice(attempted, attempted + RACE_SIZE);
-    if (batch.length === 0) break;
-    attempted += batch.length;
+async function raceJSON(prompt, label, validateFn, repairFn) {
+  const MAX_RETRIES = 3;
+  let lastError = '';
 
-    log.info(`${label} 🏁 Racing wave ${wave + 1}: [${batch.map(m => m.id.split('/').pop()).join(', ')}]`);
-
-    const results = await Promise.allSettled(batch.map(m => fetchJSONOnce(m, prompt, label, validateFn, repairFn)));
-
-    for (const r of results) {
-      if (r.status === 'rejected' && (r.reason?.message?.includes('API_KEY') || r.reason?.message?.includes('invalid'))) {
-        throw r.reason;
-      }
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 1) {
+      const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
+      await sleep(backoff);
     }
 
-    const winner = results.find(r => r.status === 'fulfilled' && r.value.ok);
-    if (winner) {
-      log.ok(`${label} 🏆 Winner: ${winner.value.name}`);
-      return winner.value.parsed;
-    }
+    const promises = MODELS_JSON.map(model => {
+      const name = model.id.split('/').pop();
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0 = Date.now();
 
-    log.warn(`${label} wave ${wave + 1} — no winner, trying next wave`);
+      return (async () => {
+        try {
+          const res = await fetch(OPENROUTER_BASE, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              'HTTP-Referer': HTTP_REFERER,
+              'X-Title': APP_TITLE,
+            },
+            body: JSON.stringify({
+              model: model.id,
+              max_tokens: model.max_tokens,
+              temperature: model.temp || 0.25,
+              stream: false,
+              messages: [{ role: 'user', content: prompt }],
+            }),
+            signal: ctrl.signal,
+          });
+          clearTimeout(timer);
+
+          if (!res.ok) {
+            const txt = await res.text().catch(() => '');
+            if (res.status === 429) throw new Error('429');
+            if (res.status === 404) throw new Error('404');
+            if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
+            throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
+          }
+
+          const data = await res.json();
+          let content = data?.choices?.[0]?.message?.content?.trim();
+          if (!content || content.length < 20) throw new Error('empty');
+
+          // Clean and parse JSON
+          content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+          const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+          if (jS === -1 || jE <= jS) throw new Error('no_json');
+          let jsonStr = content.slice(jS, jE + 1);
+
+          let parsed;
+          try { parsed = JSON.parse(jsonStr); }
+          catch {
+            try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+            catch {
+              try {
+                parsed = JSON.parse(
+                  jsonStr.replace(/,(\s*[}\]])/g, '$1')
+                         .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                         .replace(/:\s*'([^']*)'/g, ': "$1"')
+                );
+              } catch {
+                try {
+                  parsed = JSON.parse(
+                    jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+                           .replace(/,(\s*[}\]])/g, '$1')
+                           .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                  );
+                } catch (e4) {
+                  throw new Error(`json_repair_failed: ${e4.message.slice(0, 60)}`);
+                }
+              }
+            }
+          }
+
+          if (typeof repairFn === 'function') {
+            try { parsed = repairFn(parsed, name) || parsed; }
+            catch { /* ignore repair errors */ }
+          }
+
+          if (!validateFn(parsed)) throw new Error('validation_failed');
+
+          log.ok(`${label} ✅ ${name} won in ${Date.now() - t0}ms`);
+          return parsed;
+
+        } catch (err) {
+          clearTimeout(timer);
+          if (err.message === 'AUTH_ERROR') throw err;
+          const reason = err.name === 'AbortError' ? 'timeout' : err.message;
+          log.warn(`${label} ${name} failed: ${reason}`);
+          throw new Error(reason);
+        }
+      })();
+    });
+
+    const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 30000));
+
+    try {
+      const result = await Promise.any([...promises, raceTimeout]);
+      log.ok(`${label} ✅ successful on attempt ${attempt}`);
+      return result;
+    } catch (err) {
+      lastError = err.message;
+      log.warn(`${label} attempt ${attempt} failed: ${err.message}`);
+      if (err.message === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+    }
   }
 
-  log.error(`${label} ALL MODELS FAILED across all waves`);
-  throw new Error(`${label}_FAILED`); // sentinel — caller decides how to surface this
+  log.error(`${label} ALL retries failed. Last error: ${lastError}`);
+  throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
 }
 
-// ── Quiz answer repair: convert letter answers / fuzzy-match to full option text ──
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 9 — REPAIR & VALIDATION FUNCTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
 function repairQuiz(parsed, modelName) {
   if (!Array.isArray(parsed.quiz_questions)) return parsed;
   parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
@@ -692,7 +577,6 @@ function repairQuiz(parsed, modelName) {
         const fix = q.options.find(o => o.toLowerCase() === lo)
                  || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()));
         if (fix) { q.correct_answer = fix; log.info(`${modelName}: fuzzy-fixed Q${i + 1} correct_answer`); }
-        else      log.warn(`${modelName}: Q${i + 1} correct_answer has no matching option — keeping as-is`);
       }
     }
     return q;
@@ -700,7 +584,6 @@ function repairQuiz(parsed, modelName) {
   return parsed;
 }
 
-// ── Flashcards repair: normalize front/back/question/answer field names ────
 function repairFlashcards(parsed) {
   if (Array.isArray(parsed.flashcards)) {
     parsed.flashcards = parsed.flashcards
@@ -711,23 +594,20 @@ function repairFlashcards(parsed) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — PER-TOOL GENERATION ENTRY POINTS
-// One small wrapper per tool, each calling the right prompt builder + the
-// right generic engine + the right validator. This is the layer that keeps
-// every tool's pipeline fully independent of every other tool's.
+// SECTION 10 — PER‑TOOL GENERATORS (using the racing functions)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function generateNotes(topic, opts, onChunk) {
-  return streamProse(buildNotesPrompt(topic, opts), onChunk, 'NOTES');
+  return raceProse(buildNotesPrompt(topic, opts), onChunk, 'NOTES');
 }
 
 function generateSummary(topic, opts, onChunk) {
-  return streamProse(buildSummaryPrompt(topic, opts), onChunk, 'SUMMARY');
+  return raceProse(buildSummaryPrompt(topic, opts), onChunk, 'SUMMARY');
 }
 
 function generateFlashcards(topic, opts) {
   const wanted = opts.cardCount || 15;
-  return fetchJSON(
+  return raceJSON(
     buildFlashcardsPrompt(topic, opts),
     'FLASHCARDS',
     parsed => Array.isArray(parsed.flashcards) && parsed.flashcards.length >= Math.min(2, wanted),
@@ -737,7 +617,7 @@ function generateFlashcards(topic, opts) {
 
 function generateQuiz(topic, opts) {
   const wanted = opts.quizCount || 10;
-  return fetchJSON(
+  return raceJSON(
     buildQuizPrompt(topic, opts),
     'QUIZ',
     parsed => Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= Math.min(2, wanted),
@@ -747,7 +627,7 @@ function generateQuiz(topic, opts) {
 
 function generateMindmap(topic, opts) {
   const wanted = opts.branchCount || 6;
-  return fetchJSON(
+  return raceJSON(
     buildMindmapPrompt(topic, opts),
     'MINDMAP',
     parsed => parsed.mindmap?.branches?.length >= Math.min(2, wanted)
@@ -755,7 +635,7 @@ function generateMindmap(topic, opts) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — TOPIC FACT (unchanged)
+// SECTION 11 — TOPIC FACT (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
@@ -776,12 +656,7 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — RESULT ASSEMBLY
-// Builds the final response object shape that app.js expects, populating
-// only the fields the active tool actually produced. No generic templated
-// filler text is ever inserted — every field is either real AI output or
-// absent (the frontend already handles missing fields gracefully via
-// `?.length` guards throughout app.js).
+// SECTION 12 — RESULT ASSEMBLY
 // ─────────────────────────────────────────────────────────────────────────────
 
 function assembleResult({ topic, opts, notes, flashcards, quiz, mindmap }) {
@@ -809,7 +684,7 @@ function assembleResult({ topic, opts, notes, flashcards, quiz, mindmap }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — SSE HELPER + SECURITY HEADERS
+// SECTION 13 — SSE HELPER + SECURITY HEADERS
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeSSE(res) {
@@ -836,10 +711,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER
-// Dispatches to the correct dedicated per-tool pipeline. Each tool branch is
-// independent — fixing/changing one tool's prompt or retry logic cannot
-// affect any other tool.
+// SECTION 14 — MAIN HANDLER
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -948,8 +820,7 @@ module.exports = async function handler(req, res) {
       }
 
       case 'flashcards': {
-        // Stream a small "building" pulse to the live overlay while the JSON call runs,
-        // so the UI never looks frozen even though this tool doesn't stream token-by-token.
+        // Send a token pulse to keep the live overlay active
         sse('token', { t: '' });
         const fc = await generateFlashcards(message, opts);
         result = assembleResult({ topic: fc.topic || message, opts, flashcards: fc });
@@ -1007,7 +878,7 @@ module.exports = async function handler(req, res) {
     result._request_id  = reqId;
     result.topic_fact    = buildTopicFact(message);
 
-    sse('stage', { idx: 4, label: '✅ Complete!', done: true });
+    sse('stage', { idx: 4, label: '✅ Complete! All study materials ready.', done: true });
     sse('done',  result);
 
     log.ok(`[${reqId}] ✅ COMPLETE — ${result._duration_ms}ms | tool:${opts.tool}`);
