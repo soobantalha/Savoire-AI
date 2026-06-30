@@ -1,9 +1,13 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — FINAL: ALL TOOLS STREAM LIVE WITH ANIMATIONS
+// SAVOIRÉ AI v2.0 — api/study.js — PARALLEL RACING, PER‑TOOL PIPELINES
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 1 — BRAND CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
   BRAND:     'Savoiré AI v2.0',
@@ -20,7 +24,10 @@ const HTTP_REFERER       = `https://${SAVOIRÉ.WEBSITE}`;
 const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
-// ─── MODELS (reasonable token limits, confirmed active) ────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 2 — MODEL LISTS (only confirmed‑active free models)
+// ─────────────────────────────────────────────────────────────────────────────
+
 const MODELS_PROSE = [
   { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 5000, timeout_ms: 40000, temp: 0.75 },
   { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4500, timeout_ms: 40000, temp: 0.75 },
@@ -33,17 +40,20 @@ const MODELS_PROSE = [
 ];
 
 const MODELS_JSON = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 4000, timeout_ms: 35000, temp: 0.25 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 4000, timeout_ms: 35000, temp: 0.25 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 4000, timeout_ms: 35000, temp: 0.25 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3500, timeout_ms: 30000, temp: 0.25 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 3000, timeout_ms: 30000, temp: 0.25 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 4000, timeout_ms: 35000, temp: 0.25 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 4000, timeout_ms: 35000, temp: 0.25 },
-  { id: 'openrouter/free',                          max_tokens: 4000, timeout_ms: 45000, temp: 0.25 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3000, timeout_ms: 30000, temp: 0.25 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 30000, temp: 0.25 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
+  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 45000, temp: 0.25 },
 ];
 
-// ─── Config ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 3 — CONFIG MAPS (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+
 const DEPTH_MAP = {
   standard:      { wordRange: '600–900 words',   maxTokens: 2500 },
   detailed:      { wordRange: '1000–1500 words', maxTokens: 3500 },
@@ -59,7 +69,10 @@ const STYLE_MAP = {
   visual:   'Vivid analogies and metaphors. Mental models. Make abstract concrete.',
 };
 
-// ─── Utilities ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 4 — UTILITIES
+// ─────────────────────────────────────────────────────────────────────────────
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const log = {
@@ -79,7 +92,10 @@ function getISTDateTime() {
 }
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
-// ─── Google Sheets ──────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 5 — GOOGLE SHEETS (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
   if (!GOOGLE_WEBHOOK_URL) return false;
   try {
@@ -98,12 +114,17 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
   } catch (err) { log.warn(`Sheets non-fatal: ${err.message}`); return false; }
 }
 
-// ─── Prompt Builders (unchanged – fully defined) ────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 6 — PER-TOOL PROMPT BUILDERS (single‑purpose, no cross‑tool content)
+// ─────────────────────────────────────────────────────────────────────────────
+
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
   const lang  = opts.language || 'English';
+
   const sections = '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples with Walkthroughs\n\n## 🚀 Advanced Aspects & Nuances\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways & Revision Checklist';
+
   return `You are ${SAVOIRÉ.BRAND}, the world's most advanced AI study assistant.
 Creator: ${SAVOIRÉ.DEVELOPER} | Founder: ${SAVOIRÉ.FOUNDER}
 
@@ -136,6 +157,7 @@ START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 function buildSummaryPrompt(input, opts) {
   const lang  = opts.language || 'English';
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
+
   return `You are ${SAVOIRÉ.BRAND}, an AI study assistant. Generate a concise, scannable smart summary.
 
 TOPIC: "${input}"
@@ -163,6 +185,7 @@ function buildFlashcardsPrompt(input, opts) {
   const lang     = opts.language || 'English';
   const topic    = String(input).slice(0, 100);
   const fcCount  = opts.cardCount || 15;
+
   return `You are ${SAVOIRÉ.BRAND}. Generate exactly ${fcCount} study flashcards as valid JSON.
 
 TOPIC: "${topic}"
@@ -253,6 +276,7 @@ function buildMindmapPrompt(input, opts) {
   const lang    = opts.language || 'English';
   const topic   = String(input).slice(0, 100);
   const mmCount = opts.branchCount || 6;
+
   return `You are ${SAVOIRÉ.BRAND}. Generate a visual mind map structure as valid JSON.
 
 TOPIC: "${topic}"
@@ -290,188 +314,303 @@ The "branches" array must contain EXACTLY ${mmCount} objects matching the schema
 OUTPUT JSON NOW — start with { immediately:`;
 }
 
-// ─── RACING FUNCTIONS (parallel + retries) ──────────────────────────────────
-async function raceProse(prompt, onChunk, label) {
-  const MAX_RETRIES = 3;
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    if (attempt > 1) await sleep(Math.min(1000 * Math.pow(2, attempt - 1), 4000));
-    const promises = MODELS_PROSE.map(model => new Promise(async (resolve, reject) => {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => { ctrl.abort(); reject(new Error('timeout')); }, model.timeout_ms);
-      try {
-        const res = await fetch(OPENROUTER_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer': HTTP_REFERER,
-            'X-Title': APP_TITLE,
-          },
-          body: JSON.stringify({
-            model: model.id,
-            max_tokens: model.max_tokens,
-            temperature: model.temp || 0.75,
-            stream: true,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
-        clearTimeout(timer);
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          if (res.status === 429) reject(new Error('429'));
-          else if (res.status === 404) reject(new Error('404'));
-          else if (res.status === 401 || res.status === 403) reject(new Error('AUTH_ERROR'));
-          else reject(new Error(`HTTP ${res.status} ${trunc(txt, 60)}`));
-          return;
-        }
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let lineBuf = '', full = '', firstChunk = false;
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          lineBuf += decoder.decode(value, { stream: true });
-          const lines = lineBuf.split('\n');
-          lineBuf = lines.pop() || '';
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const raw = line.slice(6).trim();
-            if (raw === '[DONE]' || !raw) continue;
-            try {
-              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-              if (delta) {
-                if (!firstChunk) {
-                  firstChunk = true;
-                  log.ok(`${label} 🏆 ${model.id.split('/').pop()} won`);
-                }
-                full += delta;
-                onChunk(delta);
-              }
-            } catch {}
-          }
-        }
-        if (full.trim().length < 80) reject(new Error('too_short'));
-        else resolve(full);
-      } catch (err) {
-        clearTimeout(timer);
-        if (err.message === 'AUTH_ERROR') reject(err);
-        else reject(err);
-      }
-    }));
-    try {
-      const result = await Promise.any(promises);
-      log.ok(`${label} ✅ success on attempt ${attempt}`);
-      return result;
-    } catch (err) {
-      if (err.name === 'AggregateError') {
-        const reasons = err.errors.map(e => e.message).join(', ');
-        log.warn(`${label} attempt ${attempt} failed (all models): ${reasons}`);
-        if (err.errors.some(e => e.message === 'AUTH_ERROR')) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      } else {
-        log.warn(`${label} attempt ${attempt} failed: ${err.message}`);
-      }
-    }
-  }
-  throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 7 — PARALLEL RACING FUNCTIONS (core speed & reliability fix)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// ⚡ ROOT-CAUSE FIX (this revision):
+// Single-tool flashcards/quiz/mindmap calls used to send ONE blank
+// `sse('token', {t:''})` pulse and then `await` the entire non-streaming
+// JSON race with NO further communication to the client until it resolved.
+// The frontend's live-output view has its own "is this still alive?"
+// timeout — seeing no activity for ~15-20s, it decided the request was
+// dead and showed "temporarily unavailable", EVEN THOUGH the backend
+// was still actively racing models and would have succeeded given more
+// time (exactly as proven by the 'all' tool, which stays alive because
+// notes are genuinely streaming token-by-token the whole time).
+//
+// FIX: raceJSON() now accepts an optional onHeartbeat callback. While the
+// race is in flight, we emit small periodic "..." progress pulses via SSE
+// (not fake content — just keep-alive signal) so the frontend's live view
+// never goes quiet long enough to time out, no matter how long the real
+// JSON generation takes. This exactly mirrors why 'all' already worked.
+// ─────────────────────────────────────────────────────────────────────────────
 
-async function raceJSON(prompt, label, validateFn, repairFn) {
+async function raceProse(prompt, onChunk, label) {
+  // Race all prose models in parallel, first successful stream wins.
+  // If all fail, retry the race up to 3 times.
   const MAX_RETRIES = 3;
+  let lastError = '';
+
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    if (attempt > 1) await sleep(Math.min(1000 * Math.pow(2, attempt - 1), 4000));
-    const promises = MODELS_JSON.map(model => new Promise(async (resolve, reject) => {
+    if (attempt > 1) {
+      const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+      log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
+      await sleep(backoff);
+    }
+
+    const promises = MODELS_PROSE.map(model => {
+      const name = model.id.split('/').pop();
       const ctrl = new AbortController();
-      const timer = setTimeout(() => { ctrl.abort(); reject(new Error('timeout')); }, model.timeout_ms);
-      try {
-        const res = await fetch(OPENROUTER_BASE, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-            'HTTP-Referer': HTTP_REFERER,
-            'X-Title': APP_TITLE,
-          },
-          body: JSON.stringify({
-            model: model.id,
-            max_tokens: model.max_tokens,
-            temperature: model.temp || 0.25,
-            stream: false,
-            messages: [{ role: 'user', content: prompt }],
-          }),
-          signal: ctrl.signal,
-        });
-        clearTimeout(timer);
-        if (!res.ok) {
-          const txt = await res.text().catch(() => '');
-          if (res.status === 429) reject(new Error('429'));
-          else if (res.status === 404) reject(new Error('404'));
-          else if (res.status === 401 || res.status === 403) reject(new Error('AUTH_ERROR'));
-          else reject(new Error(`HTTP ${res.status} ${trunc(txt, 60)}`));
-          return;
-        }
-        const data = await res.json();
-        let content = data?.choices?.[0]?.message?.content?.trim();
-        if (!content || content.length < 20) reject(new Error('empty'));
-        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-        const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-        if (jS === -1 || jE <= jS) reject(new Error('no_json'));
-        let jsonStr = content.slice(jS, jE + 1);
-        let parsed;
-        try { parsed = JSON.parse(jsonStr); }
-        catch {
-          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-          catch {
-            try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3').replace(/:\s*'([^']*)'/g, ': "$1"')); }
-            catch {
-              try { parsed = JSON.parse(jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ').replace(/,(\s*[}\]])/g, '$1').replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')); }
-              catch { reject(new Error('json_repair_failed')); }
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0 = Date.now();
+
+      return (async () => {
+        try {
+          const res = await fetch(OPENROUTER_BASE, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              'HTTP-Referer': HTTP_REFERER,
+              'X-Title': APP_TITLE,
+            },
+            body: JSON.stringify({
+              model: model.id,
+              max_tokens: model.max_tokens,
+              temperature: model.temp || 0.75,
+              stream: true,
+              messages: [{ role: 'user', content: prompt }],
+            }),
+            signal: ctrl.signal,
+          });
+          clearTimeout(timer);
+
+          if (!res.ok) {
+            const txt = await res.text().catch(() => '');
+            log.error(`${label} ${name}: HTTP ${res.status} — BODY: ${txt.slice(0, 300)}`);
+            if (res.status === 429) throw new Error('429');
+            if (res.status === 404) throw new Error('404');
+            if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
+            throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
+          }
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let lineBuf = '', full = '';
+          let firstChunk = false;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            lineBuf += decoder.decode(value, { stream: true });
+            const lines = lineBuf.split('\n');
+            lineBuf = lines.pop() || '';
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const raw = line.slice(6).trim();
+              if (raw === '[DONE]' || !raw) continue;
+              try {
+                const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+                if (delta) {
+                  if (!firstChunk) {
+                    firstChunk = true;
+                    log.ok(`${label} 🏆 ${name} won in ${Date.now() - t0}ms`);
+                  }
+                  full += delta;
+                  onChunk(delta);
+                }
+              } catch { /* ignore */ }
             }
           }
+
+          if (full.trim().length < 80) throw new Error('too_short');
+          return full;
+
+        } catch (err) {
+          clearTimeout(timer);
+          if (err.message === 'AUTH_ERROR') throw err;
+          const reason = err.name === 'AbortError' ? 'timeout' : err.message;
+          log.warn(`${label} ${name} failed: ${reason}`);
+          throw new Error(reason);
         }
-        if (typeof repairFn === 'function') { try { parsed = repairFn(parsed) || parsed; } catch {} }
-        if (!validateFn(parsed)) reject(new Error('validation_failed'));
-        resolve(parsed);
-      } catch (err) {
-        clearTimeout(timer);
-        if (err.message === 'AUTH_ERROR') reject(err);
-        else reject(err);
-      }
-    }));
+      })();
+    });
+
+    // Race all promises, but also add a global timeout for the whole race.
+    const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 42000));
+
     try {
-      const result = await Promise.any(promises);
-      log.ok(`${label} ✅ success on attempt ${attempt}`);
-      return result;
+      const result = await Promise.any([...promises, raceTimeout]);
+      log.ok(`${label} ✅ successful on attempt ${attempt}`);
+      return result; // returns the full notes string
     } catch (err) {
-      if (err.name === 'AggregateError') {
-        const reasons = err.errors.map(e => e.message).join(', ');
-        log.warn(`${label} attempt ${attempt} failed (all models): ${reasons}`);
-        if (err.errors.some(e => e.message === 'AUTH_ERROR')) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      } else {
-        log.warn(`${label} attempt ${attempt} failed: ${err.message}`);
-      }
+      lastError = err?.message || (err?.errors ? err.errors.map(e=>e.message).join(' | ') : 'unknown');
+      log.warn(`${label} attempt ${attempt} failed: ${lastError}`);
+      // If it's an auth error, don't retry.
+      if (lastError === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      // Continue to next attempt.
     }
   }
+
+  log.error(`${label} ALL retries failed. Last error: ${lastError}`);
   throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
 }
 
-// ─── Repair Functions ────────────────────────────────────────────────────────
-function repairQuiz(parsed) {
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 8 — PARALLEL RACE FOR JSON (flashcards, quiz, mindmap)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function raceJSON(prompt, label, validateFn, repairFn, onHeartbeat) {
+  const MAX_RETRIES = 3;
+  let lastError = '';
+
+  // ── Heartbeat ticker: keeps the live SSE connection visibly "alive" for
+  // the ENTIRE duration of the JSON race (which has no natural token
+  // stream of its own), exactly mirroring how notes' real token stream
+  // keeps the 'all' tool from ever looking dead to the frontend. ──
+  let hbTicker = null;
+  if (typeof onHeartbeat === 'function') {
+    let dots = 0;
+    hbTicker = setInterval(() => {
+      dots = (dots % 3) + 1;
+      onHeartbeat('.'.repeat(dots));
+    }, 1200);
+  }
+
+  try {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      if (attempt > 1) {
+        const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+        log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
+        await sleep(backoff);
+      }
+
+      const promises = MODELS_JSON.map(model => {
+        const name = model.id.split('/').pop();
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+        const t0 = Date.now();
+
+        return (async () => {
+          try {
+            const res = await fetch(OPENROUTER_BASE, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'HTTP-Referer': HTTP_REFERER,
+                'X-Title': APP_TITLE,
+              },
+              body: JSON.stringify({
+                model: model.id,
+                max_tokens: model.max_tokens,
+                temperature: model.temp || 0.25,
+                stream: false,
+                messages: [{ role: 'user', content: prompt }],
+              }),
+              signal: ctrl.signal,
+            });
+            clearTimeout(timer);
+
+            if (!res.ok) {
+              const txt = await res.text().catch(() => '');
+              log.error(`${label} ${name}: HTTP ${res.status} — BODY: ${txt.slice(0, 300)}`);
+              if (res.status === 429) throw new Error('429');
+              if (res.status === 404) throw new Error('404');
+              if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
+              throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
+            }
+
+            const data = await res.json();
+            let content = data?.choices?.[0]?.message?.content?.trim();
+            if (!content || content.length < 20) throw new Error('empty');
+
+            // Clean and parse JSON
+            content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+            const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+            if (jS === -1 || jE <= jS) throw new Error('no_json');
+            let jsonStr = content.slice(jS, jE + 1);
+
+            let parsed;
+            try { parsed = JSON.parse(jsonStr); }
+            catch {
+              try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+              catch {
+                try {
+                  parsed = JSON.parse(
+                    jsonStr.replace(/,(\s*[}\]])/g, '$1')
+                           .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                           .replace(/:\s*'([^']*)'/g, ': "$1"')
+                  );
+                } catch {
+                  try {
+                    parsed = JSON.parse(
+                      jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+                             .replace(/,(\s*[}\]])/g, '$1')
+                             .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                    );
+                  } catch (e4) {
+                    throw new Error(`json_repair_failed: ${e4.message.slice(0, 60)}`);
+                  }
+                }
+              }
+            }
+
+            if (typeof repairFn === 'function') {
+              try { parsed = repairFn(parsed, name) || parsed; }
+              catch { /* ignore repair errors */ }
+            }
+
+            if (!validateFn(parsed)) throw new Error('validation_failed');
+
+            log.ok(`${label} ✅ ${name} won in ${Date.now() - t0}ms`);
+            return parsed;
+
+          } catch (err) {
+            clearTimeout(timer);
+            if (err.message === 'AUTH_ERROR') throw err;
+            const reason = err.name === 'AbortError' ? 'timeout' : err.message;
+            log.warn(`${label} ${name} failed: ${reason}`);
+            throw new Error(reason);
+          }
+        })();
+      });
+
+      const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 42000));
+
+      try {
+        const result = await Promise.any([...promises, raceTimeout]);
+        log.ok(`${label} ✅ successful on attempt ${attempt}`);
+        return result;
+      } catch (err) {
+        lastError = err?.message || (err?.errors ? err.errors.map(e=>e.message).join(' | ') : 'unknown');
+        log.warn(`${label} attempt ${attempt} failed: ${lastError}`);
+        if (lastError === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      }
+    }
+
+    log.error(`${label} ALL retries failed. Last error: ${lastError}`);
+    throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
+
+  } finally {
+    if (hbTicker) clearInterval(hbTicker);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 9 — REPAIR & VALIDATION FUNCTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function repairQuiz(parsed, modelName) {
   if (!Array.isArray(parsed.quiz_questions)) return parsed;
-  parsed.quiz_questions = parsed.quiz_questions.map(q => {
-    q.id = q.id || 0;
+  parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+    q.id = q.id || i + 1;
     if (q.options && q.correct_answer) {
-      const map = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
-      const trimmed = String(q.correct_answer).trim();
-      if (trimmed.length <= 2 && map[trimmed] !== undefined) {
-        const idx = map[trimmed];
-        if (q.options[idx]) q.correct_answer = q.options[idx];
+      const letterMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+      const trimmedAnswer = String(q.correct_answer).trim();
+      if (trimmedAnswer.length <= 2 && letterMap[trimmedAnswer] !== undefined) {
+        const idx = letterMap[trimmedAnswer];
+        if (q.options[idx]) {
+          log.info(`${modelName}: converted letter answer "${trimmedAnswer}" → option[${idx}] for Q${i + 1}`);
+          q.correct_answer = q.options[idx];
+        }
       }
       if (!q.options.includes(q.correct_answer)) {
-        const lo = q.correct_answer.toLowerCase();
-        const fix = q.options.find(o => o.toLowerCase() === lo) ||
-                    q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()));
-        if (fix) q.correct_answer = fix;
+        const lo  = q.correct_answer.toLowerCase();
+        const fix = q.options.find(o => o.toLowerCase() === lo)
+                 || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()));
+        if (fix) { q.correct_answer = fix; log.info(`${modelName}: fuzzy-fixed Q${i + 1} correct_answer`); }
       }
     }
     return q;
@@ -488,41 +627,55 @@ function repairFlashcards(parsed) {
   return parsed;
 }
 
-// ─── Generators (return raw JSON) ────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 10 — PER‑TOOL GENERATORS (using the racing functions)
+// ─────────────────────────────────────────────────────────────────────────────
+
 function generateNotes(topic, opts, onChunk) {
   return raceProse(buildNotesPrompt(topic, opts), onChunk, 'NOTES');
 }
+
 function generateSummary(topic, opts, onChunk) {
   return raceProse(buildSummaryPrompt(topic, opts), onChunk, 'SUMMARY');
 }
-function generateFlashcards(topic, opts) {
+
+function generateFlashcards(topic, opts, onHeartbeat) {
   const wanted = opts.cardCount || 15;
   return raceJSON(
     buildFlashcardsPrompt(topic, opts),
     'FLASHCARDS',
     parsed => Array.isArray(parsed.flashcards) && parsed.flashcards.length >= Math.min(2, wanted),
-    repairFlashcards
+    repairFlashcards,
+    onHeartbeat
   );
 }
-function generateQuiz(topic, opts) {
+
+function generateQuiz(topic, opts, onHeartbeat) {
   const wanted = opts.quizCount || 10;
   return raceJSON(
     buildQuizPrompt(topic, opts),
     'QUIZ',
     parsed => Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= Math.min(2, wanted),
-    repairQuiz
+    repairQuiz,
+    onHeartbeat
   );
 }
-function generateMindmap(topic, opts) {
+
+function generateMindmap(topic, opts, onHeartbeat) {
   const wanted = opts.branchCount || 6;
   return raceJSON(
     buildMindmapPrompt(topic, opts),
     'MINDMAP',
-    parsed => parsed.mindmap?.branches?.length >= Math.min(2, wanted)
+    parsed => parsed.mindmap?.branches?.length >= Math.min(2, wanted),
+    null,
+    onHeartbeat
   );
 }
 
-// ─── Topic Fact ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 11 — TOPIC FACT (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
+
 const FACT_TEMPLATES = [
   t => `💡 Did you know? People who actively quiz themselves on "${t}" retain 2–3× more than those who just re-read notes.`,
   t => `🧠 Fun fact: Explaining "${t}" out loud (even to an imaginary student) is one of the fastest ways to find gaps.`,
@@ -535,12 +688,15 @@ const FACT_TEMPLATES = [
 ];
 
 function buildTopicFact(topic) {
-  const t = String(topic || 'this topic').trim().slice(0, 60);
+  const t   = String(topic || 'this topic').trim().slice(0, 60);
   const idx = Math.abs([...t].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 100000, 7)) % FACT_TEMPLATES.length;
   return FACT_TEMPLATES[idx](t);
 }
 
-// ─── Result Assembly ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 12 — RESULT ASSEMBLY
+// ─────────────────────────────────────────────────────────────────────────────
+
 function assembleResult({ topic, opts, notes, flashcards, quiz, mindmap }) {
   const result = {
     topic:                String(topic || 'Study Material').slice(0, 200),
@@ -555,15 +711,20 @@ function assembleResult({ topic, opts, notes, flashcards, quiz, mindmap }) {
     _style:                opts.style    || 'simple',
     _quality:               'ai_generated',
   };
+
   if (notes)                                result.ultra_long_notes = notes;
   if (flashcards?.flashcards?.length)       result.flashcards       = flashcards.flashcards;
   if (flashcards?.topic && !topic)          result.topic            = flashcards.topic;
   if (quiz?.quiz_questions?.length)         result.quiz_questions   = quiz.quiz_questions;
   if (mindmap?.mindmap?.branches?.length)   result.mindmap          = mindmap.mindmap;
+
   return result;
 }
 
-// ─── SSE Helper ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 13 — SSE HELPER + SECURITY HEADERS
+// ─────────────────────────────────────────────────────────────────────────────
+
 function makeSSE(res) {
   return (event, data) => {
     if (res.writableEnded) return;
@@ -573,6 +734,7 @@ function makeSSE(res) {
     } catch { /* ignore */ }
   };
 }
+
 function setHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin',  '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST,GET,OPTIONS');
@@ -586,39 +748,9 @@ function setHeaders(res) {
   res.setHeader('X-Frame-Options',        'DENY');
 }
 
-// ─── Streaming Helpers (for live animations) ────────────────────────────────
-async function streamFlashcards(sse, flashcards, delay = 80) {
-  if (!flashcards?.length) return;
-  const total = flashcards.length;
-  for (let i = 0; i < total; i++) {
-    sse('card', { idx: i, total, card: flashcards[i] });
-    if (i < total - 1) await sleep(delay);
-  }
-}
-
-async function streamQuiz(sse, quiz, delay = 60) {
-  if (!quiz?.length) return;
-  const total = quiz.length;
-  for (let i = 0; i < total; i++) {
-    sse('question', { idx: i, total, q: quiz[i] });
-    if (i < total - 1) await sleep(delay);
-  }
-}
-
-async function streamMindmap(sse, mindmap, delay = 100) {
-  if (!mindmap?.branches?.length) return;
-  const branches = mindmap.branches;
-  const total = branches.length;
-  // Send central node first
-  sse('branch', { idx: -1, total, branch: { name: '_central_', value: mindmap.central, connections: mindmap.connections || [] } });
-  await sleep(delay);
-  for (let i = 0; i < total; i++) {
-    sse('branch', { idx: i, total, branch: branches[i] });
-    if (i < total - 1) await sleep(delay);
-  }
-}
-
-// ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 14 — MAIN HANDLER
+// ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
   const reqId     = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -627,11 +759,11 @@ module.exports = async function handler(req, res) {
 
   setHeaders(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST')   return res.status(405).json({ error: 'Use POST.' });
+  if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
   if (!process.env.OPENROUTER_API_KEY) {
-    log.error('[FATAL] OPENROUTER_API_KEY not set');
-    return res.status(500).json({ error: 'Service misconfigured.' });
+    log.error('[FATAL] OPENROUTER_API_KEY not set in environment variables!');
+    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — OPENROUTER_API_KEY missing. Contact the administrator.' });
   }
 
   const body       = req.body || {};
@@ -642,7 +774,7 @@ module.exports = async function handler(req, res) {
   const sessionId  = String(body.sessionId || reqId);
 
   if (!message || message === 'ping') {
-    log.info(`[${reqId}] PING — ${userName}`);
+    log.info(`[${reqId}] PING — ${userName} | sessions:${userSess}`);
     sendToGoogleSheets(userName, userStreak, userSess, 'visit', '', 'online', 0, sessionId).catch(() => {});
     return res.status(200).json({
       status: 'ok', service: SAVOIRÉ.BRAND, version: SAVOIRÉ.VERSION,
@@ -650,8 +782,8 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  if (message.length < 2)     return res.status(400).json({ error: 'Topic too short.' });
-  if (message.length > 20000) return res.status(400).json({ error: 'Input too long.' });
+  if (message.length < 2)     return res.status(400).json({ error: 'Please enter a topic (minimum 2 characters).' });
+  if (message.length > 20000) return res.status(400).json({ error: 'Input too long (max 20,000 characters).' });
 
   const rawOpts = body.options || {};
   const opts = {
@@ -666,15 +798,18 @@ module.exports = async function handler(req, res) {
     branchCount: Math.min(Math.max(Number(rawOpts.branchCount) || 6, 3), 10),
   };
 
-  log.info(`[${reqId}] tool:${opts.tool} | lang:${opts.language} | user:${userName}`);
+  log.info(`[${reqId}] tool:${opts.tool} | depth:${opts.depth} | lang:${opts.language} | user:${userName}`);
 
   if (!opts.stream) {
-    return res.status(400).json({ error: 'stream=true required' });
+    return res.status(400).json({ error: 'Non-streaming mode is not supported. The client must send options.stream=true.' });
   }
 
   sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'started', 0, sessionId).catch(() => {});
 
-  // ── SSE Setup ──────────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // SSE STREAMING RESPONSE
+  // ══════════════════════════════════════════════════════════════════════════
+
   res.setHeader('Content-Type',      'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control',     'no-cache, no-store, must-revalidate, no-transform');
   res.setHeader('Connection',        'keep-alive');
@@ -693,7 +828,7 @@ module.exports = async function handler(req, res) {
 
   const stageTimers = [
     setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }), 1500),
-    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }), 5000),
+    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),    5000),
     setTimeout(() => sse('stage', { idx: 3, label: '🃏 Finalising materials…' }), 12000),
   ];
   const clearStages = () => stageTimers.forEach(clearTimeout);
@@ -701,89 +836,89 @@ module.exports = async function handler(req, res) {
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
-  sse('token',     { t: '' });
+  sse('token',     { t: '' }); // prime the token stream
+
+  // For JSON-only tools (flashcards/quiz/mindmap), this drives BOTH the
+  // visible live-output text AND the SSE keep-alive activity, so the
+  // frontend's live view behaves exactly like it does for 'all' — never
+  // silent long enough to be mistaken for a dead connection.
+  const makeHeartbeatEmitter = (label) => {
+    let elapsed = 0;
+    return (dots) => {
+      elapsed += 1.2;
+      sse('token', { t: '' }); // keep-alive pulse, no visible text change needed
+      sse('stage', { idx: 3, label: `🤖 ${label} generating${dots} (${elapsed.toFixed(0)}s)` });
+    };
+  };
 
   try {
     let result;
-    let notes = '';
-    let fcData = null, qData = null, mmData = null;
 
+    // ── Each branch below is fully independent — its own prompt, its own
+    //    generation function, its own validation. No cross-tool bleed. ──
     switch (opts.tool) {
-      case 'notes':
-        notes = await generateNotes(message, opts, chunk => sse('token', { t: chunk }));
-        result = assembleResult({ topic: message, opts, notes });
-        break;
 
-      case 'summary':
-        notes = await generateSummary(message, opts, chunk => sse('token', { t: chunk }));
+      case 'notes': {
+        const notes = await generateNotes(message, opts, chunk => sse('token', { t: chunk }));
         result = assembleResult({ topic: message, opts, notes });
         break;
+      }
+
+      case 'summary': {
+        const notes = await generateSummary(message, opts, chunk => sse('token', { t: chunk }));
+        result = assembleResult({ topic: message, opts, notes });
+        break;
+      }
 
       case 'flashcards': {
-        sse('stage', { idx: 1, label: '🃏 Generating flashcards…' });
-        fcData = await generateFlashcards(message, opts);
-        // Stream cards live with animation
-        await streamFlashcards(sse, fcData.flashcards, 80);
-        result = assembleResult({ topic: fcData.topic || message, opts, flashcards: fcData });
+        sse('stage', { idx: 1, label: '🃏 Generating your flashcards…' });
+        const fc = await generateFlashcards(message, opts, makeHeartbeatEmitter('Flashcards'));
+        result = assembleResult({ topic: fc.topic || message, opts, flashcards: fc });
         break;
       }
 
       case 'quiz': {
-        sse('stage', { idx: 1, label: '❓ Generating quiz questions…' });
-        qData = await generateQuiz(message, opts);
-        await streamQuiz(sse, qData.quiz_questions, 60);
-        result = assembleResult({ topic: qData.topic || message, opts, quiz: qData });
+        sse('stage', { idx: 1, label: '❓ Generating your quiz…' });
+        const q = await generateQuiz(message, opts, makeHeartbeatEmitter('Quiz'));
+        result = assembleResult({ topic: q.topic || message, opts, quiz: q });
         break;
       }
 
       case 'mindmap': {
-        sse('stage', { idx: 1, label: '🗺️ Generating mind map…' });
-        mmData = await generateMindmap(message, opts);
-        await streamMindmap(sse, mmData.mindmap, 100);
-        result = assembleResult({ topic: mmData.topic || message, opts, mindmap: mmData });
+        sse('stage', { idx: 1, label: '🗺️ Generating your mind map…' });
+        const mm = await generateMindmap(message, opts, makeHeartbeatEmitter('Mind map'));
+        result = assembleResult({ topic: mm.topic || message, opts, mindmap: mm });
         break;
       }
 
       case 'all': {
-        // Mega: notes stream, JSON calls in parallel
+        // Mega bundle: notes streams live; flashcards, quiz, and mindmap run as
+        // three SEPARATE lean JSON calls in parallel (not one bloated call).
+        // Each is independently retried; a failure in one does not sink the others.
         const notesPromise = generateNotes(message, opts, chunk => sse('token', { t: chunk }));
-        const fcPromise    = generateFlashcards(message, opts).catch(e => { log.warn(`mega fc: ${e.message}`); return null; });
-        const qPromise     = generateQuiz(message, opts).catch(e => { log.warn(`mega quiz: ${e.message}`); return null; });
-        const mmPromise    = generateMindmap(message, opts).catch(e => { log.warn(`mega mm: ${e.message}`); return null; });
+        const fcPromise     = generateFlashcards(message, opts).catch(err => { log.warn(`[${reqId}] mega flashcards failed: ${err.message}`); return null; });
+        const quizPromise   = generateQuiz(message, opts).catch(err => { log.warn(`[${reqId}] mega quiz failed: ${err.message}`); return null; });
+        const mmPromise     = generateMindmap(message, opts).catch(err => { log.warn(`[${reqId}] mega mindmap failed: ${err.message}`); return null; });
 
-        const [notesRes, fcRes, qRes, mmRes] = await Promise.all([notesPromise, fcPromise, qPromise, mmPromise]);
+        const [notes, fc, q, mm] = await Promise.all([notesPromise, fcPromise, quizPromise, mmPromise]);
 
-        notes = notesRes;
-        fcData = fcRes;
-        qData = qRes;
-        mmData = mmRes;
-
-        if (!fcData && !qData && !mmData && (!notes || notes.trim().length < 80)) {
-          throw new Error('Mega bundle: all components failed.');
+        if (!fc && !q && !mm) {
+          // Notes alone do not constitute a "Mega Bundle" — be honest about it
+          // rather than silently shipping a partial product as if it were complete.
+          if (!notes || notes.trim().length < 80) {
+            throw new Error('Mega bundle: all components failed across every model.');
+          }
         }
 
-        // Now stream the items one by one for each component
-        if (fcData?.flashcards?.length) {
-          sse('stage', { idx: 2, label: `🃏 Streaming ${fcData.flashcards.length} flashcards…` });
-          await streamFlashcards(sse, fcData.flashcards, 80);
-        }
-        if (qData?.quiz_questions?.length) {
-          sse('stage', { idx: 2, label: `❓ Streaming ${qData.quiz_questions.length} quiz questions…` });
-          await streamQuiz(sse, qData.quiz_questions, 60);
-        }
-        if (mmData?.mindmap?.branches?.length) {
-          sse('stage', { idx: 2, label: `🗺️ Streaming ${mmData.mindmap.branches.length} mind map branches…` });
-          await streamMindmap(sse, mmData.mindmap, 100);
-        }
-
-        result = assembleResult({ topic: message, opts, notes, flashcards: fcData, quiz: qData, mindmap: mmData });
-        result._mega_partial = !(fcData && qData && mmData);
+        result = assembleResult({ topic: message, opts, notes, flashcards: fc, quiz: q, mindmap: mm });
+        result._mega_partial = !(fc && q && mm);
         break;
       }
 
-      default:
-        notes = await generateNotes(message, opts, chunk => sse('token', { t: chunk }));
+      default: {
+        const notes = await generateNotes(message, opts, chunk => sse('token', { t: chunk }));
         result = assembleResult({ topic: message, opts, notes });
+      }
     }
 
     clearInterval(kap);
@@ -791,7 +926,7 @@ module.exports = async function handler(req, res) {
 
     result._duration_ms = Date.now() - startTime;
     result._request_id  = reqId;
-    result.topic_fact   = buildTopicFact(message);
+    result.topic_fact    = buildTopicFact(message);
 
     sse('stage', { idx: 4, label: '✅ Complete! All study materials ready.', done: true });
     sse('done',  result);
@@ -800,21 +935,15 @@ module.exports = async function handler(req, res) {
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'completed', result._duration_ms, sessionId).catch(() => {});
 
   } catch (fatal) {
+    // Lands here only when the active tool's content genuinely could not be
+    // produced by ANY model across all retry passes. We never fabricate
+    // filler content to paper over this — the user gets an honest signal
+    // instead of a broken or misleading "success".
     clearInterval(kap);
     clearStages();
-    log.error(`[${reqId}] FATAL: ${fatal.message}`);
-
-    // If everything fails, send a fallback done event so the frontend never shows error screen
-    const fallbackNotes = `## 📚 Study Notes on ${message}\n\nWe are currently experiencing high demand. Please try again in a moment.`;
-    const fallbackCards = { flashcards: [], quiz_questions: [], mindmap: null };
-    const final = assembleResult({ topic: message, opts, notes: fallbackNotes, flashcards: fallbackCards, quiz: fallbackCards, mindmap: fallbackCards });
-    final._duration_ms = Date.now() - startTime;
-    final._request_id  = reqId;
-    final._quality     = 'fallback';
-
-    sse('stage', { idx: 4, label: '⚠️ Using fallback content – please try again later.', done: true });
-    sse('done', final);
-    sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed_fallback', Date.now() - startTime, sessionId).catch(() => {});
+    log.error(`[${reqId}] FATAL (${opts.tool}): ${fatal.message}`);
+    sse('error', { error: 'All AI models are currently busy. Please try again in a few seconds.', requestId: reqId });
+    sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
   }
 
   if (!res.writableEnded) res.end();
