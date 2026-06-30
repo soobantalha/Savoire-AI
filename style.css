@@ -146,6 +146,7 @@ body {
   --font-heading: 'Playfair Display', 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
   --font-body: 'Inter', 'Montserrat', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-brand: 'Orbitron', 'Inter', system-ui, -apple-system, sans-serif; /* matches NAME.png logo */
   
   /* ── Font Sizes ── */
   --text-xs: 0.75rem;
@@ -1168,13 +1169,16 @@ input::placeholder, textarea::placeholder {
 }
 
 .dh-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
+  font-family: var(--font-brand);
+  font-size: 0.95rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #ffffff, #d4af37);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.dh-name-ai {
+  color: #00d4ff;
 }
 
 .dh-ver {
@@ -4601,14 +4605,27 @@ input::placeholder, textarea::placeholder {
 }
 
 .about-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  font-family: var(--font-heading);
-  background: linear-gradient(135deg, #ffffff, #d4af37);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: 1.15rem;
+  font-weight: 800;
+  font-family: var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
   margin-bottom: 4px;
+}
+
+.about-name-ai {
+  color: #00d4ff;
+}
+
+.about-name-ver {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: rgba(255, 255, 255, 0.45);
+  vertical-align: middle;
 }
 
 .about-tagline {
@@ -8575,11 +8592,15 @@ input::placeholder, textarea::placeholder {
 
 /* ── Welcome brand name ── */
 .welcome-brand {
-  background: linear-gradient(135deg, #d4af37, #00d4ff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-weight: 900;
+  font-family: var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.welcome-brand-ai {
+  color: #00d4ff;
 }
 
 .welcome-tagline {
@@ -9196,9 +9217,11 @@ input::placeholder, textarea::placeholder {
 
 /* ── WELCOME BRAND GRADIENT ── */
 .welcome-brand {
-  background: linear-gradient(135deg,#d4af37,#00d4ff);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-  font-weight: 900;
+  font-family: var(--font-brand);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  font-weight: 800;
 }
 .welcome-tagline { font-size: .9rem; font-style: italic; color: #d4af37; margin-bottom: 6px; }
 .welcome-name-section { text-align: left; margin-bottom: 16px; }
@@ -9384,3 +9407,244 @@ input::placeholder, textarea::placeholder {
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
    END SECTION 52 — SAVOIRÉ AI v2.0 FINALf
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
+/* ── LIVE ANIMATION ADDITIONS — SAVOIRÉ AI v2.0 PATCH ── */
+@keyframes pulse-green {
+  from { opacity: .6; transform: scale(.9); }
+  to   { opacity: 1;  transform: scale(1.1); }
+}
+@keyframes pulse-purple {
+  from { opacity: .6; transform: scale(.9); text-shadow: 0 0 4px rgba(191,0,255,.3); }
+  to   { opacity: 1;  transform: scale(1.1); text-shadow: 0 0 12px rgba(191,0,255,.8); }
+}
+@keyframes pulse-gold {
+  0%   { box-shadow: 0 0 0 0 rgba(212,175,55,.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(212,175,55,0); }
+  100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+}
+@keyframes blink-live {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Auto-advance wizard: flash the selected card */
+.wizard-tool-card.selected,
+.wizard-language-card.selected,
+.wizard-depth-card.selected,
+.wizard-style-card.selected {
+  animation: selectedFlash .28s ease;
+}
+@keyframes selectedFlash {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.04); box-shadow: 0 0 0 3px rgba(0,212,255,.5); }
+  100% { transform: scale(1); }
+}
+
+/* Wizard auto-advance shimmer on selected */
+.wizard-tool-card.selected .wizard-tool-icon,
+.wizard-language-card.selected .wlang-flag {
+  animation: selectedShimmer .3s ease;
+}
+@keyframes selectedShimmer {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.5) drop-shadow(0 0 6px currentColor); }
+  100% { filter: brightness(1); }
+}
+
+/* ── FAST LIVE CARD ANIMATIONS v2.1 ── */
+.live-card-new {
+  animation: liveCardPop 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275) both !important;
+}
+@keyframes liveCardPop {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.97); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── LIVE QUIZ QUESTION FAST ENTRY ── */
+.live-quiz-item.live-card-new {
+  animation: liveQuizPop 0.15s cubic-bezier(0.22, 1, 0.36, 1) both !important;
+}
+@keyframes liveQuizPop {
+  0%   { opacity: 0; transform: translateX(-6px); border-left-color: transparent; }
+  100% { opacity: 1; transform: translateX(0);   border-left-color: #00ff88; }
+}
+
+/* ── LIVE MINDMAP BRANCH ENTRY ── */
+.live-mm-branch.live-card-new {
+  animation: liveBranchSlide 0.18s ease-out both !important;
+}
+@keyframes liveBranchSlide {
+  0%   { opacity: 0; transform: translateX(-8px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* ── STREAM OVERLAY TEXT — blinking cursor on live notes ── */
+.live-md::after {
+  content: '▊';
+  display: inline-block;
+  color: #00d4ff;
+  animation: cursorBlink 0.6s step-end infinite;
+  font-size: 1em;
+  vertical-align: baseline;
+  margin-left: 2px;
+}
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── LIVE NOTES MODAL ── */
+#liveNotesModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  display: none;
+}
+#liveNotesModal .modal-box {
+  background: var(--card-bg, #1a1a2e);
+  border: 1px solid rgba(0,255,136,.2);
+  border-radius: 16px;
+  box-shadow: 0 0 60px rgba(0,255,136,.08), 0 30px 80px rgba(0,0,0,.6);
+  animation: modalPop .22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   WIZARD TOOL-SPECIFIC STEPS — Card Count / Quiz Options / Branch Count
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Info banner above option grid */
+.wizard-tool-specific-info {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+  border-radius: 10px; padding: 12px 16px; margin-bottom: 18px;
+  font-size: .84rem; color: rgba(255,255,255,.65); line-height: 1.5;
+}
+.wizard-tool-specific-info i { color: #00d4ff; margin-top: 2px; flex-shrink: 0; }
+.wizard-tool-specific-info strong { color: rgba(255,255,255,.9); }
+
+/* 4-column option grid (card count / branch count) */
+.wizard-option-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  margin-bottom: 18px;
+}
+@media (max-width: 600px) { .wizard-option-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.wizard-option-card {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 18px 12px 14px;
+  background: rgba(255,255,255,.03); border: 1.5px solid rgba(255,255,255,.07);
+  border-radius: 14px; cursor: pointer; text-align: center;
+  transition: all .2s ease; user-select: none;
+}
+.wizard-option-card:hover {
+  background: rgba(255,255,255,.06); border-color: var(--opt-color, #00d4ff);
+  transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3);
+}
+.wizard-option-card.selected {
+  background: color-mix(in srgb, var(--opt-color, #00d4ff) 12%, transparent);
+  border-color: var(--opt-color, #00d4ff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--opt-color, #00d4ff) 20%, transparent),
+              0 6px 24px rgba(0,0,0,.3);
+  transform: translateY(-2px);
+}
+.wizard-option-card.selected { animation: optionPop .22s cubic-bezier(0.22,1,0.36,1); }
+@keyframes optionPop {
+  0%   { transform: translateY(0) scale(1); }
+  50%  { transform: translateY(-4px) scale(1.03); }
+  100% { transform: translateY(-2px) scale(1); }
+}
+
+.wopt-badge {
+  position: absolute; top: -1px; right: 8px;
+  font-size: .58rem; font-weight: 700; letter-spacing: .04em;
+  padding: 2px 7px; border-radius: 0 0 6px 6px; text-transform: uppercase;
+}
+.wopt-icon { font-size: 1.6rem; margin: 4px 0 2px; }
+.wopt-count { font-size: 1rem; font-weight: 800; line-height: 1.1; }
+.wopt-desc  { font-size: .72rem; color: rgba(255,255,255,.45); line-height: 1.3; }
+.wopt-check {
+  position: absolute; bottom: 8px; right: 8px;
+  font-size: .9rem; color: var(--opt-color, #00ff88);
+  animation: checkPop .18s ease;
+}
+@keyframes checkPop {
+  0%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+
+/* Preview bar */
+.wizard-tool-specific-preview {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid rgba(0,212,255,.2); border-radius: 10px;
+  padding: 12px 16px; font-size: .84rem; color: rgba(255,255,255,.75);
+  background: rgba(0,212,255,.05); margin-top: 4px;
+}
+.wizard-tool-specific-preview strong { font-weight: 700; }
+
+/* Quiz options layout */
+.wizard-quiz-opts-layout {
+  display: flex; flex-direction: column; gap: 16px; margin-bottom: 18px;
+}
+.wizard-quiz-section {}
+.wizard-quiz-section-label {
+  font-size: .8rem; font-weight: 700; color: rgba(255,255,255,.5);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+
+/* Quiz question count pills */
+.wizard-quiz-count-row {
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+.wizard-quiz-count-pill {
+  padding: 8px 20px; border-radius: 50px; cursor: pointer;
+  font-size: .88rem; font-weight: 600;
+  background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1);
+  color: rgba(255,255,255,.6); transition: all .18s ease;
+}
+.wizard-quiz-count-pill:hover {
+  background: rgba(0,255,136,.1); border-color: rgba(0,255,136,.4); color: #00ff88;
+}
+.wizard-quiz-count-pill.active {
+  background: rgba(0,255,136,.15); border-color: #00ff88; color: #00ff88;
+  font-weight: 800; box-shadow: 0 0 0 3px rgba(0,255,136,.15);
+}
+
+/* Quiz type cards — 5-column grid */
+.wizard-quiz-type-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+}
+@media (max-width: 700px) { .wizard-quiz-type-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 480px) { .wizard-quiz-type-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.wizard-quiz-type-card {
+  position: relative; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 14px 8px 12px;
+  background: rgba(255,255,255,.03); border: 1.5px solid rgba(255,255,255,.07);
+  border-radius: 12px; cursor: pointer; text-align: center;
+  transition: all .2s ease;
+}
+.wizard-quiz-type-card:hover {
+  background: rgba(255,255,255,.06); border-color: var(--qt-color, #00ff88);
+  transform: translateY(-2px);
+}
+.wizard-quiz-type-card.selected {
+  background: color-mix(in srgb, var(--qt-color, #00ff88) 12%, transparent);
+  border-color: var(--qt-color, #00ff88);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--qt-color, #00ff88) 18%, transparent);
+  transform: translateY(-2px);
+}
+.wizard-quiz-type-card i { font-size: 1.3rem; }
+.wqt-label { font-size: .78rem; font-weight: 800; }
+.wqt-desc  { font-size: .65rem; color: rgba(255,255,255,.4); line-height: 1.3; }
+
+/* Footer action button inside step (for quiz — no auto-advance) */
+.wizard-footer-action {
+  display: flex; justify-content: flex-end;
+}

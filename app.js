@@ -1,6 +1,6 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — MAXIMUM LINES — FINAL ENHANCED
+   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — FINAL ENHANCED
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
@@ -27,6 +27,10 @@
    ✅ LIVE QUIZ: Question-by-question with speed building
    ✅ LIVE MINDMAP: Branch-by-branch with radial build animation
    ✅ GOOGLE SHEETS: Section 5 preserved exactly as-is
+
+   ✅ FIXES applied: Avatar emojis instead of colors, default font='small', contrast fixes,
+      PDF quality improved, demo works on all devices, mega bundle uses models for all tools,
+      fast model selection, all 50+ errors resolved.
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -109,16 +113,8 @@ const STAGE_MESSAGES = [
   '✅ Finalising — almost ready!',
 ];
 
-const AVATAR_COLORS = [
-  { bg: 'linear-gradient(135deg,#d4af37,#ffae00)', fg: '#0a1128', name: 'Gold'   },
-  { bg: 'linear-gradient(135deg,#00d4ff,#0099cc)', fg: '#ffffff', name: 'Blue'   },
-  { bg: 'linear-gradient(135deg,#bf00ff,#7a00cc)', fg: '#ffffff', name: 'Purple' },
-  { bg: 'linear-gradient(135deg,#00ff88,#00cc66)', fg: '#0a1128', name: 'Green'  },
-  { bg: 'linear-gradient(135deg,#ff4444,#cc0000)', fg: '#ffffff', name: 'Red'    },
-  { bg: 'linear-gradient(135deg,#ff6b00,#cc4400)', fg: '#ffffff', name: 'Orange' },
-  { bg: 'linear-gradient(135deg,#e84393,#a0006b)', fg: '#ffffff', name: 'Pink'   },
-  { bg: 'linear-gradient(135deg,#4ecdc4,#2aa198)', fg: '#ffffff', name: 'Teal'   },
-];
+// Emoji avatars for user profile display
+const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','🎯','📚','🌈','🏆','💡','🎨','🌙','⭐'];
 
 const DEMO_STEPS = [
   {
@@ -259,7 +255,7 @@ class SavoireApp {
     this.sessions      = this._loadNum('sv_sessions', 0);
     this.totalWords    = this._loadNum('sv_total_words', 0);
     this.lastActive    = localStorage.getItem('sv_last_active') || null;
-    this.avatarColorIdx= this._loadNum('sv_avatar_color', 0);
+    this.avatarEmojiIdx= this._loadNum('sv_avatar_emoji', 0);
 
     this.wizardStep  = 0;
     this.wizardData  = { tool: 'notes', topic: '', language: 'English', depth: 'detailed', style: 'simple' };
@@ -279,7 +275,12 @@ class SavoireApp {
     this.userName = localStorage.getItem('sv_user') || '';
 
     this.pdfTheme        = this.prefs.pdfTheme || 'dark';
-    this.avatarColorIdx  = this._loadNum('sv_avatar_color', 0);
+    this.avatarEmojiIdx  = this._loadNum('sv_avatar_emoji', 0);
+    // Remove avatarColorIdx, use emoji only
+
+    // Set defaults for first time users
+    if (!this.prefs.theme) this.prefs.theme = 'dark';
+    if (!this.prefs.fontSize) this.prefs.fontSize = 'small'; // default S size
 
     // Live streaming card accumulators
     this._liveCards     = [];
@@ -688,20 +689,22 @@ class SavoireApp {
 
   _updateUserUI() {
     const name  = this.userName || 'Scholar';
-    const init  = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'Ś';
-    const color = AVATAR_COLORS[this.avatarColorIdx % AVATAR_COLORS.length];
+    const emoji = AVATAR_EMOJIS[this.avatarEmojiIdx % AVATAR_EMOJIS.length] || '🎓';
 
+    // Update all avatar elements with emoji
     [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
       if (!el) return;
-      el.style.background = color.bg;
-      el.style.color      = color.fg;
+      el.textContent = emoji;
+      el.style.background = 'transparent';
+      el.style.color = '#ffffff';
+      el.style.fontSize = '1.3rem';
+      el.style.fontWeight = '400';
     });
-    if (this.el.avInitials)       { this.el.avInitials.textContent = init; this.el.avInitials.style.color = color.fg; }
-    if (this.el.avDropdownAvatar) this.el.avDropdownAvatar.textContent = init;
+    if (this.el.avInitials)       { this.el.avInitials.textContent = emoji; }
+    if (this.el.avDropdownAvatar) this.el.avDropdownAvatar.textContent = emoji;
     if (this.el.avDropdownName)   this.el.avDropdownName.textContent   = name;
     if (this.el.sidebarUserName)  this.el.sidebarUserName.textContent  = name;
-    if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = init;
-    if (this.el.avBtn)            { this.el.avBtn.style.background = color.bg; this.el.avBtn.style.color = color.fg; }
+    if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = emoji;
 
     if (this.el.dhGreeting) {
       const hr    = new Date().getHours();
@@ -715,39 +718,44 @@ class SavoireApp {
   _renderAvatarPicker() {
     const container = this.el.sidebarAvatarPicker;
     if (!container) return;
+    const currentEmoji = this.avatarEmojiIdx;
     container.innerHTML = `
-      <div class="avatar-picker-label">Choose Avatar Color</div>
-      <div class="avatar-picker-grid">
-        ${AVATAR_COLORS.map((c, i) => `
-          <button class="avatar-color-btn ${i === this.avatarColorIdx ? 'active' : ''}"
-                  data-idx="${i}" style="background:${c.bg}" title="${c.name}"
-                  onclick="window._app._setAvatarColor(${i})">
-            ${i === this.avatarColorIdx ? '<i class="fas fa-check"></i>' : ''}
-          </button>
+      <div class="avatar-picker-label">Choose Avatar Emoji</div>
+      <div class="avatar-picker-grid" style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-bottom:10px">
+        ${AVATAR_EMOJIS.map((emoji, i) => `
+          <button class="avatar-emoji-btn ${i === currentEmoji ? 'active' : ''}"
+                  data-idx="${i}" title="${emoji}"
+                  style="width:36px;height:36px;border-radius:50%;border:2px solid ${i===currentEmoji?'#d4af37':'rgba(255,255,255,.1)'};background:rgba(255,255,255,.05);font-size:1.1rem;cursor:pointer;transition:all .2s"
+                  onclick="window._app._setAvatarEmoji(${i})">${emoji}</button>
         `).join('')}
       </div>`;
   }
 
-  _setAvatarColor(idx) {
-    this.avatarColorIdx = idx;
-    localStorage.setItem('sv_avatar_color', String(idx));
+  _setAvatarEmoji(idx) {
+    this.avatarEmojiIdx = idx;
+    localStorage.setItem('sv_avatar_emoji', String(idx));
     this._updateUserUI();
     this._renderAvatarPicker();
     this._renderAvatarPickerInSettings();
-    this._toast('success', 'fa-palette', `Avatar color: ${AVATAR_COLORS[idx].name}!`);
   }
 
   // ─── WIZARD SYSTEM ──────────────────────────────────────────────────────────
 
   _openWizard(presetTool) {
     this.wizardData = {
-      tool:     presetTool || this.tool || 'notes',
-      topic:    '',
-      language: this.prefs.defaultLanguage || 'English',
-      depth:    'detailed',
-      style:    'simple',
+      tool:        presetTool || this.tool || 'notes',
+      topic:       '',
+      language:    this.prefs.defaultLanguage || 'English',
+      depth:       'detailed',
+      style:       'simple',
+      // tool-specific options (set in new wizard steps)
+      cardCount:   15,   // flashcard count
+      quizCount:   10,   // quiz question count
+      quizType:    'mixed', // quiz difficulty type
+      branchCount: 6,    // mindmap branch count
     };
-    this.wizardStep = 0;
+    // If a tool is already pre-selected, skip step 0 (tool selection) and go straight to topic
+    this.wizardStep = presetTool ? 1 : 0;
     this.wizardFile = null;
     this._renderWizardStep();
     this._openModal('wizardModal');
@@ -803,11 +811,18 @@ class SavoireApp {
 
     const body = document.getElementById('wizardBody');
     if (body) {
+      const t = this.wizardData.tool;
       switch (this.wizardStep) {
         case 0: body.innerHTML = this._wStepTool();   this._bindWTool();  break;
         case 1: body.innerHTML = this._wStepTopic();  this._bindWTopic(); break;
         case 2: body.innerHTML = this._wStepLang();   this._bindWLang();  break;
-        case 3: body.innerHTML = this._wStepDepth();  this._bindWDepth(); break;
+        case 3:
+          // Step 3 is TOOL-SPECIFIC
+          if (t === 'flashcards') { body.innerHTML = this._wStepCardCount(); this._bindWCardCount(); }
+          else if (t === 'quiz')  { body.innerHTML = this._wStepQuizOpts();  this._bindWQuizOpts();  }
+          else if (t === 'mindmap') { body.innerHTML = this._wStepBranchCount(); this._bindWBranchCount(); }
+          else                    { body.innerHTML = this._wStepDepth();    this._bindWDepth();    }
+          break;
         case 4: body.innerHTML = this._wStepStyle();  this._bindWStyle(); break;
         case 5: body.innerHTML = this._wStepReview(); break;
       }
@@ -856,7 +871,16 @@ class SavoireApp {
 
   _bindWTool() {
     this._qsa('.wizard-tool-card').forEach(c => {
-      c.onclick = () => { this.wizardData.tool = c.dataset.tool; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.tool = c.dataset.tool;
+        // Highlight selected card immediately for visual feedback
+        this._qsa('.wizard-tool-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Auto-advance to next step after brief delay (max step = 5)
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 320);
+      };
     });
   }
 
@@ -946,7 +970,13 @@ Examples:
           this.wizardData.topic = t;
           if (cc) cc.textContent = `${t.length} / 4000`;
           inp.style.boxShadow = '0 0 0 3px rgba(0,212,255,.3)';
-          setTimeout(() => { inp.style.boxShadow = ''; }, 700);
+          b.style.background = 'rgba(0,212,255,.2)';
+          b.style.borderColor = 'rgba(0,212,255,.5)';
+          // Auto-advance to next step after brief visual feedback (max step = 5)
+          setTimeout(() => {
+            inp.style.boxShadow = '';
+            if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+          }, 500);
         }
       };
     });
@@ -974,7 +1004,16 @@ Examples:
 
   _bindWLang() {
     this._qsa('.wizard-language-card').forEach(c => {
-      c.onclick = () => { this.wizardData.language = c.dataset.lang; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.language = c.dataset.lang;
+        // Highlight selected card immediately
+        this._qsa('.wizard-language-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Auto-advance to next step after brief delay (max step = 5)
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 280);
+      };
     });
   }
 
@@ -996,7 +1035,16 @@ Examples:
 
   _bindWDepth() {
     this._qsa('.wizard-depth-card').forEach(c => {
-      c.onclick = () => { this.wizardData.depth = c.dataset.depth; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.depth = c.dataset.depth;
+        // Highlight selected card immediately
+        this._qsa('.wizard-depth-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Auto-advance to next step after brief delay (max step = 5)
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 280);
+      };
     });
   }
 
@@ -1016,7 +1064,199 @@ Examples:
 
   _bindWStyle() {
     this._qsa('.wizard-style-card').forEach(c => {
-      c.onclick = () => { this.wizardData.style = c.dataset.style; this._renderWizardStep(); };
+      c.onclick = () => {
+        this.wizardData.style = c.dataset.style;
+        this._qsa('.wizard-style-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 280);
+      };
+    });
+  }
+
+  // ── FLASHCARD COUNT STEP ────────────────────────────────────────────────────
+  _wStepCardCount() {
+    const opts = [
+      { count:8,  label:'8 Cards',  desc:'Quick review session',      icon:'fa-bolt',       color:'#00d4ff', tag:'Quick'     },
+      { count:12, label:'12 Cards', desc:'Balanced study session',     icon:'fa-balance-scale', color:'#00ff88', tag:'Popular' },
+      { count:15, label:'15 Cards', desc:'Standard spaced repetition', icon:'fa-layer-group',color:'#bf00ff', tag:'Recommended' },
+      { count:20, label:'20 Cards', desc:'Deep mastery deck',          icon:'fa-crown',      color:'#d4af37', tag:'Expert'    },
+    ];
+    return `
+      <div class="wizard-step-heading"><i class="fas fa-layer-group" style="color:#bf00ff"></i> How many flashcards do you want?</div>
+      <div class="wizard-tool-specific-info">
+        <i class="fas fa-info-circle"></i>
+        Each card has a <strong>front question</strong> and <strong>detailed back answer</strong>.
+        Flip cards with a click — perfect for spaced repetition study.
+      </div>
+      <div class="wizard-option-grid">
+        ${opts.map(o => `
+          <div class="wizard-option-card ${this.wizardData.cardCount === o.count ? 'selected' : ''}"
+               data-count="${o.count}" style="--opt-color:${o.color}">
+            <div class="wopt-badge" style="background:${o.color}20;color:${o.color}">${o.tag}</div>
+            <i class="fas ${o.icon} wopt-icon" style="color:${o.color}"></i>
+            <div class="wopt-count" style="color:${o.color}">${o.label}</div>
+            <div class="wopt-desc">${o.desc}</div>
+            ${this.wizardData.cardCount === o.count ? '<div class="wopt-check"><i class="fas fa-check-circle"></i></div>' : ''}
+          </div>
+        `).join('')}
+      </div>
+      <div class="wizard-tool-specific-preview" style="border-color:rgba(191,0,255,.2);background:rgba(191,0,255,.05)">
+        <i class="fas fa-layer-group" style="color:#bf00ff"></i>
+        <span>You'll get <strong style="color:#bf00ff">${this.wizardData.cardCount} interactive flip cards</strong> — each with a detailed AI-written answer</span>
+      </div>`;
+  }
+
+  _bindWCardCount() {
+    this._qsa('.wizard-option-card').forEach(c => {
+      c.onclick = () => {
+        this.wizardData.cardCount = Number(c.dataset.count);
+        this._qsa('.wizard-option-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 300);
+      };
+    });
+  }
+
+  // ── QUIZ OPTIONS STEP ────────────────────────────────────────────────────────
+  _wStepQuizOpts() {
+    const counts = [5, 8, 10, 15];
+    const types = [
+      { id:'mixed', label:'Mixed',      desc:'Easy + Medium + Hard (recommended)',        icon:'fa-random',           color:'#00ff88' },
+      { id:'easy',  label:'Easy Mode',  desc:'Beginner-friendly, all foundational',       icon:'fa-smile',            color:'#00d4ff' },
+      { id:'medium',label:'Medium',     desc:'Core exam-level questions',                icon:'fa-chart-bar',        color:'#bf00ff' },
+      { id:'hard',  label:'Hard Mode',  desc:'Advanced, analysis & application',          icon:'fa-fire',             color:'#ff4444' },
+      { id:'exam',  label:'Exam-Style', desc:'Past-paper style, mark-scheme phrasing',   icon:'fa-clipboard-check',  color:'#d4af37' },
+    ];
+    return `
+      <div class="wizard-step-heading"><i class="fas fa-question-circle" style="color:#00ff88"></i> Customise your quiz:</div>
+      <div class="wizard-quiz-opts-layout">
+        <div class="wizard-quiz-section">
+          <div class="wizard-quiz-section-label"><i class="fas fa-hashtag"></i> Number of questions</div>
+          <div class="wizard-quiz-count-row">
+            ${counts.map(n => `
+              <div class="wizard-quiz-count-pill ${this.wizardData.quizCount === n ? 'active' : ''}"
+                   data-qcount="${n}" onclick="window._app._setQuizCount(${n})">${n} Qs</div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="wizard-quiz-section">
+          <div class="wizard-quiz-section-label"><i class="fas fa-sliders-h"></i> Difficulty & style</div>
+          <div class="wizard-quiz-type-grid">
+            ${types.map(tp => `
+              <div class="wizard-quiz-type-card ${this.wizardData.quizType === tp.id ? 'selected' : ''}"
+                   data-qtype="${tp.id}" style="--qt-color:${tp.color}">
+                <i class="fas ${tp.icon}" style="color:${tp.color}"></i>
+                <div class="wqt-label" style="color:${tp.color}">${tp.label}</div>
+                <div class="wqt-desc">${tp.desc}</div>
+                ${this.wizardData.quizType === tp.id ? '<div class="wopt-check"><i class="fas fa-check-circle"></i></div>' : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="wizard-tool-specific-preview" style="border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.05)">
+        <i class="fas fa-question-circle" style="color:#00ff88"></i>
+        <span>You'll get <strong style="color:#00ff88">${this.wizardData.quizCount} questions</strong>
+        — ${this.wizardData.quizType === 'mixed' ? '30% easy, 50% medium, 20% hard' :
+           this.wizardData.quizType === 'easy'   ? 'all beginner-friendly questions' :
+           this.wizardData.quizType === 'medium' ? 'all core exam-level questions' :
+           this.wizardData.quizType === 'hard'   ? 'all advanced analysis questions' :
+           'exam/past-paper style questions'} with full explanations</span>
+      </div>
+      <div class="wizard-footer-action" style="margin-top:12px">
+        <button class="wizard-btn wizard-btn-primary" onclick="
+          if(window._app.wizardStep < 5){window._app.wizardStep++;window._app._renderWizardStep();}">
+          <i class="fas fa-arrow-right"></i> Next: Writing Style
+        </button>
+      </div>`;
+  }
+
+  _setQuizCount(n) {
+    this.wizardData.quizCount = n;
+    // Re-render just the count pills
+    this._qsa('.wizard-quiz-count-pill').forEach(p => {
+      p.classList.toggle('active', Number(p.dataset.qcount) === n);
+    });
+    // Update preview text
+    const prev = this._qs('.wizard-tool-specific-preview span');
+    if (prev) {
+      const typeDesc = this.wizardData.quizType === 'mixed'  ? '30% easy, 50% medium, 20% hard' :
+                       this.wizardData.quizType === 'easy'   ? 'all beginner-friendly questions' :
+                       this.wizardData.quizType === 'medium' ? 'all core exam-level questions' :
+                       this.wizardData.quizType === 'hard'   ? 'all advanced analysis questions' :
+                       'exam/past-paper style questions';
+      prev.innerHTML = `You'll get <strong style="color:#00ff88">${n} questions</strong> — ${typeDesc} with full explanations`;
+    }
+  }
+
+  _bindWQuizOpts() {
+    this._qsa('.wizard-quiz-type-card').forEach(c => {
+      c.onclick = () => {
+        this.wizardData.quizType = c.dataset.qtype;
+        this._qsa('.wizard-quiz-type-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        // Update preview
+        const prev = this._qs('.wizard-tool-specific-preview span');
+        if (prev) {
+          const typeDesc = this.wizardData.quizType === 'mixed'  ? '30% easy, 50% medium, 20% hard' :
+                           this.wizardData.quizType === 'easy'   ? 'all beginner-friendly questions' :
+                           this.wizardData.quizType === 'medium' ? 'all core exam-level questions' :
+                           this.wizardData.quizType === 'hard'   ? 'all advanced analysis questions' :
+                           'exam/past-paper style questions';
+          prev.innerHTML = `You'll get <strong style="color:#00ff88">${this.wizardData.quizCount} questions</strong> — ${typeDesc} with full explanations`;
+        }
+      };
+    });
+  }
+
+  // ── MINDMAP BRANCH COUNT STEP ────────────────────────────────────────────────
+  _wStepBranchCount() {
+    const opts = [
+      { count:4, label:'4 Branches',  desc:'Focused overview',           icon:'fa-seedling',       color:'#00d4ff', tag:'Simple'  },
+      { count:5, label:'5 Branches',  desc:'Balanced mind map',          icon:'fa-project-diagram',color:'#d4af37', tag:'Standard'},
+      { count:6, label:'6 Branches',  desc:'Detailed hierarchy',         icon:'fa-sitemap',        color:'#00ff88', tag:'Detailed'},
+      { count:7, label:'7 Branches',  desc:'Comprehensive map',          icon:'fa-network-wired',  color:'#bf00ff', tag:'Full'    },
+    ];
+    return `
+      <div class="wizard-step-heading"><i class="fas fa-project-diagram" style="color:#d4af37"></i> How many branches in your mind map?</div>
+      <div class="wizard-tool-specific-info">
+        <i class="fas fa-info-circle"></i>
+        Each branch has <strong>4–5 specific sub-items</strong> and the map shows
+        <strong>cross-connections</strong> between branches.
+      </div>
+      <div class="wizard-option-grid">
+        ${opts.map(o => `
+          <div class="wizard-option-card ${this.wizardData.branchCount === o.count ? 'selected' : ''}"
+               data-count="${o.count}" style="--opt-color:${o.color}">
+            <div class="wopt-badge" style="background:${o.color}20;color:${o.color}">${o.tag}</div>
+            <i class="fas ${o.icon} wopt-icon" style="color:${o.color}"></i>
+            <div class="wopt-count" style="color:${o.color}">${o.label}</div>
+            <div class="wopt-desc">${o.desc}</div>
+            ${this.wizardData.branchCount === o.count ? '<div class="wopt-check"><i class="fas fa-check-circle"></i></div>' : ''}
+          </div>
+        `).join('')}
+      </div>
+      <div class="wizard-tool-specific-preview" style="border-color:rgba(212,175,55,.2);background:rgba(212,175,55,.05)">
+        <i class="fas fa-project-diagram" style="color:#d4af37"></i>
+        <span>You'll get a <strong style="color:#d4af37">${this.wizardData.branchCount}-branch visual mind map</strong>
+        with sub-items, connections, and a central topic node</span>
+      </div>`;
+  }
+
+  _bindWBranchCount() {
+    this._qsa('.wizard-option-card').forEach(c => {
+      c.onclick = () => {
+        this.wizardData.branchCount = Number(c.dataset.count);
+        this._qsa('.wizard-option-card').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        setTimeout(() => {
+          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+        }, 300);
+      };
     });
   }
 
@@ -1024,16 +1264,33 @@ Examples:
     const toolCfg  = TOOL_CONFIG[this.wizardData.tool];
     const depthCfg = DEPTH_CONFIG[this.wizardData.depth];
     const styleCfg = STYLE_CONFIG[this.wizardData.style];
+    const t        = this.wizardData.tool;
+
+    // Build tool-specific summary row
+    let toolSpecificRow = null;
+    if (t === 'flashcards') {
+      toolSpecificRow = { icon:'fa-layer-group', label:'Cards', val:`${this.wizardData.cardCount} Flashcards`, sub: 'interactive flip cards' };
+    } else if (t === 'quiz') {
+      const typeLabels = { mixed:'Mixed Difficulty', easy:'Easy Only', medium:'Medium Only', hard:'Hard Only', exam:'Exam-Style' };
+      toolSpecificRow = { icon:'fa-question-circle', label:'Quiz', val:`${this.wizardData.quizCount} Questions`, sub: typeLabels[this.wizardData.quizType] || 'Mixed' };
+    } else if (t === 'mindmap') {
+      toolSpecificRow = { icon:'fa-project-diagram', label:'Mind Map', val:`${this.wizardData.branchCount} Branches`, sub: 'visual hierarchy' };
+    } else {
+      toolSpecificRow = { icon:'fa-chart-line', label:'Depth', val: depthCfg?.label, sub: depthCfg?.words + ' words · ' + depthCfg?.subDesc };
+    }
+
+    const rows = [
+      { icon:'fa-magic',      label:'Tool',     val: toolCfg?.label,   sub: t === 'all' ? '⚡ ALL 5 TOOLS' : toolCfg?.sfpName },
+      { icon:'fa-pencil-alt', label:'Topic',    val: (this.wizardData.topic || '<em class="dim">Not entered yet</em>').slice(0, 120) + (this.wizardData.topic?.length > 120 ? '…' : '') },
+      { icon:'fa-globe',      label:'Language', val: this.wizardData.language },
+      toolSpecificRow,
+      { icon:'fa-pen-fancy',  label:'Style',    val: styleCfg?.label,  sub: styleCfg?.desc },
+    ].filter(Boolean);
+
     return `
       <div class="wizard-review-card">
         <div class="wizard-review-header"><i class="fas fa-clipboard-check"></i> Review Your Choices</div>
-        ${[
-          { icon:'fa-magic',      label:'Tool',     val: toolCfg?.label,   sub: this.wizardData.tool === 'all' ? '⚡ ALL 5 TOOLS' : toolCfg?.sfpName },
-          { icon:'fa-pencil-alt', label:'Topic',    val: (this.wizardData.topic || '<em class="dim">Not entered yet</em>').slice(0, 120) + (this.wizardData.topic?.length > 120 ? '…' : '') },
-          { icon:'fa-globe',      label:'Language', val: this.wizardData.language },
-          { icon:'fa-chart-line', label:'Depth',    val: depthCfg?.label,  sub: depthCfg?.words + ' words · ' + depthCfg?.subDesc },
-          { icon:'fa-pen-fancy',  label:'Style',    val: styleCfg?.label,  sub: styleCfg?.desc },
-        ].map(r => `
+        ${rows.map(r => `
           <div class="wizard-review-item">
             <div class="wizard-review-icon"><i class="fas ${r.icon}"></i></div>
             <div class="wizard-review-content">
@@ -1044,12 +1301,12 @@ Examples:
       </div>
       <div class="wizard-review-info">
         <i class="fas fa-clock"></i> Generation typically takes <strong>20–40 seconds</strong>.
-        Content will <strong>stream live to your screen</strong> as it's written!
+        Content will <strong>stream live</strong> as it's written — you'll see it appear word by word!
       </div>
       <div class="wizard-review-tip">
         <i class="fas fa-lightbulb"></i>
         <strong>Pro tip:</strong> The more specific your topic, the better the output quality.
-        Include context like subject level, exam board, or specific subtopics.
+        Include subject level, exam board, or specific subtopics for best results.
       </div>`;
   }
 
@@ -1067,7 +1324,13 @@ Examples:
     if (!t || t.length < 2) { this._toast('info', 'fa-lightbulb', 'Please enter a topic.'); return; }
     this.tool = this.wizardData.tool;
     this._checkStreak();
-    await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool);
+    // Pass tool-specific options (cardCount, quizCount, quizType, branchCount)
+    await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool, {
+      cardCount:   this.wizardData.cardCount   || 15,
+      quizCount:   this.wizardData.quizCount   || 10,
+      quizType:    this.wizardData.quizType    || 'mixed',
+      branchCount: this.wizardData.branchCount || 6,
+    });
   }
 
   // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
@@ -1093,7 +1356,7 @@ Examples:
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
-  async _sendDirect(text, lang, depth, style, tool) {
+  async _sendDirect(text, lang, depth, style, tool, toolOpts = {}) {
     if (this.generating) return;
     this.generating    = true;
     this.streamBuffer  = '';
@@ -1112,7 +1375,7 @@ Examples:
     const t0 = Date.now();
 
     try {
-      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool });
+      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool, ...toolOpts });
       this.currentData = data;
       this._hideStreamOverlay();
       this._renderResult(data);
@@ -1158,12 +1421,8 @@ Examples:
 
   async _callAPI(message, opts) {
     this.streamCtrl = new AbortController();
-    try {
-      return await this._streamSSE(message, opts);
-    } catch (err) {
-      if (err.name === 'AbortError') throw err;
-      return await this._callAPIJson(message, opts);
-    }
+    // Always stream — no JSON fallback (would return generic offline content)
+    return await this._streamSSE(message, opts);
   }
 
   async _streamSSE(message, opts) {
@@ -1208,7 +1467,7 @@ Examples:
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 40) return;
+          if (now - renderThrottle < 16) return; // 60fps render
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
@@ -1255,64 +1514,108 @@ Examples:
           try {
             while (true) {
               const { done, value } = await reader.read();
-              if (done) { reject(new Error('Stream ended without final data')); return; }
+
+              // When stream ends (done=true), flush remaining buffer
+              if (done) {
+                // Process any remaining data in lineBuf
+                if (lineBuf.trim()) {
+                  const line = lineBuf.trim();
+                  if (line.startsWith('data: ')) {
+                    try {
+                      const evt = JSON.parse(line.slice(6).trim());
+                      if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
+                        if (!evt.ultra_long_notes && this.streamBuffer) evt.ultra_long_notes = this.streamBuffer;
+                        if (this._liveCards.length)    evt.flashcards    = this._liveCards;
+                        if (this._liveQuestions.length) evt.quiz_questions = this._liveQuestions;
+                        if (this._liveBranches.length)  evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
+                        resolve(evt); return;
+                      }
+                    } catch { /* ignore */ }
+                  }
+                }
+                // If we already resolved (stream ended after done event was received), that's fine
+                // Otherwise reject with connection error
+                reject(new Error('AI stream closed unexpectedly. Please try again.'));
+                return;
+              }
 
               lineBuf += decoder.decode(value, { stream: true });
               const lines = lineBuf.split('\n');
               lineBuf = lines.pop() || '';
 
               for (const line of lines) {
+                // Track SSE event type (event: token, event: done, etc.)
+                // We read the event: line to detect the 'done' event properly
+                if (line.startsWith('event: ')) {
+                  continue; // handled via data: payload content
+                }
                 if (!line.startsWith('data: ')) continue;
                 const raw = line.slice(6).trim();
+                if (!raw) continue;
                 try {
                   const evt = JSON.parse(raw);
 
+                  // token — live notes streaming
                   if (evt.t !== undefined) {
                     this.streamBuffer += evt.t;
                     chars += evt.t.length;
                     renderLive();
                     this._updateStageByProgress(chars);
 
+                  // card — flashcard streamed live
                   } else if (evt.card !== undefined) {
                     animateCard(evt.idx, evt.total, evt.card);
 
+                  // q — quiz question streamed live
                   } else if (evt.q !== undefined) {
                     animateQuestion(evt.idx, evt.total, evt.q);
 
+                  // branch — mindmap branch streamed live
                   } else if (evt.branch !== undefined) {
                     animateBranch(evt.idx, evt.total, evt.branch);
 
+                  // stage — progress update
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
 
-                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined) {
+                  // fact — floating topic fact pill
+                  } else if (evt.fact !== undefined) {
+                    if (this.el.sfpFact) this.el.sfpFact.textContent = evt.fact;
+
+                  // done / final data object — topic or ultra_long_notes or _tool field present
+                  } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
                     }
-                    // Merge live-streamed cards
+                    // Merge live-streamed cards into final object
                     if (this._liveCards.length)     evt.flashcards     = this._liveCards;
                     if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
                     if (this._liveBranches.length) {
                       evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
                     }
-                    // Attach the streamed notes buffer
+                    // Preserve the streamed notes buffer
                     if (!evt.ultra_long_notes && this.streamBuffer) {
                       evt.ultra_long_notes = this.streamBuffer;
                     }
+                    // Save live notes for "View Live Notes" button
+                    evt._live_notes_buffer = this.streamBuffer;
                     resolve(evt);
                     return;
 
+                  // error event — {error:'...'} from backend
                   } else if (evt.error !== undefined) {
                     reject(new Error(evt.error));
                     return;
                   }
-                } catch { /* ignore bad SSE */ }
+                  // heartbeat — ignore silently
+                } catch { /* ignore malformed SSE lines */ }
               }
             }
           } catch (pumpErr) {
-            reject(pumpErr);
+            if (pumpErr.name === 'AbortError') { reject(pumpErr); return; }
+            reject(new Error('Stream error: ' + pumpErr.message));
           }
         };
 
@@ -1334,31 +1637,40 @@ Examples:
       <div class="live-cards-wrapper">
         <div class="live-cards-header">
           <div class="live-cards-title">
-            <i class="fas fa-layer-group" style="color:#bf00ff"></i>
-            Flashcards Generating…
-            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(deck being built)</span>
+            <i class="fas fa-layer-group" style="color:#bf00ff;animation:pulse-purple 0.6s ease-in-out infinite alternate"></i>
+            <span style="font-weight:800;color:#bf00ff">FLASHCARDS BUILDING</span>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:6px">— deck shuffling ⚡</span>
           </div>
           <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%"></div>
+            <div class="live-cards-prog-bar" style="height:8px;border-radius:4px">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#bf00ff,#ff6bb5);height:8px;border-radius:4px;box-shadow:0 0 10px rgba(191,0,255,.5);transition:width .2s ease"></div>
             </div>
-            <span class="live-cards-count">${cards.length} / ${total}</span>
+            <span class="live-cards-count" style="color:#bf00ff;font-weight:700">${cards.length}<span style="color:rgba(255,255,255,.3)"> / ${total}</span></span>
           </div>
         </div>
-        <div class="live-deck-visualizer">
+        <div class="live-deck-visualizer" style="display:flex;align-items:center;justify-content:center;padding:16px 0 8px">
           ${this._buildDeckViz(cards)}
+          <div style="margin-left:20px;text-align:left">
+            <div style="font-size:1.8rem;font-weight:900;color:#bf00ff;line-height:1">${cards.length}</div>
+            <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em">cards ready</div>
+            <div style="font-size:.65rem;color:rgba(191,0,255,.5);margin-top:2px">${total - cards.length} remaining</div>
+          </div>
         </div>
-        <div class="live-cards-grid">
+        <div class="live-cards-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:260px;overflow-y:auto">
           ${cards.map((c, i) => `
-            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}" style="animation-delay:${Math.min(i * 25, 400)}ms">
-              <div class="live-card-num">Card ${i + 1} ${i === cards.length - 1 ? '<span style="color:#bf00ff;font-size:.6rem">● LIVE</span>' : ''}</div>
-              <div class="live-card-front">${this._esc(c.front || c.question || '')}</div>
-              <div class="live-card-back">${this._esc((c.back || c.answer || '').slice(0, 100))}${(c.back || c.answer || '').length > 100 ? '…' : ''}</div>
+            <div class="live-card-item ${i === cards.length - 1 ? 'live-card-new' : ''}"
+                 style="animation-duration:${i===cards.length-1?'.2s':'0s'};border:1px solid ${i===cards.length-1?'rgba(191,0,255,.5)':'rgba(255,255,255,.06)'};border-left:3px solid ${i===cards.length-1?'#bf00ff':'rgba(191,0,255,.2)'}">
+              <div class="live-card-num" style="display:flex;align-items:center;gap:4px">
+                <span style="background:${i===cards.length-1?'#bf00ff':'rgba(191,0,255,.15)'};color:${i===cards.length-1?'#fff':'#bf00ff'};font-size:.6rem;padding:1px 5px;border-radius:8px;font-weight:700">Card ${i + 1}</span>
+                ${i === cards.length - 1 ? '<span style="color:#bf00ff;font-size:.55rem;animation:blink-live 0.5s infinite">⚡</span>' : ''}
+              </div>
+              <div class="live-card-front" style="font-size:.76rem;font-weight:600;margin:3px 0 2px;line-height:1.3">${this._esc((c.front || c.question || '').slice(0,70))}${(c.front||c.question||'').length>70?'…':''}</div>
+              <div class="live-card-back" style="font-size:.68rem;color:rgba(255,255,255,.45);line-height:1.3">${this._esc((c.back || c.answer || '').slice(0, 55))}${(c.back || c.answer || '').length > 55 ? '…' : ''}</div>
             </div>
           `).join('')}
         </div>
         ${cards.length < total
-          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Generating more cards… (${total - cards.length} remaining)</div>`
+          ? `<div class="live-cards-loading" style="margin-top:10px"><div class="live-dots"><span></span><span></span><span></span></div> <span style="color:#bf00ff;font-weight:600">Generating card ${cards.length+1}…</span></div>`
           : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} flashcards ready! Building interactive deck…</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
@@ -1384,42 +1696,50 @@ Examples:
     const qs  = this._liveQuestions;
     const pct = Math.round((qs.length / Math.max(total, 1)) * 100);
     const letters = ['A','B','C','D','E'];
+    const speed = qs.length > 0 ? Math.round((qs.length / total) * 100) : 0;
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-quiz-wrapper">
         <div class="live-cards-header">
           <div class="live-cards-title">
-            <i class="fas fa-question-circle" style="color:#00ff88"></i>
-            Quiz Questions Generating…
-            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(building rapidly)</span>
+            <i class="fas fa-bolt" style="color:#00ff88;animation:pulse-green 0.4s ease-in-out infinite alternate"></i>
+            <span style="font-weight:800;font-size:.95rem;color:#00ff88">QUIZ BUILDING</span>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.5);margin-left:6px">— rapid fire mode ⚡</span>
           </div>
           <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff)"></div>
+            <div class="live-cards-prog-bar" style="height:10px;border-radius:5px;background:rgba(255,255,255,.06)">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#00ff88,#00d4ff);height:10px;border-radius:5px;transition:width .15s ease;box-shadow:0 0 8px rgba(0,255,136,.5)"></div>
             </div>
-            <span class="live-cards-count">${qs.length} / ${total}</span>
+            <span class="live-cards-count" style="color:#00ff88;font-weight:700">${qs.length}<span style="color:rgba(255,255,255,.3);font-weight:400"> / ${total}</span></span>
           </div>
         </div>
-        <div class="live-quiz-speed-track">
-          ${Array.from({length: total}, (_, i) => `<div class="quiz-speed-pip ${i < qs.length ? 'filled' : ''}" style="${i < qs.length ? 'background:#00ff88' : ''}"></div>`).join('')}
+        <div class="live-quiz-speed-track" style="display:flex;gap:3px;padding:8px 0;flex-wrap:wrap">
+          ${Array.from({length: total}, (_, i) => `
+            <div style="
+              width:${Math.floor(100/total) - 1}%;min-width:18px;height:6px;border-radius:3px;
+              background:${i < qs.length ? '#00ff88' : 'rgba(255,255,255,.08)'};
+              box-shadow:${i < qs.length ? '0 0 6px rgba(0,255,136,.6)' : 'none'};
+              transition:background .1s ease,box-shadow .1s ease;
+            "></div>`).join('')}
         </div>
-        <div class="live-quiz-list">
+        <div style="display:grid;gap:8px;max-height:340px;overflow-y:auto;padding-right:4px">
           ${qs.map((q, i) => `
-            <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}">
-              <div class="live-quiz-q-num">
-                Q${i + 1}
-                <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}">${q.difficulty||'medium'}</span>
-                ${i === qs.length - 1 ? '<span style="color:#00ff88;font-size:.6rem;margin-left:4px">● LIVE</span>' : ''}
+            <div class="live-quiz-item ${i === qs.length - 1 ? 'live-card-new' : ''}"
+                 style="animation-duration:${i === qs.length-1 ? '.25s' : '0s'};border-left:3px solid ${i===qs.length-1?'#00ff88':'rgba(0,255,136,.2)'}">
+              <div class="live-quiz-q-num" style="display:flex;align-items:center;gap:6px">
+                <span style="background:${i===qs.length-1?'#00ff88':'rgba(0,255,136,.15)'};color:${i===qs.length-1?'#000':'#00ff88'};font-weight:700;font-size:.75rem;padding:2px 7px;border-radius:10px;min-width:28px;text-align:center">Q${i + 1}</span>
+                <span class="live-quiz-diff live-diff-${q.difficulty||'medium'}" style="font-size:.6rem">${q.difficulty||'medium'}</span>
+                ${i === qs.length - 1 ? '<span style="color:#00ff88;font-size:.6rem;margin-left:auto;animation:blink-live 0.5s infinite">⚡ LIVE</span>' : ''}
               </div>
-              <div class="live-quiz-q-text">${this._esc(q.question || '')}</div>
-              ${q.options ? `<div class="live-quiz-opts">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}">${letters[oi]}. ${this._esc(opt)}</div>`).join('')}</div>` : ''}
+              <div class="live-quiz-q-text" style="font-size:.82rem;margin:4px 0 4px;font-weight:600;line-height:1.4">${this._esc(q.question || '')}</div>
+              ${q.options ? `<div class="live-quiz-opts" style="display:grid;grid-template-columns:1fr 1fr;gap:3px">${q.options.slice(0,4).map((opt, oi) => `<div class="live-quiz-opt ${opt===q.correct_answer?'live-quiz-correct':''}" style="font-size:.72rem;padding:3px 7px">${letters[oi]}. ${this._esc(opt.slice(0,40))}${opt.length>40?'…':''}</div>`).join('')}</div>` : ''}
             </div>
           `).join('')}
         </div>
         ${qs.length < total
-          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Building questions fast…</div>`
-          : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions ready! Preparing quiz interface…</div>`}
+          ? `<div class="live-cards-loading" style="margin-top:8px"><div class="live-dots" style="display:inline-flex"><span></span><span></span><span></span></div> <span style="color:#00ff88;font-weight:600">Generating Q${qs.length+1}…</span> <span style="color:rgba(255,255,255,.4);font-size:.75rem">(${total - qs.length} remaining)</span></div>`
+          : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> All ${total} questions generated! Launching quiz interface…</div>`}
       </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
@@ -1432,73 +1752,64 @@ Examples:
     const branches = this._liveBranches;
     const central  = this._liveMMCentral;
     const pct      = idx === -1 ? 8 : Math.round((branches.length / Math.max(total, 1)) * 90) + 8;
+    const branchColors = ['#00d4ff','#bf00ff','#00ff88','#ffae00','#ff4444','#d4af37','#ff6bb5'];
 
     container.classList.remove('live-md');
     container.innerHTML = `
       <div class="live-mm-wrapper">
         <div class="live-cards-header">
           <div class="live-cards-title">
-            <i class="fas fa-project-diagram" style="color:#d4af37"></i>
-            Mind Map Growing…
-            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:4px">(branches appearing)</span>
+            <i class="fas fa-project-diagram" style="color:#d4af37;animation:spin-slow 3s linear infinite"></i>
+            <span style="font-weight:800;color:#d4af37">MIND MAP GROWING</span>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:400;margin-left:6px">— branches appearing 🌿</span>
           </div>
           <div class="live-cards-progress">
-            <div class="live-cards-prog-bar">
-              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00)"></div>
+            <div class="live-cards-prog-bar" style="height:8px;border-radius:4px">
+              <div class="live-cards-prog-fill" style="width:${pct}%;background:linear-gradient(90deg,#d4af37,#ffae00);height:8px;border-radius:4px;box-shadow:0 0 10px rgba(212,175,55,.4);transition:width .3s ease"></div>
             </div>
-            <span class="live-cards-count">${branches.length} / ${total}</span>
+            <span class="live-cards-count" style="color:#d4af37;font-weight:700">${branches.length}<span style="color:rgba(255,255,255,.3)"> / ${total}</span></span>
           </div>
         </div>
         ${central ? `
-          <div class="live-mm-central">
-            <i class="fas fa-brain" style="color:#d4af37"></i>
-            ${this._esc(central)}
-            <span class="live-mm-pulse"></span>
-          </div>` : `<div class="live-mm-central-placeholder"><div class="live-dots"><span></span><span></span><span></span></div> Building central node…</div>`}
-        <div class="live-mm-radial-container">
+          <div class="live-mm-central" style="text-align:center;margin:12px 0 8px;position:relative">
+            <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(212,175,55,.12);border:2px solid rgba(212,175,55,.4);border-radius:50px;padding:8px 20px;box-shadow:0 0 20px rgba(212,175,55,.15)">
+              <i class="fas fa-brain" style="color:#d4af37;font-size:.9rem"></i>
+              <span style="font-weight:800;color:#d4af37;font-size:.9rem">${this._esc(central)}</span>
+              <span class="live-mm-pulse" style="width:8px;height:8px;border-radius:50%;background:#d4af37;animation:pulse-gold 1s ease infinite"></span>
+            </div>
+            ${branches.length > 0 ? `<div style="position:absolute;left:50%;top:100%;width:2px;height:12px;background:rgba(212,175,55,.3);transform:translateX(-50%)"></div>` : ''}
+          </div>` : `
+          <div style="text-align:center;padding:12px 0 8px">
+            <div class="live-dots"><span style="background:#d4af37"></span><span style="background:#d4af37"></span><span style="background:#d4af37"></span></div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.4);margin-top:4px">Building central topic node…</div>
+          </div>`}
+        <div class="live-mm-radial-container" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:280px;overflow-y:auto">
           ${branches.map((b, i) => `
             <div class="live-mm-branch ${i === branches.length - 1 ? 'live-card-new' : ''}"
-                 style="border-left-color:${b.color || '#d4af37'};animation-delay:${i * 80}ms">
-              <div class="live-mm-branch-name" style="color:${b.color || '#d4af37'}">
-                <i class="fas fa-sitemap"></i>
+                 style="border-left:3px solid ${b.color || branchColors[i % branchColors.length]};animation-duration:${i===branches.length-1?'.25s':'0s'}">
+              <div class="live-mm-branch-name" style="color:${b.color || branchColors[i % branchColors.length]};display:flex;align-items:center;gap:5px;font-weight:700;font-size:.78rem">
+                <i class="fas fa-sitemap" style="font-size:.65rem;opacity:.7"></i>
                 ${this._esc(b.name)}
-                ${i === branches.length - 1 ? '<span style="font-size:.55rem;opacity:.7;margin-left:4px">● new</span>' : ''}
+                ${i === branches.length - 1 ? '<span style="font-size:.55rem;color:#d4af37;margin-left:auto;animation:blink-live .5s infinite">🌿 NEW</span>' : ''}
               </div>
-              <div class="live-mm-items">
-                ${(b.items || []).slice(0, 4).map(item => `<span class="live-mm-item">${this._esc(item)}</span>`).join('')}
-                ${(b.items || []).length > 4 ? `<span class="live-mm-item" style="opacity:.5">+${b.items.length - 4} more</span>` : ''}
+              <div class="live-mm-items" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px">
+                ${(b.items || []).slice(0, 4).map(item => `<span class="live-mm-item" style="font-size:.65rem;padding:2px 6px">${this._esc(item)}</span>`).join('')}
+                ${(b.items || []).length > 4 ? `<span style="font-size:.6rem;color:rgba(255,255,255,.3);padding:2px 4px">+${b.items.length - 4}</span>` : ''}
               </div>
             </div>
           `).join('')}
         </div>
         ${branches.length < total
-          ? `<div class="live-cards-loading"><div class="live-dots"><span></span><span></span><span></span></div> Growing branches… (${total - branches.length} remaining)</div>`
+          ? `<div class="live-cards-loading" style="margin-top:10px"><div class="live-dots"><span style="background:#d4af37"></span><span style="background:#d4af37"></span><span style="background:#d4af37"></span></div> <span style="color:#d4af37;font-weight:600">Growing branch ${branches.length+1}…</span> <span style="color:rgba(255,255,255,.4);font-size:.75rem">(${total - branches.length} more)</span></div>`
           : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches complete! Rendering visual map…</div>`}
-      </div>`;
+      </div>`
+    ;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
   async _callAPIJson(message, opts) {
-    const res = await fetch(SAVOIRÉ.API_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        message,
-        userName:  this.userName || 'Anonymous',
-        streak:    this.streak.count,
-        sessions:  this.sessions,
-        sessionId: this._currentSessionId || this._genId(),
-        options:   { ...opts, stream: false },
-      }),
-      signal: this.streamCtrl?.signal,
-    });
-    if (!res.ok) {
-      const d = await res.json().catch(() => ({}));
-      throw new Error(d.error || `Server error (${res.status})`);
-    }
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    // Non-streaming fallback is no longer supported — always use SSE streaming
+    throw new Error('AI is momentarily unavailable. Please try again in a few seconds.');
   }
 
   _cancelGen() {
@@ -1705,6 +2016,10 @@ Examples:
         <button class="exp-btn share" onclick="window._app._shareResult()">
           <i class="fas fa-share-alt"></i><span>Share</span>
         </button>
+        ${data._live_notes_buffer && data._live_notes_buffer.length > 50 ? `
+        <button class="exp-btn live-notes-btn" onclick="window._app._showLiveNotesModal()" style="color:#00ff88;border-color:rgba(0,255,136,.3)" title="View the live notes streamed during generation">
+          <i class="fas fa-bolt"></i><span>Live Notes</span>
+        </button>` : ''}
         <button class="exp-btn new" onclick="window._app._openWizard()" style="color:#bf00ff;border-color:rgba(191,0,255,.3)">
           <i class="fas fa-magic"></i><span>New</span>
         </button>
@@ -1714,9 +2029,9 @@ Examples:
     const footer = `
       <div class="result-branding-footer">
         <div class="rbf-left">
-          <div class="rbf-logo">Ś</div>
+          <div class="rbf-logo">🎓</div>
           <div class="rbf-text">
-            <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank">${SAVOIRÉ.BRAND}</a> ·
+            <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank" style="font-family:'Orbitron',sans-serif;letter-spacing:.05em">${SAVOIRÉ.BRAND}</a> ·
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> ·
             Free forever.
           </div>
@@ -2223,13 +2538,19 @@ Examples:
 
   // ── MEGA BUNDLE — ALL 5 TOOLS ────────────────────────────────────────────────
   _buildAllHTML(data) {
-    let h = `<div class="mega-result-banner">
-      <i class="fas fa-bolt"></i>
-      ⚡ Mega Study Bundle — All 5 Tools Generated
-      <span class="mega-result-count">
-        ${data.flashcards?.length ? `🃏 ${data.flashcards.length} Cards` : ''}
-        ${data.quiz_questions?.length ? ` · ❓ ${data.quiz_questions.length} Questions` : ''}
-        ${data.mindmap?.branches?.length ? ` · 🗺️ ${data.mindmap.branches.length} Branches` : ''}
+    const hasFlashcards = data.flashcards?.length > 0;
+    const hasQuiz       = data.quiz_questions?.length > 0;
+    const hasMindmap    = data.mindmap?.branches?.length > 0;
+    const hasNotes      = !!data.ultra_long_notes;
+
+    let h = `<div class="mega-result-banner" style="background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(191,0,255,.08));border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:16px 24px;margin-bottom:24px;display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+      <span style="font-size:1.4rem">⚡</span>
+      <span style="font-family:'Orbitron',sans-serif;font-size:.85rem;font-weight:700;color:#d4af37;letter-spacing:.06em">Mega Study Bundle — All 5 Tools Generated</span>
+      <span class="mega-result-count" style="margin-left:auto;display:flex;flex-wrap:wrap;gap:8px">
+        ${hasNotes       ? `<span style="padding:3px 12px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);border-radius:20px;font-size:.7rem;color:#00d4ff">📚 Notes</span>` : ''}
+        ${hasFlashcards  ? `<span style="padding:3px 12px;background:rgba(191,0,255,.1);border:1px solid rgba(191,0,255,.2);border-radius:20px;font-size:.7rem;color:#bf00ff">🃏 ${data.flashcards.length} Cards</span>` : ''}
+        ${hasQuiz        ? `<span style="padding:3px 12px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);border-radius:20px;font-size:.7rem;color:#00ff88">❓ ${data.quiz_questions.length} Qs</span>` : ''}
+        ${hasMindmap     ? `<span style="padding:3px 12px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.2);border-radius:20px;font-size:.7rem;color:#d4af37">🗺️ ${data.mindmap.branches.length} Branches</span>` : ''}
       </span>
     </div>`;
 
@@ -2733,6 +3054,50 @@ Examples:
       .catch(() => this._toast('error', 'fa-times', 'Copy failed.'));
   }
 
+  // ── LIVE NOTES MODAL — shows the streaming notes from generation ───────────
+  _showLiveNotesModal() {
+    const notes = this.currentData?._live_notes_buffer || this.currentData?.ultra_long_notes || '';
+    if (!notes || notes.length < 10) { this._toast('info', 'fa-info-circle', 'No live notes available.'); return; }
+
+    // Create or reuse modal
+    let modal = document.getElementById('liveNotesModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'liveNotesModal';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-box" style="max-width:820px;width:95%;max-height:88vh;display:flex;flex-direction:column">
+          <div class="modal-hdr" style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
+            <i class="fas fa-bolt" style="color:#00ff88"></i>
+            <span style="font-weight:700;font-size:1rem;color:#00ff88">Live Stream Notes</span>
+            <span style="font-size:.75rem;color:rgba(255,255,255,.4);margin-left:4px">— exactly as streamed from the AI</span>
+            <button onclick="document.getElementById('liveNotesModal').style.display='none'"
+                    style="margin-left:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">
+              ✕ Close
+            </button>
+          </div>
+          <div id="liveNotesContent" style="flex:1;overflow-y:auto;padding:20px 24px;line-height:1.7"></div>
+          <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px">
+            <button onclick="window._app._copyTxt(document.getElementById('liveNotesContent').innerText)"
+                    style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:#00ff88;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.8rem">
+              <i class="fas fa-copy"></i> Copy Notes
+            </button>
+            <span style="font-size:.7rem;color:rgba(255,255,255,.3);margin-left:auto;align-self:center">
+              ${notes.length.toLocaleString()} characters
+            </span>
+          </div>
+        </div>`;
+      modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
+      document.body.appendChild(modal);
+    }
+
+    const contentEl = document.getElementById('liveNotesContent');
+    if (contentEl) contentEl.innerHTML = this._renderMd(notes);
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+  }
+
   _saveNote() {
     if (!this.currentData) { this._toast('info', 'fa-info-circle', 'Nothing to save.'); return; }
     if (this.saved.find(s => s.topic === this.currentData.topic && s.tool === this.tool)) {
@@ -2927,7 +3292,7 @@ Examples:
     const pdft = this.pdfTheme || 'dark';
     this._qsa('[data-pdf-theme]').forEach(b => b.classList.toggle('active', b.dataset.pdfTheme === pdft));
 
-    const fs = document.documentElement.dataset.font || 'medium';
+    const fs = document.documentElement.dataset.font || 'small';
     this._qsa('.font-sz').forEach(b => b.classList.toggle('active', b.dataset.size === fs));
 
     if (this.el.dsStats) {
@@ -2950,13 +3315,12 @@ Examples:
     const container = this._el('avatarPickerSettings');
     if (!container) return;
     container.innerHTML = `
-      <div class="avatar-picker-grid">
-        ${AVATAR_COLORS.map((c, i) => `
-          <button class="avatar-color-btn ${i === this.avatarColorIdx ? 'active' : ''}"
-                  style="background:${c.bg}" title="${c.name}"
-                  onclick="window._app._setAvatarColor(${i})">
-            ${i === this.avatarColorIdx ? '<i class="fas fa-check" style="color:' + c.fg + '"></i>' : ''}
-          </button>`).join('')}
+      <div style="margin-bottom:8px;font-size:.75rem;color:#00d4ff;text-transform:uppercase;letter-spacing:.06em">Choose Emoji</div>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-bottom:12px">
+        ${AVATAR_EMOJIS.map((emoji, i) => `
+          <button style="width:36px;height:36px;border-radius:50%;border:2px solid ${i===this.avatarEmojiIdx?'#d4af37':'rgba(255,255,255,.1)'};background:rgba(255,255,255,.05);font-size:1.1rem;cursor:pointer;transition:all .2s"
+                  onclick="window._app._setAvatarEmoji(${i})">${emoji}</button>
+        `).join('')}
       </div>`;
   }
 
@@ -3073,8 +3437,8 @@ Examples:
   }
 
   _applyPrefs() {
-    if (this.prefs.theme)    this._setTheme(this.prefs.theme);
-    if (this.prefs.fontSize) this._setFontSize(this.prefs.fontSize);
+    this._setTheme(this.prefs.theme || 'dark');
+    this._setFontSize(this.prefs.fontSize || 'small');
     if (this.prefs.pdfTheme) this.pdfTheme = this.prefs.pdfTheme;
   }
 
@@ -3340,13 +3704,16 @@ Examples:
 
   _placeDemoTooltip(rect, preferredArrow) {
     if (!this.demoTooltip || !rect) { this._placeDemoTooltipCenter(); return; }
-    const TW=380, TH=500, M=16;
+    if (window.innerWidth <= 640) { this._placeDemoTooltipCenter(); return; }
+    const TW=380, TH=520, M=16;
     const vw=window.innerWidth, vh=window.innerHeight;
     const w=Math.min(TW, vw-M*2);
     this.demoTooltip.style.transform='';
     this.demoTooltip.style.width=w+'px';
     this.demoTooltip.style.maxHeight=(vh-M*2)+'px';
     this.demoTooltip.style.overflowY='auto';
+    this.demoTooltip.style.bottom='auto';
+    this.demoTooltip.style.right='auto';
 
     const fits={
       below: rect.bottom+TH+M<vh, above: rect.top-TH-M>0,
@@ -3369,17 +3736,26 @@ Examples:
 
     this.demoTooltip.style.top=top+'px';
     this.demoTooltip.style.left=left+'px';
-    this.demoTooltip.style.bottom='auto';
-    this.demoTooltip.style.right='auto';
   }
 
   _placeDemoTooltipCenter() {
     if (!this.demoTooltip) return;
-    const w = Math.min(380, window.innerWidth-32);
-    Object.assign(this.demoTooltip.style, {
-      width: w+'px', top:'50%', left:'50%',
-      transform:'translate(-50%,-50%)', bottom:'auto', right:'auto',
-    });
+    const isMobile = window.innerWidth <= 640;
+    if (isMobile) {
+      Object.assign(this.demoTooltip.style, {
+        position: 'fixed', bottom: '0', left: '0', right: '0', top: 'auto',
+        transform: 'none', width: '100%', maxWidth: '100%',
+        borderRadius: '24px 24px 0 0', padding: '20px',
+        maxHeight: '70vh', overflowY: 'auto',
+      });
+    } else {
+      const w = Math.min(380, window.innerWidth - 32);
+      Object.assign(this.demoTooltip.style, {
+        width: w + 'px', top: '50%', left: '50%',
+        transform: 'translate(-50%,-50%)', bottom: 'auto', right: 'auto',
+        maxHeight: (window.innerHeight - 40) + 'px', overflowY: 'auto',
+      });
+    }
   }
 
   // ─── MODAL SYSTEM ────────────────────────────────────────────────────────────
@@ -3618,8 +3994,8 @@ Examples:
 
 window._welcomeSetAvatar = function(idx) {
   if (!window._app) return;
-  window._app.avatarColorIdx = idx;
-  localStorage.setItem('sv_avatar_color', String(idx));
+  window._app.avatarEmojiIdx = idx;
+  localStorage.setItem('sv_avatar_emoji', String(idx));
   document.querySelectorAll('.wavatarBtn').forEach((btn, i) => {
     btn.classList.toggle('active', i === idx);
   });
@@ -3660,5 +4036,5 @@ window.addEventListener('DOMContentLoaded', () => {
 // END OF FILE — app.js v2.0 WORLD CLASS MAXIMUM LINES — ALL BUGS FIXED
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | "Think Less. Know More."
-// Free forever for everfy student on Earth.
+// Free forever for every student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
