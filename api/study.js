@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — PARALLEL RACING, PER‑TOOL PIPELINES
+// SAVOIRÉ AI v2.0 — api/study.js — FINAL FIX: LONGER TIMEOUTS + HEARTBEAT
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -25,7 +25,7 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LISTS (only confirmed‑active free models)
+// SECTION 2 — MODEL LISTS (confirmed‑active free models, with longer timeouts)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MODELS_PROSE = [
@@ -39,15 +39,16 @@ const MODELS_PROSE = [
   { id: 'openrouter/free',                          max_tokens: 5000, timeout_ms: 55000, temp: 0.75 },
 ];
 
+// JSON models – significantly increased timeouts
 const MODELS_JSON = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3000, timeout_ms: 30000, temp: 0.25 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 30000, temp: 0.25 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 45000, temp: 0.25 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 60000, temp: 0.25 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 60000, temp: 0.25 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 60000, temp: 0.25 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3000, timeout_ms: 60000, temp: 0.25 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 60000, temp: 0.25 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 3500, timeout_ms: 60000, temp: 0.25 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 60000, temp: 0.25 },
+  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 75000, temp: 0.25 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -115,7 +116,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PER-TOOL PROMPT BUILDERS (single‑purpose, no cross‑tool content)
+// SECTION 6 — PER-TOOL PROMPT BUILDERS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -315,12 +316,11 @@ OUTPUT JSON NOW — start with { immediately:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PARALLEL RACING FUNCTIONS (core speed & reliability fix)
+// SECTION 7 — PARALLEL RACING FUNCTIONS (with heartbeat for JSON)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function raceProse(prompt, onChunk, label) {
   // Race all prose models in parallel, first successful stream wins.
-  // If all fail, retry the race up to 3 times.
   const MAX_RETRIES = 3;
   let lastError = '';
 
@@ -387,10 +387,6 @@ async function raceProse(prompt, onChunk, label) {
                   if (!firstChunk) {
                     firstChunk = true;
                     log.ok(`${label} 🏆 ${name} won in ${Date.now() - t0}ms`);
-                    // Once this model produces the first chunk, we cancel all others.
-                    // We can't easily cancel other promises from here, but we can
-                    // check a flag and stop reading if another won. Since we're racing,
-                    // we'll let the others continue but ignore their results.
                   }
                   full += delta;
                   onChunk(delta);
@@ -412,132 +408,7 @@ async function raceProse(prompt, onChunk, label) {
       })();
     });
 
-    // Race all promises, but also add a global timeout for the whole race.
-    const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 30000));
-
-    try {
-      const result = await Promise.any([...promises, raceTimeout]);
-      log.ok(`${label} ✅ successful on attempt ${attempt}`);
-      return result; // returns the full notes string
-    } catch (err) {
-      lastError = err.message;
-      log.warn(`${label} attempt ${attempt} failed: ${err.message}`);
-      // If it's an auth error, don't retry.
-      if (err.message === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      // Continue to next attempt.
-    }
-  }
-
-  log.error(`${label} ALL retries failed. Last error: ${lastError}`);
-  throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PARALLEL RACE FOR JSON (flashcards, quiz, mindmap)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function raceJSON(prompt, label, validateFn, repairFn) {
-  const MAX_RETRIES = 3;
-  let lastError = '';
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    if (attempt > 1) {
-      const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-      log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
-      await sleep(backoff);
-    }
-
-    const promises = MODELS_JSON.map(model => {
-      const name = model.id.split('/').pop();
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      const t0 = Date.now();
-
-      return (async () => {
-        try {
-          const res = await fetch(OPENROUTER_BASE, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-              'HTTP-Referer': HTTP_REFERER,
-              'X-Title': APP_TITLE,
-            },
-            body: JSON.stringify({
-              model: model.id,
-              max_tokens: model.max_tokens,
-              temperature: model.temp || 0.25,
-              stream: false,
-              messages: [{ role: 'user', content: prompt }],
-            }),
-            signal: ctrl.signal,
-          });
-          clearTimeout(timer);
-
-          if (!res.ok) {
-            const txt = await res.text().catch(() => '');
-            if (res.status === 429) throw new Error('429');
-            if (res.status === 404) throw new Error('404');
-            if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
-            throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
-          }
-
-          const data = await res.json();
-          let content = data?.choices?.[0]?.message?.content?.trim();
-          if (!content || content.length < 20) throw new Error('empty');
-
-          // Clean and parse JSON
-          content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-          const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-          if (jS === -1 || jE <= jS) throw new Error('no_json');
-          let jsonStr = content.slice(jS, jE + 1);
-
-          let parsed;
-          try { parsed = JSON.parse(jsonStr); }
-          catch {
-            try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-            catch {
-              try {
-                parsed = JSON.parse(
-                  jsonStr.replace(/,(\s*[}\]])/g, '$1')
-                         .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                         .replace(/:\s*'([^']*)'/g, ': "$1"')
-                );
-              } catch {
-                try {
-                  parsed = JSON.parse(
-                    jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
-                           .replace(/,(\s*[}\]])/g, '$1')
-                           .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                  );
-                } catch (e4) {
-                  throw new Error(`json_repair_failed: ${e4.message.slice(0, 60)}`);
-                }
-              }
-            }
-          }
-
-          if (typeof repairFn === 'function') {
-            try { parsed = repairFn(parsed, name) || parsed; }
-            catch { /* ignore repair errors */ }
-          }
-
-          if (!validateFn(parsed)) throw new Error('validation_failed');
-
-          log.ok(`${label} ✅ ${name} won in ${Date.now() - t0}ms`);
-          return parsed;
-
-        } catch (err) {
-          clearTimeout(timer);
-          if (err.message === 'AUTH_ERROR') throw err;
-          const reason = err.name === 'AbortError' ? 'timeout' : err.message;
-          log.warn(`${label} ${name} failed: ${reason}`);
-          throw new Error(reason);
-        }
-      })();
-    });
-
-    const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 30000));
+    const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 40000));
 
     try {
       const result = await Promise.any([...promises, raceTimeout]);
@@ -554,8 +425,142 @@ async function raceJSON(prompt, label, validateFn, repairFn) {
   throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
 }
 
+// ── JSON race with longer timeouts, more retries, and heartbeat support ──
+async function raceJSON(prompt, label, validateFn, repairFn, heartbeatFn) {
+  const MAX_RETRIES = 4; // increased from 3
+  let lastError = '';
+
+  // Start heartbeat if provided
+  let heartbeatInterval = null;
+  if (typeof heartbeatFn === 'function') {
+    heartbeatInterval = setInterval(heartbeatFn, 3000); // send a '.' every 3s
+  }
+
+  try {
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      if (attempt > 1) {
+        const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
+        log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
+        await sleep(backoff);
+      }
+
+      const promises = MODELS_JSON.map(model => {
+        const name = model.id.split('/').pop();
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+        const t0 = Date.now();
+
+        return (async () => {
+          try {
+            const res = await fetch(OPENROUTER_BASE, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                'HTTP-Referer': HTTP_REFERER,
+                'X-Title': APP_TITLE,
+              },
+              body: JSON.stringify({
+                model: model.id,
+                max_tokens: model.max_tokens,
+                temperature: model.temp || 0.25,
+                stream: false,
+                messages: [{ role: 'user', content: prompt }],
+              }),
+              signal: ctrl.signal,
+            });
+            clearTimeout(timer);
+
+            if (!res.ok) {
+              const txt = await res.text().catch(() => '');
+              if (res.status === 429) throw new Error('429');
+              if (res.status === 404) throw new Error('404');
+              if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
+              throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
+            }
+
+            const data = await res.json();
+            let content = data?.choices?.[0]?.message?.content?.trim();
+            if (!content || content.length < 20) throw new Error('empty');
+
+            // Clean and parse JSON
+            content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+            const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+            if (jS === -1 || jE <= jS) throw new Error('no_json');
+            let jsonStr = content.slice(jS, jE + 1);
+
+            let parsed;
+            try { parsed = JSON.parse(jsonStr); }
+            catch {
+              try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+              catch {
+                try {
+                  parsed = JSON.parse(
+                    jsonStr.replace(/,(\s*[}\]])/g, '$1')
+                           .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                           .replace(/:\s*'([^']*)'/g, ': "$1"')
+                  );
+                } catch {
+                  try {
+                    parsed = JSON.parse(
+                      jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+                             .replace(/,(\s*[}\]])/g, '$1')
+                             .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                    );
+                  } catch (e4) {
+                    throw new Error(`json_repair_failed: ${e4.message.slice(0, 60)}`);
+                  }
+                }
+              }
+            }
+
+            if (typeof repairFn === 'function') {
+              try { parsed = repairFn(parsed, name) || parsed; }
+              catch { /* ignore repair errors */ }
+            }
+
+            if (!validateFn(parsed)) throw new Error('validation_failed');
+
+            log.ok(`${label} ✅ ${name} won in ${Date.now() - t0}ms`);
+            return parsed;
+
+          } catch (err) {
+            clearTimeout(timer);
+            if (err.message === 'AUTH_ERROR') throw err;
+            const reason = err.name === 'AbortError' ? 'timeout' : err.message;
+            log.warn(`${label} ${name} failed: ${reason}`);
+            throw new Error(reason);
+          }
+        })();
+      });
+
+      const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 60000)); // increased to 60s
+
+      try {
+        const result = await Promise.any([...promises, raceTimeout]);
+        log.ok(`${label} ✅ successful on attempt ${attempt}`);
+        // Stop heartbeat on success
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        return result;
+      } catch (err) {
+        lastError = err.message;
+        log.warn(`${label} attempt ${attempt} failed: ${err.message}`);
+        if (err.message === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      }
+    }
+
+    // All retries exhausted
+    log.error(`${label} ALL retries failed. Last error: ${lastError}`);
+    throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
+
+  } finally {
+    // Ensure heartbeat is cleared even if an error propagates
+    if (heartbeatInterval) clearInterval(heartbeatInterval);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — REPAIR & VALIDATION FUNCTIONS
+// SECTION 8 — REPAIR & VALIDATION FUNCTIONS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function repairQuiz(parsed, modelName) {
@@ -594,7 +599,7 @@ function repairFlashcards(parsed) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — PER‑TOOL GENERATORS (using the racing functions)
+// SECTION 9 — PER‑TOOL GENERATORS (with heartbeat for individual JSON tools)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function generateNotes(topic, opts, onChunk) {
@@ -605,37 +610,41 @@ function generateSummary(topic, opts, onChunk) {
   return raceProse(buildSummaryPrompt(topic, opts), onChunk, 'SUMMARY');
 }
 
-function generateFlashcards(topic, opts) {
+function generateFlashcards(topic, opts, heartbeatFn) {
   const wanted = opts.cardCount || 15;
   return raceJSON(
     buildFlashcardsPrompt(topic, opts),
     'FLASHCARDS',
     parsed => Array.isArray(parsed.flashcards) && parsed.flashcards.length >= Math.min(2, wanted),
-    repairFlashcards
+    repairFlashcards,
+    heartbeatFn
   );
 }
 
-function generateQuiz(topic, opts) {
+function generateQuiz(topic, opts, heartbeatFn) {
   const wanted = opts.quizCount || 10;
   return raceJSON(
     buildQuizPrompt(topic, opts),
     'QUIZ',
     parsed => Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= Math.min(2, wanted),
-    repairQuiz
+    repairQuiz,
+    heartbeatFn
   );
 }
 
-function generateMindmap(topic, opts) {
+function generateMindmap(topic, opts, heartbeatFn) {
   const wanted = opts.branchCount || 6;
   return raceJSON(
     buildMindmapPrompt(topic, opts),
     'MINDMAP',
-    parsed => parsed.mindmap?.branches?.length >= Math.min(2, wanted)
+    parsed => parsed.mindmap?.branches?.length >= Math.min(2, wanted),
+    null,
+    heartbeatFn
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — TOPIC FACT (unchanged)
+// SECTION 10 — TOPIC FACT (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
@@ -656,7 +665,7 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — RESULT ASSEMBLY
+// SECTION 11 — RESULT ASSEMBLY (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function assembleResult({ topic, opts, notes, flashcards, quiz, mindmap }) {
@@ -684,7 +693,7 @@ function assembleResult({ topic, opts, notes, flashcards, quiz, mindmap }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — SSE HELPER + SECURITY HEADERS
+// SECTION 12 — SSE HELPER + SECURITY HEADERS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeSSE(res) {
@@ -711,7 +720,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 14 — MAIN HANDLER
+// SECTION 13 — MAIN HANDLER (with heartbeat for individual JSON tools)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -798,13 +807,14 @@ module.exports = async function handler(req, res) {
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
-  sse('token',     { t: '' }); // prime the token stream
+  sse('token',     { t: '' });
 
   try {
     let result;
 
-    // ── Each branch below is fully independent — its own prompt, its own
-    //    generation function, its own validation. No cross-tool bleed. ──
+    // ── Helper for sending heartbeat tokens during JSON generation ──
+    const heartbeatFn = () => sse('token', { t: '.' });
+
     switch (opts.tool) {
 
       case 'notes': {
@@ -820,31 +830,26 @@ module.exports = async function handler(req, res) {
       }
 
       case 'flashcards': {
-        // Send a token pulse to keep the live overlay active
-        sse('token', { t: '' });
-        const fc = await generateFlashcards(message, opts);
+        // Start heartbeat to keep connection alive and show activity
+        const fc = await generateFlashcards(message, opts, heartbeatFn);
         result = assembleResult({ topic: fc.topic || message, opts, flashcards: fc });
         break;
       }
 
       case 'quiz': {
-        sse('token', { t: '' });
-        const q = await generateQuiz(message, opts);
+        const q = await generateQuiz(message, opts, heartbeatFn);
         result = assembleResult({ topic: q.topic || message, opts, quiz: q });
         break;
       }
 
       case 'mindmap': {
-        sse('token', { t: '' });
-        const mm = await generateMindmap(message, opts);
+        const mm = await generateMindmap(message, opts, heartbeatFn);
         result = assembleResult({ topic: mm.topic || message, opts, mindmap: mm });
         break;
       }
 
       case 'all': {
-        // Mega bundle: notes streams live; flashcards, quiz, and mindmap run as
-        // three SEPARATE lean JSON calls in parallel (not one bloated call).
-        // Each is independently retried; a failure in one does not sink the others.
+        // Mega: notes stream, JSON calls in parallel – no heartbeat needed because notes provide activity
         const notesPromise = generateNotes(message, opts, chunk => sse('token', { t: chunk }));
         const fcPromise     = generateFlashcards(message, opts).catch(err => { log.warn(`[${reqId}] mega flashcards failed: ${err.message}`); return null; });
         const quizPromise   = generateQuiz(message, opts).catch(err => { log.warn(`[${reqId}] mega quiz failed: ${err.message}`); return null; });
@@ -853,8 +858,6 @@ module.exports = async function handler(req, res) {
         const [notes, fc, q, mm] = await Promise.all([notesPromise, fcPromise, quizPromise, mmPromise]);
 
         if (!fc && !q && !mm) {
-          // Notes alone do not constitute a "Mega Bundle" — be honest about it
-          // rather than silently shipping a partial product as if it were complete.
           if (!notes || notes.trim().length < 80) {
             throw new Error('Mega bundle: all components failed across every model.');
           }
@@ -885,10 +888,6 @@ module.exports = async function handler(req, res) {
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'completed', result._duration_ms, sessionId).catch(() => {});
 
   } catch (fatal) {
-    // Lands here only when the active tool's content genuinely could not be
-    // produced by ANY model across all retry passes. We never fabricate
-    // filler content to paper over this — the user gets an honest signal
-    // instead of a broken or misleading "success".
     clearInterval(kap);
     clearStages();
     log.error(`[${reqId}] FATAL (${opts.tool}): ${fatal.message}`);
