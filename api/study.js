@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTRA RELIABLE, NO ERROR SCREEN
+// SAVOIRÉ AI v2.0 — api/study.js — FAIL‑SAFE (ALWAYS RETURNS DONE)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -25,17 +25,15 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — SINGLE MODEL (openrouter/free) — most reliable
+// SECTION 2 — SINGLE MODEL (openrouter/free)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MODEL = {
   id: 'openrouter/free',
-  max_tokens: 6000,        // for notes; cards we'll increase later
-  timeout_ms: 120000,      // 2 minutes for full response
+  max_tokens: 6000,
+  timeout_ms: 120000,
   temp: 0.75,
 };
-
-// We'll use the same model for both notes and cards, but with different max_tokens
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS (unchanged)
@@ -114,7 +112,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (unchanged from previous working version)
+// SECTION 6 — PROMPT BUILDERS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -366,15 +364,12 @@ ${toolBlock}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (single model, long timeout, retries)
+// SECTION 7 — PHASE 1: STREAM NOTES (retries, long timeouts)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT = 30000; // 30 seconds to get first token
-const FULL_STREAM_TIMEOUT = 120000; // 2 minutes total
-
 async function streamNotes(prompt, onChunk, tool) {
+  const maxAttempts = 8;
   let attempt = 0;
-  const maxAttempts = 6;
   let lastError = '';
 
   while (attempt < maxAttempts) {
@@ -385,14 +380,13 @@ async function streamNotes(prompt, onChunk, tool) {
       await sleep(delay);
     }
 
-    const name = 'openrouter/free';
     const ctrl = new AbortController();
-    let firstTokenTimer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT);
+    let firstTokenTimer = setTimeout(() => ctrl.abort(), 30000); // 30s for first token
     let fullStreamTimer = null;
     const t0 = Date.now();
 
     try {
-      log.info(`P1 (${tool}) → ${name} (attempt ${attempt})`);
+      log.info(`P1 (${tool}) → openrouter/free (attempt ${attempt})`);
 
       const res = await fetch(OPENROUTER_BASE, {
         method: 'POST',
@@ -419,7 +413,7 @@ async function streamNotes(prompt, onChunk, tool) {
         log.warn(`P1 HTTP ${res.status} — ${trunc(body, 80)}`);
         if (res.status === 429) {
           lastError = 'Rate limited (429)';
-          continue; // will retry with backoff
+          continue;
         }
         if (res.status === 401) throw new Error('Invalid API key');
         lastError = `HTTP ${res.status}`;
@@ -451,7 +445,7 @@ async function streamNotes(prompt, onChunk, tool) {
               if (!gotFirst) {
                 gotFirst = true;
                 clearTimeout(firstTokenTimer);
-                fullStreamTimer = setTimeout(() => ctrl.abort(), FULL_STREAM_TIMEOUT);
+                fullStreamTimer = setTimeout(() => ctrl.abort(), 120000); // 2 min total
                 log.ok(`P1 🏆 first token in ${Date.now()-t0}ms — committing`);
               }
               full += delta;
@@ -472,7 +466,7 @@ async function streamNotes(prompt, onChunk, tool) {
         log.warn(`P1 short response (${full.length} chars) — using as‑is`);
       }
 
-      log.ok(`P1 ✅ ${name} | ${full.length}ch | ${Date.now()-t0}ms (attempt ${attempt})`);
+      log.ok(`P1 ✅ openrouter/free | ${full.length}ch | ${Date.now()-t0}ms (attempt ${attempt})`);
       return full; // success
 
     } catch (err) {
@@ -490,12 +484,12 @@ async function streamNotes(prompt, onChunk, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH STRUCTURED CARDS (single model, long timeout, retries)
+// SECTION 8 — PHASE 2: FETCH CARDS (retries, long timeout)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool, topic) {
+  const maxAttempts = 6;
   let attempt = 0;
-  const maxAttempts = 5;
   let lastError = '';
 
   while (attempt < maxAttempts) {
@@ -506,13 +500,12 @@ async function fetchCards(prompt, tool, topic) {
       await sleep(delay);
     }
 
-    const name = 'openrouter/free';
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 90000); // 90 seconds for JSON
     const t0 = Date.now();
 
     try {
-      log.info(`P2 (${tool}) → ${name} (attempt ${attempt})`);
+      log.info(`P2 (${tool}) → openrouter/free (attempt ${attempt})`);
 
       const res = await fetch(OPENROUTER_BASE, {
         method: 'POST',
@@ -645,7 +638,7 @@ async function fetchCards(prompt, tool, topic) {
         continue;
       }
 
-      log.ok(`P2 ✅ ${name} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms (attempt ${attempt})`);
+      log.ok(`P2 ✅ openrouter/free | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms (attempt ${attempt})`);
       return parsed; // success
 
     } catch (err) {
@@ -733,7 +726,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MAIN HANDLER — ALWAYS DELIVERS A RESPONSE (no error screen)
+// SECTION 11 — MAIN HANDLER — ALWAYS RETURNS DONE (NO ERROR EVENTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -747,8 +740,12 @@ module.exports = async function handler(req, res) {
 
   if (!process.env.OPENROUTER_API_KEY) {
     log.error('[FATAL] OPENROUTER_API_KEY not set!');
-    // Still return a JSON response, not an error screen
-    return res.status(500).json({ error: 'Service misconfigured. Please contact admin.' });
+    // Still return a done‑like response (not error) to avoid frontend error screen
+    return res.status(200).json({
+      status: 'error',
+      message: 'Service misconfigured. Please contact admin.',
+      requestId: reqId,
+    });
   }
 
   const body = req.body || {};
@@ -839,10 +836,16 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
     } catch (err) {
       log.error(`[${reqId}] P1 failed: ${err.message}`);
-      // We will continue without notes; we'll generate a fallback later
+      // Generate offline notes and stream them in chunks
+      notes = generateOfflineNotes(message, opts);
+      for (let i = 0; i < notes.length; i += 200) {
+        sse('token', { t: notes.slice(i, i + 200) });
+        await sleep(5);
+      }
+      notesSuccess = true; // we have something
     }
 
-    // ── PHASE 2: Fetch cards (only if notes succeeded, otherwise skip) ────
+    // ── PHASE 2: Fetch cards ──────────────────────────────────────────────
     if (notesSuccess) {
       sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
       const cardsPrompt = buildCardsPrompt(message, opts);
@@ -852,17 +855,9 @@ module.exports = async function handler(req, res) {
         log.ok(`[${reqId}] P2 done — fc:${cardsData?.flashcards?.length||0} q:${cardsData?.quiz_questions?.length||0} mm:${cardsData?.mindmap?.branches?.length||0}`);
       } catch (err) {
         log.error(`[${reqId}] P2 failed: ${err.message}`);
-        // Cards failed, but we still have notes – we'll proceed without cards
-      }
-    } else {
-      // If notes failed, we'll try a fallback generation without streaming (sync) for notes
-      log.warn(`[${reqId}] Notes failed, attempting offline fallback notes`);
-      notes = await generateFallbackNotes(message, opts);
-      notesSuccess = true; // we have something
-      // stream the fallback notes in chunks
-      for (let i = 0; i < notes.length; i += 200) {
-        sse('token', { t: notes.slice(i, i + 200) });
-        await sleep(5);
+        cardsSuccess = false;
+        // We'll send an empty cards structure
+        cardsData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null };
       }
     }
 
@@ -900,11 +895,6 @@ module.exports = async function handler(req, res) {
     clearInterval(kap);
     clearStages();
 
-    // If cardsData is null, create an empty structure
-    if (!cardsData) {
-      cardsData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null };
-    }
-
     const final = mergeCards(cardsData, notes, message, opts);
     final._duration_ms = Date.now() - startTime;
     final._request_id = reqId;
@@ -924,8 +914,8 @@ module.exports = async function handler(req, res) {
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
 
-    // We still send a done event with a basic fallback to avoid error screen
-    const fallbackNotes = `## 📚 Study Notes on ${message}\n\nWe're sorry, but the AI service is temporarily unavailable. Please try again in a moment.`;
+    // Last‑resort fallback — always send a done event
+    const fallbackNotes = generateOfflineNotes(message, opts);
     const fallbackData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null, key_concepts: [] };
     const final = mergeCards(fallbackData, fallbackNotes, message, opts);
     final._duration_ms = Date.now() - startTime;
@@ -966,11 +956,10 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — FALLBACK NOTES GENERATOR (sync, no AI)
+// SECTION 13 — OFFLINE NOTES GENERATOR (sync, no AI)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function generateFallbackNotes(topic, opts) {
-  // This is used only if the AI notes generation completely fails
+function generateOfflineNotes(topic, opts) {
   const lang = opts.language || 'English';
   const T = topic || 'this topic';
   return `## 📚 Introduction to ${T}
@@ -1041,6 +1030,6 @@ Each stage follows from the previous according to identifiable patterns.
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// END — api/study.js v2.0 ULTRA RELIABLE | Sooban Talha Technologies
+// END — api/study.js v2.0 FAIL‑SAFE | Sooban Talha Technologies
 // "Think Less. Know More." — Free forever for every student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════
