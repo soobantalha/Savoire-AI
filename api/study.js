@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — SINGLE MODEL: openrouter/free
+// SAVOIRÉ AI v2.0 — api/study.js — ULTRA ROBUST (no fallback, max retries)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -30,30 +30,30 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 40000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 40000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 42000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 42000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 42000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 42000, temp: 0.75 },
-  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 45000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 50000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 50000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 50000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 52000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 52000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 52000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 52000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 55000, temp: 0.75 },
 ];
 
 // ─── PHASE 2: STRUCTURED JSON (cards) ──────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 30000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 30000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 30000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 32000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 32000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 32000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 32000, temp: 0.30 },
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 35000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 40000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 40000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 40000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 42000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 42000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 42000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 42000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 45000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS
+// SECTION 3 — CONFIG MAPS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -281,11 +281,11 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (robust race, no fallback)
+// SECTION 7 — PHASE 1: STREAM NOTES (aggressive retries, no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
-  // ── RACE with fast win (15 chars) ──
+  // ── Race with very low threshold (10 chars) ──
   let settled = false;
   let activeWinnerName = null;
 
@@ -321,7 +321,12 @@ async function streamNotes(prompt, onChunk, tool) {
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
         if (res.status === 401 || res.status === 403) { reject(new Error('API_KEY_INVALID')); return; }
-        reject(new Error(`${name}: HTTP ${res.status} ${trunc(txt, 60)}`));
+        // For 429 (rate limit) or 503, we throw a specific error so retry logic can handle
+        if (res.status === 429 || res.status === 503) {
+          reject(new Error(`${name}: rate limited or busy (${res.status})`));
+        } else {
+          reject(new Error(`${name}: HTTP ${res.status} ${trunc(txt, 60)}`));
+        }
         return;
       }
 
@@ -350,8 +355,7 @@ async function streamNotes(prompt, onChunk, tool) {
               myFull += delta;
               if (!settled) {
                 myChunks.push(delta);
-                // Win after 15 chars (faster)
-                if (myFull.length > 15) {
+                if (myFull.length > 10) { // very fast win
                   settled = true;
                   activeWinnerName = name;
                   log.ok(`P1 🏆 ${name} WON (${myFull.length} chars)`);
@@ -367,7 +371,7 @@ async function streamNotes(prompt, onChunk, tool) {
       }
 
       if (!settled) {
-        if (myFull.trim().length >= 10) {
+        if (myFull.trim().length >= 8) {
           settled = true;
           activeWinnerName = name;
           for (const c of myChunks) onChunk(c);
@@ -395,38 +399,62 @@ async function streamNotes(prompt, onChunk, tool) {
     }
   });
 
-  // ── Execute race ──
-  return new Promise((resolve, reject) => {
-    let settledCount = 0;
-    let wonAlready    = false;
-    const errors      = [];
-    const total       = MODELS_STREAM.length;
+  // ── Execute race with exponential backoff for retries ──
+  const maxAttempts = 5;
+  let attempt = 0;
+  let lastError = null;
 
-    MODELS_STREAM.forEach((model, i) => {
-      attemptModel(model, i * 300).then(result => {
-        if (!wonAlready) {
-          wonAlready = true;
-          resolve(result.full);
-        }
-      }).catch(err => {
-        errors.push(err);
-        settledCount++;
-        if (err.message === 'API_KEY_INVALID' && !wonAlready) {
-          wonAlready = true;
-          reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
-          return;
-        }
-        if (settledCount === total && !wonAlready) {
-          // No fallback – throw error
-          reject(new Error(`All ${total} free models failed to generate notes. Last error: ${errors[errors.length-1]?.message || 'unknown'}`));
-        }
+  while (attempt < maxAttempts) {
+    attempt++;
+    const delay = (attempt === 1) ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 16000);
+    if (delay > 0) {
+      log.info(`P1 retry ${attempt} waiting ${delay}ms...`);
+      await sleep(delay);
+    }
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        let settledCount = 0;
+        let wonAlready    = false;
+        const errors      = [];
+        const total       = MODELS_STREAM.length;
+
+        MODELS_STREAM.forEach((model, i) => {
+          attemptModel(model, i * 300).then(result => {
+            if (!wonAlready) {
+              wonAlready = true;
+              resolve(result.full);
+            }
+          }).catch(err => {
+            errors.push(err);
+            settledCount++;
+            if (err.message === 'API_KEY_INVALID' && !wonAlready) {
+              wonAlready = true;
+              reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
+              return;
+            }
+            if (settledCount === total && !wonAlready) {
+              reject(new Error(`All models failed on attempt ${attempt}: ${errors.map(e=>e.message).join(' | ')}`));
+            }
+          });
+        });
       });
-    });
-  });
+      return result; // success
+    } catch (err) {
+      lastError = err;
+      log.warn(`P1 attempt ${attempt} failed: ${err.message}`);
+      // If it's a key error, don't retry
+      if (err.message.includes('API_KEY')) throw err;
+      // Continue to next attempt
+    }
+  }
+
+  // All attempts failed
+  throw new Error(`Notes generation failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'unknown'}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (parallel race, no fallback)
+// SECTION 8 — PHASE 2: FETCH CARDS (parallel race with retries)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool) {
@@ -455,6 +483,7 @@ async function fetchCards(prompt, tool) {
 
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+        if (res.status === 429 || res.status === 503) throw new Error(`rate limited or busy (${res.status})`);
         throw new Error(`${name}: HTTP ${res.status}`);
       }
 
@@ -537,33 +566,55 @@ async function fetchCards(prompt, tool) {
     }
   };
 
-  // ── Manual race ──
-  return new Promise((resolve, reject) => {
-    let settledCount = 0;
-    let wonAlready   = false;
-    const errors     = [];
-    const total      = MODELS_CARDS.length;
+  // ── Manual race with retries ──
+  const maxAttempts = 3;
+  let attempt = 0;
+  let lastError = null;
 
-    MODELS_CARDS.forEach(model => {
-      attemptModel(model).then(result => {
-        if (!wonAlready) {
-          wonAlready = true;
-          resolve(result);
-        }
-      }).catch(err => {
-        errors.push(err);
-        settledCount++;
-        if (err.message === 'API_KEY_INVALID' && !wonAlready) {
-          wonAlready = true;
-          reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
-          return;
-        }
-        if (settledCount === total && !wonAlready) {
-          reject(new Error(`All ${total} free models failed for tool:${tool}. Last error: ${errors[errors.length-1]?.message || 'unknown'}`));
-        }
+  while (attempt < maxAttempts) {
+    attempt++;
+    const delay = (attempt === 1) ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 8000);
+    if (delay > 0) {
+      log.info(`P2 retry ${attempt} waiting ${delay}ms...`);
+      await sleep(delay);
+    }
+
+    try {
+      const result = await new Promise((resolve, reject) => {
+        let settledCount = 0;
+        let wonAlready   = false;
+        const errors     = [];
+        const total      = MODELS_CARDS.length;
+
+        MODELS_CARDS.forEach(model => {
+          attemptModel(model).then(result => {
+            if (!wonAlready) {
+              wonAlready = true;
+              resolve(result);
+            }
+          }).catch(err => {
+            errors.push(err);
+            settledCount++;
+            if (err.message === 'API_KEY_INVALID' && !wonAlready) {
+              wonAlready = true;
+              reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
+              return;
+            }
+            if (settledCount === total && !wonAlready) {
+              reject(new Error(`All models failed on attempt ${attempt}: ${errors.map(e=>e.message).join(' | ')}`));
+            }
+          });
+        });
       });
-    });
-  });
+      return result;
+    } catch (err) {
+      lastError = err;
+      log.warn(`P2 attempt ${attempt} failed: ${err.message}`);
+      if (err.message.includes('API_KEY')) throw err;
+    }
+  }
+
+  throw new Error(`Cards generation failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'unknown'}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -657,7 +708,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — MAIN HANDLER (no fallback, retries, fast final)
+// SECTION 12 — MAIN HANDLER (ultra‑robust, no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -750,38 +801,22 @@ module.exports = async function handler(req, res) {
   let p2Ticker = null;
 
   try {
-    // ── PHASE 1: STREAM NOTES with retries ──
+    // ── PHASE 1: STREAM NOTES with maximum retries ──
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
     const notesPrompt = buildNotesPrompt(message, opts);
 
-    let p1Attempts = 0;
-    const MAX_P1_ATTEMPTS = 4; // more retries
-    while (p1Attempts < MAX_P1_ATTEMPTS && !p1ok) {
-      p1Attempts++;
-      try {
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-        p1ok = true;
-        log.ok(`[${reqId}] P1 done — ${notes.length}ch (attempt ${p1Attempts})`);
-      } catch (e1) {
-        log.error(`[${reqId}] P1 attempt ${p1Attempts} FAILED: ${e1.message}`);
-        if (p1Attempts < MAX_P1_ATTEMPTS) {
-          sse('stage', { idx: 1, label: `🔄 Retrying with backup AI models… (attempt ${p1Attempts + 1})` });
-          await sleep(1000);
-        }
-      }
-    }
-    if (!p1ok) {
-      // No fallback – throw
-      throw new Error('All AI models failed to generate notes after multiple retries.');
-    }
+    // streamNotes now handles its own retries (5 attempts)
+    notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+    p1ok = true;
+    log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
 
-    // ── PHASE 2: CARDS (started now, but we also start earlier in parallel? We'll start it now and wait) ──
+    // ── PHASE 2: CARDS (started in parallel) ──
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
 
     let cardsData = null;
     let p2ok = false;
 
-    // Launch cards in parallel with a small delay so notes can finish
+    // Launch cards generation with its own retries (3 attempts)
     const cardsPromise = (async () => {
       try {
         if (opts.tool === 'all') {
@@ -812,24 +847,18 @@ module.exports = async function handler(req, res) {
           }
           return combined;
         } else {
-          // Retry cards once if needed
-          try {
-            return await fetchCards(buildCardsPrompt(message, opts), opts.tool);
-          } catch (err) {
-            log.warn(`[${reqId}] Cards first attempt failed, retrying...`);
-            return await fetchCards(buildCardsPrompt(message, opts), opts.tool);
-          }
+          return await fetchCards(buildCardsPrompt(message, opts), opts.tool);
         }
       } catch (err) {
         log.error(`[${reqId}] Cards generation failed: ${err.message}`);
-        throw err; // no fallback
+        throw err;
       }
     })();
 
-    // Wait for cards with a generous timeout (20 seconds after notes done)
+    // Wait for cards with a generous timeout (35 seconds after notes done)
     const cardsResult = await Promise.race([
       cardsPromise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Cards generation timed out')), 20000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Cards generation timed out after 35s')), 35000))
     ]);
 
     cardsData = cardsResult;
@@ -891,11 +920,11 @@ module.exports = async function handler(req, res) {
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
 
-    // Send error to frontend – no fallback
+    // Only send error if it's truly extreme (e.g., API key missing or all retries exhausted)
     const userMsg = fatal.message?.includes('API_KEY')
       ? 'Service configuration error. Please contact the administrator.'
       : fatal.message?.includes('timed out') || fatal.message?.includes('failed')
-        ? 'AI models are currently busy. Please try again in a few seconds.'
+        ? 'All AI models are currently busy. Please try again in a few seconds.'
         : 'Savoiré AI is momentarily unavailable. Please try again.';
 
     sse('error', { error: userMsg, requestId: reqId });
