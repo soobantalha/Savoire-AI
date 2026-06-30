@@ -1472,15 +1472,21 @@ Examples:
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
-            // For notes/summary tool: show formatted text
+            // For notes/summary tool: show formatted streaming text
             if (tool === 'notes' || tool === 'summary') {
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
-              // For card tools: only show notes during phase 1
+              // For card tools (flashcards/quiz/mindmap):
+              // Keep the ultra-graphic animation running until real events arrive
+              // Don't overwrite with boring streamBuffer text
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
-                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-                this.el.sfpText.classList.add('live-md');
+                // Animation is already showing from _showStreamOverlay — leave it alone
+                // Only update if streamBuffer has actual markdown content (from "all" tool notes phase)
+                if (tool === 'all' && this.streamBuffer.trim().length > 50) {
+                  this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+                  this.el.sfpText.classList.add('live-md');
+                }
               }
             }
           } catch {
@@ -1837,15 +1843,152 @@ Examples:
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
     if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
     if (this.el.sfpText) {
-      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
-      this.el.sfpText.classList.remove('done');
-      this.el.sfpText.classList.add('live-md');
+      // Show ultra-high-graphic tool-specific animation immediately for card tools
+      if (tool === 'flashcards' || tool === 'quiz' || tool === 'mindmap') {
+        this.el.sfpText.innerHTML = this._buildLiveAnimation(tool);
+        this.el.sfpText.classList.remove('live-md');
+      } else {
+        this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
+        this.el.sfpText.classList.remove('done');
+        this.el.sfpText.classList.add('live-md');
+      }
     }
     if (this.el.sscProgressBar) this.el.sscProgressBar.style.width = '4%';
     if (this.el.streamFullpage)  this.el.streamFullpage.style.display = 'flex';
     if (this.el.emptyState)      this.el.emptyState.style.display = 'none';
     if (this.el.resultArea)      this.el.resultArea.style.display = 'none';
     if (this.el.thinkingWrap)    this.el.thinkingWrap.style.display = 'none';
+  }
+
+  // ── ULTRA HIGH GRAPHIC LIVE ANIMATIONS ──────────────────────────────────────
+  _buildLiveAnimation(tool) {
+    if (tool === 'flashcards') return this._buildFlashcardAnimation();
+    if (tool === 'quiz')       return this._buildQuizAnimation();
+    if (tool === 'mindmap')    return this._buildMindmapAnimation();
+    return '<div class="live-loading-anim"><div class="live-dots"><span></span><span></span><span></span></div></div>';
+  }
+
+  _buildFlashcardAnimation() {
+    const cards = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+    return `
+    <div class="ultra-live-anim fc-live-anim">
+      <div class="fc-live-title">
+        <i class="fas fa-layer-group" style="color:#bf00ff"></i>
+        <span>FLASHCARDS DECK BUILDING</span>
+        <span class="fc-live-sub">— cards shuffling & dealing ⚡</span>
+      </div>
+      <div class="fc-live-deck">
+        <div class="fc-deck-stack">
+          <div class="fc-stack-card" style="--i:0"></div>
+          <div class="fc-stack-card" style="--i:1"></div>
+          <div class="fc-stack-card" style="--i:2"></div>
+          <div class="fc-stack-card" style="--i:3"></div>
+          <div class="fc-stack-card" style="--i:4"></div>
+        </div>
+        <div class="fc-deck-count-bounce">15</div>
+        <div class="fc-deck-label">cards</div>
+      </div>
+      <div class="fc-live-grid">
+        ${cards.map((n, i) => `
+          <div class="fc-live-card-deal" style="--deal-delay:${0.3 + i * 0.12}s">
+            <div class="fc-deal-inner">
+              <div class="fc-deal-front-face">
+                <span style="font-size:.7rem;color:#bf00ff;font-weight:700">Card ${n}</span>
+                <span style="font-size:1.4rem;color:rgba(255,255,255,.15)">?</span>
+              </div>
+              <div class="fc-deal-back-face">
+                <span style="font-size:.55rem;color:#00ff88">✓ Ready</span>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="fc-live-sparkles">
+        ${Array.from({length:8},(_,i)=>`<div class="fc-sparkle" style="--sp-x:${20+Math.random()*60}%;--sp-y:${10+Math.random()*80}%;--sp-delay:${i*0.4}s;--sp-color:${['#bf00ff','#00d4ff','#ffae00','#00ff88','#d4af37'][i%5]}"></div>`).join('')}
+      </div>
+      <div class="fc-live-progress-area">
+        <div class="fc-live-prog-bar"><div class="fc-live-prog-fill"></div></div>
+        <span style="font-size:.7rem;color:#bf00ff;font-weight:600">⚡ AI is writing your flashcards…</span>
+      </div>
+    </div>`;
+  }
+
+  _buildQuizAnimation() {
+    const qs = [1,2,3,4,5,6,7,8,9,10];
+    return `
+    <div class="ultra-live-anim quiz-live-anim">
+      <div class="quiz-live-title">
+        <i class="fas fa-bolt" style="color:#00ff88"></i>
+        <span>QUIZ CONSTRUCTION</span>
+        <span class="quiz-live-sub">— rapid fire generation ⚡</span>
+      </div>
+      <div class="quiz-live-bolts">
+        ${Array.from({length:6},(_,i)=>`<div class="quiz-bolt" style="--b-delay:${i*0.5}s;--b-x:${10+i*16}%"></div>`).join('')}
+      </div>
+      <div class="quiz-live-grid">
+        ${qs.map((n, i) => `
+          <div class="quiz-live-q-deal" style="--q-delay:${0.2 + i * 0.15}s">
+            <div class="quiz-q-deal-inner">
+              <div class="quiz-q-num-bounce">Q${n}</div>
+              <div class="quiz-q-options-preview">
+                <div class="quiz-opt-dot" style="--opt-delay:${0.5+i*0.15}s"></div>
+                <div class="quiz-opt-dot" style="--opt-delay:${0.6+i*0.15}s"></div>
+                <div class="quiz-opt-dot" style="--opt-delay:${0.7+i*0.15}s"></div>
+                <div class="quiz-opt-dot quiz-opt-dot-correct" style="--opt-delay:${0.8+i*0.15}s"></div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="quiz-live-particles">
+        ${Array.from({length:12},(_,i)=>`<div class="quiz-particle" style="--p-x:${Math.random()*100}%;--p-y:${Math.random()*100}%;--p-delay:${i*0.3}s;--p-color:${['#00ff88','#00d4ff','#ffae00','#d4af37'][i%4]}"></div>`).join('')}
+      </div>
+      <div class="quiz-live-progress-area">
+        <div class="quiz-live-prog-bar"><div class="quiz-live-prog-fill"></div></div>
+        <span style="font-size:.7rem;color:#00ff88;font-weight:600">⚡ AI is crafting your questions…</span>
+      </div>
+    </div>`;
+  }
+
+  _buildMindmapAnimation() {
+    const branches = ['Core','Mechanism','Applications','Analysis','Connections','Impact'];
+    const colors = ['#00d4ff','#bf00ff','#00ff88','#ffae00','#d4af37','#ff4444'];
+    return `
+    <div class="ultra-live-anim mm-live-anim">
+      <div class="mm-live-title">
+        <i class="fas fa-project-diagram" style="color:#d4af37"></i>
+        <span>MIND MAP GROWING</span>
+        <span class="mm-live-sub">— branches appearing 🌿</span>
+      </div>
+      <div class="mm-live-canvas">
+        <div class="mm-live-center-node">
+          <i class="fas fa-brain" style="color:#d4af37"></i>
+          <div class="mm-center-pulse"></div>
+          <div class="mm-center-pulse" style="--pulse-delay:0.5s"></div>
+        </div>
+        ${branches.map((b, i) => {
+          const angle = (i * 60) - 90;
+          const rad = angle * Math.PI / 180;
+          const x = Math.cos(rad) * 42;
+          const y = Math.sin(rad) * 42;
+          return `
+          <div class="mm-live-branch-line" style="--br-angle:${angle}deg;--br-delay:${0.5+i*0.3}s;--br-color:${colors[i]}"></div>
+          <div class="mm-live-branch-node" style="--br-x:${x}%;--br-y:${y}%;--br-delay:${0.8+i*0.3}s;--br-color:${colors[i]}">
+            <div class="mm-branch-dot" style="background:${colors[i]};box-shadow:0 0 12px ${colors[i]}80"></div>
+            <div class="mm-branch-name" style="color:${colors[i]}">${b}</div>
+            <div class="mm-branch-items">
+              <div class="mm-item-dot" style="--it-delay:${1.2+i*0.3}s;background:${colors[i]}40;color:${colors[i]}">•</div>
+              <div class="mm-item-dot" style="--it-delay:${1.4+i*0.3}s;background:${colors[i]}40;color:${colors[i]}">•</div>
+              <div class="mm-item-dot" style="--it-delay:${1.6+i*0.3}s;background:${colors[i]}40;color:${colors[i]}">•</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="mm-live-progress-area">
+        <div class="mm-live-prog-bar"><div class="mm-live-prog-fill"></div></div>
+        <span style="font-size:.7rem;color:#d4af37;font-weight:600">⚡ AI is growing your mind map…</span>
+      </div>
+    </div>`;
   }
 
   _hideStreamOverlay() {

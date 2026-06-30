@@ -850,8 +850,9 @@ module.exports = async function handler(req, res) {
     let elapsed = 0;
     return (dots) => {
       elapsed += 1.2;
-      // Send VISIBLE progress text so the live overlay stays alive with content
-      sse('token', { t: `> ⏳ ${label} generating${dots} ${elapsed.toFixed(0)}s — AI models are racing…\n\n` });
+      // Empty token keeps SSE connection alive without cluttering live view
+      // The frontend shows its own stunning animations during generation
+      sse('token', { t: '' });
       sse('stage', { idx: 3, label: `🤖 ${label} generating${dots} (${elapsed.toFixed(0)}s)` });
     };
   };
@@ -908,6 +909,17 @@ module.exports = async function handler(req, res) {
       case 'mindmap': {
         sse('stage', { idx: 1, label: '🗺️ Generating your mind map…' });
         const mm = await generateMindmap(message, opts, makeHeartbeatEmitter('Mind map'));
+        // Emit individual branch events so frontend can animate the map growing
+        if (mm.mindmap?.branches?.length) {
+          sse('stage', { idx: 2, label: `🗺️ Growing ${mm.mindmap.branches.length} branches…` });
+          // Emit central node first
+          sse('branch', { idx: -1, total: mm.mindmap.branches.length, branch: { name: '_central_', value: mm.mindmap.central, connections: mm.mindmap.connections || [] } });
+          await sleep(60);
+          for (let i = 0; i < mm.mindmap.branches.length; i++) {
+            sse('branch', { idx: i, total: mm.mindmap.branches.length, branch: mm.mindmap.branches[i] });
+            await sleep(80);
+          }
+        }
         result = assembleResult({ topic: mm.topic || message, opts, mindmap: mm });
         break;
       }
@@ -922,6 +934,28 @@ module.exports = async function handler(req, res) {
         const mmPromise     = generateMindmap(message, opts).catch(err => { log.warn(`[${reqId}] mega mindmap failed: ${err.message}`); return null; });
 
         const [notes, fc, q, mm] = await Promise.all([notesPromise, fcPromise, quizPromise, mmPromise]);
+
+        // Emit individual card/q/branch events for live animation before final done
+        if (fc?.flashcards?.length) {
+          for (let i = 0; i < fc.flashcards.length; i++) {
+            sse('card', { idx: i, total: fc.flashcards.length, card: fc.flashcards[i] });
+            await sleep(40);
+          }
+        }
+        if (q?.quiz_questions?.length) {
+          for (let i = 0; i < q.quiz_questions.length; i++) {
+            sse('q', { idx: i, total: q.quiz_questions.length, q: q.quiz_questions[i] });
+            await sleep(40);
+          }
+        }
+        if (mm?.mindmap?.branches?.length) {
+          sse('branch', { idx: -1, total: mm.mindmap.branches.length, branch: { name: '_central_', value: mm.mindmap.central, connections: mm.mindmap.connections || [] } });
+          await sleep(40);
+          for (let i = 0; i < mm.mindmap.branches.length; i++) {
+            sse('branch', { idx: i, total: mm.mindmap.branches.length, branch: mm.mindmap.branches[i] });
+            await sleep(50);
+          }
+        }
 
         if (!fc && !q && !mm) {
           // Notes alone do not constitute a "Mega Bundle" — be honest about it
