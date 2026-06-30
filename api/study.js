@@ -31,12 +31,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
-  BRAND:     'Savoiré AI v3.0',
+  BRAND:     'Savoiré AI v2.0',
   DEVELOPER: 'Sooban Talha Technologies',
   DEVSITE:   'soobantalhatech.xyz',
   WEBSITE:   'savoireai.vercel.app',
   FOUNDER:   'Sooban Talha',
-  VERSION:   '3.0',
+  VERSION:   '2.0',
   TAGLINE:   'Think Less. Know More.',
 };
 
