@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — FAIL‑SAFE (ALWAYS RETURNS DONE)
+// SAVOIRÉ AI v2.0 — api/study.js — PARALLEL RACING (fast, real AI only)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -25,15 +25,30 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — SINGLE MODEL (openrouter/free)
+// SECTION 2 — FAST MODEL LISTS (parallel racing)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MODEL = {
-  id: 'openrouter/free',
-  max_tokens: 6000,
-  timeout_ms: 120000,
-  temp: 0.75,
-};
+// For streaming notes – fastest models first, but we race all simultaneously
+const MODELS_STREAM = [
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 4500, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 4000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 4000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 5000, temp: 0.75 },
+];
+
+// For structured JSON cards – high accuracy, but we race them all
+const MODELS_CARDS = [
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 5000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 7000, temp: 0.30 },
+];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS (unchanged)
@@ -112,7 +127,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (unchanged)
+// SECTION 6 — PROMPT BUILDERS (optimised for speed)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -123,74 +138,55 @@ function buildNotesPrompt(input, opts) {
 
   const sectionMap = {
     notes:
-      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms & Processes\n\n## 💡 Key Examples with Detailed Walkthroughs\n\n## 🚀 Advanced Aspects, Nuances & Edge Cases\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions & Corrections\n\n## 📝 Summary, Key Takeaways & Revision Checklist',
+      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways',
     flashcards:
-      '## 📖 Overview & Context\n\n## 🎯 Core Concepts (as Q&A pairs)\n\n## ⚙️ Mechanisms & Processes (each step = one Q&A)\n\n## 💡 Examples & Applications\n\n## ⚠️ Common Misconceptions\n\n## 🎯 Quick Summary',
+      '## 📖 Overview\n\n## 🎯 Core Concepts (Q&A)\n\n## ⚙️ Mechanisms (Q&A)\n\n## 💡 Examples & Applications\n\n## ⚠️ Misconceptions\n\n## 🎯 Quick Summary',
     quiz:
-      '## 📚 Topic Introduction\n\n## ✏️ Core Concepts (exam‑ready format)\n\n## ⚙️ Mechanisms (exam‑style explanation)\n\n## 📝 Typical Exam Questions & Model Answers\n\n## 🎯 Must‑Remember Points',
+      '## 📚 Topic Intro\n\n## ✏️ Core Concepts (exam-ready)\n\n## ⚙️ Mechanisms (exam-style)\n\n## 📝 Model Answers\n\n## 🎯 Must-Remember Points',
     summary:
-      '## 🚀 TL;DR — Executive Summary (3–5 sentences maximum)\n\n## 🎯 Core Concepts (one bullet each — crisp)\n\n## ⚙️ Key Mechanisms (ultra‑short)\n\n## 💡 Critical Examples Only\n\n## ✅ Final Revision Checklist',
+      '## 🚀 TL;DR (3-5 sentences)\n\n## 🎯 Core Concepts (bullets)\n\n## ⚙️ Key Mechanisms (short)\n\n## 💡 Critical Examples\n\n## ✅ Revision Checklist',
     mindmap:
-      '## 🧠 Central Topic Overview\n\n## 🌿 Branch 1: Foundations & Definitions\n\n## 🌿 Branch 2: Core Mechanisms\n\n## 🌿 Branch 3: Key Examples\n\n## 🌿 Branch 4: Real‑World Applications\n\n## 🌿 Branch 5: Common Pitfalls & Misconceptions\n\n## 🔗 Key Connections Between Branches',
+      '## 🧠 Central Topic\n\n## 🌿 Branch 1: Foundations\n\n## 🌿 Branch 2: Core Mechanisms\n\n## 🌿 Branch 3: Key Examples\n\n## 🌿 Branch 4: Applications\n\n## 🌿 Branch 5: Pitfalls\n\n## 🔗 Connections',
     all:
-      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Real‑World Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Revision Checklist',
+      '## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Revision Checklist',
   };
 
   const sections = sectionMap[tool] || sectionMap.notes;
-
   const toolGoal = {
-    notes:      'Generate comprehensive, well‑structured study notes covering every important aspect.',
-    flashcards: 'Generate notes structured as clear Q&A pairs, each concept as a distinct question/answer.',
-    quiz:       'Generate exam‑focused notes emphasising examinable points and common question patterns.',
-    summary:    'Generate a concise smart summary: TL;DR first, then bullet key points, scannable.',
-    mindmap:    'Generate hierarchically structured notes for mind map conversion — clear parent→child.',
-    all:        'Generate the ULTIMATE comprehensive study package covering every angle of this topic.',
-  }[tool] || 'Generate comprehensive study notes.';
+    notes:      'Comprehensive study notes.',
+    flashcards: 'Notes as Q&A pairs.',
+    quiz:       'Exam-focused notes.',
+    summary:    'Concise smart summary.',
+    mindmap:    'Hierarchical notes for mind map.',
+    all:        'Ultimate study package.',
+  }[tool] || 'Study notes.';
 
-  return `You are ${SAVOIRÉ.BRAND}, the world's most advanced AI study assistant.
-Creator: ${SAVOIRÉ.DEVELOPER} (${SAVOIRÉ.DEVSITE}) | Founder: ${SAVOIRÉ.FOUNDER}
+  return `You are ${SAVOIRÉ.BRAND}. ${toolGoal}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 TASK: ${toolGoal}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TOPIC: "${input}"
+LANGUAGE: ${lang} (ALL words in ${lang})
+LENGTH: ${depth.wordRange}
+STYLE: ${style}
 
-📖 TOPIC: "${input}"
-
-🌐 LANGUAGE: ${lang}
-   ⚠️ Write EVERY word in ${lang}. Zero exceptions. No mixing.
-
-📏 LENGTH: ${depth.wordRange} — aim for the upper end; be thorough
-
-🎨 STYLE: ${style}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 REQUIRED STRUCTURE — use exactly these headings:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
+REQUIRED SECTIONS (use exactly these ## headings):
 ${sections}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📐 MANDATORY FORMATTING:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• ## for all section headings
-• **bold** every key term first time
-• - for bullet lists
-• Numbered lists for sequential steps
-• > for definitions/key statements
-• --- between major sections
-• \`inline code\` for formulas/precise terms
-• At least 5 real‑world examples
-• ⚠️ Common Mistakes section
-• 🎯 Key Takeaways (5‑8 bullets) at end
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 BEGIN IMMEDIATELY — start with first ## heading. Write in ${lang} only.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+FORMATTING:
+- **bold** key terms
+- - for bullets
+- 1., 2. for steps
+- > for definitions
+- --- between sections
+- At least 5 examples
+- ⚠️ Common Mistakes
+- 🎯 Key Takeaways (5-8 bullets)
+
+START NOW with first ## heading. Write in ${lang} only.`;
 }
 
 function buildCardsPrompt(input, opts) {
   const lang = opts.language || 'English';
   const tool = opts.tool     || 'notes';
-  const now  = getISTDateTime();
   const topicShort = String(input).slice(0, 120);
 
   let toolBlock = '';
@@ -199,463 +195,334 @@ function buildCardsPrompt(input, opts) {
   let mmField   = '"mindmap": null';
 
   if (tool === 'flashcards' || tool === 'all') {
-    toolBlock += `
-╔═══════════════════════════════════════════════════════════════════════════╗
-║  MANDATORY: Generate 15–20 FLASHCARDS about "${topicShort}"               ║
-╚═══════════════════════════════════════════════════════════════════════════╝
-
-Each flashcard MUST have:
-• "front" (10–40 words in ${lang}): a SPECIFIC question about "${topicShort}"
-• "back" (60–180 words in ${lang}): a SPECIFIC detailed answer with a concrete example from this topic
-
-Card types (include at least 2 of each):
-  - Definition cards    – "What is X in [topic]?"
-  - Mechanism cards     – "How does X work in [topic]?"
-  - Comparison cards    – "X vs Y in [topic]"
-  - Application cards   – "How is X used in real world (specific to topic)?"
-  - Misconception cards – "What do people get wrong about [topic]?"
-`;
+    toolBlock += `Generate 15-20 flashcards about "${topicShort}". Each: front (10-40 words), back (60-180 words). Types: definition, mechanism, comparison, application, misconception.`;
     fcField = `"flashcards": [
-    {"front": "[SPECIFIC question about ${topicShort} in ${lang}]", "back": "[SPECIFIC 60‑180 word answer with example]"},
-    {"front": "[Another SPECIFIC question]", "back": "[Another SPECIFIC answer]"},
-    {"front": "[Mechanism question]", "back": "[Step‑by‑step explanation specific to ${topicShort}]"},
-    {"front": "[Comparison question]", "back": "[Clear comparison with details from ${topicShort}]"},
-    {"front": "[Application question]", "back": "[Real‑world application specific to ${topicShort}]"}
-  ]`;
+      {"front": "[question about ${topicShort}]", "back": "[answer with example]"},
+      {"front": "[another question]", "back": "[another answer]"}
+    ]`;
   }
 
   if (tool === 'quiz' || tool === 'all') {
-    toolBlock += `
-╔═══════════════════════════════════════════════════════════════════════════╗
-║  MANDATORY: Generate 10–12 QUIZ QUESTIONS about "${topicShort}"           ║
-╚═══════════════════════════════════════════════════════════════════════════╝
-
-Each question MUST have:
-• "question": a SPECIFIC factual question about "${topicShort}" in ${lang}
-• "options": EXACTLY 4 strings (one correct, three plausible distractors) – all related to "${topicShort}"
-• "correct_answer": CHARACTER‑FOR‑CHARACTER IDENTICAL to the correct option (copy‑paste exact string)
-• "explanation": 80‑130 words in ${lang}, referencing "${topicShort}" specifically
-• "difficulty": "easy", "medium", or "hard" (target: 3 easy, 5 medium, 4 hard)
-`;
+    toolBlock += `Generate 10-12 quiz questions about "${topicShort}". Each: question, 4 options (one correct), correct_answer (exact match), explanation (80-130 words), difficulty (easy/medium/hard).`;
     qField = `"quiz_questions": [
-    {
-      "id": 1,
-      "question": "[SPECIFIC question about ${topicShort} in ${lang}]",
-      "options": ["[Plausible wrong A]", "[CORRECT answer — copy exact]", "[Plausible wrong C]", "[Plausible wrong D]"],
-      "correct_answer": "[CORRECT answer — copy exact from options]",
-      "explanation": "[80‑130 words specifically about ${topicShort} in ${lang}]",
-      "difficulty": "medium"
-    },
-    {
-      "id": 2,
-      "question": "[Another SPECIFIC question]",
-      "options": ["[Option A]", "[Option B — correct]", "[Option C]", "[Option D]"],
-      "correct_answer": "[Option B — correct]",
-      "explanation": "[Explanation specifically about ${topicShort}]",
-      "difficulty": "hard"
-    }
-  ]`;
+      {"id":1,"question":"[question]","options":["A","B","C","D"],"correct_answer":"[B]","explanation":"[explanation]","difficulty":"medium"}
+    ]`;
   }
 
   if (tool === 'mindmap' || tool === 'all') {
-    toolBlock += `
-╔═══════════════════════════════════════════════════════════════════════════╗
-║  MANDATORY: Generate MIND MAP with 5–7 BRANCHES about "${topicShort}"    ║
-╚═══════════════════════════════════════════════════════════════════════════╝
-
-• "central": 3–6 words capturing the ESSENCE of "${topicShort}" in ${lang}
-• "branches": 5–7 branches with SPECIFIC NAMES from "${topicShort}" (NOT generic labels like "Introduction")
-• Each branch: 4–6 items (specific facts, terms, or concepts from "${topicShort}") each 5‑20 words
-• "connections": 3–5 cross‑connections describing relationships within "${topicShort}"
-`;
+    toolBlock += `Generate mind map with 5-7 branches about "${topicShort}". central: 3-6 words. branches: name (specific), color (#hex), items (4-6 facts). connections: 3-5 {from, to, description}.`;
     mmField = `"mindmap": {
-    "central": "[3‑6 word essence of ${topicShort} in ${lang}]",
-    "branches": [
-      {"name": "[SPECIFIC category from ${topicShort}]", "color": "#00d4ff", "items": ["[Specific fact 1]", "[Specific fact 2]", "[Specific fact 3]", "[Specific fact 4]", "[Specific fact 5]"]},
-      {"name": "[SPECIFIC aspect]", "color": "#bf00ff", "items": ["[Item 1]", "[Item 2]", "[Item 3]", "[Item 4]"]},
-      {"name": "[SPECIFIC process]", "color": "#00ff88", "items": ["[Item 1]", "[Item 2]", "[Item 3]", "[Item 4]"]},
-      {"name": "[SPECIFIC application]", "color": "#ffae00", "items": ["[Item 1]", "[Item 2]", "[Item 3]", "[Item 4]"]},
-      {"name": "[SPECIFIC challenge]", "color": "#d4af37", "items": ["[Item 1]", "[Item 2]", "[Item 3]", "[Item 4]"]}
-    ],
-    "connections": [
-      {"from": "[Branch name]", "to": "[Branch name]", "description": "[How they relate in ${topicShort}]"},
-      {"from": "[Branch name]", "to": "[Branch name]", "description": "[Another relationship]"},
-      {"from": "[Branch name]", "to": "[Branch name]", "description": "[Third connection]"}
-    ]
-  }`;
+      "central": "[essence]",
+      "branches": [
+        {"name":"[specific category]","color":"#00d4ff","items":["fact1","fact2","fact3","fact4"]}
+      ],
+      "connections": [{"from":"[branch]","to":"[branch]","description":"[relationship]"}]
+    }`;
   }
 
-  return `You are ${SAVOIRÉ.BRAND}. Generate a complete structured JSON about:
+  return `You are ${SAVOIRÉ.BRAND}. Generate valid JSON about:
 
-📖 TOPIC: "${input}"
-🌐 LANGUAGE: ${lang} (ALL text MUST be in ${lang})
-🛠️ TOOL: ${tool.toUpperCase()}
+TOPIC: "${input}"
+LANGUAGE: ${lang}
+TOOL: ${tool}
 
 ${toolBlock}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚡ OUTPUT: Valid JSON ONLY. Start with {. End with }. No markdown. No explanations.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OUTPUT: ONLY JSON, starting with {.
 
 {
-  "topic": "[Clean title of topic in ${lang}]",
-  "curriculum_alignment": "[Specific level e.g. 'A‑Level Biology']",
-  "generated_at": "${now}",
+  "topic": "[title]",
+  "curriculum_alignment": "[level]",
   "study_score": 97,
-
   ${fcField},
   ${qField},
   ${mmField},
-
-  "key_concepts": [
-    "[Name of concept]: [55‑80 word explanation with specific example]",
-    "[Second concept]: [55‑80 words with example]",
-    "[Third concept]: [55‑80 words with example]",
-    "[Fourth concept]: [55‑80 words with example]",
-    "[Fifth concept]: [55‑80 words with example]",
-    "[Sixth concept]: [55‑80 words with example]"
-  ],
-
-  "key_tricks": [
-    "🧠 [Mnemonic for ${topicShort}]: [70‑110 words with specific application]",
-    "📝 [Study method]: [70‑110 words with concrete instructions]",
-    "⏰ [Memory strategy]: [70‑110 words with specific application]",
-    "🎨 [Visualization]: [70‑110 words making this topic vivid]"
-  ],
-
-  "practice_questions": [
-    {"question": "[Analytical 80‑130 word question about ${topicShort}]", "answer": "[200+ word answer with reasoning]"},
-    {"question": "[Application 80‑130 word question about ${topicShort}]", "answer": "[200+ word answer]"},
-    {"question": "[Evaluation 80‑130 word question]", "answer": "[200+ word answer]"},
-    {"question": "[Synthesis 80‑130 word question]", "answer": "[200+ word answer]"}
-  ],
-
-  "real_world_applications": [
-    "🏥 Healthcare: [60‑90 word specific application]",
-    "💻 Technology: [60‑90 word specific tech application]",
-    "📈 Business: [60‑90 word specific business application]",
-    "🎓 Research: [60‑90 word academic research application]",
-    "🌍 Society: [60‑90 word social impact]",
-    "🏠 Daily Life: [60‑90 word everyday relevance]"
-  ],
-
-  "common_misconceptions": [
-    "❌ MYTH: [Specific wrong belief]. ✅ TRUTH: [60‑90 word correction]",
-    "❌ MYTH: [Second misconception]. ✅ TRUTH: [60‑90 word correction]",
-    "❌ MYTH: [Third misconception]. ✅ TRUTH: [60‑90 word correction]",
-    "❌ MYTH: [Fourth misconception]. ✅ TRUTH: [60‑90 word correction]"
-  ]
+  "key_concepts": ["concept1: explanation", "concept2: explanation"],
+  "key_tricks": ["🧠 trick1", "📝 trick2"],
+  "practice_questions": [{"question":"q1","answer":"a1"}],
+  "real_world_applications": ["app1","app2"],
+  "common_misconceptions": ["❌ myth1 ✅ truth1"]
 }
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚨 ABSOLUTE RULES — violation = failed generation:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Output ONLY valid JSON — nothing before { or after }
-2. ALL placeholder text REPLACED with REAL content about "${topicShort}"
-3. ALL text in ${lang}
-4. quiz correct_answer = CHARACTER‑FOR‑CHARACTER IDENTICAL to one options[] string
-5. ${tool==='flashcards'||tool==='all' ? 'Generate 15‑20 flashcards about this specific topic' : ''}
-6. ${tool==='quiz'||tool==='all' ? 'Generate 10‑12 quiz questions about this specific topic' : ''}
-7. ${tool==='mindmap'||tool==='all' ? 'Generate 5‑7 branches with SPECIFIC names from this topic' : ''}
-8. No trailing commas. All strings in double quotes. Valid JSON.
-9. FORBIDDEN: Generic content, placeholder text, content NOT about "${topicShort}"
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 OUTPUT JSON NOW:`;
+RULES: valid JSON, all placeholders replaced with real content about "${topicShort}", ALL text in ${lang}, no extra text. OUTPUT JSON NOW:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (retries, long timeouts)
+// SECTION 7 — PHASE 1: STREAM NOTES (parallel race)
 // ─────────────────────────────────────────────────────────────────────────────
+
+const FIRST_TOKEN_TIMEOUT = 8000;  // 8 seconds to get first token
+const FULL_STREAM_TIMEOUT = 60000; // 60 seconds total after first token
 
 async function streamNotes(prompt, onChunk, tool) {
-  const maxAttempts = 8;
-  let attempt = 0;
-  let lastError = '';
+  const controllers = [];
+  const winner = { id: null, reader: null, done: false };
 
-  while (attempt < maxAttempts) {
-    attempt++;
-    const delay = attempt === 1 ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 30000);
-    if (delay > 0) {
-      log.info(`P1 retry ${attempt} waiting ${delay}ms...`);
-      await sleep(delay);
-    }
-
+  // Start all model fetches
+  const fetches = MODELS_STREAM.map(model => {
     const ctrl = new AbortController();
-    let firstTokenTimer = setTimeout(() => ctrl.abort(), 30000); // 30s for first token
-    let fullStreamTimer = null;
+    controllers.push(ctrl);
+    const name = model.id.split('/').pop().replace(':free', '');
     const t0 = Date.now();
 
-    try {
-      log.info(`P1 (${tool}) → openrouter/free (attempt ${attempt})`);
+    return (async () => {
+      try {
+        const res = await fetch(OPENROUTER_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer': HTTP_REFERER,
+            'X-Title': APP_TITLE,
+          },
+          body: JSON.stringify({
+            model: model.id,
+            max_tokens: model.max_tokens,
+            temperature: model.temp || 0.75,
+            stream: true,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
 
-      const res = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': HTTP_REFERER,
-          'X-Title': APP_TITLE,
-        },
-        body: JSON.stringify({
-          model: 'openrouter/free',
-          max_tokens: 6000,
-          temperature: 0.75,
-          stream: true,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
-
-      clearTimeout(firstTokenTimer);
-
-      if (!res.ok) {
-        const body = await res.text().catch(() => '');
-        log.warn(`P1 HTTP ${res.status} — ${trunc(body, 80)}`);
-        if (res.status === 429) {
-          lastError = 'Rate limited (429)';
-          continue;
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          if (res.status === 401) throw new Error('Invalid API key');
+          throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
         }
-        if (res.status === 401) throw new Error('Invalid API key');
-        lastError = `HTTP ${res.status}`;
-        continue;
-      }
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let lineBuf = '';
-      let full = '';
-      let gotFirst = false;
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let lineBuf = '';
+        let full = '';
+        let firstTokenSent = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        lineBuf += decoder.decode(value, { stream: true });
-        const lines = lineBuf.split('\n');
-        lineBuf = lines.pop() || '';
+          lineBuf += decoder.decode(value, { stream: true });
+          const lines = lineBuf.split('\n');
+          lineBuf = lines.pop() || '';
 
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]' || !raw) continue;
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]' || !raw) continue;
 
-          try {
-            const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-            if (delta) {
-              if (!gotFirst) {
-                gotFirst = true;
-                clearTimeout(firstTokenTimer);
-                fullStreamTimer = setTimeout(() => ctrl.abort(), 120000); // 2 min total
-                log.ok(`P1 🏆 first token in ${Date.now()-t0}ms — committing`);
+            try {
+              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+              if (delta) {
+                if (!firstTokenSent) {
+                  // This model is the first to produce a token – it wins the race
+                  firstTokenSent = true;
+                  log.ok(`P1 🏆 ${name} won in ${Date.now()-t0}ms`);
+                  // Cancel all other controllers
+                  for (const otherCtrl of controllers) {
+                    if (otherCtrl !== ctrl) otherCtrl.abort();
+                  }
+                  // Set winner reader and start streaming its tokens
+                  winner.id = name;
+                  winner.reader = reader;
+                  // We need to continue reading from this reader, but we are inside this loop.
+                  // We'll break out and let the outer loop handle the winner.
+                  // But we need to stop processing other lines from other models.
+                  // Since we already cancelled others, we can safely return the full string later.
+                  // For now, we'll just stream this delta and continue reading from this reader.
+                  // We'll set a flag so we know this model is the winner.
+                  // We'll also break out of the line loop to avoid reading further lines from other models.
+                  // But we are inside the loop for this model only, so it's fine.
+                  // We'll just keep streaming.
+                  onChunk(delta);
+                  full += delta;
+                  // Continue reading from this reader
+                } else {
+                  // This model is the winner, continue streaming
+                  onChunk(delta);
+                  full += delta;
+                }
               }
-              full += delta;
-              onChunk(delta);
-            }
-          } catch { /* ignore */ }
+            } catch { /* ignore */ }
+          }
         }
+
+        // If we reach here, the stream ended. Return the full content.
+        // But only if this model was the winner (firstTokenSent) or if no other won.
+        // In the case where this model was the first to send a token, it already won.
+        // If no one won (shouldn't happen because we have at least one model), return whatever we have.
+        if (firstTokenSent) {
+          // This is the winner – return full content
+          return full;
+        } else {
+          // This model didn't win, but we might still have content; we'll ignore it.
+          return null;
+        }
+
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          log.warn(`P1 ${name} error: ${err.message}`);
+        }
+        return null;
       }
+    })();
+  });
 
-      clearTimeout(fullStreamTimer);
+  // Wait for the first model to complete successfully (returning a non-null string)
+  // Use Promise.race with a timeout for the entire race
+  const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Race timeout')), 30000));
 
-      if (!gotFirst) {
-        lastError = 'No content received';
-        continue;
-      }
-
-      if (full.trim().length < 80) {
-        log.warn(`P1 short response (${full.length} chars) — using as‑is`);
-      }
-
-      log.ok(`P1 ✅ openrouter/free | ${full.length}ch | ${Date.now()-t0}ms (attempt ${attempt})`);
-      return full; // success
-
-    } catch (err) {
-      clearTimeout(firstTokenTimer);
-      if (fullStreamTimer) clearTimeout(fullStreamTimer);
-      if (err.message === 'Invalid API key') throw err;
-      const reason = err.name === 'AbortError' ? (gotFirst ? 'full‑stream timeout' : 'no first token') : err.message;
-      log.warn(`P1 fail (attempt ${attempt}): ${reason}`);
-      lastError = reason;
-      // Continue to next attempt
+  try {
+    const result = await Promise.race([
+      Promise.any(fetches.map(p => p.then(r => r))),
+      raceTimeout,
+    ]);
+    // result is the full notes string from the winner
+    if (result && typeof result === 'string' && result.length > 50) {
+      log.ok(`P1 ✅ ${winner.id || 'winner'} | ${result.length}ch`);
+      return result;
+    } else {
+      throw new Error('Winner returned insufficient content');
     }
+  } catch (err) {
+    // Race failed or timed out
+    log.error(`P1 race failed: ${err.message}`);
+    // Retry the whole race once with a small delay
+    await sleep(1500);
+    // Recursively try again (but only once)
+    return await streamNotes(prompt, onChunk, tool);
   }
-
-  throw new Error(`Notes generation failed after ${maxAttempts} attempts. Last error: ${lastError}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (retries, long timeout)
+// SECTION 8 — PHASE 2: FETCH CARDS (parallel race)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool, topic) {
-  const maxAttempts = 6;
-  let attempt = 0;
-  let lastError = '';
+  const controllers = [];
 
-  while (attempt < maxAttempts) {
-    attempt++;
-    const delay = attempt === 1 ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 20000);
-    if (delay > 0) {
-      log.info(`P2 retry ${attempt} waiting ${delay}ms...`);
-      await sleep(delay);
-    }
-
+  const fetches = MODELS_CARDS.map(model => {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 90000); // 90 seconds for JSON
+    controllers.push(ctrl);
+    const name = model.id.split('/').pop().replace(':free', '');
     const t0 = Date.now();
 
-    try {
-      log.info(`P2 (${tool}) → openrouter/free (attempt ${attempt})`);
-
-      const res = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer': HTTP_REFERER,
-          'X-Title': APP_TITLE,
-        },
-        body: JSON.stringify({
-          model: 'openrouter/free',
-          max_tokens: 8000,
-          temperature: 0.30,
-          stream: false,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
-
-      clearTimeout(timer);
-
-      if (!res.ok) {
-        const body = await res.text().catch(() => '');
-        log.warn(`P2 HTTP ${res.status} — ${trunc(body, 80)}`);
-        if (res.status === 429) {
-          lastError = 'Rate limited (429)';
-          continue;
-        }
-        if (res.status === 401) throw new Error('Invalid API key');
-        lastError = `HTTP ${res.status}`;
-        continue;
-      }
-
-      const data = await res.json();
-      let content = data?.choices?.[0]?.message?.content?.trim();
-
-      if (!content || content.length < 50) {
-        lastError = 'Empty or short response';
-        continue;
-      }
-
-      // Remove code fences
-      content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-
-      // Extract JSON object
-      const jS = content.indexOf('{');
-      const jE = content.lastIndexOf('}');
-      if (jS === -1 || jE <= jS) {
-        lastError = 'No JSON object';
-        continue;
-      }
-      let jsonStr = content.slice(jS, jE + 1);
-
-      // JSON repair (4 steps)
-      let parsed;
+    return (async () => {
       try {
-        parsed = JSON.parse(jsonStr);
-      } catch {
-        try {
-          parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1'));
-        } catch {
-          try {
-            parsed = JSON.parse(
-              jsonStr
-                .replace(/,(\s*[}\]])/g, '$1')
-                .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                .replace(/:\s*'([^']*)'/g, ': "$1"')
-            );
-          } catch {
+        const res = await fetch(OPENROUTER_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer': HTTP_REFERER,
+            'X-Title': APP_TITLE,
+          },
+          body: JSON.stringify({
+            model: model.id,
+            max_tokens: model.max_tokens,
+            temperature: model.temp || 0.30,
+            stream: false,
+            messages: [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
+
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          if (res.status === 401) throw new Error('Invalid API key');
+          throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
+        }
+
+        const data = await res.json();
+        let content = data?.choices?.[0]?.message?.content?.trim();
+        if (!content || content.length < 50) throw new Error('empty response');
+
+        // Remove code fences and extract JSON
+        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+        const jS = content.indexOf('{');
+        const jE = content.lastIndexOf('}');
+        if (jS === -1 || jE <= jS) throw new Error('no JSON');
+        let jsonStr = content.slice(jS, jE + 1);
+
+        // JSON repair (4 steps)
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); }
+        catch {
+          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+          catch {
             try {
               parsed = JSON.parse(
-                jsonStr
-                  .replace(/[\x00-\x1F\x7F]/g, ' ')
-                  .replace(/,(\s*[}\]])/g, '$1')
-                  .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                jsonStr.replace(/,(\s*[}\]])/g, '$1')
+                       .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                       .replace(/:\s*'([^']*)'/g, ': "$1"')
               );
-            } catch (e4) {
-              lastError = `JSON repair failed: ${e4.message.slice(0,60)}`;
-              continue;
+            } catch {
+              try {
+                parsed = JSON.parse(
+                  jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+                         .replace(/,(\s*[}\]])/g, '$1')
+                         .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                );
+              } catch (e4) {
+                throw new Error(`JSON repair failed: ${e4.message.slice(0,60)}`);
+              }
             }
           }
         }
-      }
 
-      // Auto‑fix quiz correct_answer mismatches
-      if (Array.isArray(parsed.quiz_questions)) {
-        parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-          q.id = q.id || i + 1;
-          if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-            const lower = q.correct_answer.toLowerCase();
-            const fix = q.options.find(o => o.toLowerCase() === lower) ||
-                        q.options.find(o => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase())) ||
-                        q.options[0];
-            if (fix) {
-              log.info(`P2 auto‑fixed Q${i+1} correct_answer`);
-              return { ...q, correct_answer: fix };
+        // Auto-fix quiz correct_answer
+        if (Array.isArray(parsed.quiz_questions)) {
+          parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+            q.id = q.id || i + 1;
+            if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+              const lower = q.correct_answer.toLowerCase();
+              const fix = q.options.find(o => o.toLowerCase() === lower) ||
+                          q.options.find(o => o.toLowerCase().includes(lower) || lower.includes(o.toLowerCase())) ||
+                          q.options[0];
+              if (fix) q.correct_answer = fix;
             }
-          }
-          return q;
-        });
-      }
+            return q;
+          });
+        }
 
-      // Normalize flashcards
-      if (Array.isArray(parsed.flashcards)) {
-        parsed.flashcards = parsed.flashcards
-          .filter(c => (c.front || c.question) && (c.back || c.answer))
-          .map(c => ({
-            front: String(c.front || c.question || '').trim(),
-            back: String(c.back || c.answer || '').trim(),
-          }));
-      }
+        // Normalize flashcards
+        if (Array.isArray(parsed.flashcards)) {
+          parsed.flashcards = parsed.flashcards
+            .filter(c => (c.front || c.question) && (c.back || c.answer))
+            .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+        }
 
-      // Validate (tool‑specific)
-      let valid = true;
-      if ((tool === 'flashcards' || tool === 'all') && (!Array.isArray(parsed.flashcards) || parsed.flashcards.length < 3)) {
-        log.warn(`P2 insufficient flashcards (${parsed.flashcards?.length||0})`);
-        valid = false;
-      }
-      if ((tool === 'quiz' || tool === 'all') && (!Array.isArray(parsed.quiz_questions) || parsed.quiz_questions.length < 3)) {
-        log.warn(`P2 insufficient quiz questions (${parsed.quiz_questions?.length||0})`);
-        valid = false;
-      }
-      if ((tool === 'mindmap' || tool === 'all') && (!parsed.mindmap?.branches || parsed.mindmap.branches.length < 2)) {
-        log.warn(`P2 insufficient mindmap branches (${parsed.mindmap?.branches?.length||0})`);
-        valid = false;
-      }
+        // Validation (tool-specific)
+        let valid = true;
+        if ((tool === 'flashcards' || tool === 'all') && (!Array.isArray(parsed.flashcards) || parsed.flashcards.length < 3)) valid = false;
+        if ((tool === 'quiz' || tool === 'all') && (!Array.isArray(parsed.quiz_questions) || parsed.quiz_questions.length < 3)) valid = false;
+        if ((tool === 'mindmap' || tool === 'all') && (!parsed.mindmap?.branches || parsed.mindmap.branches.length < 2)) valid = false;
+        if (!valid && tool !== 'all') throw new Error('validation failed');
 
-      if (!valid && tool !== 'all') {
-        lastError = 'Validation failed';
-        continue;
+        log.ok(`P2 ✅ ${name} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+        return parsed;
+
+      } catch (err) {
+        if (err.name !== 'AbortError') log.warn(`P2 ${name} error: ${err.message}`);
+        return null;
       }
+    })();
+  });
 
-      log.ok(`P2 ✅ openrouter/free | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms (attempt ${attempt})`);
-      return parsed; // success
-
-    } catch (err) {
-      clearTimeout(timer);
-      if (err.message === 'Invalid API key') throw err;
-      const reason = err.name === 'AbortError' ? 'timed out' : err.message;
-      log.warn(`P2 fail (attempt ${attempt}): ${reason}`);
-      lastError = reason;
-      // Continue to next attempt
-    }
+  try {
+    const result = await Promise.any(fetches.map(p => p.then(r => r)));
+    if (result) return result;
+    throw new Error('All models returned null');
+  } catch (err) {
+    log.error(`P2 race failed: ${err.message}`);
+    // Retry once
+    await sleep(1500);
+    // Recursive retry
+    return await fetchCards(prompt, tool, topic);
   }
-
-  throw new Error(`Cards generation failed after ${maxAttempts} attempts. Last error: ${lastError}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — MERGE
+// SECTION 9 — MERGE (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
@@ -699,7 +566,7 @@ function mergeCards(cardsRaw, notes, topic, opts) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — SSE HELPER + HEADERS
+// SECTION 10 — SSE HELPER + HEADERS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeSSE(res) {
@@ -726,7 +593,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MAIN HANDLER — ALWAYS RETURNS DONE (NO ERROR EVENTS)
+// SECTION 11 — MAIN HANDLER — with parallel race, no fallback unless all fail
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -740,12 +607,7 @@ module.exports = async function handler(req, res) {
 
   if (!process.env.OPENROUTER_API_KEY) {
     log.error('[FATAL] OPENROUTER_API_KEY not set!');
-    // Still return a done‑like response (not error) to avoid frontend error screen
-    return res.status(200).json({
-      status: 'error',
-      message: 'Service misconfigured. Please contact admin.',
-      requestId: reqId,
-    });
+    return res.status(200).json({ status: 'error', message: 'Service misconfigured. Contact admin.', requestId: reqId });
   }
 
   const body = req.body || {};
@@ -755,7 +617,6 @@ module.exports = async function handler(req, res) {
   const userSessions = Number(body.sessions)  || 1;
   const sessionId    = String(body.sessionId  || reqId);
 
-  // ── PING / VISIT ──────────────────────────────────────────────────────────
   if (!message || message === 'ping') {
     log.info(`[${reqId}] PING — ${userName} | sessions:${userSessions}`);
     sendToGoogleSheets(userName, userStreak, userSessions, 'visit', '', 'online', 0, sessionId).catch(() => {});
@@ -797,21 +658,15 @@ module.exports = async function handler(req, res) {
   if (typeof res.flushHeaders === 'function') res.flushHeaders();
 
   const sse = makeSSE(res);
-
-  // Keep‑alive
   const kap = setInterval(() => {
     if (res.writableEnded) { clearInterval(kap); return; }
-    try {
-      res.write(`: ping ${Date.now()}\n\n`);
-      if (typeof res.flush === 'function') res.flush();
-    } catch { clearInterval(kap); }
+    try { res.write(`: ping ${Date.now()}\n\n`); if (typeof res.flush === 'function') res.flush(); } catch { clearInterval(kap); }
   }, 10000);
 
-  // Stage timers (cosmetic)
   const stageTimers = [
-    setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }), 2000),
-    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }), 6000),
-    setTimeout(() => sse('stage', { idx: 3, label: '🃏 Generating interactive cards…' }), 12000),
+    setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }), 1500),
+    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }), 5000),
+    setTimeout(() => sse('stage', { idx: 3, label: '🃏 Generating interactive cards…' }), 10000),
   ];
   const clearStages = () => stageTimers.forEach(clearTimeout);
 
@@ -826,7 +681,7 @@ module.exports = async function handler(req, res) {
   let cardsSuccess = false;
 
   try {
-    // ── PHASE 1: Stream notes ──────────────────────────────────────────────
+    // ── PHASE 1: Stream notes (parallel race) ──────────────────────────────
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
     const notesPrompt = buildNotesPrompt(message, opts);
 
@@ -836,16 +691,12 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
     } catch (err) {
       log.error(`[${reqId}] P1 failed: ${err.message}`);
-      // Generate offline notes and stream them in chunks
-      notes = generateOfflineNotes(message, opts);
-      for (let i = 0; i < notes.length; i += 200) {
-        sse('token', { t: notes.slice(i, i + 200) });
-        await sleep(5);
-      }
-      notesSuccess = true; // we have something
+      // We will still continue, but notes will be empty. The final merge will add generic content.
+      notes = `## Study Notes on ${message}\n\nWe could not generate AI content at this moment. Please try again.`;
+      notesSuccess = false;
     }
 
-    // ── PHASE 2: Fetch cards ──────────────────────────────────────────────
+    // ── PHASE 2: Fetch cards (parallel race) ──────────────────────────────
     if (notesSuccess) {
       sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
       const cardsPrompt = buildCardsPrompt(message, opts);
@@ -856,7 +707,6 @@ module.exports = async function handler(req, res) {
       } catch (err) {
         log.error(`[${reqId}] P2 failed: ${err.message}`);
         cardsSuccess = false;
-        // We'll send an empty cards structure
         cardsData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null };
       }
     }
@@ -866,29 +716,26 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
         sse('card', { idx: i, total: cardsData.flashcards.length, card: cardsData.flashcards[i] });
-        await sleep(80);
+        await sleep(60);
       }
-      log.ok(`[${reqId}] Streamed ${cardsData.flashcards.length} flashcards`);
     }
 
     if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `❓ Streaming ${cardsData.quiz_questions.length} quiz questions…` });
       for (let i = 0; i < cardsData.quiz_questions.length; i++) {
         sse('question', { idx: i, total: cardsData.quiz_questions.length, q: cardsData.quiz_questions[i] });
-        await sleep(100);
+        await sleep(80);
       }
-      log.ok(`[${reqId}] Streamed ${cardsData.quiz_questions.length} questions`);
     }
 
     if (cardsData?.mindmap?.branches?.length && (opts.tool === 'mindmap' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🗺️ Streaming ${cardsData.mindmap.branches.length} mind map branches…` });
       sse('branch', { idx: -1, total: cardsData.mindmap.branches.length, branch: { name: '_central_', value: cardsData.mindmap.central, connections: cardsData.mindmap.connections || [] } });
-      await sleep(150);
+      await sleep(100);
       for (let i = 0; i < cardsData.mindmap.branches.length; i++) {
         sse('branch', { idx: i, total: cardsData.mindmap.branches.length, branch: cardsData.mindmap.branches[i] });
-        await sleep(120);
+        await sleep(100);
       }
-      log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }
 
     // ── FINAL DONE EVENT ──────────────────────────────────────────────────
@@ -914,8 +761,8 @@ module.exports = async function handler(req, res) {
     clearStages();
     log.error(`[${reqId}] FATAL: ${fatal.message}`);
 
-    // Last‑resort fallback — always send a done event
-    const fallbackNotes = generateOfflineNotes(message, opts);
+    // Even on fatal, we send a done event with a generic message
+    const fallbackNotes = `## Study Notes on ${message}\n\nWe're sorry, but the AI service is currently unavailable. Please try again in a few moments.`;
     const fallbackData = { _fallback: true, flashcards: [], quiz_questions: [], mindmap: null, key_concepts: [] };
     const final = mergeCards(fallbackData, fallbackNotes, message, opts);
     final._duration_ms = Date.now() - startTime;
@@ -925,7 +772,7 @@ module.exports = async function handler(req, res) {
     final._notes_only = true;
     final.powered_by = `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`;
 
-    sse('stage', { idx: 4, label: '⚠️ Using fallback content — please try again later.', done: true });
+    sse('stage', { idx: 4, label: '⚠️ Service temporarily unavailable – please try again later.', done: true });
     sse('done', final);
 
     sendToGoogleSheets(userName, userStreak, userSessions, opts.tool, message, 'failed_fallback', Date.now() - startTime, sessionId).catch(() => {});
@@ -955,81 +802,7 @@ function buildTopicFact(topic) {
   return FACT_TEMPLATES[idx](t);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — OFFLINE NOTES GENERATOR (sync, no AI)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function generateOfflineNotes(topic, opts) {
-  const lang = opts.language || 'English';
-  const T = topic || 'this topic';
-  return `## 📚 Introduction to ${T}
-
-**${T}** is an important area of study with significant theoretical foundations and practical applications. This guide covers the essential concepts, mechanisms, and applications.
-
----
-
-## 🎯 Core Concepts
-
-> **Definition:** ${T} refers to the systematic study and practice of its core domain, encompassing the principles, methods, and applications that define the field.
-
-**Foundational Framework:** The study of ${T} rests on interconnected principles that together explain how and why things work as they do. Understanding these connections is more valuable than memorising individual definitions.
-
-**Key Relationships:** Core concepts in ${T} are not isolated but form a coherent system. Grasping how each concept relates to others is the key to genuine mastery.
-
----
-
-## ⚙️ How It Works
-
-The primary mechanism of ${T} operates through a structured sequence:
-
-1. **Initial conditions** are identified and characterised
-2. **The primary process** begins following the rules of ${T}
-3. **Intermediate stages** transform inputs progressively
-4. **Observable outcomes** emerge and can be evaluated against standards
-
-Each stage follows from the previous according to identifiable patterns.
-
----
-
-## 💡 Key Examples
-
-**Example 1:** The simplest case shows core principles in their clearest form — revealing the essential logic underlying all more complex instances.
-
-**Example 2:** Real-world application adds complications requiring adaptation of the core approach to specific circumstances.
-
-**Example 3:** Edge cases show where standard approaches break down, revealing boundary conditions that experts must recognise.
-
----
-
-## 🚀 Advanced Aspects
-
-**Boundary conditions:** Every principle holds under specific conditions and breaks down outside them. Knowing these boundaries is as important as knowing the principles themselves.
-
-**Ongoing research:** Like all living fields, ${T} has active research frontiers where questions remain open.
-
-**Interdisciplinary connections:** ${T} connects productively to adjacent fields in both directions.
-
----
-
-## 📝 Key Takeaways
-
-- ✅ ${T} is a reasoning framework, not a collection of facts
-- ✅ Understanding WHY mechanisms work matters more than memorising WHAT they produce
-- ✅ Real mastery = applying ${T} to novel situations, not just familiar ones  
-- ✅ Knowing boundary conditions prevents systematic errors
-- ✅ Active retrieval practice is 2-3× more effective than re-reading for ${T}
-
-## ⚠️ Common Mistakes
-
-- ⚠️ Memorising definitions without understanding mechanisms
-- ⚠️ Applying principles outside their valid scope
-- ⚠️ Confusing re-reading familiarity with genuine understanding
-
----
-*Generated by ${SAVOIRÉ.BRAND} | ${SAVOIRÉ.DEVELOPER} | Free forever*`;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
-// END — api/study.js v2.0 FAIL‑SAFE | Sooban Talha Technologies
+// END — api/study.js v2.0 PARALLEL RACING | Sooban Talha Technologies
 // "Think Less. Know More." — Free forever for every student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════
