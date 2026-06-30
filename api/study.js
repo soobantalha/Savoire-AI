@@ -30,17 +30,13 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Phase 1: Streaming markdown notes — fastest first
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 5000, timeout_ms: 30000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 5000, timeout_ms: 30000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 4500, timeout_ms: 30000, temp: 0.75 },
-];
+  { id: 'openrouter/free',          max_tokens: 10000000, timeout_ms: 30000, temp: 0.75 },
+  ];
 
 // Phase 2: Structured JSON — high accuracy
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8000, timeout_ms: 25000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8000, timeout_ms: 25000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 7000, timeout_ms: 25000, temp: 0.30 },
-];
+  { id: 'openrouter/free',          max_tokens: 10000000, timeout_ms: 25000, temp: 0.30 },
+  ];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS
