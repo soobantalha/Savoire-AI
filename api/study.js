@@ -1,8 +1,44 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — PARALLEL RACING, PER‑TOOL PIPELINES
+// SAVOIRÉ AI v3.0 — api/study.js — PER-TOOL PIPELINES, REAL ITEM-BY-ITEM STREAMING
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
+//
+// WHY THIS REWRITE EXISTS — the actual root causes found in the frontend:
+//
+// 1) Every tool used to share ONE bloated prompt asking for notes prose AND
+//    flashcards AND quiz AND mindmap AND key_concepts etc. all at once, no
+//    matter which single tool was selected. That wasted tokens, caused
+//    cross-tool content bleed, and made everything slower and flakier.
+//    FIX: each tool now has its own single-purpose prompt (Section 6).
+//
+// 2) THE BIG ONE: app.js already contains fully built live-rendering UI for
+//    flashcards/quiz/mindmap (_updateLiveCards, _updateLiveQuestions,
+//    _updateLiveMindmap) that expects the backend to emit SSE events shaped
+//    like {card, idx, total}, {q, idx, total}, {branch, idx, total} for EACH
+//    individual item as it's generated — exactly like notes streams token by
+//    token. The old backend never sent these events; it only ever sent one
+//    giant JSON blob inside the final `done` event. So the live overlay had
+//    nothing to render for the entire generation — screen sat empty, then
+//    everything popped in at once if/when the single call succeeded. With 8
+//    models racing concurrently on every single attempt, that one big call
+//    was also far more likely to get rate-limited into oblivion, which is
+//    why it only worked "1 in 100 times".
+//    FIX: flashcards/quiz/mindmap are now generated in small BATCHES (3-4
+//    items per model call). As each batch resolves, every item in it is
+//    immediately emitted as its own `card`/`q`/`branch` SSE event — so the
+//    live UI starts filling in within a few seconds and keeps growing item
+//    by item until the full set is ready, then `done` ships the final
+//    assembled object. This is real progressive AI generation, not a fake
+//    animation of an already-finished result.
+//
+// 3) Model calls are now SEQUENTIAL-per-batch (try model A, then B, then C…)
+//    rather than firing all 8 models at once for every request. Racing 8
+//    concurrent calls against the same API key for every single batch was
+//    needlessly hammering the rate limit and is the likely cause of the
+//    near-total failure rate. Sequential trial with fast-skip on 429/404
+//    keeps things fast (first working model usually responds in 2-5s) while
+//    being far gentler on shared rate limits.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10,12 +46,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
-  BRAND:     'Savoiré AI v2.0',
+  BRAND:     'Savoiré AI v3.0',
   DEVELOPER: 'Sooban Talha Technologies',
   DEVSITE:   'soobantalhatech.xyz',
   WEBSITE:   'savoireai.vercel.app',
   FOUNDER:   'Sooban Talha',
-  VERSION:   '2.0',
+  VERSION:   '3.0',
   TAGLINE:   'Think Less. Know More.',
 };
 
@@ -25,7 +61,10 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LISTS (only confirmed‑active free models)
+// SECTION 2 — MODEL LISTS
+// PROSE pool: streamed, higher temp, used for notes/summary.
+// JSON pool: non-streamed, low temp, smaller max_tokens since each call now
+// only ever produces a small BATCH of one content type (not everything).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MODELS_PROSE = [
@@ -39,19 +78,22 @@ const MODELS_PROSE = [
   { id: 'openrouter/free',                          max_tokens: 5000, timeout_ms: 55000, temp: 0.75 },
 ];
 
+// Small max_tokens — each call now only generates a BATCH of 3-4 items of
+// ONE content type, so it needs a fraction of the old budget. Short timeouts
+// because small batches should return in a few seconds on a healthy model.
 const MODELS_JSON = [
-  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 3000, timeout_ms: 30000, temp: 0.25 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 2500, timeout_ms: 30000, temp: 0.25 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 3500, timeout_ms: 35000, temp: 0.25 },
-  { id: 'openrouter/free',                          max_tokens: 3500, timeout_ms: 45000, temp: 0.25 },
+  { id: 'google/gemini-2.0-flash-exp:free',        max_tokens: 1800, timeout_ms: 22000, temp: 0.4 },
+  { id: 'google/gemini-flash-1.5-8b:free',         max_tokens: 1800, timeout_ms: 22000, temp: 0.4 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',  max_tokens: 1800, timeout_ms: 22000, temp: 0.4 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 1500, timeout_ms: 20000, temp: 0.4 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free', max_tokens: 1500, timeout_ms: 20000, temp: 0.4 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',          max_tokens: 1800, timeout_ms: 22000, temp: 0.4 },
+  { id: 'z-ai/glm-4.5-air:free',                   max_tokens: 1800, timeout_ms: 22000, temp: 0.4 },
+  { id: 'openrouter/free',                          max_tokens: 1800, timeout_ms: 28000, temp: 0.4 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS (unchanged)
+// SECTION 3 — CONFIG MAPS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -115,7 +157,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PER-TOOL PROMPT BUILDERS (single‑purpose, no cross‑tool content)
+// SECTION 6 — PROSE PROMPT BUILDERS (notes / summary)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -181,436 +223,359 @@ FORMATTING RULES:
 START NOW with the TL;DR heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-function buildFlashcardsPrompt(input, opts) {
-  const lang     = opts.language || 'English';
-  const topic    = String(input).slice(0, 100);
-  const fcCount  = opts.cardCount || 15;
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 7 — BATCH JSON PROMPT BUILDERS (flashcards / quiz / mindmap)
+// Each builds a prompt for a SMALL BATCH (a handful of items), not the full
+// requested count — that's what makes per-item streaming + small fast model
+// calls possible. avoidList lets us tell the model what's already been
+// generated so the batches don't repeat themselves.
+// ─────────────────────────────────────────────────────────────────────────────
 
-  return `You are ${SAVOIRÉ.BRAND}. Generate exactly ${fcCount} study flashcards as valid JSON.
+function buildFlashcardBatchPrompt(topic, opts, batchSize, avoidList) {
+  const lang  = opts.language || 'English';
+  const t     = String(topic).slice(0, 100);
+  const avoid = avoidList.length
+    ? `\nALREADY COVERED — do NOT repeat these questions or near-duplicates:\n${avoidList.map(f => `- ${f}`).join('\n')}\n`
+    : '';
 
-TOPIC: "${topic}"
+  return `You are ${SAVOIRÉ.BRAND}. Generate exactly ${batchSize} NEW study flashcards as valid JSON.
+
+TOPIC: "${t}"
 LANGUAGE: ${lang} — ALL text must be in ${lang}.
-
+${avoid}
 Each flashcard:
-• "front": specific question about "${topic}" (10-40 words, in ${lang})
-• "back": detailed answer 60-150 words about "${topic}" (in ${lang})
+• "front": specific question about "${t}" (10-40 words, in ${lang})
+• "back": detailed answer 60-150 words about "${t}" (in ${lang})
+Mix definition / mechanism / comparison / application / misconception-correction cards.
+ALL content specifically about "${t}". Zero generic filler, zero placeholders.
 
-Mix of types across the ${fcCount} cards: definition cards, mechanism cards, comparison cards,
-application cards, misconception-correction cards. ALL content specifically about "${topic}".
-Zero generic filler, zero placeholder text.
-
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown, no code fences, no explanation before or after.
-
+OUTPUT ONLY valid JSON, starting with { and ending with }. No markdown, no code fences.
 {
-  "topic": "clean title for ${topic} in ${lang}",
   "flashcards": [
-    {"front": "Specific question 1 about ${topic}", "back": "Detailed 60-150 word answer 1"},
-    {"front": "Specific question 2 about ${topic}", "back": "Detailed 60-150 word answer 2"}
+    {"front": "Specific question about ${t}", "back": "Detailed 60-150 word answer"}
   ]
 }
-
-The "flashcards" array must contain EXACTLY ${fcCount} objects, each with non-empty "front" and "back".
-OUTPUT JSON NOW — start with { immediately:`;
+The "flashcards" array must contain EXACTLY ${batchSize} objects.
+OUTPUT JSON NOW:`;
 }
 
-function buildQuizPrompt(input, opts) {
-  const lang      = opts.language || 'English';
-  const topic     = String(input).slice(0, 100);
-  const qCount    = opts.quizCount || 10;
-  const quizType  = opts.quizType || 'mixed';
+function buildQuizBatchPrompt(topic, opts, batchSize, avoidList) {
+  const lang     = opts.language || 'English';
+  const t        = String(topic).slice(0, 100);
+  const quizType = opts.quizType || 'mixed';
   const qDiffInstr =
     quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
     quizType === 'medium' ? 'ALL questions must be medium difficulty (core exam level).' :
     quizType === 'hard'   ? 'ALL questions must be hard (advanced analysis, application).' :
     quizType === 'exam'   ? 'ALL questions must be exam-style (past-paper format, mark-scheme phrasing, tricky distractors).' :
-                             'Difficulty mix across the set: 30% easy, 50% medium, 20% hard.';
+                             'Mix of easy/medium/hard across this batch.';
+  const avoid = avoidList.length
+    ? `\nALREADY COVERED — do NOT repeat these questions or near-duplicates:\n${avoidList.map(q => `- ${q}`).join('\n')}\n`
+    : '';
 
-  return `You are ${SAVOIRÉ.BRAND}. Generate exactly ${qCount} multiple-choice quiz questions as valid JSON.
+  return `You are ${SAVOIRÉ.BRAND}. Generate exactly ${batchSize} NEW multiple-choice quiz questions as valid JSON.
 
-TOPIC: "${topic}"
+TOPIC: "${t}"
 LANGUAGE: ${lang} — ALL text must be in ${lang}.
-
+${avoid}
 Each question object:
-• "id": sequential number starting at 1
-• "question": specific question about "${topic}" (in ${lang})
-• "options": array of EXACTLY 4 strings. EACH option must be a COMPLETE, FULL-LENGTH ANSWER
-  (15-60 words each) written as real answer text — NEVER single letters like "A", "B", "C", "D"
-  and NEVER short label-only options. All 4 must be plausible and topic-specific; exactly one is correct.
-• "correct_answer": the value MUST be an exact, character-for-character COPY of one of the
-  four strings inside "options" — copy-paste the full option text, not a letter, not an index.
-• "explanation": 60-100 words explaining why the correct answer is right, referencing "${topic}" (in ${lang})
-• "difficulty": one of "easy" | "medium" | "hard"
+• "question": specific question about "${t}" (in ${lang})
+• "options": array of EXACTLY 4 strings. EACH a COMPLETE full-length answer (15-60 words) —
+  NEVER single letters like "A"/"B"/"C"/"D" and never short label-only options.
+• "correct_answer": MUST be an exact character-for-character copy of one of the 4 "options" strings.
+• "explanation": 60-100 words explaining why correct, referencing "${t}" (in ${lang})
+• "difficulty": "easy" | "medium" | "hard"
+${qDiffInstr}
+VARY which position holds the correct answer across questions — don't always use the same slot.
 
-DIFFICULTY RULE: ${qDiffInstr}
-VARY which position (1st, 2nd, 3rd, or 4th option) holds the correct answer from question to
-question — do NOT always put the correct answer in the same options[] slot.
-
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown, no code fences, no explanation before or after.
-
+OUTPUT ONLY valid JSON, starting with { and ending with }. No markdown, no code fences.
 {
-  "topic": "clean title for ${topic} in ${lang}",
   "quiz_questions": [
     {
-      "id": 1,
-      "question": "Specific question about ${topic}",
-      "options": [
-        "Complete full-length answer option one here",
-        "Complete full-length answer option two here",
-        "Complete full-length answer option three here",
-        "Complete full-length answer option four here"
-      ],
-      "correct_answer": "Complete full-length answer option two here",
-      "explanation": "Detailed 60-100 word explanation of why this is correct",
+      "question": "Specific question about ${t}",
+      "options": ["Full answer option one", "Full answer option two", "Full answer option three", "Full answer option four"],
+      "correct_answer": "Full answer option two",
+      "explanation": "Detailed 60-100 word explanation",
       "difficulty": "medium"
     }
   ]
 }
-
-The "quiz_questions" array must contain EXACTLY ${qCount} objects matching the schema above.
-OUTPUT JSON NOW — start with { immediately:`;
+The "quiz_questions" array must contain EXACTLY ${batchSize} objects.
+OUTPUT JSON NOW:`;
 }
 
-function buildMindmapPrompt(input, opts) {
-  const lang    = opts.language || 'English';
-  const topic   = String(input).slice(0, 100);
-  const mmCount = opts.branchCount || 6;
+function buildMindmapCentralPrompt(topic, opts) {
+  const lang = opts.language || 'English';
+  const t    = String(topic).slice(0, 100);
+  return `You are ${SAVOIRÉ.BRAND}. Generate the central topic title for a mind map as valid JSON.
 
-  return `You are ${SAVOIRÉ.BRAND}. Generate a visual mind map structure as valid JSON.
+TOPIC: "${t}"
+LANGUAGE: ${lang}
 
-TOPIC: "${topic}"
+OUTPUT ONLY valid JSON: {"central": "3-5 word essence of ${t} in ${lang}"}
+OUTPUT JSON NOW:`;
+}
+
+function buildMindmapBranchBatchPrompt(topic, opts, batchSize, avoidList) {
+  const lang  = opts.language || 'English';
+  const t     = String(topic).slice(0, 100);
+  const avoid = avoidList.length
+    ? `\nALREADY COVERED branch names — do NOT repeat or duplicate these:\n${avoidList.map(b => `- ${b}`).join('\n')}\n`
+    : '';
+
+  return `You are ${SAVOIRÉ.BRAND}. Generate exactly ${batchSize} NEW mind map branches as valid JSON.
+
+TOPIC: "${t}"
 LANGUAGE: ${lang} — ALL text must be in ${lang}.
+${avoid}
+Each branch:
+• "name": a specific branch name derived from "${t}" — NEVER generic labels like "Introduction" or
+  "Overview". Must name an actual concept/sub-topic.
+• "color": one of "#00d4ff","#bf00ff","#00ff88","#ffae00","#d4af37","#ff4444","#e84393"
+• "items": array of 4-5 specific facts/terms about that branch (each 5-20 words, in ${lang})
 
-Structure:
-• "central": 3-5 word essence/title of "${topic}" (in ${lang})
-• "branches": array of EXACTLY ${mmCount} objects, each with:
-  - "name": a specific branch name derived from "${topic}" — NEVER generic labels like
-    "Introduction", "Overview", or "Basics". Must name an actual concept/sub-topic.
-  - "color": one of "#00d4ff","#bf00ff","#00ff88","#ffae00","#d4af37","#ff4444","#e84393"
-    (use a different color for each branch where possible)
-  - "items": array of 4-5 specific facts/terms about that branch (each 5-20 words, in ${lang})
-• "connections": array of 3-4 objects {"from": "branch name", "to": "branch name",
-  "description": "how they relate, 10-20 words"} — showing real conceptual relationships
-  between branches, not generic statements.
-
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown, no code fences, no explanation before or after.
-
+OUTPUT ONLY valid JSON, starting with { and ending with }. No markdown, no code fences.
 {
-  "topic": "clean title for ${topic} in ${lang}",
-  "mindmap": {
-    "central": "3-5 word essence of ${topic}",
-    "branches": [
-      {"name": "Specific branch 1", "color": "#00d4ff", "items": ["fact 1", "fact 2", "fact 3", "fact 4"]}
-    ],
-    "connections": [
-      {"from": "Branch A", "to": "Branch B", "description": "how they relate"}
-    ]
-  }
+  "branches": [
+    {"name": "Specific branch name", "color": "#00d4ff", "items": ["fact 1", "fact 2", "fact 3", "fact 4"]}
+  ]
+}
+The "branches" array must contain EXACTLY ${batchSize} objects.
+OUTPUT JSON NOW:`;
 }
 
-The "branches" array must contain EXACTLY ${mmCount} objects matching the schema above.
-OUTPUT JSON NOW — start with { immediately:`;
+function buildMindmapConnectionsPrompt(topic, opts, branchNames) {
+  const lang = opts.language || 'English';
+  const t    = String(topic).slice(0, 100);
+  return `You are ${SAVOIRÉ.BRAND}. Given these mind map branches for "${t}": ${branchNames.join(', ')} —
+generate 3-4 connections showing how they relate, as valid JSON.
+
+LANGUAGE: ${lang}
+OUTPUT ONLY valid JSON: {"connections": [{"from": "branch name", "to": "branch name", "description": "10-20 word relation in ${lang}"}]}
+Use EXACT branch names from this list: ${branchNames.join(', ')}.
+OUTPUT JSON NOW:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PARALLEL RACING FUNCTIONS (core speed & reliability fix)
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// ⚡ ROOT-CAUSE FIX (this revision):
-// Single-tool flashcards/quiz/mindmap calls used to send ONE blank
-// `sse('token', {t:''})` pulse and then `await` the entire non-streaming
-// JSON race with NO further communication to the client until it resolved.
-// The frontend's live-output view has its own "is this still alive?"
-// timeout — seeing no activity for ~15-20s, it decided the request was
-// dead and showed "temporarily unavailable", EVEN THOUGH the backend
-// was still actively racing models and would have succeeded given more
-// time (exactly as proven by the 'all' tool, which stays alive because
-// notes are genuinely streaming token-by-token the whole time).
-//
-// FIX: raceJSON() now accepts an optional onHeartbeat callback. While the
-// race is in flight, we emit small periodic "..." progress pulses via SSE
-// (not fake content — just keep-alive signal) so the frontend's live view
-// never goes quiet long enough to time out, no matter how long the real
-// JSON generation takes. This exactly mirrors why 'all' already worked.
+// SECTION 8 — PROSE STREAMER (notes / summary)
+// Sequential trial across MODELS_PROSE, 3 passes with exponential backoff.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function raceProse(prompt, onChunk, label) {
-  // Race all prose models in parallel, first successful stream wins.
-  // If all fail, retry the race up to 3 times.
-  const MAX_RETRIES = 3;
-  let lastError = '';
+async function streamProse(prompt, onChunk, label) {
+  const MAX_PASSES = 3;
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    if (attempt > 1) {
-      const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-      log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    if (pass > 0) {
+      const backoff = Math.min(1000 * Math.pow(2, pass), 4000);
+      log.warn(`${label} ↻ Pass ${pass + 1}/${MAX_PASSES} — backing off ${backoff}ms`);
       await sleep(backoff);
     }
 
-    const promises = MODELS_PROSE.map(model => {
-      const name = model.id.split('/').pop();
-      const ctrl = new AbortController();
+    for (const model of MODELS_PROSE) {
+      const name  = model.id.split('/').pop();
+      const ctrl  = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-      const t0 = Date.now();
-
-      return (async () => {
-        try {
-          const res = await fetch(OPENROUTER_BASE, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-              'HTTP-Referer': HTTP_REFERER,
-              'X-Title': APP_TITLE,
-            },
-            body: JSON.stringify({
-              model: model.id,
-              max_tokens: model.max_tokens,
-              temperature: model.temp || 0.75,
-              stream: true,
-              messages: [{ role: 'user', content: prompt }],
-            }),
-            signal: ctrl.signal,
-          });
-          clearTimeout(timer);
-
-          if (!res.ok) {
-            const txt = await res.text().catch(() => '');
-            log.error(`${label} ${name}: HTTP ${res.status} — BODY: ${txt.slice(0, 300)}`);
-            if (res.status === 429) throw new Error('429');
-            if (res.status === 404) throw new Error('404');
-            if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
-            throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
-          }
-
-          const reader = res.body.getReader();
-          const decoder = new TextDecoder('utf-8');
-          let lineBuf = '', full = '';
-          let firstChunk = false;
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            lineBuf += decoder.decode(value, { stream: true });
-            const lines = lineBuf.split('\n');
-            lineBuf = lines.pop() || '';
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
-              const raw = line.slice(6).trim();
-              if (raw === '[DONE]' || !raw) continue;
-              try {
-                const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-                if (delta) {
-                  if (!firstChunk) {
-                    firstChunk = true;
-                    log.ok(`${label} 🏆 ${name} won in ${Date.now() - t0}ms`);
-                  }
-                  full += delta;
-                  onChunk(delta);
-                }
-              } catch { /* ignore */ }
-            }
-          }
-
-          if (full.trim().length < 80) throw new Error('too_short');
-          return full;
-
-        } catch (err) {
-          clearTimeout(timer);
-          if (err.message === 'AUTH_ERROR') throw err;
-          const reason = err.name === 'AbortError' ? 'timeout' : err.message;
-          log.warn(`${label} ${name} failed: ${reason}`);
-          throw new Error(reason);
-        }
-      })();
-    });
-
-    // Race all promises, but also add a global timeout for the whole race.
-    const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 42000));
-
-    try {
-      const result = await Promise.any([...promises, raceTimeout]);
-      log.ok(`${label} ✅ successful on attempt ${attempt}`);
-      return result; // returns the full notes string
-    } catch (err) {
-      lastError = err?.message || (err?.errors ? err.errors.map(e=>e.message).join(' | ') : 'unknown');
-      log.warn(`${label} attempt ${attempt} failed: ${lastError}`);
-      // If it's an auth error, don't retry.
-      if (lastError === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      // Continue to next attempt.
-    }
-  }
-
-  log.error(`${label} ALL retries failed. Last error: ${lastError}`);
-  throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PARALLEL RACE FOR JSON (flashcards, quiz, mindmap)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function raceJSON(prompt, label, validateFn, repairFn, onHeartbeat) {
-  const MAX_RETRIES = 3;
-  let lastError = '';
-
-  // ── Heartbeat ticker: keeps the live SSE connection visibly "alive" for
-  // the ENTIRE duration of the JSON race (which has no natural token
-  // stream of its own), exactly mirroring how notes' real token stream
-  // keeps the 'all' tool from ever looking dead to the frontend. ──
-  let hbTicker = null;
-  if (typeof onHeartbeat === 'function') {
-    let dots = 0;
-    hbTicker = setInterval(() => {
-      dots = (dots % 3) + 1;
-      onHeartbeat('.'.repeat(dots));
-    }, 1200);
-  }
-
-  try {
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      if (attempt > 1) {
-        const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 4000);
-        log.warn(`${label} ↻ retry ${attempt}/${MAX_RETRIES} — backing off ${backoff}ms`);
-        await sleep(backoff);
-      }
-
-      const promises = MODELS_JSON.map(model => {
-        const name = model.id.split('/').pop();
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-        const t0 = Date.now();
-
-        return (async () => {
-          try {
-            const res = await fetch(OPENROUTER_BASE, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                'HTTP-Referer': HTTP_REFERER,
-                'X-Title': APP_TITLE,
-              },
-              body: JSON.stringify({
-                model: model.id,
-                max_tokens: model.max_tokens,
-                temperature: model.temp || 0.25,
-                stream: false,
-                messages: [{ role: 'user', content: prompt }],
-              }),
-              signal: ctrl.signal,
-            });
-            clearTimeout(timer);
-
-            if (!res.ok) {
-              const txt = await res.text().catch(() => '');
-              log.error(`${label} ${name}: HTTP ${res.status} — BODY: ${txt.slice(0, 300)}`);
-              if (res.status === 429) throw new Error('429');
-              if (res.status === 404) throw new Error('404');
-              if (res.status === 401 || res.status === 403) throw new Error('AUTH_ERROR');
-              throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
-            }
-
-            const data = await res.json();
-            let content = data?.choices?.[0]?.message?.content?.trim();
-            if (!content || content.length < 20) throw new Error('empty');
-
-            // Clean and parse JSON
-            content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-            const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-            if (jS === -1 || jE <= jS) throw new Error('no_json');
-            let jsonStr = content.slice(jS, jE + 1);
-
-            let parsed;
-            try { parsed = JSON.parse(jsonStr); }
-            catch {
-              try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-              catch {
-                try {
-                  parsed = JSON.parse(
-                    jsonStr.replace(/,(\s*[}\]])/g, '$1')
-                           .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                           .replace(/:\s*'([^']*)'/g, ': "$1"')
-                  );
-                } catch {
-                  try {
-                    parsed = JSON.parse(
-                      jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
-                             .replace(/,(\s*[}\]])/g, '$1')
-                             .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                    );
-                  } catch (e4) {
-                    throw new Error(`json_repair_failed: ${e4.message.slice(0, 60)}`);
-                  }
-                }
-              }
-            }
-
-            if (typeof repairFn === 'function') {
-              try { parsed = repairFn(parsed, name) || parsed; }
-              catch { /* ignore repair errors */ }
-            }
-
-            if (!validateFn(parsed)) throw new Error('validation_failed');
-
-            log.ok(`${label} ✅ ${name} won in ${Date.now() - t0}ms`);
-            return parsed;
-
-          } catch (err) {
-            clearTimeout(timer);
-            if (err.message === 'AUTH_ERROR') throw err;
-            const reason = err.name === 'AbortError' ? 'timeout' : err.message;
-            log.warn(`${label} ${name} failed: ${reason}`);
-            throw new Error(reason);
-          }
-        })();
-      });
-
-      const raceTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('race_timeout')), 42000));
+      const t0    = Date.now();
 
       try {
-        const result = await Promise.any([...promises, raceTimeout]);
-        log.ok(`${label} ✅ successful on attempt ${attempt}`);
-        return result;
+        log.info(`${label} → ${name} (pass ${pass + 1}/${MAX_PASSES})`);
+
+        const res = await fetch(OPENROUTER_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer':  HTTP_REFERER,
+            'X-Title':       APP_TITLE,
+          },
+          body: JSON.stringify({
+            model:       model.id,
+            max_tokens:  model.max_tokens,
+            temperature: model.temp || 0.75,
+            stream:      true,
+            messages:    [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
+
+        clearTimeout(timer);
+
+        if (res.status === 429) { log.warn(`${label} ⏳ 429 on ${name} — next model`); continue; }
+        if (res.status === 404) { log.warn(`${label} ⚠️ 404 on ${name} — skipping`); continue; }
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+          if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+          continue;
+        }
+
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let lineBuf = '', full = '', tokens = 0;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          lineBuf += decoder.decode(value, { stream: true });
+          const lines = lineBuf.split('\n');
+          lineBuf = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]' || !raw) continue;
+            try {
+              const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+              if (delta) { full += delta; tokens++; onChunk(delta); }
+            } catch { /* ignore */ }
+          }
+        }
+
+        if (full.trim().length < 80) { log.warn(`${name}: response too short (${full.length}ch) — next model`); continue; }
+
+        log.ok(`${label} ✅ ${name} | ${tokens} tokens | ${full.length}ch | ${Date.now() - t0}ms`);
+        return full;
+
       } catch (err) {
-        lastError = err?.message || (err?.errors ? err.errors.map(e=>e.message).join(' | ') : 'unknown');
-        log.warn(`${label} attempt ${attempt} failed: ${lastError}`);
-        if (lastError === 'AUTH_ERROR') throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+        clearTimeout(timer);
+        if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+        else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
+        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
       }
     }
-
-    log.error(`${label} ALL retries failed. Last error: ${lastError}`);
-    throw new Error(`All AI models are currently busy for ${label}. Please try again.`);
-
-  } finally {
-    if (hbTicker) clearInterval(hbTicker);
   }
+
+  log.error(`${label} ALL MODELS FAILED across ${MAX_PASSES} passes`);
+  throw new Error(`All AI models are currently busy. Please try again in a moment.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — REPAIR & VALIDATION FUNCTIONS
+// SECTION 9 — SINGLE-CALL JSON FETCHER (used per-batch)
+// Sequential trial across MODELS_JSON for ONE batch's worth of content.
+// Small batches + small token budgets = each call is fast, so a handful of
+// sequential attempts (not 8-way concurrent racing) still resolves quickly
+// while being far gentler on rate limits.
 // ─────────────────────────────────────────────────────────────────────────────
 
+async function fetchJSONBatch(prompt, label, validateFn, repairFn) {
+  const MAX_PASSES = 2; // batches are small — 2 full passes through all models is plenty
+
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    if (pass > 0) await sleep(800);
+
+    for (const model of MODELS_JSON) {
+      const name  = model.id.split('/').pop();
+      const ctrl  = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+      const t0    = Date.now();
+
+      try {
+        const res = await fetch(OPENROUTER_BASE, {
+          method: 'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'HTTP-Referer':  HTTP_REFERER,
+            'X-Title':       APP_TITLE,
+          },
+          body: JSON.stringify({
+            model:       model.id,
+            max_tokens:  model.max_tokens,
+            temperature: model.temp || 0.4,
+            stream:      false,
+            messages:    [{ role: 'user', content: prompt }],
+          }),
+          signal: ctrl.signal,
+        });
+
+        clearTimeout(timer);
+
+        if (res.status === 429) { log.warn(`${label} ⏳ 429 on ${name} — next model`); continue; }
+        if (res.status === 404) { log.warn(`${label} ⚠️ 404 on ${name} — skipping`); continue; }
+        if (!res.ok) {
+          const txt = await res.text().catch(() => '');
+          log.warn(`${label} HTTP ${res.status} — ${name}: ${trunc(txt, 100)}`);
+          if (res.status === 401 || res.status === 403) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+          continue;
+        }
+
+        const data    = await res.json();
+        let content = data?.choices?.[0]?.message?.content?.trim();
+        if (!content || content.length < 10) { log.warn(`${name}: empty response — next model`); continue; }
+
+        content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+        const jS = content.indexOf('{');
+        const jE = content.lastIndexOf('}');
+        if (jS === -1 || jE <= jS) { log.warn(`${name}: no JSON object — next model`); continue; }
+        let jsonStr = content.slice(jS, jE + 1);
+
+        let parsed;
+        try { parsed = JSON.parse(jsonStr); }
+        catch {
+          try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+          catch {
+            try {
+              parsed = JSON.parse(
+                jsonStr
+                  .replace(/,(\s*[}\]])/g, '$1')
+                  .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                  .replace(/:\s*'([^']*)'/g, ': "$1"')
+              );
+            }
+            catch {
+              try {
+                parsed = JSON.parse(
+                  jsonStr
+                    .replace(/[\x00-\x1F\x7F]/g, ' ')
+                    .replace(/,(\s*[}\]])/g, '$1')
+                    .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                );
+              }
+              catch (e4) {
+                log.warn(`${name}: JSON repair failed — ${e4.message.slice(0, 80)} — next model`);
+                continue;
+              }
+            }
+          }
+        }
+
+        if (typeof repairFn === 'function') {
+          try { parsed = repairFn(parsed, name) || parsed; }
+          catch (repairErr) { log.warn(`${name}: repairFn threw — ${repairErr.message}`); }
+        }
+
+        if (!validateFn(parsed)) { log.warn(`${name}: validation failed for ${label} — next model`); continue; }
+
+        log.ok(`${label} ✅ ${name} | ${Date.now() - t0}ms`);
+        return parsed;
+
+      } catch (err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') log.warn(`${label} ⏱️ ${name} timed out after ${model.timeout_ms}ms`);
+        else                            log.warn(`${label} ✗ ${name}: ${err.message}`);
+        if (err.message?.includes('API_KEY') || err.message?.includes('invalid')) throw err;
+      }
+    }
+  }
+
+  return null; // batch failed across every model — caller decides what to do
+}
+
+// ── Quiz answer repair: convert letter answers / fuzzy-match to full option text ──
 function repairQuiz(parsed, modelName) {
   if (!Array.isArray(parsed.quiz_questions)) return parsed;
-  parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-    q.id = q.id || i + 1;
+  parsed.quiz_questions = parsed.quiz_questions.map((q) => {
     if (q.options && q.correct_answer) {
       const letterMap = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
       const trimmedAnswer = String(q.correct_answer).trim();
       if (trimmedAnswer.length <= 2 && letterMap[trimmedAnswer] !== undefined) {
         const idx = letterMap[trimmedAnswer];
-        if (q.options[idx]) {
-          log.info(`${modelName}: converted letter answer "${trimmedAnswer}" → option[${idx}] for Q${i + 1}`);
-          q.correct_answer = q.options[idx];
-        }
+        if (q.options[idx]) q.correct_answer = q.options[idx];
       }
       if (!q.options.includes(q.correct_answer)) {
         const lo  = q.correct_answer.toLowerCase();
         const fix = q.options.find(o => o.toLowerCase() === lo)
                  || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()));
-        if (fix) { q.correct_answer = fix; log.info(`${modelName}: fuzzy-fixed Q${i + 1} correct_answer`); }
+        if (fix) q.correct_answer = fix;
       }
     }
     return q;
@@ -628,48 +593,135 @@ function repairFlashcards(parsed) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — PER‑TOOL GENERATORS (using the racing functions)
+// SECTION 10 — BATCHED, ITEM-STREAMING GENERATORS
+// This is the core fix: instead of one giant call, we request small batches
+// and emit each resulting item over SSE the moment it's ready, so the
+// frontend's existing live-card/live-quiz/live-mindmap UI actually has
+// something to animate within a few seconds — matching how notes streaming
+// already behaves.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function generateNotes(topic, opts, onChunk) {
-  return raceProse(buildNotesPrompt(topic, opts), onChunk, 'NOTES');
+function batchSizes(total, size) {
+  const sizes = [];
+  let remaining = total;
+  while (remaining > 0) { const n = Math.min(size, remaining); sizes.push(n); remaining -= n; }
+  return sizes;
 }
 
-function generateSummary(topic, opts, onChunk) {
-  return raceProse(buildSummaryPrompt(topic, opts), onChunk, 'SUMMARY');
+async function generateFlashcardsStreaming(topic, opts, emitCard) {
+  const total = opts.cardCount || 15;
+  const sizes = batchSizes(total, 3); // 3 cards per call
+  const collected = [];
+  let resultTopic = null;
+
+  for (const size of sizes) {
+    const avoid = collected.map(c => c.front);
+    const prompt = buildFlashcardBatchPrompt(topic, opts, size, avoid);
+    const parsed = await fetchJSONBatch(
+      prompt, 'FLASHCARDS',
+      p => Array.isArray(p.flashcards) && p.flashcards.length >= 1,
+      repairFlashcards
+    );
+
+    if (!parsed || !Array.isArray(parsed.flashcards) || !parsed.flashcards.length) {
+      log.warn(`FLASHCARDS: batch of ${size} failed across all models — skipping this batch, continuing`);
+      continue; // skip this batch but keep trying remaining batches
+    }
+
+    for (const card of parsed.flashcards) {
+      collected.push(card);
+      emitCard(collected.length - 1, total, card);
+    }
+  }
+
+  if (collected.length === 0) throw new Error('FLASHCARDS_FAILED');
+  return { topic: resultTopic, flashcards: collected.slice(0, total) };
 }
 
-function generateFlashcards(topic, opts, onHeartbeat) {
-  const wanted = opts.cardCount || 15;
-  return raceJSON(
-    buildFlashcardsPrompt(topic, opts),
-    'FLASHCARDS',
-    parsed => Array.isArray(parsed.flashcards) && parsed.flashcards.length >= Math.min(2, wanted),
-    repairFlashcards,
-    onHeartbeat
+async function generateQuizStreaming(topic, opts, emitQuestion) {
+  const total = opts.quizCount || 10;
+  const sizes = batchSizes(total, 3); // 3 questions per call
+  const collected = [];
+
+  for (const size of sizes) {
+    const avoid = collected.map(q => q.question);
+    const prompt = buildQuizBatchPrompt(topic, opts, size, avoid);
+    const parsed = await fetchJSONBatch(
+      prompt, 'QUIZ',
+      p => Array.isArray(p.quiz_questions) && p.quiz_questions.length >= 1,
+      repairQuiz
+    );
+
+    if (!parsed || !Array.isArray(parsed.quiz_questions) || !parsed.quiz_questions.length) {
+      log.warn(`QUIZ: batch of ${size} failed across all models — skipping this batch, continuing`);
+      continue;
+    }
+
+    for (const q of parsed.quiz_questions) {
+      q.id = collected.length + 1;
+      collected.push(q);
+      emitQuestion(collected.length - 1, total, q);
+    }
+  }
+
+  if (collected.length === 0) throw new Error('QUIZ_FAILED');
+  return { quiz_questions: collected.slice(0, total) };
+}
+
+async function generateMindmapStreaming(topic, opts, emitBranch) {
+  const total = opts.branchCount || 6;
+
+  // Step 1: central node first — emits immediately so the UI shows the
+  // central topic node right away, mirroring _updateLiveMindmap(idx=-1).
+  let central = String(topic).slice(0, 40);
+  const centralParsed = await fetchJSONBatch(
+    buildMindmapCentralPrompt(topic, opts), 'MINDMAP_CENTRAL',
+    p => typeof p.central === 'string' && p.central.trim().length > 0
   );
-}
+  if (centralParsed?.central) central = centralParsed.central.trim();
 
-function generateQuiz(topic, opts, onHeartbeat) {
-  const wanted = opts.quizCount || 10;
-  return raceJSON(
-    buildQuizPrompt(topic, opts),
-    'QUIZ',
-    parsed => Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= Math.min(2, wanted),
-    repairQuiz,
-    onHeartbeat
-  );
-}
+  // Step 2: branches in small batches.
+  const sizes = batchSizes(total, 2); // 2 branches per call — richer items, smaller batch
+  const collected = [];
 
-function generateMindmap(topic, opts, onHeartbeat) {
-  const wanted = opts.branchCount || 6;
-  return raceJSON(
-    buildMindmapPrompt(topic, opts),
-    'MINDMAP',
-    parsed => parsed.mindmap?.branches?.length >= Math.min(2, wanted),
-    null,
-    onHeartbeat
-  );
+  for (const size of sizes) {
+    const avoid = collected.map(b => b.name);
+    const prompt = buildMindmapBranchBatchPrompt(topic, opts, size, avoid);
+    const parsed = await fetchJSONBatch(
+      prompt, 'MINDMAP_BRANCH',
+      p => Array.isArray(p.branches) && p.branches.length >= 1
+    );
+
+    if (!parsed || !Array.isArray(parsed.branches) || !parsed.branches.length) {
+      log.warn(`MINDMAP: branch batch of ${size} failed across all models — skipping, continuing`);
+      continue;
+    }
+
+    for (const branch of parsed.branches) {
+      collected.push(branch);
+      emitBranch(collected.length - 1, total, branch, central);
+    }
+  }
+
+  if (collected.length === 0) throw new Error('MINDMAP_FAILED');
+
+  // Step 3: connections — best-effort, doesn't block the result if it fails.
+  let connections = [];
+  if (collected.length >= 2) {
+    const connParsed = await fetchJSONBatch(
+      buildMindmapConnectionsPrompt(topic, opts, collected.map(b => b.name)), 'MINDMAP_CONN',
+      p => Array.isArray(p.connections)
+    );
+    if (connParsed?.connections) connections = connParsed.connections;
+  }
+
+  return {
+    mindmap: {
+      central,
+      branches: collected.slice(0, total),
+      connections,
+    },
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -712,11 +764,10 @@ function assembleResult({ topic, opts, notes, flashcards, quiz, mindmap }) {
     _quality:               'ai_generated',
   };
 
-  if (notes)                                result.ultra_long_notes = notes;
-  if (flashcards?.flashcards?.length)       result.flashcards       = flashcards.flashcards;
-  if (flashcards?.topic && !topic)          result.topic            = flashcards.topic;
-  if (quiz?.quiz_questions?.length)         result.quiz_questions   = quiz.quiz_questions;
-  if (mindmap?.mindmap?.branches?.length)   result.mindmap          = mindmap.mindmap;
+  if (notes)                              result.ultra_long_notes = notes;
+  if (flashcards?.flashcards?.length)     result.flashcards       = flashcards.flashcards;
+  if (quiz?.quiz_questions?.length)       result.quiz_questions   = quiz.quiz_questions;
+  if (mindmap?.mindmap?.branches?.length) result.mindmap          = mindmap.mindmap;
 
   return result;
 }
@@ -826,143 +877,85 @@ module.exports = async function handler(req, res) {
     } catch { clearInterval(kap); }
   }, 10000);
 
-  const stageTimers = [
-    setTimeout(() => sse('stage', { idx: 1, label: '📝 Writing your content…' }), 1500),
-    setTimeout(() => sse('stage', { idx: 2, label: '🔍 Building sections…' }),    5000),
-    setTimeout(() => sse('stage', { idx: 3, label: '🃏 Finalising materials…' }), 12000),
-  ];
-  const clearStages = () => stageTimers.forEach(clearTimeout);
-
-  const toolLabels = { notes:'Notes', flashcards:'Flashcards', quiz:'Quiz', summary:'Summary', mindmap:'Mind Map', all:'Mega Bundle' };
-  const toolLabel = toolLabels[opts.tool] || 'Content';
-
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
-  // Send VISIBLE first token so user sees content within seconds
-  sse('token',     { t: `✨ **${toolLabel} generation started!**\n\n> 🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"…\n\n---\n\n` });
+  sse('token',     { t: '' }); // prime the token stream
 
-  // For JSON-only tools (flashcards/quiz/mindmap), this drives BOTH the
-  // visible live-output text AND the SSE keep-alive activity, so the
-  // frontend's live view behaves exactly like it does for 'all' — never
-  // silent long enough to be mistaken for a dead connection.
-  const makeHeartbeatEmitter = (label) => {
-    let elapsed = 0;
-    return (dots) => {
-      elapsed += 1.2;
-      // Empty token keeps SSE connection alive without cluttering live view
-      // The frontend shows its own stunning animations during generation
-      sse('token', { t: '' });
-      sse('stage', { idx: 3, label: `🤖 ${label} generating${dots} (${elapsed.toFixed(0)}s)` });
-    };
-  };
+  // Emitters that feed the SSE protocol app.js already expects natively.
+  const emitCard     = (idx, total, card)   => sse('card', { idx, total, card });
+  const emitQuestion = (idx, total, q)      => sse('question', { idx, total, q: { ...q, id: idx + 1 } }).valueOf() || sse('q', { idx, total, q: { ...q, id: idx + 1 } });
+  const emitBranchCentral = (total, central, connections) => sse('branch', { idx: -1, total, branch: { name: '_central_', value: central, connections } });
+  const emitBranch   = (idx, total, branch) => sse('branch', { idx, total, branch });
 
   try {
     let result;
 
-    // ── Each branch below is fully independent — its own prompt, its own
-    //    generation function, its own validation. No cross-tool bleed. ──
     switch (opts.tool) {
 
       case 'notes': {
-        const notes = await generateNotes(message, opts, chunk => sse('token', { t: chunk }));
+        const notes = await streamProse(buildNotesPrompt(message, opts), chunk => sse('token', { t: chunk }), 'NOTES');
         result = assembleResult({ topic: message, opts, notes });
         break;
       }
 
       case 'summary': {
-        const notes = await generateSummary(message, opts, chunk => sse('token', { t: chunk }));
+        const notes = await streamProse(buildSummaryPrompt(message, opts), chunk => sse('token', { t: chunk }), 'SUMMARY');
         result = assembleResult({ topic: message, opts, notes });
         break;
       }
 
       case 'flashcards': {
         sse('stage', { idx: 1, label: '🃏 Generating your flashcards…' });
-        const fc = await generateFlashcards(message, opts, makeHeartbeatEmitter('Flashcards'));
-        // Emit individual card events so frontend can animate them appearing one-by-one
-        if (fc.flashcards?.length) {
-          sse('stage', { idx: 2, label: `🃏 Building ${fc.flashcards.length} flashcards…` });
-          for (let i = 0; i < fc.flashcards.length; i++) {
-            sse('card', { idx: i, total: fc.flashcards.length, card: fc.flashcards[i] });
-            await sleep(50);
-          }
-        }
-        result = assembleResult({ topic: fc.topic || message, opts, flashcards: fc });
+        const fc = await generateFlashcardsStreaming(message, opts, (idx, total, card) => emitCard(idx, total, card));
+        result = assembleResult({ topic: message, opts, flashcards: fc });
         break;
       }
 
       case 'quiz': {
         sse('stage', { idx: 1, label: '❓ Generating your quiz…' });
-        const q = await generateQuiz(message, opts, makeHeartbeatEmitter('Quiz'));
-        // Emit individual question events so frontend can animate them appearing
-        if (q.quiz_questions?.length) {
-          sse('stage', { idx: 2, label: `❓ Building ${q.quiz_questions.length} questions…` });
-          for (let i = 0; i < q.quiz_questions.length; i++) {
-            sse('q', { idx: i, total: q.quiz_questions.length, q: q.quiz_questions[i] });
-            await sleep(50);
-          }
-        }
-        result = assembleResult({ topic: q.topic || message, opts, quiz: q });
+        const q = await generateQuizStreaming(message, opts, (idx, total, question) => sse('q', { idx, total, q: question }));
+        result = assembleResult({ topic: message, opts, quiz: q });
         break;
       }
 
       case 'mindmap': {
         sse('stage', { idx: 1, label: '🗺️ Generating your mind map…' });
-        const mm = await generateMindmap(message, opts, makeHeartbeatEmitter('Mind map'));
-        // Emit individual branch events so frontend can animate the map growing
-        if (mm.mindmap?.branches?.length) {
-          sse('stage', { idx: 2, label: `🗺️ Growing ${mm.mindmap.branches.length} branches…` });
-          // Emit central node first
-          sse('branch', { idx: -1, total: mm.mindmap.branches.length, branch: { name: '_central_', value: mm.mindmap.central, connections: mm.mindmap.connections || [] } });
-          await sleep(60);
-          for (let i = 0; i < mm.mindmap.branches.length; i++) {
-            sse('branch', { idx: i, total: mm.mindmap.branches.length, branch: mm.mindmap.branches[i] });
-            await sleep(80);
-          }
-        }
-        result = assembleResult({ topic: mm.topic || message, opts, mindmap: mm });
+        let centralSent = false;
+        const mm = await generateMindmapStreaming(message, opts, (idx, total, branch, central) => {
+          if (!centralSent) { emitBranchCentral(total, central, []); centralSent = true; }
+          emitBranch(idx, total, branch);
+        });
+        result = assembleResult({ topic: message, opts, mindmap: mm });
         break;
       }
 
       case 'all': {
-        // Mega bundle: notes streams live; flashcards, quiz, and mindmap run as
-        // three SEPARATE lean JSON calls in parallel (not one bloated call).
-        // Each is independently retried; a failure in one does not sink the others.
-        const notesPromise = generateNotes(message, opts, chunk => sse('token', { t: chunk }));
-        const fcPromise     = generateFlashcards(message, opts).catch(err => { log.warn(`[${reqId}] mega flashcards failed: ${err.message}`); return null; });
-        const quizPromise   = generateQuiz(message, opts).catch(err => { log.warn(`[${reqId}] mega quiz failed: ${err.message}`); return null; });
-        const mmPromise     = generateMindmap(message, opts).catch(err => { log.warn(`[${reqId}] mega mindmap failed: ${err.message}`); return null; });
+        // Mega bundle: notes streams live token-by-token; flashcards, quiz,
+        // and mindmap each stream their own items live via the same batched
+        // engines used standalone — all four running in parallel.
+        const notesPromise = streamProse(buildNotesPrompt(message, opts), chunk => sse('token', { t: chunk }), 'NOTES');
+
+        const fcCountMega = Math.min(opts.cardCount, 12);
+        const qCountMega  = Math.min(opts.quizCount, 8);
+        const megaOpts    = { ...opts, cardCount: fcCountMega, quizCount: qCountMega };
+
+        const fcPromise = generateFlashcardsStreaming(message, megaOpts, (idx, total, card) => emitCard(idx, total, card))
+          .catch(err => { log.warn(`[${reqId}] mega flashcards failed: ${err.message}`); return null; });
+
+        const quizPromise = generateQuizStreaming(message, megaOpts, (idx, total, question) => sse('q', { idx, total, q: question }))
+          .catch(err => { log.warn(`[${reqId}] mega quiz failed: ${err.message}`); return null; });
+
+        let mmCentralSent = false;
+        const mmPromise = generateMindmapStreaming(message, opts, (idx, total, branch, central) => {
+          if (!mmCentralSent) { emitBranchCentral(total, central, []); mmCentralSent = true; }
+          emitBranch(idx, total, branch);
+        }).catch(err => { log.warn(`[${reqId}] mega mindmap failed: ${err.message}`); return null; });
 
         const [notes, fc, q, mm] = await Promise.all([notesPromise, fcPromise, quizPromise, mmPromise]);
 
-        // Emit individual card/q/branch events for live animation before final done
-        if (fc?.flashcards?.length) {
-          for (let i = 0; i < fc.flashcards.length; i++) {
-            sse('card', { idx: i, total: fc.flashcards.length, card: fc.flashcards[i] });
-            await sleep(40);
-          }
-        }
-        if (q?.quiz_questions?.length) {
-          for (let i = 0; i < q.quiz_questions.length; i++) {
-            sse('q', { idx: i, total: q.quiz_questions.length, q: q.quiz_questions[i] });
-            await sleep(40);
-          }
-        }
-        if (mm?.mindmap?.branches?.length) {
-          sse('branch', { idx: -1, total: mm.mindmap.branches.length, branch: { name: '_central_', value: mm.mindmap.central, connections: mm.mindmap.connections || [] } });
-          await sleep(40);
-          for (let i = 0; i < mm.mindmap.branches.length; i++) {
-            sse('branch', { idx: i, total: mm.mindmap.branches.length, branch: mm.mindmap.branches[i] });
-            await sleep(50);
-          }
-        }
-
-        if (!fc && !q && !mm) {
-          // Notes alone do not constitute a "Mega Bundle" — be honest about it
-          // rather than silently shipping a partial product as if it were complete.
-          if (!notes || notes.trim().length < 80) {
-            throw new Error('Mega bundle: all components failed across every model.');
-          }
+        if (!fc && !q && !mm && (!notes || notes.trim().length < 80)) {
+          throw new Error('Mega bundle: all components failed across every model.');
         }
 
         result = assembleResult({ topic: message, opts, notes, flashcards: fc, quiz: q, mindmap: mm });
@@ -971,31 +964,25 @@ module.exports = async function handler(req, res) {
       }
 
       default: {
-        const notes = await generateNotes(message, opts, chunk => sse('token', { t: chunk }));
+        const notes = await streamProse(buildNotesPrompt(message, opts), chunk => sse('token', { t: chunk }), 'NOTES');
         result = assembleResult({ topic: message, opts, notes });
       }
     }
 
     clearInterval(kap);
-    clearStages();
 
     result._duration_ms = Date.now() - startTime;
     result._request_id  = reqId;
     result.topic_fact    = buildTopicFact(message);
 
-    sse('stage', { idx: 4, label: '✅ Complete! All study materials ready.', done: true });
+    sse('stage', { idx: 4, label: '✅ Complete!', done: true });
     sse('done',  result);
 
     log.ok(`[${reqId}] ✅ COMPLETE — ${result._duration_ms}ms | tool:${opts.tool}`);
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'completed', result._duration_ms, sessionId).catch(() => {});
 
   } catch (fatal) {
-    // Lands here only when the active tool's content genuinely could not be
-    // produced by ANY model across all retry passes. We never fabricate
-    // filler content to paper over this — the user gets an honest signal
-    // instead of a broken or misleading "success".
     clearInterval(kap);
-    clearStages();
     log.error(`[${reqId}] FATAL (${opts.tool}): ${fatal.message}`);
     sse('error', { error: 'All AI models are currently busy. Please try again in a few seconds.', requestId: reqId });
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
