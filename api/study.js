@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTRA ROBUST (no fallback, max retries)
+// SAVOIRÉ AI v2.0 — api/study.js — SEQUENTIAL FALLBACK (fast & reliable)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -25,31 +25,21 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LISTS (free models, ordered by speed)
+// SECTION 2 — MODEL LISTS (only the 3 most powerful & free, ordered by speed)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── PHASE 1: STREAMING NOTES ────────────────────────────────────────────
 const MODELS_STREAM = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 50000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 50000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 50000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 52000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 52000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 52000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 52000, temp: 0.75 },
-  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 55000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 20000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 20000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 20000, temp: 0.75 },
 ];
 
 // ─── PHASE 2: STRUCTURED JSON (cards) ──────────────────────────────────
 const MODELS_CARDS = [
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 40000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 40000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 40000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 42000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 42000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 42000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 42000, temp: 0.30 },
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 45000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 25000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 25000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 25000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -281,340 +271,261 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (aggressive retries, no fallback)
+// SECTION 7 — PHASE 1: STREAM NOTES (sequential fallback, fast start)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function streamNotes(prompt, onChunk, tool) {
-  // ── Race with very low threshold (10 chars) ──
-  let settled = false;
-  let activeWinnerName = null;
-
-  const attemptModel = (model, startDelay) => new Promise(async (resolve, reject) => {
-    if (startDelay) await sleep(startDelay);
-    if (settled) { reject(new Error('already settled')); return; }
-
-    const name  = model.id.split('/').pop().replace(':free', '');
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-    const t0    = Date.now();
-    let myChunks = [];
-    let myFull   = '';
-
-    try {
-      log.info(`P1 → ${name} | tool:${tool}`);
-      const res = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer':  HTTP_REFERER,
-          'X-Title':       APP_TITLE,
-        },
-        body: JSON.stringify({
-          model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
-          stream: true, messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        if (res.status === 401 || res.status === 403) { reject(new Error('API_KEY_INVALID')); return; }
-        // For 429 (rate limit) or 503, we throw a specific error so retry logic can handle
-        if (res.status === 429 || res.status === 503) {
-          reject(new Error(`${name}: rate limited or busy (${res.status})`));
-        } else {
-          reject(new Error(`${name}: HTTP ${res.status} ${trunc(txt, 60)}`));
-        }
-        return;
-      }
-
-      const reader  = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let lineBuf = '';
-
-      while (true) {
-        if (settled && activeWinnerName !== name) {
-          try { reader.cancel(); } catch {}
-          reject(new Error(`${name}: lost race to ${activeWinnerName}`));
-          return;
-        }
-        const { done, value } = await reader.read();
-        if (done) break;
-        lineBuf += decoder.decode(value, { stream: true });
-        const lines = lineBuf.split('\n');
-        lineBuf = lines.pop() || '';
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]' || !raw) continue;
-          try {
-            const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-            if (delta) {
-              myFull += delta;
-              if (!settled) {
-                myChunks.push(delta);
-                if (myFull.length > 10) { // very fast win
-                  settled = true;
-                  activeWinnerName = name;
-                  log.ok(`P1 🏆 ${name} WON (${myFull.length} chars)`);
-                  for (const c of myChunks) onChunk(c);
-                  myChunks = [];
-                }
-              } else if (activeWinnerName === name) {
-                onChunk(delta);
-              }
-            }
-          } catch { /* ignore */ }
-        }
-      }
-
-      if (!settled) {
-        if (myFull.trim().length >= 8) {
-          settled = true;
-          activeWinnerName = name;
-          for (const c of myChunks) onChunk(c);
-          myChunks = [];
-          log.ok(`P1 🏆 ${name} WON after stream end (${myFull.length} chars)`);
-        } else {
-          reject(new Error(`${name}: too short (${myFull.length})`));
-          return;
-        }
-      }
-
-      if (activeWinnerName !== name) {
-        reject(new Error(`${name}: completed but lost race to ${activeWinnerName}`));
-        return;
-      }
-
-      log.ok(`P1 ✅ ${name} | ${myFull.length}ch | ${Date.now()-t0}ms | WINNER`);
-      resolve({ name, full: myFull });
-
-    } catch (err) {
-      clearTimeout(timer);
-      if (err.message === 'API_KEY_INVALID') { reject(err); return; }
-      const reason = err.name === 'AbortError' ? `${name} timed out` : `${name}: ${err.message}`;
-      reject(new Error(reason));
-    }
-  });
-
-  // ── Execute race with exponential backoff for retries ──
-  const maxAttempts = 5;
+  // Try each model sequentially, with retries on failure
+  const maxAttempts = 3; // total attempts across all models
   let attempt = 0;
   let lastError = null;
 
   while (attempt < maxAttempts) {
     attempt++;
-    const delay = (attempt === 1) ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 16000);
-    if (delay > 0) {
+    if (attempt > 1) {
+      const delay = Math.min(1000 * Math.pow(2, attempt - 2), 4000);
       log.info(`P1 retry ${attempt} waiting ${delay}ms...`);
       await sleep(delay);
     }
 
-    try {
-      const result = await new Promise((resolve, reject) => {
-        let settledCount = 0;
-        let wonAlready    = false;
-        const errors      = [];
-        const total       = MODELS_STREAM.length;
+    // Try each model in order
+    for (const model of MODELS_STREAM) {
+      const name = model.id.split('/').pop().replace(':free', '');
+      log.info(`P1 trying ${name} (attempt ${attempt})`);
 
-        MODELS_STREAM.forEach((model, i) => {
-          attemptModel(model, i * 300).then(result => {
-            if (!wonAlready) {
-              wonAlready = true;
-              resolve(result.full);
-            }
-          }).catch(err => {
-            errors.push(err);
-            settledCount++;
-            if (err.message === 'API_KEY_INVALID' && !wonAlready) {
-              wonAlready = true;
-              reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
-              return;
-            }
-            if (settledCount === total && !wonAlready) {
-              reject(new Error(`All models failed on attempt ${attempt}: ${errors.map(e=>e.message).join(' | ')}`));
-            }
-          });
-        });
-      });
-      return result; // success
-    } catch (err) {
-      lastError = err;
-      log.warn(`P1 attempt ${attempt} failed: ${err.message}`);
-      // If it's a key error, don't retry
-      if (err.message.includes('API_KEY')) throw err;
-      // Continue to next attempt
+      try {
+        const result = await tryStreamModel(model, prompt, onChunk, tool);
+        log.ok(`P1 ✅ ${name} succeeded`);
+        return result; // success
+      } catch (err) {
+        log.warn(`P1 ${name} failed: ${err.message}`);
+        lastError = err;
+        // Continue to next model
+      }
     }
+    // If all models failed in this attempt, retry the whole loop
   }
 
-  // All attempts failed
+  // All attempts exhausted
   throw new Error(`Notes generation failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'unknown'}`);
 }
 
+async function tryStreamModel(model, prompt, onChunk, tool) {
+  const name  = model.id.split('/').pop().replace(':free', '');
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+  const t0    = Date.now();
+  let myFull  = '';
+  let streamStarted = false;
+
+  try {
+    const res = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
+      },
+      body: JSON.stringify({
+        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
+        stream: true, messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+      if (res.status === 429 || res.status === 503) throw new Error(`rate limited or busy (${res.status})`);
+      throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
+    }
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let lineBuf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      lineBuf += decoder.decode(value, { stream: true });
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]' || !raw) continue;
+        try {
+          const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+          if (delta) {
+            myFull += delta;
+            if (!streamStarted) {
+              streamStarted = true;
+              log.ok(`P1 ${name} started streaming (${myFull.length} chars)`);
+            }
+            onChunk(delta);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+
+    if (myFull.trim().length < 8) {
+      throw new Error(`too short (${myFull.length} chars)`);
+    }
+
+    log.ok(`P1 ${name} done (${myFull.length} chars) in ${Date.now()-t0}ms`);
+    return myFull;
+
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.message === 'API_KEY_INVALID') throw err;
+    const reason = err.name === 'AbortError' ? 'timed out' : err.message;
+    throw new Error(`${name}: ${reason}`);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (parallel race with retries)
+// SECTION 8 — PHASE 2: FETCH CARDS (sequential fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCards(prompt, tool) {
-  const attemptModel = async (model) => {
-    const name  = model.id.split('/').pop().replace(':free', '');
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-    const t0    = Date.now();
-
-    try {
-      const res = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer':  HTTP_REFERER,
-          'X-Title':       APP_TITLE,
-        },
-        body: JSON.stringify({
-          model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.30,
-          stream: false, messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-        if (res.status === 429 || res.status === 503) throw new Error(`rate limited or busy (${res.status})`);
-        throw new Error(`${name}: HTTP ${res.status}`);
-      }
-
-      const data    = await res.json();
-      let   content = data?.choices?.[0]?.message?.content?.trim();
-      if (!content || content.length < 20) throw new Error(`${name}: empty response`);
-
-      content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-      const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-      if (jS === -1 || jE <= jS) throw new Error(`${name}: no JSON object`);
-      let jsonStr = content.slice(jS, jE + 1);
-
-      let parsed;
-      try { parsed = JSON.parse(jsonStr); }
-      catch {
-        try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-        catch {
-          try {
-            parsed = JSON.parse(
-              jsonStr.replace(/,(\s*[}\]])/g, '$1')
-                     .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                     .replace(/:\s*\'([^\']*)\'/g, ': "$1"')
-            );
-          }
-          catch {
-            try {
-              parsed = JSON.parse(
-                jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
-                       .replace(/,(\s*[}\]])/g, '$1')
-                       .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-              );
-            }
-            catch (e4) { throw new Error(`${name}: JSON repair failed - ${e4.message.slice(0,60)}`); }
-          }
-        }
-      }
-
-      // Fix quiz correct_answer mismatches
-      if (Array.isArray(parsed.quiz_questions)) {
-        parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-          q.id = q.id || i + 1;
-          if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-            const lo  = q.correct_answer.toLowerCase();
-            const fix = q.options.find(o => o.toLowerCase() === lo)
-                     || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
-                     || q.options[0];
-            if (fix) q.correct_answer = fix;
-          }
-          return q;
-        });
-      }
-
-      if (Array.isArray(parsed.flashcards)) {
-        parsed.flashcards = parsed.flashcards
-          .filter(c => (c.front || c.question) && (c.back || c.answer))
-          .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
-      }
-
-      // Validation
-      const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
-      const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-      const hasMm = parsed.mindmap?.branches?.length >= 2;
-      const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
-      const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
-                  : tool === 'quiz'                                    ? hasQ
-                  : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
-                  : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
-                  : hasKc;
-      if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
-
-      log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
-      return parsed;
-
-    } catch (err) {
-      clearTimeout(timer);
-      if (err.message === 'API_KEY_INVALID') throw err;
-      const reason = err.name === 'AbortError' ? `${name} timed out` : err.message;
-      log.warn(`P2 ✗ ${reason}`);
-      throw new Error(reason);
-    }
-  };
-
-  // ── Manual race with retries ──
-  const maxAttempts = 3;
+  const maxAttempts = 2; // try each model once, then retry all once
   let attempt = 0;
   let lastError = null;
 
   while (attempt < maxAttempts) {
     attempt++;
-    const delay = (attempt === 1) ? 0 : Math.min(2000 * Math.pow(2, attempt - 2), 8000);
-    if (delay > 0) {
+    if (attempt > 1) {
+      const delay = 2000;
       log.info(`P2 retry ${attempt} waiting ${delay}ms...`);
       await sleep(delay);
     }
 
-    try {
-      const result = await new Promise((resolve, reject) => {
-        let settledCount = 0;
-        let wonAlready   = false;
-        const errors     = [];
-        const total      = MODELS_CARDS.length;
+    for (const model of MODELS_CARDS) {
+      const name = model.id.split('/').pop().replace(':free', '');
+      log.info(`P2 trying ${name} (attempt ${attempt})`);
 
-        MODELS_CARDS.forEach(model => {
-          attemptModel(model).then(result => {
-            if (!wonAlready) {
-              wonAlready = true;
-              resolve(result);
-            }
-          }).catch(err => {
-            errors.push(err);
-            settledCount++;
-            if (err.message === 'API_KEY_INVALID' && !wonAlready) {
-              wonAlready = true;
-              reject(new Error('OPENROUTER_API_KEY is invalid or missing.'));
-              return;
-            }
-            if (settledCount === total && !wonAlready) {
-              reject(new Error(`All models failed on attempt ${attempt}: ${errors.map(e=>e.message).join(' | ')}`));
-            }
-          });
-        });
-      });
-      return result;
-    } catch (err) {
-      lastError = err;
-      log.warn(`P2 attempt ${attempt} failed: ${err.message}`);
-      if (err.message.includes('API_KEY')) throw err;
+      try {
+        const result = await tryCardModel(model, prompt, tool);
+        log.ok(`P2 ✅ ${name} succeeded`);
+        return result;
+      } catch (err) {
+        log.warn(`P2 ${name} failed: ${err.message}`);
+        lastError = err;
+      }
     }
   }
 
   throw new Error(`Cards generation failed after ${maxAttempts} attempts. Last error: ${lastError?.message || 'unknown'}`);
+}
+
+async function tryCardModel(model, prompt, tool) {
+  const name  = model.id.split('/').pop().replace(':free', '');
+  const ctrl  = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+  const t0    = Date.now();
+
+  try {
+    const res = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
+      },
+      body: JSON.stringify({
+        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.30,
+        stream: false, messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+      if (res.status === 429 || res.status === 503) throw new Error(`rate limited or busy (${res.status})`);
+      throw new Error(`HTTP ${res.status} ${trunc(txt, 60)}`);
+    }
+
+    const data    = await res.json();
+    let   content = data?.choices?.[0]?.message?.content?.trim();
+    if (!content || content.length < 20) throw new Error('empty response');
+
+    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+    const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+    if (jS === -1 || jE <= jS) throw new Error('no JSON object');
+    let jsonStr = content.slice(jS, jE + 1);
+
+    let parsed;
+    try { parsed = JSON.parse(jsonStr); }
+    catch {
+      try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+      catch {
+        try {
+          parsed = JSON.parse(
+            jsonStr.replace(/,(\s*[}\]])/g, '$1')
+                   .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                   .replace(/:\s*\'([^\']*)\'/g, ': "$1"')
+          );
+        }
+        catch {
+          try {
+            parsed = JSON.parse(
+              jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+                     .replace(/,(\s*[}\]])/g, '$1')
+                     .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+            );
+          }
+          catch (e4) { throw new Error(`JSON repair failed - ${e4.message.slice(0,60)}`); }
+        }
+      }
+    }
+
+    // Fix quiz correct_answer mismatches
+    if (Array.isArray(parsed.quiz_questions)) {
+      parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+        q.id = q.id || i + 1;
+        if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+          const lo  = q.correct_answer.toLowerCase();
+          const fix = q.options.find(o => o.toLowerCase() === lo)
+                   || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
+                   || q.options[0];
+          if (fix) q.correct_answer = fix;
+        }
+        return q;
+      });
+    }
+
+    if (Array.isArray(parsed.flashcards)) {
+      parsed.flashcards = parsed.flashcards
+        .filter(c => (c.front || c.question) && (c.back || c.answer))
+        .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+    }
+
+    // Validation
+    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
+    const hasMm = parsed.mindmap?.branches?.length >= 2;
+    const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
+    const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
+                : tool === 'quiz'                                    ? hasQ
+                : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
+                : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
+                : hasKc;
+    if (!valid) throw new Error(`validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
+
+    log.ok(`P2 ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+    return parsed;
+
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.message === 'API_KEY_INVALID') throw err;
+    const reason = err.name === 'AbortError' ? 'timed out' : err.message;
+    throw new Error(`${name}: ${reason}`);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -708,7 +619,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — MAIN HANDLER (ultra‑robust, no fallback)
+// SECTION 12 — MAIN HANDLER (fast final output, no fallback)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -774,7 +685,7 @@ module.exports = async function handler(req, res) {
 
   const sse = makeSSE(res);
 
-  // Keep-alive
+  // Keep-alive ping
   const kap = setInterval(() => {
     if (res.writableEnded) { clearInterval(kap); return; }
     try {
@@ -801,22 +712,21 @@ module.exports = async function handler(req, res) {
   let p2Ticker = null;
 
   try {
-    // ── PHASE 1: STREAM NOTES with maximum retries ──
+    // ── PHASE 1: STREAM NOTES (sequential fallback) ──
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
     const notesPrompt = buildNotesPrompt(message, opts);
 
-    // streamNotes now handles its own retries (5 attempts)
     notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
     p1ok = true;
     log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
 
-    // ── PHASE 2: CARDS (started in parallel) ──
+    // ── PHASE 2: CARDS (parallel, but we'll start it now) ──
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
 
     let cardsData = null;
     let p2ok = false;
 
-    // Launch cards generation with its own retries (3 attempts)
+    // Start cards generation in parallel
     const cardsPromise = (async () => {
       try {
         if (opts.tool === 'all') {
@@ -855,10 +765,10 @@ module.exports = async function handler(req, res) {
       }
     })();
 
-    // Wait for cards with a generous timeout (35 seconds after notes done)
+    // Wait for cards with a generous timeout (30 seconds)
     const cardsResult = await Promise.race([
       cardsPromise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Cards generation timed out after 35s')), 35000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Cards generation timed out after 30s')), 30000))
     ]);
 
     cardsData = cardsResult;
