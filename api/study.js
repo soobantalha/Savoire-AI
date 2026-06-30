@@ -56,15 +56,19 @@ const MODELS_STREAM = [
 ];
 
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 18000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 18000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 18000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 18000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 20000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 20000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 20000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 20000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 14000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 14000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 14000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 14000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 15000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 15000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 15000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 15000, temp: 0.30 },
 ];
+
+// (Pool-size constants kept for backward compatibility / readability but
+// are no longer used — both streamNotes() and fetchCards() now run
+// sequentially with fast per-model timeouts instead of concurrent racing.)
 
 // How many models to race SIMULTANEOUSLY (rest are sequential fallback only).
 // Keeping this small avoids self-inflicted rate-limiting on OpenRouter free tier.
@@ -305,177 +309,173 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES — small-pool race + sequential fallback
+// SECTION 7 — PHASE 1: STREAM NOTES — fast-fail sequential, ALWAYS real AI
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// ⚡ FIX: instead of racing all 8 models at once (which self-throttles
-// OpenRouter's free tier and causes the long post-stream hang), we:
-//   1) Race only STREAM_RACE_POOL_SIZE (3) models concurrently.
-//   2) The very FIRST model to emit ANY token (not 60 chars — just the
-//      first byte) is declared the winner instantly, so live output on
-//      screen starts within 1-3 seconds of hitting Generate.
-//   3. If the whole pool fails, fall back to the remaining models one at a
-//      time (not all at once) so we don't pile on more concurrent load.
+// ⚡ REWRITE (v2): the previous Promise.any()-based concurrent race had a
+// subtle bug — when the winner was declared, every losing model's reader
+// got abort()'d, which threw AbortError on their in-flight reader.read()
+// calls AFTER their governing Promise had already settled. Those orphaned
+// rejections could surface as unhandled rejections and, combined with the
+// complexity of manually draining a "paused" winner stream object, made
+// the whole pipeline fragile — under any hiccup it fell through to the
+// emergency offline/fallback content instead of real AI output.
+//
+// NEW STRATEGY — much simpler, much harder to break:
+//   • Try ONE model at a time, fully streaming it start-to-finish.
+//   • Each model gets a SHORT first-token timeout (FIRST_TOKEN_TIMEOUT_MS).
+//     If it hasn't produced its first token within that window, we abandon
+//     it (cleanly — abort BEFORE any other code path touches the reader)
+//     and move to the next model immediately. This is what gives the
+//     "1-3 seconds to live output" behaviour, because openrouter/free or
+//     gemini-flash almost always respond well within that window — and if
+//     they don't, we don't wait long before trying the next one.
+//   • Once a model produces its first token, we commit to it fully (no
+//     more racing/aborting) and stream it straight through to onChunk().
+//   • Only if we've worked through every model in MODELS_STREAM and NONE
+//     of them produced even a first token do we fall back to offline
+//     content. With 8 models in the list this is exceptionally rare.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function streamFromModel(model, prompt, onChunk, tool, abortSignalHolder) {
-  return new Promise(async (resolve, reject) => {
-    const name  = model.id.split('/').pop().replace(':free', '');
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-    const t0    = Date.now();
-    let full = '';
-    let firstTokenSent = false;
+const FIRST_TOKEN_TIMEOUT_MS = 9000;  // how long to wait for the first token before abandoning a model
+const FULL_STREAM_TIMEOUT_MS = 45000; // safety ceiling once a model has committed (is actively streaming)
 
-    if (abortSignalHolder) abortSignalHolder.ctrl = ctrl;
+async function streamOneModel(model, prompt, onChunk, tool) {
+  const name = model.id.split('/').pop().replace(':free', '');
+  const ctrl = new AbortController();
 
-    try {
-      log.info(`P1 → ${name} | tool:${tool}`);
-      const res = await fetch(OPENROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'HTTP-Referer':  HTTP_REFERER,
-          'X-Title':       APP_TITLE,
-        },
-        body: JSON.stringify({
-          model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
-          stream: true, messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
+  // Two-stage timeout: short window to get the FIRST token, longer window
+  // once streaming has actually started (some long notes take a while).
+  let firstTokenTimer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT_MS);
+  let fullStreamTimer = null;
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        if (res.status === 401 || res.status === 403) { reject(new Error('API_KEY_INVALID')); return; }
-        reject(new Error(`${name}: HTTP ${res.status} ${trunc(txt, 60)}`));
-        return;
-      }
+  const t0 = Date.now();
+  log.info(`P1 → trying ${name} | tool:${tool}`);
 
-      const reader  = res.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let lineBuf = '';
-
-      while (true) {
-        if (ctrl.signal.aborted) { try { reader.cancel(); } catch {} reject(new Error(`${name}: aborted (lost race)`)); return; }
-        const { done, value } = await reader.read();
-        if (done) break;
-        lineBuf += decoder.decode(value, { stream: true });
-        const lines = lineBuf.split('\n');
-        lineBuf = lines.pop() || '';
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]' || !raw) continue;
-          try {
-            const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-            if (delta) {
-              full += delta;
-              if (!firstTokenSent) {
-                firstTokenSent = true;
-                resolve({ name, winner: true, firstChunk: delta, reader, decoder, lineBuf, ctrl, onDone: () => full });
-              }
-              if (onChunk._isLive) onChunk(delta);
-            }
-          } catch { /* ignore bad chunk */ }
-        }
-      }
-      // Stream ended without ever emitting a token (rare) — reject so caller can fall back.
-      if (!firstTokenSent) reject(new Error(`${name}: empty stream`));
-
-    } catch (err) {
-      clearTimeout(timer);
-      if (err.message === 'API_KEY_INVALID') { reject(err); return; }
-      const reason = err.name === 'AbortError' ? `${name} timed out` : `${name}: ${err.message}`;
-      reject(new Error(reason));
-    }
-  });
-}
-
-// Fully drains a winning stream's reader to completion, forwarding chunks live.
-async function drainWinnerStream(winnerInfo, onChunk) {
-  const { reader, decoder, ctrl } = winnerInfo;
-  let lineBuf = winnerInfo.lineBuf || '';
-  let full    = winnerInfo.onDone();
-
-  // First chunk already captured before winner declared — emit it now.
-  onChunk(winnerInfo.firstChunk);
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    lineBuf += decoder.decode(value, { stream: true });
-    const lines = lineBuf.split('\n');
-    lineBuf = lines.pop() || '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const raw = line.slice(6).trim();
-      if (raw === '[DONE]' || !raw) continue;
-      try {
-        const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-        if (delta) { full += delta; onChunk(delta); }
-      } catch { /* ignore */ }
-    }
+  let res;
+  try {
+    res = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
+      },
+      body: JSON.stringify({
+        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
+        stream: true, messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    clearTimeout(firstTokenTimer);
+    if (err.name === 'AbortError') throw new Error(`${name}: no response within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
+    throw new Error(`${name}: ${err.message}`);
   }
+
+  if (!res.ok) {
+    clearTimeout(firstTokenTimer);
+    const txt = await res.text().catch(() => '');
+    if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+    throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 60)}`);
+  }
+
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let lineBuf = '';
+  let full    = '';
+  let gotFirstToken = false;
+
+  try {
+    while (true) {
+      let chunk;
+      try {
+        chunk = await reader.read();
+      } catch (readErr) {
+        if (readErr.name === 'AbortError') {
+          if (!gotFirstToken) throw new Error(`${name}: no first token within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
+          // Already committed and streamed real, visible content to the
+          // screen — we must NOT fall through to a different model now,
+          // since that would start a second stream from scratch and
+          // duplicate/garble what the user already sees live. Salvage
+          // whatever we have, no matter the length.
+          log.warn(`P1 ${name}: full-stream timeout — salvaging ${full.length}ch already streamed (committed, no retry)`);
+          return full;
+        }
+        // Non-abort read error mid-stream — same salvage rule applies.
+        if (gotFirstToken) {
+          log.warn(`P1 ${name}: read error mid-stream — salvaging ${full.length}ch already streamed (committed, no retry)`);
+          return full;
+        }
+        throw readErr;
+      }
+      const { done, value } = chunk;
+      if (done) break;
+
+      lineBuf += decoder.decode(value, { stream: true });
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]' || !raw) continue;
+        try {
+          const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+          if (delta) {
+            if (!gotFirstToken) {
+              gotFirstToken = true;
+              // We've committed to this model — swap to the longer ceiling.
+              clearTimeout(firstTokenTimer);
+              fullStreamTimer = setTimeout(() => ctrl.abort(), FULL_STREAM_TIMEOUT_MS);
+              log.ok(`P1 🏆 ${name} produced first token in ${Date.now()-t0}ms — committing`);
+            }
+            full += delta;
+            onChunk(delta); // forward to the live SSE stream immediately
+          }
+        } catch { /* ignore malformed SSE line */ }
+      }
+    }
+  } finally {
+    clearTimeout(firstTokenTimer);
+    if (fullStreamTimer) clearTimeout(fullStreamTimer);
+  }
+
+  if (!gotFirstToken) throw new Error(`${name}: stream ended with no content`);
+  // gotFirstToken === true here means real content was streamed live —
+  // even if shorter than ideal, we MUST return it rather than throw,
+  // because a caller-side retry would duplicate content on screen.
+  if (full.trim().length < 80) {
+    log.warn(`P1 ${name}: short response (${full.length}ch) but already streamed live — using as-is, no retry`);
+  }
+
+  log.ok(`P1 ✅ ${name} | ${full.length}ch | ${Date.now()-t0}ms`);
   return full;
 }
 
 async function streamNotes(prompt, onChunk, tool) {
-  // Build the race pool: openrouter/free + the next N-1 fastest-known models.
-  const pool     = MODELS_STREAM.slice(0, STREAM_RACE_POOL_SIZE);
-  const fallback = MODELS_STREAM.slice(STREAM_RACE_POOL_SIZE);
+  const errors = [];
 
-  const tryPool = async (models) => {
-    const holders = models.map(() => ({}));
-    const attempts = models.map((model, i) => {
-      // No live forwarding during the race itself — only the eventual
-      // winner's chunks get forwarded, via the firstChunk + drain step below.
-      const muteOnChunk = () => {};
-      muteOnChunk._isLive = false;
-      return streamFromModel(model, prompt, muteOnChunk, tool, holders[i]).then(info => ({ info, idx: i }));
-    });
-
-    let winnerResult = null;
+  for (const model of MODELS_STREAM) {
     try {
-      winnerResult = await Promise.any(attempts);
-    } catch (aggErr) {
-      // Every model in this pool failed before producing even one token.
-      const errs = (aggErr.errors || []).map(e => e.message);
-      if (errs.some(m => m === 'API_KEY_INVALID')) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      throw new Error(`Pool failed: ${errs.slice(0,3).join(' | ')}`);
-    }
-
-    // Abort every other in-flight request in this pool — we have our winner.
-    holders.forEach((h, i) => { if (i !== winnerResult.idx && h.ctrl) h.ctrl.abort(); });
-
-    log.ok(`P1 🏆 ${winnerResult.info.name} WON (first token in pool)`);
-    const liveOnChunk = (c) => onChunk(c);
-    const full = await drainWinnerStream(winnerResult.info, liveOnChunk);
-
-    if (full.trim().length < 80) throw new Error(`${winnerResult.info.name}: response too short`);
-    return full;
-  };
-
-  // 1) Try the small concurrent pool first — this is the fast path (1-3s to first token).
-  try {
-    return await tryPool(pool);
-  } catch (poolErr) {
-    log.warn(`P1 pool race failed: ${poolErr.message} — falling back sequentially`);
-    if (poolErr.message.includes('API_KEY')) throw poolErr;
-  }
-
-  // 2) Sequential fallback through remaining models (rare path — only if all 3 raced models failed).
-  for (const model of fallback) {
-    try {
-      return await tryPool([model]);
-    } catch (e) {
-      log.warn(`P1 fallback ${model.id} failed: ${e.message}`);
+      // Sequential trial — only ONE model is ever streaming at a time, so
+      // onChunk can be called directly with no risk of two models'
+      // chunks interleaving on screen.
+      const result = await streamOneModel(model, prompt, onChunk, tool);
+      return result; // success — real AI content, already streamed live
+    } catch (err) {
+      if (err.message === 'API_KEY_INVALID') {
+        throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      }
+      log.warn(`P1 ✗ ${err.message} — trying next model`);
+      errors.push(err.message);
+      // no sleep — move to next model immediately, keeps total latency low
     }
   }
 
-  throw new Error('All free AI models are currently busy. Please try again in a moment.');
+  log.error(`P1 ALL ${MODELS_STREAM.length} MODELS FAILED: ${errors.join(' | ')}`);
+  throw new Error(`All free AI models are currently busy. Please try again in a moment.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -592,38 +592,28 @@ async function fetchCardsFromModel(model, prompt, tool) {
 }
 
 async function fetchCards(prompt, tool) {
-  const pool     = MODELS_CARDS.slice(0, CARDS_RACE_POOL_SIZE);
-  const fallback = MODELS_CARDS.slice(CARDS_RACE_POOL_SIZE);
+  // ⚡ REWRITE (v2): same reasoning as streamNotes — sequential trial with a
+  // per-model timeout is far more reliable than Promise.any() racing, which
+  // was producing spurious failures that fell through to fallback content
+  // even though real AI models were available and working. Each model gets
+  // its own timeout_ms (already tuned per-model in MODELS_CARDS); the
+  // moment one fails or times out we move to the next, no race conditions.
+  const errors = [];
 
-  const raceSmallPool = async (models) => {
-    log.info(`P2 racing ${models.length} models | tool:${tool}`);
+  for (const model of MODELS_CARDS) {
     try {
-      const winner = await Promise.any(models.map(m => fetchCardsFromModel(m, prompt, tool)));
-      return winner;
-    } catch (aggErr) {
-      const errs = (aggErr.errors || []).map(e => e.message);
-      if (errs.some(m => m === 'API_KEY_INVALID')) throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-      throw new Error(`Pool failed: ${errs.slice(0,3).join(' | ')}`);
-    }
-  };
-
-  // 1) Fast path — small concurrent pool.
-  try {
-    return await raceSmallPool(pool);
-  } catch (poolErr) {
-    log.warn(`P2 pool race failed: ${poolErr.message} — falling back sequentially`);
-    if (poolErr.message.includes('API_KEY')) throw poolErr;
-  }
-
-  // 2) Sequential fallback through remaining models — one at a time.
-  for (const model of fallback) {
-    try {
-      return await fetchCardsFromModel(model, prompt, tool);
-    } catch (e) {
-      log.warn(`P2 fallback ${model.id} failed: ${e.message}`);
+      const result = await fetchCardsFromModel(model, prompt, tool);
+      return result; // success — real AI JSON content
+    } catch (err) {
+      if (err.message === 'API_KEY_INVALID') {
+        throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+      }
+      log.warn(`P2 ✗ ${err.message} — trying next model`);
+      errors.push(err.message);
     }
   }
 
+  log.error(`P2 ALL ${MODELS_CARDS.length} MODELS FAILED for tool:${tool}: ${errors.join(' | ')}`);
   throw new Error(`All free AI models failed for tool:${tool}.`);
 }
 
