@@ -56,14 +56,14 @@ const MODELS_STREAM = [
 ];
 
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 14000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 14000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 14000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 14000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 15000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 15000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 15000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 15000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 22000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 22000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
 ];
 
 // (Pool-size constants kept for backward compatibility / readability but
@@ -337,15 +337,15 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 //     content. With 8 models in the list this is exceptionally rare.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 9000;  // how long to wait for the first token before abandoning a model
-const FULL_STREAM_TIMEOUT_MS = 45000; // safety ceiling once a model has committed (is actively streaming)
+const FIRST_TOKEN_TIMEOUT_MS = 16000; // generous — free-tier models can be slow to start (cold queues)
+const FULL_STREAM_TIMEOUT_MS = 60000; // safety ceiling once a model has committed (long notes can take a while)
 
 async function streamOneModel(model, prompt, onChunk, tool) {
   const name = model.id.split('/').pop().replace(':free', '');
   const ctrl = new AbortController();
 
-  // Two-stage timeout: short window to get the FIRST token, longer window
-  // once streaming has actually started (some long notes take a while).
+  // Two-stage timeout: longer window to get the FIRST token (free models can
+  // be slow to start), longer-still window once streaming has begun.
   let firstTokenTimer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT_MS);
   let fullStreamTimer = null;
 
@@ -371,14 +371,18 @@ async function streamOneModel(model, prompt, onChunk, tool) {
   } catch (err) {
     clearTimeout(firstTokenTimer);
     if (err.name === 'AbortError') throw new Error(`${name}: no response within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
-    throw new Error(`${name}: ${err.message}`);
+    throw new Error(`${name}: fetch failed — ${err.message}`);
   }
 
   if (!res.ok) {
     clearTimeout(firstTokenTimer);
     const txt = await res.text().catch(() => '');
+    // Log the FULL error body so the real cause (rate limit, model down,
+    // bad key, content policy, etc) is visible in server logs instead of
+    // being silently swallowed.
+    log.error(`P1 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
     if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-    throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 60)}`);
+    throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
   }
 
   const reader  = res.body.getReader();
@@ -457,20 +461,31 @@ async function streamOneModel(model, prompt, onChunk, tool) {
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
 
-  for (const model of MODELS_STREAM) {
-    try {
-      // Sequential trial — only ONE model is ever streaming at a time, so
-      // onChunk can be called directly with no risk of two models'
-      // chunks interleaving on screen.
-      const result = await streamOneModel(model, prompt, onChunk, tool);
-      return result; // success — real AI content, already streamed live
-    } catch (err) {
-      if (err.message === 'API_KEY_INVALID') {
-        throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+  // Two full passes through the model list. Free-tier endpoints often have
+  // transient hiccups (momentary 429s, cold-start timeouts) that clear up
+  // within a few seconds — a single pass through 8 models can fail on
+  // bad luck alone, so we loop the whole list twice before ever falling
+  // back to static content. This still completes fast because failures
+  // are detected quickly (FIRST_TOKEN_TIMEOUT_MS) and most passes succeed
+  // on pass 1.
+  for (let pass = 1; pass <= 2; pass++) {
+    for (const model of MODELS_STREAM) {
+      try {
+        // Sequential trial — only ONE model is ever streaming at a time, so
+        // onChunk can be called directly with no risk of two models'
+        // chunks interleaving on screen.
+        const result = await streamOneModel(model, prompt, onChunk, tool);
+        return result; // success — real AI content, already streamed live
+      } catch (err) {
+        if (err.message === 'API_KEY_INVALID') {
+          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+        }
+        log.warn(`P1 [pass ${pass}] ✗ ${err.message} — trying next model`);
+        errors.push(`[pass${pass}] ${err.message}`);
+        // Brief pause on rate-limit errors specifically — a fixed model
+        // that's just momentarily throttled often works again in ~1.5s.
+        if (/HTTP 429/.test(err.message)) await sleep(1500);
       }
-      log.warn(`P1 ✗ ${err.message} — trying next model`);
-      errors.push(err.message);
-      // no sleep — move to next model immediately, keeps total latency low
     }
   }
 
@@ -506,8 +521,10 @@ async function fetchCardsFromModel(model, prompt, tool) {
     clearTimeout(timer);
 
     if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      log.error(`P2 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
       if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-      throw new Error(`${name}: HTTP ${res.status}`);
+      throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
     }
 
     const data    = await res.json();
@@ -600,20 +617,26 @@ async function fetchCards(prompt, tool) {
   // moment one fails or times out we move to the next, no race conditions.
   const errors = [];
 
-  for (const model of MODELS_CARDS) {
-    try {
-      const result = await fetchCardsFromModel(model, prompt, tool);
-      return result; // success — real AI JSON content
-    } catch (err) {
-      if (err.message === 'API_KEY_INVALID') {
-        throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+  // Two full passes — same reasoning as streamNotes: transient hiccups on a
+  // single pass shouldn't trigger fallback content when retrying usually
+  // succeeds within seconds.
+  for (let pass = 1; pass <= 2; pass++) {
+    for (const model of MODELS_CARDS) {
+      try {
+        const result = await fetchCardsFromModel(model, prompt, tool);
+        return result; // success — real AI JSON content
+      } catch (err) {
+        if (err.message === 'API_KEY_INVALID') {
+          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
+        }
+        log.warn(`P2 [pass ${pass}] ✗ ${err.message} — trying next model`);
+        errors.push(`[pass${pass}] ${err.message}`);
+        if (/HTTP 429/.test(err.message)) await sleep(1500);
       }
-      log.warn(`P2 ✗ ${err.message} — trying next model`);
-      errors.push(err.message);
     }
   }
 
-  log.error(`P2 ALL ${MODELS_CARDS.length} MODELS FAILED for tool:${tool}: ${errors.join(' | ')}`);
+  log.error(`P2 ALL ${MODELS_CARDS.length} MODELS FAILED (2 passes) for tool:${tool}: ${errors.join(' | ')}`);
   throw new Error(`All free AI models failed for tool:${tool}.`);
 }
 
