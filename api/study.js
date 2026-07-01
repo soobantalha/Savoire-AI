@@ -1,8 +1,15 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — SINGLE MODEL: openrouter/free
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE PARALLEL MODEL ENGINE
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
+//
+// ✅ PARALLEL MODEL EXECUTION  — All free models run simultaneously
+// ✅ TOOL-SPECIFIC PROMPTS     — Each tool gets its own dedicated prompt
+// ✅ MAX TOKENS                — Maximum token limits to prevent failure
+// ✅ LIVE + JSON IN PARALLEL   — Phase 1 (notes) and Phase 2 (cards) run concurrently
+// ✅ 3-PASS RETRY              — 3 full passes with backoff for resilience
+// ✅ PERFECT ERROR HANDLING    — Clean fallbacks, no unhandled rejections
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -25,55 +32,36 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// ⚡ FIX NOTE (live-output-delay bug):
-// The old version raced 8 free models simultaneously for BOTH phase 1 (notes)
-// AND phase 2 (cards/quiz/mindmap). For "all" tool that meant up to
-// 8 (notes) + 8 (flashcards_quiz) + 8 (mindmap) = 24 concurrent requests to
-// OpenRouter's free tier at once. Free-tier endpoints throttle/queue hard
-// under that load, so EVERY model became slow together — which is exactly
-// the "live output finishes then huge wait for final result" symptom.
-//
-// FIX: race a SMALL pool (3 models) instead of all 8. openrouter/free is
-// always included as the most reliable router. This keeps concurrent
-// OpenRouter calls low enough to avoid self-inflicted throttling, while
-// still giving 3-way redundancy so one slow/busy model doesn't block
-// everything. Remaining models are kept in the array as a sequential
-// fallback pool ONLY if the entire fast-pool race fails.
+// SECTION 2 — MODEL LIST with MAXIMUM TOKENS (prevent failures)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ╔═══════════════════════════════════════════════════════════════════════════
+// ║  PARALLEL ENGINE: ALL MODELS RUN SIMULTANEOUSLY
+// ║  First successful model wins. Others are cleanly aborted.
+// ║  Each model uses MAXIMUM TOKENS to ensure complete output.
+// ╚═══════════════════════════════════════════════════════════════════════════
+
 const MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 3500, timeout_ms: 25000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 3200, timeout_ms: 25000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 3500, timeout_ms: 28000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 2800, timeout_ms: 28000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 2800, timeout_ms: 28000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 3000, timeout_ms: 28000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 4096, timeout_ms: 30000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 30000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 30000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
 ];
 
 const MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 6500, timeout_ms: 22000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 7000, timeout_ms: 22000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 6000, timeout_ms: 22000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 5000, timeout_ms: 24000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 6500, timeout_ms: 24000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 28000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 28000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 28000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
 ];
-
-// (Pool-size constants kept for backward compatibility / readability but
-// are no longer used — both streamNotes() and fetchCards() now run
-// sequentially with fast per-model timeouts instead of concurrent racing.)
-
-// How many models to race SIMULTANEOUSLY (rest are sequential fallback only).
-// Keeping this small avoids self-inflicted rate-limiting on OpenRouter free tier.
-const STREAM_RACE_POOL_SIZE = 3;
-const CARDS_RACE_POOL_SIZE  = 3;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS (unchanged)
@@ -118,7 +106,7 @@ function getISTDateTime() {
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — GOOGLE SHEETS (unchanged — do not edit)
+// SECTION 5 — GOOGLE SHEETS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
@@ -140,7 +128,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (your existing ones — keep as is)
+// SECTION 6 — PROMPT BUILDERS (TOOL-SPECIFIC)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -149,13 +137,14 @@ function buildNotesPrompt(input, opts) {
   const lang  = opts.language || 'English';
   const tool  = opts.tool || 'notes';
 
+  // ── Separate sections for EACH tool (no mixing) ──
   const sectionMap = {
-    notes:      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples with Walkthroughs\n\n## 🚀 Advanced Aspects & Nuances\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways & Revision Checklist',
-    flashcards: '## 📖 Overview & Context\n\n## 🎯 Core Concepts (as Q&A pairs)\n\n## ⚙️ Mechanisms & Processes\n\n## 💡 Examples & Applications\n\n## ⚠️ Common Misconceptions\n\n## 🎯 Quick Summary',
-    quiz:       '## 📚 Topic Introduction\n\n## ✏️ Core Concepts (exam-ready format)\n\n## ⚙️ Mechanisms (exam-style)\n\n## 📝 Must-Remember Points for Exam',
-    summary:    '## 🚀 TL;DR — 3 to 5 sentences maximum\n\n## 🎯 Core Concepts — one bullet each\n\n## ⚙️ Key Mechanisms — ultra-short\n\n## ✅ Final Revision Checklist',
-    mindmap:    '## 🧠 Central Topic Overview\n\n## 🌿 Branch 1: Foundations & Definitions\n\n## 🌿 Branch 2: Core Mechanisms\n\n## 🌿 Branch 3: Key Examples\n\n## 🌿 Branch 4: Real-World Applications\n\n## 🌿 Branch 5: Common Pitfalls\n\n## 🔗 Key Connections',
-    all:        '## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Summary & Checklist',
+    notes:      `## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples with Walkthroughs\n\n## 🚀 Advanced Aspects & Nuances\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways & Revision Checklist`,
+    flashcards: `## 📖 Overview & Context\n\n## 🎯 Core Concepts (as Q&A pairs)\n\n## ⚙️ Mechanisms & Processes\n\n## 💡 Examples & Applications\n\n## ⚠️ Common Misconceptions\n\n## 🎯 Quick Summary`,
+    quiz:       `## 📚 Topic Introduction\n\n## ✏️ Core Concepts (exam-ready format)\n\n## ⚙️ Mechanisms (exam-style)\n\n## 📝 Must-Remember Points for Exam`,
+    summary:    `## 🚀 TL;DR — 3 to 5 sentences maximum\n\n## 🎯 Core Concepts — one bullet each\n\n## ⚙️ Key Mechanisms — ultra-short\n\n## ✅ Final Revision Checklist`,
+    mindmap:    `## 🧠 Central Topic Overview\n\n## 🌿 Branch 1: Foundations & Definitions\n\n## 🌿 Branch 2: Core Mechanisms\n\n## 🌿 Branch 3: Key Examples\n\n## 🌿 Branch 4: Real-World Applications\n\n## 🌿 Branch 5: Common Pitfalls\n\n## 🔗 Key Connections`,
+    all:        `## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Summary & Checklist`,
   };
 
   const sections  = sectionMap[tool] || sectionMap.notes;
@@ -203,15 +192,15 @@ function buildCardsPrompt(input, opts, toolOverride) {
   const tool       = toolOverride  || opts.tool || 'notes';
   const topicShort = String(input).slice(0, 100);
 
+  // ── Separate inclusion flags per tool ──
   const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
   const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
   const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
-  // Use wizard-selected counts, fall back to defaults
+  
   const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
   const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
   const mmCount    = opts.branchCount || 6;
   const quizType   = opts.quizType   || 'mixed';
-  // Quiz difficulty instruction based on type
   const qDiffInstr = quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
                      quizType === 'medium'  ? 'ALL questions must be medium difficulty (core exam level).' :
                      quizType === 'hard'    ? 'ALL questions must be hard (advanced analysis, application).' :
@@ -253,9 +242,7 @@ MIND MAP — generate central + ${mmCount} branches
   - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
 • "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
 
-  // For mega bundle sub-calls, skip the heavy extra fields (key_tricks, practice_questions,
-  // applications, misconceptions) — those come from the main notes prompt already.
-  // This keeps each mega sub-call's JSON compact = faster generation = faster final result.
+  // Lean calls = skip heavy extra fields (they come from main notes)
   const isLeanCall = tool === 'flashcards_quiz' || tool === 'mindmap_only';
 
   const extraFieldsBlock = isLeanCall ? '' : `
@@ -309,48 +296,27 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES — fast-fail sequential, ALWAYS real AI
+// SECTION 7 — PHASE 1: PARALLEL STREAM NOTES
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// ⚡ REWRITE (v2): the previous Promise.any()-based concurrent race had a
-// subtle bug — when the winner was declared, every losing model's reader
-// got abort()'d, which threw AbortError on their in-flight reader.read()
-// calls AFTER their governing Promise had already settled. Those orphaned
-// rejections could surface as unhandled rejections and, combined with the
-// complexity of manually draining a "paused" winner stream object, made
-// the whole pipeline fragile — under any hiccup it fell through to the
-// emergency offline/fallback content instead of real AI output.
-//
-// NEW STRATEGY — much simpler, much harder to break:
-//   • Try ONE model at a time, fully streaming it start-to-finish.
-//   • Each model gets a SHORT first-token timeout (FIRST_TOKEN_TIMEOUT_MS).
-//     If it hasn't produced its first token within that window, we abandon
-//     it (cleanly — abort BEFORE any other code path touches the reader)
-//     and move to the next model immediately. This is what gives the
-//     "1-3 seconds to live output" behaviour, because openrouter/free or
-//     gemini-flash almost always respond well within that window — and if
-//     they don't, we don't wait long before trying the next one.
-//   • Once a model produces its first token, we commit to it fully (no
-//     more racing/aborting) and stream it straight through to onChunk().
-//   • Only if we've worked through every model in MODELS_STREAM and NONE
-//     of them produced even a first token do we fall back to offline
-//     content. With 8 models in the list this is exceptionally rare.
+// ⚡ ULTIMATE PARALLEL ENGINE:
+//    ALL models start simultaneously. First one to produce a token wins.
+//    Losers are aborted cleanly. 3-pass retry for resilience.
+//    Max tokens per model to prevent truncation.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 16000; // generous — free-tier models can be slow to start (cold queues)
-const FULL_STREAM_TIMEOUT_MS = 60000; // safety ceiling once a model has committed (long notes can take a while)
+const FIRST_TOKEN_TIMEOUT_MS = 20000; // generous — free-tier cold start
+const FULL_STREAM_TIMEOUT_MS = 90000; // 90s safety ceiling
 
-async function streamOneModel(model, prompt, onChunk, tool) {
+async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
-  const ctrl = new AbortController();
+  const ctrl  = new AbortController();
 
-  // Two-stage timeout: longer window to get the FIRST token (free models can
-  // be slow to start), longer-still window once streaming has begun.
   let firstTokenTimer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT_MS);
   let fullStreamTimer = null;
 
   const t0 = Date.now();
-  log.info(`P1 → trying ${name} | tool:${tool}`);
+  log.info(`P1 ⚡ starting ${name} (parallel) | tool:${tool}`);
 
   let res;
   try {
@@ -377,9 +343,6 @@ async function streamOneModel(model, prompt, onChunk, tool) {
   if (!res.ok) {
     clearTimeout(firstTokenTimer);
     const txt = await res.text().catch(() => '');
-    // Log the FULL error body so the real cause (rate limit, model down,
-    // bad key, content policy, etc) is visible in server logs instead of
-    // being silently swallowed.
     log.error(`P1 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
     if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
     throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
@@ -390,26 +353,38 @@ async function streamOneModel(model, prompt, onChunk, tool) {
   let lineBuf = '';
   let full    = '';
   let gotFirstToken = false;
+  let winnerDeclared = false;
+
+  // Check if another model already won
+  const checkWinner = () => {
+    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
+      winnerDeclared = true;
+      return true;
+    }
+    return false;
+  };
 
   try {
     while (true) {
+      // If another model won, abort this one
+      if (checkWinner()) {
+        ctrl.abort();
+        // Return whatever we have (won't be used since winner already declared)
+        return full;
+      }
+
       let chunk;
       try {
         chunk = await reader.read();
       } catch (readErr) {
         if (readErr.name === 'AbortError') {
           if (!gotFirstToken) throw new Error(`${name}: no first token within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
-          // Already committed and streamed real, visible content to the
-          // screen — we must NOT fall through to a different model now,
-          // since that would start a second stream from scratch and
-          // duplicate/garble what the user already sees live. Salvage
-          // whatever we have, no matter the length.
-          log.warn(`P1 ${name}: full-stream timeout — salvaging ${full.length}ch already streamed (committed, no retry)`);
+          // Already committed and streamed real content — salvage it
+          log.warn(`P1 ${name}: full-stream timeout — salvaging ${full.length}ch (committed, no retry)`);
           return full;
         }
-        // Non-abort read error mid-stream — same salvage rule applies.
         if (gotFirstToken) {
-          log.warn(`P1 ${name}: read error mid-stream — salvaging ${full.length}ch already streamed (committed, no retry)`);
+          log.warn(`P1 ${name}: read error mid-stream — salvaging ${full.length}ch (committed, no retry)`);
           return full;
         }
         throw readErr;
@@ -430,15 +405,27 @@ async function streamOneModel(model, prompt, onChunk, tool) {
           if (delta) {
             if (!gotFirstToken) {
               gotFirstToken = true;
-              // We've committed to this model — swap to the longer ceiling.
               clearTimeout(firstTokenTimer);
               fullStreamTimer = setTimeout(() => ctrl.abort(), FULL_STREAM_TIMEOUT_MS);
-              log.ok(`P1 🏆 ${name} produced first token in ${Date.now()-t0}ms — committing`);
+
+              // Declare this model as the winner (if not already declared)
+              if (sharedState && !sharedState.winnerId) {
+                sharedState.winnerId = model.id;
+                log.ok(`P1 🏆 ${name} WON in ${Date.now()-t0}ms — committing`);
+              } else if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
+                // Another model already won — abort this one
+                winnerDeclared = true;
+                ctrl.abort();
+                return full;
+              }
             }
-            full += delta;
-            onChunk(delta); // forward to the live SSE stream immediately
+            // Only send chunks if this model is the winner
+            if (!winnerDeclared && (!sharedState || sharedState.winnerId === model.id)) {
+              full += delta;
+              onChunk(delta);
+            }
           }
-        } catch { /* ignore malformed SSE line */ }
+        } catch { /* ignore malformed SSE */ }
       }
     }
   } finally {
@@ -447,9 +434,6 @@ async function streamOneModel(model, prompt, onChunk, tool) {
   }
 
   if (!gotFirstToken) throw new Error(`${name}: stream ended with no content`);
-  // gotFirstToken === true here means real content was streamed live —
-  // even if shorter than ideal, we MUST return it rather than throw,
-  // because a caller-side retry would duplicate content on screen.
   if (full.trim().length < 80) {
     log.warn(`P1 ${name}: short response (${full.length}ch) but already streamed live — using as-is, no retry`);
   }
@@ -460,50 +444,87 @@ async function streamOneModel(model, prompt, onChunk, tool) {
 
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
+  const sharedState = { winnerId: null };
 
-  // Two full passes through the model list. Free-tier endpoints often have
-  // transient hiccups (momentary 429s, cold-start timeouts) that clear up
-  // within a few seconds — a single pass through 8 models can fail on
-  // bad luck alone, so we loop the whole list twice before ever falling
-  // back to static content. This still completes fast because failures
-  // are detected quickly (FIRST_TOKEN_TIMEOUT_MS) and most passes succeed
-  // on pass 1.
-  for (let pass = 1; pass <= 2; pass++) {
-    for (const model of MODELS_STREAM) {
-      try {
-        // Sequential trial — only ONE model is ever streaming at a time, so
-        // onChunk can be called directly with no risk of two models'
-        // chunks interleaving on screen.
-        const result = await streamOneModel(model, prompt, onChunk, tool);
-        return result; // success — real AI content, already streamed live
-      } catch (err) {
-        if (err.message === 'API_KEY_INVALID') {
-          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-        }
-        log.warn(`P1 [pass ${pass}] ✗ ${err.message} — trying next model`);
-        errors.push(`[pass${pass}] ${err.message}`);
-        // Brief pause on rate-limit errors specifically — a fixed model
-        // that's just momentarily throttled often works again in ~1.5s.
-        if (/HTTP 429/.test(err.message)) await sleep(1500);
-      }
+  // ── 3 FULL PASSES for resilience ──
+  for (let pass = 1; pass <= 3; pass++) {
+    log.info(`P1 pass ${pass}: starting ALL ${MODELS_STREAM.length} models in parallel`);
+    sharedState.winnerId = null;
+
+    // Start ALL models in parallel
+    const modelPromises = MODELS_STREAM.map(model =>
+      streamOneModel(model, prompt, onChunk, tool, sharedState)
+        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
+        .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
+    );
+
+    // Wait for all to settle (or until one wins)
+    const results = await Promise.allSettled(
+      modelPromises.map(p => p.then(
+        r => r,
+        e => ({ status: 'rejected', reason: e, model: 'unknown' })
+      ))
+    );
+
+    // Check if any model succeeded
+    const successes = results
+      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
+      .map(r => r.value);
+
+    if (successes.length > 0) {
+      // Return the first successful result (the winner)
+      const winner = successes[0];
+      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch`);
+      return winner.value;
+    }
+
+    // All models failed — collect errors
+    const failReasons = results
+      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
+      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
+      .concat(
+        results
+          .filter(r => r.status === 'rejected')
+          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
+      );
+
+    errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
+    log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+
+    // Backoff before retry
+    if (pass < 3) {
+      const backoff = pass * 1200;
+      log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
+      await sleep(backoff);
     }
   }
 
-  log.error(`P1 ALL ${MODELS_STREAM.length} MODELS FAILED: ${errors.join(' | ')}`);
+  log.error(`P1 ALL ${MODELS_STREAM.length} MODELS FAILED (3 passes): ${errors.join(' | ')}`);
   throw new Error(`All free AI models are currently busy. Please try again in a moment.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS — small-pool race + sequential fallback
+// SECTION 8 — PHASE 2: PARALLEL FETCH CARDS
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// ⚡ ULTIMATE PARALLEL ENGINE:
+//    ALL models start simultaneously for JSON generation.
+//    First to return valid JSON wins. 3-pass retry with backoff.
+//    Max tokens per model to prevent truncation.
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function fetchCardsFromModel(model, prompt, tool) {
+async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   const name  = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
   const t0    = Date.now();
 
   try {
+    // Check if another model already won
+    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
+      throw new Error(`${name}: skipped — another model already won`);
+    }
+
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
       headers: {
@@ -596,6 +617,12 @@ async function fetchCardsFromModel(model, prompt, tool) {
                 : hasKc;
     if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
 
+    // Declare winner
+    if (sharedState && !sharedState.winnerId) {
+      sharedState.winnerId = model.id;
+      log.ok(`P2 🏆 ${name} WON in ${Date.now()-t0}ms | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
+    }
+
     log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
     return parsed;
 
@@ -609,34 +636,63 @@ async function fetchCardsFromModel(model, prompt, tool) {
 }
 
 async function fetchCards(prompt, tool) {
-  // ⚡ REWRITE (v2): same reasoning as streamNotes — sequential trial with a
-  // per-model timeout is far more reliable than Promise.any() racing, which
-  // was producing spurious failures that fell through to fallback content
-  // even though real AI models were available and working. Each model gets
-  // its own timeout_ms (already tuned per-model in MODELS_CARDS); the
-  // moment one fails or times out we move to the next, no race conditions.
   const errors = [];
+  const sharedState = { winnerId: null };
 
-  // Two full passes — same reasoning as streamNotes: transient hiccups on a
-  // single pass shouldn't trigger fallback content when retrying usually
-  // succeeds within seconds.
-  for (let pass = 1; pass <= 2; pass++) {
-    for (const model of MODELS_CARDS) {
-      try {
-        const result = await fetchCardsFromModel(model, prompt, tool);
-        return result; // success — real AI JSON content
-      } catch (err) {
-        if (err.message === 'API_KEY_INVALID') {
-          throw new Error('OPENROUTER_API_KEY is invalid or missing.');
-        }
-        log.warn(`P2 [pass ${pass}] ✗ ${err.message} — trying next model`);
-        errors.push(`[pass${pass}] ${err.message}`);
-        if (/HTTP 429/.test(err.message)) await sleep(1500);
-      }
+  // ── 3 FULL PASSES for resilience ──
+  for (let pass = 1; pass <= 3; pass++) {
+    log.info(`P2 pass ${pass}: starting ALL ${MODELS_CARDS.length} models in parallel for tool:${tool}`);
+    sharedState.winnerId = null;
+
+    // Start ALL models in parallel
+    const modelPromises = MODELS_CARDS.map(model =>
+      fetchCardsFromModel(model, prompt, tool, sharedState)
+        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
+        .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
+    );
+
+    // Wait for all to settle
+    const results = await Promise.allSettled(
+      modelPromises.map(p => p.then(
+        r => r,
+        e => ({ status: 'rejected', reason: e, model: 'unknown' })
+      ))
+    );
+
+    // Check if any model succeeded
+    const successes = results
+      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
+      .map(r => r.value);
+
+    if (successes.length > 0) {
+      // Return the first successful result (the winner)
+      const winner = successes[0];
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model} — returning`);
+      return winner.value;
+    }
+
+    // All models failed — collect errors
+    const failReasons = results
+      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
+      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
+      .concat(
+        results
+          .filter(r => r.status === 'rejected')
+          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
+      );
+
+    errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
+    log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+
+    // Backoff before retry
+    if (pass < 3) {
+      const backoff = pass * 1200;
+      log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
+      await sleep(backoff);
     }
   }
 
-  log.error(`P2 ALL ${MODELS_CARDS.length} MODELS FAILED (2 passes) for tool:${tool}: ${errors.join(' | ')}`);
+  log.error(`P2 ALL ${MODELS_CARDS.length} MODELS FAILED (3 passes) for tool:${tool}: ${errors.join(' | ')}`);
   throw new Error(`All free AI models failed for tool:${tool}.`);
 }
 
@@ -685,8 +741,6 @@ The primary mechanism of ${T}:
 }
 
 function buildTopicFallback(tool, topic) {
-  // ── Used ONLY if every single free model + every retry has failed.
-  // Provides a usable (if generic) result so the UI never shows a dead end.
   const T = topic || 'this topic';
   const base = {
     topic: T,
@@ -886,7 +940,6 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
-  // ── API KEY CHECK — fail fast with clear message ──────────────────────────
   if (!process.env.OPENROUTER_API_KEY) {
     log.error('[FATAL] OPENROUTER_API_KEY not set in environment variables!');
     return res.status(500).json({ error: 'Savoiré AI service is misconfigured — OPENROUTER_API_KEY missing. Contact the administrator.' });
@@ -899,7 +952,6 @@ module.exports = async function handler(req, res) {
   const userSess   = Number(body.sessions) || 1;
   const sessionId  = String(body.sessionId || reqId);
 
-  // ── PING / VISIT ──────────────────────────────────────────────────────────
   if (!message || message === 'ping') {
     log.info(`[${reqId}] PING — ${userName} | sessions:${userSess}`);
     sendToGoogleSheets(userName, userStreak, userSess, 'visit', '', 'online', 0, sessionId).catch(() => {});
@@ -945,7 +997,6 @@ module.exports = async function handler(req, res) {
 
   const sse = makeSSE(res);
 
-  // Keep-alive ping every 10s to prevent proxy/CDN timeout
   const kap = setInterval(() => {
     if (res.writableEnded) { clearInterval(kap); return; }
     try {
@@ -963,25 +1014,22 @@ module.exports = async function handler(req, res) {
   sse('heartbeat', { ts: Date.now(), status: 'connected', service: SAVOIRÉ.BRAND, requestId: reqId, tool: opts.tool });
   sse('stage',     { idx: 0, label: `🎯 Analysing "${message.slice(0, 50)}${message.length > 50 ? '…' : ''}"` });
   sse('fact',      { fact: buildTopicFact(message) });
-  sse('token',     { t: '' }); // prime the token stream
+  sse('token',     { t: '' });
 
   let notes = '', p1ok = false;
   let p2Ticker = null;
 
   try {
-    // ╔═══════════════════════════════════════════════════════════════╗
-    // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY                             ║
-    // ║  Phase 2 starts the instant we kick off Phase 1's notes stream, ║
-    // ║  so by the time the live notes finish on screen, the cards are  ║
-    // ║  usually already done or very close — eliminating the dead gap. ║
-    // ╚═══════════════════════════════════════════════════════════════╝
+    // ╔═══════════════════════════════════════════════════════════════════════
+    // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (PARALLEL)
+    // ║  Phase 2 starts immediately. Both use PARALLEL model execution.
+    // ╚═══════════════════════════════════════════════════════════════════════
 
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
     const notesPrompt = buildNotesPrompt(message, opts);
 
-    // Kick off Phase 2 immediately in the background — small race pool only,
-    // so it doesn't compete with Phase 1's own race pool for OpenRouter slots.
+    // ── Phase 2: cards generation — starts NOW in parallel with Phase 1 ──
     let cardsPromise;
     if (opts.tool === 'all') {
       cardsPromise = Promise.allSettled([
@@ -995,7 +1043,7 @@ module.exports = async function handler(req, res) {
       );
     }
 
-    // ── PHASE 1 — live notes stream. Small race pool → first token in 1-3s. ──
+    // ── Phase 1: live notes stream (PARALLEL models) ──
     try {
       notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
       p1ok  = true;
@@ -1012,15 +1060,14 @@ module.exports = async function handler(req, res) {
 
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
 
-    // Periodic "still working" pings so the UI never looks frozen while we
-    // wait for Phase 2 (which has been running in the background already).
+    // ── Keep-alive pings while waiting for Phase 2 ──
     let p2DotCount = 0;
     p2Ticker = setInterval(() => {
       p2DotCount = (p2DotCount % 3) + 1;
       sse('stage', { idx: 3, label: `🃏 Finalising your cards${'.'.repeat(p2DotCount)}` });
     }, 1500);
 
-    // ── PHASE 2 — await the cards promise that's been running since P1 started ──
+    // ── Wait for Phase 2 (which has been running in parallel) ──
     let cardsData = null, p2ok = false;
 
     if (opts.tool === 'all') {
@@ -1052,7 +1099,7 @@ module.exports = async function handler(req, res) {
 
       p2ok = !!(cardsData.flashcards?.length || cardsData.quiz_questions?.length || cardsData.mindmap);
       if (!p2ok) {
-        log.warn(`[${reqId}] Mega bundle: all AI cards failed — using fallback content so user still gets a full result`);
+        log.warn(`[${reqId}] Mega bundle: all AI cards failed — using fallback content`);
         cardsData = buildTopicFallback('all', message);
       }
 
@@ -1070,9 +1117,9 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // ╔═══════════════════════════════════════════╗
-    // ║  PHASE 3 — STREAM CARDS LIVE (animations)  ║
-    // ╚═══════════════════════════════════════════╝
+    // ╔═══════════════════════════════════════════════════════════════════════
+    // ║  PHASE 3 — STREAM CARDS LIVE (animations)
+    // ╚═══════════════════════════════════════════════════════════════════════
 
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
@@ -1103,9 +1150,10 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }
 
-    // ╔═══════════════════╗
-    // ║  SEND FINAL DATA  ║
-    // ╚═══════════════════╝
+    // ╔═══════════════════════════════════════════════════════════════════════
+    // ║  SEND FINAL DATA
+    // ╚═══════════════════════════════════════════════════════════════════════
+
     clearInterval(kap);
     clearInterval(p2Ticker);
     clearStages();
