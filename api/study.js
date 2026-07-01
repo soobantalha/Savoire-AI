@@ -1,13 +1,14 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE PARALLEL ENGINE (FALLBACK KILLER)
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ EXTREME RETRY: 5 passes, each with all models parallel
-// ✅ HUGE TIMEOUTS: 45s first-token, 120s full stream, 60s per model
-// ✅ LAST RESORT: non-streaming openrouter/free with 16384 tokens
-// ✅ ALWAYS AI: fallback content is NEVER used unless truly catastrophic
+// ✅ SEPARATE PROMPTS FOR EACH TOOL — no generic prompts, each tool gets its own
+// ✅ ULTRA LONG TIMEOUTS — first token: 60s, full stream: 180s, per-model: 90s
+// ✅ 5 PARALLEL PASSES — all models race, first to respond wins
+// ✅ NON-STREAMING LAST RESORT — openrouter/free with 16384 tokens
+// ✅ FALLBACK ONLY AS ABSOLUTE LAST RESORT — almost never used
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,37 +31,34 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, LARGE TIMEOUTS)
+// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, MASSIVE TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Only the most reliable free models (in order of preference)
-const RELIABLE_MODELS = [
-  'openrouter/free',
-  'google/gemini-2.0-flash-exp:free',
-  'deepseek/deepseek-chat-v3-0324:free',
+const RELIABLE_MODELS_STREAM = [
+  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
 ];
 
-// Full list for fallback
 const ALL_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  ...RELIABLE_MODELS_STREAM,
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -128,41 +126,18 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (unchanged)
+// SECTION 6 — SEPARATE PROMPT BUILDERS FOR EACH TOOL
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── NOTES ──
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
   const lang  = opts.language || 'English';
-  const tool  = opts.tool || 'notes';
-
-  const sectionMap = {
-    notes:      `## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples with Walkthroughs\n\n## 🚀 Advanced Aspects & Nuances\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways & Revision Checklist`,
-    flashcards: `## 📖 Overview & Context\n\n## 🎯 Core Concepts (as Q&A pairs)\n\n## ⚙️ Mechanisms & Processes\n\n## 💡 Examples & Applications\n\n## ⚠️ Common Misconceptions\n\n## 🎯 Quick Summary`,
-    quiz:       `## 📚 Topic Introduction\n\n## ✏️ Core Concepts (exam-ready format)\n\n## ⚙️ Mechanisms (exam-style)\n\n## 📝 Must-Remember Points for Exam`,
-    summary:    `## 🚀 TL;DR — 3 to 5 sentences maximum\n\n## 🎯 Core Concepts — one bullet each\n\n## ⚙️ Key Mechanisms — ultra-short\n\n## ✅ Final Revision Checklist`,
-    mindmap:    `## 🧠 Central Topic Overview\n\n## 🌿 Branch 1: Foundations & Definitions\n\n## 🌿 Branch 2: Core Mechanisms\n\n## 🌿 Branch 3: Key Examples\n\n## 🌿 Branch 4: Real-World Applications\n\n## 🌿 Branch 5: Common Pitfalls\n\n## 🔗 Key Connections`,
-    all:        `## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Summary & Checklist`,
-  };
-
-  const sections  = sectionMap[tool] || sectionMap.notes;
-  const toolGoals = {
-    notes:      'Generate comprehensive, well-structured study notes covering every important aspect.',
-    flashcards: 'Generate notes structured as clear Q&A pairs — each concept as a distinct question/answer.',
-    quiz:       'Generate exam-focused notes emphasising examinable points and common question patterns.',
-    summary:    'Generate a concise smart summary: TL;DR first, then bullet key points, scannable.',
-    mindmap:    'Generate hierarchically structured notes suitable for mind map conversion.',
-    all:        'Generate the ULTIMATE comprehensive study package covering every angle of this topic.',
-  };
-  const toolGoal = toolGoals[tool] || toolGoals.notes;
-
   return `You are ${SAVOIRÉ.BRAND}, the world's most advanced AI study assistant.
 Creator: ${SAVOIRÉ.DEVELOPER} | Founder: ${SAVOIRÉ.FOUNDER}
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TASK: ${toolGoal}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK: Generate comprehensive, well-structured study notes covering every important aspect of the topic.
 
 TOPIC: "${input}"
 LANGUAGE: ${lang} — write EVERY word in ${lang}. Zero exceptions.
@@ -170,7 +145,14 @@ LENGTH: ${depth.wordRange} — aim for upper end. Be thorough.
 STYLE: ${style}
 
 REQUIRED SECTIONS (use exactly these headings):
-${sections}
+## 📚 Introduction & Overview
+## 🎯 Core Concepts & Definitions
+## ⚙️ How It Works — Mechanisms
+## 💡 Key Examples with Walkthroughs
+## 🚀 Advanced Aspects & Nuances
+## 🌍 Real-World Applications
+## 🧠 Common Misconceptions
+## 📝 Key Takeaways & Revision Checklist
 
 FORMATTING RULES:
 • ## for all section headings
@@ -182,121 +164,220 @@ FORMATTING RULES:
 • At least 3 real-world examples specific to "${input}"
 • ⚠️ Common Mistakes / Misconceptions section
 • 🎯 Key Takeaways (5–8 bullets) at end
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-function buildCardsPrompt(input, opts, toolOverride) {
-  const lang       = opts.language || 'English';
-  const tool       = toolOverride  || opts.tool || 'notes';
-  const topicShort = String(input).slice(0, 100);
-
-  const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
-  const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
-  const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
-  const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
-  const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
-  const mmCount    = opts.branchCount || 6;
-  const quizType   = opts.quizType   || 'mixed';
-  const qDiffInstr = quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
-                     quizType === 'medium'  ? 'ALL questions must be medium difficulty (core exam level).' :
-                     quizType === 'hard'    ? 'ALL questions must be hard (advanced analysis, application).' :
-                     quizType === 'exam'    ? 'ALL questions must be exam-style (past-paper format, mark-scheme phrasing, tricky distractors).' :
-                     'Difficulty mix: 30% easy, 50% medium, 20% hard.';
-
-  const fcInstr = includeFc ? `
-═══════════════════════════════════════════════════
-FLASHCARDS — generate exactly ${fcCount} cards
-═══════════════════════════════════════════════════
-Each card:
-• "front": specific question about "${topicShort}" (10-40 words, in ${lang})
-• "back": detailed answer 60-150 words about "${topicShort}" (in ${lang})
-Include: definition cards, mechanism cards, comparison cards, application cards, misconception cards.
-ALL content specifically about "${topicShort}". Zero generic filler.` : '';
-
-  const qInstr = includeQ ? `
-═══════════════════════════════════════════════════
-QUIZ QUESTIONS — generate exactly ${qCount} questions
-═══════════════════════════════════════════════════
-Each question:
-• "id": sequential number
-• "question": specific question about "${topicShort}" (in ${lang})
-• "options": array of EXACTLY 4 strings (one correct, three plausible wrong)
-• "correct_answer": MUST be CHARACTER-FOR-CHARACTER identical to one of the options strings
-• "explanation": 60-100 words explaining why correct, referencing "${topicShort}" (in ${lang})
-• "difficulty": "easy" | "medium" | "hard"
-DIFFICULTY RULE: ${qDiffInstr}
-CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.` : '';
-
-  const mmInstr = includeMm ? `
-═══════════════════════════════════════════════════
-MIND MAP — generate central + ${mmCount} branches
-═══════════════════════════════════════════════════
-• "central": 3-5 word essence of "${topicShort}" (in ${lang})
-• "branches": array of EXACTLY ${mmCount} objects, each with:
-  - "name": specific branch name from "${topicShort}" (NOT generic like "Introduction" or "Overview")
-  - "color": one of "#00d4ff","#bf00ff","#00ff88","#ffae00","#d4af37","#ff4444","#e84393"
-  - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
-• "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
-
-  const isLeanCall = tool === 'flashcards_quiz' || tool === 'mindmap_only';
-
-  const extraFieldsBlock = isLeanCall ? '' : `
-  "key_tricks": [
-    "🧠 Memory trick for ${topicShort}: 60-90 words in ${lang}",
-    "📝 Study strategy for ${topicShort}: 60-90 words in ${lang}",
-    "⏰ Recall technique: 60-90 words in ${lang}"
-  ],
-  "practice_questions": [
-    {"question": "analytical question about ${topicShort} in ${lang}", "answer": "200+ word answer in ${lang}"},
-    {"question": "application question about ${topicShort} in ${lang}", "answer": "200+ word answer in ${lang}"}
-  ],
-  "real_world_applications": [
-    "🏥 Healthcare: specific application of ${topicShort}",
-    "💻 Technology: specific tech use of ${topicShort}",
-    "📈 Business: specific business application",
-    "🌍 Society: social impact of ${topicShort}"
-  ],
-  "common_misconceptions": [
-    "❌ MYTH about ${topicShort}. ✅ TRUTH: 50-80 word correction in ${lang}",
-    "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}",
-    "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}"
-  ]`;
-
-  return `You are ${SAVOIRÉ.BRAND}. Generate structured study content as valid JSON.
+// ── FLASHCARDS ──
+function buildFlashcardsPrompt(input, opts) {
+  const lang = opts.language || 'English';
+  const count = opts.cardCount || 15;
+  return `You are ${SAVOIRÉ.BRAND}. Generate a set of interactive flashcards as valid JSON.
 
 TOPIC: "${input}"
 LANGUAGE: ${lang} — ALL text must be in ${lang}.
-${fcInstr}
-${qInstr}
-${mmInstr}
+
+Generate exactly ${count} flashcards. Each card must have:
+- "front": a specific question about the topic (10-40 words, in ${lang})
+- "back": a detailed answer 60-150 words (in ${lang})
+
+Include these types:
+- Definition cards
+- Mechanism cards
+- Comparison cards
+- Application cards
+- Misconception cards
 
 OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown. No code fences. No explanations before or after. Keep it compact — no filler.
+No markdown. No code fences. No explanations before or after.
 
 {
-  "topic": "clean title for ${topicShort} in ${lang}",
-  "curriculum_alignment": "appropriate level e.g. A-Level, GCSE, University",
+  "flashcards": [
+    {"front": "What is the definition of X?", "back": "X is defined as ..."},
+    ...
+  ]
+}
+
+OUTPUT JSON NOW — start with { immediately. Be concise.`;
+}
+
+// ── QUIZ ──
+function buildQuizPrompt(input, opts) {
+  const lang = opts.language || 'English';
+  const count = opts.quizCount || 10;
+  const quizType = opts.quizType || 'mixed';
+  const diffInstr = quizType === 'easy' ? 'ALL questions must be easy (foundational).' :
+                    quizType === 'medium' ? 'ALL questions must be medium difficulty (core exam level).' :
+                    quizType === 'hard' ? 'ALL questions must be hard (advanced analysis).' :
+                    quizType === 'exam' ? 'ALL questions must be exam-style (past-paper format, tricky distractors).' :
+                    'Mix: 30% easy, 50% medium, 20% hard.';
+
+  return `You are ${SAVOIRÉ.BRAND}. Generate a practice quiz as valid JSON.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — ALL text must be in ${lang}.
+
+Generate exactly ${count} multiple-choice questions. Each question must have:
+- "id": sequential number
+- "question": specific question about the topic (in ${lang})
+- "options": array of EXACTLY 4 strings (one correct, three plausible wrong)
+- "correct_answer": MUST be character-for-character identical to one of the options strings
+- "explanation": 60-100 words explaining why correct (in ${lang})
+- "difficulty": "easy" | "medium" | "hard"
+
+DIFFICULTY RULE: ${diffInstr}
+CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.
+
+OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
+No markdown. No code fences.
+
+{
+  "quiz_questions": [
+    {
+      "id": 1,
+      "question": "What is ...?",
+      "options": ["A", "B", "C", "D"],
+      "correct_answer": "B",
+      "explanation": "B is correct because ...",
+      "difficulty": "medium"
+    },
+    ...
+  ]
+}
+
+OUTPUT JSON NOW — start with { immediately.`;
+}
+
+// ── SUMMARY ──
+function buildSummaryPrompt(input, opts) {
+  const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
+  const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
+  const lang  = opts.language || 'English';
+  return `You are ${SAVOIRÉ.BRAND}. Generate a smart, concise summary.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — write EVERY word in ${lang}.
+LENGTH: ${depth.wordRange} — aim for upper end.
+STYLE: ${style}
+
+REQUIRED SECTIONS (use exactly these headings):
+## 🚀 TL;DR — 3 to 5 sentences maximum
+## 🎯 Core Concepts — one bullet each
+## ⚙️ Key Mechanisms — ultra-short
+## ✅ Final Revision Checklist
+
+FORMATTING RULES:
+• ## for all section headings
+• **bold** every key term
+• - for bullet lists
+• Keep it scannable, no long paragraphs
+
+START NOW with first ## heading. Topic: "${input}"`;
+}
+
+// ── MIND MAP ──
+function buildMindmapPrompt(input, opts) {
+  const lang = opts.language || 'English';
+  const count = opts.branchCount || 6;
+  return `You are ${SAVOIRÉ.BRAND}. Generate a hierarchical mind map as valid JSON.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — ALL text must be in ${lang}.
+
+Generate:
+- "central": 3-5 word essence of the topic (in ${lang})
+- "branches": array of EXACTLY ${count} objects, each with:
+  - "name": specific branch name from the topic (NOT generic like "Introduction")
+  - "color": one of "#00d4ff","#bf00ff","#00ff88","#ffae00","#d4af37","#ff4444","#e84393"
+  - "items": array of 4-5 specific facts/terms about the topic (each 5-20 words, in ${lang})
+- "connections": array of 3-4 objects {from, to, description} showing relationships
+
+OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
+No markdown. No code fences.
+
+{
+  "mindmap": {
+    "central": "Topic essence",
+    "branches": [
+      {"name": "Branch 1", "color": "#00d4ff", "items": ["fact1", "fact2", ...]},
+      ...
+    ],
+    "connections": [
+      {"from": "Branch 1", "to": "Branch 2", "description": "Relationship description"}
+    ]
+  }
+}
+
+OUTPUT JSON NOW — start with { immediately.`;
+}
+
+// ── MEGA BUNDLE (all tools) ──
+function buildMegaPrompt(input, opts) {
+  const lang = opts.language || 'English';
+  const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
+  const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
+  const fcCount = 12, qCount = 8, mmCount = 6;
+  return `You are ${SAVOIRÉ.BRAND}. Generate the ULTIMATE comprehensive study package covering ALL angles of this topic. Output must be valid JSON.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — ALL text must be in ${lang}.
+LENGTH: ${depth.wordRange} for notes
+STYLE: ${style}
+
+Generate:
+1. "ultra_long_notes": Comprehensive notes with these sections:
+   ## 📚 Introduction
+   ## 🎯 Core Concepts
+   ## ⚙️ How It Works
+   ## 💡 Key Examples
+   ## 🚀 Advanced Aspects
+   ## 🌍 Applications
+   ## 🧠 Memory Tricks
+   ## 📝 Summary & Checklist
+
+2. "flashcards": EXACTLY ${fcCount} flashcards [{"front":"...","back":"..."}]
+
+3. "quiz_questions": EXACTLY ${qCount} multiple-choice questions with 4 options, correct_answer, explanation, difficulty.
+
+4. "mindmap": central + ${mmCount} branches + connections.
+
+5. "key_concepts": 5-7 core concepts (each 60-80 words).
+
+6. "key_tricks": 3 study tricks/memory aids (60-90 words each).
+
+7. "practice_questions": 2 analytical questions with 200+ word answers.
+
+8. "real_world_applications": 4 applications (healthcare, tech, business, society).
+
+9. "common_misconceptions": 3 myth vs truth corrections.
+
+OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
+No markdown. No code fences. All fields must be present.
+
+{
+  "topic": "${input}",
+  "curriculum_alignment": "appropriate level",
   "study_score": 97,
-  ${includeFc  ? `"flashcards": [{"front":"...","back":"..."}],`       : '"flashcards": [],'}
-  ${includeQ   ? `"quiz_questions": [{"id":1,"question":"...","options":["A","B","C","D"],"correct_answer":"...","explanation":"...","difficulty":"medium"}],` : '"quiz_questions": [],'}
-  ${includeMm  ? `"mindmap": {"central":"...","branches":[{"name":"...","color":"#00d4ff","items":["...","...","...","..."]}],"connections":[{"from":"...","to":"...","description":"..."}]},` : '"mindmap": null,'}
-  "key_concepts": [
-    "Concept Name: 60-80 word explanation specific to ${topicShort} in ${lang}",
-    "Concept Name: 60-80 word explanation",
-    "Concept Name: 60-80 word explanation"
-  ]${extraFieldsBlock}
+  "ultra_long_notes": "Full notes here...",
+  "flashcards": [...],
+  "quiz_questions": [...],
+  "mindmap": {...},
+  "key_concepts": [...],
+  "key_tricks": [...],
+  "practice_questions": [...],
+  "real_world_applications": [...],
+  "common_misconceptions": [...]
 }
 
-OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
+OUTPUT JSON NOW — start with { immediately.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (5 PASSES, HUGE TIMEOUTS)
+// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 45000;  // 45s for first token
-const FULL_STREAM_TIMEOUT_MS = 120000; // 2 min total
+const FIRST_TOKEN_TIMEOUT_MS = 60000;  // 60s for first token
+const FULL_STREAM_TIMEOUT_MS = 180000; // 3 min total
 const MAX_PASSES = 5;
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
@@ -484,8 +565,8 @@ async function streamNotes(prompt, onChunk, tool) {
     const results = await Promise.allSettled(
       modelPromises.map(p => p.then(
         r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' })
-      ))
+        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
+      )
     );
 
     const successes = results
@@ -529,7 +610,7 @@ async function streamNotes(prompt, onChunk, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS (5 PASSES, HUGE TIMEOUTS)
+// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCardsFromModel(model, prompt, tool, sharedState) {
@@ -570,11 +651,13 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     let   content = data?.choices?.[0]?.message?.content?.trim();
     if (!content || content.length < 20) throw new Error(`${name}: empty response`);
 
+    // Clean JSON
     content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
     const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
     if (jS === -1 || jE <= jS) throw new Error(`${name}: no JSON object`);
     let jsonStr = content.slice(jS, jE + 1);
 
+    // 4-step JSON repair
     let parsed;
     try { parsed = JSON.parse(jsonStr); }
     catch {
@@ -600,6 +683,7 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       }
     }
 
+    // Auto-fix quiz correct_answer mismatches
     if (Array.isArray(parsed.quiz_questions)) {
       parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
         q.id = q.id || i + 1;
@@ -614,23 +698,27 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       });
     }
 
+    // Normalize flashcards
     if (Array.isArray(parsed.flashcards)) {
       parsed.flashcards = parsed.flashcards
         .filter(c => (c.front || c.question) && (c.back || c.answer))
         .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
     }
 
+    // Validation based on tool
     const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
     const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
     const hasMm = parsed.mindmap?.branches?.length >= 2;
     const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
-    const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
-                : tool === 'quiz'                                    ? hasQ
-                : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
-                : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
-                : hasKc;
+    const valid = (tool === 'flashcards' || tool === 'flashcards_quiz') ? hasFc
+                : tool === 'quiz'                                     ? hasQ
+                : (tool === 'mindmap' || tool === 'mindmap_only')     ? hasMm
+                : tool === 'all'                                      ? (hasFc || hasQ || hasMm || hasKc)
+                : hasKc; // notes/summary fallback
+
     if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
 
+    // Declare winner
     if (sharedState && !sharedState.winnerId) {
       sharedState.winnerId = model.id;
       log.ok(`P2 🏆 ${name} WON in ${Date.now()-t0}ms`);
@@ -704,8 +792,8 @@ async function fetchCards(prompt, tool) {
     const results = await Promise.allSettled(
       modelPromises.map(p => p.then(
         r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' })
-      ))
+        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
+      )
     );
 
     const successes = results
@@ -749,7 +837,7 @@ async function fetchCards(prompt, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK CONTENT (almost never used now)
+// SECTION 9 — FALLBACK CONTENT (almost never used)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function offlineNotes(topic) {
@@ -910,7 +998,7 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MERGE (unchanged)
+// SECTION 11 — MERGE
 // ─────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
@@ -1076,19 +1164,50 @@ module.exports = async function handler(req, res) {
     // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (PARALLEL)
     // ╚═══════════════════════════════════════════════════════════════════════
 
-    sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
+    // ── Select the correct prompt based on tool ──
+    let notesPrompt;
+    switch (opts.tool) {
+      case 'notes': notesPrompt = buildNotesPrompt(message, opts); break;
+      case 'flashcards': notesPrompt = buildFlashcardsPrompt(message, opts); break;
+      case 'quiz': notesPrompt = buildQuizPrompt(message, opts); break;
+      case 'summary': notesPrompt = buildSummaryPrompt(message, opts); break;
+      case 'mindmap': notesPrompt = buildMindmapPrompt(message, opts); break;
+      case 'all': notesPrompt = buildMegaPrompt(message, opts); break;
+      default: notesPrompt = buildNotesPrompt(message, opts);
+    }
 
-    const notesPrompt = buildNotesPrompt(message, opts);
+    sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
     // ── Phase 2: cards generation — starts NOW in parallel with Phase 1 ──
     let cardsPromise;
     if (opts.tool === 'all') {
-      cardsPromise = Promise.allSettled([
-        fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz'),
-        fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only'),
-      ]);
+      // For all, we generate everything in one mega prompt, no separate calls
+      cardsPromise = fetchCards(notesPrompt, 'all').then(
+        v => ({ status: 'fulfilled', value: v }),
+        e => ({ status: 'rejected', reason: e })
+      );
+    } else if (opts.tool === 'flashcards') {
+      const fcPrompt = buildFlashcardsPrompt(message, opts);
+      cardsPromise = fetchCards(fcPrompt, 'flashcards').then(
+        v => ({ status: 'fulfilled', value: v }),
+        e => ({ status: 'rejected', reason: e })
+      );
+    } else if (opts.tool === 'quiz') {
+      const quizPrompt = buildQuizPrompt(message, opts);
+      cardsPromise = fetchCards(quizPrompt, 'quiz').then(
+        v => ({ status: 'fulfilled', value: v }),
+        e => ({ status: 'rejected', reason: e })
+      );
+    } else if (opts.tool === 'mindmap') {
+      const mmPrompt = buildMindmapPrompt(message, opts);
+      cardsPromise = fetchCards(mmPrompt, 'mindmap').then(
+        v => ({ status: 'fulfilled', value: v }),
+        e => ({ status: 'rejected', reason: e })
+      );
     } else {
-      cardsPromise = fetchCards(buildCardsPrompt(message, opts), opts.tool).then(
+      // For notes and summary, we still need key_concepts etc. but they come from the same prompt.
+      // We'll reuse the notesPrompt for cards as well (it contains structured content)
+      cardsPromise = fetchCards(notesPrompt, opts.tool).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
@@ -1096,14 +1215,25 @@ module.exports = async function handler(req, res) {
 
     // ── Phase 1: live notes stream (PARALLEL models) ──
     try {
-      notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-      p1ok  = true;
-      log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
+      // For tools that don't need streaming notes (flashcards, quiz, mindmap), we still stream notes as a fallback
+      // but we'll also stream the JSON later. To avoid duplication, we'll stream the notes only for notes/summary/all
+      if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+        p1ok = true;
+        log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
+      } else {
+        // For flashcards/quiz/mindmap, we don't need streaming notes, but we need to let the client know we're generating
+        // So we stream a placeholder message and then the final JSON will come later.
+        // We'll still call streamNotes but it will be used only if the cards fail (fallback)
+        // Actually better: we skip streaming notes for these tools and directly generate the JSON.
+        // But we still need to show something, so we'll generate notes as a fallback.
+        // Let's do: generate notes anyway (it's useful) but also fetch cards.
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+        p1ok = true;
+        log.ok(`[${reqId}] P1 done (fallback notes) — ${notes.length}ch`);
+      }
     } catch (e1) {
       log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
-      // We will NOT use offline notes if streamNotes throws; we want AI only.
-      // But streamNotes should never throw after our last-resort fallback.
-      // However, if it does, we still provide offline content as absolute last resort.
       notes = offlineNotes(message);
       for (let i = 0; i < notes.length; i += 300) {
         sse('token', { t: notes.slice(i, i + 300) });
@@ -1126,46 +1256,62 @@ module.exports = async function handler(req, res) {
 
     if (opts.tool === 'all') {
       sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
-      let [fcqRes, mmRes] = await cardsPromise;
-
-      cardsData = {};
-      if (fcqRes.status === 'fulfilled' && fcqRes.value) {
-        const v = fcqRes.value;
-        if (v.flashcards?.length)              cardsData.flashcards             = v.flashcards;
-        if (v.quiz_questions?.length)          cardsData.quiz_questions         = v.quiz_questions;
-        if (v.key_concepts?.length)            cardsData.key_concepts           = v.key_concepts;
-        if (v.key_tricks?.length)              cardsData.key_tricks             = v.key_tricks;
-        if (v.practice_questions?.length)      cardsData.practice_questions     = v.practice_questions;
-        if (v.real_world_applications?.length) cardsData.real_world_applications= v.real_world_applications;
-        if (v.common_misconceptions?.length)   cardsData.common_misconceptions  = v.common_misconceptions;
-        if (v.topic)                           cardsData.topic                  = v.topic;
-        if (v.study_score)                     cardsData.study_score            = v.study_score;
-      } else {
-        log.error(`[${reqId}] Mega P2a (flashcards+quiz) failed: ${fcqRes.reason?.message}`);
-      }
-      if (mmRes.status === 'fulfilled' && mmRes.value?.mindmap) {
-        cardsData.mindmap = mmRes.value.mindmap;
-        if (!cardsData.key_concepts?.length && mmRes.value.key_concepts?.length)
-          cardsData.key_concepts = mmRes.value.key_concepts;
-      } else {
-        log.error(`[${reqId}] Mega P2b (mindmap) failed: ${mmRes.reason?.message}`);
-      }
-
-      p2ok = !!(cardsData.flashcards?.length || cardsData.quiz_questions?.length || cardsData.mindmap);
-      if (!p2ok) {
-        log.warn(`[${reqId}] Mega bundle: all AI cards failed — using fallback content`);
-        cardsData = buildTopicFallback('all', message);
-      }
-
-    } else {
-      const label = { flashcards:'flashcards', quiz:'quiz questions', mindmap:'mind map', summary:'summary cards', notes:'study cards' }[opts.tool] || 'cards';
-      sse('stage', { idx: 3, label: `🃏 Finalising ${label}…` });
       const cardsResult = await cardsPromise;
       if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
+        log.ok(`[${reqId}] Mega bundle succeeded`);
       } else {
-        log.warn(`[${reqId}] P2 failed for ${opts.tool} — using fallback content: ${cardsResult.reason?.message}`);
+        log.error(`[${reqId}] Mega bundle failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('all', message);
+        p2ok = false;
+      }
+    } else if (opts.tool === 'flashcards') {
+      sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Flashcards succeeded`);
+      } else {
+        log.error(`[${reqId}] Flashcards failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('flashcards', message);
+        p2ok = false;
+      }
+    } else if (opts.tool === 'quiz') {
+      sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Quiz succeeded`);
+      } else {
+        log.error(`[${reqId}] Quiz failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('quiz', message);
+        p2ok = false;
+      }
+    } else if (opts.tool === 'mindmap') {
+      sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Mindmap succeeded`);
+      } else {
+        log.error(`[${reqId}] Mindmap failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('mindmap', message);
+        p2ok = false;
+      }
+    } else {
+      // notes or summary: we already have notes, but we also want key_concepts etc.
+      // We'll use the cardsPromise to get that data.
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);
+      } else {
+        log.warn(`[${reqId}] Cards failed for ${opts.tool}, using fallback`);
         cardsData = buildTopicFallback(opts.tool, message);
         p2ok = false;
       }
