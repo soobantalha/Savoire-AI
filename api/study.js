@@ -1,15 +1,13 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE PARALLEL MODEL ENGINE
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE PARALLEL ENGINE (FALLBACK KILLER)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ PARALLEL MODEL EXECUTION  — All free models run simultaneously
-// ✅ TOOL-SPECIFIC PROMPTS     — Each tool gets its own dedicated prompt
-// ✅ MAX TOKENS                — Maximum token limits to prevent failure
-// ✅ LIVE + JSON IN PARALLEL   — Phase 1 (notes) and Phase 2 (cards) run concurrently
-// ✅ 3-PASS RETRY              — 3 full passes with backoff for resilience
-// ✅ PERFECT ERROR HANDLING    — Clean fallbacks, no unhandled rejections
+// ✅ EXTREME RETRY: 5 passes, each with all models parallel
+// ✅ HUGE TIMEOUTS: 45s first-token, 120s full stream, 60s per model
+// ✅ LAST RESORT: non-streaming openrouter/free with 16384 tokens
+// ✅ ALWAYS AI: fallback content is NEVER used unless truly catastrophic
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,35 +30,37 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST with MAXIMUM TOKENS (prevent failures)
+// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, LARGE TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ╔═══════════════════════════════════════════════════════════════════════════
-// ║  PARALLEL ENGINE: ALL MODELS RUN SIMULTANEOUSLY
-// ║  First successful model wins. Others are cleanly aborted.
-// ║  Each model uses MAXIMUM TOKENS to ensure complete output.
-// ╚═══════════════════════════════════════════════════════════════════════════
-
-const MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 4096, timeout_ms: 30000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 30000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 30000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 32000, temp: 0.75 },
+// Only the most reliable free models (in order of preference)
+const RELIABLE_MODELS = [
+  'openrouter/free',
+  'google/gemini-2.0-flash-exp:free',
+  'deepseek/deepseek-chat-v3-0324:free',
 ];
 
-const MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 28000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 28000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 28000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 30000, temp: 0.30 },
+// Full list for fallback
+const ALL_MODELS_STREAM = [
+  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+];
+
+const ALL_MODELS_CARDS = [
+  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (TOOL-SPECIFIC)
+// SECTION 6 — PROMPT BUILDERS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function buildNotesPrompt(input, opts) {
@@ -137,7 +137,6 @@ function buildNotesPrompt(input, opts) {
   const lang  = opts.language || 'English';
   const tool  = opts.tool || 'notes';
 
-  // ── Separate sections for EACH tool (no mixing) ──
   const sectionMap = {
     notes:      `## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples with Walkthroughs\n\n## 🚀 Advanced Aspects & Nuances\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways & Revision Checklist`,
     flashcards: `## 📖 Overview & Context\n\n## 🎯 Core Concepts (as Q&A pairs)\n\n## ⚙️ Mechanisms & Processes\n\n## 💡 Examples & Applications\n\n## ⚠️ Common Misconceptions\n\n## 🎯 Quick Summary`,
@@ -192,11 +191,9 @@ function buildCardsPrompt(input, opts, toolOverride) {
   const tool       = toolOverride  || opts.tool || 'notes';
   const topicShort = String(input).slice(0, 100);
 
-  // ── Separate inclusion flags per tool ──
   const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
   const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
   const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
-  
   const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
   const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
   const mmCount    = opts.branchCount || 6;
@@ -242,7 +239,6 @@ MIND MAP — generate central + ${mmCount} branches
   - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
 • "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
 
-  // Lean calls = skip heavy extra fields (they come from main notes)
   const isLeanCall = tool === 'flashcards_quiz' || tool === 'mindmap_only';
 
   const extraFieldsBlock = isLeanCall ? '' : `
@@ -296,17 +292,12 @@ OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: PARALLEL STREAM NOTES
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// ⚡ ULTIMATE PARALLEL ENGINE:
-//    ALL models start simultaneously. First one to produce a token wins.
-//    Losers are aborted cleanly. 3-pass retry for resilience.
-//    Max tokens per model to prevent truncation.
+// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (5 PASSES, HUGE TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 20000; // generous — free-tier cold start
-const FULL_STREAM_TIMEOUT_MS = 90000; // 90s safety ceiling
+const FIRST_TOKEN_TIMEOUT_MS = 45000;  // 45s for first token
+const FULL_STREAM_TIMEOUT_MS = 120000; // 2 min total
+const MAX_PASSES = 5;
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -355,7 +346,6 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   let gotFirstToken = false;
   let winnerDeclared = false;
 
-  // Check if another model already won
   const checkWinner = () => {
     if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
       winnerDeclared = true;
@@ -366,10 +356,8 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
 
   try {
     while (true) {
-      // If another model won, abort this one
       if (checkWinner()) {
         ctrl.abort();
-        // Return whatever we have (won't be used since winner already declared)
         return full;
       }
 
@@ -379,12 +367,11 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
       } catch (readErr) {
         if (readErr.name === 'AbortError') {
           if (!gotFirstToken) throw new Error(`${name}: no first token within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
-          // Already committed and streamed real content — salvage it
-          log.warn(`P1 ${name}: full-stream timeout — salvaging ${full.length}ch (committed, no retry)`);
+          log.warn(`P1 ${name}: full-stream timeout — salvaging ${full.length}ch`);
           return full;
         }
         if (gotFirstToken) {
-          log.warn(`P1 ${name}: read error mid-stream — salvaging ${full.length}ch (committed, no retry)`);
+          log.warn(`P1 ${name}: read error mid-stream — salvaging ${full.length}ch`);
           return full;
         }
         throw readErr;
@@ -408,24 +395,21 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
               clearTimeout(firstTokenTimer);
               fullStreamTimer = setTimeout(() => ctrl.abort(), FULL_STREAM_TIMEOUT_MS);
 
-              // Declare this model as the winner (if not already declared)
               if (sharedState && !sharedState.winnerId) {
                 sharedState.winnerId = model.id;
-                log.ok(`P1 🏆 ${name} WON in ${Date.now()-t0}ms — committing`);
+                log.ok(`P1 🏆 ${name} WON in ${Date.now()-t0}ms`);
               } else if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
-                // Another model already won — abort this one
                 winnerDeclared = true;
                 ctrl.abort();
                 return full;
               }
             }
-            // Only send chunks if this model is the winner
             if (!winnerDeclared && (!sharedState || sharedState.winnerId === model.id)) {
               full += delta;
               onChunk(delta);
             }
           }
-        } catch { /* ignore malformed SSE */ }
+        } catch { /* ignore */ }
       }
     }
   } finally {
@@ -442,23 +426,61 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   return full;
 }
 
+// ── Last resort non-streaming fallback ──
+async function streamNotesFallback(prompt, onChunk, tool) {
+  log.info(`P1 fallback: attempting non-streaming request to openrouter/free`);
+  try {
+    const res = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
+      },
+      body: JSON.stringify({
+        model: 'openrouter/free',
+        max_tokens: 16384,
+        temperature: 0.75,
+        stream: false,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      timeout: 120000,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content?.trim();
+    if (!content || content.length < 100) throw new Error('Empty or too short');
+    // Stream it in chunks
+    const chunkSize = 300;
+    for (let i = 0; i < content.length; i += chunkSize) {
+      onChunk(content.slice(i, i + chunkSize));
+      await sleep(5);
+    }
+    log.ok(`P1 fallback: returned ${content.length}ch`);
+    return content;
+  } catch (err) {
+    log.error(`P1 fallback failed: ${err.message}`);
+    return null;
+  }
+}
+
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  // ── 3 FULL PASSES for resilience ──
-  for (let pass = 1; pass <= 3; pass++) {
-    log.info(`P1 pass ${pass}: starting ALL ${MODELS_STREAM.length} models in parallel`);
+  // ── 5 FULL PASSES ──
+  for (let pass = 1; pass <= MAX_PASSES; pass++) {
+    log.info(`P1 pass ${pass}: starting ALL ${ALL_MODELS_STREAM.length} models in parallel`);
     sharedState.winnerId = null;
 
-    // Start ALL models in parallel
-    const modelPromises = MODELS_STREAM.map(model =>
+    const modelPromises = ALL_MODELS_STREAM.map(model =>
       streamOneModel(model, prompt, onChunk, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    // Wait for all to settle (or until one wins)
+    // Wait for all to settle
     const results = await Promise.allSettled(
       modelPromises.map(p => p.then(
         r => r,
@@ -466,19 +488,16 @@ async function streamNotes(prompt, onChunk, tool) {
       ))
     );
 
-    // Check if any model succeeded
     const successes = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
       .map(r => r.value);
 
     if (successes.length > 0) {
-      // Return the first successful result (the winner)
       const winner = successes[0];
       log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch`);
       return winner.value;
     }
 
-    // All models failed — collect errors
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
       .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
@@ -491,26 +510,26 @@ async function streamNotes(prompt, onChunk, tool) {
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
     log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
-    // Backoff before retry
-    if (pass < 3) {
-      const backoff = pass * 1200;
+    if (pass < MAX_PASSES) {
+      const backoff = pass * 1500;
       log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
   }
 
-  log.error(`P1 ALL ${MODELS_STREAM.length} MODELS FAILED (3 passes): ${errors.join(' | ')}`);
+  // ── LAST RESORT: non-streaming fallback ──
+  log.warn('P1 all streaming attempts failed; trying non-streaming fallback');
+  const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
+  if (fallbackResult) {
+    return fallbackResult;
+  }
+
+  log.error(`P1 ALL attempts failed: ${errors.join(' | ')}`);
   throw new Error(`All free AI models are currently busy. Please try again in a moment.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: PARALLEL FETCH CARDS
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// ⚡ ULTIMATE PARALLEL ENGINE:
-//    ALL models start simultaneously for JSON generation.
-//    First to return valid JSON wins. 3-pass retry with backoff.
-//    Max tokens per model to prevent truncation.
+// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS (5 PASSES, HUGE TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCardsFromModel(model, prompt, tool, sharedState) {
@@ -520,7 +539,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   const t0    = Date.now();
 
   try {
-    // Check if another model already won
     if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
       throw new Error(`${name}: skipped — another model already won`);
     }
@@ -557,7 +575,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     if (jS === -1 || jE <= jS) throw new Error(`${name}: no JSON object`);
     let jsonStr = content.slice(jS, jE + 1);
 
-    // 4-step JSON repair
     let parsed;
     try { parsed = JSON.parse(jsonStr); }
     catch {
@@ -583,7 +600,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       }
     }
 
-    // Auto-fix quiz correct_answer mismatches
     if (Array.isArray(parsed.quiz_questions)) {
       parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
         q.id = q.id || i + 1;
@@ -598,14 +614,12 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       });
     }
 
-    // Normalize flashcards
     if (Array.isArray(parsed.flashcards)) {
       parsed.flashcards = parsed.flashcards
         .filter(c => (c.front || c.question) && (c.back || c.answer))
         .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
     }
 
-    // Validation
     const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
     const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
     const hasMm = parsed.mindmap?.branches?.length >= 2;
@@ -617,10 +631,9 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
                 : hasKc;
     if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
 
-    // Declare winner
     if (sharedState && !sharedState.winnerId) {
       sharedState.winnerId = model.id;
-      log.ok(`P2 🏆 ${name} WON in ${Date.now()-t0}ms | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
+      log.ok(`P2 🏆 ${name} WON in ${Date.now()-t0}ms`);
     }
 
     log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
@@ -635,23 +648,59 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   }
 }
 
+// ── Last resort non-streaming JSON fallback ──
+async function fetchCardsFallback(prompt, tool) {
+  log.info(`P2 fallback: attempting non-streaming JSON request to openrouter/free`);
+  try {
+    const res = await fetch(OPENROUTER_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer':  HTTP_REFERER,
+        'X-Title':       APP_TITLE,
+      },
+      body: JSON.stringify({
+        model: 'openrouter/free',
+        max_tokens: 16384,
+        temperature: 0.30,
+        stream: false,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      timeout: 120000,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content?.trim();
+    if (!content) throw new Error('Empty response');
+    // Try to parse JSON
+    const cleaned = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+    const jS = cleaned.indexOf('{'), jE = cleaned.lastIndexOf('}');
+    if (jS === -1 || jE <= jS) throw new Error('No JSON');
+    const jsonStr = cleaned.slice(jS, jE + 1);
+    const parsed = JSON.parse(jsonStr);
+    log.ok(`P2 fallback: returned JSON`);
+    return parsed;
+  } catch (err) {
+    log.error(`P2 fallback failed: ${err.message}`);
+    return null;
+  }
+}
+
 async function fetchCards(prompt, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  // ── 3 FULL PASSES for resilience ──
-  for (let pass = 1; pass <= 3; pass++) {
-    log.info(`P2 pass ${pass}: starting ALL ${MODELS_CARDS.length} models in parallel for tool:${tool}`);
+  for (let pass = 1; pass <= MAX_PASSES; pass++) {
+    log.info(`P2 pass ${pass}: starting ALL ${ALL_MODELS_CARDS.length} models in parallel for tool:${tool}`);
     sharedState.winnerId = null;
 
-    // Start ALL models in parallel
-    const modelPromises = MODELS_CARDS.map(model =>
+    const modelPromises = ALL_MODELS_CARDS.map(model =>
       fetchCardsFromModel(model, prompt, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    // Wait for all to settle
     const results = await Promise.allSettled(
       modelPromises.map(p => p.then(
         r => r,
@@ -659,19 +708,16 @@ async function fetchCards(prompt, tool) {
       ))
     );
 
-    // Check if any model succeeded
     const successes = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
       .map(r => r.value);
 
     if (successes.length > 0) {
-      // Return the first successful result (the winner)
       const winner = successes[0];
-      log.ok(`P2 pass ${pass}: WINNER ${winner.model} — returning`);
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model}`);
       return winner.value;
     }
 
-    // All models failed — collect errors
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
       .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
@@ -684,20 +730,26 @@ async function fetchCards(prompt, tool) {
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
     log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
-    // Backoff before retry
-    if (pass < 3) {
-      const backoff = pass * 1200;
+    if (pass < MAX_PASSES) {
+      const backoff = pass * 1500;
       log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
   }
 
-  log.error(`P2 ALL ${MODELS_CARDS.length} MODELS FAILED (3 passes) for tool:${tool}: ${errors.join(' | ')}`);
+  // ── LAST RESORT ──
+  log.warn('P2 all attempts failed; trying non-streaming JSON fallback');
+  const fallbackResult = await fetchCardsFallback(prompt, tool);
+  if (fallbackResult) {
+    return fallbackResult;
+  }
+
+  log.error(`P2 ALL attempts failed: ${errors.join(' | ')}`);
   throw new Error(`All free AI models failed for tool:${tool}.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK CONTENT (used only when ALL retries fail)
+// SECTION 9 — FALLBACK CONTENT (almost never used now)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function offlineNotes(topic) {
@@ -1022,7 +1074,6 @@ module.exports = async function handler(req, res) {
   try {
     // ╔═══════════════════════════════════════════════════════════════════════
     // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (PARALLEL)
-    // ║  Phase 2 starts immediately. Both use PARALLEL model execution.
     // ╚═══════════════════════════════════════════════════════════════════════
 
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
@@ -1050,6 +1101,9 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
     } catch (e1) {
       log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
+      // We will NOT use offline notes if streamNotes throws; we want AI only.
+      // But streamNotes should never throw after our last-resort fallback.
+      // However, if it does, we still provide offline content as absolute last resort.
       notes = offlineNotes(message);
       for (let i = 0; i < notes.length; i += 300) {
         sse('token', { t: notes.slice(i, i + 300) });
