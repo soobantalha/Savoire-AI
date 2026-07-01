@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-font="small">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
@@ -12,96 +12,147 @@
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
-  <link rel="stylesheet" href="style.css">
 
+  <!-- Critical inline styles for loading state and base layout -->
   <style>
-    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-    html,body{height:100%;overflow:hidden}
-    body{font-family:'Inter',system-ui,sans-serif;background:linear-gradient(135deg,#0a1128 0%,#050814 50%,#000000 100%);color:#c0c0c0;display:flex;flex-direction:column}
-    .dash-body{flex:1;display:flex;overflow:hidden;position:relative}
-
-    /* Loading spinner */
-    .loading-spinner{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:56px;height:56px;border:3px solid rgba(212,175,55,0.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite;z-index:9999}
-    @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
-    .loaded .loading-spinner{display:none}
-
-    /* Toast */
-    .toast-container{position:fixed;bottom:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-    .toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:10px 18px;background:rgba(15,23,42,0.97);backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;font-size:.82rem;color:#fff;animation:slideInToast .3s ease;cursor:pointer;max-width:340px;min-width:200px}
-    .toast.success{border-left:4px solid #00ff88}
-    .toast.error  {border-left:4px solid #ff4444}
-    .toast.info   {border-left:4px solid #00d4ff}
-    @keyframes slideInToast{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
-
-    /* Sidebar backdrop */
-    .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:48;cursor:pointer}
-    .sb-backdrop.visible{display:block;animation:fadeIn .25s ease}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-
-    /* Empty tool message */
-    .empty-tool-msg{padding:60px 40px;text-align:center;color:rgba(255,255,255,.4);font-size:1.1rem;display:flex;flex-direction:column;align-items:center;gap:16px}
-    .empty-tool-msg i{font-size:3rem;color:rgba(255,255,255,.2)}
-
-    /* Deck visualizer */
-    .deck-viz-wrap{position:relative;width:80px;height:60px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center}
-    .deck-card-viz{position:absolute;width:64px;height:44px;background:linear-gradient(135deg,rgba(191,0,255,.15),rgba(0,212,255,.1));border:1px solid rgba(191,0,255,.3);border-radius:6px;transition:all .3s ease}
-    .deck-count-badge{position:absolute;bottom:-10px;right:-10px;background:linear-gradient(135deg,#bf00ff,#7a00cc);color:#fff;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:20px;z-index:10}
-
-    /* Mindmap pulse */
-    .live-mm-pulse{display:inline-block;width:8px;height:8px;background:#d4af37;border-radius:50%;margin-left:8px;animation:mmPulse 1.5s ease infinite}
-    @keyframes mmPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.5}}
-
-    /* Mindmap central placeholder */
-    .live-mm-central-placeholder{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;background:rgba(212,175,55,.06);border:1px dashed rgba(212,175,55,.2);border-radius:30px;color:rgba(212,175,55,.5);font-size:.85rem;margin-bottom:16px}
-    .live-mm-radial-container{display:flex;flex-wrap:wrap;gap:10px;max-height:calc(100vh - 260px);overflow-y:auto}
-
-    /* Quiz speed track */
-    .live-quiz-speed-track{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;padding:8px 12px;background:rgba(0,255,136,.04);border-radius:8px}
-    .quiz-speed-pip{width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,.1);transition:background .3s ease}
-    .quiz-speed-pip.filled{background:rgba(0,255,136,.4)}
-
-    /* Fc deck info */
-    .fc-deck-info{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .fc-deck-badge{padding:3px 10px;background:rgba(191,0,255,.1);border:1px solid rgba(191,0,255,.2);border-radius:20px;font-size:.62rem;color:#bf00ff;font-weight:600}
-
-    /* Result section mega num */
-    .mega-num{width:22px;height:22px;background:linear-gradient(135deg,#d4af37,#b8941f);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;color:#0a1128;margin-right:6px;flex-shrink:0}
-
-    /* Avatar picker settings */
-    #avatarPickerSettings .avatar-picker-grid{display:flex;flex-wrap:wrap;gap:8px}
-
-    /* Sidebar avatar picker */
-    #sidebarAvatarPicker{padding:12px 20px;border-top:1px solid rgba(255,255,255,.05)}
-
-    /* Welcome name hint */
-    #welcomeNameHint{min-height:18px}
+    /* ── RESET & BASE ── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a1128 0%, #050814 50%, #000000 100%);
+      color: #c0c0c0;
+      display: flex;
+      flex-direction: column;
+    }
+    .dash-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+    /* ── LOADING SPINNER ── */
+    .loading-spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 56px;
+      height: 56px;
+      border: 3px solid rgba(212, 175, 55, 0.2);
+      border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      z-index: 9999;
+    }
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    .loaded .loading-spinner {
+      display: none;
+    }
+    /* ── TOAST CONTAINER ── */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background: rgba(15, 23, 42, 0.97);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 12px;
+      font-size: .82rem;
+      color: #fff;
+      animation: slideInToast .3s ease;
+      cursor: pointer;
+      max-width: 340px;
+      min-width: 200px;
+    }
+    .toast.success { border-left: 4px solid #00ff88; }
+    .toast.error   { border-left: 4px solid #ff4444; }
+    .toast.info    { border-left: 4px solid #00d4ff; }
+    @keyframes slideInToast {
+      from { opacity: 0; transform: translateX(100%); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    /* ── SIDEBAR BACKDROP ── */
+    .sb-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .75);
+      backdrop-filter: blur(4px);
+      z-index: 48;
+      cursor: pointer;
+    }
+    .sb-backdrop.visible {
+      display: block;
+      animation: fadeIn .25s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- ═══════════ NOSCRIPT MESSAGE ═══════════ -->
   <noscript>
     <div style="position:fixed;inset:0;background:#0a1128;display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;text-align:center;padding:20px">
-      <div><h1>⚠️ JavaScript Required</h1><p>Savoiré AI requires JavaScript to function. Please enable it in your browser.</p></div>
+      <div>
+        <h1>⚠️ JavaScript Required</h1>
+        <p>Savoiré AI requires JavaScript to function. Please enable it in your browser.</p>
+      </div>
     </div>
   </noscript>
 
+  <!-- ═══════════ LOADING SPINNER ═══════════ -->
   <div class="loading-spinner"></div>
+
+  <!-- ═══════════ PARTICLES BACKGROUND ═══════════ -->
   <canvas id="particleCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
+
+  <!-- ═══════════ TOAST CONTAINER ═══════════ -->
   <div id="toastContainer" class="toast-container"></div>
+
+  <!-- ═══════════ SIDEBAR BACKDROP ═══════════ -->
   <div class="sb-backdrop" id="sbBackdrop"></div>
 
-  <!-- ═══════════════════════════════════════ MAIN LAYOUT ═══════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════ MAIN LAYOUT ═══════════════════════════════════════ -->
   <div class="dash-body">
 
     <!-- ═══════════ LEFT PANEL / SIDEBAR ═══════════ -->
     <aside class="left-panel" id="leftPanel">
 
+      <!-- Panel Header -->
       <div class="lp-hdr">
         <div class="lp-hdr-row">
           <span class="lp-title">MENU</span>
@@ -111,14 +162,14 @@
 
       <!-- User Profile -->
       <div class="user-profile-sidebar">
-        <div class="user-avatar-sidebar" id="sidebarAvatar">Ś</div>
+        <div class="user-avatar-sidebar" id="sidebarAvatar">🎓</div>
         <div class="user-info-sidebar">
           <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
           <div class="user-tagline-sidebar">Think Less. Know More.</div>
         </div>
       </div>
 
-      <!-- Stats Grid — 4 col on mobile -->
+      <!-- Stats Grid (7 stats) -->
       <div class="stats-grid-sidebar" id="sidebarStats">
         <div class="stat-card-sidebar">
           <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
@@ -152,43 +203,47 @@
 
       <!-- Navigation -->
       <nav class="sidebar-nav" id="sidebarNav">
-        <!-- MAIN CTA -->
+        <!-- Wizard CTA -->
         <div class="nav-item nav-item-wizard" data-nav="wizard" id="navWizard">
           <i class="fas fa-magic nav-icon"></i>
           <span class="nav-text">✨ Create Study Material</span>
           <span class="nav-badge new-badge">Wizard</span>
         </div>
-        <!-- MEGA BUNDLE -->
+        <!-- Mega Bundle -->
         <div class="nav-item nav-item-mega" data-nav="all" id="navAll">
           <i class="fas fa-bolt nav-icon"></i>
           <span class="nav-text">⚡ Mega Study Bundle</span>
           <span class="nav-badge mega-badge">ALL 5</span>
         </div>
         <div class="nav-divider"></div>
+        <!-- History -->
         <div class="nav-item" data-nav="history" id="navHistory">
           <i class="fas fa-history nav-icon"></i>
           <span class="nav-text">Study History</span>
         </div>
+        <!-- Saved -->
         <div class="nav-item" data-nav="saved" id="navSaved">
           <i class="fas fa-star nav-icon"></i>
           <span class="nav-text">Saved Notes</span>
         </div>
+        <!-- Settings -->
         <div class="nav-item" data-nav="settings" id="navSettings">
           <i class="fas fa-cog nav-icon"></i>
           <span class="nav-text">Settings</span>
         </div>
+        <!-- Focus Mode -->
         <div class="nav-item" data-nav="focus" id="navFocus">
           <i class="fas fa-expand-alt nav-icon"></i>
           <span class="nav-text">Focus Mode</span>
         </div>
       </nav>
 
-      <!-- Demo Button -->
+      <!-- Demo Replay Button -->
       <button class="demo-replay-btn" id="demoReplayBtn">
         <i class="fas fa-play-circle"></i> Watch Demo
       </button>
 
-      <!-- Recent History -->
+      <!-- Recent History (sidebar) -->
       <div class="lp-history" id="lpHistory">
         <div class="lp-hist-header">
           <span class="lp-hist-title">Recent Study</span>
@@ -199,7 +254,7 @@
         </div>
       </div>
 
-      <!-- Saved Notes Strip -->
+      <!-- Saved Notes (sidebar) -->
       <div class="lp-history" id="lpSavedStrip">
         <div class="lp-hist-header">
           <span class="lp-hist-title">Saved Notes</span>
@@ -210,10 +265,10 @@
         </div>
       </div>
 
-      <!-- Avatar Picker in Sidebar -->
+      <!-- Avatar Picker (sidebar) -->
       <div id="sidebarAvatarPicker"></div>
 
-      <!-- About Section -->
+      <!-- About Section (sidebar) -->
       <div class="sidebar-about">
         <button class="about-toggle-btn" id="aboutToggleBtn">
           <i class="fas fa-info-circle"></i> About Savoiré AI
@@ -251,13 +306,13 @@
           <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home">
             <div class="dh-mark">Ś</div>
             <div class="dh-text">
-              <span class="dh-name">Savoiré AI</span>
+              <span class="dh-name">Savoiré <span class="dh-name-ai">AI</span></span>
               <span class="dh-ver">v2.0</span>
             </div>
           </div>
         </div>
 
-        <!-- Stats in header -->
+        <!-- Header Stats -->
         <div class="dh-stats">
           <div class="dh-stat dh-stat-streak" id="headerStreakWrap">
             <i class="fas fa-fire"></i>
@@ -277,6 +332,7 @@
 
         <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think Less. Know More.</div>
 
+        <!-- Header Actions -->
         <div class="dh-actions">
           <button class="dh-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle Theme">
             <i class="fas fa-moon" id="themeIcon"></i>
@@ -291,15 +347,15 @@
             <i class="fas fa-bolt"></i>
           </button>
           <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu" title="User Menu">
-            <span id="avInitials">Ś</span>
+            <span id="avInitials">🎓</span>
           </div>
         </div>
       </header>
 
-      <!-- Avatar Dropdown -->
+      <!-- ═══════════ AVATAR DROPDOWN ═══════════ -->
       <div class="av-dropdown" id="avDropdown">
         <div class="av-user">
-          <div class="av-u-av" id="avDropdownAvatar">Ś</div>
+          <div class="av-u-av" id="avDropdownAvatar">🎓</div>
           <div>
             <div class="av-u-name" id="avDropdownName">Scholar</div>
             <div class="av-u-sub">Savoiré AI Member</div>
@@ -313,7 +369,7 @@
         <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i> Clear All Data</button>
       </div>
 
-      <!-- Output Toolbar (hidden until output ready) -->
+      <!-- ═══════════ OUTPUT TOOLBAR (hidden until generation) ═══════════ -->
       <div class="out-toolbar" id="outToolbar" style="display:none">
         <button class="otb-btn" id="copyBtn" title="Copy all content"><i class="fas fa-copy"></i> <span>Copy</span></button>
         <button class="otb-btn otb-pdf" id="pdfBtn" data-theme="🌙" title="Download PDF"><i class="fas fa-file-pdf"></i> <span>PDF</span></button>
@@ -326,10 +382,10 @@
         <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> wizard · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
       </div>
 
-      <!-- Output Area -->
+      <!-- ═══════════ OUTPUT AREA ═══════════ -->
       <div class="out-area" id="outArea">
 
-        <!-- Thinking indicator -->
+        <!-- Thinking Indicator -->
         <div id="thinkingWrap" style="display:none">
           <div class="thinking-card">
             <div class="th-av"><i class="fas fa-brain"></i></div>
@@ -347,7 +403,7 @@
           </div>
         </div>
 
-        <!-- ══════════════ EMPTY STATE ══════════════ -->
+        <!-- Empty State -->
         <div id="emptyState" class="empty-state">
           <div class="es-mark">✨</div>
           <div class="es-title">Ready to Study Smarter?</div>
@@ -362,7 +418,6 @@
             </button>
           </div>
 
-          <!-- Tool chips — each works independently -->
           <div class="es-features">
             <span class="es-feat es-feat-chip" data-tool="notes" title="Generate comprehensive study notes">
               <i class="fas fa-book-open"></i> Notes
@@ -392,11 +447,12 @@
           </div>
         </div>
 
-        <!-- Result Area -->
+        <!-- Result Area (populated by JavaScript) -->
         <div id="resultArea"></div>
 
       </div>
 
+      <!-- ═══════════ BACK TO TOP BUTTON ═══════════ -->
       <button class="back-to-top" id="backToTopBtn" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
     </main>
@@ -440,7 +496,7 @@
 
   <!-- ═══════════════════════════════ MODALS ═══════════════════════════════ -->
 
-  <!-- Wizard Modal -->
+  <!-- ─── Wizard Modal ─── -->
   <div class="modal-overlay" id="wizardModal">
     <div class="modal modal-lg">
       <div class="modal-header">
@@ -451,7 +507,7 @@
     </div>
   </div>
 
-  <!-- Mega Bundle Modal -->
+  <!-- ─── Mega Bundle Modal ─── -->
   <div class="modal-overlay" id="megaModal">
     <div class="modal modal-md">
       <div class="modal-header">
@@ -520,7 +576,7 @@
     </div>
   </div>
 
-  <!-- History Modal -->
+  <!-- ─── History Modal ─── -->
   <div class="modal-overlay" id="histModal">
     <div class="modal modal-md">
       <div class="modal-header">
@@ -554,7 +610,7 @@
     </div>
   </div>
 
-  <!-- Saved Modal -->
+  <!-- ─── Saved Notes Modal ─── -->
   <div class="modal-overlay" id="savedModal">
     <div class="modal modal-md">
       <div class="modal-header">
@@ -570,7 +626,7 @@
     </div>
   </div>
 
-  <!-- Settings Modal -->
+  <!-- ─── Settings Modal ─── -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal modal-md">
       <div class="modal-header">
@@ -592,7 +648,7 @@
 
         <!-- Avatar Picker -->
         <div class="settings-section">
-          <div class="settings-title"><i class="fas fa-palette"></i> Avatar Color</div>
+          <div class="settings-title"><i class="fas fa-palette"></i> Avatar</div>
           <div id="avatarPickerSettings"></div>
         </div>
 
@@ -610,9 +666,8 @@
           <div class="settings-row">
             <div class="settings-label">Font Size</div>
             <div class="font-buttons">
-              <button class="font-btn font-sz" data-size="xsmall">XS</button>
-              <button class="font-btn font-sz" data-size="small">S</button>
-              <button class="font-btn font-sz active" data-size="medium">M</button>
+              <button class="font-btn font-sz active" data-size="small">S</button>
+              <button class="font-btn font-sz" data-size="medium">M</button>
               <button class="font-btn font-sz" data-size="large">L</button>
               <button class="font-btn font-sz" data-size="xlarge">XL</button>
             </div>
@@ -663,7 +718,7 @@
           <div class="stats-grid" id="dsStats"></div>
         </div>
 
-        <!-- Backup -->
+        <!-- Backup & Restore -->
         <div class="settings-section">
           <div class="settings-title"><i class="fas fa-database"></i> Backup &amp; Restore</div>
           <div class="settings-buttons">
@@ -678,7 +733,7 @@
           <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
           <div class="about-card-settings">
             <div class="about-logo">Ś</div>
-            <div class="about-name">Savoiré AI v2.0</div>
+            <div class="about-name">Savoiré <span class="about-name-ai">AI</span> <span class="about-name-ver">v2.0</span></div>
             <div class="about-tagline">"Think Less. Know More."</div>
             <div class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</div>
             <div class="about-founder">
@@ -704,7 +759,7 @@
     </div>
   </div>
 
-  <!-- Confirm Modal -->
+  <!-- ─── Confirm Modal ─── -->
   <div class="modal-overlay" id="confirmModal">
     <div class="modal modal-sm">
       <div class="modal-header">
@@ -721,12 +776,12 @@
     </div>
   </div>
 
-  <!-- Welcome Overlay (New User) -->
+  <!-- ─── Welcome Overlay (New User) ─── -->
   <div class="modal-overlay" id="welcomeOverlay" style="z-index:3000">
     <div class="modal" style="max-width:460px;text-align:center">
       <div class="modal-body" style="text-align:center;padding:32px">
         <div class="welcome-logo">Ś</div>
-        <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré AI</span></h2>
+        <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré <span class="welcome-brand-ai">AI</span></span></h2>
         <p class="welcome-tagline">"Think Less. Know More."</p>
         <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
         <div class="welcome-features">
@@ -745,13 +800,12 @@
         <button id="welcomeBtn" class="welcome-btn">
           <i class="fas fa-graduation-cap"></i> Start Studying →
         </button>
-        <button id="welcomeSkip" class="welcome-skip" style="display:none">Skip for now</button>
         <p class="welcome-footer">Free forever · No login required · Built by Sooban Talha Technologies</p>
       </div>
     </div>
   </div>
 
-  <!-- Welcome Back Overlay -->
+  <!-- ─── Welcome Back Overlay ─── -->
   <div class="modal-overlay" id="welcomeBackOverlay" style="z-index:3000">
     <div class="modal" style="max-width:400px;text-align:center">
       <div class="modal-body" style="text-align:center;padding:32px">
@@ -777,32 +831,80 @@
     </div>
   </div>
 
-  <!-- Demo Modal (legacy — kept for compatibility, demo runs via canvas system) -->
-  <div class="modal-overlay" id="demoModal" style="display:none">
-    <div class="modal modal-lg">
-      <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-play-circle"></i> Savoiré AI — Interactive Demo Tour</div>
-        <button class="modal-close" data-close="demoModal"><i class="fas fa-times"></i></button>
+  <!-- ─── NEW: Command Palette Modal ─── -->
+  <div class="modal-overlay" id="cmdPaletteModal" style="z-index:4000;display:none">
+    <div class="modal modal-md" style="max-width:600px;margin-top:10vh">
+      <div class="modal-body" style="padding:0">
+        <div style="display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding:8px 16px">
+          <i class="fas fa-search" style="color:#d4af37;opacity:0.7;margin-right:12px"></i>
+          <input type="text" id="cmdInput" placeholder="Search commands…" style="flex:1;background:transparent;border:none;color:#fff;font-size:1rem;outline:none">
+          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);font-family:monospace">Esc</span>
+        </div>
+        <div id="cmdResults" style="max-height:300px;overflow-y:auto;padding:8px"></div>
+        <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,0.05);font-size:0.6rem;color:rgba(255,255,255,0.3);display:flex;gap:12px">
+          <span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span>
+          <span><kbd>Enter</kbd> run</span>
+          <span><kbd>Esc</kbd> close</span>
+        </div>
       </div>
-      <div class="modal-body" id="demoContent"></div>
     </div>
   </div>
 
+  <!-- ─── NEW: Focus Timer (Floating) ─── -->
+  <div id="focusTimer" style="position:fixed;bottom:90px;right:24px;z-index:500;display:none;background:rgba(15,23,42,0.95);backdrop-filter:blur(12px);border:1px solid rgba(212,175,55,0.3);border-radius:20px;padding:16px;width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:0.7rem;font-weight:600;color:#d4af37">FOCUS TIMER</span>
+      <button id="timerCloseBtn" style="background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem">&times;</button>
+    </div>
+    <div style="display:flex;justify-content:center;margin-bottom:10px">
+      <svg width="80" height="80" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#d4af37" stroke-width="8" stroke-dasharray="314.16" stroke-dashoffset="0" id="timerCircle" style="transition:stroke-dashoffset 0.5s ease"/>
+      </svg>
+    </div>
+    <div style="text-align:center;font-size:1.2rem;font-weight:700;font-family:monospace;color:#fff" id="timerDisplay">25:00</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px">
+      <button class="timer-preset" data-minutes="15" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">15m</button>
+      <button class="timer-preset" data-minutes="25" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">25m</button>
+      <button class="timer-preset" data-minutes="45" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">45m</button>
+      <button class="timer-preset" data-minutes="60" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">60m</button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+      <button id="timerStartBtn" style="padding:6px 16px;background:linear-gradient(135deg,#00d4ff,#0099cc);border:none;border-radius:30px;color:#fff;font-weight:600;cursor:pointer;font-size:0.7rem">Start</button>
+      <button id="timerResetBtn" style="padding:6px 16px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:30px;color:#fff;cursor:pointer;font-size:0.7rem">Reset</button>
+    </div>
+  </div>
+
+  <!-- ─── NEW: Find in Output Bar ─── -->
+  <div id="findBar" style="position:fixed;top:70px;right:24px;z-index:100;display:none;background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;padding:8px 12px;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+    <i class="fas fa-search" style="color:#d4af37;font-size:0.8rem"></i>
+    <input type="text" id="findInput" placeholder="Find in output…" style="background:transparent;border:none;color:#fff;font-size:0.9rem;outline:none;width:180px">
+    <span id="findCount" style="font-size:0.7rem;color:rgba(255,255,255,0.4);font-family:monospace">0/0</span>
+    <button id="findNextBtn" style="background:transparent;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.8rem" title="Next match"><i class="fas fa-arrow-down"></i></button>
+    <button id="findCloseBtn" style="background:transparent;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:0.8rem" title="Close"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ═══════════════════════════════════ SCRIPT: Theme flash prevention and loader removal ═══════════════════════════════════ -->
   <script>
-    // Theme flash preventifon — runs before everything
+    // ── Theme flash prevention ──
     (function(){
-      try{
-        const p=JSON.parse(localStorage.getItem('sv_prefs')||'{}');
-        if(p.theme)    document.documentElement.setAttribute('data-theme',p.theme);
-        if(p.fontSize) document.documentElement.setAttribute('data-font',p.fontSize);
-      }catch(e){}
+      try {
+        const p = JSON.parse(localStorage.getItem('sv_prefs') || '{}');
+        if (p.theme)    document.documentElement.setAttribute('data-theme', p.theme);
+        if (p.fontSize) document.documentElement.setAttribute('data-font', p.fontSize);
+        else document.documentElement.setAttribute('data-font', 'small');
+      } catch(e) {}
     })();
+
+    // ── Remove loading spinner once page is loaded ──
     window.addEventListener('load', function(){
       document.body.classList.add('loaded');
-      const s=document.querySelector('.loading-spinner');
-      if(s)s.remove();
+      const spinner = document.querySelector('.loading-spinner');
+      if (spinner) spinner.remove();
     });
   </script>
+
+  <!-- ═══════════════════════════════════ MAIN APPLICATION SCRIPT ═══════════════════════════════════ -->
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a060473ebd532141',t:'MTc4MDUwNjI4MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

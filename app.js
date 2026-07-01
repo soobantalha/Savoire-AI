@@ -39,7 +39,7 @@
 
 const SAVOIRÉ = {
   VERSION:     '2.0',
-  BRAND:       'Savoiré AI ',
+  BRAND:       'Savoiré AI v2.0',
   DEVELOPER:   'Sooban Talha Technologies',
   DEVSITE:     'soobantalhatech.xyz',
   WEBSITE:     'savoireai.vercel.app',
@@ -743,16 +743,11 @@ class SavoireApp {
 
   _openWizard(presetTool) {
     this.wizardData = {
-      tool:        presetTool || this.tool || 'notes',
-      topic:       '',
-      language:    this.prefs.defaultLanguage || 'English',
-      depth:       'detailed',
-      style:       'simple',
-      // tool-specific options (set in new wizard steps)
-      cardCount:   15,   // flashcard count
-      quizCount:   10,   // quiz question count
-      quizType:    'mixed', // quiz difficulty type
-      branchCount: 6,    // mindmap branch count
+      tool:     presetTool || this.tool || 'notes',
+      topic:    '',
+      language: this.prefs.defaultLanguage || 'English',
+      depth:    'detailed',
+      style:    'simple',
     };
     // If a tool is already pre-selected, skip step 0 (tool selection) and go straight to topic
     this.wizardStep = presetTool ? 1 : 0;
@@ -811,18 +806,11 @@ class SavoireApp {
 
     const body = document.getElementById('wizardBody');
     if (body) {
-      const t = this.wizardData.tool;
       switch (this.wizardStep) {
         case 0: body.innerHTML = this._wStepTool();   this._bindWTool();  break;
         case 1: body.innerHTML = this._wStepTopic();  this._bindWTopic(); break;
         case 2: body.innerHTML = this._wStepLang();   this._bindWLang();  break;
-        case 3:
-          // Step 3 is TOOL-SPECIFIC
-          if (t === 'flashcards') { body.innerHTML = this._wStepCardCount(); this._bindWCardCount(); }
-          else if (t === 'quiz')  { body.innerHTML = this._wStepQuizOpts();  this._bindWQuizOpts();  }
-          else if (t === 'mindmap') { body.innerHTML = this._wStepBranchCount(); this._bindWBranchCount(); }
-          else                    { body.innerHTML = this._wStepDepth();    this._bindWDepth();    }
-          break;
+        case 3: body.innerHTML = this._wStepDepth();  this._bindWDepth(); break;
         case 4: body.innerHTML = this._wStepStyle();  this._bindWStyle(); break;
         case 5: body.innerHTML = this._wStepReview(); break;
       }
@@ -1066,196 +1054,13 @@ Examples:
     this._qsa('.wizard-style-card').forEach(c => {
       c.onclick = () => {
         this.wizardData.style = c.dataset.style;
+        // Highlight selected card immediately
         this._qsa('.wizard-style-card').forEach(x => x.classList.remove('selected'));
         c.classList.add('selected');
+        // Auto-advance to review step after brief delay (max step = 5)
         setTimeout(() => {
           if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
         }, 280);
-      };
-    });
-  }
-
-  // ── FLASHCARD COUNT STEP ────────────────────────────────────────────────────
-  _wStepCardCount() {
-    const opts = [
-      { count:8,  label:'8 Cards',  desc:'Quick review session',      icon:'fa-bolt',       color:'#00d4ff', tag:'Quick'     },
-      { count:12, label:'12 Cards', desc:'Balanced study session',     icon:'fa-balance-scale', color:'#00ff88', tag:'Popular' },
-      { count:15, label:'15 Cards', desc:'Standard spaced repetition', icon:'fa-layer-group',color:'#bf00ff', tag:'Recommended' },
-      { count:20, label:'20 Cards', desc:'Deep mastery deck',          icon:'fa-crown',      color:'#d4af37', tag:'Expert'    },
-    ];
-    return `
-      <div class="wizard-step-heading"><i class="fas fa-layer-group" style="color:#bf00ff"></i> How many flashcards do you want?</div>
-      <div class="wizard-tool-specific-info">
-        <i class="fas fa-info-circle"></i>
-        Each card has a <strong>front question</strong> and <strong>detailed back answer</strong>.
-        Flip cards with a click — perfect for spaced repetition study.
-      </div>
-      <div class="wizard-option-grid">
-        ${opts.map(o => `
-          <div class="wizard-option-card ${this.wizardData.cardCount === o.count ? 'selected' : ''}"
-               data-count="${o.count}" style="--opt-color:${o.color}">
-            <div class="wopt-badge" style="background:${o.color}20;color:${o.color}">${o.tag}</div>
-            <i class="fas ${o.icon} wopt-icon" style="color:${o.color}"></i>
-            <div class="wopt-count" style="color:${o.color}">${o.label}</div>
-            <div class="wopt-desc">${o.desc}</div>
-            ${this.wizardData.cardCount === o.count ? '<div class="wopt-check"><i class="fas fa-check-circle"></i></div>' : ''}
-          </div>
-        `).join('')}
-      </div>
-      <div class="wizard-tool-specific-preview" style="border-color:rgba(191,0,255,.2);background:rgba(191,0,255,.05)">
-        <i class="fas fa-layer-group" style="color:#bf00ff"></i>
-        <span>You'll get <strong style="color:#bf00ff">${this.wizardData.cardCount} interactive flip cards</strong> — each with a detailed AI-written answer</span>
-      </div>`;
-  }
-
-  _bindWCardCount() {
-    this._qsa('.wizard-option-card').forEach(c => {
-      c.onclick = () => {
-        this.wizardData.cardCount = Number(c.dataset.count);
-        this._qsa('.wizard-option-card').forEach(x => x.classList.remove('selected'));
-        c.classList.add('selected');
-        setTimeout(() => {
-          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
-        }, 300);
-      };
-    });
-  }
-
-  // ── QUIZ OPTIONS STEP ────────────────────────────────────────────────────────
-  _wStepQuizOpts() {
-    const counts = [5, 8, 10, 15];
-    const types = [
-      { id:'mixed', label:'Mixed',      desc:'Easy + Medium + Hard (recommended)',        icon:'fa-random',           color:'#00ff88' },
-      { id:'easy',  label:'Easy Mode',  desc:'Beginner-friendly, all foundational',       icon:'fa-smile',            color:'#00d4ff' },
-      { id:'medium',label:'Medium',     desc:'Core exam-level questions',                icon:'fa-chart-bar',        color:'#bf00ff' },
-      { id:'hard',  label:'Hard Mode',  desc:'Advanced, analysis & application',          icon:'fa-fire',             color:'#ff4444' },
-      { id:'exam',  label:'Exam-Style', desc:'Past-paper style, mark-scheme phrasing',   icon:'fa-clipboard-check',  color:'#d4af37' },
-    ];
-    return `
-      <div class="wizard-step-heading"><i class="fas fa-question-circle" style="color:#00ff88"></i> Customise your quiz:</div>
-      <div class="wizard-quiz-opts-layout">
-        <div class="wizard-quiz-section">
-          <div class="wizard-quiz-section-label"><i class="fas fa-hashtag"></i> Number of questions</div>
-          <div class="wizard-quiz-count-row">
-            ${counts.map(n => `
-              <div class="wizard-quiz-count-pill ${this.wizardData.quizCount === n ? 'active' : ''}"
-                   data-qcount="${n}" onclick="window._app._setQuizCount(${n})">${n} Qs</div>
-            `).join('')}
-          </div>
-        </div>
-        <div class="wizard-quiz-section">
-          <div class="wizard-quiz-section-label"><i class="fas fa-sliders-h"></i> Difficulty & style</div>
-          <div class="wizard-quiz-type-grid">
-            ${types.map(tp => `
-              <div class="wizard-quiz-type-card ${this.wizardData.quizType === tp.id ? 'selected' : ''}"
-                   data-qtype="${tp.id}" style="--qt-color:${tp.color}">
-                <i class="fas ${tp.icon}" style="color:${tp.color}"></i>
-                <div class="wqt-label" style="color:${tp.color}">${tp.label}</div>
-                <div class="wqt-desc">${tp.desc}</div>
-                ${this.wizardData.quizType === tp.id ? '<div class="wopt-check"><i class="fas fa-check-circle"></i></div>' : ''}
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-      <div class="wizard-tool-specific-preview" style="border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.05)">
-        <i class="fas fa-question-circle" style="color:#00ff88"></i>
-        <span>You'll get <strong style="color:#00ff88">${this.wizardData.quizCount} questions</strong>
-        — ${this.wizardData.quizType === 'mixed' ? '30% easy, 50% medium, 20% hard' :
-           this.wizardData.quizType === 'easy'   ? 'all beginner-friendly questions' :
-           this.wizardData.quizType === 'medium' ? 'all core exam-level questions' :
-           this.wizardData.quizType === 'hard'   ? 'all advanced analysis questions' :
-           'exam/past-paper style questions'} with full explanations</span>
-      </div>
-      <div class="wizard-footer-action" style="margin-top:12px">
-        <button class="wizard-btn wizard-btn-primary" onclick="
-          if(window._app.wizardStep < 5){window._app.wizardStep++;window._app._renderWizardStep();}">
-          <i class="fas fa-arrow-right"></i> Next: Writing Style
-        </button>
-      </div>`;
-  }
-
-  _setQuizCount(n) {
-    this.wizardData.quizCount = n;
-    // Re-render just the count pills
-    this._qsa('.wizard-quiz-count-pill').forEach(p => {
-      p.classList.toggle('active', Number(p.dataset.qcount) === n);
-    });
-    // Update preview text
-    const prev = this._qs('.wizard-tool-specific-preview span');
-    if (prev) {
-      const typeDesc = this.wizardData.quizType === 'mixed'  ? '30% easy, 50% medium, 20% hard' :
-                       this.wizardData.quizType === 'easy'   ? 'all beginner-friendly questions' :
-                       this.wizardData.quizType === 'medium' ? 'all core exam-level questions' :
-                       this.wizardData.quizType === 'hard'   ? 'all advanced analysis questions' :
-                       'exam/past-paper style questions';
-      prev.innerHTML = `You'll get <strong style="color:#00ff88">${n} questions</strong> — ${typeDesc} with full explanations`;
-    }
-  }
-
-  _bindWQuizOpts() {
-    this._qsa('.wizard-quiz-type-card').forEach(c => {
-      c.onclick = () => {
-        this.wizardData.quizType = c.dataset.qtype;
-        this._qsa('.wizard-quiz-type-card').forEach(x => x.classList.remove('selected'));
-        c.classList.add('selected');
-        // Update preview
-        const prev = this._qs('.wizard-tool-specific-preview span');
-        if (prev) {
-          const typeDesc = this.wizardData.quizType === 'mixed'  ? '30% easy, 50% medium, 20% hard' :
-                           this.wizardData.quizType === 'easy'   ? 'all beginner-friendly questions' :
-                           this.wizardData.quizType === 'medium' ? 'all core exam-level questions' :
-                           this.wizardData.quizType === 'hard'   ? 'all advanced analysis questions' :
-                           'exam/past-paper style questions';
-          prev.innerHTML = `You'll get <strong style="color:#00ff88">${this.wizardData.quizCount} questions</strong> — ${typeDesc} with full explanations`;
-        }
-      };
-    });
-  }
-
-  // ── MINDMAP BRANCH COUNT STEP ────────────────────────────────────────────────
-  _wStepBranchCount() {
-    const opts = [
-      { count:4, label:'4 Branches',  desc:'Focused overview',           icon:'fa-seedling',       color:'#00d4ff', tag:'Simple'  },
-      { count:5, label:'5 Branches',  desc:'Balanced mind map',          icon:'fa-project-diagram',color:'#d4af37', tag:'Standard'},
-      { count:6, label:'6 Branches',  desc:'Detailed hierarchy',         icon:'fa-sitemap',        color:'#00ff88', tag:'Detailed'},
-      { count:7, label:'7 Branches',  desc:'Comprehensive map',          icon:'fa-network-wired',  color:'#bf00ff', tag:'Full'    },
-    ];
-    return `
-      <div class="wizard-step-heading"><i class="fas fa-project-diagram" style="color:#d4af37"></i> How many branches in your mind map?</div>
-      <div class="wizard-tool-specific-info">
-        <i class="fas fa-info-circle"></i>
-        Each branch has <strong>4–5 specific sub-items</strong> and the map shows
-        <strong>cross-connections</strong> between branches.
-      </div>
-      <div class="wizard-option-grid">
-        ${opts.map(o => `
-          <div class="wizard-option-card ${this.wizardData.branchCount === o.count ? 'selected' : ''}"
-               data-count="${o.count}" style="--opt-color:${o.color}">
-            <div class="wopt-badge" style="background:${o.color}20;color:${o.color}">${o.tag}</div>
-            <i class="fas ${o.icon} wopt-icon" style="color:${o.color}"></i>
-            <div class="wopt-count" style="color:${o.color}">${o.label}</div>
-            <div class="wopt-desc">${o.desc}</div>
-            ${this.wizardData.branchCount === o.count ? '<div class="wopt-check"><i class="fas fa-check-circle"></i></div>' : ''}
-          </div>
-        `).join('')}
-      </div>
-      <div class="wizard-tool-specific-preview" style="border-color:rgba(212,175,55,.2);background:rgba(212,175,55,.05)">
-        <i class="fas fa-project-diagram" style="color:#d4af37"></i>
-        <span>You'll get a <strong style="color:#d4af37">${this.wizardData.branchCount}-branch visual mind map</strong>
-        with sub-items, connections, and a central topic node</span>
-      </div>`;
-  }
-
-  _bindWBranchCount() {
-    this._qsa('.wizard-option-card').forEach(c => {
-      c.onclick = () => {
-        this.wizardData.branchCount = Number(c.dataset.count);
-        this._qsa('.wizard-option-card').forEach(x => x.classList.remove('selected'));
-        c.classList.add('selected');
-        setTimeout(() => {
-          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
-        }, 300);
       };
     });
   }
@@ -1264,33 +1069,16 @@ Examples:
     const toolCfg  = TOOL_CONFIG[this.wizardData.tool];
     const depthCfg = DEPTH_CONFIG[this.wizardData.depth];
     const styleCfg = STYLE_CONFIG[this.wizardData.style];
-    const t        = this.wizardData.tool;
-
-    // Build tool-specific summary row
-    let toolSpecificRow = null;
-    if (t === 'flashcards') {
-      toolSpecificRow = { icon:'fa-layer-group', label:'Cards', val:`${this.wizardData.cardCount} Flashcards`, sub: 'interactive flip cards' };
-    } else if (t === 'quiz') {
-      const typeLabels = { mixed:'Mixed Difficulty', easy:'Easy Only', medium:'Medium Only', hard:'Hard Only', exam:'Exam-Style' };
-      toolSpecificRow = { icon:'fa-question-circle', label:'Quiz', val:`${this.wizardData.quizCount} Questions`, sub: typeLabels[this.wizardData.quizType] || 'Mixed' };
-    } else if (t === 'mindmap') {
-      toolSpecificRow = { icon:'fa-project-diagram', label:'Mind Map', val:`${this.wizardData.branchCount} Branches`, sub: 'visual hierarchy' };
-    } else {
-      toolSpecificRow = { icon:'fa-chart-line', label:'Depth', val: depthCfg?.label, sub: depthCfg?.words + ' words · ' + depthCfg?.subDesc };
-    }
-
-    const rows = [
-      { icon:'fa-magic',      label:'Tool',     val: toolCfg?.label,   sub: t === 'all' ? '⚡ ALL 5 TOOLS' : toolCfg?.sfpName },
-      { icon:'fa-pencil-alt', label:'Topic',    val: (this.wizardData.topic || '<em class="dim">Not entered yet</em>').slice(0, 120) + (this.wizardData.topic?.length > 120 ? '…' : '') },
-      { icon:'fa-globe',      label:'Language', val: this.wizardData.language },
-      toolSpecificRow,
-      { icon:'fa-pen-fancy',  label:'Style',    val: styleCfg?.label,  sub: styleCfg?.desc },
-    ].filter(Boolean);
-
     return `
       <div class="wizard-review-card">
         <div class="wizard-review-header"><i class="fas fa-clipboard-check"></i> Review Your Choices</div>
-        ${rows.map(r => `
+        ${[
+          { icon:'fa-magic',      label:'Tool',     val: toolCfg?.label,   sub: this.wizardData.tool === 'all' ? '⚡ ALL 5 TOOLS' : toolCfg?.sfpName },
+          { icon:'fa-pencil-alt', label:'Topic',    val: (this.wizardData.topic || '<em class="dim">Not entered yet</em>').slice(0, 120) + (this.wizardData.topic?.length > 120 ? '…' : '') },
+          { icon:'fa-globe',      label:'Language', val: this.wizardData.language },
+          { icon:'fa-chart-line', label:'Depth',    val: depthCfg?.label,  sub: depthCfg?.words + ' words · ' + depthCfg?.subDesc },
+          { icon:'fa-pen-fancy',  label:'Style',    val: styleCfg?.label,  sub: styleCfg?.desc },
+        ].map(r => `
           <div class="wizard-review-item">
             <div class="wizard-review-icon"><i class="fas ${r.icon}"></i></div>
             <div class="wizard-review-content">
@@ -1301,12 +1089,12 @@ Examples:
       </div>
       <div class="wizard-review-info">
         <i class="fas fa-clock"></i> Generation typically takes <strong>20–40 seconds</strong>.
-        Content will <strong>stream live</strong> as it's written — you'll see it appear word by word!
+        Content will <strong>stream live to your screen</strong> as it's written!
       </div>
       <div class="wizard-review-tip">
         <i class="fas fa-lightbulb"></i>
         <strong>Pro tip:</strong> The more specific your topic, the better the output quality.
-        Include subject level, exam board, or specific subtopics for best results.
+        Include context like subject level, exam board, or specific subtopics.
       </div>`;
   }
 
@@ -1324,13 +1112,7 @@ Examples:
     if (!t || t.length < 2) { this._toast('info', 'fa-lightbulb', 'Please enter a topic.'); return; }
     this.tool = this.wizardData.tool;
     this._checkStreak();
-    // Pass tool-specific options (cardCount, quizCount, quizType, branchCount)
-    await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool, {
-      cardCount:   this.wizardData.cardCount   || 15,
-      quizCount:   this.wizardData.quizCount   || 10,
-      quizType:    this.wizardData.quizType    || 'mixed',
-      branchCount: this.wizardData.branchCount || 6,
-    });
+    await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool);
   }
 
   // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
@@ -1356,7 +1138,7 @@ Examples:
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
-  async _sendDirect(text, lang, depth, style, tool, toolOpts = {}) {
+  async _sendDirect(text, lang, depth, style, tool) {
     if (this.generating) return;
     this.generating    = true;
     this.streamBuffer  = '';
@@ -1375,7 +1157,7 @@ Examples:
     const t0 = Date.now();
 
     try {
-      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool, ...toolOpts });
+      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool });
       this.currentData = data;
       this._hideStreamOverlay();
       this._renderResult(data);
@@ -1472,21 +1254,15 @@ Examples:
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
-            // For notes/summary tool: show formatted streaming text
+            // For notes/summary tool: show formatted text
             if (tool === 'notes' || tool === 'summary') {
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
-              // For card tools (flashcards/quiz/mindmap):
-              // Keep the ultra-graphic animation running until real events arrive
-              // Don't overwrite with boring streamBuffer text
+              // For card tools: only show notes during phase 1
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
-                // Animation is already showing from _showStreamOverlay — leave it alone
-                // Only update if streamBuffer has actual markdown content (from "all" tool notes phase)
-                if (tool === 'all' && this.streamBuffer.trim().length > 50) {
-                  this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
-                  this.el.sfpText.classList.add('live-md');
-                }
+                this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
+                this.el.sfpText.classList.add('live-md');
               }
             }
           } catch {
@@ -1539,20 +1315,8 @@ Examples:
                     } catch { /* ignore */ }
                   }
                 }
-                // Stream closed — if we have meaningful content, resolve with it instead of rejecting
-                if (this.streamBuffer && this.streamBuffer.trim().length > 100) {
-                  const syntheticData = {
-                    topic: opts.topic || 'Study Material',
-                    ultra_long_notes: this.streamBuffer,
-                    flashcards: this._liveCards.length ? this._liveCards : [],
-                    quiz_questions: this._liveQuestions.length ? this._liveQuestions : [],
-                    mindmap: this._liveBranches.length ? { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns } : null,
-                    key_concepts: [],
-                    _tool: opts.tool || 'notes',
-                    _partial: true,
-                  };
-                  resolve(syntheticData); return;
-                }
+                // If we already resolved (stream ended after done event was received), that's fine
+                // Otherwise reject with connection error
                 reject(new Error('AI stream closed unexpectedly. Please try again.'));
                 return;
               }
@@ -1843,152 +1607,15 @@ Examples:
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
     if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
     if (this.el.sfpText) {
-      // Show ultra-high-graphic tool-specific animation immediately for card tools
-      if (tool === 'flashcards' || tool === 'quiz' || tool === 'mindmap') {
-        this.el.sfpText.innerHTML = this._buildLiveAnimation(tool);
-        this.el.sfpText.classList.remove('live-md');
-      } else {
-        this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
-        this.el.sfpText.classList.remove('done');
-        this.el.sfpText.classList.add('live-md');
-      }
+      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
+      this.el.sfpText.classList.remove('done');
+      this.el.sfpText.classList.add('live-md');
     }
     if (this.el.sscProgressBar) this.el.sscProgressBar.style.width = '4%';
     if (this.el.streamFullpage)  this.el.streamFullpage.style.display = 'flex';
     if (this.el.emptyState)      this.el.emptyState.style.display = 'none';
     if (this.el.resultArea)      this.el.resultArea.style.display = 'none';
     if (this.el.thinkingWrap)    this.el.thinkingWrap.style.display = 'none';
-  }
-
-  // ── ULTRA HIGH GRAPHIC LIVE ANIMATIONS ──────────────────────────────────────
-  _buildLiveAnimation(tool) {
-    if (tool === 'flashcards') return this._buildFlashcardAnimation();
-    if (tool === 'quiz')       return this._buildQuizAnimation();
-    if (tool === 'mindmap')    return this._buildMindmapAnimation();
-    return '<div class="live-loading-anim"><div class="live-dots"><span></span><span></span><span></span></div></div>';
-  }
-
-  _buildFlashcardAnimation() {
-    const cards = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15];
-    return `
-    <div class="ultra-live-anim fc-live-anim">
-      <div class="fc-live-title">
-        <i class="fas fa-layer-group" style="color:#bf00ff"></i>
-        <span>FLASHCARDS DECK BUILDING</span>
-        <span class="fc-live-sub">— cards shuffling & dealing ⚡</span>
-      </div>
-      <div class="fc-live-deck">
-        <div class="fc-deck-stack">
-          <div class="fc-stack-card" style="--i:0"></div>
-          <div class="fc-stack-card" style="--i:1"></div>
-          <div class="fc-stack-card" style="--i:2"></div>
-          <div class="fc-stack-card" style="--i:3"></div>
-          <div class="fc-stack-card" style="--i:4"></div>
-        </div>
-        <div class="fc-deck-count-bounce">15</div>
-        <div class="fc-deck-label">cards</div>
-      </div>
-      <div class="fc-live-grid">
-        ${cards.map((n, i) => `
-          <div class="fc-live-card-deal" style="--deal-delay:${0.3 + i * 0.12}s">
-            <div class="fc-deal-inner">
-              <div class="fc-deal-front-face">
-                <span style="font-size:.7rem;color:#bf00ff;font-weight:700">Card ${n}</span>
-                <span style="font-size:1.4rem;color:rgba(255,255,255,.15)">?</span>
-              </div>
-              <div class="fc-deal-back-face">
-                <span style="font-size:.55rem;color:#00ff88">✓ Ready</span>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="fc-live-sparkles">
-        ${Array.from({length:8},(_,i)=>`<div class="fc-sparkle" style="--sp-x:${20+Math.random()*60}%;--sp-y:${10+Math.random()*80}%;--sp-delay:${i*0.4}s;--sp-color:${['#bf00ff','#00d4ff','#ffae00','#00ff88','#d4af37'][i%5]}"></div>`).join('')}
-      </div>
-      <div class="fc-live-progress-area">
-        <div class="fc-live-prog-bar"><div class="fc-live-prog-fill"></div></div>
-        <span style="font-size:.7rem;color:#bf00ff;font-weight:600">⚡ AI is writing your flashcards…</span>
-      </div>
-    </div>`;
-  }
-
-  _buildQuizAnimation() {
-    const qs = [1,2,3,4,5,6,7,8,9,10];
-    return `
-    <div class="ultra-live-anim quiz-live-anim">
-      <div class="quiz-live-title">
-        <i class="fas fa-bolt" style="color:#00ff88"></i>
-        <span>QUIZ CONSTRUCTION</span>
-        <span class="quiz-live-sub">— rapid fire generation ⚡</span>
-      </div>
-      <div class="quiz-live-bolts">
-        ${Array.from({length:6},(_,i)=>`<div class="quiz-bolt" style="--b-delay:${i*0.5}s;--b-x:${10+i*16}%"></div>`).join('')}
-      </div>
-      <div class="quiz-live-grid">
-        ${qs.map((n, i) => `
-          <div class="quiz-live-q-deal" style="--q-delay:${0.2 + i * 0.15}s">
-            <div class="quiz-q-deal-inner">
-              <div class="quiz-q-num-bounce">Q${n}</div>
-              <div class="quiz-q-options-preview">
-                <div class="quiz-opt-dot" style="--opt-delay:${0.5+i*0.15}s"></div>
-                <div class="quiz-opt-dot" style="--opt-delay:${0.6+i*0.15}s"></div>
-                <div class="quiz-opt-dot" style="--opt-delay:${0.7+i*0.15}s"></div>
-                <div class="quiz-opt-dot quiz-opt-dot-correct" style="--opt-delay:${0.8+i*0.15}s"></div>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-      <div class="quiz-live-particles">
-        ${Array.from({length:12},(_,i)=>`<div class="quiz-particle" style="--p-x:${Math.random()*100}%;--p-y:${Math.random()*100}%;--p-delay:${i*0.3}s;--p-color:${['#00ff88','#00d4ff','#ffae00','#d4af37'][i%4]}"></div>`).join('')}
-      </div>
-      <div class="quiz-live-progress-area">
-        <div class="quiz-live-prog-bar"><div class="quiz-live-prog-fill"></div></div>
-        <span style="font-size:.7rem;color:#00ff88;font-weight:600">⚡ AI is crafting your questions…</span>
-      </div>
-    </div>`;
-  }
-
-  _buildMindmapAnimation() {
-    const branches = ['Core','Mechanism','Applications','Analysis','Connections','Impact'];
-    const colors = ['#00d4ff','#bf00ff','#00ff88','#ffae00','#d4af37','#ff4444'];
-    return `
-    <div class="ultra-live-anim mm-live-anim">
-      <div class="mm-live-title">
-        <i class="fas fa-project-diagram" style="color:#d4af37"></i>
-        <span>MIND MAP GROWING</span>
-        <span class="mm-live-sub">— branches appearing 🌿</span>
-      </div>
-      <div class="mm-live-canvas">
-        <div class="mm-live-center-node">
-          <i class="fas fa-brain" style="color:#d4af37"></i>
-          <div class="mm-center-pulse"></div>
-          <div class="mm-center-pulse" style="--pulse-delay:0.5s"></div>
-        </div>
-        ${branches.map((b, i) => {
-          const angle = (i * 60) - 90;
-          const rad = angle * Math.PI / 180;
-          const x = Math.cos(rad) * 42;
-          const y = Math.sin(rad) * 42;
-          return `
-          <div class="mm-live-branch-line" style="--br-angle:${angle}deg;--br-delay:${0.5+i*0.3}s;--br-color:${colors[i]}"></div>
-          <div class="mm-live-branch-node" style="--br-x:${x}%;--br-y:${y}%;--br-delay:${0.8+i*0.3}s;--br-color:${colors[i]}">
-            <div class="mm-branch-dot" style="background:${colors[i]};box-shadow:0 0 12px ${colors[i]}80"></div>
-            <div class="mm-branch-name" style="color:${colors[i]}">${b}</div>
-            <div class="mm-branch-items">
-              <div class="mm-item-dot" style="--it-delay:${1.2+i*0.3}s;background:${colors[i]}40;color:${colors[i]}">•</div>
-              <div class="mm-item-dot" style="--it-delay:${1.4+i*0.3}s;background:${colors[i]}40;color:${colors[i]}">•</div>
-              <div class="mm-item-dot" style="--it-delay:${1.6+i*0.3}s;background:${colors[i]}40;color:${colors[i]}">•</div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="mm-live-progress-area">
-        <div class="mm-live-prog-bar"><div class="mm-live-prog-fill"></div></div>
-        <span style="font-size:.7rem;color:#d4af37;font-weight:600">⚡ AI is growing your mind map…</span>
-      </div>
-    </div>`;
   }
 
   _hideStreamOverlay() {
