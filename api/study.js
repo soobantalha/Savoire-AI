@@ -1136,6 +1136,6 @@ module.exports = async function handler(req, res) {
     sse('error', { error: userMsg, requestId: reqId });
     sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'failed', Date.now() - startTime, sessionId).catch(() => {});
   }
-
+554
   if (!res.writableEnded) res.end();
 };
