@@ -9513,3 +9513,49 @@ input::placeholder, textarea::placeholder {
   box-shadow: 0 0 60px rgba(0,255,136,.08), 0 30px 80px rgba(0,0,0,.6);
   animation: modalPop .22s cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* ── FINALISING ANIMATION (shown after live stream ends, before final screen) ── */
+.finalise-wrap {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px; padding: 40px 20px; min-height: 260px;
+}
+.finalise-orbit {
+  position: relative; width: 120px; height: 120px;
+}
+.finalise-orbit .core {
+  position: absolute; inset: 0; margin: auto; width: 56px; height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(212,175,55,.9), rgba(191,0,255,.5));
+  box-shadow: 0 0 30px rgba(212,175,55,.55), 0 0 60px rgba(191,0,255,.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; color: #fff;
+  animation: pulseGlow 1.4s ease-in-out infinite;
+}
+.finalise-orbit .ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #d4af37; border-right-color: rgba(191,0,255,.6);
+  animation: spin 1.1s linear infinite;
+}
+.finalise-orbit .ring.r2 {
+  inset: -14px; border-top-color: rgba(0,212,255,.7); border-right-color: transparent;
+  animation: spinReverse 1.7s linear infinite;
+}
+.finalise-items {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 420px;
+}
+.finalise-chip {
+  padding: 6px 14px; border-radius: 20px; font-size: .78rem; font-weight: 600;
+  background: rgba(212,175,55,.1); border: 1px solid rgba(212,175,55,.25); color: #d4af37;
+  opacity: 0; transform: translateY(8px) scale(.9);
+  animation: chipPop .45s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes chipPop {
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.finalise-caption {
+  font-family: 'Orbitron', sans-serif; font-size: .85rem; letter-spacing: .05em;
+  color: #d4af37; text-align: center; animation: pulseSoft 1.8s ease-in-out infinite;
+}
+.finalise-sub {
+  font-size: .75rem; color: rgba(255,255,255,.5); text-align: center;
+}
