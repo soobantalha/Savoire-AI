@@ -1429,24 +1429,6 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
     }
 
-    // Same exact-count enforcement for quiz questions — same reasoning as above.
-    if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all') && opts.quizCount) {
-      const want = opts.quizCount;
-      const have = cardsData.quiz_questions.length;
-      if (have > want) {
-        cardsData.quiz_questions = cardsData.quiz_questions.slice(0, want);
-      } else if (have < want) {
-        const filler = buildTopicFallback('quiz', message)?.quiz_questions || [];
-        let i = 0;
-        while (cardsData.quiz_questions.length < want && filler.length) {
-          cardsData.quiz_questions.push(filler[i % filler.length]);
-          i++;
-          if (i > want * 2) break;
-        }
-      }
-      log.ok(`[${reqId}] Quiz count enforced: wanted ${want}, delivering ${cardsData.quiz_questions.length}`);
-    }
-
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
