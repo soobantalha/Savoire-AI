@@ -168,6 +168,37 @@ FORMATTING RULES:
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
+// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary — separate from the prose notes prompt) ──
+function buildKeyConceptsPrompt(input, opts) {
+  const lang = opts.language || 'English';
+  return `You are ${SAVOIRÉ.BRAND}. Generate supplementary study material as valid JSON for the topic below.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — ALL text must be in ${lang}.
+
+Generate:
+1. "key_concepts": 5 core concepts, each a single plain STRING 60-80 words (NOT an object).
+2. "key_tricks": 3 study tricks/memory aids, each a single plain STRING 60-90 words (NOT an object).
+3. "practice_questions": 2 analytical questions, each an object {"question":"...", "answer":"200+ word answer"}.
+4. "real_world_applications": 4 applications, each a single plain STRING (e.g. "🏥 Healthcare: ..."), NOT an object.
+5. "common_misconceptions": 3 corrections, each a single plain STRING formatted as "❌ MYTH: ... ✅ TRUTH: ...", NOT an object.
+
+CRITICAL: key_concepts, key_tricks, real_world_applications, and common_misconceptions arrays must contain PLAIN STRINGS only — never nested objects.
+
+OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
+No markdown. No code fences.
+
+{
+  "key_concepts": ["...", "...", "...", "...", "..."],
+  "key_tricks": ["...", "...", "..."],
+  "practice_questions": [{"question":"...","answer":"..."}, {"question":"...","answer":"..."}],
+  "real_world_applications": ["...", "...", "...", "..."],
+  "common_misconceptions": ["...", "...", "..."]
+}
+
+OUTPUT JSON NOW — start with { immediately.`;
+}
+
 // ── FLASHCARDS ──
 function buildFlashcardsPrompt(input, opts) {
   const lang = opts.language || 'English';
@@ -188,6 +219,8 @@ Include these types:
 - Application cards
 - Misconception cards
 
+Also generate "key_concepts": 5 core concepts as plain STRINGS (60-80 words each, NOT objects).
+
 OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
 No markdown. No code fences. No explanations before or after.
 
@@ -195,7 +228,8 @@ No markdown. No code fences. No explanations before or after.
   "flashcards": [
     {"front": "What is the definition of X?", "back": "X is defined as ..."},
     ...
-  ]
+  ],
+  "key_concepts": ["...", "...", "...", "...", "..."]
 }
 
 OUTPUT JSON NOW — start with { immediately. Be concise.`;
@@ -228,6 +262,8 @@ Generate exactly ${count} multiple-choice questions. Each question must have:
 DIFFICULTY RULE: ${diffInstr}
 CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.
 
+Also generate "key_concepts": 5 core concepts as plain STRINGS (60-80 words each, NOT objects).
+
 OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
 No markdown. No code fences.
 
@@ -242,7 +278,8 @@ No markdown. No code fences.
       "difficulty": "medium"
     },
     ...
-  ]
+  ],
+  "key_concepts": ["...", "...", "...", "...", "..."]
 }
 
 OUTPUT JSON NOW — start with { immediately.`;
@@ -283,6 +320,7 @@ function buildMindmapPrompt(input, opts) {
 
 TOPIC: "${input}"
 LANGUAGE: ${lang} — ALL text must be in ${lang}.
+CRITICAL: every branch name and item must be specifically and factually about "${input}" — never drift to an unrelated topic, and never invent generic placeholder branches like "Solutions" or "Applications" unless they are filled with real specifics about "${input}".
 
 Generate:
 - "central": 3-5 word essence of the topic (in ${lang})
@@ -314,42 +352,29 @@ OUTPUT JSON NOW — start with { immediately.`;
 // ── MEGA BUNDLE (all tools) ──
 function buildMegaPrompt(input, opts) {
   const lang = opts.language || 'English';
-  const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
-  const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
   const fcCount = 12, qCount = 8, mmCount = 6;
   return `You are ${SAVOIRÉ.BRAND}. Generate the ULTIMATE comprehensive study package covering ALL angles of this topic. Output must be valid JSON.
 
 TOPIC: "${input}"
 LANGUAGE: ${lang} — ALL text must be in ${lang}.
-LENGTH: ${depth.wordRange} for notes
-STYLE: ${style}
+CRITICAL: stay strictly on-topic. Every field must be specifically about "${input}" — never drift to an unrelated topic.
 
 Generate:
-1. "ultra_long_notes": Comprehensive notes with these sections:
-   ## 📚 Introduction
-   ## 🎯 Core Concepts
-   ## ⚙️ How It Works
-   ## 💡 Key Examples
-   ## 🚀 Advanced Aspects
-   ## 🌍 Applications
-   ## 🧠 Memory Tricks
-   ## 📝 Summary & Checklist
+1. "flashcards": EXACTLY ${fcCount} flashcards [{"front":"...","back":"..."}]
 
-2. "flashcards": EXACTLY ${fcCount} flashcards [{"front":"...","back":"..."}]
+2. "quiz_questions": EXACTLY ${qCount} multiple-choice questions with 4 options, correct_answer, explanation, difficulty.
 
-3. "quiz_questions": EXACTLY ${qCount} multiple-choice questions with 4 options, correct_answer, explanation, difficulty.
+3. "mindmap": {"central": "...", "branches": EXACTLY ${mmCount} objects {"name","color","items"}, "connections": [...]}
 
-4. "mindmap": central + ${mmCount} branches + connections.
+4. "key_concepts": 5-7 core concepts, each a plain STRING (60-80 words), NOT objects.
 
-5. "key_concepts": 5-7 core concepts (each 60-80 words).
+5. "key_tricks": 3 study tricks/memory aids, each a plain STRING (60-90 words), NOT objects.
 
-6. "key_tricks": 3 study tricks/memory aids (60-90 words each).
+6. "practice_questions": 2 objects {"question":"...","answer":"200+ word answer"}.
 
-7. "practice_questions": 2 analytical questions with 200+ word answers.
+7. "real_world_applications": 4 applications, each a plain STRING, NOT objects.
 
-8. "real_world_applications": 4 applications (healthcare, tech, business, society).
-
-9. "common_misconceptions": 3 myth vs truth corrections.
+8. "common_misconceptions": 3 corrections, each a plain STRING formatted "❌ MYTH: ... ✅ TRUTH: ...", NOT objects.
 
 OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
 No markdown. No code fences. All fields must be present.
@@ -358,7 +383,6 @@ No markdown. No code fences. All fields must be present.
   "topic": "${input}",
   "curriculum_alignment": "appropriate level",
   "study_score": 97,
-  "ultra_long_notes": "Full notes here...",
   "flashcards": [...],
   "quiz_questions": [...],
   "mindmap": {...},
@@ -708,7 +732,11 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     // Validation based on tool
     const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
     const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-    const hasMm = parsed.mindmap?.branches?.length >= 2;
+    // Require at least 3 branches AND at least half the requested count — catches
+    // truncated JSON (model cut off mid-array) that would otherwise render as a
+    // sparse/broken mind map.
+    const requestedBranches = tool === 'mindmap' ? 6 : 6;
+    const hasMm = parsed.mindmap?.branches?.length >= Math.max(3, Math.floor(requestedBranches / 2));
     const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
     const valid = (tool === 'flashcards' || tool === 'flashcards_quiz') ? hasFc
                 : tool === 'quiz'                                     ? hasQ
@@ -1004,15 +1032,30 @@ function buildTopicFact(topic) {
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
   const isFallback = !!cardsRaw?._fallback;
+
+  // Defensive normalizer — some free models occasionally return objects instead
+  // of plain strings for these fields despite the prompt asking for strings.
+  // Without this, the UI shows "[object Object]" instead of real text.
+  const toStringArray = arr => !Array.isArray(arr) ? [] : arr.map(item => {
+    if (typeof item === 'string') return item;
+    if (item && typeof item === 'object') {
+      // Try common shapes: {myth,truth}, {area,description}, {question,answer}, etc.
+      const vals = Object.values(item).filter(v => typeof v === 'string');
+      if (vals.length) return vals.join(' — ');
+      try { return JSON.stringify(item); } catch { return String(item); }
+    }
+    return String(item ?? '');
+  }).filter(Boolean);
+
   const merged = {
     topic:                   String(topic || cardsRaw?.topic || 'Study Material').slice(0, 200),
     curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
     ultra_long_notes:        notes || '',
-    key_concepts:            cardsRaw?.key_concepts            || [],
-    key_tricks:              cardsRaw?.key_tricks              || [],
+    key_concepts:            toStringArray(cardsRaw?.key_concepts),
+    key_tricks:              toStringArray(cardsRaw?.key_tricks),
     practice_questions:      cardsRaw?.practice_questions      || [],
-    real_world_applications: cardsRaw?.real_world_applications || [],
-    common_misconceptions:   cardsRaw?.common_misconceptions   || [],
+    real_world_applications: toStringArray(cardsRaw?.real_world_applications),
+    common_misconceptions:   toStringArray(cardsRaw?.common_misconceptions),
     study_score:             cardsRaw?.study_score             || 95,
     powered_by:              `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
     generated_at:            now,
@@ -1028,7 +1071,13 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
-  if (!merged.key_concepts?.length) {
+  // Only synthesize the static key_concepts filler for notes/summary/all — for
+  // flashcards/quiz/mindmap, key_concepts is now a real requested field in
+  // their own prompt (see buildFlashcardsPrompt/buildQuizPrompt), so an empty
+  // result there means the AI genuinely didn't return it and we'd rather show
+  // nothing than fabricate the same canned template every time.
+  const fillerEligible = ['notes', 'summary', 'all'].includes(opts.tool);
+  if (fillerEligible && !merged.key_concepts?.length) {
     merged.key_concepts = [
       `Core Principles: ${topic} rests on fundamental principles connecting theory to practice. Understanding WHY matters more than memorising WHAT.`,
       `Key Mechanisms: Primary processes follow identifiable patterns that can be learned and systematically applied.`,
@@ -1036,6 +1085,7 @@ function mergeCards(cardsRaw, notes, topic, opts) {
       `Expert Thinking: Experts in ${topic} differ from beginners in pattern recognition, conditional reasoning, and metacognition.`,
       `Learning Strategy: Active retrieval practice is 2–3× more effective than re-reading for mastering ${topic}.`,
     ];
+    merged._key_concepts_filler = true;
   }
   return merged;
 }
@@ -1172,7 +1222,12 @@ module.exports = async function handler(req, res) {
       case 'quiz': notesPrompt = buildQuizPrompt(message, opts); break;
       case 'summary': notesPrompt = buildSummaryPrompt(message, opts); break;
       case 'mindmap': notesPrompt = buildMindmapPrompt(message, opts); break;
-      case 'all': notesPrompt = buildMegaPrompt(message, opts); break;
+      // IMPORTANT: 'all' must NOT stream buildMegaPrompt live — that prompt asks
+      // the AI for one giant JSON blob, and streaming its raw tokens live shows
+      // unparsed JSON syntax with no formatting. Stream clean prose notes
+      // instead; the JSON blob (buildMegaPrompt) is fetched separately below
+      // for Phase 2 (cards/quiz/mindmap), never shown live as text.
+      case 'all': notesPrompt = buildNotesPrompt(message, opts); break;
       default: notesPrompt = buildNotesPrompt(message, opts);
     }
 
@@ -1181,8 +1236,10 @@ module.exports = async function handler(req, res) {
     // ── Phase 2: cards generation — starts NOW in parallel with Phase 1 ──
     let cardsPromise;
     if (opts.tool === 'all') {
-      // For all, we generate everything in one mega prompt, no separate calls
-      cardsPromise = fetchCards(notesPrompt, 'all').then(
+      // For all, the JSON blob (notes+cards+quiz+mindmap) is fetched here,
+      // completely separate from the clean-prose live stream above.
+      const megaPrompt = buildMegaPrompt(message, opts);
+      cardsPromise = fetchCards(megaPrompt, 'all').then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
@@ -1205,9 +1262,13 @@ module.exports = async function handler(req, res) {
         e => ({ status: 'rejected', reason: e })
       );
     } else {
-      // For notes and summary, we still need key_concepts etc. but they come from the same prompt.
-      // We'll reuse the notesPrompt for cards as well (it contains structured content)
-      cardsPromise = fetchCards(notesPrompt, opts.tool).then(
+      // For notes and summary, we need key_concepts/tricks/Q&A/applications/misconceptions.
+      // BUG FIX: this used to reuse notesPrompt (a prose-writing prompt), which the AI would
+      // correctly obey by writing markdown prose — so JSON parsing failed on every attempt,
+      // and this ALWAYS fell back to the canned static filler regardless of whether the
+      // notes themselves were real AI content. Use a dedicated JSON prompt instead.
+      const kcPrompt = buildKeyConceptsPrompt(message, opts);
+      cardsPromise = fetchCards(kcPrompt, opts.tool).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
