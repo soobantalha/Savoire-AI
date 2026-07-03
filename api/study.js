@@ -1326,32 +1326,10 @@ module.exports = async function handler(req, res) {
     // ── Wait for Phase 2 (which has been running in parallel) ──
     let cardsData = null, p2ok = false;
 
-    // Hard deadline for every card-producing branch. Without this, a run
-    // that needs several retry passes (more likely at high flashcard/quiz
-    // counts) can outlive the hosting platform's request timeout: the SSE
-    // connection dies AFTER the live tokens/cards already streamed, so the
-    // user sees a full live preview, a long stall, then a hard error and
-    // no final screen. Racing against a deadline guarantees a final
-    // payload (real data if it arrives in time, graceful fallback if not)
-    // instead of ever hanging indefinitely.
-    // A single model attempt alone can legitimately take up to 45s
-    // (timeout_ms above), and up to MAX_PASSES=3 retries can run if earlier
-    // passes fail validation — so the deadline must comfortably clear that
-    // before it's treated as a genuine hang, not a normal slow response.
-    const CARDS_DEADLINE_MS = opts.tool === 'all' ? 130000 : 100000;
-    const raceWithDeadline = (promise) => Promise.race([
-      promise,
-      new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), CARDS_DEADLINE_MS)),
-    ]);
-
     if (opts.tool === 'all') {
       sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
-      const cardsResult = await raceWithDeadline(cardsPromise);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Mega bundle exceeded ${CARDS_DEADLINE_MS}ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('all', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Mega bundle succeeded`);
@@ -1362,12 +1340,8 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'flashcards') {
       sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
-      const cardsResult = await raceWithDeadline(cardsPromise);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Flashcards exceeded ${CARDS_DEADLINE_MS}ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('flashcards', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Flashcards succeeded`);
@@ -1378,12 +1352,8 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'quiz') {
       sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
-      const cardsResult = await raceWithDeadline(cardsPromise);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Quiz exceeded ${CARDS_DEADLINE_MS}ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('quiz', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Quiz succeeded`);
@@ -1394,12 +1364,8 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'mindmap') {
       sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
-      const cardsResult = await raceWithDeadline(cardsPromise);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Mindmap exceeded ${CARDS_DEADLINE_MS}ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('mindmap', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Mindmap succeeded`);
@@ -1418,7 +1384,7 @@ module.exports = async function handler(req, res) {
       // word, then errors after a long delay" — Phase 2 could take 5-8+ minutes
       // (MAX_PASSES retries x 90s per model), which outlives the hosting
       // platform's request timeout and drops the SSE connection.
-      const NOTES_CARDS_DEADLINE_MS = 100000;
+      const NOTES_CARDS_DEADLINE_MS = 25000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
@@ -1463,7 +1429,7 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
     }
 
-    // Same exact-count enforcement for quiz questions.
+    // Same exact-count enforcement for quiz questions — same reasoning as above.
     if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all') && opts.quizCount) {
       const want = opts.quizCount;
       const have = cardsData.quiz_questions.length;
