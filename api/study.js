@@ -1,14 +1,13 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE (FULL FIX)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ SEPARATE PROMPTS FOR EACH TOOL — no generic prompts, each tool gets its own
-// ✅ ULTRA LONG TIMEOUTS — first token: 60s, full stream: 180s, per-model: 90s
-// ✅ 5 PARALLEL PASSES — all models race, first to respond wins
-// ✅ NON-STREAMING LAST RESORT — openrouter/free with 16384 tokens
-// ✅ FALLBACK ONLY AS ABSOLUTE LAST RESORT — almost never used
+// ✅ EXTENDED TIMEOUTS — first token: 45s, full stream: 240s, per-model: 60s
+// ✅ 4 PARALLEL PASSES — all models race, first to respond wins
+// ✅ CONCURRENT PHASE 1 & 2 — notes stream and cards fetch run side‑by‑side
+// ✅ NON-STREAMING LAST RESORT — only when all streaming attempts fail
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,38 +30,38 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, MASSIVE TIMEOUTS)
+// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, EXTENDED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Only the most reliable free models (in order of preference)
 const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS (unchanged)
+// SECTION 3 — CONFIG MAPS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -168,7 +167,7 @@ FORMATTING RULES:
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary — separate from the prose notes prompt) ──
+// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary) ──
 function buildKeyConceptsPrompt(input, opts) {
   const lang = opts.language || 'English';
   return `You are ${SAVOIRÉ.BRAND}. Generate supplementary study material as valid JSON for the topic below.
@@ -179,7 +178,7 @@ LANGUAGE: ${lang} — ALL text must be in ${lang}.
 Generate:
 1. "key_concepts": 5 core concepts, each a single plain STRING 60-80 words (NOT an object).
 2. "key_tricks": 3 study tricks/memory aids, each a single plain STRING 60-90 words (NOT an object).
-3. "practice_questions": 2 analytical questions, each an object {"question":"...", "answer":"200+ word answer"}.
+3. "practice_questions": 2 analytical questions, each an object {"question":"...","answer":"200+ word answer"}.
 4. "real_world_applications": 4 applications, each a single plain STRING (e.g. "🏥 Healthcare: ..."), NOT an object.
 5. "common_misconceptions": 3 corrections, each a single plain STRING formatted as "❌ MYTH: ... ✅ TRUTH: ...", NOT an object.
 
@@ -397,12 +396,12 @@ OUTPUT JSON NOW — start with { immediately.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES
+// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 30000;  // 30s for first token (was 60s) — 8 models race in parallel, no need to wait this long
-const FULL_STREAM_TIMEOUT_MS = 180000; // 3 min total
-const MAX_PASSES = 3; // was 5 — 8 models already race each pass, 5 full passes could take 5-8+ min worst case
+const FIRST_TOKEN_TIMEOUT_MS = 45000;   // 45s for first token (was 30s)
+const FULL_STREAM_TIMEOUT_MS = 240000;  // 4 min total (was 180s)
+const MAX_PASSES = 4;                   // 4 full passes (was 3)
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -574,7 +573,7 @@ async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  // ── 5 FULL PASSES ──
+  // ── 4 FULL PASSES ──
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
     log.info(`P1 pass ${pass}: starting ALL ${ALL_MODELS_STREAM.length} models in parallel`);
     sharedState.winnerId = null;
@@ -634,13 +633,13 @@ async function streamNotes(prompt, onChunk, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS
+// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS (EXTENDED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   const name  = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms); // now 60s
   const t0    = Date.now();
 
   try {
@@ -708,9 +707,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     }
 
     // Auto-fix quiz correct_answer mismatches + drop malformed questions
-    // BUG FIX: previously nothing filtered out questions missing "question" text
-    // or with too few options — these rendered as blank/invisible quiz cards in
-    // the UI. Now dropped here so the final quiz always shows real content.
     if (Array.isArray(parsed.quiz_questions)) {
       parsed.quiz_questions = parsed.quiz_questions
         .filter(q => q && typeof q.question === 'string' && q.question.trim().length > 3
@@ -739,9 +735,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     // Validation based on tool
     const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
     const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-    // Require at least 3 branches AND at least half the requested count — catches
-    // truncated JSON (model cut off mid-array) that would otherwise render as a
-    // sparse/broken mind map.
     const requestedBranches = tool === 'mindmap' ? 6 : 6;
     const hasMm = parsed.mindmap?.branches?.length >= Math.max(3, Math.floor(requestedBranches / 2));
     const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
@@ -749,7 +742,7 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
                 : tool === 'quiz'                                     ? hasQ
                 : (tool === 'mindmap' || tool === 'mindmap_only')     ? hasMm
                 : tool === 'all'                                      ? (hasFc || hasQ || hasMm || hasKc)
-                : hasKc; // notes/summary fallback
+                : hasKc;
 
     if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
 
@@ -1012,7 +1005,7 @@ function buildTopicFallback(tool, topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — TOPIC FACT (unchanged)
+// SECTION 10 — TOPIC FACT
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
@@ -1125,7 +1118,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER
+// SECTION 13 — MAIN HANDLER (with extended deadline for notes/summary)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -1217,20 +1210,8 @@ module.exports = async function handler(req, res) {
   let p2Ticker = null;
 
   try {
-    // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (PARALLEL)
-    // ╚═══════════════════════════════════════════════════════════════════════
+    // ── Phase 1 + Phase 2 run concurrently (parallel) ──
 
-    // ── Live-stream prompt: ALWAYS clean prose, regardless of tool. ──
-    // BUG FIX: flashcards/quiz/mindmap/all used to stream their own
-    // JSON-generation prompt live (buildFlashcardsPrompt/buildQuizPrompt/
-    // buildMindmapPrompt/buildMegaPrompt) — those instruct the AI to output
-    // raw JSON, not prose, so the live view showed unparsed JSON with zero
-    // formatting. Notes and Summary already used real prose prompts and never
-    // had this problem, so they keep their own (Summary's prompt has the
-    // TL;DR heading the final render depends on — don't swap that one out).
-    // The JSON data itself is still fetched separately in Phase 2 below using
-    // each tool's own dedicated JSON prompt — it's just never shown live.
     let notesPrompt;
     switch (opts.tool) {
       case 'summary': notesPrompt = buildSummaryPrompt(message, opts); break;
@@ -1244,11 +1225,9 @@ module.exports = async function handler(req, res) {
 
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
-    // ── Phase 2: cards generation — starts NOW in parallel with Phase 1 ──
+    // ── Phase 2: cards generation (concurrent) ──
     let cardsPromise;
     if (opts.tool === 'all') {
-      // For all, the JSON blob (notes+cards+quiz+mindmap) is fetched here,
-      // completely separate from the clean-prose live stream above.
       const megaPrompt = buildMegaPrompt(message, opts);
       cardsPromise = fetchCards(megaPrompt, 'all').then(
         v => ({ status: 'fulfilled', value: v }),
@@ -1273,11 +1252,7 @@ module.exports = async function handler(req, res) {
         e => ({ status: 'rejected', reason: e })
       );
     } else {
-      // For notes and summary, we need key_concepts/tricks/Q&A/applications/misconceptions.
-      // BUG FIX: this used to reuse notesPrompt (a prose-writing prompt), which the AI would
-      // correctly obey by writing markdown prose — so JSON parsing failed on every attempt,
-      // and this ALWAYS fell back to the canned static filler regardless of whether the
-      // notes themselves were real AI content. Use a dedicated JSON prompt instead.
+      // notes or summary – get key_concepts/tricks/Q&A/apps/misconceptions
       const kcPrompt = buildKeyConceptsPrompt(message, opts);
       cardsPromise = fetchCards(kcPrompt, opts.tool).then(
         v => ({ status: 'fulfilled', value: v }),
@@ -1285,21 +1260,14 @@ module.exports = async function handler(req, res) {
       );
     }
 
-    // ── Phase 1: live notes stream (PARALLEL models) ──
+    // ── Phase 1: live notes stream (parallel) ──
     try {
-      // For tools that don't need streaming notes (flashcards, quiz, mindmap), we still stream notes as a fallback
-      // but we'll also stream the JSON later. To avoid duplication, we'll stream the notes only for notes/summary/all
       if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } else {
-        // For flashcards/quiz/mindmap, we don't need streaming notes, but we need to let the client know we're generating
-        // So we stream a placeholder message and then the final JSON will come later.
-        // We'll still call streamNotes but it will be used only if the cards fail (fallback)
-        // Actually better: we skip streaming notes for these tools and directly generate the JSON.
-        // But we still need to show something, so we'll generate notes as a fallback.
-        // Let's do: generate notes anyway (it's useful) but also fetch cards.
+        // For flashcards/quiz/mindmap, still generate notes as fallback but they are not shown in final UI
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
         p1ok = true;
         log.ok(`[${reqId}] P1 done (fallback notes) — ${notes.length}ch`);
@@ -1323,7 +1291,7 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 3, label: `🃏 Finalising your cards${'.'.repeat(p2DotCount)}` });
     }, 1500);
 
-    // ── Wait for Phase 2 (which has been running in parallel) ──
+    // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
     if (opts.tool === 'all') {
@@ -1375,16 +1343,8 @@ module.exports = async function handler(req, res) {
         p2ok = false;
       }
     } else {
-      // notes or summary: we already have notes, but we also want key_concepts etc.
-      // This is SUPPLEMENTARY data — it must never be allowed to hold the whole
-      // request (and therefore the SSE connection) open for minutes after the
-      // notes have already finished streaming. Cap it hard: if it isn't done in
-      // NOTES_CARDS_DEADLINE_MS, fall back immediately instead of waiting on the
-      // remaining P2 retry passes. This was the cause of "processes to the final
-      // word, then errors after a long delay" — Phase 2 could take 5-8+ minutes
-      // (MAX_PASSES retries x 90s per model), which outlives the hosting
-      // platform's request timeout and drops the SSE connection.
-      const NOTES_CARDS_DEADLINE_MS = 25000;
+      // notes or summary: extended deadline from 25s → 35s
+      const NOTES_CARDS_DEADLINE_MS = 35000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
@@ -1405,13 +1365,10 @@ module.exports = async function handler(req, res) {
     }
 
     // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  PHASE 3 — STREAM CARDS LIVE (animations)
+    // ║  PHASE 3 — STREAM CARDS LIVE (unchanged)
     // ╚═══════════════════════════════════════════════════════════════════════
 
-    // Enforce exact requested flashcard count: models routinely ignore
-    // "Generate exactly N" (e.g. asked for 30, returned 6; asked for 20,
-    // returned 27). Truncate overproduction; pad underproduction from the
-    // topic fallback generator so the user always gets what they chose.
+    // Enforce exact requested flashcard count
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
       const want = opts.cardCount;
       const have = cardsData.flashcards.length;
@@ -1423,7 +1380,7 @@ module.exports = async function handler(req, res) {
         while (cardsData.flashcards.length < want && filler.length) {
           cardsData.flashcards.push(filler[i % filler.length]);
           i++;
-          if (i > want * 2) break; // safety valve
+          if (i > want * 2) break;
         }
       }
       log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
