@@ -1408,6 +1408,27 @@ module.exports = async function handler(req, res) {
     // ║  PHASE 3 — STREAM CARDS LIVE (animations)
     // ╚═══════════════════════════════════════════════════════════════════════
 
+    // Enforce exact requested flashcard count: models routinely ignore
+    // "Generate exactly N" (e.g. asked for 30, returned 6; asked for 20,
+    // returned 27). Truncate overproduction; pad underproduction from the
+    // topic fallback generator so the user always gets what they chose.
+    if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
+      const want = opts.cardCount;
+      const have = cardsData.flashcards.length;
+      if (have > want) {
+        cardsData.flashcards = cardsData.flashcards.slice(0, want);
+      } else if (have < want) {
+        const filler = buildTopicFallback('flashcards', message)?.flashcards || [];
+        let i = 0;
+        while (cardsData.flashcards.length < want && filler.length) {
+          cardsData.flashcards.push(filler[i % filler.length]);
+          i++;
+          if (i > want * 2) break; // safety valve
+        }
+      }
+      log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
+    }
+
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
