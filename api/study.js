@@ -1,13 +1,13 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE (FULL FIX)
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE (FULLY FIXED)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
 // ✅ EXTENDED TIMEOUTS — first token: 45s, full stream: 240s, per-model: 60s
 // ✅ 4 PARALLEL PASSES — all models race, first to respond wins
-// ✅ CONCURRENT PHASE 1 & 2 — notes stream and cards fetch run side‑by‑side
-// ✅ NON-STREAMING LAST RESORT — only when all streaming attempts fail
+// ✅ RELAXED VALIDATION — accepts even a single flashcard/quiz/branch as REAL AI
+// ✅ CARDS DEADLINE 45s — gives models enough time to produce JSON
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -399,9 +399,9 @@ OUTPUT JSON NOW — start with { immediately.`;
 // SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 45000;   // 45s for first token (was 30s)
-const FULL_STREAM_TIMEOUT_MS = 240000;  // 4 min total (was 180s)
-const MAX_PASSES = 4;                   // 4 full passes (was 3)
+const FIRST_TOKEN_TIMEOUT_MS = 45000;   // 45s for first token
+const FULL_STREAM_TIMEOUT_MS = 240000;  // 4 min total
+const MAX_PASSES = 4;                   // 4 full passes
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -732,19 +732,24 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
         .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
     }
 
-    // Validation based on tool
-    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
-    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-    const requestedBranches = tool === 'mindmap' ? 6 : 6;
-    const hasMm = parsed.mindmap?.branches?.length >= Math.max(3, Math.floor(requestedBranches / 2));
+    // ─── RELAXED VALIDATION — accept even a single item ───
+    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 1;
+    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 1;
+    const hasMm = parsed.mindmap?.branches?.length >= 1; // at least 1 branch
     const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
-    const valid = (tool === 'flashcards' || tool === 'flashcards_quiz') ? hasFc
-                : tool === 'quiz'                                     ? hasQ
-                : (tool === 'mindmap' || tool === 'mindmap_only')     ? hasMm
-                : tool === 'all'                                      ? (hasFc || hasQ || hasMm || hasKc)
-                : hasKc;
 
-    if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
+    let valid = false;
+    if (tool === 'flashcards' || tool === 'flashcards_quiz') valid = hasFc;
+    else if (tool === 'quiz') valid = hasQ;
+    else if (tool === 'mindmap' || tool === 'mindmap_only') valid = hasMm;
+    else if (tool === 'all') valid = (hasFc || hasQ || hasMm || hasKc);
+    else valid = hasKc; // notes/summary
+
+    if (!valid) {
+      // Log what we got for debugging
+      log.warn(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0}`);
+      throw new Error(`${name}: validation failed`);
+    }
 
     // Declare winner
     if (sharedState && !sharedState.winnerId) {
@@ -1343,8 +1348,8 @@ module.exports = async function handler(req, res) {
         p2ok = false;
       }
     } else {
-      // notes or summary: extended deadline from 25s → 35s
-      const NOTES_CARDS_DEADLINE_MS = 35000;
+      // notes or summary: extended deadline to 45 seconds
+      const NOTES_CARDS_DEADLINE_MS = 45000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
