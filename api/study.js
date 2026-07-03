@@ -36,29 +36,29 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Only the most reliable free models (in order of preference)
 const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
 ];
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -376,9 +376,9 @@ OUTPUT JSON NOW — start with { immediately.`;
 // SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 60000;  // 60s for first token
+const FIRST_TOKEN_TIMEOUT_MS = 30000;  // 30s for first token (was 60s) — 8 models race in parallel, no need to wait this long
 const FULL_STREAM_TIMEOUT_MS = 180000; // 3 min total
-const MAX_PASSES = 5;
+const MAX_PASSES = 3; // was 5 — 8 models already race each pass, 5 full passes could take 5-8+ min worst case
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -1304,9 +1304,24 @@ module.exports = async function handler(req, res) {
       }
     } else {
       // notes or summary: we already have notes, but we also want key_concepts etc.
-      // We'll use the cardsPromise to get that data.
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
+      // This is SUPPLEMENTARY data — it must never be allowed to hold the whole
+      // request (and therefore the SSE connection) open for minutes after the
+      // notes have already finished streaming. Cap it hard: if it isn't done in
+      // NOTES_CARDS_DEADLINE_MS, fall back immediately instead of waiting on the
+      // remaining P2 retry passes. This was the cause of "processes to the final
+      // word, then errors after a long delay" — Phase 2 could take 5-8+ minutes
+      // (MAX_PASSES retries x 90s per model), which outlives the hosting
+      // platform's request timeout and drops the SSE connection.
+      const NOTES_CARDS_DEADLINE_MS = 25000;
+      const deadlineFallback = new Promise(resolve => {
+        setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
+      });
+      const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
+      if (cardsResult.status === 'deadline') {
+        log.warn(`[${reqId}] Cards for ${opts.tool} exceeded ${NOTES_CARDS_DEADLINE_MS}ms deadline - using fallback so the notes stream can finish on time`);
+        cardsData = buildTopicFallback(opts.tool, message);
+        p2ok = false;
+      } else if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);

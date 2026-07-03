@@ -258,7 +258,7 @@ class SavoireApp {
     this.avatarEmojiIdx= this._loadNum('sv_avatar_emoji', 0);
 
     this.wizardStep  = 0;
-    this.wizardData  = { tool: 'notes', topic: '', language: 'English', depth: 'detailed', style: 'simple' };
+    this.wizardData  = { tool: 'notes', topic: '', language: 'English', depth: 'detailed', style: 'simple', cardCount: 15, quizCount: 10, quizType: 'mixed', branchCount: 6 };
     this.wizardFile  = null;
 
     this.demoStep     = 0;
@@ -810,7 +810,7 @@ class SavoireApp {
         case 0: body.innerHTML = this._wStepTool();   this._bindWTool();  break;
         case 1: body.innerHTML = this._wStepTopic();  this._bindWTopic(); break;
         case 2: body.innerHTML = this._wStepLang();   this._bindWLang();  break;
-        case 3: body.innerHTML = this._wStepDepth();  this._bindWDepth(); break;
+        case 3: body.innerHTML = this._wStepDepth();  this._bindWDepth();  break;
         case 4: body.innerHTML = this._wStepStyle();  this._bindWStyle(); break;
         case 5: body.innerHTML = this._wStepReview(); break;
       }
@@ -1006,6 +1006,15 @@ Examples:
   }
 
   _wStepDepth() {
+    switch (this.wizardData.tool) {
+      case 'flashcards': return this._wStepCardCount();
+      case 'quiz':        return this._wStepQuizConfig();
+      case 'mindmap':     return this._wStepBranchCount();
+      default:            return this._wStepDepthGeneric();
+    }
+  }
+
+  _wStepDepthGeneric() {
     return `
       <div class="wizard-step-heading"><i class="fas fa-chart-line"></i> How much detail do you need?</div>
       <div class="wizard-depth-grid">
@@ -1021,17 +1030,119 @@ Examples:
       </div>`;
   }
 
+  _wStepCardCount() {
+    const options = [10, 15, 20, 25, 30];
+    return `
+      <div class="wizard-step-heading"><i class="fas fa-layer-group"></i> How many flashcards?</div>
+      <div class="wizard-depth-grid">
+        ${options.map(n => `
+          <div class="wizard-depth-card ${this.wizardData.cardCount === n ? 'selected' : ''}" data-count="${n}">
+            <i class="fas fa-clone wdc-icon"></i>
+            <div class="wizard-depth-name">${n} cards</div>
+            <div class="wizard-depth-desc">${n <= 15 ? 'Quick review' : n <= 20 ? 'Standard deck' : 'Deep dive'}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  _wStepQuizConfig() {
+    const counts = [5, 10, 15, 20];
+    const types  = [
+      { k: 'mixed',  label: 'Mixed',  desc: '30% easy · 50% medium · 20% hard' },
+      { k: 'easy',   label: 'Easy',   desc: 'Foundational questions' },
+      { k: 'medium', label: 'Medium', desc: 'Core exam-level' },
+      { k: 'hard',   label: 'Hard',   desc: 'Advanced analysis' },
+      { k: 'exam',   label: 'Exam-style', desc: 'Tricky, past-paper format' },
+    ];
+    return `
+      <div class="wizard-step-heading"><i class="fas fa-question-circle"></i> How many questions?</div>
+      <div class="wizard-depth-grid">
+        ${counts.map(n => `
+          <div class="wizard-depth-card ${this.wizardData.quizCount === n ? 'selected' : ''}" data-count="${n}">
+            <i class="fas fa-list-ol wdc-icon"></i>
+            <div class="wizard-depth-name">${n} questions</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="wizard-step-heading" style="margin-top:20px"><i class="fas fa-sliders-h"></i> Difficulty</div>
+      <div class="wizard-depth-grid">
+        ${types.map(t => `
+          <div class="wizard-depth-card ${this.wizardData.quizType === t.k ? 'selected' : ''}" data-quiztype="${t.k}">
+            <i class="fas fa-check-circle wdc-icon"></i>
+            <div class="wizard-depth-name">${t.label}</div>
+            <div class="wizard-depth-desc">${t.desc}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  _wStepBranchCount() {
+    const options = [4, 6, 8, 10];
+    return `
+      <div class="wizard-step-heading"><i class="fas fa-project-diagram"></i> How many branches?</div>
+      <div class="wizard-depth-grid">
+        ${options.map(n => `
+          <div class="wizard-depth-card ${this.wizardData.branchCount === n ? 'selected' : ''}" data-count="${n}">
+            <i class="fas fa-share-alt wdc-icon"></i>
+            <div class="wizard-depth-name">${n} branches</div>
+            <div class="wizard-depth-desc">${n <= 6 ? 'Focused map' : 'Wide-coverage map'}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
   _bindWDepth() {
-    this._qsa('.wizard-depth-card').forEach(c => {
+    switch (this.wizardData.tool) {
+      case 'flashcards': return this._bindWCount('cardCount');
+      case 'quiz':        return this._bindWQuizConfig();
+      case 'mindmap':     return this._bindWCount('branchCount');
+      default:            return this._bindWDepthGeneric();
+    }
+  }
+
+  _wAdvance() {
+    setTimeout(() => {
+      if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
+    }, 280);
+  }
+
+  _bindWCount(field) {
+    this._qsa('.wizard-depth-card[data-count]').forEach(c => {
+      c.onclick = () => {
+        this.wizardData[field] = Number(c.dataset.count);
+        this._qsa('.wizard-depth-card[data-count]').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        this._wAdvance();
+      };
+    });
+  }
+
+  _bindWQuizConfig() {
+    this._qsa('.wizard-depth-card[data-count]').forEach(c => {
+      c.onclick = () => {
+        this.wizardData.quizCount = Number(c.dataset.count);
+        this._qsa('.wizard-depth-card[data-count]').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+      };
+    });
+    this._qsa('.wizard-depth-card[data-quiztype]').forEach(c => {
+      c.onclick = () => {
+        this.wizardData.quizType = c.dataset.quiztype;
+        this._qsa('.wizard-depth-card[data-quiztype]').forEach(x => x.classList.remove('selected'));
+        c.classList.add('selected');
+        this._wAdvance();
+      };
+    });
+  }
+
+  _bindWDepthGeneric() {
+    this._qsa('.wizard-depth-card[data-depth]').forEach(c => {
       c.onclick = () => {
         this.wizardData.depth = c.dataset.depth;
         // Highlight selected card immediately
-        this._qsa('.wizard-depth-card').forEach(x => x.classList.remove('selected'));
+        this._qsa('.wizard-depth-card[data-depth]').forEach(x => x.classList.remove('selected'));
         c.classList.add('selected');
-        // Auto-advance to next step after brief delay (max step = 5)
-        setTimeout(() => {
-          if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
-        }, 280);
+        this._wAdvance();
       };
     });
   }
@@ -1112,7 +1223,10 @@ Examples:
     if (!t || t.length < 2) { this._toast('info', 'fa-lightbulb', 'Please enter a topic.'); return; }
     this.tool = this.wizardData.tool;
     this._checkStreak();
-    await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool);
+    await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool, {
+      cardCount: this.wizardData.cardCount, quizCount: this.wizardData.quizCount,
+      quizType: this.wizardData.quizType, branchCount: this.wizardData.branchCount,
+    });
   }
 
   // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
@@ -1138,7 +1252,7 @@ Examples:
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
-  async _sendDirect(text, lang, depth, style, tool) {
+  async _sendDirect(text, lang, depth, style, tool, counts) {
     if (this.generating) return;
     this.generating    = true;
     this.streamBuffer  = '';
@@ -1157,7 +1271,7 @@ Examples:
     const t0 = Date.now();
 
     try {
-      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool });
+      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool, ...(counts || {}) });
       this.currentData = data;
       this._hideStreamOverlay();
       this._renderResult(data);
@@ -1863,13 +1977,9 @@ Examples:
 
   // ── FLASHCARD TOOL OUTPUT — ONLY FLASHCARDS, NO NOTES ──────────────────────
   _buildFcHTML(data) {
-    const cards = data.flashcards?.length ? data.flashcards
-      : (data.key_concepts || []).slice(0, 15).map(c => ({
-          front: c.split(':')[0]?.trim() || c.slice(0, 60),
-          back:  c,
-        }));
+    const cards = data.flashcards?.length ? data.flashcards : [];
 
-    if (!cards.length) return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> No flashcards were generated. Please try again.</div>`;
+    if (!cards.length) return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> The AI didn't return real flashcards this time — showing fake ones made from key concepts would be misleading, so nothing is shown instead. <button class="wizard-btn wizard-btn-primary" onclick="window.__savoire && window.__savoire._runWizard && window.__savoire._runWizard()" style="margin-top:12px"><i class="fas fa-redo"></i> Try again</button></div>`;
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
