@@ -1334,7 +1334,11 @@ module.exports = async function handler(req, res) {
     // no final screen. Racing against a deadline guarantees a final
     // payload (real data if it arrives in time, graceful fallback if not)
     // instead of ever hanging indefinitely.
-    const CARDS_DEADLINE_MS = opts.tool === 'all' ? 42000 : 32000;
+    // A single model attempt alone can legitimately take up to 45s
+    // (timeout_ms above), and up to MAX_PASSES=3 retries can run if earlier
+    // passes fail validation — so the deadline must comfortably clear that
+    // before it's treated as a genuine hang, not a normal slow response.
+    const CARDS_DEADLINE_MS = opts.tool === 'all' ? 130000 : 100000;
     const raceWithDeadline = (promise) => Promise.race([
       promise,
       new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), CARDS_DEADLINE_MS)),
@@ -1414,7 +1418,7 @@ module.exports = async function handler(req, res) {
       // word, then errors after a long delay" — Phase 2 could take 5-8+ minutes
       // (MAX_PASSES retries x 90s per model), which outlives the hosting
       // platform's request timeout and drops the SSE connection.
-      const NOTES_CARDS_DEADLINE_MS = 32000;
+      const NOTES_CARDS_DEADLINE_MS = 100000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
