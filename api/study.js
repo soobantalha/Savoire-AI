@@ -707,19 +707,26 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       }
     }
 
-    // Auto-fix quiz correct_answer mismatches
+    // Auto-fix quiz correct_answer mismatches + drop malformed questions
+    // BUG FIX: previously nothing filtered out questions missing "question" text
+    // or with too few options — these rendered as blank/invisible quiz cards in
+    // the UI. Now dropped here so the final quiz always shows real content.
     if (Array.isArray(parsed.quiz_questions)) {
-      parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
-        q.id = q.id || i + 1;
-        if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-          const lo  = q.correct_answer.toLowerCase();
-          const fix = q.options.find(o => o.toLowerCase() === lo)
-                   || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
-                   || q.options[0];
-          if (fix) q.correct_answer = fix;
-        }
-        return q;
-      });
+      parsed.quiz_questions = parsed.quiz_questions
+        .filter(q => q && typeof q.question === 'string' && q.question.trim().length > 3
+                  && Array.isArray(q.options) && q.options.filter(o => typeof o === 'string' && o.trim()).length >= 2)
+        .map((q, i) => {
+          q.id = i + 1;
+          q.options = q.options.filter(o => typeof o === 'string' && o.trim());
+          if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+            const lo  = String(q.correct_answer).toLowerCase();
+            const fix = q.options.find(o => o.toLowerCase() === lo)
+                     || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
+                     || q.options[0];
+            if (fix) q.correct_answer = fix;
+          }
+          return q;
+        });
     }
 
     // Normalize flashcards
@@ -1214,20 +1221,24 @@ module.exports = async function handler(req, res) {
     // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (PARALLEL)
     // ╚═══════════════════════════════════════════════════════════════════════
 
-    // ── Select the correct prompt based on tool ──
+    // ── Live-stream prompt: ALWAYS clean prose, regardless of tool. ──
+    // BUG FIX: flashcards/quiz/mindmap/all used to stream their own
+    // JSON-generation prompt live (buildFlashcardsPrompt/buildQuizPrompt/
+    // buildMindmapPrompt/buildMegaPrompt) — those instruct the AI to output
+    // raw JSON, not prose, so the live view showed unparsed JSON with zero
+    // formatting. Notes and Summary already used real prose prompts and never
+    // had this problem, so they keep their own (Summary's prompt has the
+    // TL;DR heading the final render depends on — don't swap that one out).
+    // The JSON data itself is still fetched separately in Phase 2 below using
+    // each tool's own dedicated JSON prompt — it's just never shown live.
     let notesPrompt;
     switch (opts.tool) {
-      case 'notes': notesPrompt = buildNotesPrompt(message, opts); break;
-      case 'flashcards': notesPrompt = buildFlashcardsPrompt(message, opts); break;
-      case 'quiz': notesPrompt = buildQuizPrompt(message, opts); break;
       case 'summary': notesPrompt = buildSummaryPrompt(message, opts); break;
-      case 'mindmap': notesPrompt = buildMindmapPrompt(message, opts); break;
-      // IMPORTANT: 'all' must NOT stream buildMegaPrompt live — that prompt asks
-      // the AI for one giant JSON blob, and streaming its raw tokens live shows
-      // unparsed JSON syntax with no formatting. Stream clean prose notes
-      // instead; the JSON blob (buildMegaPrompt) is fetched separately below
-      // for Phase 2 (cards/quiz/mindmap), never shown live as text.
-      case 'all': notesPrompt = buildNotesPrompt(message, opts); break;
+      case 'notes':
+      case 'flashcards':
+      case 'quiz':
+      case 'mindmap':
+      case 'all':
       default: notesPrompt = buildNotesPrompt(message, opts);
     }
 
