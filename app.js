@@ -1264,7 +1264,6 @@ Examples:
     this._liveBranches  = [];
     this._liveMMCentral = '';
     this._liveMMConns   = [];
-    this._finaliseShown = false;
 
     this._showToolbar(false);
     this._showStreamOverlay(text, this.tool);
@@ -1475,14 +1474,6 @@ Examples:
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-                    // Finalising stage (idx 3): live tokens/cards are done streaming
-                    // and we're waiting on the server for the final payload. Show a
-                    // tool-specific animated "building your X" visual instead of a
-                    // blank/static screen until the final result arrives.
-                    if (evt.idx === 3 && !this._finaliseShown) {
-                      this._finaliseShown = true;
-                      this._renderFinaliseAnimation(this.tool);
-                    }
 
                   // fact — floating topic fact pill
                   } else if (evt.fact !== undefined) {
@@ -1739,37 +1730,6 @@ Examples:
     if (this.el.emptyState)      this.el.emptyState.style.display = 'none';
     if (this.el.resultArea)      this.el.resultArea.style.display = 'none';
     if (this.el.thinkingWrap)    this.el.thinkingWrap.style.display = 'none';
-  }
-
-  // Tool-specific "building your X" animation shown between the end of the
-  // live stream and the final result screen — keeps the wait visually alive
-  // instead of a stall, for every tool (notes/flashcards/quiz/mindmap/all).
-  _renderFinaliseAnimation(tool) {
-    if (!this.el.sfpText) return;
-    const specs = {
-      notes:      { icon: 'fa-book-open',    caption: 'Polishing your notes',        chips: ['Key concepts', 'Study tricks', 'Practice Q&A', 'Real-world links', 'Misconceptions'] },
-      flashcards: { icon: 'fa-layer-group',  caption: 'Stacking your flashcards',    chips: ['Definitions', 'Mechanisms', 'Comparisons', 'Applications', 'Tricky ones'] },
-      quiz:       { icon: 'fa-circle-check', caption: 'Grading the answer key',      chips: ['Multiple choice', 'Explanations', 'Difficulty mix', 'Distractors'] },
-      summary:    { icon: 'fa-compress',     caption: 'Compressing the essentials',  chips: ['Core ideas', 'Key terms', 'Takeaways'] },
-      mindmap:    { icon: 'fa-diagram-project', caption: 'Wiring up the branches',   chips: ['Central node', 'Branches', 'Connections'] },
-      all:        { icon: 'fa-bolt',         caption: 'Assembling the mega bundle',  chips: ['Notes', 'Flashcards', 'Quiz', 'Summary', 'Mind Map'] },
-    };
-    const s = specs[tool] || specs.notes;
-    const chips = s.chips.map((c, i) =>
-      `<span class="finalise-chip" style="animation-delay:${(i * 0.12).toFixed(2)}s">${c}</span>`
-    ).join('');
-    this.el.sfpText.innerHTML = `
-      <div class="finalise-wrap">
-        <div class="finalise-orbit">
-          <div class="ring"></div>
-          <div class="ring r2"></div>
-          <div class="core"><i class="fas ${s.icon}"></i></div>
-        </div>
-        <div class="finalise-caption">${s.caption}…</div>
-        <div class="finalise-items">${chips}</div>
-        <div class="finalise-sub">Almost there — finalising your result</div>
-      </div>`;
-    this.el.sfpText.classList.remove('live-md');
   }
 
   _hideStreamOverlay() {
