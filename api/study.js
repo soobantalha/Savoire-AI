@@ -70,21 +70,16 @@ const ALL_MODELS_CARDS = [
   { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
   { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
   { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'mistralai/mistral-nemo:free',                max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemma-2-9b-it:free',                  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen-2.5-7b-instruct:free',             max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                       max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'mistralai/mistral-nemo:free',                 max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
   { id: 'qwen/qwq-32b:free',                           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1:free',                   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'liquid/lfm-40b:free',                         max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'openchat/openchat-7b:free',                   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'huggingfaceh4/zephyr-7b-beta:free',           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1:free',                    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free', max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  // Small/weaker free models removed from this pool — fine for loose prose
+  // (still used in ALL_MODELS_STREAM) but too unreliable at following a
+  // strict JSON schema; they were sometimes winning the speed race with
+  // structurally-valid-but-junk output (e.g. quiz options literally "A"/"B").
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,6 +185,10 @@ FORMATTING RULES:
 • At least 3 real-world examples specific to "${input}"
 • ⚠️ Common Mistakes / Misconceptions section
 • 🎯 Key Takeaways (5–8 bullets) at end
+
+DO NOT invent extra section headings beyond the 8 listed above (no "Cross-Connections", no custom checklists, etc.).
+NEVER write a bullet with an empty/placeholder body — e.g. never output a line like "↔ :" or "• :" with nothing after
+the colon. Every single bullet must contain real, specific, filled-in content about "${input}", or be omitted entirely.
 
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
@@ -754,7 +753,18 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       }
     }
 
-    // Auto-fix quiz correct_answer mismatches + drop malformed questions
+    // Auto-fix quiz correct_answer mismatches + drop malformed questions.
+    // IMPORTANT: also reject questions whose options are placeholder junk
+    // (bare "A"/"B"/"C"/"D", or suspiciously short strings) — some weaker
+    // free models return that instead of real answer text, and it used to
+    // pass validation (structurally an array of 4 strings) and "win" the
+    // fast-success race with garbage. Now it's treated as a failed question
+    // and dropped, so a genuinely bad model's response can't win purely on
+    // speed over a slower model's real content.
+    const isJunkOption = (o) => {
+      const t = String(o).trim();
+      return t.length < 4 || /^[a-dA-D][.):]?$/.test(t) || /^option\s*[a-dA-D]$/i.test(t);
+    };
     if (Array.isArray(parsed.quiz_questions)) {
       parsed.quiz_questions = parsed.quiz_questions
         .filter(q => q && typeof q.question === 'string' && q.question.trim().length > 3
@@ -770,7 +780,8 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
             if (fix) q.correct_answer = fix;
           }
           return q;
-        });
+        })
+        .filter(q => q.options.filter(o => !isJunkOption(o)).length >= 2);
     }
 
     // Normalize flashcards
@@ -1353,7 +1364,7 @@ module.exports = async function handler(req, res) {
 
     if (opts.tool === 'all') {
       sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
-      const cardsResult = await raceWithDeadline(60000);
+      const cardsResult = await raceWithDeadline(90000);
       if (cardsResult.status === 'deadline') {
         log.warn(`[${reqId}] Mega bundle exceeded 60000ms deadline - using fallback so a final screen always renders`);
         cardsData = buildTopicFallback('all', message);
@@ -1369,7 +1380,7 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'flashcards') {
       sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
-      const cardsResult = await raceWithDeadline(45000);
+      const cardsResult = await raceWithDeadline(75000);
       if (cardsResult.status === 'deadline') {
         log.warn(`[${reqId}] Flashcards exceeded 45000ms deadline - using fallback so a final screen always renders`);
         cardsData = buildTopicFallback('flashcards', message);
@@ -1385,7 +1396,7 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'quiz') {
       sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
-      const cardsResult = await raceWithDeadline(45000);
+      const cardsResult = await raceWithDeadline(75000);
       if (cardsResult.status === 'deadline') {
         log.warn(`[${reqId}] Quiz exceeded 45000ms deadline - using fallback so a final screen always renders`);
         cardsData = buildTopicFallback('quiz', message);
@@ -1401,7 +1412,7 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'mindmap') {
       sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
-      const cardsResult = await raceWithDeadline(45000);
+      const cardsResult = await raceWithDeadline(75000);
       if (cardsResult.status === 'deadline') {
         log.warn(`[${reqId}] Mindmap exceeded 45000ms deadline - using fallback so a final screen always renders`);
         cardsData = buildTopicFallback('mindmap', message);
@@ -1417,7 +1428,7 @@ module.exports = async function handler(req, res) {
       }
     } else {
       // notes or summary: extended deadline to 45 seconds
-      const NOTES_CARDS_DEADLINE_MS = 45000;
+      const NOTES_CARDS_DEADLINE_MS = 75000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
