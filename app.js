@@ -1045,36 +1045,48 @@ Examples:
   }
 
   _wStepCardCount() {
-    const options = [10, 15, 20, 25, 30];
+    const options = [
+      { n: 10, tag: 'Quick review',   desc: 'Fast pre-exam skim' },
+      { n: 15, tag: 'Standard deck',  desc: 'Balanced daily practice' },
+      { n: 20, tag: 'Deep dive',      desc: 'Full-topic mastery' },
+    ];
     return `
       <div class="wizard-step-heading"><i class="fas fa-layer-group"></i> How many flashcards?</div>
       <div class="wizard-depth-grid">
-        ${options.map(n => `
-          <div class="wizard-depth-card ${this.wizardData.cardCount === n ? 'selected' : ''}" data-count="${n}">
+        ${options.map(o => `
+          <div class="wizard-depth-card count-card ${this.wizardData.cardCount === o.n ? 'selected' : ''}" data-count="${o.n}">
             <i class="fas fa-clone wdc-icon"></i>
-            <div class="wizard-depth-name">${n} cards</div>
-            <div class="wizard-depth-desc">${n <= 15 ? 'Quick review' : n <= 20 ? 'Standard deck' : 'Deep dive'}</div>
+            <div class="wizard-depth-name">${o.n} cards</div>
+            <div class="wizard-depth-tag">${o.tag}</div>
+            <div class="wizard-depth-desc">${o.desc}</div>
           </div>
         `).join('')}
       </div>`;
   }
 
   _wStepQuizConfig() {
-    const counts = [5, 10, 15, 20];
+    const counts = [
+      { n: 5,  tag: 'Quick check',  desc: 'Fast confidence test' },
+      { n: 10, tag: 'Standard set', desc: 'Balanced practice round' },
+      { n: 15, tag: 'Full drill',   desc: 'Solid exam simulation' },
+      { n: 20, tag: 'Deep test',    desc: 'Complete topic coverage' },
+    ];
     const types  = [
-      { k: 'mixed',  label: 'Mixed',  desc: '30% easy · 50% medium · 20% hard' },
-      { k: 'easy',   label: 'Easy',   desc: 'Foundational questions' },
-      { k: 'medium', label: 'Medium', desc: 'Core exam-level' },
-      { k: 'hard',   label: 'Hard',   desc: 'Advanced analysis' },
+      { k: 'mixed',  label: 'Mixed',      desc: '30% easy · 50% medium · 20% hard' },
+      { k: 'easy',   label: 'Easy',       desc: 'Foundational questions' },
+      { k: 'medium', label: 'Medium',     desc: 'Core exam-level' },
+      { k: 'hard',   label: 'Hard',       desc: 'Advanced analysis' },
       { k: 'exam',   label: 'Exam-style', desc: 'Tricky, past-paper format' },
     ];
     return `
       <div class="wizard-step-heading"><i class="fas fa-question-circle"></i> How many questions?</div>
       <div class="wizard-depth-grid">
-        ${counts.map(n => `
-          <div class="wizard-depth-card ${this.wizardData.quizCount === n ? 'selected' : ''}" data-count="${n}">
+        ${counts.map(o => `
+          <div class="wizard-depth-card count-card ${this.wizardData.quizCount === o.n ? 'selected' : ''}" data-count="${o.n}">
             <i class="fas fa-list-ol wdc-icon"></i>
-            <div class="wizard-depth-name">${n} questions</div>
+            <div class="wizard-depth-name">${o.n} questions</div>
+            <div class="wizard-depth-tag">${o.tag}</div>
+            <div class="wizard-depth-desc">${o.desc}</div>
           </div>
         `).join('')}
       </div>
@@ -1246,11 +1258,12 @@ Examples:
   // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
 
   _openMega() {
-    if (this.el.megaTopicInput)  this.el.megaTopicInput.value = '';
-    if (this.el.megaCharCount)   this.el.megaCharCount.textContent = '0 / 4000';
-    if (this.el.megaLangSel)     this.el.megaLangSel.value = this.prefs.defaultLanguage || 'English';
-    if (this.el.megaDepthSel)    this.el.megaDepthSel.value = 'detailed';
-    this._openModal('megaModal');
+    // Every "Mega Bundle" entry point (header button, sidebar, empty state,
+    // feature chip, keyboard shortcut 'm') now opens the exact same Wizard
+    // flow used when a user picks Mega Bundle inside the wizard itself —
+    // one implementation, one set of options, no more divergence between
+    // "wizard mega" and "outside-wizard mega".
+    this._openWizard('all');
   }
 
   _runMega() {
