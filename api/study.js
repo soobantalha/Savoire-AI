@@ -1351,99 +1351,64 @@ module.exports = async function handler(req, res) {
     // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
-    // Same deadline-fallback pattern as notes below: without this, a run
-    // needing several retry passes can outlive the hosting connection and
-    // the SSE stream dies mid-air (long stall -> hard "Tool Unavailable"
-    // error), even though live content already streamed fine. The fast
-    // first-success race above means legit successes are now typically
-    // much quicker than this, so it rarely fires in the healthy case.
+    // These tools' ENTIRE output comes from cardsPromise — if it fails there is
+    // nothing real to show, so we no longer silently substitute generic
+    // template content. We wait generously (multiple retry passes across the
+    // whole model pool already happen inside fetchCards) and only if that
+    // genuinely exhausts do we surface a real error + Retry button — never a
+    // fabricated result pretending to be AI-generated.
     const raceWithDeadline = (ms) => Promise.race([
       cardsPromise,
       new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), ms)),
     ]);
 
-    if (opts.tool === 'all') {
-      sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
-      const cardsResult = await raceWithDeadline(90000);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Mega bundle exceeded 60000ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('all', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+    const CARD_ONLY_TOOLS = ['all', 'flashcards', 'quiz', 'mindmap'];
+    if (CARD_ONLY_TOOLS.includes(opts.tool)) {
+      const labels = {
+        all:        '⚡ Finalising mega bundle — flashcards + quiz + mindmap…',
+        flashcards: '🃏 Finalising flashcards…',
+        quiz:       '❓ Finalising quiz…',
+        mindmap:    '🗺️ Finalising mind map…',
+      };
+      const deadlineMs = opts.tool === 'all' ? 150000 : 120000;
+      sse('stage', { idx: 3, label: labels[opts.tool] });
+      const cardsResult = await raceWithDeadline(deadlineMs);
+
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
-        log.ok(`[${reqId}] Mega bundle succeeded`);
+        log.ok(`[${reqId}] ${opts.tool} succeeded`);
       } else {
-        log.error(`[${reqId}] Mega bundle failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('all', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'flashcards') {
-      sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
-      const cardsResult = await raceWithDeadline(75000);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Flashcards exceeded 45000ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('flashcards', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Flashcards succeeded`);
-      } else {
-        log.error(`[${reqId}] Flashcards failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('flashcards', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'quiz') {
-      sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
-      const cardsResult = await raceWithDeadline(75000);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Quiz exceeded 45000ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('quiz', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Quiz succeeded`);
-      } else {
-        log.error(`[${reqId}] Quiz failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('quiz', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'mindmap') {
-      sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
-      const cardsResult = await raceWithDeadline(75000);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Mindmap exceeded 45000ms deadline - using fallback so a final screen always renders`);
-        cardsData = buildTopicFallback('mindmap', message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Mindmap succeeded`);
-      } else {
-        log.error(`[${reqId}] Mindmap failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('mindmap', message);
-        p2ok = false;
+        // Every model, every retry pass, genuinely exhausted (or a true hang
+        // past the generous deadline). Send a real error, not fake content.
+        const why = cardsResult.status === 'deadline'
+          ? `exceeded ${deadlineMs}ms after full retries`
+          : (cardsResult.reason?.message || 'all models failed');
+        log.error(`[${reqId}] ${opts.tool} failed for real: ${why}`);
+        sse('error', {
+          error: 'All available AI models are currently busy or unreachable. No fake/placeholder content was generated — please retry in a few seconds.',
+          tool: opts.tool,
+        });
+        return; // stop here — no 'done' event, no fabricated result
       }
     } else {
-      // notes or summary: extended deadline to 45 seconds
-      const NOTES_CARDS_DEADLINE_MS = 75000;
+      // notes or summary: P1 (the live notes prose) already succeeded by this
+      // point — this is only the supplementary key_concepts/tricks/quiz-teaser
+      // side data. If it fails, we still have real notes to show, so we don't
+      // hard-error the whole response; we simply omit the supplementary
+      // section rather than filling it with generic fallback text.
+      const NOTES_CARDS_DEADLINE_MS = 90000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
       const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Cards for ${opts.tool} exceeded ${NOTES_CARDS_DEADLINE_MS}ms deadline - using fallback so the notes stream can finish on time`);
-        cardsData = buildTopicFallback(opts.tool, message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);
       } else {
-        log.warn(`[${reqId}] Cards failed for ${opts.tool}, using fallback`);
-        cardsData = buildTopicFallback(opts.tool, message);
+        log.warn(`[${reqId}] Supplementary cards failed/timed out for ${opts.tool} — showing notes without them rather than fake filler`);
+        cardsData = null;
         p2ok = false;
       }
     }
@@ -1452,22 +1417,26 @@ module.exports = async function handler(req, res) {
     // ║  PHASE 3 — STREAM CARDS LIVE (unchanged)
     // ╚═══════════════════════════════════════════════════════════════════════
 
-    // Enforce exact requested flashcard count
+    // Enforce requested flashcard count — trim excess only; never pad with
+    // synthetic filler cards. If the model genuinely returns fewer than
+    // asked, the user gets fewer real cards rather than fake ones mixed in.
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
       const want = opts.cardCount;
       const have = cardsData.flashcards.length;
       if (have > want) {
         cardsData.flashcards = cardsData.flashcards.slice(0, want);
-      } else if (have < want) {
-        const filler = buildTopicFallback('flashcards', message)?.flashcards || [];
-        let i = 0;
-        while (cardsData.flashcards.length < want && filler.length) {
-          cardsData.flashcards.push(filler[i % filler.length]);
-          i++;
-          if (i > want * 2) break;
-        }
       }
-      log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
+      log.ok(`[${reqId}] Flashcard count: wanted ${want}, delivering ${cardsData.flashcards.length} (real, no padding)`);
+    }
+
+    // Same for quiz — trim excess only, never pad with synthetic filler.
+    if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all') && opts.quizCount) {
+      const want = opts.quizCount;
+      const have = cardsData.quiz_questions.length;
+      if (have > want) {
+        cardsData.quiz_questions = cardsData.quiz_questions.slice(0, want);
+      }
+      log.ok(`[${reqId}] Quiz count: wanted ${want}, delivering ${cardsData.quiz_questions.length} (real, no padding)`);
     }
 
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {

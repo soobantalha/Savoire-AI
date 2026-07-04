@@ -1286,6 +1286,7 @@ Examples:
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
   async _sendDirect(text, lang, depth, style, tool, counts) {
+    this._lastRequest = { text, lang, depth, style, tool, counts };
     if (this.generating) return;
     this.generating    = true;
     this.streamBuffer  = '';
@@ -1847,6 +1848,12 @@ Examples:
 
   // ─── STATE MANAGEMENT ────────────────────────────────────────────────────────
 
+  _retryLast() {
+    if (!this._lastRequest) { this._toast('error', 'fa-exclamation-circle', 'Nothing to retry.'); return; }
+    const { text, lang, depth, style, tool, counts } = this._lastRequest;
+    this._sendDirect(text, lang, depth, style, tool, counts);
+  }
+
   _showState(state, errMsg) {
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
     if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
@@ -1867,15 +1874,15 @@ Examples:
               <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                AI models are occasionally busy when many students study simultaneously.
-                This usually resolves itself in a few seconds — please try again!
+                Every available AI model was tried and none responded in time — so nothing fake was
+                shown instead. This is usually momentary; retrying often works within seconds.
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
-                <button class="btn btn-primary" onclick="window._app._openWizard()">
-                  <i class="fas fa-magic"></i> Try Again with Wizard
+                <button class="btn btn-primary" onclick="window._app._retryLast()">
+                  <i class="fas fa-redo"></i> Retry
                 </button>
-                <button class="btn btn-gold" onclick="window._app._openMega()">
-                  <i class="fas fa-bolt"></i> Try Mega Bundle
+                <button class="btn btn-gold" onclick="window._app._openWizard()">
+                  <i class="fas fa-magic"></i> Try Again with Wizard
                 </button>
               </div>
             </div>`;
