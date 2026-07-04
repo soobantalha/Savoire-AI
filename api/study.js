@@ -46,7 +46,22 @@ const ALL_MODELS_STREAM = [
   { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
   { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
   { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemma-2-9b-it:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen-2.5-7b-instruct:free',             max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'liquid/lfm-40b:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'openchat/openchat-7b:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'gryphe/mythomax-l2-13b:free',                max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'undi95/toppy-m-7b:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'huggingfaceh4/zephyr-7b-beta:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
@@ -57,7 +72,19 @@ const ALL_MODELS_CARDS = [
   { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
   { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
   { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'mistralai/mistral-nemo:free',                max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'google/gemma-2-9b-it:free',                  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen-2.5-7b-instruct:free',             max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwq-32b:free',                           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1:free',                   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'liquid/lfm-40b:free',                         max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openchat/openchat-7b:free',                   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'huggingfaceh4/zephyr-7b-beta:free',           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -569,6 +596,35 @@ async function streamNotesFallback(prompt, onChunk, tool) {
   }
 }
 
+// Races model attempts and resolves the instant the FIRST one succeeds —
+// instead of Promise.allSettled, which always waits for every model to
+// finish (including ones stuck at their 60s timeout) even after a fast
+// model has already returned a good result. This is why first tokens/cards
+// used to take up to a full pass-timeout even on a normal successful run.
+// The stragglers keep running harmlessly in the background; we just stop
+// waiting on them.
+function raceFirstSuccess(modelPromises) {
+  return new Promise((resolve) => {
+    let remaining = modelPromises.length;
+    let resolved = false;
+    const settled = [];
+    modelPromises.forEach(p => {
+      p.then(r => {
+        settled.push(r);
+        if (!resolved && r.status === 'fulfilled') {
+          resolved = true;
+          resolve({ winner: r, all: null });
+        }
+        remaining--;
+        if (!resolved && remaining === 0) {
+          resolved = true;
+          resolve({ winner: null, all: settled });
+        }
+      });
+    });
+  });
+}
+
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
@@ -584,23 +640,15 @@ async function streamNotes(prompt, onChunk, tool) {
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    // Wait for all to settle
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch (fast-race, didn't wait for stragglers)`);
       return winner.value;
     }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
 
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
@@ -822,22 +870,15 @@ async function fetchCards(prompt, tool) {
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P2 pass ${pass}: WINNER ${winner.model}`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model} (fast-race, didn't wait for stragglers)`);
       return winner.value;
     }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
 
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
@@ -1299,10 +1340,25 @@ module.exports = async function handler(req, res) {
     // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
+    // Same deadline-fallback pattern as notes below: without this, a run
+    // needing several retry passes can outlive the hosting connection and
+    // the SSE stream dies mid-air (long stall -> hard "Tool Unavailable"
+    // error), even though live content already streamed fine. The fast
+    // first-success race above means legit successes are now typically
+    // much quicker than this, so it rarely fires in the healthy case.
+    const raceWithDeadline = (ms) => Promise.race([
+      cardsPromise,
+      new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), ms)),
+    ]);
+
     if (opts.tool === 'all') {
       sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await raceWithDeadline(60000);
+      if (cardsResult.status === 'deadline') {
+        log.warn(`[${reqId}] Mega bundle exceeded 60000ms deadline - using fallback so a final screen always renders`);
+        cardsData = buildTopicFallback('all', message);
+        p2ok = false;
+      } else if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Mega bundle succeeded`);
@@ -1313,8 +1369,12 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'flashcards') {
       sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await raceWithDeadline(45000);
+      if (cardsResult.status === 'deadline') {
+        log.warn(`[${reqId}] Flashcards exceeded 45000ms deadline - using fallback so a final screen always renders`);
+        cardsData = buildTopicFallback('flashcards', message);
+        p2ok = false;
+      } else if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Flashcards succeeded`);
@@ -1325,8 +1385,12 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'quiz') {
       sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await raceWithDeadline(45000);
+      if (cardsResult.status === 'deadline') {
+        log.warn(`[${reqId}] Quiz exceeded 45000ms deadline - using fallback so a final screen always renders`);
+        cardsData = buildTopicFallback('quiz', message);
+        p2ok = false;
+      } else if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Quiz succeeded`);
@@ -1337,8 +1401,12 @@ module.exports = async function handler(req, res) {
       }
     } else if (opts.tool === 'mindmap') {
       sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
+      const cardsResult = await raceWithDeadline(45000);
+      if (cardsResult.status === 'deadline') {
+        log.warn(`[${reqId}] Mindmap exceeded 45000ms deadline - using fallback so a final screen always renders`);
+        cardsData = buildTopicFallback('mindmap', message);
+        p2ok = false;
+      } else if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Mindmap succeeded`);

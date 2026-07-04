@@ -113,6 +113,20 @@ const STAGE_MESSAGES = [
   '✅ Finalising — almost ready!',
 ];
 
+// Rotating motivational lines shown ONLY if the final result is taking a
+// noticeable moment after the live stream's last token — i.e. the user is
+// staring at a finished live screen, waiting. Keeps that wait feel intentional
+// instead of stuck. Same pool for every tool, cycled every few seconds.
+const FINALISE_QUOTES = [
+  'Toppers don\u2019t rush \u2014 they wait for clarity. Your clarity is loading.',
+  'Good notes are brewed, not microwaved. Yours are almost ready.',
+  'The best answers take a breath before they arrive.',
+  'Read what\u2019s on screen \u2014 your final output is being generated right now.',
+  'Real understanding isn\u2019t instant. Neither is a great set of notes.',
+  'Every rank holder has waited for something worth waiting for.',
+  'This pause is where the quality gets added. Hang tight.',
+];
+
 // Emoji avatars for user profile display
 const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','🎯','📚','🌈','🏆','💡','🎨','🌙','⭐'];
 
@@ -1247,7 +1261,13 @@ Examples:
     this._closeModal('megaModal');
     this.tool = 'all';
     this._checkStreak();
-    this._sendDirect(topic, lang, depth, 'simple', 'all');
+    // IMPORTANT: pass the same counts the wizard's mega path sends — without
+    // these (branchCount especially) the mind map came back with blank
+    // branches when Mega Bundle was launched from the sidebar/header/empty
+    // state instead of the wizard, even though it's the same _sendDirect call.
+    this._sendDirect(topic, lang, depth, 'simple', 'all', {
+      cardCount: 15, quizCount: 10, quizType: 'mixed', branchCount: 6,
+    });
   }
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
@@ -1264,6 +1284,8 @@ Examples:
     this._liveBranches  = [];
     this._liveMMCentral = '';
     this._liveMMConns   = [];
+    if (this._finaliseTimer)    { clearTimeout(this._finaliseTimer);    this._finaliseTimer = null; }
+    if (this._finaliseInterval) { clearInterval(this._finaliseInterval); this._finaliseInterval = null; }
 
     this._showToolbar(false);
     this._showStreamOverlay(text, this.tool);
@@ -1474,6 +1496,21 @@ Examples:
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+                    // Finalising stage (idx 3): live content is fully streamed and
+                    // we're waiting on the server for the final payload. If that
+                    // wait passes 2s, start rotating short motivational lines so
+                    // the pause reads as intentional, not stuck — never overwrites
+                    // the live content already on screen, just the status label.
+                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval) {
+                      this._finaliseTimer = setTimeout(() => {
+                        let qi = 0;
+                        if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+                        this._finaliseInterval = setInterval(() => {
+                          qi = (qi + 1) % FINALISE_QUOTES.length;
+                          if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+                        }, 3200);
+                      }, 2000);
+                    }
 
                   // fact — floating topic fact pill
                   } else if (evt.fact !== undefined) {
@@ -1481,6 +1518,8 @@ Examples:
 
                   // done / final data object — topic or ultra_long_notes or _tool field present
                   } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
+                    if (this._finaliseTimer)    { clearTimeout(this._finaliseTimer);    this._finaliseTimer = null; }
+                    if (this._finaliseInterval) { clearInterval(this._finaliseInterval); this._finaliseInterval = null; }
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
