@@ -35,30 +35,29 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Only the most reliable free models (in order of preference)
 const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
 ];
+
+// How many models to try AT ONCE per pass. Kept small — this is the actual
+// lever that avoids self-inflicted 429s (OpenRouter free tier shares a
+// 20-req/min bucket across ALL free models combined), not total model count.
+const BATCH_SIZE = 2;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS
@@ -569,38 +568,61 @@ async function streamNotesFallback(prompt, onChunk, tool) {
   }
 }
 
+// Races model attempts and resolves the instant the FIRST one succeeds —
+// instead of Promise.allSettled, which always waits for every model in the
+// batch to finish (including ones stuck at their timeout) even after a fast
+// model already returned a good result.
+function raceFirstSuccess(modelPromises) {
+  return new Promise((resolve) => {
+    let remaining = modelPromises.length;
+    let resolved = false;
+    const settled = [];
+    modelPromises.forEach(p => {
+      p.then(r => {
+        settled.push(r);
+        if (!resolved && r.status === 'fulfilled') {
+          resolved = true;
+          resolve({ winner: r, all: null });
+        }
+        remaining--;
+        if (!resolved && remaining === 0) {
+          resolved = true;
+          resolve({ winner: null, all: settled });
+        }
+      });
+    });
+  });
+}
+
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  // ── 4 FULL PASSES ──
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P1 pass ${pass}: starting ALL ${ALL_MODELS_STREAM.length} models in parallel`);
+  // Try the whole pool, 2 models at a time (BATCH_SIZE) — real breadth
+  // across every model without ever bursting past OpenRouter's shared
+  // 20-req/min free-tier ceiling.
+  const P1_PASSES = Math.ceil(ALL_MODELS_STREAM.length / BATCH_SIZE);
+  for (let pass = 1; pass <= P1_PASSES; pass++) {
+    const batch = ALL_MODELS_STREAM.slice((pass - 1) * BATCH_SIZE, pass * BATCH_SIZE);
+    if (!batch.length) break;
+    log.info(`P1 pass ${pass}/${P1_PASSES}: trying ${batch.map(m => m.id).join(', ')}`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_STREAM.map(model =>
+    const modelPromises = batch.map(model =>
       streamOneModel(model, prompt, onChunk, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    // Wait for all to settle
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch (fast-race)`);
       return winner.value;
     }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
 
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
@@ -612,12 +634,10 @@ async function streamNotes(prompt, onChunk, tool) {
       );
 
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+    log.warn(`P1 pass ${pass}: batch failed — ${failReasons.length} failures`);
 
-    if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
-      log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
-      await sleep(backoff);
+    if (pass < P1_PASSES) {
+      await sleep(800);
     }
   }
 
@@ -812,32 +832,28 @@ async function fetchCards(prompt, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P2 pass ${pass}: starting ALL ${ALL_MODELS_CARDS.length} models in parallel for tool:${tool}`);
+  const P2_PASSES = Math.ceil(ALL_MODELS_CARDS.length / BATCH_SIZE);
+  for (let pass = 1; pass <= P2_PASSES; pass++) {
+    const batch = ALL_MODELS_CARDS.slice((pass - 1) * BATCH_SIZE, pass * BATCH_SIZE);
+    if (!batch.length) break;
+    log.info(`P2 pass ${pass}/${P2_PASSES}: trying ${batch.map(m => m.id).join(', ')} for tool:${tool}`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_CARDS.map(model =>
+    const modelPromises = batch.map(model =>
       fetchCardsFromModel(model, prompt, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P2 pass ${pass}: WINNER ${winner.model}`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model} (fast-race)`);
       return winner.value;
     }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
 
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
@@ -849,16 +865,14 @@ async function fetchCards(prompt, tool) {
       );
 
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+    log.warn(`P2 pass ${pass}: batch failed — ${failReasons.length} failures`);
 
-    if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
-      log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
-      await sleep(backoff);
+    if (pass < P2_PASSES) {
+      await sleep(800);
     }
   }
 
-  // ── LAST RESORT ──
+  // ── LAST RESORT: still a REAL AI attempt (non-streaming), never fabricated ──
   log.warn('P2 all attempts failed; trying non-streaming JSON fallback');
   const fallbackResult = await fetchCardsFallback(prompt, tool);
   if (fallbackResult) {
@@ -1265,26 +1279,31 @@ module.exports = async function handler(req, res) {
       );
     }
 
-    // ── Phase 1: live notes stream (parallel) ──
-    try {
-      if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+    // ── Phase 1: live notes stream — ONLY for tools that actually show notes.
+    // flashcards/quiz/mindmap don't need a prose notes essay at all — that
+    // used to run anyway "for fallback" even though it was never displayed,
+    // wasting an entire AI call's worth of time before Phase 2 even started.
+    if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+      try {
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
-      } else {
-        // For flashcards/quiz/mindmap, still generate notes as fallback but they are not shown in final UI
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-        p1ok = true;
-        log.ok(`[${reqId}] P1 done (fallback notes) — ${notes.length}ch`);
+      } catch (e1) {
+        // No offline/generic notes — if every model in every retry batch
+        // genuinely failed, be honest about it instead of streaming local
+        // template text that looks like a real AI answer.
+        log.error(`[${reqId}] P1 failed for real: ${e1.message}`);
+        clearInterval(kap);
+        clearStages();
+        sse('error', {
+          error: 'We couldn\u2019t generate real AI content for this just now, so we\u2019re showing nothing rather than something fake. This is almost always momentary.',
+          tool: opts.tool,
+        });
+        if (!res.writableEnded) res.end();
+        return;
       }
-    } catch (e1) {
-      log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
-      notes = offlineNotes(message);
-      for (let i = 0; i < notes.length; i += 300) {
-        sse('token', { t: notes.slice(i, i + 300) });
-        await sleep(4);
-      }
-      p1ok = false;
+    } else {
+      p1ok = true; // flashcards/quiz/mindmap: go straight to Phase 2
     }
 
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
@@ -1296,75 +1315,51 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 3, label: `🃏 Finalising your cards${'.'.repeat(p2DotCount)}` });
     }, 1500);
 
-    // ── Wait for Phase 2 ──
+    // ── Wait for Phase 2 — NEVER fabricate content on failure ──
     let cardsData = null, p2ok = false;
 
-    if (opts.tool === 'all') {
-      sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
+    const CARD_ONLY_TOOLS = ['all', 'flashcards', 'quiz', 'mindmap'];
+    const labels = {
+      all:        '⚡ Finalising mega bundle — flashcards + quiz + mindmap…',
+      flashcards: '🃏 Finalising flashcards…',
+      quiz:       '❓ Finalising quiz…',
+      mindmap:    '🗺️ Finalising mind map…',
+    };
+    if (CARD_ONLY_TOOLS.includes(opts.tool)) {
+      sse('stage', { idx: 3, label: labels[opts.tool] });
       const cardsResult = await cardsPromise;
       if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
-        log.ok(`[${reqId}] Mega bundle succeeded`);
+        log.ok(`[${reqId}] ${opts.tool} succeeded`);
       } else {
-        log.error(`[${reqId}] Mega bundle failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('all', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'flashcards') {
-      sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Flashcards succeeded`);
-      } else {
-        log.error(`[${reqId}] Flashcards failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('flashcards', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'quiz') {
-      sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Quiz succeeded`);
-      } else {
-        log.error(`[${reqId}] Quiz failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('quiz', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'mindmap') {
-      sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Mindmap succeeded`);
-      } else {
-        log.error(`[${reqId}] Mindmap failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('mindmap', message);
-        p2ok = false;
+        log.error(`[${reqId}] ${opts.tool} failed for real: ${cardsResult.reason?.message}`);
+        clearInterval(kap);
+        clearInterval(p2Ticker);
+        clearStages();
+        sse('error', {
+          error: 'We couldn\u2019t generate real AI content for this just now, so we\u2019re showing nothing rather than something fake. This is almost always momentary.',
+          tool: opts.tool,
+        });
+        if (!res.writableEnded) res.end();
+        return;
       }
     } else {
-      // notes or summary: extended deadline to 45 seconds
-      const NOTES_CARDS_DEADLINE_MS = 45000;
+      // notes or summary: P1 already succeeded — this is only the
+      // supplementary key_concepts/tricks side data. If it fails, keep the
+      // real notes and simply omit the supplementary section (no filler).
+      const NOTES_CARDS_DEADLINE_MS = 60000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
       const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Cards for ${opts.tool} exceeded ${NOTES_CARDS_DEADLINE_MS}ms deadline - using fallback so the notes stream can finish on time`);
-        cardsData = buildTopicFallback(opts.tool, message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);
       } else {
-        log.warn(`[${reqId}] Cards failed for ${opts.tool}, using fallback`);
-        cardsData = buildTopicFallback(opts.tool, message);
+        log.warn(`[${reqId}] Supplementary cards failed/timed out for ${opts.tool} — showing notes without them`);
+        cardsData = null;
         p2ok = false;
       }
     }
@@ -1373,25 +1368,19 @@ module.exports = async function handler(req, res) {
     // ║  PHASE 3 — STREAM CARDS LIVE (unchanged)
     // ╚═══════════════════════════════════════════════════════════════════════
 
-    // Enforce exact requested flashcard count
+    // Enforce requested flashcard count — trim excess only, never pad with
+    // synthetic filler cards.
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
       const want = opts.cardCount;
       const have = cardsData.flashcards.length;
       if (have > want) {
         cardsData.flashcards = cardsData.flashcards.slice(0, want);
-      } else if (have < want) {
-        const filler = buildTopicFallback('flashcards', message)?.flashcards || [];
-        let i = 0;
-        while (cardsData.flashcards.length < want && filler.length) {
-          cardsData.flashcards.push(filler[i % filler.length]);
-          i++;
-          if (i > want * 2) break;
-        }
       }
       log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
     }
 
-    if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
+    if
+     (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
         sse('card', { idx: i, total: cardsData.flashcards.length, card: cardsData.flashcards[i] });
