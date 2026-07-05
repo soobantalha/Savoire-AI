@@ -34,26 +34,27 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Only the most reliable free models (in order of preference)
+// Live logs confirmed these are dead: google/gemini-2.0-flash-exp:free and
+// deepseek/deepseek-chat-v3-0324:free both return HTTP 404 "no longer
+// available for free" — OpenRouter discontinued them. Replaced with models
+// confirmed live in July 2026. Also: 'openrouter/free' (the auto-router) was
+// the one hitting "free-models-per-day" exceeded — that's an OpenRouter
+// ACCOUNT-level daily quota (50/day without a one-time $10 credit top-up,
+// 1000/day with it), not something any code change can bypass. Keeping one
+// direct model as primary instead of relying on the account-quota-limited
+// auto-router.
 const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
-// CRITICAL: OpenRouter's free tier hard-caps at ~20 requests per MINUTE
-// combined across every :free model (it's a shared bucket, not per-model),
-// plus a 50-1000/day ceiling — and that bucket is shared across EVERY user
-// of this app hitting the same API key, not just one person testing. Cut
-// down hard to 2 models x 1 pass = max 2 calls per single-tool request (4
-// for mega), so a burst of retries or several concurrent users still stays
-// far under the ceiling. More models was never more resilience here — every
-// extra parallel model was extra self-inflicted 429 risk.
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
