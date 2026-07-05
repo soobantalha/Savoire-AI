@@ -46,8 +46,8 @@ const SAVOIRÉ = {
   FOUNDER:     'Sooban Talha',
   TAGLINE:     'Think Less. Know More.',
   API_URL:     '/api/study',
-  MAX_HISTORY: 6000,
-  MAX_SAVED:   120000,
+  MAX_HISTORY: 60,
+  MAX_SAVED:   120,
   NTFY:        'savoireai_new_users',
 };
 
@@ -97,16 +97,6 @@ const DEPTH_CONFIG = {
   expert:        { label: 'Expert',        desc: '2200–3500 words', subDesc: 'Maximum depth',     icon: 'fa-crown',      words: '2200-3500' },
 };
 
-// Summary is meant to be short by definition — reusing Notes' 600-3500 word
-// range made "comprehensive/expert" summaries contradictorily long. This is
-// its own, much shorter scale.
-const SUMMARY_DEPTH_CONFIG = {
-  standard:      { label: 'Quick',        desc: '80–150 words',  subDesc: 'One-glance recap',   icon: 'fa-flag',       words: '80-150'   },
-  detailed:      { label: 'Standard',     desc: '150–250 words', subDesc: 'Balanced summary',   icon: 'fa-chart-line', words: '150-250'  },
-  comprehensive: { label: 'Thorough',     desc: '250–400 words', subDesc: 'Covers every point', icon: 'fa-book',       words: '250-400'  },
-  expert:        { label: 'In-depth',     desc: '400–600 words', subDesc: 'Still a summary — just complete', icon: 'fa-crown', words: '400-600' },
-};
-
 const STYLE_CONFIG = {
   simple:   { label: 'Simple & Clear',       desc: 'Beginner-friendly, analogies',   icon: 'fa-smile'           },
   academic: { label: 'Academic & Formal',    desc: 'Scholarly, precise terminology', icon: 'fa-graduation-cap'  },
@@ -128,11 +118,10 @@ const STAGE_MESSAGES = [
 // staring at a finished live screen, waiting. Keeps that wait feel intentional
 // instead of stuck. Same pool for every tool, cycled every few seconds.
 const FINALISE_QUOTES = [
-  '\u26A0\uFE0F This is not the final result yet \u2014 it\u2019s still being generated. Please wait a moment.',
   'Toppers don\u2019t rush \u2014 they wait for clarity. Your clarity is loading.',
   'Good notes are brewed, not microwaved. Yours are almost ready.',
   'The best answers take a breath before they arrive.',
-  'Your real, AI-written result is on its way \u2014 almost there.',
+  'Read what\u2019s on screen \u2014 your final output is being generated right now.',
   'Real understanding isn\u2019t instant. Neither is a great set of notes.',
   'Every rank holder has waited for something worth waiting for.',
   'This pause is where the quality gets added. Hang tight.',
@@ -1040,11 +1029,10 @@ Examples:
   }
 
   _wStepDepthGeneric() {
-    const cfg = this.wizardData.tool === 'summary' ? SUMMARY_DEPTH_CONFIG : DEPTH_CONFIG;
     return `
       <div class="wizard-step-heading"><i class="fas fa-chart-line"></i> How much detail do you need?</div>
       <div class="wizard-depth-grid">
-        ${Object.entries(cfg).map(([k, d]) => `
+        ${Object.entries(DEPTH_CONFIG).map(([k, d]) => `
           <div class="wizard-depth-card ${this.wizardData.depth === k ? 'selected' : ''}" data-depth="${k}">
             <i class="fas ${d.icon} wdc-icon"></i>
             <div class="wizard-depth-name">${d.label}</div>
@@ -1522,24 +1510,20 @@ Examples:
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-                    // Finalising stage (idx 3): show a clear "this isn't the
-                    // final result yet" explainer + animated visual so the
-                    // wait never looks blank/broken — for notes/summary/all,
-                    // wait 2s first since live prose is still on screen; for
-                    // flashcards/quiz/mindmap there's no live prose at all
-                    // anymore, so show it immediately instead of a blank pane.
-                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval && !this._finaliseShown) {
-                      const delay = (this.tool === 'notes' || this.tool === 'summary' || this.tool === 'all') ? 2000 : 0;
+                    // Finalising stage (idx 3): live content is fully streamed and
+                    // we're waiting on the server for the final payload. If that
+                    // wait passes 2s, start rotating short motivational lines so
+                    // the pause reads as intentional, not stuck — never overwrites
+                    // the live content already on screen, just the status label.
+                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval) {
                       this._finaliseTimer = setTimeout(() => {
-                        this._finaliseShown = true;
-                        this._renderFinaliseAnimation(this.tool);
                         let qi = 0;
                         if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
                         this._finaliseInterval = setInterval(() => {
                           qi = (qi + 1) % FINALISE_QUOTES.length;
                           if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
                         }, 3200);
-                      }, delay);
+                      }, 2000);
                     }
 
                   // fact — floating topic fact pill
@@ -1790,22 +1774,7 @@ Examples:
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
     if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
     if (this.el.sfpText) {
-      // Unmissable intro banner: makes it explicit up-front that what's about
-      // to appear is a live in-progress preview, not the final result — so
-      // when it later pauses, the user doesn't panic and leave thinking it's
-      // stuck or broken. "Continue" just acknowledges and reveals the live feed.
-      this.el.sfpText.innerHTML = `
-        <div class="live-intro-banner" id="liveIntroBanner">
-          <div class="live-intro-icon"><i class="fas fa-circle-info"></i></div>
-          <div class="live-intro-text">
-            <strong>You're about to see a live preview</strong> while ${cfg.sfpName.toLowerCase()} is being generated.
-            This isn't the final result yet — keep an eye on this screen, real AI content is being written in real time.
-          </div>
-          <button class="btn btn-primary live-intro-btn" onclick="document.getElementById('liveIntroBanner').remove()">
-            <i class="fas fa-arrow-right"></i> Continue
-          </button>
-        </div>
-        <span class="typing-cursor">▊</span>`;
+      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
       this.el.sfpText.classList.remove('done');
       this.el.sfpText.classList.add('live-md');
     }
@@ -1814,49 +1783,6 @@ Examples:
     if (this.el.emptyState)      this.el.emptyState.style.display = 'none';
     if (this.el.resultArea)      this.el.resultArea.style.display = 'none';
     if (this.el.thinkingWrap)    this.el.thinkingWrap.style.display = 'none';
-  }
-
-  // Tool-specific "building your X" animation shown between the end of the
-  // live stream and the final result screen — keeps the wait visually alive
-  // instead of a stall/blank pane, for every tool.
-  _renderFinaliseAnimation(tool) {
-    if (!this.el.sfpText) return;
-    if (document.getElementById('finaliseAnimBlock')) return; // already shown
-    const specs = {
-      notes:      { icon: 'fa-book-open',       color: '#d4af37', caption: 'Polishing your notes',       chips: ['Key concepts', 'Study tricks', 'Practice Q&A', 'Real-world links', 'Misconceptions'] },
-      flashcards: { icon: 'fa-layer-group',     color: '#bf00ff', caption: 'Stacking your flashcards',   chips: ['Definitions', 'Mechanisms', 'Comparisons', 'Applications', 'Tricky ones'] },
-      quiz:       { icon: 'fa-circle-check',    color: '#00d4ff', caption: 'Grading the answer key',     chips: ['Multiple choice', 'Explanations', 'Difficulty mix', 'Distractors'] },
-      summary:    { icon: 'fa-compress',        color: '#00ff88', caption: 'Compressing the essentials', chips: ['Core ideas', 'Key terms', 'Takeaways'] },
-      mindmap:    { icon: 'fa-diagram-project', color: '#ff6bb5', caption: 'Wiring up the branches',     chips: ['Central node', 'Branches', 'Connections'] },
-      all:        { icon: 'fa-bolt',            color: '#d4af37', caption: 'Assembling the mega bundle', chips: ['Notes', 'Flashcards', 'Quiz', 'Summary', 'Mind Map'] },
-    };
-    const s = specs[tool] || specs.notes;
-    const chips = s.chips.map((c, i) =>
-      `<span class="finalise-chip" style="animation-delay:${(i * 0.12).toFixed(2)}s">${c}</span>`
-    ).join('');
-    // Append after existing live content — never overwrite what's already
-    // on screen (notes text / live cards / live quiz / live mindmap).
-    const wrap = document.createElement('div');
-    wrap.id = 'finaliseAnimBlock';
-    wrap.innerHTML = `
-      <div class="finalise-wrap" style="--fx-color:${s.color}">
-        <div class="finalise-stage">
-          <div class="finalise-particles">
-            <span></span><span></span><span></span><span></span><span></span><span></span>
-          </div>
-          <div class="finalise-orbit">
-            <div class="ring"></div>
-            <div class="ring r2"></div>
-          </div>
-          <div class="finalise-core"><i class="fas ${s.icon}"></i></div>
-        </div>
-        <div class="finalise-caption">${s.caption}…</div>
-        <div class="finalise-bar-wrap"><div class="finalise-bar-fill"></div></div>
-        <div class="finalise-items">${chips}</div>
-        <div class="finalise-sub">Almost there — finalising your result</div>
-      </div>`;
-    this.el.sfpText.appendChild(wrap);
-    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
   _hideStreamOverlay() {
@@ -1922,6 +1848,12 @@ Examples:
 
   // ─── STATE MANAGEMENT ────────────────────────────────────────────────────────
 
+  _retryLast() {
+    if (!this._lastRequest) { this._toast('error', 'fa-exclamation-circle', 'Nothing to retry.'); return; }
+    const { text, lang, depth, style, tool, counts } = this._lastRequest;
+    this._sendDirect(text, lang, depth, style, tool, counts);
+  }
+
   _showState(state, errMsg) {
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
     if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
@@ -1933,24 +1865,8 @@ Examples:
           this.el.resultArea.style.display = 'block';
           if (this.el.outArea) setTimeout(() => { this.el.outArea.scrollTop = 0; }, 80);
         }
-        this._autoRetryCount = 0; // success — reset for next time
         break;
-      case 'error': {
-        // No manual Retry button — the app retries automatically in the
-        // background, up to 2 extra silent attempts, before ever bothering
-        // the user. Only shows the error card if those genuinely all fail too.
-        const attempt = this._autoRetryCount || 0;
-        if (attempt < 2 && this._lastRequest) {
-          this._autoRetryCount = attempt + 1;
-          this._showAutoRetryingState(attempt + 1);
-          const delay = 2500 * (attempt + 1);
-          setTimeout(() => {
-            const { text, lang, depth, style, tool, counts } = this._lastRequest;
-            this._sendDirect(text, lang, depth, style, tool, counts);
-          }, delay);
-          break;
-        }
-        this._autoRetryCount = 0;
+      case 'error':
         if (this.el.resultArea) {
           this.el.resultArea.style.display = 'block';
           this.el.resultArea.innerHTML = `
@@ -1958,30 +1874,23 @@ Examples:
               <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                We automatically retried a couple of times in the background already \u2014 real demand is
-                unusually high right now. Please try again in a minute.
+                Every available AI model was tried and none responded in time — so nothing fake was
+                shown instead. This is usually momentary; retrying often works within seconds.
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+                <button class="btn btn-primary" onclick="window._app._retryLast()">
+                  <i class="fas fa-redo"></i> Retry
+                </button>
                 <button class="btn btn-gold" onclick="window._app._openWizard()">
-                  <i class="fas fa-magic"></i> Start a New Request
+                  <i class="fas fa-magic"></i> Try Again with Wizard
                 </button>
               </div>
             </div>`;
         }
         break;
-      }
       default:
         if (this.el.emptyState) this.el.emptyState.style.display = 'flex';
         break;
-    }
-  }
-
-  _showAutoRetryingState(attemptNum) {
-    // Keep the user on the live/stream screen with a calm, professional
-    // note instead of ever surfacing a raw error + button for a transient hiccup.
-    this._showStreamOverlay(this._lastRequest?.text || '', this._lastRequest?.tool || this.tool);
-    if (this.el.sfpLabel) {
-      this.el.sfpLabel.textContent = `Reconnecting to AI \u2014 attempt ${attemptNum + 1} of 3\u2026`;
     }
   }
 
