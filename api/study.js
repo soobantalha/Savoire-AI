@@ -44,24 +44,17 @@ const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
   { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',      max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'google/gemma-2-9b-it:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'qwen/qwen-2.5-7b-instruct:free',             max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'liquid/lfm-40b:free',                        max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'openchat/openchat-7b:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'gryphe/mythomax-l2-13b:free',                max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'undi95/toppy-m-7b:free',                     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'huggingfaceh4/zephyr-7b-beta:free',          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  // Trimmed from 20 down to 10: firing 20-30 simultaneous requests to the
+  // same API key, repeated across up to 4 retry passes, can itself trigger
+  // the provider's own rate-limiting/abuse protection — which looks
+  // identical to "every model failed" from our side. A smaller, still-varied
+  // pool is the safer default; raise it only if real logs show genuine
+  // per-model unavailability rather than blanket 429s.
 ];
 
 const ALL_MODELS_CARDS = [
@@ -77,28 +70,10 @@ const ALL_MODELS_CARDS = [
   { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
   { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
   { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'google/gemma-2-9b-it:free',                    max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'qwen/qwen-2.5-7b-instruct:free',               max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free',        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free',max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'liquid/lfm-40b:free',                           max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'openchat/openchat-7b:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'gryphe/mythomax-l2-13b:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'undi95/toppy-m-7b:free',                        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'huggingfaceh4/zephyr-7b-beta:free',             max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'nousresearch/hermes-2-pro-llama-3-8b:free',     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-3-8b-instruct:free',           max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'thudm/glm-4-9b:free',                            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'qwen/qwen-2.5-coder-32b-instruct:free',         max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'sophosympatheia/rogue-rose-103b-v0.2:free',     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'cognitivecomputations/dolphin3.0-mistral-24b:free', max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'rekaai/reka-flash-3:free',                      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  // Junk-content filter (isJunkOption + question/answer sanity checks) means
-  // any weak model's bad output gets rejected and retried rather than
-  // accepted — so a big pool here is now pure upside: more chances one
-  // model is free/fast, without a quality-risk trade-off.
+  // Trimmed from 30 down to 12 for the same reason as ALL_MODELS_STREAM
+  // above — this pool gets fired up to MAX_PASSES=4 times per request, so 30
+  // models meant up to 120 near-simultaneous calls on one API key, which is
+  // a very plausible self-inflicted rate-limit trigger.
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
