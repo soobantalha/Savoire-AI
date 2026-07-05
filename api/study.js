@@ -4,10 +4,11 @@
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ EXTENDED TIMEOUTS — first token: 45s, full stream: 240s, per-model: 60s
-// ✅ 4 PARALLEL PASSES — all models race, first to respond wins
+// ✅ EXTENDED TIMEOUTS — first token: 60s, full stream: 300s, per-model: 90s
+// ✅ 10 PARALLEL PASSES — all models race, first to respond wins
 // ✅ RELAXED VALIDATION — accepts even a single flashcard/quiz/branch as REAL AI
-// ✅ CARDS DEADLINE 45s — gives models enough time to produce JSON
+// ✅ CARDS DEADLINE 90s — gives models enough time to produce JSON
+// ✅ MASSIVELY INCREASED MODEL POOL + RETRIES TO ELIMINATE IMMEDIATE ERRORS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -35,29 +36,37 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Only the most reliable free models (in order of preference)
 const RELIABLE_MODELS_STREAM = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'google/gemma-2-9b-it:free',                 max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
 ];
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'microsoft/phi-3-medium-128k-instruct:free', max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'nousresearch/hermes-3-llama-3.1-8b:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-7b-instruct:free',             max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.2:free',   max_tokens: 8192, timeout_ms: 90000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'google/gemma-2-9b-it:free',                 max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'microsoft/phi-3-medium-128k-instruct:free', max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'nousresearch/hermes-3-llama-3.1-8b:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-7b-instruct:free',             max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.2:free',   max_tokens: 16384, timeout_ms: 90000, temp: 0.30 },
 ];
 
-// How many models to try AT ONCE per pass. Kept small — this is the actual
-// lever that avoids self-inflicted 429s (OpenRouter free tier shares a
-// 20-req/min bucket across ALL free models combined), not total model count.
-const BATCH_SIZE = 2;
+// How many models to try AT ONCE per pass. Increased to 4 for wider parallelism.
+const BATCH_SIZE = 4;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS
@@ -398,9 +407,9 @@ OUTPUT JSON NOW — start with { immediately.`;
 // SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 45000;   // 45s for first token
-const FULL_STREAM_TIMEOUT_MS = 240000;  // 4 min total
-const MAX_PASSES = 4;                   // 4 full passes
+const FIRST_TOKEN_TIMEOUT_MS = 60000;   // 60s for first token
+const FULL_STREAM_TIMEOUT_MS = 300000;  // 5 min total
+const MAX_PASSES = 10;                   // 10 full passes (was 4)
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -548,7 +557,7 @@ async function streamNotesFallback(prompt, onChunk, tool) {
         stream: false,
         messages: [{ role: 'user', content: prompt }],
       }),
-      timeout: 120000,
+      timeout: 180000,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -598,7 +607,7 @@ async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  // Try the whole pool, 2 models at a time (BATCH_SIZE) — real breadth
+  // Try the whole pool, BATCH_SIZE models at a time — real breadth
   // across every model without ever bursting past OpenRouter's shared
   // 20-req/min free-tier ceiling.
   const P1_PASSES = Math.ceil(ALL_MODELS_STREAM.length / BATCH_SIZE);
@@ -659,7 +668,7 @@ async function streamNotes(prompt, onChunk, tool) {
 async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   const name  = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms); // now 60s
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms); // now 90s
   const t0    = Date.now();
 
   try {
@@ -766,7 +775,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     else valid = hasKc; // notes/summary
 
     if (!valid) {
-      // Log what we got for debugging
       log.warn(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0}`);
       throw new Error(`${name}: validation failed`);
     }
@@ -808,7 +816,7 @@ async function fetchCardsFallback(prompt, tool) {
         stream: false,
         messages: [{ role: 'user', content: prompt }],
       }),
-      timeout: 120000,
+      timeout: 180000,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
