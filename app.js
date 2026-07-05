@@ -97,6 +97,16 @@ const DEPTH_CONFIG = {
   expert:        { label: 'Expert',        desc: '2200–3500 words', subDesc: 'Maximum depth',     icon: 'fa-crown',      words: '2200-3500' },
 };
 
+// Summary is meant to be short by definition — reusing Notes' 600-3500 word
+// range made "comprehensive/expert" summaries contradictorily long. This is
+// its own, much shorter scale.
+const SUMMARY_DEPTH_CONFIG = {
+  standard:      { label: 'Quick',        desc: '80–150 words',  subDesc: 'One-glance recap',   icon: 'fa-flag',       words: '80-150'   },
+  detailed:      { label: 'Standard',     desc: '150–250 words', subDesc: 'Balanced summary',   icon: 'fa-chart-line', words: '150-250'  },
+  comprehensive: { label: 'Thorough',     desc: '250–400 words', subDesc: 'Covers every point', icon: 'fa-book',       words: '250-400'  },
+  expert:        { label: 'In-depth',     desc: '400–600 words', subDesc: 'Still a summary — just complete', icon: 'fa-crown', words: '400-600' },
+};
+
 const STYLE_CONFIG = {
   simple:   { label: 'Simple & Clear',       desc: 'Beginner-friendly, analogies',   icon: 'fa-smile'           },
   academic: { label: 'Academic & Formal',    desc: 'Scholarly, precise terminology', icon: 'fa-graduation-cap'  },
@@ -111,6 +121,21 @@ const STAGE_MESSAGES = [
   '🔍 Building detailed sections…',
   '✨ Generating cards and data…',
   '✅ Finalising — almost ready!',
+];
+
+// Rotating motivational lines shown ONLY if the final result is taking a
+// noticeable moment after the live stream's last token — i.e. the user is
+// staring at a finished live screen, waiting. Keeps that wait feel intentional
+// instead of stuck. Same pool for every tool, cycled every few seconds.
+const FINALISE_QUOTES = [
+  '\u26A0\uFE0F This is not the final result yet \u2014 it\u2019s still being generated. Please wait a moment.',
+  'Toppers don\u2019t rush \u2014 they wait for clarity. Your clarity is loading.',
+  'Good notes are brewed, not microwaved. Yours are almost ready.',
+  'The best answers take a breath before they arrive.',
+  'Your real, AI-written result is on its way \u2014 almost there.',
+  'Real understanding isn\u2019t instant. Neither is a great set of notes.',
+  'Every rank holder has waited for something worth waiting for.',
+  'This pause is where the quality gets added. Hang tight.',
 ];
 
 // Emoji avatars for user profile display
@@ -1015,10 +1040,11 @@ Examples:
   }
 
   _wStepDepthGeneric() {
+    const cfg = this.wizardData.tool === 'summary' ? SUMMARY_DEPTH_CONFIG : DEPTH_CONFIG;
     return `
       <div class="wizard-step-heading"><i class="fas fa-chart-line"></i> How much detail do you need?</div>
       <div class="wizard-depth-grid">
-        ${Object.entries(DEPTH_CONFIG).map(([k, d]) => `
+        ${Object.entries(cfg).map(([k, d]) => `
           <div class="wizard-depth-card ${this.wizardData.depth === k ? 'selected' : ''}" data-depth="${k}">
             <i class="fas ${d.icon} wdc-icon"></i>
             <div class="wizard-depth-name">${d.label}</div>
@@ -1031,36 +1057,48 @@ Examples:
   }
 
   _wStepCardCount() {
-    const options = [10, 15, 20, 25, 30];
+    const options = [
+      { n: 10, tag: 'Quick review',   desc: 'Fast pre-exam skim' },
+      { n: 15, tag: 'Standard deck',  desc: 'Balanced daily practice' },
+      { n: 20, tag: 'Deep dive',      desc: 'Full-topic mastery' },
+    ];
     return `
       <div class="wizard-step-heading"><i class="fas fa-layer-group"></i> How many flashcards?</div>
       <div class="wizard-depth-grid">
-        ${options.map(n => `
-          <div class="wizard-depth-card ${this.wizardData.cardCount === n ? 'selected' : ''}" data-count="${n}">
+        ${options.map(o => `
+          <div class="wizard-depth-card count-card ${this.wizardData.cardCount === o.n ? 'selected' : ''}" data-count="${o.n}">
             <i class="fas fa-clone wdc-icon"></i>
-            <div class="wizard-depth-name">${n} cards</div>
-            <div class="wizard-depth-desc">${n <= 15 ? 'Quick review' : n <= 20 ? 'Standard deck' : 'Deep dive'}</div>
+            <div class="wizard-depth-name">${o.n} cards</div>
+            <div class="wizard-depth-tag">${o.tag}</div>
+            <div class="wizard-depth-desc">${o.desc}</div>
           </div>
         `).join('')}
       </div>`;
   }
 
   _wStepQuizConfig() {
-    const counts = [5, 10, 15, 20];
+    const counts = [
+      { n: 5,  tag: 'Quick check',  desc: 'Fast confidence test' },
+      { n: 10, tag: 'Standard set', desc: 'Balanced practice round' },
+      { n: 15, tag: 'Full drill',   desc: 'Solid exam simulation' },
+      { n: 20, tag: 'Deep test',    desc: 'Complete topic coverage' },
+    ];
     const types  = [
-      { k: 'mixed',  label: 'Mixed',  desc: '30% easy · 50% medium · 20% hard' },
-      { k: 'easy',   label: 'Easy',   desc: 'Foundational questions' },
-      { k: 'medium', label: 'Medium', desc: 'Core exam-level' },
-      { k: 'hard',   label: 'Hard',   desc: 'Advanced analysis' },
+      { k: 'mixed',  label: 'Mixed',      desc: '30% easy · 50% medium · 20% hard' },
+      { k: 'easy',   label: 'Easy',       desc: 'Foundational questions' },
+      { k: 'medium', label: 'Medium',     desc: 'Core exam-level' },
+      { k: 'hard',   label: 'Hard',       desc: 'Advanced analysis' },
       { k: 'exam',   label: 'Exam-style', desc: 'Tricky, past-paper format' },
     ];
     return `
       <div class="wizard-step-heading"><i class="fas fa-question-circle"></i> How many questions?</div>
       <div class="wizard-depth-grid">
-        ${counts.map(n => `
-          <div class="wizard-depth-card ${this.wizardData.quizCount === n ? 'selected' : ''}" data-count="${n}">
+        ${counts.map(o => `
+          <div class="wizard-depth-card count-card ${this.wizardData.quizCount === o.n ? 'selected' : ''}" data-count="${o.n}">
             <i class="fas fa-list-ol wdc-icon"></i>
-            <div class="wizard-depth-name">${n} questions</div>
+            <div class="wizard-depth-name">${o.n} questions</div>
+            <div class="wizard-depth-tag">${o.tag}</div>
+            <div class="wizard-depth-desc">${o.desc}</div>
           </div>
         `).join('')}
       </div>
@@ -1232,11 +1270,12 @@ Examples:
   // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
 
   _openMega() {
-    if (this.el.megaTopicInput)  this.el.megaTopicInput.value = '';
-    if (this.el.megaCharCount)   this.el.megaCharCount.textContent = '0 / 4000';
-    if (this.el.megaLangSel)     this.el.megaLangSel.value = this.prefs.defaultLanguage || 'English';
-    if (this.el.megaDepthSel)    this.el.megaDepthSel.value = 'detailed';
-    this._openModal('megaModal');
+    // Every "Mega Bundle" entry point (header button, sidebar, empty state,
+    // feature chip, keyboard shortcut 'm') now opens the exact same Wizard
+    // flow used when a user picks Mega Bundle inside the wizard itself —
+    // one implementation, one set of options, no more divergence between
+    // "wizard mega" and "outside-wizard mega".
+    this._openWizard('all');
   }
 
   _runMega() {
@@ -1247,12 +1286,19 @@ Examples:
     this._closeModal('megaModal');
     this.tool = 'all';
     this._checkStreak();
-    this._sendDirect(topic, lang, depth, 'simple', 'all');
+    // IMPORTANT: pass the same counts the wizard's mega path sends — without
+    // these (branchCount especially) the mind map came back with blank
+    // branches when Mega Bundle was launched from the sidebar/header/empty
+    // state instead of the wizard, even though it's the same _sendDirect call.
+    this._sendDirect(topic, lang, depth, 'simple', 'all', {
+      cardCount: 15, quizCount: 10, quizType: 'mixed', branchCount: 6,
+    });
   }
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
   async _sendDirect(text, lang, depth, style, tool, counts) {
+    this._lastRequest = { text, lang, depth, style, tool, counts };
     if (this.generating) return;
     this.generating    = true;
     this.streamBuffer  = '';
@@ -1264,6 +1310,8 @@ Examples:
     this._liveBranches  = [];
     this._liveMMCentral = '';
     this._liveMMConns   = [];
+    if (this._finaliseTimer)    { clearTimeout(this._finaliseTimer);    this._finaliseTimer = null; }
+    if (this._finaliseInterval) { clearInterval(this._finaliseInterval); this._finaliseInterval = null; }
 
     this._showToolbar(false);
     this._showStreamOverlay(text, this.tool);
@@ -1474,6 +1522,25 @@ Examples:
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
+                    // Finalising stage (idx 3): show a clear "this isn't the
+                    // final result yet" explainer + animated visual so the
+                    // wait never looks blank/broken — for notes/summary/all,
+                    // wait 2s first since live prose is still on screen; for
+                    // flashcards/quiz/mindmap there's no live prose at all
+                    // anymore, so show it immediately instead of a blank pane.
+                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval && !this._finaliseShown) {
+                      const delay = (this.tool === 'notes' || this.tool === 'summary' || this.tool === 'all') ? 2000 : 0;
+                      this._finaliseTimer = setTimeout(() => {
+                        this._finaliseShown = true;
+                        this._renderFinaliseAnimation(this.tool);
+                        let qi = 0;
+                        if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+                        this._finaliseInterval = setInterval(() => {
+                          qi = (qi + 1) % FINALISE_QUOTES.length;
+                          if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+                        }, 3200);
+                      }, delay);
+                    }
 
                   // fact — floating topic fact pill
                   } else if (evt.fact !== undefined) {
@@ -1481,6 +1548,8 @@ Examples:
 
                   // done / final data object — topic or ultra_long_notes or _tool field present
                   } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
+                    if (this._finaliseTimer)    { clearTimeout(this._finaliseTimer);    this._finaliseTimer = null; }
+                    if (this._finaliseInterval) { clearInterval(this._finaliseInterval); this._finaliseInterval = null; }
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
@@ -1721,7 +1790,22 @@ Examples:
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
     if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
     if (this.el.sfpText) {
-      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
+      // Unmissable intro banner: makes it explicit up-front that what's about
+      // to appear is a live in-progress preview, not the final result — so
+      // when it later pauses, the user doesn't panic and leave thinking it's
+      // stuck or broken. "Continue" just acknowledges and reveals the live feed.
+      this.el.sfpText.innerHTML = `
+        <div class="live-intro-banner" id="liveIntroBanner">
+          <div class="live-intro-icon"><i class="fas fa-circle-info"></i></div>
+          <div class="live-intro-text">
+            <strong>You're about to see a live preview</strong> while ${cfg.sfpName.toLowerCase()} is being generated.
+            This isn't the final result yet — keep an eye on this screen, real AI content is being written in real time.
+          </div>
+          <button class="btn btn-primary live-intro-btn" onclick="document.getElementById('liveIntroBanner').remove()">
+            <i class="fas fa-arrow-right"></i> Continue
+          </button>
+        </div>
+        <span class="typing-cursor">▊</span>`;
       this.el.sfpText.classList.remove('done');
       this.el.sfpText.classList.add('live-md');
     }
@@ -1730,6 +1814,49 @@ Examples:
     if (this.el.emptyState)      this.el.emptyState.style.display = 'none';
     if (this.el.resultArea)      this.el.resultArea.style.display = 'none';
     if (this.el.thinkingWrap)    this.el.thinkingWrap.style.display = 'none';
+  }
+
+  // Tool-specific "building your X" animation shown between the end of the
+  // live stream and the final result screen — keeps the wait visually alive
+  // instead of a stall/blank pane, for every tool.
+  _renderFinaliseAnimation(tool) {
+    if (!this.el.sfpText) return;
+    if (document.getElementById('finaliseAnimBlock')) return; // already shown
+    const specs = {
+      notes:      { icon: 'fa-book-open',       color: '#d4af37', caption: 'Polishing your notes',       chips: ['Key concepts', 'Study tricks', 'Practice Q&A', 'Real-world links', 'Misconceptions'] },
+      flashcards: { icon: 'fa-layer-group',     color: '#bf00ff', caption: 'Stacking your flashcards',   chips: ['Definitions', 'Mechanisms', 'Comparisons', 'Applications', 'Tricky ones'] },
+      quiz:       { icon: 'fa-circle-check',    color: '#00d4ff', caption: 'Grading the answer key',     chips: ['Multiple choice', 'Explanations', 'Difficulty mix', 'Distractors'] },
+      summary:    { icon: 'fa-compress',        color: '#00ff88', caption: 'Compressing the essentials', chips: ['Core ideas', 'Key terms', 'Takeaways'] },
+      mindmap:    { icon: 'fa-diagram-project', color: '#ff6bb5', caption: 'Wiring up the branches',     chips: ['Central node', 'Branches', 'Connections'] },
+      all:        { icon: 'fa-bolt',            color: '#d4af37', caption: 'Assembling the mega bundle', chips: ['Notes', 'Flashcards', 'Quiz', 'Summary', 'Mind Map'] },
+    };
+    const s = specs[tool] || specs.notes;
+    const chips = s.chips.map((c, i) =>
+      `<span class="finalise-chip" style="animation-delay:${(i * 0.12).toFixed(2)}s">${c}</span>`
+    ).join('');
+    // Append after existing live content — never overwrite what's already
+    // on screen (notes text / live cards / live quiz / live mindmap).
+    const wrap = document.createElement('div');
+    wrap.id = 'finaliseAnimBlock';
+    wrap.innerHTML = `
+      <div class="finalise-wrap" style="--fx-color:${s.color}">
+        <div class="finalise-stage">
+          <div class="finalise-particles">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="finalise-orbit">
+            <div class="ring"></div>
+            <div class="ring r2"></div>
+          </div>
+          <div class="finalise-core"><i class="fas ${s.icon}"></i></div>
+        </div>
+        <div class="finalise-caption">${s.caption}…</div>
+        <div class="finalise-bar-wrap"><div class="finalise-bar-fill"></div></div>
+        <div class="finalise-items">${chips}</div>
+        <div class="finalise-sub">Almost there — finalising your result</div>
+      </div>`;
+    this.el.sfpText.appendChild(wrap);
+    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
   }
 
   _hideStreamOverlay() {
@@ -1795,6 +1922,12 @@ Examples:
 
   // ─── STATE MANAGEMENT ────────────────────────────────────────────────────────
 
+  _retryLast() {
+    if (!this._lastRequest) { this._toast('error', 'fa-exclamation-circle', 'Nothing to retry.'); return; }
+    const { text, lang, depth, style, tool, counts } = this._lastRequest;
+    this._sendDirect(text, lang, depth, style, tool, counts);
+  }
+
   _showState(state, errMsg) {
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
     if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
@@ -1815,15 +1948,15 @@ Examples:
               <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                AI models are occasionally busy when many students study simultaneously.
-                This usually resolves itself in a few seconds — please try again!
+                This happens occasionally when demand is high — we’d rather show nothing than something fake.
+                It almost always works on the very next try.
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
-                <button class="btn btn-primary" onclick="window._app._openWizard()">
-                  <i class="fas fa-magic"></i> Try Again with Wizard
+                <button class="btn btn-primary" onclick="window._app._retryLast()">
+                  <i class="fas fa-redo"></i> Retry
                 </button>
-                <button class="btn btn-gold" onclick="window._app._openMega()">
-                  <i class="fas fa-bolt"></i> Try Mega Bundle
+                <button class="btn btn-gold" onclick="window._app._openWizard()">
+                  <i class="fas fa-magic"></i> Try Again with Wizard
                 </button>
               </div>
             </div>`;
