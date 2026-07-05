@@ -35,27 +35,32 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Only the most reliable free models (in order of preference)
 const RELIABLE_MODELS_STREAM = [
-{ id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-{id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'poolside/laguna-m.1:free',       max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+{ id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+{id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'poolside/laguna-m.1:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
 
-{ id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+{ id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
 ]
   
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  {id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  {id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  // New free general-purpose text models (added per user request — skipped
+  // rerank/safety/image-only models from the list since they can't generate
+  // notes/flashcards/quiz text):
+  { id: 'qwen/qwen3-next-80b-a3b-instruct:free',      max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
   // Trimmed from 20 down to 10: firing 20-30 simultaneous requests to the
   // same API key, repeated across up to 4 retry passes, can itself trigger
   // the provider's own rate-limiting/abuse protection — which looks
@@ -65,18 +70,20 @@ const ALL_MODELS_STREAM = [
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',              max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'mistralai/mistral-nemo:free',                  max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'qwen/qwq-32b:free',                            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',    max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',              max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'mistralai/mistral-nemo:free',                  max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'qwen/qwq-32b:free',                            max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',    max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'qwen/qwen3-next-80b-a3b-instruct:free',        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
   // Trimmed from 30 down to 12 for the same reason as ALL_MODELS_STREAM
   // above — this pool gets fired up to MAX_PASSES=4 times per request, so 30
   // models meant up to 120 near-simultaneous calls on one API key, which is
@@ -436,9 +443,9 @@ OUTPUT JSON NOW — start with { immediately.`;
 // SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 45000;   // 45s for first token
-const FULL_STREAM_TIMEOUT_MS = 240000;  // 4 min total
-const MAX_PASSES = 4;                   // 4 full passes
+const FIRST_TOKEN_TIMEOUT_MS = 10000;   // 10s for first token
+const FULL_STREAM_TIMEOUT_MS = 32000;   // 32s total — safely inside Hobby's 60s cap
+const MAX_PASSES = 3;                   // 3 passes x 10s + small backoffs ≈ 31.5s worst case
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -570,6 +577,8 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
 // ── Last resort non-streaming fallback ──
 async function streamNotesFallback(prompt, onChunk, tool) {
   log.info(`P1 fallback: attempting non-streaming request to openrouter/free`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000); // real enforced 8s cap
   try {
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
@@ -586,8 +595,9 @@ async function streamNotesFallback(prompt, onChunk, tool) {
         stream: false,
         messages: [{ role: 'user', content: prompt }],
       }),
-      timeout: 120000,
+      signal: ctrl.signal,
     });
+    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content?.trim();
@@ -673,7 +683,7 @@ async function streamNotes(prompt, onChunk, tool) {
     log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
     if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
+      const backoff = pass * 500;
       log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
@@ -842,6 +852,8 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
 // ── Last resort non-streaming JSON fallback ──
 async function fetchCardsFallback(prompt, tool) {
   log.info(`P2 fallback: attempting non-streaming JSON request to openrouter/free`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000); // real enforced 8s cap
   try {
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
@@ -858,8 +870,9 @@ async function fetchCardsFallback(prompt, tool) {
         stream: false,
         messages: [{ role: 'user', content: prompt }],
       }),
-      timeout: 120000,
+      signal: ctrl.signal,
     });
+    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content?.trim();
@@ -915,7 +928,7 @@ async function fetchCards(prompt, tool) {
     log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
     if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
+      const backoff = pass * 500;
       log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
@@ -1217,7 +1230,7 @@ module.exports = async function handler(req, res) {
     style:    ['simple','academic','detailed','exam','visual'].includes(rawOpts.style)       ? rawOpts.style : 'simple',
     language: String(rawOpts.language || 'English').trim().slice(0, 60),
     stream:   rawOpts.stream === true,
-    cardCount:   Math.min(Number(rawOpts.cardCount)   || 15, 20),
+    cardCount:   Math.min(Number(rawOpts.cardCount)   || 15, 30),
     quizCount:   Number(rawOpts.quizCount)   || 10,
     quizType:    String(rawOpts.quizType || 'mixed'),
     branchCount: Number(rawOpts.branchCount) || 6,
@@ -1410,7 +1423,7 @@ module.exports = async function handler(req, res) {
       // side data. If it fails, we still have real notes to show, so we don't
       // hard-error the whole response; we simply omit the supplementary
       // section rather than filling it with generic fallback text.
-      const NOTES_CARDS_DEADLINE_MS = 90000;
+      const NOTES_CARDS_DEADLINE_MS = 15000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });

@@ -1310,6 +1310,13 @@ Examples:
     this._liveBranches  = [];
     this._liveMMCentral = '';
     this._liveMMConns   = [];
+    this._liveStreamsExpected = tool === 'all' ? new Set(['cards', 'questions', 'branches'])
+      : tool === 'flashcards' ? new Set(['cards'])
+      : tool === 'quiz'       ? new Set(['questions'])
+      : tool === 'mindmap'    ? new Set(['branches'])
+      : new Set();
+    this._liveStreamsDone = new Set();
+    this._finaliseShown = false;
     if (this._finaliseTimer)    { clearTimeout(this._finaliseTimer);    this._finaliseTimer = null; }
     if (this._finaliseInterval) { clearInterval(this._finaliseInterval); this._finaliseInterval = null; }
 
@@ -1433,14 +1440,38 @@ Examples:
           if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
         };
 
+        const maybeStartFinaliseWait = () => {
+          if (this._finaliseTimer || this._finaliseInterval || this._finaliseShown) return;
+          this._finaliseTimer = setTimeout(() => {
+            this._finaliseShown = true;
+            this._renderFinaliseAnimation(this.tool);
+            let qi = 0;
+            if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+            this._finaliseInterval = setInterval(() => {
+              qi = (qi + 1) % FINALISE_QUOTES.length;
+              if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+            }, 3200);
+          }, 2000);
+        };
+
+        const markStreamDone = (streamKey) => {
+          this._liveStreamsDone = this._liveStreamsDone || new Set();
+          this._liveStreamsDone.add(streamKey);
+          const expected = this._liveStreamsExpected || new Set([streamKey]);
+          const allDone = [...expected].every(k => this._liveStreamsDone.has(k));
+          if (allDone) maybeStartFinaliseWait();
+        };
+
         const animateCard = (idx, total, card) => {
           this._liveCards.push(card);
           this._updateLiveCards(idx, total);
+          if (idx + 1 >= total) markStreamDone('cards');
         };
 
         const animateQuestion = (idx, total, q) => {
           this._liveQuestions.push(q);
           this._updateLiveQuestions(idx, total);
+          if (idx + 1 >= total) markStreamDone('questions');
         };
 
         const animateBranch = (idx, total, branch) => {
@@ -1451,6 +1482,7 @@ Examples:
           } else {
             this._liveBranches.push(branch);
             this._updateLiveMindmap(idx, total);
+            if (idx + 1 >= total) markStreamDone('branches');
           }
         };
 
@@ -1528,8 +1560,8 @@ Examples:
                     // wait 2s first since live prose is still on screen; for
                     // flashcards/quiz/mindmap there's no live prose at all
                     // anymore, so show it immediately instead of a blank pane.
-                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval && !this._finaliseShown) {
-                      const delay = (this.tool === 'notes' || this.tool === 'summary' || this.tool === 'all') ? 2000 : 0;
+                    if (evt.idx === 3 && (this.tool === 'notes' || this.tool === 'summary')
+                        && !this._finaliseTimer && !this._finaliseInterval && !this._finaliseShown) {
                       this._finaliseTimer = setTimeout(() => {
                         this._finaliseShown = true;
                         this._renderFinaliseAnimation(this.tool);
@@ -1539,7 +1571,24 @@ Examples:
                           qi = (qi + 1) % FINALISE_QUOTES.length;
                           if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
                         }, 3200);
-                      }, delay);
+                      }, 2000);
+                    }
+                    // Safety net for 'all': if one of the three live reveals
+                    // never starts (that part of generation silently failed),
+                    // markStreamDone would never fire. This generous fallback
+                    // guarantees the animation still appears eventually.
+                    if (evt.idx === 3 && this.tool === 'all'
+                        && !this._finaliseTimer && !this._finaliseInterval && !this._finaliseShown) {
+                      this._finaliseTimer = setTimeout(() => {
+                        this._finaliseShown = true;
+                        this._renderFinaliseAnimation(this.tool);
+                        let qi = 0;
+                        if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+                        this._finaliseInterval = setInterval(() => {
+                          qi = (qi + 1) % FINALISE_QUOTES.length;
+                          if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
+                        }, 3200);
+                      }, 6000);
                     }
 
                   // fact — floating topic fact pill
