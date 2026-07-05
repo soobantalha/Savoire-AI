@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/study.js": {
-      "maxDuration": 600
+      "maxDuration": 300
     }
   },
   "headers": [

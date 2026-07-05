@@ -35,45 +35,33 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Only the most reliable free models (in order of preference)
 const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
+// CRITICAL: OpenRouter's free tier hard-caps at ~20 requests per MINUTE
+// combined across every :free model (it's a shared bucket, not per-model),
+// plus a 50-1000/day ceiling. Racing 10-30 models in parallel, repeated
+// across several retry passes, instantly blew past that — every model
+// coming back with a 429 within a couple of seconds looks identical to
+// "everything is broken" from our side, but it was actually us rate-limiting
+// ourselves. Kept deliberately small (4) so even 2 retry passes (8 calls)
+// stays comfortably under the per-minute ceiling.
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 20000, temp: 0.75 },
-  // Trimmed from 20 down to 10: firing 20-30 simultaneous requests to the
-  // same API key, repeated across up to 4 retry passes, can itself trigger
-  // the provider's own rate-limiting/abuse protection — which looks
-  // identical to "every model failed" from our side. A smaller, still-varied
-  // pool is the safer default; raise it only if real logs show genuine
-  // per-model unavailability rather than blanket 429s.
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',              max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                        max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'mistralai/mistral-nemo:free',                  max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'qwen/qwq-32b:free',                            max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',    max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 20000, temp: 0.30 },
-  // Trimmed from 30 down to 12 for the same reason as ALL_MODELS_STREAM
-  // above — this pool gets fired up to MAX_PASSES=4 times per request, so 30
-  // models meant up to 120 near-simultaneous calls on one API key, which is
-  // a very plausible self-inflicted rate-limit trigger.
+  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  // Same rate-limit reasoning as ALL_MODELS_STREAM above — deliberately kept
+  // to 4 models so the whole request stays well under OpenRouter's shared
+  // 20-requests/minute free-tier ceiling, even across a couple of retry
+  // passes. More models here is NOT more resilience — it self-inflicts 429s.
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -429,9 +417,9 @@ OUTPUT JSON NOW — start with { immediately.`;
 // SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 18000;   // 18s for first token — models race in parallel, no need to wait long
-const FULL_STREAM_TIMEOUT_MS = 90000;   // 90s total — keep well under common hosting function time limits
-const MAX_PASSES = 3;                   // 3 full passes — worst case 3x20s + short backoffs, not 4x75s+
+const FIRST_TOKEN_TIMEOUT_MS = 45000;   // 45s for first token
+const FULL_STREAM_TIMEOUT_MS = 240000;  // 4 min total
+const MAX_PASSES = 2;                   // 2 full passes — with 4 models/pool this is max 8 calls/request, safely under OpenRouter's shared 20-req/min free-tier limit
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -666,7 +654,7 @@ async function streamNotes(prompt, onChunk, tool) {
     log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
     if (pass < MAX_PASSES) {
-      const backoff = pass * 500;
+      const backoff = pass * 1500;
       log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
@@ -908,7 +896,7 @@ async function fetchCards(prompt, tool) {
     log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
     if (pass < MAX_PASSES) {
-      const backoff = pass * 500;
+      const backoff = pass * 1500;
       log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
@@ -1210,7 +1198,7 @@ module.exports = async function handler(req, res) {
     style:    ['simple','academic','detailed','exam','visual'].includes(rawOpts.style)       ? rawOpts.style : 'simple',
     language: String(rawOpts.language || 'English').trim().slice(0, 60),
     stream:   rawOpts.stream === true,
-    cardCount:   Math.min(Number(rawOpts.cardCount)   || 15, 30),
+    cardCount:   Math.min(Number(rawOpts.cardCount)   || 15, 20),
     quizCount:   Number(rawOpts.quizCount)   || 10,
     quizType:    String(rawOpts.quizType || 'mixed'),
     branchCount: Number(rawOpts.branchCount) || 6,
@@ -1403,7 +1391,7 @@ module.exports = async function handler(req, res) {
       // side data. If it fails, we still have real notes to show, so we don't
       // hard-error the whole response; we simply omit the supplementary
       // section rather than filling it with generic fallback text.
-      const NOTES_CARDS_DEADLINE_MS = 40000;
+      const NOTES_CARDS_DEADLINE_MS = 90000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
