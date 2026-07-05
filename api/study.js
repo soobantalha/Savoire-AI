@@ -40,34 +40,14 @@ const RELIABLE_MODELS_STREAM = [
   { id: 'poolside/laguna-m.1:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
 
 { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-]
+  ]
   
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
   { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
   {id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  // New free general-purpose text models (added per user request — skipped
-  // rerank/safety/image-only models from the list since they can't generate
-  // notes/flashcards/quiz text):
-  { id: 'qwen/qwen3-next-80b-a3b-instruct:free',      max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  // Trimmed from 20 down to 10: firing 20-30 simultaneous requests to the
-  // same API key, repeated across up to 4 retry passes, can itself trigger
-  // the provider's own rate-limiting/abuse protection — which looks
-  // identical to "every model failed" from our side. A smaller, still-varied
-  // pool is the safer default; raise it only if real logs show genuine
-  // per-model unavailability rather than blanket 429s.
-];
+  ];
 
 const ALL_MODELS_CARDS = [
   { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
