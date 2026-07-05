@@ -1874,8 +1874,8 @@ Examples:
               <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                Every available AI model was tried and none responded in time — so nothing fake was
-                shown instead. This is usually momentary; retrying often works within seconds.
+                This happens occasionally when demand is high — we’d rather show nothing than something fake.
+                It almost always works on the very next try.
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
                 <button class="btn btn-primary" onclick="window._app._retryLast()">

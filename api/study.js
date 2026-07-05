@@ -35,66 +35,66 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Only the most reliable free models (in order of preference)
 const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemma-2-9b-it:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'qwen/qwen-2.5-7b-instruct:free',             max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'liquid/lfm-40b:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'openchat/openchat-7b:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'gryphe/mythomax-l2-13b:free',                max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'undi95/toppy-m-7b:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'huggingfaceh4/zephyr-7b-beta:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',      max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'google/gemma-2-9b-it:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'qwen/qwen-2.5-7b-instruct:free',             max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'liquid/lfm-40b:free',                        max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'openchat/openchat-7b:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'gryphe/mythomax-l2-13b:free',                max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'undi95/toppy-m-7b:free',                     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'huggingfaceh4/zephyr-7b-beta:free',          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',              max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'mistralai/mistral-nemo:free',                  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwq-32b:free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemma-2-9b-it:free',                    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen-2.5-7b-instruct:free',               max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free',        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free',max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'liquid/lfm-40b:free',                           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'openchat/openchat-7b:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'gryphe/mythomax-l2-13b:free',                   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'undi95/toppy-m-7b:free',                        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'huggingfaceh4/zephyr-7b-beta:free',             max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'nousresearch/hermes-2-pro-llama-3-8b:free',     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3-8b-instruct:free',           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'thudm/glm-4-9b:free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen-2.5-coder-32b-instruct:free',         max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'sophosympatheia/rogue-rose-103b-v0.2:free',     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'cognitivecomputations/dolphin3.0-mistral-24b:free', max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'rekaai/reka-flash-3:free',                      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',              max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'mistralai/mistral-nemo:free',                  max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'qwen/qwq-32b:free',                            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',    max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'google/gemma-2-9b-it:free',                    max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'qwen/qwen-2.5-7b-instruct:free',               max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free',max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'liquid/lfm-40b:free',                           max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'openchat/openchat-7b:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'gryphe/mythomax-l2-13b:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'undi95/toppy-m-7b:free',                        max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'huggingfaceh4/zephyr-7b-beta:free',             max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'nousresearch/hermes-2-pro-llama-3-8b:free',     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3-8b-instruct:free',           max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'thudm/glm-4-9b:free',                            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'qwen/qwen-2.5-coder-32b-instruct:free',         max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'sophosympatheia/rogue-rose-103b-v0.2:free',     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'cognitivecomputations/dolphin3.0-mistral-24b:free', max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'rekaai/reka-flash-3:free',                      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
   // Junk-content filter (isJunkOption + question/answer sanity checks) means
   // any weak model's bad output gets rejected and retried rather than
   // accepted — so a big pool here is now pure upside: more chances one
@@ -1324,26 +1324,31 @@ module.exports = async function handler(req, res) {
       );
     }
 
-    // ── Phase 1: live notes stream (parallel) ──
-    try {
-      if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+    // ── Phase 1: live notes stream — ONLY for tools that actually show notes.
+    // flashcards/quiz/mindmap used to also generate a full prose notes essay
+    // here "for fallback" even though it was never displayed — that wasted
+    // an entire AI call's worth of time (comprehensive depth can take 60-90s)
+    // before Phase 2 (the actual flashcards/quiz/mindmap content) even got a
+    // chance to finish, which was the main reason those tools stalled out.
+    if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+      try {
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
-      } else {
-        // For flashcards/quiz/mindmap, still generate notes as fallback but they are not shown in final UI
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-        p1ok = true;
-        log.ok(`[${reqId}] P1 done (fallback notes) — ${notes.length}ch`);
+      } catch (e1) {
+        log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
+        notes = offlineNotes(message);
+        for (let i = 0; i < notes.length; i += 300) {
+          sse('token', { t: notes.slice(i, i + 300) });
+          await sleep(4);
+        }
+        p1ok = false;
       }
-    } catch (e1) {
-      log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
-      notes = offlineNotes(message);
-      for (let i = 0; i < notes.length; i += 300) {
-        sse('token', { t: notes.slice(i, i + 300) });
-        await sleep(4);
-      }
-      p1ok = false;
+    } else {
+      // flashcards / quiz / mindmap: no prose notes needed at all — go
+      // straight to Phase 2, which is already running in the background
+      // since cardsPromise was fired above before we even got here.
+      p1ok = true;
     }
 
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
@@ -1393,7 +1398,7 @@ module.exports = async function handler(req, res) {
           : (cardsResult.reason?.message || 'all models failed');
         log.error(`[${reqId}] ${opts.tool} failed for real: ${why}`);
         sse('error', {
-          error: 'All available AI models are currently busy or unreachable. No fake/placeholder content was generated — please retry in a few seconds.',
+          error: 'We couldn\u2019t generate real AI content for this just now, so we\u2019re showing nothing rather than something fake. This is almost always momentary \u2014 tap Retry and it typically works right away.',
           tool: opts.tool,
         });
         return; // stop here — no 'done' event, no fabricated result
