@@ -97,6 +97,16 @@ const DEPTH_CONFIG = {
   expert:        { label: 'Expert',        desc: '2200–3500 words', subDesc: 'Maximum depth',     icon: 'fa-crown',      words: '2200-3500' },
 };
 
+// Summary is meant to be short by definition — reusing Notes' 600-3500 word
+// range made "comprehensive/expert" summaries contradictorily long. This is
+// its own, much shorter scale.
+const SUMMARY_DEPTH_CONFIG = {
+  standard:      { label: 'Quick',        desc: '80–150 words',  subDesc: 'One-glance recap',   icon: 'fa-flag',       words: '80-150'   },
+  detailed:      { label: 'Standard',     desc: '150–250 words', subDesc: 'Balanced summary',   icon: 'fa-chart-line', words: '150-250'  },
+  comprehensive: { label: 'Thorough',     desc: '250–400 words', subDesc: 'Covers every point', icon: 'fa-book',       words: '250-400'  },
+  expert:        { label: 'In-depth',     desc: '400–600 words', subDesc: 'Still a summary — just complete', icon: 'fa-crown', words: '400-600' },
+};
+
 const STYLE_CONFIG = {
   simple:   { label: 'Simple & Clear',       desc: 'Beginner-friendly, analogies',   icon: 'fa-smile'           },
   academic: { label: 'Academic & Formal',    desc: 'Scholarly, precise terminology', icon: 'fa-graduation-cap'  },
@@ -118,10 +128,11 @@ const STAGE_MESSAGES = [
 // staring at a finished live screen, waiting. Keeps that wait feel intentional
 // instead of stuck. Same pool for every tool, cycled every few seconds.
 const FINALISE_QUOTES = [
+  '\u26A0\uFE0F This is not the final result yet \u2014 it\u2019s still being generated. Please wait a moment.',
   'Toppers don\u2019t rush \u2014 they wait for clarity. Your clarity is loading.',
   'Good notes are brewed, not microwaved. Yours are almost ready.',
   'The best answers take a breath before they arrive.',
-  'Read what\u2019s on screen \u2014 your final output is being generated right now.',
+  'Your real, AI-written result is on its way \u2014 almost there.',
   'Real understanding isn\u2019t instant. Neither is a great set of notes.',
   'Every rank holder has waited for something worth waiting for.',
   'This pause is where the quality gets added. Hang tight.',
@@ -1029,10 +1040,11 @@ Examples:
   }
 
   _wStepDepthGeneric() {
+    const cfg = this.wizardData.tool === 'summary' ? SUMMARY_DEPTH_CONFIG : DEPTH_CONFIG;
     return `
       <div class="wizard-step-heading"><i class="fas fa-chart-line"></i> How much detail do you need?</div>
       <div class="wizard-depth-grid">
-        ${Object.entries(DEPTH_CONFIG).map(([k, d]) => `
+        ${Object.entries(cfg).map(([k, d]) => `
           <div class="wizard-depth-card ${this.wizardData.depth === k ? 'selected' : ''}" data-depth="${k}">
             <i class="fas ${d.icon} wdc-icon"></i>
             <div class="wizard-depth-name">${d.label}</div>
@@ -1510,20 +1522,24 @@ Examples:
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-                    // Finalising stage (idx 3): live content is fully streamed and
-                    // we're waiting on the server for the final payload. If that
-                    // wait passes 2s, start rotating short motivational lines so
-                    // the pause reads as intentional, not stuck — never overwrites
-                    // the live content already on screen, just the status label.
-                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval) {
+                    // Finalising stage (idx 3): show a clear "this isn't the
+                    // final result yet" explainer + animated visual so the
+                    // wait never looks blank/broken — for notes/summary/all,
+                    // wait 2s first since live prose is still on screen; for
+                    // flashcards/quiz/mindmap there's no live prose at all
+                    // anymore, so show it immediately instead of a blank pane.
+                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval && !this._finaliseShown) {
+                      const delay = (this.tool === 'notes' || this.tool === 'summary' || this.tool === 'all') ? 2000 : 0;
                       this._finaliseTimer = setTimeout(() => {
+                        this._finaliseShown = true;
+                        this._renderFinaliseAnimation(this.tool);
                         let qi = 0;
                         if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
                         this._finaliseInterval = setInterval(() => {
                           qi = (qi + 1) % FINALISE_QUOTES.length;
                           if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
                         }, 3200);
-                      }, 2000);
+                      }, delay);
                     }
 
                   // fact — floating topic fact pill

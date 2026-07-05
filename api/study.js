@@ -112,6 +112,16 @@ const DEPTH_MAP = {
   expert:        { wordRange: '2200–3000 words', maxTokens: 5500 },
 };
 
+// Summary must stay a summary — reusing DEPTH_MAP's notes-length ranges made
+// a "comprehensive/expert" summary just as long as full notes, defeating
+// the point. Matches the frontend's SUMMARY_DEPTH_CONFIG exactly.
+const SUMMARY_DEPTH_MAP = {
+  standard:      { wordRange: '80–150 words',  maxTokens: 800  },
+  detailed:      { wordRange: '150–250 words', maxTokens: 1200 },
+  comprehensive: { wordRange: '250–400 words', maxTokens: 1600 },
+  expert:        { wordRange: '400–600 words', maxTokens: 2200 },
+};
+
 const STYLE_MAP = {
   simple:   'Clear, beginner-friendly language. Short sentences. Everyday analogies. Define all jargon.',
   academic: 'Formal academic language. Precise terminology. Objective third-person tone.',
@@ -331,7 +341,7 @@ OUTPUT JSON NOW — start with { immediately.`;
 
 // ── SUMMARY ──
 function buildSummaryPrompt(input, opts) {
-  const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
+  const depth = SUMMARY_DEPTH_MAP[opts.depth] || SUMMARY_DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
   const lang  = opts.language || 'English';
   return `You are ${SAVOIRÉ.BRAND}. Generate a smart, concise summary.
