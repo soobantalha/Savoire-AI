@@ -1816,6 +1816,49 @@ Examples:
     if (this.el.thinkingWrap)    this.el.thinkingWrap.style.display = 'none';
   }
 
+  // Tool-specific "building your X" animation shown between the end of the
+  // live stream and the final result screen — keeps the wait visually alive
+  // instead of a stall/blank pane, for every tool.
+  _renderFinaliseAnimation(tool) {
+    if (!this.el.sfpText) return;
+    if (document.getElementById('finaliseAnimBlock')) return; // already shown
+    const specs = {
+      notes:      { icon: 'fa-book-open',       color: '#d4af37', caption: 'Polishing your notes',       chips: ['Key concepts', 'Study tricks', 'Practice Q&A', 'Real-world links', 'Misconceptions'] },
+      flashcards: { icon: 'fa-layer-group',     color: '#bf00ff', caption: 'Stacking your flashcards',   chips: ['Definitions', 'Mechanisms', 'Comparisons', 'Applications', 'Tricky ones'] },
+      quiz:       { icon: 'fa-circle-check',    color: '#00d4ff', caption: 'Grading the answer key',     chips: ['Multiple choice', 'Explanations', 'Difficulty mix', 'Distractors'] },
+      summary:    { icon: 'fa-compress',        color: '#00ff88', caption: 'Compressing the essentials', chips: ['Core ideas', 'Key terms', 'Takeaways'] },
+      mindmap:    { icon: 'fa-diagram-project', color: '#ff6bb5', caption: 'Wiring up the branches',     chips: ['Central node', 'Branches', 'Connections'] },
+      all:        { icon: 'fa-bolt',            color: '#d4af37', caption: 'Assembling the mega bundle', chips: ['Notes', 'Flashcards', 'Quiz', 'Summary', 'Mind Map'] },
+    };
+    const s = specs[tool] || specs.notes;
+    const chips = s.chips.map((c, i) =>
+      `<span class="finalise-chip" style="animation-delay:${(i * 0.12).toFixed(2)}s">${c}</span>`
+    ).join('');
+    // Append after existing live content — never overwrite what's already
+    // on screen (notes text / live cards / live quiz / live mindmap).
+    const wrap = document.createElement('div');
+    wrap.id = 'finaliseAnimBlock';
+    wrap.innerHTML = `
+      <div class="finalise-wrap" style="--fx-color:${s.color}">
+        <div class="finalise-stage">
+          <div class="finalise-particles">
+            <span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div class="finalise-orbit">
+            <div class="ring"></div>
+            <div class="ring r2"></div>
+          </div>
+          <div class="finalise-core"><i class="fas ${s.icon}"></i></div>
+        </div>
+        <div class="finalise-caption">${s.caption}…</div>
+        <div class="finalise-bar-wrap"><div class="finalise-bar-fill"></div></div>
+        <div class="finalise-items">${chips}</div>
+        <div class="finalise-sub">Almost there — finalising your result</div>
+      </div>`;
+    this.el.sfpText.appendChild(wrap);
+    if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
+  }
+
   _hideStreamOverlay() {
     if (this.el.streamFullpage) {
       this.el.streamFullpage.classList.add('fading-out');
