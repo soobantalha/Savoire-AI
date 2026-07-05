@@ -43,36 +43,30 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // 1000/day with it), not something any code change can bypass. Keeping one
 // direct model as primary instead of relying on the account-quota-limited
 // auto-router.
-// 8 free models confirmed live/current as of July 2026 (verified against
-// multiple up-to-date sources after the earlier dead-model 404s). This pool
-// is deliberately tried 2-AT-A-TIME per pass (see BATCH_SIZE below), never
-// all 8 simultaneously — that gives real breadth/fallback across many
-// models while keeping concurrent requests low enough to stay under
-// OpenRouter's shared 20-req/min free-tier ceiling.
+// User confirmed a prior version of this file worked reliably (only 2-3
+// tools occasionally errored) using this exact model set minus 3 that the
+// live server logs proved dead (openrouter/free hits the account's daily
+// quota; google/gemini-2.0-flash-exp:free and deepseek/deepseek-chat-v3-0324
+// both 404). Trusting that real-world evidence over further guesses at
+// model IDs from web search, which is how the previous attempt went wrong.
 const RELIABLE_MODELS_STREAM = [
-  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-4-scout:free',              max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'meta-llama/llama-4-maverick:free',           max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3.1:free',           max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'qwen/qwen3-235b-a22b:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'zhipu-ai/glm-4.5-air:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct:free',         max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'deepseek/deepseek-r1:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-4-scout:free',               max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-4-maverick:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3.1:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'qwen/qwen3-235b-a22b:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'zhipu-ai/glm-4.5-air:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct:free',          max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
 ];
 
 // How many models to try AT ONCE per pass. Kept small on purpose — this is
