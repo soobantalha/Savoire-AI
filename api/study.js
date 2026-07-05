@@ -34,32 +34,56 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Only the most reliable free models (in order of preference)
-const RELIABLE_MODELS_STREAM = [
-{ id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-{id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  { id: 'poolside/laguna-m.1:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+// All models are 100% free on OpenRouter, ranked by coding ability
+const WORKING_MODELS = [
+  // 🏆 Tier 1: Elite Coding Models
+  { id: 'qwen/qwen3-coder-480b-a35b:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-v3.2:free',               max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'kimi/kimi-k2:free',                         max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'minimax/minimax-m3:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 
-{ id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  ]
-  
+  // 🥇 Tier 2: Premium Coding Agents
+  { id: 'glm/glm-4.7:free',                          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'openai/gpt-oss-120b:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'nvidia/nemotron-3-ultra:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'poolside/laguna-m.1:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-v4-flash:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen3-7b:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 
-const ALL_MODELS_STREAM = [
-  ...RELIABLE_MODELS_STREAM,
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  {id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  ];
+  // 🥈 Tier 3: Strong Open-Weight Models
+  { id: 'nvidia/nemotron-3-super:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'cohere/north-mini-code:free',               max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'minimax/minimax-m2:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-4-maverick:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'mistralai/codestral-2501:free',             max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemini-2.5-flash:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'owl/owl-alpha:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 
-const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  {id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
-  
-  // Trimmed from 30 down to 12 for the same reason as ALL_MODELS_STREAM
-  // above — this pool gets fired up to MAX_PASSES=4 times per request, so 30
-  // models meant up to 120 near-simultaneous calls on one API key, which is
-  // a very plausible self-inflicted rate-limit trigger.
+  // 🥉 Tier 4: Solid Coding Models
+  { id: 'qwen/qwen3-14b:free',                       max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'z-ai/glm-4.7-flash:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'xiaomi/mimo-v2.5:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.1-70b:free',             max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemma-4-31b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'pony/pony-alpha:free',                      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'microsoft/phi-3.5-mini:free',               max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+
+  // 🔹 Tier 5: Lightweight but Capable
+  { id: 'poolside/laguna-xs.2:free',                 max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1:free',                 max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'nvidia/nemotron-nano-9b:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemma-4-12b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'openai/gpt-oss-20b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
+
+// For card generation (higher max_tokens, lower temperature)
+const ALL_MODELS_STREAM = WORKING_MODELS;
+const ALL_MODELS_CARDS  = WORKING_MODELS.map(m => ({ ...m, max_tokens: 16384, temp: 0.30 }));
+
+// How many models to try at once (to avoid 429)
+const BATCH_SIZE = 5;
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS
