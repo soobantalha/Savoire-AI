@@ -113,20 +113,6 @@ const STAGE_MESSAGES = [
   '✅ Finalising — almost ready!',
 ];
 
-// Rotating motivational lines shown ONLY if the final result is taking a
-// noticeable moment after the live stream's last token — i.e. the user is
-// staring at a finished live screen, waiting. Keeps that wait feel intentional
-// instead of stuck. Same pool for every tool, cycled every few seconds.
-const FINALISE_QUOTES = [
-  'Toppers don\u2019t rush \u2014 they wait for clarity. Your clarity is loading.',
-  'Good notes are brewed, not microwaved. Yours are almost ready.',
-  'The best answers take a breath before they arrive.',
-  'Read what\u2019s on screen \u2014 your final output is being generated right now.',
-  'Real understanding isn\u2019t instant. Neither is a great set of notes.',
-  'Every rank holder has waited for something worth waiting for.',
-  'This pause is where the quality gets added. Hang tight.',
-];
-
 // Emoji avatars for user profile display
 const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','🎯','📚','🌈','🏆','💡','🎨','🌙','⭐'];
 
@@ -1045,48 +1031,36 @@ Examples:
   }
 
   _wStepCardCount() {
-    const options = [
-      { n: 10, tag: 'Quick review',   desc: 'Fast pre-exam skim' },
-      { n: 15, tag: 'Standard deck',  desc: 'Balanced daily practice' },
-      { n: 20, tag: 'Deep dive',      desc: 'Full-topic mastery' },
-    ];
+    const options = [10, 15, 20, 25, 30];
     return `
       <div class="wizard-step-heading"><i class="fas fa-layer-group"></i> How many flashcards?</div>
       <div class="wizard-depth-grid">
-        ${options.map(o => `
-          <div class="wizard-depth-card count-card ${this.wizardData.cardCount === o.n ? 'selected' : ''}" data-count="${o.n}">
+        ${options.map(n => `
+          <div class="wizard-depth-card ${this.wizardData.cardCount === n ? 'selected' : ''}" data-count="${n}">
             <i class="fas fa-clone wdc-icon"></i>
-            <div class="wizard-depth-name">${o.n} cards</div>
-            <div class="wizard-depth-tag">${o.tag}</div>
-            <div class="wizard-depth-desc">${o.desc}</div>
+            <div class="wizard-depth-name">${n} cards</div>
+            <div class="wizard-depth-desc">${n <= 15 ? 'Quick review' : n <= 20 ? 'Standard deck' : 'Deep dive'}</div>
           </div>
         `).join('')}
       </div>`;
   }
 
   _wStepQuizConfig() {
-    const counts = [
-      { n: 5,  tag: 'Quick check',  desc: 'Fast confidence test' },
-      { n: 10, tag: 'Standard set', desc: 'Balanced practice round' },
-      { n: 15, tag: 'Full drill',   desc: 'Solid exam simulation' },
-      { n: 20, tag: 'Deep test',    desc: 'Complete topic coverage' },
-    ];
+    const counts = [5, 10, 15, 20];
     const types  = [
-      { k: 'mixed',  label: 'Mixed',      desc: '30% easy · 50% medium · 20% hard' },
-      { k: 'easy',   label: 'Easy',       desc: 'Foundational questions' },
-      { k: 'medium', label: 'Medium',     desc: 'Core exam-level' },
-      { k: 'hard',   label: 'Hard',       desc: 'Advanced analysis' },
+      { k: 'mixed',  label: 'Mixed',  desc: '30% easy · 50% medium · 20% hard' },
+      { k: 'easy',   label: 'Easy',   desc: 'Foundational questions' },
+      { k: 'medium', label: 'Medium', desc: 'Core exam-level' },
+      { k: 'hard',   label: 'Hard',   desc: 'Advanced analysis' },
       { k: 'exam',   label: 'Exam-style', desc: 'Tricky, past-paper format' },
     ];
     return `
       <div class="wizard-step-heading"><i class="fas fa-question-circle"></i> How many questions?</div>
       <div class="wizard-depth-grid">
-        ${counts.map(o => `
-          <div class="wizard-depth-card count-card ${this.wizardData.quizCount === o.n ? 'selected' : ''}" data-count="${o.n}">
+        ${counts.map(n => `
+          <div class="wizard-depth-card ${this.wizardData.quizCount === n ? 'selected' : ''}" data-count="${n}">
             <i class="fas fa-list-ol wdc-icon"></i>
-            <div class="wizard-depth-name">${o.n} questions</div>
-            <div class="wizard-depth-tag">${o.tag}</div>
-            <div class="wizard-depth-desc">${o.desc}</div>
+            <div class="wizard-depth-name">${n} questions</div>
           </div>
         `).join('')}
       </div>
@@ -1258,12 +1232,11 @@ Examples:
   // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
 
   _openMega() {
-    // Every "Mega Bundle" entry point (header button, sidebar, empty state,
-    // feature chip, keyboard shortcut 'm') now opens the exact same Wizard
-    // flow used when a user picks Mega Bundle inside the wizard itself —
-    // one implementation, one set of options, no more divergence between
-    // "wizard mega" and "outside-wizard mega".
-    this._openWizard('all');
+    if (this.el.megaTopicInput)  this.el.megaTopicInput.value = '';
+    if (this.el.megaCharCount)   this.el.megaCharCount.textContent = '0 / 4000';
+    if (this.el.megaLangSel)     this.el.megaLangSel.value = this.prefs.defaultLanguage || 'English';
+    if (this.el.megaDepthSel)    this.el.megaDepthSel.value = 'detailed';
+    this._openModal('megaModal');
   }
 
   _runMega() {
@@ -1274,19 +1247,12 @@ Examples:
     this._closeModal('megaModal');
     this.tool = 'all';
     this._checkStreak();
-    // IMPORTANT: pass the same counts the wizard's mega path sends — without
-    // these (branchCount especially) the mind map came back with blank
-    // branches when Mega Bundle was launched from the sidebar/header/empty
-    // state instead of the wizard, even though it's the same _sendDirect call.
-    this._sendDirect(topic, lang, depth, 'simple', 'all', {
-      cardCount: 15, quizCount: 10, quizType: 'mixed', branchCount: 6,
-    });
+    this._sendDirect(topic, lang, depth, 'simple', 'all');
   }
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
   async _sendDirect(text, lang, depth, style, tool, counts) {
-    this._lastRequest = { text, lang, depth, style, tool, counts };
     if (this.generating) return;
     this.generating    = true;
     this.streamBuffer  = '';
@@ -1298,8 +1264,6 @@ Examples:
     this._liveBranches  = [];
     this._liveMMCentral = '';
     this._liveMMConns   = [];
-    if (this._finaliseTimer)    { clearTimeout(this._finaliseTimer);    this._finaliseTimer = null; }
-    if (this._finaliseInterval) { clearInterval(this._finaliseInterval); this._finaliseInterval = null; }
 
     this._showToolbar(false);
     this._showStreamOverlay(text, this.tool);
@@ -1510,21 +1474,6 @@ Examples:
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
-                    // Finalising stage (idx 3): live content is fully streamed and
-                    // we're waiting on the server for the final payload. If that
-                    // wait passes 2s, start rotating short motivational lines so
-                    // the pause reads as intentional, not stuck — never overwrites
-                    // the live content already on screen, just the status label.
-                    if (evt.idx === 3 && !this._finaliseTimer && !this._finaliseInterval) {
-                      this._finaliseTimer = setTimeout(() => {
-                        let qi = 0;
-                        if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
-                        this._finaliseInterval = setInterval(() => {
-                          qi = (qi + 1) % FINALISE_QUOTES.length;
-                          if (this.el.sfpLabel) this.el.sfpLabel.textContent = FINALISE_QUOTES[qi];
-                        }, 3200);
-                      }, 2000);
-                    }
 
                   // fact — floating topic fact pill
                   } else if (evt.fact !== undefined) {
@@ -1532,8 +1481,6 @@ Examples:
 
                   // done / final data object — topic or ultra_long_notes or _tool field present
                   } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
-                    if (this._finaliseTimer)    { clearTimeout(this._finaliseTimer);    this._finaliseTimer = null; }
-                    if (this._finaliseInterval) { clearInterval(this._finaliseInterval); this._finaliseInterval = null; }
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
@@ -1848,12 +1795,6 @@ Examples:
 
   // ─── STATE MANAGEMENT ────────────────────────────────────────────────────────
 
-  _retryLast() {
-    if (!this._lastRequest) { this._toast('error', 'fa-exclamation-circle', 'Nothing to retry.'); return; }
-    const { text, lang, depth, style, tool, counts } = this._lastRequest;
-    this._sendDirect(text, lang, depth, style, tool, counts);
-  }
-
   _showState(state, errMsg) {
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
     if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
@@ -1874,15 +1815,15 @@ Examples:
               <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                Every available AI model was tried and none responded in time — so nothing fake was
-                shown instead. This is usually momentary; retrying often works within seconds.
+                AI models are occasionally busy when many students study simultaneously.
+                This usually resolves itself in a few seconds — please try again!
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
-                <button class="btn btn-primary" onclick="window._app._retryLast()">
-                  <i class="fas fa-redo"></i> Retry
-                </button>
-                <button class="btn btn-gold" onclick="window._app._openWizard()">
+                <button class="btn btn-primary" onclick="window._app._openWizard()">
                   <i class="fas fa-magic"></i> Try Again with Wizard
+                </button>
+                <button class="btn btn-gold" onclick="window._app._openMega()">
+                  <i class="fas fa-bolt"></i> Try Mega Bundle
                 </button>
               </div>
             </div>`;
