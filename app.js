@@ -1922,19 +1922,6 @@ Examples:
 
   // ─── STATE MANAGEMENT ────────────────────────────────────────────────────────
 
-  _retryLast() {
-    if (!this._lastRequest) { this._toast('error', 'fa-exclamation-circle', 'Nothing to retry.'); return; }
-    const now = Date.now();
-    if (this._lastRetryAt && (now - this._lastRetryAt) < 8000) {
-      const waitLeft = Math.ceil((8000 - (now - this._lastRetryAt)) / 1000);
-      this._toast('info', 'fa-clock', `Please wait ${waitLeft}s before retrying — helps the AI provider recover faster.`);
-      return;
-    }
-    this._lastRetryAt = now;
-    const { text, lang, depth, style, tool, counts } = this._lastRequest;
-    this._sendDirect(text, lang, depth, style, tool, counts);
-  }
-
   _showState(state, errMsg) {
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
     if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
@@ -1946,8 +1933,24 @@ Examples:
           this.el.resultArea.style.display = 'block';
           if (this.el.outArea) setTimeout(() => { this.el.outArea.scrollTop = 0; }, 80);
         }
+        this._autoRetryCount = 0; // success — reset for next time
         break;
-      case 'error':
+      case 'error': {
+        // No manual Retry button — the app retries automatically in the
+        // background, up to 2 extra silent attempts, before ever bothering
+        // the user. Only shows the error card if those genuinely all fail too.
+        const attempt = this._autoRetryCount || 0;
+        if (attempt < 2 && this._lastRequest) {
+          this._autoRetryCount = attempt + 1;
+          this._showAutoRetryingState(attempt + 1);
+          const delay = 2500 * (attempt + 1);
+          setTimeout(() => {
+            const { text, lang, depth, style, tool, counts } = this._lastRequest;
+            this._sendDirect(text, lang, depth, style, tool, counts);
+          }, delay);
+          break;
+        }
+        this._autoRetryCount = 0;
         if (this.el.resultArea) {
           this.el.resultArea.style.display = 'block';
           this.el.resultArea.innerHTML = `
@@ -1955,23 +1958,30 @@ Examples:
               <div class="error-card-hdr"><i class="fas fa-exclamation-circle"></i> Savoiré AI — Tool Temporarily Unavailable</div>
               <div class="error-card-body">${this._esc(errMsg || 'Savoiré AI study tool is momentarily unavailable.')}</div>
               <div class="error-card-hint">
-                This happens occasionally when demand is high — we’d rather show nothing than something fake.
-                It almost always works on the very next try.
+                We automatically retried a couple of times in the background already \u2014 real demand is
+                unusually high right now. Please try again in a minute.
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
-                <button class="btn btn-primary" onclick="window._app._retryLast()">
-                  <i class="fas fa-redo"></i> Retry
-                </button>
                 <button class="btn btn-gold" onclick="window._app._openWizard()">
-                  <i class="fas fa-magic"></i> Try Again with Wizard
+                  <i class="fas fa-magic"></i> Start a New Request
                 </button>
               </div>
             </div>`;
         }
         break;
+      }
       default:
         if (this.el.emptyState) this.el.emptyState.style.display = 'flex';
         break;
+    }
+  }
+
+  _showAutoRetryingState(attemptNum) {
+    // Keep the user on the live/stream screen with a calm, professional
+    // note instead of ever surfacing a raw error + button for a transient hiccup.
+    this._showStreamOverlay(this._lastRequest?.text || '', this._lastRequest?.tool || this.tool);
+    if (this.el.sfpLabel) {
+      this.el.sfpLabel.textContent = `Reconnecting to AI \u2014 attempt ${attemptNum + 1} of 3\u2026`;
     }
   }
 
