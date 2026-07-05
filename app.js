@@ -1790,7 +1790,22 @@ Examples:
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
     if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
     if (this.el.sfpText) {
-      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
+      // Unmissable intro banner: makes it explicit up-front that what's about
+      // to appear is a live in-progress preview, not the final result — so
+      // when it later pauses, the user doesn't panic and leave thinking it's
+      // stuck or broken. "Continue" just acknowledges and reveals the live feed.
+      this.el.sfpText.innerHTML = `
+        <div class="live-intro-banner" id="liveIntroBanner">
+          <div class="live-intro-icon"><i class="fas fa-circle-info"></i></div>
+          <div class="live-intro-text">
+            <strong>You're about to see a live preview</strong> while ${cfg.sfpName.toLowerCase()} is being generated.
+            This isn't the final result yet — keep an eye on this screen, real AI content is being written in real time.
+          </div>
+          <button class="btn btn-primary live-intro-btn" onclick="document.getElementById('liveIntroBanner').remove()">
+            <i class="fas fa-arrow-right"></i> Continue
+          </button>
+        </div>
+        <span class="typing-cursor">▊</span>`;
       this.el.sfpText.classList.remove('done');
       this.el.sfpText.classList.add('live-md');
     }
