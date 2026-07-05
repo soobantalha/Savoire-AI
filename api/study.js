@@ -46,18 +46,59 @@ const ALL_MODELS_STREAM = [
   { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
   { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
   { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'z-ai/glm-4.5-air:free',                      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'mistralai/mistral-nemo:free',                max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemma-2-9b-it:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen-2.5-7b-instruct:free',             max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwq-32b:free',                          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'liquid/lfm-40b:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'openchat/openchat-7b:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'gryphe/mythomax-l2-13b:free',                max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'undi95/toppy-m-7b:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'huggingfaceh4/zephyr-7b-beta:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',              max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'z-ai/glm-4.5-air:free',                        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'mistralai/mistral-nemo:free',                  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwq-32b:free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct-v0.3:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'microsoft/phi-3-mini-128k-instruct:free',      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'google/gemma-2-9b-it:free',                    max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen-2.5-7b-instruct:free',               max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.2-3b-instruct:free',        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free',max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'liquid/lfm-40b:free',                           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'openchat/openchat-7b:free',                     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'gryphe/mythomax-l2-13b:free',                   max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'undi95/toppy-m-7b:free',                        max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'huggingfaceh4/zephyr-7b-beta:free',             max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'nousresearch/hermes-2-pro-llama-3-8b:free',     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'meta-llama/llama-3-8b-instruct:free',           max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'thudm/glm-4-9b:free',                            max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'qwen/qwen-2.5-coder-32b-instruct:free',         max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'sophosympatheia/rogue-rose-103b-v0.2:free',     max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'cognitivecomputations/dolphin3.0-mistral-24b:free', max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  { id: 'rekaai/reka-flash-3:free',                      max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+  // Junk-content filter (isJunkOption + question/answer sanity checks) means
+  // any weak model's bad output gets rejected and retried rather than
+  // accepted — so a big pool here is now pure upside: more chances one
+  // model is free/fast, without a quality-risk trade-off.
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -163,6 +204,10 @@ FORMATTING RULES:
 • At least 3 real-world examples specific to "${input}"
 • ⚠️ Common Mistakes / Misconceptions section
 • 🎯 Key Takeaways (5–8 bullets) at end
+
+DO NOT invent extra section headings beyond the 8 listed above (no "Cross-Connections", no custom checklists, etc.).
+NEVER write a bullet with an empty/placeholder body — e.g. never output a line like "↔ :" or "• :" with nothing after
+the colon. Every single bullet must contain real, specific, filled-in content about "${input}", or be omitted entirely.
 
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
@@ -569,6 +614,35 @@ async function streamNotesFallback(prompt, onChunk, tool) {
   }
 }
 
+// Races model attempts and resolves the instant the FIRST one succeeds —
+// instead of Promise.allSettled, which always waits for every model to
+// finish (including ones stuck at their 60s timeout) even after a fast
+// model has already returned a good result. This is why first tokens/cards
+// used to take up to a full pass-timeout even on a normal successful run.
+// The stragglers keep running harmlessly in the background; we just stop
+// waiting on them.
+function raceFirstSuccess(modelPromises) {
+  return new Promise((resolve) => {
+    let remaining = modelPromises.length;
+    let resolved = false;
+    const settled = [];
+    modelPromises.forEach(p => {
+      p.then(r => {
+        settled.push(r);
+        if (!resolved && r.status === 'fulfilled') {
+          resolved = true;
+          resolve({ winner: r, all: null });
+        }
+        remaining--;
+        if (!resolved && remaining === 0) {
+          resolved = true;
+          resolve({ winner: null, all: settled });
+        }
+      });
+    });
+  });
+}
+
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
@@ -584,23 +658,15 @@ async function streamNotes(prompt, onChunk, tool) {
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    // Wait for all to settle
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch (fast-race, didn't wait for stragglers)`);
       return winner.value;
     }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
 
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
@@ -706,7 +772,18 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       }
     }
 
-    // Auto-fix quiz correct_answer mismatches + drop malformed questions
+    // Auto-fix quiz correct_answer mismatches + drop malformed questions.
+    // IMPORTANT: also reject questions whose options are placeholder junk
+    // (bare "A"/"B"/"C"/"D", or suspiciously short strings) — some weaker
+    // free models return that instead of real answer text, and it used to
+    // pass validation (structurally an array of 4 strings) and "win" the
+    // fast-success race with garbage. Now it's treated as a failed question
+    // and dropped, so a genuinely bad model's response can't win purely on
+    // speed over a slower model's real content.
+    const isJunkOption = (o) => {
+      const t = String(o).trim();
+      return t.length < 1 || /^[a-dA-D][.):]?$/.test(t) || /^option\s*[a-dA-D]$/i.test(t);
+    };
     if (Array.isArray(parsed.quiz_questions)) {
       parsed.quiz_questions = parsed.quiz_questions
         .filter(q => q && typeof q.question === 'string' && q.question.trim().length > 3
@@ -722,7 +799,8 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
             if (fix) q.correct_answer = fix;
           }
           return q;
-        });
+        })
+        .filter(q => q.options.filter(o => !isJunkOption(o)).length >= 2);
     }
 
     // Normalize flashcards
@@ -822,22 +900,15 @@ async function fetchCards(prompt, tool) {
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P2 pass ${pass}: WINNER ${winner.model}`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model} (fast-race, didn't wait for stragglers)`);
       return winner.value;
     }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
 
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
@@ -1076,22 +1147,10 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
-  // Only synthesize the static key_concepts filler for notes/summary/all — for
-  // flashcards/quiz/mindmap, key_concepts is now a real requested field in
-  // their own prompt (see buildFlashcardsPrompt/buildQuizPrompt), so an empty
-  // result there means the AI genuinely didn't return it and we'd rather show
-  // nothing than fabricate the same canned template every time.
-  const fillerEligible = ['notes', 'summary', 'all'].includes(opts.tool);
-  if (fillerEligible && !merged.key_concepts?.length) {
-    merged.key_concepts = [
-      `Core Principles: ${topic} rests on fundamental principles connecting theory to practice. Understanding WHY matters more than memorising WHAT.`,
-      `Key Mechanisms: Primary processes follow identifiable patterns that can be learned and systematically applied.`,
-      `Practical Transfer: ${topic} knowledge applies to healthcare, technology, business, and research contexts.`,
-      `Expert Thinking: Experts in ${topic} differ from beginners in pattern recognition, conditional reasoning, and metacognition.`,
-      `Learning Strategy: Active retrieval practice is 2–3× more effective than re-reading for mastering ${topic}.`,
-    ];
-    merged._key_concepts_filler = true;
-  }
+  // No synthetic key_concepts filler anymore, for ANY tool. If the AI
+  // genuinely didn't return key_concepts, we show nothing there rather than
+  // the same canned template every time — consistent with the no-fallback
+  // policy applied everywhere else.
   return merged;
 }
 
@@ -1166,7 +1225,7 @@ module.exports = async function handler(req, res) {
     style:    ['simple','academic','detailed','exam','visual'].includes(rawOpts.style)       ? rawOpts.style : 'simple',
     language: String(rawOpts.language || 'English').trim().slice(0, 60),
     stream:   rawOpts.stream === true,
-    cardCount:   Number(rawOpts.cardCount)   || 15,
+    cardCount:   Math.min(Number(rawOpts.cardCount)   || 15, 20),
     quizCount:   Number(rawOpts.quizCount)   || 10,
     quizType:    String(rawOpts.quizType || 'mixed'),
     branchCount: Number(rawOpts.branchCount) || 6,
@@ -1299,72 +1358,64 @@ module.exports = async function handler(req, res) {
     // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
-    if (opts.tool === 'all') {
-      sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
-      const cardsResult = await cardsPromise;
+    // These tools' ENTIRE output comes from cardsPromise — if it fails there is
+    // nothing real to show, so we no longer silently substitute generic
+    // template content. We wait generously (multiple retry passes across the
+    // whole model pool already happen inside fetchCards) and only if that
+    // genuinely exhausts do we surface a real error + Retry button — never a
+    // fabricated result pretending to be AI-generated.
+    const raceWithDeadline = (ms) => Promise.race([
+      cardsPromise,
+      new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), ms)),
+    ]);
+
+    const CARD_ONLY_TOOLS = ['all', 'flashcards', 'quiz', 'mindmap'];
+    if (CARD_ONLY_TOOLS.includes(opts.tool)) {
+      const labels = {
+        all:        '⚡ Finalising mega bundle — flashcards + quiz + mindmap…',
+        flashcards: '🃏 Finalising flashcards…',
+        quiz:       '❓ Finalising quiz…',
+        mindmap:    '🗺️ Finalising mind map…',
+      };
+      const deadlineMs = opts.tool === 'all' ? 150000 : 120000;
+      sse('stage', { idx: 3, label: labels[opts.tool] });
+      const cardsResult = await raceWithDeadline(deadlineMs);
+
       if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
-        log.ok(`[${reqId}] Mega bundle succeeded`);
+        log.ok(`[${reqId}] ${opts.tool} succeeded`);
       } else {
-        log.error(`[${reqId}] Mega bundle failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('all', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'flashcards') {
-      sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Flashcards succeeded`);
-      } else {
-        log.error(`[${reqId}] Flashcards failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('flashcards', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'quiz') {
-      sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Quiz succeeded`);
-      } else {
-        log.error(`[${reqId}] Quiz failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('quiz', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'mindmap') {
-      sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Mindmap succeeded`);
-      } else {
-        log.error(`[${reqId}] Mindmap failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('mindmap', message);
-        p2ok = false;
+        // Every model, every retry pass, genuinely exhausted (or a true hang
+        // past the generous deadline). Send a real error, not fake content.
+        const why = cardsResult.status === 'deadline'
+          ? `exceeded ${deadlineMs}ms after full retries`
+          : (cardsResult.reason?.message || 'all models failed');
+        log.error(`[${reqId}] ${opts.tool} failed for real: ${why}`);
+        sse('error', {
+          error: 'All available AI models are currently busy or unreachable. No fake/placeholder content was generated — please retry in a few seconds.',
+          tool: opts.tool,
+        });
+        return; // stop here — no 'done' event, no fabricated result
       }
     } else {
-      // notes or summary: extended deadline to 45 seconds
-      const NOTES_CARDS_DEADLINE_MS = 45000;
+      // notes or summary: P1 (the live notes prose) already succeeded by this
+      // point — this is only the supplementary key_concepts/tricks/quiz-teaser
+      // side data. If it fails, we still have real notes to show, so we don't
+      // hard-error the whole response; we simply omit the supplementary
+      // section rather than filling it with generic fallback text.
+      const NOTES_CARDS_DEADLINE_MS = 90000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
       const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Cards for ${opts.tool} exceeded ${NOTES_CARDS_DEADLINE_MS}ms deadline - using fallback so the notes stream can finish on time`);
-        cardsData = buildTopicFallback(opts.tool, message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);
       } else {
-        log.warn(`[${reqId}] Cards failed for ${opts.tool}, using fallback`);
-        cardsData = buildTopicFallback(opts.tool, message);
+        log.warn(`[${reqId}] Supplementary cards failed/timed out for ${opts.tool} — showing notes without them rather than fake filler`);
+        cardsData = null;
         p2ok = false;
       }
     }
@@ -1373,22 +1424,26 @@ module.exports = async function handler(req, res) {
     // ║  PHASE 3 — STREAM CARDS LIVE (unchanged)
     // ╚═══════════════════════════════════════════════════════════════════════
 
-    // Enforce exact requested flashcard count
+    // Enforce requested flashcard count — trim excess only; never pad with
+    // synthetic filler cards. If the model genuinely returns fewer than
+    // asked, the user gets fewer real cards rather than fake ones mixed in.
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
       const want = opts.cardCount;
       const have = cardsData.flashcards.length;
       if (have > want) {
         cardsData.flashcards = cardsData.flashcards.slice(0, want);
-      } else if (have < want) {
-        const filler = buildTopicFallback('flashcards', message)?.flashcards || [];
-        let i = 0;
-        while (cardsData.flashcards.length < want && filler.length) {
-          cardsData.flashcards.push(filler[i % filler.length]);
-          i++;
-          if (i > want * 2) break;
-        }
       }
-      log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
+      log.ok(`[${reqId}] Flashcard count: wanted ${want}, delivering ${cardsData.flashcards.length} (real, no padding)`);
+    }
+
+    // Same for quiz — trim excess only, never pad with synthetic filler.
+    if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all') && opts.quizCount) {
+      const want = opts.quizCount;
+      const have = cardsData.quiz_questions.length;
+      if (have > want) {
+        cardsData.quiz_questions = cardsData.quiz_questions.slice(0, want);
+      }
+      log.ok(`[${reqId}] Quiz count: wanted ${want}, delivering ${cardsData.quiz_questions.length} (real, no padding)`);
     }
 
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
