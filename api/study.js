@@ -37,31 +37,23 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 const RELIABLE_MODELS_STREAM = [
   { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 // CRITICAL: OpenRouter's free tier hard-caps at ~20 requests per MINUTE
 // combined across every :free model (it's a shared bucket, not per-model),
-// plus a 50-1000/day ceiling. Racing 10-30 models in parallel, repeated
-// across several retry passes, instantly blew past that — every model
-// coming back with a 429 within a couple of seconds looks identical to
-// "everything is broken" from our side, but it was actually us rate-limiting
-// ourselves. Kept deliberately small (4) so even 2 retry passes (8 calls)
-// stays comfortably under the per-minute ceiling.
+// plus a 50-1000/day ceiling — and that bucket is shared across EVERY user
+// of this app hitting the same API key, not just one person testing. Cut
+// down hard to 2 models x 1 pass = max 2 calls per single-tool request (4
+// for mega), so a burst of retries or several concurrent users still stays
+// far under the ceiling. More models was never more resilience here — every
+// extra parallel model was extra self-inflicted 429 risk.
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
   { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
   { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
-  // Same rate-limit reasoning as ALL_MODELS_STREAM above — deliberately kept
-  // to 4 models so the whole request stays well under OpenRouter's shared
-  // 20-requests/minute free-tier ceiling, even across a couple of retry
-  // passes. More models here is NOT more resilience — it self-inflicts 429s.
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -419,7 +411,7 @@ OUTPUT JSON NOW — start with { immediately.`;
 
 const FIRST_TOKEN_TIMEOUT_MS = 45000;   // 45s for first token
 const FULL_STREAM_TIMEOUT_MS = 240000;  // 4 min total
-const MAX_PASSES = 2;                   // 2 full passes — with 4 models/pool this is max 8 calls/request, safely under OpenRouter's shared 20-req/min free-tier limit
+const MAX_PASSES = 1;                   // 1 pass x 2 models = max 2 calls/request (4 for mega) — minimal footprint against the shared 20-req/min free-tier ceiling
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
