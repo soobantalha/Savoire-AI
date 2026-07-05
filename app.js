@@ -46,8 +46,8 @@ const SAVOIRÉ = {
   FOUNDER:     'Sooban Talha',
   TAGLINE:     'Think Less. Know More.',
   API_URL:     '/api/study',
-  MAX_HISTORY: 60,
-  MAX_SAVED:   120,
+  MAX_HISTORY: 6000,
+  MAX_SAVED:   120000,
   NTFY:        'savoireai_new_users',
 };
 
