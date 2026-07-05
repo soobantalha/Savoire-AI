@@ -1321,13 +1321,18 @@ module.exports = async function handler(req, res) {
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } catch (e1) {
-        log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
-        notes = offlineNotes(message);
-        for (let i = 0; i < notes.length; i += 300) {
-          sse('token', { t: notes.slice(i, i + 300) });
-          await sleep(4);
-        }
-        p1ok = false;
+        // No more offline/generic notes here either — if every model in
+        // every retry pass genuinely failed, be honest about it instead of
+        // streaming local template text that looks like a real AI answer.
+        log.error(`[${reqId}] P1 failed for real: ${e1.message}`);
+        clearInterval(kap);
+        clearStages();
+        sse('error', {
+          error: 'We couldn\u2019t generate real AI content for this just now, so we\u2019re showing nothing rather than something fake. This is almost always momentary \u2014 tap Retry and it typically works right away.',
+          tool: opts.tool,
+        });
+        if (!res.writableEnded) res.end();
+        return;
       }
     } else {
       // flashcards / quiz / mindmap: no prose notes needed at all — go
@@ -1386,6 +1391,10 @@ module.exports = async function handler(req, res) {
           error: 'We couldn\u2019t generate real AI content for this just now, so we\u2019re showing nothing rather than something fake. This is almost always momentary \u2014 tap Retry and it typically works right away.',
           tool: opts.tool,
         });
+        clearInterval(kap);
+        if (p2Ticker) clearInterval(p2Ticker);
+        clearStages();
+        if (!res.writableEnded) res.end();
         return; // stop here — no 'done' event, no fabricated result
       }
     } else {
