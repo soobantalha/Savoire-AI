@@ -52,18 +52,9 @@ const ALL_MODELS_STREAM = [
 const ALL_MODELS_CARDS = [
   { id: 'openrouter/free',                             max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
   { id: 'google/gemini-2.0-flash-exp:free',            max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',         max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',              max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'mistralai/mistral-nemo:free',                  max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'qwen/qwq-32b:free',                            max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'nousresearch/hermes-3-llama-3.1-405b:free',    max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1:free',                     max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'deepseek/deepseek-r1-distill-llama-70b:free',  max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free',        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'qwen/qwen3-next-80b-a3b-instruct:free',        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free',        max_tokens: 16384, timeout_ms: 10000, temp: 0.30 },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',       max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  {id:'nvidia/nemotron-3-super-120b-a12b:free', max_tokens: 8192, timeout_ms: 10000, temp: 0.75 },
+  
   // Trimmed from 30 down to 12 for the same reason as ALL_MODELS_STREAM
   // above — this pool gets fired up to MAX_PASSES=4 times per request, so 30
   // models meant up to 120 near-simultaneous calls on one API key, which is
