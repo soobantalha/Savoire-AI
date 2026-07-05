@@ -43,6 +43,12 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // 1000/day with it), not something any code change can bypass. Keeping one
 // direct model as primary instead of relying on the account-quota-limited
 // auto-router.
+// 8 free models confirmed live/current as of July 2026 (verified against
+// multiple up-to-date sources after the earlier dead-model 404s). This pool
+// is deliberately tried 2-AT-A-TIME per pass (see BATCH_SIZE below), never
+// all 8 simultaneously — that gives real breadth/fallback across many
+// models while keeping concurrent requests low enough to stay under
+// OpenRouter's shared 20-req/min free-tier ceiling.
 const RELIABLE_MODELS_STREAM = [
   { id: 'deepseek/deepseek-r1:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
   { id: 'meta-llama/llama-3.3-70b-instruct:free',     max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
@@ -50,12 +56,28 @@ const RELIABLE_MODELS_STREAM = [
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
+  { id: 'meta-llama/llama-4-scout:free',              max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'meta-llama/llama-4-maverick:free',           max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',           max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'qwen/qwen3-235b-a22b:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'zhipu-ai/glm-4.5-air:free',                  max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
+  { id: 'mistralai/mistral-7b-instruct:free',         max_tokens: 8192, timeout_ms: 75000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
   { id: 'deepseek/deepseek-r1:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
   { id: 'meta-llama/llama-3.3-70b-instruct:free',      max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-4-scout:free',               max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'meta-llama/llama-4-maverick:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'deepseek/deepseek-chat-v3.1:free',            max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'qwen/qwen3-235b-a22b:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'zhipu-ai/glm-4.5-air:free',                   max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
+  { id: 'mistralai/mistral-7b-instruct:free',          max_tokens: 16384, timeout_ms: 75000, temp: 0.30 },
 ];
+
+// How many models to try AT ONCE per pass. Kept small on purpose — this is
+// the actual lever that avoids self-inflicted 429s, not total model count.
+const BATCH_SIZE = 2;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS
@@ -614,11 +636,14 @@ async function streamNotes(prompt, onChunk, tool) {
   const sharedState = { winnerId: null };
 
   // ── 4 FULL PASSES ──
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P1 pass ${pass}: starting ALL ${ALL_MODELS_STREAM.length} models in parallel`);
+const P1_PASSES = Math.ceil(ALL_MODELS_STREAM.length / BATCH_SIZE); // covers the whole pool, 2 models at a time
+  for (let pass = 1; pass <= P1_PASSES; pass++) {
+    const batch = ALL_MODELS_STREAM.slice((pass - 1) * BATCH_SIZE, pass * BATCH_SIZE);
+    if (!batch.length) break;
+    log.info(`P1 pass ${pass}/${P1_PASSES}: trying ${batch.map(m => m.id).join(', ')}`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_STREAM.map(model =>
+    const modelPromises = batch.map(model =>
       streamOneModel(model, prompt, onChunk, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
@@ -646,9 +671,9 @@ async function streamNotes(prompt, onChunk, tool) {
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
     log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
-    if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
-      log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
+    if (pass < P1_PASSES) {
+      const backoff = 800;
+      log.info(`P1 pass ${pass}: backing off ${backoff}ms before next batch`);
       await sleep(backoff);
     }
   }
@@ -856,11 +881,14 @@ async function fetchCards(prompt, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P2 pass ${pass}: starting ALL ${ALL_MODELS_CARDS.length} models in parallel for tool:${tool}`);
+  const P2_PASSES = Math.ceil(ALL_MODELS_CARDS.length / BATCH_SIZE);
+  for (let pass = 1; pass <= P2_PASSES; pass++) {
+    const batch = ALL_MODELS_CARDS.slice((pass - 1) * BATCH_SIZE, pass * BATCH_SIZE);
+    if (!batch.length) break;
+    log.info(`P2 pass ${pass}/${P2_PASSES}: trying ${batch.map(m => m.id).join(', ')} for tool:${tool}`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_CARDS.map(model =>
+    const modelPromises = batch.map(model =>
       fetchCardsFromModel(model, prompt, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
@@ -886,11 +914,11 @@ async function fetchCards(prompt, tool) {
       );
 
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+    log.warn(`P2 pass ${pass}: batch failed — ${failReasons.length} failures`);
 
-    if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
-      log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
+    if (pass < P2_PASSES) {
+      const backoff = 800;
+      log.info(`P2 pass ${pass}: backing off ${backoff}ms before next batch`);
       await sleep(backoff);
     }
   }
@@ -1353,7 +1381,7 @@ module.exports = async function handler(req, res) {
         quiz:       '❓ Finalising quiz…',
         mindmap:    '🗺️ Finalising mind map…',
       };
-      const deadlineMs = opts.tool === 'all' ? 150000 : 120000;
+      const deadlineMs = opts.tool === 'all' ? 200000 : 160000;
       sse('stage', { idx: 3, label: labels[opts.tool] });
       const cardsResult = await raceWithDeadline(deadlineMs);
 
@@ -1384,7 +1412,7 @@ module.exports = async function handler(req, res) {
       // side data. If it fails, we still have real notes to show, so we don't
       // hard-error the whole response; we simply omit the supplementary
       // section rather than filling it with generic fallback text.
-      const NOTES_CARDS_DEADLINE_MS = 90000;
+      const NOTES_CARDS_DEADLINE_MS = 130000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
