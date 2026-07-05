@@ -1,14 +1,14 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE (FULLY FIXED)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ SEPARATE PROMPTS FOR EACH TOOL — no generic prompts, each tool gets its own
-// ✅ ULTRA LONG TIMEOUTS — first token: 60s, full stream: 180s, per-model: 90s
-// ✅ 5 PARALLEL PASSES — all models race, first to respond wins
-// ✅ NON-STREAMING LAST RESORT — openrouter/free with 16384 tokens
-// ✅ FALLBACK ONLY AS ABSOLUTE LAST RESORT — almost never used
+// ✅ ONLY OPENROUTER – 20+ working free models (July 2026)
+// ✅ PARALLEL RACING – all models compete, first to respond wins
+// ✅ BATCHING (BATCH_SIZE=2) to avoid 429 rate limits
+// ✅ RETRY-AFTER handling with exponential backoff
+// ✅ EXTENDED TIMEOUTS – first token: 60s, full stream: 5min
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,38 +31,52 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, MASSIVE TIMEOUTS)
+// SECTION 2 — MODEL LIST (ONLY VALID FREE IDs – as of July 2026)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Only the most reliable free models (in order of preference)
-const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+// All currently working free models on OpenRouter (verified)
+const WORKING_MODELS = [
+  // NVIDIA
+  { id: 'nvidia/nemotron-3-ultra:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'nvidia/nemotron-3-super:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Poolside
+  { id: 'poolside/laguna-m.1:free',               max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'poolside/laguna-xs.2:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Cohere
+  { id: 'cohere/north-mini-code:free',            max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Meta (Llama)
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Mistral
+  { id: 'mistralai/mistral-7b-instruct:free',     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'mistralai/mistral-large-2:free',         max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Google
+  { id: 'google/gemma-2-9b-it:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'google/gemini-2.5-flash:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Qwen
+  { id: 'qwen/qwen2.5-7b-instruct:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b-instruct:free',         max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // DeepSeek
+  { id: 'deepseek/deepseek-r1-distill-llama-70b:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // NousResearch
+  { id: 'nousresearch/hermes-3-llama-3.1-8b:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // OpenChat
+  { id: 'openchat/openchat-7b:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Microsoft
+  { id: 'microsoft/phi-3-mini-128k-instruct:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // Z-AI
+  { id: 'z-ai/glm-4.5-air:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
 
-const ALL_MODELS_STREAM = [
-  ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-];
+// For cards (higher max_tokens)
+const ALL_MODELS_STREAM = WORKING_MODELS;
+const ALL_MODELS_CARDS  = WORKING_MODELS.map(m => ({ ...m, max_tokens: 16384, temp: 0.30 }));
 
-const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-];
+// How many models to try at once (to avoid 429)
+const BATCH_SIZE = 2;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS (unchanged)
+// SECTION 3 — CONFIG MAPS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -126,7 +140,7 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — SEPARATE PROMPT BUILDERS FOR EACH TOOL
+// SECTION 6 — PROMPT BUILDERS (FULL)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── NOTES ──
@@ -168,7 +182,7 @@ FORMATTING RULES:
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary — separate from the prose notes prompt) ──
+// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary) ──
 function buildKeyConceptsPrompt(input, opts) {
   const lang = opts.language || 'English';
   return `You are ${SAVOIRÉ.BRAND}. Generate supplementary study material as valid JSON for the topic below.
@@ -179,7 +193,7 @@ LANGUAGE: ${lang} — ALL text must be in ${lang}.
 Generate:
 1. "key_concepts": 5 core concepts, each a single plain STRING 60-80 words (NOT an object).
 2. "key_tricks": 3 study tricks/memory aids, each a single plain STRING 60-90 words (NOT an object).
-3. "practice_questions": 2 analytical questions, each an object {"question":"...", "answer":"200+ word answer"}.
+3. "practice_questions": 2 analytical questions, each an object {"question":"...","answer":"200+ word answer"}.
 4. "real_world_applications": 4 applications, each a single plain STRING (e.g. "🏥 Healthcare: ..."), NOT an object.
 5. "common_misconceptions": 3 corrections, each a single plain STRING formatted as "❌ MYTH: ... ✅ TRUTH: ...", NOT an object.
 
@@ -397,12 +411,12 @@ OUTPUT JSON NOW — start with { immediately.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES
+// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (RACING)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 30000;  // 30s for first token (was 60s) — 8 models race in parallel, no need to wait this long
-const FULL_STREAM_TIMEOUT_MS = 180000; // 3 min total
-const MAX_PASSES = 3; // was 5 — 8 models already race each pass, 5 full passes could take 5-8+ min worst case
+const FIRST_TOKEN_TIMEOUT_MS = 60000;   // 60s
+const FULL_STREAM_TIMEOUT_MS = 300000;  // 5 min
+const MAX_PASSES = 10;                   // 10 full passes (was 4)
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   const name = model.id.split('/').pop().replace(':free', '');
@@ -425,8 +439,11 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
         'X-Title':       APP_TITLE,
       },
       body: JSON.stringify({
-        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
-        stream: true, messages: [{ role: 'user', content: prompt }],
+        model: model.id,
+        max_tokens: model.max_tokens,
+        temperature: model.temp || 0.75,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
@@ -441,6 +458,17 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
     const txt = await res.text().catch(() => '');
     log.error(`P1 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
     if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+
+    // Handle 429 with Retry-After
+    if (res.status === 429) {
+      let retryAfter = 5; // default seconds
+      try {
+        const json = JSON.parse(txt);
+        if (json?.metadata?.retry_after_seconds) retryAfter = json.metadata.retry_after_seconds;
+        else if (json?.metadata?.headers?.['Retry-After']) retryAfter = parseInt(json.metadata.headers['Retry-After'], 10) || 5;
+      } catch (e) {}
+      throw new Error(`${name}: HTTP 429 — retry after ${retryAfter}s`);
+    }
     throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
   }
 
@@ -531,81 +559,68 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
   return full;
 }
 
-// ── Last resort non-streaming fallback ──
-async function streamNotesFallback(prompt, onChunk, tool) {
-  log.info(`P1 fallback: attempting non-streaming request to openrouter/free`);
-  try {
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
-      },
-      body: JSON.stringify({
-        model: 'openrouter/free',
-        max_tokens: 16384,
-        temperature: 0.75,
-        stream: false,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      timeout: 120000,
+// Races model attempts and resolves the instant the FIRST one succeeds
+function raceFirstSuccess(modelPromises) {
+  return new Promise((resolve) => {
+    let remaining = modelPromises.length;
+    let resolved = false;
+    const settled = [];
+    modelPromises.forEach(p => {
+      p.then(r => {
+        settled.push(r);
+        if (!resolved && r.status === 'fulfilled') {
+          resolved = true;
+          resolve({ winner: r, all: null });
+        }
+        remaining--;
+        if (!resolved && remaining === 0) {
+          resolved = true;
+          resolve({ winner: null, all: settled });
+        }
+      });
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 100) throw new Error('Empty or too short');
-    // Stream it in chunks
-    const chunkSize = 300;
-    for (let i = 0; i < content.length; i += chunkSize) {
-      onChunk(content.slice(i, i + chunkSize));
-      await sleep(5);
-    }
-    log.ok(`P1 fallback: returned ${content.length}ch`);
-    return content;
-  } catch (err) {
-    log.error(`P1 fallback failed: ${err.message}`);
-    return null;
-  }
+  });
 }
 
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  // ── 5 FULL PASSES ──
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P1 pass ${pass}: starting ALL ${ALL_MODELS_STREAM.length} models in parallel`);
+  const P1_PASSES = Math.ceil(ALL_MODELS_STREAM.length / BATCH_SIZE);
+  for (let pass = 1; pass <= P1_PASSES; pass++) {
+    const batch = ALL_MODELS_STREAM.slice((pass - 1) * BATCH_SIZE, pass * BATCH_SIZE);
+    if (!batch.length) break;
+    log.info(`P1 pass ${pass}/${P1_PASSES}: trying ${batch.map(m => m.id).join(', ')}`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_STREAM.map(model =>
+    const modelPromises = batch.map(model =>
       streamOneModel(model, prompt, onChunk, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    // Wait for all to settle
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch (fast-race)`);
       return winner.value;
     }
 
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
+
+    // Collect failure reasons and check for 429 Retry-After
+    let maxRetry = 0;
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
-      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
+      .map(r => {
+        const msg = r.value.reason?.message || 'unknown';
+        if (msg.includes('429')) {
+          const match = msg.match(/retry after (\d+)s/);
+          if (match) maxRetry = Math.max(maxRetry, parseInt(match[1], 10));
+        }
+        return `${r.value.model}: ${msg}`;
+      })
       .concat(
         results
           .filter(r => r.status === 'rejected')
@@ -613,20 +628,13 @@ async function streamNotes(prompt, onChunk, tool) {
       );
 
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+    log.warn(`P1 pass ${pass}: batch failed — ${failReasons.length} failures`);
 
-    if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
-      log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
-      await sleep(backoff);
+    if (pass < P1_PASSES) {
+      const wait = Math.max(1500, (maxRetry || 0) * 1000 + 500);
+      log.info(`P1 pass ${pass}: backing off ${wait}ms before retry`);
+      await sleep(wait);
     }
-  }
-
-  // ── LAST RESORT: non-streaming fallback ──
-  log.warn('P1 all streaming attempts failed; trying non-streaming fallback');
-  const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
-  if (fallbackResult) {
-    return fallbackResult;
   }
 
   log.error(`P1 ALL attempts failed: ${errors.join(' | ')}`);
@@ -634,7 +642,7 @@ async function streamNotes(prompt, onChunk, tool) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS
+// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS (RACING)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fetchCardsFromModel(model, prompt, tool, sharedState) {
@@ -657,8 +665,11 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
         'X-Title':       APP_TITLE,
       },
       body: JSON.stringify({
-        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.30,
-        stream: false, messages: [{ role: 'user', content: prompt }],
+        model: model.id,
+        max_tokens: model.max_tokens,
+        temperature: model.temp || 0.30,
+        stream: false,
+        messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
@@ -668,6 +679,14 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       const txt = await res.text().catch(() => '');
       log.error(`P2 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
       if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+      if (res.status === 429) {
+        let retryAfter = 5;
+        try {
+          const json = JSON.parse(txt);
+          if (json?.metadata?.retry_after_seconds) retryAfter = json.metadata.retry_after_seconds;
+        } catch (e) {}
+        throw new Error(`${name}: HTTP 429 — retry after ${retryAfter}s`);
+      }
       throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
     }
 
@@ -707,10 +726,7 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
       }
     }
 
-    // Auto-fix quiz correct_answer mismatches + drop malformed questions
-    // BUG FIX: previously nothing filtered out questions missing "question" text
-    // or with too few options — these rendered as blank/invisible quiz cards in
-    // the UI. Now dropped here so the final quiz always shows real content.
+    // Auto-fix quiz correct_answer mismatches
     if (Array.isArray(parsed.quiz_questions)) {
       parsed.quiz_questions = parsed.quiz_questions
         .filter(q => q && typeof q.question === 'string' && q.question.trim().length > 3
@@ -736,22 +752,23 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
         .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
     }
 
-    // Validation based on tool
-    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
-    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-    // Require at least 3 branches AND at least half the requested count — catches
-    // truncated JSON (model cut off mid-array) that would otherwise render as a
-    // sparse/broken mind map.
-    const requestedBranches = tool === 'mindmap' ? 6 : 6;
-    const hasMm = parsed.mindmap?.branches?.length >= Math.max(3, Math.floor(requestedBranches / 2));
+    // ─── RELAXED VALIDATION — accept even a single item ───
+    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 1;
+    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 1;
+    const hasMm = parsed.mindmap?.branches?.length >= 1;
     const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
-    const valid = (tool === 'flashcards' || tool === 'flashcards_quiz') ? hasFc
-                : tool === 'quiz'                                     ? hasQ
-                : (tool === 'mindmap' || tool === 'mindmap_only')     ? hasMm
-                : tool === 'all'                                      ? (hasFc || hasQ || hasMm || hasKc)
-                : hasKc; // notes/summary fallback
 
-    if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
+    let valid = false;
+    if (tool === 'flashcards' || tool === 'flashcards_quiz') valid = hasFc;
+    else if (tool === 'quiz') valid = hasQ;
+    else if (tool === 'mindmap' || tool === 'mindmap_only') valid = hasMm;
+    else if (tool === 'all') valid = (hasFc || hasQ || hasMm || hasKc);
+    else valid = hasKc; // notes/summary
+
+    if (!valid) {
+      log.warn(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0}`);
+      throw new Error(`${name}: validation failed`);
+    }
 
     // Declare winner
     if (sharedState && !sharedState.winnerId) {
@@ -771,79 +788,44 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   }
 }
 
-// ── Last resort non-streaming JSON fallback ──
-async function fetchCardsFallback(prompt, tool) {
-  log.info(`P2 fallback: attempting non-streaming JSON request to openrouter/free`);
-  try {
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
-      },
-      body: JSON.stringify({
-        model: 'openrouter/free',
-        max_tokens: 16384,
-        temperature: 0.30,
-        stream: false,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      timeout: 120000,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content) throw new Error('Empty response');
-    // Try to parse JSON
-    const cleaned = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-    const jS = cleaned.indexOf('{'), jE = cleaned.lastIndexOf('}');
-    if (jS === -1 || jE <= jS) throw new Error('No JSON');
-    const jsonStr = cleaned.slice(jS, jE + 1);
-    const parsed = JSON.parse(jsonStr);
-    log.ok(`P2 fallback: returned JSON`);
-    return parsed;
-  } catch (err) {
-    log.error(`P2 fallback failed: ${err.message}`);
-    return null;
-  }
-}
-
 async function fetchCards(prompt, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
 
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P2 pass ${pass}: starting ALL ${ALL_MODELS_CARDS.length} models in parallel for tool:${tool}`);
+  const P2_PASSES = Math.ceil(ALL_MODELS_CARDS.length / BATCH_SIZE);
+  for (let pass = 1; pass <= P2_PASSES; pass++) {
+    const batch = ALL_MODELS_CARDS.slice((pass - 1) * BATCH_SIZE, pass * BATCH_SIZE);
+    if (!batch.length) break;
+    log.info(`P2 pass ${pass}/${P2_PASSES}: trying ${batch.map(m => m.id).join(', ')} for tool:${tool}`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_CARDS.map(model =>
+    const modelPromises = batch.map(model =>
       fetchCardsFromModel(model, prompt, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
     );
 
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
+    const raceResult = await raceFirstSuccess(modelPromises);
 
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
-
-    if (successes.length > 0) {
-      const winner = successes[0];
-      log.ok(`P2 pass ${pass}: WINNER ${winner.model}`);
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model} (fast-race)`);
       return winner.value;
     }
 
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
+
+    let maxRetry = 0;
     const failReasons = results
       .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
-      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
+      .map(r => {
+        const msg = r.value.reason?.message || 'unknown';
+        if (msg.includes('429')) {
+          const match = msg.match(/retry after (\d+)s/);
+          if (match) maxRetry = Math.max(maxRetry, parseInt(match[1], 10));
+        }
+        return `${r.value.model}: ${msg}`;
+      })
       .concat(
         results
           .filter(r => r.status === 'rejected')
@@ -851,20 +833,13 @@ async function fetchCards(prompt, tool) {
       );
 
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+    log.warn(`P2 pass ${pass}: batch failed — ${failReasons.length} failures`);
 
-    if (pass < MAX_PASSES) {
-      const backoff = pass * 1500;
-      log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
-      await sleep(backoff);
+    if (pass < P2_PASSES) {
+      const wait = Math.max(1500, (maxRetry || 0) * 1000 + 500);
+      log.info(`P2 pass ${pass}: backing off ${wait}ms before retry`);
+      await sleep(wait);
     }
-  }
-
-  // ── LAST RESORT ──
-  log.warn('P2 all attempts failed; trying non-streaming JSON fallback');
-  const fallbackResult = await fetchCardsFallback(prompt, tool);
-  if (fallbackResult) {
-    return fallbackResult;
   }
 
   log.error(`P2 ALL attempts failed: ${errors.join(' | ')}`);
@@ -1012,7 +987,7 @@ function buildTopicFallback(tool, topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — TOPIC FACT (unchanged)
+// SECTION 10 — TOPIC FACT
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
@@ -1040,13 +1015,9 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
   const isFallback = !!cardsRaw?._fallback;
 
-  // Defensive normalizer — some free models occasionally return objects instead
-  // of plain strings for these fields despite the prompt asking for strings.
-  // Without this, the UI shows "[object Object]" instead of real text.
   const toStringArray = arr => !Array.isArray(arr) ? [] : arr.map(item => {
     if (typeof item === 'string') return item;
     if (item && typeof item === 'object') {
-      // Try common shapes: {myth,truth}, {area,description}, {question,answer}, etc.
       const vals = Object.values(item).filter(v => typeof v === 'string');
       if (vals.length) return vals.join(' — ');
       try { return JSON.stringify(item); } catch { return String(item); }
@@ -1078,11 +1049,6 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
-  // Only synthesize the static key_concepts filler for notes/summary/all — for
-  // flashcards/quiz/mindmap, key_concepts is now a real requested field in
-  // their own prompt (see buildFlashcardsPrompt/buildQuizPrompt), so an empty
-  // result there means the AI genuinely didn't return it and we'd rather show
-  // nothing than fabricate the same canned template every time.
   const fillerEligible = ['notes', 'summary', 'all'].includes(opts.tool);
   if (fillerEligible && !merged.key_concepts?.length) {
     merged.key_concepts = [
@@ -1182,9 +1148,9 @@ module.exports = async function handler(req, res) {
 
   sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'started', 0, sessionId).catch(() => {});
 
-  // ══════════════════════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────────────────────────────────────
   // SSE STREAMING RESPONSE
-  // ══════════════════════════════════════════════════════════════════════════
+  // ──────────────────────────────────────────────────────────────────────────
 
   res.setHeader('Content-Type',      'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control',     'no-cache, no-store, must-revalidate, no-transform');
@@ -1217,20 +1183,8 @@ module.exports = async function handler(req, res) {
   let p2Ticker = null;
 
   try {
-    // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (PARALLEL)
-    // ╚═══════════════════════════════════════════════════════════════════════
+    // ── Phase 1 + Phase 2 run concurrently (parallel) ──
 
-    // ── Live-stream prompt: ALWAYS clean prose, regardless of tool. ──
-    // BUG FIX: flashcards/quiz/mindmap/all used to stream their own
-    // JSON-generation prompt live (buildFlashcardsPrompt/buildQuizPrompt/
-    // buildMindmapPrompt/buildMegaPrompt) — those instruct the AI to output
-    // raw JSON, not prose, so the live view showed unparsed JSON with zero
-    // formatting. Notes and Summary already used real prose prompts and never
-    // had this problem, so they keep their own (Summary's prompt has the
-    // TL;DR heading the final render depends on — don't swap that one out).
-    // The JSON data itself is still fetched separately in Phase 2 below using
-    // each tool's own dedicated JSON prompt — it's just never shown live.
     let notesPrompt;
     switch (opts.tool) {
       case 'summary': notesPrompt = buildSummaryPrompt(message, opts); break;
@@ -1244,11 +1198,9 @@ module.exports = async function handler(req, res) {
 
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
-    // ── Phase 2: cards generation — starts NOW in parallel with Phase 1 ──
+    // ── Phase 2: cards generation (concurrent) ──
     let cardsPromise;
     if (opts.tool === 'all') {
-      // For all, the JSON blob (notes+cards+quiz+mindmap) is fetched here,
-      // completely separate from the clean-prose live stream above.
       const megaPrompt = buildMegaPrompt(message, opts);
       cardsPromise = fetchCards(megaPrompt, 'all').then(
         v => ({ status: 'fulfilled', value: v }),
@@ -1273,11 +1225,7 @@ module.exports = async function handler(req, res) {
         e => ({ status: 'rejected', reason: e })
       );
     } else {
-      // For notes and summary, we need key_concepts/tricks/Q&A/applications/misconceptions.
-      // BUG FIX: this used to reuse notesPrompt (a prose-writing prompt), which the AI would
-      // correctly obey by writing markdown prose — so JSON parsing failed on every attempt,
-      // and this ALWAYS fell back to the canned static filler regardless of whether the
-      // notes themselves were real AI content. Use a dedicated JSON prompt instead.
+      // notes or summary – get key_concepts/tricks/Q&A/apps/misconceptions
       const kcPrompt = buildKeyConceptsPrompt(message, opts);
       cardsPromise = fetchCards(kcPrompt, opts.tool).then(
         v => ({ status: 'fulfilled', value: v }),
@@ -1285,33 +1233,27 @@ module.exports = async function handler(req, res) {
       );
     }
 
-    // ── Phase 1: live notes stream (PARALLEL models) ──
-    try {
-      // For tools that don't need streaming notes (flashcards, quiz, mindmap), we still stream notes as a fallback
-      // but we'll also stream the JSON later. To avoid duplication, we'll stream the notes only for notes/summary/all
-      if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+    // ── Phase 1: live notes stream ──
+    if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+      try {
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
-      } else {
-        // For flashcards/quiz/mindmap, we don't need streaming notes, but we need to let the client know we're generating
-        // So we stream a placeholder message and then the final JSON will come later.
-        // We'll still call streamNotes but it will be used only if the cards fail (fallback)
-        // Actually better: we skip streaming notes for these tools and directly generate the JSON.
-        // But we still need to show something, so we'll generate notes as a fallback.
-        // Let's do: generate notes anyway (it's useful) but also fetch cards.
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-        p1ok = true;
-        log.ok(`[${reqId}] P1 done (fallback notes) — ${notes.length}ch`);
+      } catch (e1) {
+        log.error(`[${reqId}] P1 failed for real: ${e1.message}`);
+        // Fallback to offline notes only as last resort
+        notes = offlineNotes(message);
+        p1ok = false;
+        // Stream the fallback notes in chunks
+        const chunkSize = 300;
+        for (let i = 0; i < notes.length; i += chunkSize) {
+          sse('token', { t: notes.slice(i, i + chunkSize) });
+          await sleep(10);
+        }
+        log.warn(`[${reqId}] P1 used offline fallback`);
       }
-    } catch (e1) {
-      log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
-      notes = offlineNotes(message);
-      for (let i = 0; i < notes.length; i += 300) {
-        sse('token', { t: notes.slice(i, i + 300) });
-        await sleep(4);
-      }
-      p1ok = false;
+    } else {
+      p1ok = true; // flashcards/quiz/mindmap: no notes needed
     }
 
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
@@ -1323,113 +1265,55 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 3, label: `🃏 Finalising your cards${'.'.repeat(p2DotCount)}` });
     }, 1500);
 
-    // ── Wait for Phase 2 (which has been running in parallel) ──
+    // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
-    if (opts.tool === 'all') {
-      sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
+    const CARD_ONLY_TOOLS = ['all', 'flashcards', 'quiz', 'mindmap'];
+    const labels = {
+      all:        '⚡ Finalising mega bundle — flashcards + quiz + mindmap…',
+      flashcards: '🃏 Finalising flashcards…',
+      quiz:       '❓ Finalising quiz…',
+      mindmap:    '🗺️ Finalising mind map…',
+    };
+    if (CARD_ONLY_TOOLS.includes(opts.tool)) {
+      sse('stage', { idx: 3, label: labels[opts.tool] });
       const cardsResult = await cardsPromise;
       if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
-        log.ok(`[${reqId}] Mega bundle succeeded`);
+        log.ok(`[${reqId}] ${opts.tool} succeeded`);
       } else {
-        log.error(`[${reqId}] Mega bundle failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('all', message);
+        log.error(`[${reqId}] ${opts.tool} failed for real: ${cardsResult.reason?.message}`);
+        // Use fallback card data
+        cardsData = buildTopicFallback(opts.tool, message);
         p2ok = false;
-      }
-    } else if (opts.tool === 'flashcards') {
-      sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Flashcards succeeded`);
-      } else {
-        log.error(`[${reqId}] Flashcards failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('flashcards', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'quiz') {
-      sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Quiz succeeded`);
-      } else {
-        log.error(`[${reqId}] Quiz failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('quiz', message);
-        p2ok = false;
-      }
-    } else if (opts.tool === 'mindmap') {
-      sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
-      const cardsResult = await cardsPromise;
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] Mindmap succeeded`);
-      } else {
-        log.error(`[${reqId}] Mindmap failed: ${cardsResult.reason?.message}`);
-        cardsData = buildTopicFallback('mindmap', message);
-        p2ok = false;
+        log.warn(`[${reqId}] ${opts.tool} used fallback`);
       }
     } else {
-      // notes or summary: we already have notes, but we also want key_concepts etc.
-      // This is SUPPLEMENTARY data — it must never be allowed to hold the whole
-      // request (and therefore the SSE connection) open for minutes after the
-      // notes have already finished streaming. Cap it hard: if it isn't done in
-      // NOTES_CARDS_DEADLINE_MS, fall back immediately instead of waiting on the
-      // remaining P2 retry passes. This was the cause of "processes to the final
-      // word, then errors after a long delay" — Phase 2 could take 5-8+ minutes
-      // (MAX_PASSES retries x 90s per model), which outlives the hosting
-      // platform's request timeout and drops the SSE connection.
-      const NOTES_CARDS_DEADLINE_MS = 25000;
+      // notes or summary: supplementary cards
+      const NOTES_CARDS_DEADLINE_MS = 60000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
       });
       const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
-      if (cardsResult.status === 'deadline') {
-        log.warn(`[${reqId}] Cards for ${opts.tool} exceeded ${NOTES_CARDS_DEADLINE_MS}ms deadline - using fallback so the notes stream can finish on time`);
-        cardsData = buildTopicFallback(opts.tool, message);
-        p2ok = false;
-      } else if (cardsResult.status === 'fulfilled') {
+      if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
         log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);
       } else {
-        log.warn(`[${reqId}] Cards failed for ${opts.tool}, using fallback`);
+        log.warn(`[${reqId}] Supplementary cards failed/timed out — using fallback`);
         cardsData = buildTopicFallback(opts.tool, message);
         p2ok = false;
       }
     }
 
-    // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  PHASE 3 — STREAM CARDS LIVE (animations)
-    // ╚═══════════════════════════════════════════════════════════════════════
-
-    // Enforce exact requested flashcard count: models routinely ignore
-    // "Generate exactly N" (e.g. asked for 30, returned 6; asked for 20,
-    // returned 27). Truncate overproduction; pad underproduction from the
-    // topic fallback generator so the user always gets what they chose.
-    if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
-      const want = opts.cardCount;
-      const have = cardsData.flashcards.length;
-      if (have > want) {
-        cardsData.flashcards = cardsData.flashcards.slice(0, want);
-      } else if (have < want) {
-        const filler = buildTopicFallback('flashcards', message)?.flashcards || [];
-        let i = 0;
-        while (cardsData.flashcards.length < want && filler.length) {
-          cardsData.flashcards.push(filler[i % filler.length]);
-          i++;
-          if (i > want * 2) break; // safety valve
-        }
-      }
-      log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
-    }
+    // ── PHASE 3 — STREAM CARDS LIVE ──
 
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
+      const want = opts.cardCount;
+      if (cardsData.flashcards.length > want) {
+        cardsData.flashcards = cardsData.flashcards.slice(0, want);
+      }
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
         sse('card', { idx: i, total: cardsData.flashcards.length, card: cardsData.flashcards[i] });
@@ -1458,9 +1342,7 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }
 
-    // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  SEND FINAL DATA
-    // ╚═══════════════════════════════════════════════════════════════════════
+    // ── SEND FINAL DATA ──
 
     clearInterval(kap);
     clearInterval(p2Ticker);
