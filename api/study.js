@@ -464,22 +464,6 @@ const STREAM_TIMEOUT_BY_DEPTH = {
 function streamTimeoutForDepth(depth) {
   return STREAM_TIMEOUT_BY_DEPTH[depth] || FULL_STREAM_TIMEOUT_MS;
 }
-// ✅ FIX (depth-mismatch bug): DEPTH_MAP/SUMMARY_DEPTH_MAP.maxTokens used to be
-// defined but NEVER wired into the actual OpenRouter request — every request
-// used the flat model.max_tokens (8192) no matter what depth was requested.
-// That meant "standard" (600-900 words) had zero token ceiling stopping a
-// model from rambling on for 2000+ words, and there was no depth-aware
-// signal at all beyond the prose instruction, which weaker free models
-// often ignore. This resolves the *actual* per-request token budget so it
-// can be passed into the API call.
-function maxTokensForDepth(tool, depth) {
-  const map = tool === 'summary' ? SUMMARY_DEPTH_MAP : DEPTH_MAP;
-  const cfg = map[depth] || map.detailed;
-  // small headroom so the model isn't cut off mid-sentence right at the
-  // target length — without this a "standard" cap of exactly 2500 tokens
-  // tends to truncate the last bullet of the checklist section.
-  return Math.round(cfg.maxTokens * 1.15);
-}
 // Longer depths already spend much more time per pass, so allow fewer
 // passes to keep total worst-case request time bounded (and inside
 // whatever Vercel maxDuration is configured — see vercel.json note below).
@@ -488,7 +472,7 @@ function passesForDepth(depth) {
   return PASSES_BY_DEPTH[depth] || MAX_PASSES;
 }
 
-async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs, maxTokensOverride) {
+async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs) {
   const name = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
 
@@ -509,13 +493,7 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamT
         'X-Title':       APP_TITLE,
       },
       body: JSON.stringify({
-        model: model.id,
-        // ✅ was: model.max_tokens (flat 8192 for every depth). Now honours
-        // the depth-specific budget computed by maxTokensForDepth, falling
-        // back to the model default only if no override was supplied
-        // (e.g. card-generation call sites, which have their own budget).
-        max_tokens: maxTokensOverride || model.max_tokens,
-        temperature: model.temp || 0.75,
+        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
         stream: true, messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
@@ -696,7 +674,6 @@ async function streamNotes(prompt, onChunk, tool, depth) {
   const errors = [];
   const sharedState = { winnerId: null };
   const streamTimeoutMs = streamTimeoutForDepth(depth);
-  const maxTokens       = maxTokensForDepth(tool, depth);
   // Models that come back with a definitive HTTP 400/429 are blacklisted
   // for the rest of THIS request's passes — retrying an invalid model ID
   // or an already-429'd model a 2nd/3rd time just burns the retry budget
@@ -711,7 +688,7 @@ async function streamNotes(prompt, onChunk, tool, depth) {
     sharedState.winnerId = null;
 
     const modelPromises = activeModels.map(model =>
-      streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs, maxTokens)
+      streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
         .catch(err => {
           if (/HTTP 400|HTTP 429|HTTP 404/.test(err.message || '')) deadModels.add(model.id);
