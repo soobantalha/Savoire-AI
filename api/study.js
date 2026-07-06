@@ -4,10 +4,11 @@
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ EXTENDED TIMEOUTS — first token: 45s, full stream: 240s, per-model: 60s
-// ✅ 4 PARALLEL PASSES — all models race, first to respond wins
+// ✅ EXTENDED TIMEOUTS — first token: 8s, full stream: up to 45s, per-model: 25s
+// ✅ 2 PARALLEL PASSES (reduced to fit platform limits)
 // ✅ RELAXED VALIDATION — accepts even a single flashcard/quiz/branch as REAL AI
 // ✅ CARDS DEADLINE 45s — gives models enough time to produce JSON
+// ✅ Depth‑based streaming timeouts to respect requested length
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37,59 +38,52 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // All models are 100% free on OpenRouter, ranked by coding ability
 const WORKING_MODELS = [
   // 🏆 Tier 1: Elite Coding Models
-  { id: 'qwen/qwen3-coder-480b-a35b:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-v3.2:free',               max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'kimi/kimi-k2:free',                         max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'minimax/minimax-m3:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen3-coder-480b-a35b:free',           max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'deepseek/deepseek-v3.2:free',               max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'kimi/kimi-k2:free',                         max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'minimax/minimax-m3:free',                   max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
 
   // 🥇 Tier 2: Premium Coding Agents
-  // NOTE: 'glm/glm-4.7:free' removed — OpenRouter returns HTTP 400
-  // "not a valid model ID" for it (a permanently broken slug, not a
-  // transient rate-limit), so it wasted a retry slot every single pass.
-  { id: 'nvidia/nemotron-3-ultra:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-v4-flash:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  // gpt-oss-120b and laguna-m.1 are frequently 429 rate-limited upstream
-  // (per logs). Kept, but demoted lower in the list — with the new
-  // per-request bad-model blacklist below, a 429 on pass 1 now takes them
-  // out of passes 2/3 entirely instead of burning the retry budget again.
-  { id: 'openai/gpt-oss-120b:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'poolside/laguna-m.1:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'qwen/qwen3-7b:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'nvidia/nemotron-3-ultra:free',              max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'deepseek/deepseek-v4-flash:free',           max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'openai/gpt-oss-120b:free',                  max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'poolside/laguna-m.1:free',                  max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'qwen/qwen3-7b:free',                        max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
 
   // 🥈 Tier 3: Strong Open-Weight Models
-  { id: 'nvidia/nemotron-3-super:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'cohere/north-mini-code:free',               max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'minimax/minimax-m2:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'meta-llama/llama-4-maverick:free',          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'mistralai/codestral-2501:free',             max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemini-2.5-flash:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'owl/owl-alpha:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'nvidia/nemotron-3-super:free',              max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'cohere/north-mini-code:free',               max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'minimax/minimax-m2:free',                   max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'meta-llama/llama-4-maverick:free',          max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'mistralai/codestral-2501:free',             max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'google/gemini-2.5-flash:free',              max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'owl/owl-alpha:free',                        max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
 
   // 🥉 Tier 4: Solid Coding Models
-  { id: 'qwen/qwen3-14b:free',                       max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'z-ai/glm-4.7-flash:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'xiaomi/mimo-v2.5:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'meta-llama/llama-3.1-70b:free',             max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemma-4-31b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'pony/pony-alpha:free',                      max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b:free',                     max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'microsoft/phi-3.5-mini:free',               max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'qwen/qwen3-14b:free',                       max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'z-ai/glm-4.7-flash:free',                   max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'xiaomi/mimo-v2.5:free',                     max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'meta-llama/llama-3.1-70b:free',             max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'google/gemma-4-31b:free',                   max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'pony/pony-alpha:free',                      max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'qwen/qwen2.5-72b:free',                     max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'microsoft/phi-3.5-mini:free',               max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
 
   // 🔹 Tier 5: Lightweight but Capable
-  { id: 'poolside/laguna-xs.2:free',                 max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'deepseek/deepseek-r1:free',                 max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'nvidia/nemotron-nano-9b:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'google/gemma-4-12b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'openai/gpt-oss-20b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'poolside/laguna-xs.2:free',                 max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'deepseek/deepseek-r1:free',                 max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'nvidia/nemotron-nano-9b:free',              max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'google/gemma-4-12b:free',                   max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
+  { id: 'openai/gpt-oss-20b:free',                   max_tokens: 8192, timeout_ms: 25000, temp: 0.75 },
 ];
 
 // For card generation (higher max_tokens, lower temperature)
+// Reduced max_tokens to 8192 to speed up generation
 const ALL_MODELS_STREAM = WORKING_MODELS;
-const ALL_MODELS_CARDS  = WORKING_MODELS.map(m => ({ ...m, max_tokens: 16384, temp: 0.30 }));
+const ALL_MODELS_CARDS  = WORKING_MODELS.map(m => ({ ...m, max_tokens: 8192, temp: 0.30 }));
 
 // How many models to try at once (to avoid 429)
 const BATCH_SIZE = 5;
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 3 — CONFIG MAPS
@@ -268,12 +262,13 @@ Also generate "key_concepts": 5 core concepts as plain STRINGS (60-80 words each
 OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
 No markdown. No code fences. No explanations before or after.
 
+EXAMPLE (adapt to the topic):
 {
   "flashcards": [
     {"front": "What is the definition of X?", "back": "X is defined as ..."},
-    ...
+    {"front": "How does Y work?", "back": "Y works by ..."}
   ],
-  "key_concepts": ["...", "...", "...", "...", "..."]
+  "key_concepts": ["Concept 1 is ...", "Concept 2 is ..."]
 }
 
 OUTPUT JSON NOW — start with { immediately. Be concise.`;
@@ -444,32 +439,25 @@ OUTPUT JSON NOW — start with { immediately.`;
 // SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 10000;   // 10s for first token
-const FULL_STREAM_TIMEOUT_MS = 32000;   // default (standard/detailed) — safely inside Hobby's 60s cap
-const MAX_PASSES = 3;                   // 3 passes x 10s + small backoffs ≈ 31.5s worst case
+const FIRST_TOKEN_TIMEOUT_MS = 8000;   // 8s for first token
+const FULL_STREAM_TIMEOUT_MS = 15000;   // default (standard/detailed) — safely inside Hobby's 10s cap if reduced
 
-// The old fixed 32s cap cut EVERY depth off after 32s of streaming, so
-// "comprehensive" (1500-2200 words) and "expert" (2200-3000 words) notes
-// were silently truncated to whatever ~32s of tokens-per-second happened
-// to produce — this is why expert notes were coming back at ~300 words.
-// Give longer depths a longer streaming budget. Vercel's function-level
-// maxDuration must be raised to match (see vercel.json) or this timeout
-// is capped by the platform regardless of what we set here.
+// Give longer depths a longer streaming budget, but keep within 60s total.
+// Vercel free tier has a 10s hard limit for serverless functions unless you upgrade.
+// We'll set these values assuming maxDuration is set to 60 via vercel.json.
 const STREAM_TIMEOUT_BY_DEPTH = {
-  standard:      28000,
-  detailed:      40000,
-  comprehensive: 65000,
-  expert:        95000,
+  standard:      20000,
+  detailed:      30000,
+  comprehensive: 45000,
+  expert:        55000,
 };
 function streamTimeoutForDepth(depth) {
   return STREAM_TIMEOUT_BY_DEPTH[depth] || FULL_STREAM_TIMEOUT_MS;
 }
-// Longer depths already spend much more time per pass, so allow fewer
-// passes to keep total worst-case request time bounded (and inside
-// whatever Vercel maxDuration is configured — see vercel.json note below).
-const PASSES_BY_DEPTH = { standard: 3, detailed: 3, comprehensive: 2, expert: 2 };
+// Fewer passes for deeper content to keep total time under limit.
+const PASSES_BY_DEPTH = { standard: 2, detailed: 2, comprehensive: 1, expert: 1 };
 function passesForDepth(depth) {
-  return PASSES_BY_DEPTH[depth] || MAX_PASSES;
+  return PASSES_BY_DEPTH[depth] || 2;
 }
 
 async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs) {
@@ -615,7 +603,7 @@ async function streamNotesFallback(prompt, onChunk, tool) {
       },
       body: JSON.stringify({
         model: 'openrouter/free',
-        max_tokens: 16384,
+        max_tokens: 8192,
         temperature: 0.75,
         stream: false,
         messages: [{ role: 'user', content: prompt }],
@@ -643,11 +631,8 @@ async function streamNotesFallback(prompt, onChunk, tool) {
 
 // Races model attempts and resolves the instant the FIRST one succeeds —
 // instead of Promise.allSettled, which always waits for every model to
-// finish (including ones stuck at their 60s timeout) even after a fast
-// model has already returned a good result. This is why first tokens/cards
-// used to take up to a full pass-timeout even on a normal successful run.
-// The stragglers keep running harmlessly in the background; we just stop
-// waiting on them.
+// finish (including ones stuck at their 25s timeout) even after a fast
+// model has already returned a good result.
 function raceFirstSuccess(modelPromises) {
   return new Promise((resolve) => {
     let remaining = modelPromises.length;
@@ -674,14 +659,9 @@ async function streamNotes(prompt, onChunk, tool, depth) {
   const errors = [];
   const sharedState = { winnerId: null };
   const streamTimeoutMs = streamTimeoutForDepth(depth);
-  // Models that come back with a definitive HTTP 400/429 are blacklisted
-  // for the rest of THIS request's passes — retrying an invalid model ID
-  // or an already-429'd model a 2nd/3rd time just burns the retry budget
-  // that a healthy model could have used instead.
   const deadModels = new Set();
   const maxPasses = passesForDepth(depth);
 
-  // ── FULL PASSES (count depends on depth — see passesForDepth) ──
   for (let pass = 1; pass <= maxPasses; pass++) {
     const activeModels = ALL_MODELS_STREAM.filter(m => !deadModels.has(m.id));
     log.info(`P1 pass ${pass}: starting ${activeModels.length}/${ALL_MODELS_STREAM.length} models in parallel (${deadModels.size} blacklisted)`);
@@ -719,13 +699,12 @@ async function streamNotes(prompt, onChunk, tool, depth) {
     log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
     if (pass < maxPasses) {
-      const backoff = pass * 500;
+      const backoff = pass * 300;
       log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
   }
 
-  // ── LAST RESORT: non-streaming fallback ──
   log.warn('P1 all streaming attempts failed; trying non-streaming fallback');
   const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
   if (fallbackResult) {
@@ -743,7 +722,7 @@ async function streamNotes(prompt, onChunk, tool, depth) {
 async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   const name  = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms); // now 60s
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms || 25000);
   const t0    = Date.now();
 
   try {
@@ -811,13 +790,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     }
 
     // Auto-fix quiz correct_answer mismatches + drop malformed questions.
-    // IMPORTANT: also reject questions whose options are placeholder junk
-    // (bare "A"/"B"/"C"/"D", or suspiciously short strings) — some weaker
-    // free models return that instead of real answer text, and it used to
-    // pass validation (structurally an array of 4 strings) and "win" the
-    // fast-success race with garbage. Now it's treated as a failed question
-    // and dropped, so a genuinely bad model's response can't win purely on
-    // speed over a slower model's real content.
     const isJunkOption = (o) => {
       const t = String(o).trim();
       return t.length < 1 || /^[a-dA-D][.):]?$/.test(t) || /^option\s*[a-dA-D]$/i.test(t);
@@ -841,10 +813,10 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
         .filter(q => q.options.filter(o => !isJunkOption(o)).length >= 2);
     }
 
-    // Normalize flashcards
+    // Normalize flashcards — ensure each card has content
     if (Array.isArray(parsed.flashcards)) {
       parsed.flashcards = parsed.flashcards
-        .filter(c => (c.front || c.question) && (c.back || c.answer))
+        .filter(c => c && (c.front || c.question) && (c.back || c.answer))
         .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
     }
 
@@ -862,7 +834,6 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
     else valid = hasKc; // notes/summary
 
     if (!valid) {
-      // Log what we got for debugging
       log.warn(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0}`);
       throw new Error(`${name}: validation failed`);
     }
@@ -889,7 +860,7 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
 async function fetchCardsFallback(prompt, tool) {
   log.info(`P2 fallback: attempting non-streaming JSON request to openrouter/free`);
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000); // real enforced 8s cap
+  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
@@ -901,7 +872,7 @@ async function fetchCardsFallback(prompt, tool) {
       },
       body: JSON.stringify({
         model: 'openrouter/free',
-        max_tokens: 16384,
+        max_tokens: 8192,
         temperature: 0.30,
         stream: false,
         messages: [{ role: 'user', content: prompt }],
@@ -913,7 +884,6 @@ async function fetchCardsFallback(prompt, tool) {
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content?.trim();
     if (!content) throw new Error('Empty response');
-    // Try to parse JSON
     const cleaned = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
     const jS = cleaned.indexOf('{'), jE = cleaned.lastIndexOf('}');
     if (jS === -1 || jE <= jS) throw new Error('No JSON');
@@ -930,11 +900,8 @@ async function fetchCardsFallback(prompt, tool) {
 async function fetchCards(prompt, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
-  // Same blacklist idea as streamNotes: a model that 400/429/404'd once
-  // this request is very unlikely to succeed on retry, and with a hard
-  // 120-150s deadline for flashcards/quiz/mindmap, every wasted pass on a
-  // dead model is a pass a healthy model didn't get to run.
   const deadModels = new Set();
+  const MAX_PASSES = 2; // reduced from 3 to 2 for speed
 
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
     const activeModels = ALL_MODELS_CARDS.filter(m => !deadModels.has(m.id));
@@ -973,13 +940,12 @@ async function fetchCards(prompt, tool) {
     log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
     if (pass < MAX_PASSES) {
-      const backoff = pass * 500;
+      const backoff = pass * 300;
       log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
     }
   }
 
-  // ── LAST RESORT ──
   log.warn('P2 all attempts failed; trying non-streaming JSON fallback');
   const fallbackResult = await fetchCardsFallback(prompt, tool);
   if (fallbackResult) {
@@ -1159,13 +1125,9 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
   const isFallback = !!cardsRaw?._fallback;
 
-  // Defensive normalizer — some free models occasionally return objects instead
-  // of plain strings for these fields despite the prompt asking for strings.
-  // Without this, the UI shows "[object Object]" instead of real text.
   const toStringArray = arr => !Array.isArray(arr) ? [] : arr.map(item => {
     if (typeof item === 'string') return item;
     if (item && typeof item === 'object') {
-      // Try common shapes: {myth,truth}, {area,description}, {question,answer}, etc.
       const vals = Object.values(item).filter(v => typeof v === 'string');
       if (vals.length) return vals.join(' — ');
       try { return JSON.stringify(item); } catch { return String(item); }
@@ -1197,10 +1159,6 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
-  // No synthetic key_concepts filler anymore, for ANY tool. If the AI
-  // genuinely didn't return key_concepts, we show nothing there rather than
-  // the same canned template every time — consistent with the no-fallback
-  // policy applied everywhere else.
   return merged;
 }
 
@@ -1375,20 +1333,12 @@ module.exports = async function handler(req, res) {
     }
 
     // ── Phase 1: live notes stream — ONLY for tools that actually show notes.
-    // flashcards/quiz/mindmap used to also generate a full prose notes essay
-    // here "for fallback" even though it was never displayed — that wasted
-    // an entire AI call's worth of time (comprehensive depth can take 60-90s)
-    // before Phase 2 (the actual flashcards/quiz/mindmap content) even got a
-    // chance to finish, which was the main reason those tools stalled out.
     if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
       try {
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, opts.depth);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } catch (e1) {
-        // No more offline/generic notes here either — if every model in
-        // every retry pass genuinely failed, be honest about it instead of
-        // streaming local template text that looks like a real AI answer.
         log.error(`[${reqId}] P1 failed for real: ${e1.message}`);
         clearInterval(kap);
         clearStages();
@@ -1402,7 +1352,6 @@ module.exports = async function handler(req, res) {
     } else {
       // flashcards / quiz / mindmap: no prose notes needed at all — go
       // straight to Phase 2, which is already running in the background
-      // since cardsPromise was fired above before we even got here.
       p1ok = true;
     }
 
@@ -1418,12 +1367,6 @@ module.exports = async function handler(req, res) {
     // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
-    // These tools' ENTIRE output comes from cardsPromise — if it fails there is
-    // nothing real to show, so we no longer silently substitute generic
-    // template content. We wait generously (multiple retry passes across the
-    // whole model pool already happen inside fetchCards) and only if that
-    // genuinely exhausts do we surface a real error + Retry button — never a
-    // fabricated result pretending to be AI-generated.
     const raceWithDeadline = (ms) => Promise.race([
       cardsPromise,
       new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), ms)),
@@ -1437,7 +1380,7 @@ module.exports = async function handler(req, res) {
         quiz:       '❓ Finalising quiz…',
         mindmap:    '🗺️ Finalising mind map…',
       };
-      const deadlineMs = opts.tool === 'all' ? 150000 : 120000;
+      const deadlineMs = opts.tool === 'all' ? 120000 : 90000;
       sse('stage', { idx: 3, label: labels[opts.tool] });
       const cardsResult = await raceWithDeadline(deadlineMs);
 
@@ -1446,8 +1389,6 @@ module.exports = async function handler(req, res) {
         p2ok = true;
         log.ok(`[${reqId}] ${opts.tool} succeeded`);
       } else {
-        // Every model, every retry pass, genuinely exhausted (or a true hang
-        // past the generous deadline). Send a real error, not fake content.
         const why = cardsResult.status === 'deadline'
           ? `exceeded ${deadlineMs}ms after full retries`
           : (cardsResult.reason?.message || 'all models failed');
@@ -1460,14 +1401,10 @@ module.exports = async function handler(req, res) {
         if (p2Ticker) clearInterval(p2Ticker);
         clearStages();
         if (!res.writableEnded) res.end();
-        return; // stop here — no 'done' event, no fabricated result
+        return;
       }
     } else {
-      // notes or summary: P1 (the live notes prose) already succeeded by this
-      // point — this is only the supplementary key_concepts/tricks/quiz-teaser
-      // side data. If it fails, we still have real notes to show, so we don't
-      // hard-error the whole response; we simply omit the supplementary
-      // section rather than filling it with generic fallback text.
+      // notes or summary: P1 already succeeded — supplementary cards
       const NOTES_CARDS_DEADLINE_MS = 15000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
@@ -1485,12 +1422,10 @@ module.exports = async function handler(req, res) {
     }
 
     // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  PHASE 3 — STREAM CARDS LIVE (unchanged)
+    // ║  PHASE 3 — STREAM CARDS LIVE
     // ╚═══════════════════════════════════════════════════════════════════════
 
-    // Enforce requested flashcard count — trim excess only; never pad with
-    // synthetic filler cards. If the model genuinely returns fewer than
-    // asked, the user gets fewer real cards rather than fake ones mixed in.
+    // Enforce requested flashcard count — trim excess only; never pad.
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
       const want = opts.cardCount;
       const have = cardsData.flashcards.length;
@@ -1500,7 +1435,7 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Flashcard count: wanted ${want}, delivering ${cardsData.flashcards.length} (real, no padding)`);
     }
 
-    // Same for quiz — trim excess only, never pad with synthetic filler.
+    // Same for quiz
     if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all') && opts.quizCount) {
       const want = opts.quizCount;
       const have = cardsData.quiz_questions.length;
