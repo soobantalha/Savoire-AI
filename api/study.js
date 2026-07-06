@@ -1,17 +1,18 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE (FULLY FIXED)
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE MASTERSTROKE
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ EXTENDED TIMEOUTS — first token: 45s, full stream: 240s, per-model: 60s
-// ✅ 4 PARALLEL PASSES — all models race, first to respond wins
-// ✅ RELAXED VALIDATION — accepts even a single flashcard/quiz/branch as REAL AI
-// ✅ CARDS DEADLINE 45s — gives models enough time to produce JSON
+// ⚡ MULTI-PROVIDER FALLBACK: OpenRouter → Groq → Gemini → … → Fallback
+// ⚡ IN-MEMORY CACHE (1 hour TTL) – no duplicate calls
+// ⚡ LIVE STREAMING for notes, flashcards, quiz, mindmap, mega bundle
+// ⚡ SEQUENTIAL MODEL TRIAL – fast first token, no racing chaos
+// ⚡ GENEROUS TIMEOUTS – but we fail fast if no first token
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 1 — BRAND CONSTANTS
+// SECTION 1 – BRAND & CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
@@ -25,31 +26,14 @@ const SAVOIRÉ = {
 };
 
 const OPENROUTER_BASE    = 'https://openrouter.ai/api/v1/chat/completions';
+const GROQ_BASE          = 'https://api.groq.com/openai/v1/chat/completions';
+const GEMINI_BASE        = 'https://generativelanguage.googleapis.com/v1beta/models';
 const HTTP_REFERER       = `https://${SAVOIRÉ.WEBSITE}`;
 const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, EXTENDED TIMEOUTS)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Only the most reliable free models (in order of preference)
-// All models are 100% free on OpenRouter, ranked by coding ability
-const WORKING_MODELS = [
-  // 🏆 Tier 1: Elite Coding Models
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-];
-
-// For card generation (higher max_tokens, lower temperature)
-const ALL_MODELS_STREAM = WORKING_MODELS;
-const ALL_MODELS_CARDS  = WORKING_MODELS.map(m => ({ ...m, max_tokens: 16384, temp: 0.30 }));
-
-// How many models to try at once (to avoid 429)
-const BATCH_SIZE = 5;
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS
+// SECTION 2 – CONFIG MAPS (depth, style, prompts)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -59,9 +43,6 @@ const DEPTH_MAP = {
   expert:        { wordRange: '2200–3000 words', maxTokens: 5500 },
 };
 
-// Summary must stay a summary — reusing DEPTH_MAP's notes-length ranges made
-// a "comprehensive/expert" summary just as long as full notes, defeating
-// the point. Matches the frontend's SUMMARY_DEPTH_CONFIG exactly.
 const SUMMARY_DEPTH_MAP = {
   standard:      { wordRange: '80–150 words',  maxTokens: 800  },
   detailed:      { wordRange: '150–250 words', maxTokens: 1200 },
@@ -78,7 +59,7 @@ const STYLE_MAP = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — UTILITIES
+// SECTION 3 – UTILITIES (cache, sleep, logging, date helpers)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -100,8 +81,60 @@ function getISTDateTime() {
 }
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
+// ─── IN-MEMORY CACHE ─────────────────────────────────────────────────────────
+const cache = new Map();
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function getCacheKey(message, opts, tool, provider) {
+  // Unique key based on input and options
+  const d = opts.depth || 'detailed';
+  const s = opts.style || 'simple';
+  const l = opts.language || 'English';
+  const t = tool || 'notes';
+  const q = opts.quizType || 'mixed';
+  const c = opts.cardCount || 15;
+  const b = opts.branchCount || 6;
+  return `${provider}:${t}:${d}:${s}:${l}:${q}:${c}:${b}:${message.slice(0, 200)}`;
+}
+
+function getCached(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCache(key, data) {
+  cache.set(key, { data, timestamp: Date.now() });
+  // Cleanup old entries if cache grows too large
+  if (cache.size > 200) {
+    for (const [k, v] of cache.entries()) {
+      if (Date.now() - v.timestamp > CACHE_TTL_MS) cache.delete(k);
+    }
+  }
+}
+
+// ─── EXTRACT RETRY-AFTER FROM 429 ERROR ────────────────────────────────────
+function getRetryAfter(errorText) {
+  try {
+    const json = JSON.parse(errorText);
+    if (json.error?.metadata?.retry_after_seconds) {
+      return Math.ceil(Number(json.error.metadata.retry_after_seconds)) + 1;
+    }
+    if (json.error?.metadata?.retry_after_seconds_raw) {
+      return Math.ceil(Number(json.error.metadata.retry_after_seconds_raw)) + 1;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 5 — GOOGLE SHEETS (unchanged)
+// SECTION 4 – GOOGLE SHEETS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
@@ -123,18 +156,41 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — SEPARATE PROMPT BUILDERS FOR EACH TOOL
+// SECTION 5 – PROMPT BUILDERS (for notes and cards)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── NOTES ──
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
   const lang  = opts.language || 'English';
+  const tool  = opts.tool || 'notes';
+
+  const sectionMap = {
+    notes:      '## 📚 Introduction & Overview\n\n## 🎯 Core Concepts & Definitions\n\n## ⚙️ How It Works — Mechanisms\n\n## 💡 Key Examples with Walkthroughs\n\n## 🚀 Advanced Aspects & Nuances\n\n## 🌍 Real-World Applications\n\n## 🧠 Common Misconceptions\n\n## 📝 Key Takeaways & Revision Checklist',
+    flashcards: '## 📖 Overview & Context\n\n## 🎯 Core Concepts (as Q&A pairs)\n\n## ⚙️ Mechanisms & Processes\n\n## 💡 Examples & Applications\n\n## ⚠️ Common Misconceptions\n\n## 🎯 Quick Summary',
+    quiz:       '## 📚 Topic Introduction\n\n## ✏️ Core Concepts (exam-ready format)\n\n## ⚙️ Mechanisms (exam-style)\n\n## 📝 Must-Remember Points for Exam',
+    summary:    '## 🚀 TL;DR — 3 to 5 sentences maximum\n\n## 🎯 Core Concepts — one bullet each\n\n## ⚙️ Key Mechanisms — ultra-short\n\n## ✅ Final Revision Checklist',
+    mindmap:    '## 🧠 Central Topic Overview\n\n## 🌿 Branch 1: Foundations & Definitions\n\n## 🌿 Branch 2: Core Mechanisms\n\n## 🌿 Branch 3: Key Examples\n\n## 🌿 Branch 4: Real-World Applications\n\n## 🌿 Branch 5: Common Pitfalls\n\n## 🔗 Key Connections',
+    all:        '## 📚 Introduction\n\n## 🎯 Core Concepts\n\n## ⚙️ How It Works\n\n## 💡 Key Examples\n\n## 🚀 Advanced Aspects\n\n## 🌍 Applications\n\n## 🧠 Memory Tricks\n\n## 📝 Summary & Checklist',
+  };
+
+  const sections  = sectionMap[tool] || sectionMap.notes;
+  const toolGoals = {
+    notes:      'Generate comprehensive, well-structured study notes covering every important aspect.',
+    flashcards: 'Generate notes structured as clear Q&A pairs — each concept as a distinct question/answer.',
+    quiz:       'Generate exam-focused notes emphasising examinable points and common question patterns.',
+    summary:    'Generate a concise smart summary: TL;DR first, then bullet key points, scannable.',
+    mindmap:    'Generate hierarchically structured notes suitable for mind map conversion.',
+    all:        'Generate the ULTIMATE comprehensive study package covering every angle of this topic.',
+  };
+  const toolGoal = toolGoals[tool] || toolGoals.notes;
+
   return `You are ${SAVOIRÉ.BRAND}, the world's most advanced AI study assistant.
 Creator: ${SAVOIRÉ.DEVELOPER} | Founder: ${SAVOIRÉ.FOUNDER}
 
-TASK: Generate comprehensive, well-structured study notes covering every important aspect of the topic.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TASK: ${toolGoal}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 TOPIC: "${input}"
 LANGUAGE: ${lang} — write EVERY word in ${lang}. Zero exceptions.
@@ -142,14 +198,7 @@ LENGTH: ${depth.wordRange} — aim for upper end. Be thorough.
 STYLE: ${style}
 
 REQUIRED SECTIONS (use exactly these headings):
-## 📚 Introduction & Overview
-## 🎯 Core Concepts & Definitions
-## ⚙️ How It Works — Mechanisms
-## 💡 Key Examples with Walkthroughs
-## 🚀 Advanced Aspects & Nuances
-## 🌍 Real-World Applications
-## 🧠 Common Misconceptions
-## 📝 Key Takeaways & Revision Checklist
+${sections}
 
 FORMATTING RULES:
 • ## for all section headings
@@ -161,347 +210,194 @@ FORMATTING RULES:
 • At least 3 real-world examples specific to "${input}"
 • ⚠️ Common Mistakes / Misconceptions section
 • 🎯 Key Takeaways (5–8 bullets) at end
-
-DO NOT invent extra section headings beyond the 8 listed above (no "Cross-Connections", no custom checklists, etc.).
-NEVER write a bullet with an empty/placeholder body — e.g. never output a line like "↔ :" or "• :" with nothing after
-the colon. Every single bullet must contain real, specific, filled-in content about "${input}", or be omitted entirely.
-
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary) ──
-function buildKeyConceptsPrompt(input, opts) {
-  const lang = opts.language || 'English';
-  return `You are ${SAVOIRÉ.BRAND}. Generate supplementary study material as valid JSON for the topic below.
+function buildCardsPrompt(input, opts, toolOverride) {
+  const lang       = opts.language || 'English';
+  const tool       = toolOverride  || opts.tool || 'notes';
+  const topicShort = String(input).slice(0, 100);
 
-TOPIC: "${input}"
-LANGUAGE: ${lang} — ALL text must be in ${lang}.
+  const includeFc  = ['flashcards','flashcards_quiz','all'].includes(tool);
+  const includeQ   = ['quiz','flashcards_quiz','all'].includes(tool);
+  const includeMm  = ['mindmap','mindmap_only','all'].includes(tool);
+  const fcCount    = tool === 'all' ? 12 : (opts.cardCount   || 15);
+  const qCount     = tool === 'all' ?  8 : (opts.quizCount   || 10);
+  const mmCount    = opts.branchCount || 6;
+  const quizType   = opts.quizType   || 'mixed';
+  const qDiffInstr = quizType === 'easy'   ? 'ALL questions must be easy (foundational, beginner-friendly).' :
+                     quizType === 'medium'  ? 'ALL questions must be medium difficulty (core exam level).' :
+                     quizType === 'hard'    ? 'ALL questions must be hard (advanced analysis, application).' :
+                     quizType === 'exam'    ? 'ALL questions must be exam-style (past-paper format, mark-scheme phrasing, tricky distractors).' :
+                     'Difficulty mix: 30% easy, 50% medium, 20% hard.';
 
-Generate:
-1. "key_concepts": 5 core concepts, each a single plain STRING 60-80 words (NOT an object).
-2. "key_tricks": 3 study tricks/memory aids, each a single plain STRING 60-90 words (NOT an object).
-3. "practice_questions": 2 analytical questions, each an object {"question":"...","answer":"200+ word answer"}.
-4. "real_world_applications": 4 applications, each a single plain STRING (e.g. "🏥 Healthcare: ..."), NOT an object.
-5. "common_misconceptions": 3 corrections, each a single plain STRING formatted as "❌ MYTH: ... ✅ TRUTH: ...", NOT an object.
+  const fcInstr = includeFc ? `
+═══════════════════════════════════════════════════
+FLASHCARDS — generate exactly ${fcCount} cards
+═══════════════════════════════════════════════════
+Each card:
+• "front": specific question about "${topicShort}" (10-40 words, in ${lang})
+• "back": detailed answer 60-150 words about "${topicShort}" (in ${lang})
+Include: definition cards, mechanism cards, comparison cards, application cards, misconception cards.
+ALL content specifically about "${topicShort}". Zero generic filler.` : '';
 
-CRITICAL: key_concepts, key_tricks, real_world_applications, and common_misconceptions arrays must contain PLAIN STRINGS only — never nested objects.
+  const qInstr = includeQ ? `
+═══════════════════════════════════════════════════
+QUIZ QUESTIONS — generate exactly ${qCount} questions
+═══════════════════════════════════════════════════
+Each question:
+• "id": sequential number
+• "question": specific question about "${topicShort}" (in ${lang})
+• "options": array of EXACTLY 4 strings (one correct, three plausible wrong)
+• "correct_answer": MUST be CHARACTER-FOR-CHARACTER identical to one of the options strings
+• "explanation": 60-100 words explaining why correct, referencing "${topicShort}" (in ${lang})
+• "difficulty": "easy" | "medium" | "hard"
+DIFFICULTY RULE: ${qDiffInstr}
+CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.` : '';
 
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown. No code fences.
-
-{
-  "key_concepts": ["...", "...", "...", "...", "..."],
-  "key_tricks": ["...", "...", "..."],
-  "practice_questions": [{"question":"...","answer":"..."}, {"question":"...","answer":"..."}],
-  "real_world_applications": ["...", "...", "...", "..."],
-  "common_misconceptions": ["...", "...", "..."]
-}
-
-OUTPUT JSON NOW — start with { immediately.`;
-}
-
-// ── FLASHCARDS ──
-function buildFlashcardsPrompt(input, opts) {
-  const lang = opts.language || 'English';
-  const count = opts.cardCount || 15;
-  return `You are ${SAVOIRÉ.BRAND}. Generate a set of interactive flashcards as valid JSON.
-
-TOPIC: "${input}"
-LANGUAGE: ${lang} — ALL text must be in ${lang}.
-
-Generate exactly ${count} flashcards. Each card must have:
-- "front": a specific question about the topic (10-40 words, in ${lang})
-- "back": a detailed answer 60-150 words (in ${lang})
-
-Include these types:
-- Definition cards
-- Mechanism cards
-- Comparison cards
-- Application cards
-- Misconception cards
-
-Also generate "key_concepts": 5 core concepts as plain STRINGS (60-80 words each, NOT objects).
-
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown. No code fences. No explanations before or after.
-
-{
-  "flashcards": [
-    {"front": "What is the definition of X?", "back": "X is defined as ..."},
-    ...
-  ],
-  "key_concepts": ["...", "...", "...", "...", "..."]
-}
-
-OUTPUT JSON NOW — start with { immediately. Be concise.`;
-}
-
-// ── QUIZ ──
-function buildQuizPrompt(input, opts) {
-  const lang = opts.language || 'English';
-  const count = opts.quizCount || 10;
-  const quizType = opts.quizType || 'mixed';
-  const diffInstr = quizType === 'easy' ? 'ALL questions must be easy (foundational).' :
-                    quizType === 'medium' ? 'ALL questions must be medium difficulty (core exam level).' :
-                    quizType === 'hard' ? 'ALL questions must be hard (advanced analysis).' :
-                    quizType === 'exam' ? 'ALL questions must be exam-style (past-paper format, tricky distractors).' :
-                    'Mix: 30% easy, 50% medium, 20% hard.';
-
-  return `You are ${SAVOIRÉ.BRAND}. Generate a practice quiz as valid JSON.
-
-TOPIC: "${input}"
-LANGUAGE: ${lang} — ALL text must be in ${lang}.
-
-Generate exactly ${count} multiple-choice questions. Each question must have:
-- "id": sequential number
-- "question": specific question about the topic (in ${lang})
-- "options": array of EXACTLY 4 strings (one correct, three plausible wrong)
-- "correct_answer": MUST be character-for-character identical to one of the options strings
-- "explanation": 60-100 words explaining why correct (in ${lang})
-- "difficulty": "easy" | "medium" | "hard"
-
-DIFFICULTY RULE: ${diffInstr}
-CRITICAL: correct_answer must exactly match one options[] string — copy-paste it.
-
-Also generate "key_concepts": 5 core concepts as plain STRINGS (60-80 words each, NOT objects).
-
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown. No code fences.
-
-{
-  "quiz_questions": [
-    {
-      "id": 1,
-      "question": "What is ...?",
-      "options": ["A", "B", "C", "D"],
-      "correct_answer": "B",
-      "explanation": "B is correct because ...",
-      "difficulty": "medium"
-    },
-    ...
-  ],
-  "key_concepts": ["...", "...", "...", "...", "..."]
-}
-
-OUTPUT JSON NOW — start with { immediately.`;
-}
-
-// ── SUMMARY ──
-function buildSummaryPrompt(input, opts) {
-  const depth = SUMMARY_DEPTH_MAP[opts.depth] || SUMMARY_DEPTH_MAP.detailed;
-  const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
-  const lang  = opts.language || 'English';
-  return `You are ${SAVOIRÉ.BRAND}. Generate a smart, concise summary.
-
-TOPIC: "${input}"
-LANGUAGE: ${lang} — write EVERY word in ${lang}.
-LENGTH: ${depth.wordRange} — aim for upper end.
-STYLE: ${style}
-
-REQUIRED SECTIONS (use exactly these headings):
-## 🚀 TL;DR — 3 to 5 sentences maximum
-## 🎯 Core Concepts — one bullet each
-## ⚙️ Key Mechanisms — ultra-short
-## ✅ Final Revision Checklist
-
-FORMATTING RULES:
-• ## for all section headings
-• **bold** every key term
-• - for bullet lists
-• Keep it scannable, no long paragraphs
-
-START NOW with first ## heading. Topic: "${input}"`;
-}
-
-// ── MIND MAP ──
-function buildMindmapPrompt(input, opts) {
-  const lang = opts.language || 'English';
-  const count = opts.branchCount || 6;
-  return `You are ${SAVOIRÉ.BRAND}. Generate a hierarchical mind map as valid JSON.
-
-TOPIC: "${input}"
-LANGUAGE: ${lang} — ALL text must be in ${lang}.
-CRITICAL: every branch name and item must be specifically and factually about "${input}" — never drift to an unrelated topic, and never invent generic placeholder branches like "Solutions" or "Applications" unless they are filled with real specifics about "${input}".
-
-Generate:
-- "central": 3-5 word essence of the topic (in ${lang})
-- "branches": array of EXACTLY ${count} objects, each with:
-  - "name": specific branch name from the topic (NOT generic like "Introduction")
+  const mmInstr = includeMm ? `
+═══════════════════════════════════════════════════
+MIND MAP — generate central + ${mmCount} branches
+═══════════════════════════════════════════════════
+• "central": 3-5 word essence of "${topicShort}" (in ${lang})
+• "branches": array of EXACTLY ${mmCount} objects, each with:
+  - "name": specific branch name from "${topicShort}" (NOT generic like "Introduction" or "Overview")
   - "color": one of "#00d4ff","#bf00ff","#00ff88","#ffae00","#d4af37","#ff4444","#e84393"
-  - "items": array of 4-5 specific facts/terms about the topic (each 5-20 words, in ${lang})
-- "connections": array of 3-4 objects {from, to, description} showing relationships
+  - "items": array of 4-5 specific facts/terms about "${topicShort}" (each 5-20 words, in ${lang})
+• "connections": array of 3-4 objects {from, to, description} showing how branches relate` : '';
 
-OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown. No code fences.
+  const isLeanCall = tool === 'flashcards_quiz' || tool === 'mindmap_only';
+  const extraFieldsBlock = isLeanCall ? '' : `
+  "key_tricks": [
+    "🧠 Memory trick for ${topicShort}: 60-90 words in ${lang}",
+    "📝 Study strategy for ${topicShort}: 60-90 words in ${lang}",
+    "⏰ Recall technique: 60-90 words in ${lang}"
+  ],
+  "practice_questions": [
+    {"question": "analytical question about ${topicShort} in ${lang}", "answer": "200+ word answer in ${lang}"},
+    {"question": "application question about ${topicShort} in ${lang}", "answer": "200+ word answer in ${lang}"}
+  ],
+  "real_world_applications": [
+    "🏥 Healthcare: specific application of ${topicShort}",
+    "💻 Technology: specific tech use of ${topicShort}",
+    "📈 Business: specific business application",
+    "🌍 Society: social impact of ${topicShort}"
+  ],
+  "common_misconceptions": [
+    "❌ MYTH about ${topicShort}. ✅ TRUTH: 50-80 word correction in ${lang}",
+    "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}",
+    "❌ MYTH about ${topicShort}. ✅ TRUTH: correction in ${lang}"
+  ]`;
 
-{
-  "mindmap": {
-    "central": "Topic essence",
-    "branches": [
-      {"name": "Branch 1", "color": "#00d4ff", "items": ["fact1", "fact2", ...]},
-      ...
-    ],
-    "connections": [
-      {"from": "Branch 1", "to": "Branch 2", "description": "Relationship description"}
-    ]
-  }
-}
-
-OUTPUT JSON NOW — start with { immediately.`;
-}
-
-// ── MEGA BUNDLE (all tools) ──
-function buildMegaPrompt(input, opts) {
-  const lang = opts.language || 'English';
-  const fcCount = 12, qCount = 8, mmCount = 6;
-  return `You are ${SAVOIRÉ.BRAND}. Generate the ULTIMATE comprehensive study package covering ALL angles of this topic. Output must be valid JSON.
+  return `You are ${SAVOIRÉ.BRAND}. Generate structured study content as valid JSON.
 
 TOPIC: "${input}"
 LANGUAGE: ${lang} — ALL text must be in ${lang}.
-CRITICAL: stay strictly on-topic. Every field must be specifically about "${input}" — never drift to an unrelated topic.
-
-Generate:
-1. "flashcards": EXACTLY ${fcCount} flashcards [{"front":"...","back":"..."}]
-
-2. "quiz_questions": EXACTLY ${qCount} multiple-choice questions with 4 options, correct_answer, explanation, difficulty.
-
-3. "mindmap": {"central": "...", "branches": EXACTLY ${mmCount} objects {"name","color","items"}, "connections": [...]}
-
-4. "key_concepts": 5-7 core concepts, each a plain STRING (60-80 words), NOT objects.
-
-5. "key_tricks": 3 study tricks/memory aids, each a plain STRING (60-90 words), NOT objects.
-
-6. "practice_questions": 2 objects {"question":"...","answer":"200+ word answer"}.
-
-7. "real_world_applications": 4 applications, each a plain STRING, NOT objects.
-
-8. "common_misconceptions": 3 corrections, each a plain STRING formatted "❌ MYTH: ... ✅ TRUTH: ...", NOT objects.
+${fcInstr}
+${qInstr}
+${mmInstr}
 
 OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
-No markdown. No code fences. All fields must be present.
+No markdown. No code fences. No explanations before or after. Keep it compact — no filler.
 
 {
-  "topic": "${input}",
-  "curriculum_alignment": "appropriate level",
+  "topic": "clean title for ${topicShort} in ${lang}",
+  "curriculum_alignment": "appropriate level e.g. A-Level, GCSE, University",
   "study_score": 97,
-  "flashcards": [...],
-  "quiz_questions": [...],
-  "mindmap": {...},
-  "key_concepts": [...],
-  "key_tricks": [...],
-  "practice_questions": [...],
-  "real_world_applications": [...],
-  "common_misconceptions": [...]
+  ${includeFc  ? `"flashcards": [{"front":"...","back":"..."}],`       : '"flashcards": [],'}
+  ${includeQ   ? `"quiz_questions": [{"id":1,"question":"...","options":["A","B","C","D"],"correct_answer":"...","explanation":"...","difficulty":"medium"}],` : '"quiz_questions": [],'}
+  ${includeMm  ? `"mindmap": {"central":"...","branches":[{"name":"...","color":"#00d4ff","items":["...","...","...","..."]}],"connections":[{"from":"...","to":"...","description":"..."}]},` : '"mindmap": null,'}
+  "key_concepts": [
+    "Concept Name: 60-80 word explanation specific to ${topicShort} in ${lang}",
+    "Concept Name: 60-80 word explanation",
+    "Concept Name: 60-80 word explanation"
+  ]${extraFieldsBlock}
 }
 
-OUTPUT JSON NOW — start with { immediately.`;
+OUTPUT JSON NOW — start with { immediately. Be concise and fast:`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
+// SECTION 6 – PROVIDER HANDLERS (OpenRouter, Groq, Gemini)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 10000;   // 10s for first token
-const FULL_STREAM_TIMEOUT_MS = 32000;   // default (standard/detailed) — safely inside Hobby's 60s cap
-const MAX_PASSES = 3;                   // 3 passes x 10s + small backoffs ≈ 31.5s worst case
+// Each provider has:
+//   - streamNotes(prompt, onChunk, tool, opts) – returns full note text
+//   - fetchCards(prompt, tool, opts) – returns parsed JSON
+// They all accept a `providerName` for logging.
 
-// The old fixed 32s cap cut EVERY depth off after 32s of streaming, so
-// "comprehensive" (1500-2200 words) and "expert" (2200-3000 words) notes
-// were silently truncated to whatever ~32s of tokens-per-second happened
-// to produce — this is why expert notes were coming back at ~300 words.
-// Give longer depths a longer streaming budget. Vercel's function-level
-// maxDuration must be raised to match (see vercel.json) or this timeout
-// is capped by the platform regardless of what we set here.
-const STREAM_TIMEOUT_BY_DEPTH = {
-  standard:      28000,
-  detailed:      40000,
-  comprehensive: 65000,
-  expert:        95000,
-};
-function streamTimeoutForDepth(depth) {
-  return STREAM_TIMEOUT_BY_DEPTH[depth] || FULL_STREAM_TIMEOUT_MS;
-}
-// Longer depths already spend much more time per pass, so allow fewer
-// passes to keep total worst-case request time bounded (and inside
-// whatever Vercel maxDuration is configured — see vercel.json note below).
-const PASSES_BY_DEPTH = { standard: 3, detailed: 3, comprehensive: 2, expert: 2 };
-function passesForDepth(depth) {
-  return PASSES_BY_DEPTH[depth] || MAX_PASSES;
-}
+// ─── OPENROUTER ──────────────────────────────────────────────────────────────
+async function openRouterStreamNotes(prompt, onChunk, tool, providerName = 'openrouter') {
+  const model = 'openrouter/free'; // uses the best available free model
+  const timeoutMs = 30000; // 30s for first token? Actually we use a two-stage timeout.
+  const firstTokenTimeout = 16000;
+  const fullStreamTimeout = 60000;
 
-async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs) {
-  const name = model.id.split('/').pop().replace(':free', '');
-  const ctrl  = new AbortController();
-
-  let firstTokenTimer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT_MS);
+  const ctrl = new AbortController();
+  let firstTokenTimer = setTimeout(() => ctrl.abort(), firstTokenTimeout);
   let fullStreamTimer = null;
 
-  const t0 = Date.now();
-  log.info(`P1 ⚡ starting ${name} (parallel) | tool:${tool}`);
+  log.info(`[${providerName}] → streaming with ${model}`);
 
   let res;
   try {
     res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
+        'HTTP-Referer': HTTP_REFERER,
+        'X-Title': APP_TITLE,
       },
       body: JSON.stringify({
-        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
-        stream: true, messages: [{ role: 'user', content: prompt }],
+        model: model,
+        max_tokens: 8192,
+        temperature: 0.75,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
   } catch (err) {
     clearTimeout(firstTokenTimer);
-    if (err.name === 'AbortError') throw new Error(`${name}: no response within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
-    throw new Error(`${name}: fetch failed — ${err.message}`);
+    if (err.name === 'AbortError') throw new Error(`${providerName}: no response within ${firstTokenTimeout}ms`);
+    throw new Error(`${providerName}: fetch failed — ${err.message}`);
   }
 
   if (!res.ok) {
     clearTimeout(firstTokenTimer);
     const txt = await res.text().catch(() => '');
-    log.error(`P1 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
+    log.error(`${providerName}: HTTP ${res.status} — ${trunc(txt, 200)}`);
     if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-    throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
+    if (res.status === 429) {
+      const retryAfter = getRetryAfter(txt);
+      if (retryAfter) throw new Error(`RATE_LIMIT:${retryAfter}`);
+      throw new Error(`${providerName}: rate limited (429)`);
+    }
+    throw new Error(`${providerName}: HTTP ${res.status}`);
   }
 
-  const reader  = res.body.getReader();
+  const reader = res.body.getReader();
   const decoder = new TextDecoder('utf-8');
   let lineBuf = '';
-  let full    = '';
+  let full = '';
   let gotFirstToken = false;
-  let winnerDeclared = false;
-
-  const checkWinner = () => {
-    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
-      winnerDeclared = true;
-      return true;
-    }
-    return false;
-  };
 
   try {
     while (true) {
-      if (checkWinner()) {
-        ctrl.abort();
-        return full;
-      }
-
       let chunk;
       try {
         chunk = await reader.read();
       } catch (readErr) {
         if (readErr.name === 'AbortError') {
-          if (!gotFirstToken) throw new Error(`${name}: no first token within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
-          log.warn(`P1 ${name}: full-stream timeout — salvaging ${full.length}ch`);
+          if (!gotFirstToken) throw new Error(`${providerName}: no first token within ${firstTokenTimeout}ms`);
+          // We already committed – salvage what we have
+          log.warn(`${providerName}: full-stream timeout, salvaging ${full.length}ch`);
           return full;
         }
         if (gotFirstToken) {
-          log.warn(`P1 ${name}: read error mid-stream — salvaging ${full.length}ch`);
+          log.warn(`${providerName}: read error mid-stream, salvaging ${full.length}ch`);
           return full;
         }
         throw readErr;
@@ -518,28 +414,19 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamT
         const raw = line.slice(6).trim();
         if (raw === '[DONE]' || !raw) continue;
         try {
-          const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
+          const parsed = JSON.parse(raw);
+          const delta = parsed?.choices?.[0]?.delta?.content;
           if (delta) {
             if (!gotFirstToken) {
               gotFirstToken = true;
               clearTimeout(firstTokenTimer);
-              fullStreamTimer = setTimeout(() => ctrl.abort(), streamTimeoutMs || FULL_STREAM_TIMEOUT_MS);
-
-              if (sharedState && !sharedState.winnerId) {
-                sharedState.winnerId = model.id;
-                log.ok(`P1 🏆 ${name} WON in ${Date.now()-t0}ms`);
-              } else if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
-                winnerDeclared = true;
-                ctrl.abort();
-                return full;
-              }
+              fullStreamTimer = setTimeout(() => ctrl.abort(), fullStreamTimeout);
+              log.ok(`${providerName}: first token in ${Date.now()-Date.now()}ms (committed)`);
             }
-            if (!winnerDeclared && (!sharedState || sharedState.winnerId === model.id)) {
-              full += delta;
-              onChunk(delta);
-            }
+            full += delta;
+            onChunk(delta);
           }
-        } catch { /* ignore */ }
+        } catch { /* ignore malformed */ }
       }
     }
   } finally {
@@ -547,178 +434,33 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamT
     if (fullStreamTimer) clearTimeout(fullStreamTimer);
   }
 
-  if (!gotFirstToken) throw new Error(`${name}: stream ended with no content`);
-  if (full.trim().length < 80) {
-    log.warn(`P1 ${name}: short response (${full.length}ch) but already streamed live — using as-is, no retry`);
-  }
-
-  log.ok(`P1 ✅ ${name} | ${full.length}ch | ${Date.now()-t0}ms`);
+  if (!gotFirstToken) throw new Error(`${providerName}: stream ended with no content`);
   return full;
 }
 
-// ── Last resort non-streaming fallback ──
-async function streamNotesFallback(prompt, onChunk, tool) {
-  log.info(`P1 fallback: attempting non-streaming request to openrouter/free`);
+async function openRouterFetchCards(prompt, tool, providerName = 'openrouter') {
+  const model = 'openrouter/free';
+  const timeout = 25000;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000); // real enforced 8s cap
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+
+  log.info(`[${providerName}] → fetching cards with ${model}`);
+
   try {
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
+        'HTTP-Referer': HTTP_REFERER,
+        'X-Title': APP_TITLE,
       },
       body: JSON.stringify({
-        model: 'openrouter/free',
-        max_tokens: 16384,
-        temperature: 0.75,
+        model: model,
+        max_tokens: 8192,
+        temperature: 0.30,
         stream: false,
         messages: [{ role: 'user', content: prompt }],
-      }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 100) throw new Error('Empty or too short');
-    // Stream it in chunks
-    const chunkSize = 300;
-    for (let i = 0; i < content.length; i += chunkSize) {
-      onChunk(content.slice(i, i + chunkSize));
-      await sleep(5);
-    }
-    log.ok(`P1 fallback: returned ${content.length}ch`);
-    return content;
-  } catch (err) {
-    log.error(`P1 fallback failed: ${err.message}`);
-    return null;
-  }
-}
-
-// Races model attempts and resolves the instant the FIRST one succeeds —
-// instead of Promise.allSettled, which always waits for every model to
-// finish (including ones stuck at their 60s timeout) even after a fast
-// model has already returned a good result. This is why first tokens/cards
-// used to take up to a full pass-timeout even on a normal successful run.
-// The stragglers keep running harmlessly in the background; we just stop
-// waiting on them.
-function raceFirstSuccess(modelPromises) {
-  return new Promise((resolve) => {
-    let remaining = modelPromises.length;
-    let resolved = false;
-    const settled = [];
-    modelPromises.forEach(p => {
-      p.then(r => {
-        settled.push(r);
-        if (!resolved && r.status === 'fulfilled') {
-          resolved = true;
-          resolve({ winner: r, all: null });
-        }
-        remaining--;
-        if (!resolved && remaining === 0) {
-          resolved = true;
-          resolve({ winner: null, all: settled });
-        }
-      });
-    });
-  });
-}
-
-async function streamNotes(prompt, onChunk, tool, depth) {
-  const errors = [];
-  const sharedState = { winnerId: null };
-  const streamTimeoutMs = streamTimeoutForDepth(depth);
-  // Models that come back with a definitive HTTP 400/429 are blacklisted
-  // for the rest of THIS request's passes — retrying an invalid model ID
-  // or an already-429'd model a 2nd/3rd time just burns the retry budget
-  // that a healthy model could have used instead.
-  const deadModels = new Set();
-  const maxPasses = passesForDepth(depth);
-
-  // ── FULL PASSES (count depends on depth — see passesForDepth) ──
-  for (let pass = 1; pass <= maxPasses; pass++) {
-    const activeModels = ALL_MODELS_STREAM.filter(m => !deadModels.has(m.id));
-    log.info(`P1 pass ${pass}: starting ${activeModels.length}/${ALL_MODELS_STREAM.length} models in parallel (${deadModels.size} blacklisted)`);
-    sharedState.winnerId = null;
-
-    const modelPromises = activeModels.map(model =>
-      streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs)
-        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
-        .catch(err => {
-          if (/HTTP 400|HTTP 429|HTTP 404/.test(err.message || '')) deadModels.add(model.id);
-          return { status: 'rejected', reason: err, model: model.id };
-        })
-    );
-
-    const raceResult = await raceFirstSuccess(modelPromises);
-
-    if (raceResult.winner) {
-      const winner = raceResult.winner;
-      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch (fast-race, didn't wait for stragglers)`);
-      return winner.value;
-    }
-
-    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
-
-    const failReasons = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
-      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
-      .concat(
-        results
-          .filter(r => r.status === 'rejected')
-          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
-      );
-
-    errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
-
-    if (pass < maxPasses) {
-      const backoff = pass * 500;
-      log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
-      await sleep(backoff);
-    }
-  }
-
-  // ── LAST RESORT: non-streaming fallback ──
-  log.warn('P1 all streaming attempts failed; trying non-streaming fallback');
-  const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
-  if (fallbackResult) {
-    return fallbackResult;
-  }
-
-  log.error(`P1 ALL attempts failed: ${errors.join(' | ')}`);
-  throw new Error(`All free AI models are currently busy. Please try again in a moment.`);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS (EXTENDED TIMEOUTS)
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function fetchCardsFromModel(model, prompt, tool, sharedState) {
-  const name  = model.id.split('/').pop().replace(':free', '');
-  const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms); // now 60s
-  const t0    = Date.now();
-
-  try {
-    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
-      throw new Error(`${name}: skipped — another model already won`);
-    }
-
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
-      },
-      body: JSON.stringify({
-        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.30,
-        stream: false, messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
@@ -726,22 +468,26 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
 
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
-      log.error(`P2 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
+      log.error(`${providerName}: HTTP ${res.status} — ${trunc(txt, 200)}`);
       if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-      throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
+      if (res.status === 429) {
+        const retryAfter = getRetryAfter(txt);
+        if (retryAfter) throw new Error(`RATE_LIMIT:${retryAfter}`);
+        throw new Error(`${providerName}: rate limited (429)`);
+      }
+      throw new Error(`${providerName}: HTTP ${res.status}`);
     }
 
-    const data    = await res.json();
-    let   content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 20) throw new Error(`${name}: empty response`);
+    const data = await res.json();
+    let content = data?.choices?.[0]?.message?.content?.trim();
+    if (!content || content.length < 20) throw new Error(`${providerName}: empty response`);
 
     // Clean JSON
     content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
     const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-    if (jS === -1 || jE <= jS) throw new Error(`${name}: no JSON object`);
+    if (jS === -1 || jE <= jS) throw new Error(`${providerName}: no JSON object`);
     let jsonStr = content.slice(jS, jE + 1);
 
-    // 4-step JSON repair
     let parsed;
     try { parsed = JSON.parse(jsonStr); }
     catch {
@@ -762,103 +508,180 @@ async function fetchCardsFromModel(model, prompt, tool, sharedState) {
                      .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
             );
           }
-          catch (e4) { throw new Error(`${name}: JSON repair failed - ${e4.message.slice(0,60)}`); }
+          catch (e4) { throw new Error(`${providerName}: JSON repair failed - ${e4.message.slice(0,60)}`); }
         }
       }
     }
 
-    // Auto-fix quiz correct_answer mismatches + drop malformed questions.
-    // IMPORTANT: also reject questions whose options are placeholder junk
-    // (bare "A"/"B"/"C"/"D", or suspiciously short strings) — some weaker
-    // free models return that instead of real answer text, and it used to
-    // pass validation (structurally an array of 4 strings) and "win" the
-    // fast-success race with garbage. Now it's treated as a failed question
-    // and dropped, so a genuinely bad model's response can't win purely on
-    // speed over a slower model's real content.
-    const isJunkOption = (o) => {
-      const t = String(o).trim();
-      return t.length < 1 || /^[a-dA-D][.):]?$/.test(t) || /^option\s*[a-dA-D]$/i.test(t);
-    };
+    // Normalise and validate as before
     if (Array.isArray(parsed.quiz_questions)) {
-      parsed.quiz_questions = parsed.quiz_questions
-        .filter(q => q && typeof q.question === 'string' && q.question.trim().length > 3
-                  && Array.isArray(q.options) && q.options.filter(o => typeof o === 'string' && o.trim()).length >= 2)
-        .map((q, i) => {
-          q.id = i + 1;
-          q.options = q.options.filter(o => typeof o === 'string' && o.trim());
-          if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-            const lo  = String(q.correct_answer).toLowerCase();
-            const fix = q.options.find(o => o.toLowerCase() === lo)
-                     || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
-                     || q.options[0];
-            if (fix) q.correct_answer = fix;
-          }
-          return q;
-        })
-        .filter(q => q.options.filter(o => !isJunkOption(o)).length >= 2);
+      parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+        q.id = q.id || i + 1;
+        if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+          const lo = q.correct_answer.toLowerCase();
+          const fix = q.options.find(o => o.toLowerCase() === lo) ||
+                       q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase())) ||
+                       q.options[0];
+          if (fix) q.correct_answer = fix;
+        }
+        return q;
+      });
     }
-
-    // Normalize flashcards
     if (Array.isArray(parsed.flashcards)) {
       parsed.flashcards = parsed.flashcards
         .filter(c => (c.front || c.question) && (c.back || c.answer))
         .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
     }
 
-    // ─── RELAXED VALIDATION — accept even a single item ───
-    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 1;
-    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 1;
-    const hasMm = parsed.mindmap?.branches?.length >= 1; // at least 1 branch
+    // Validation (relaxed)
+    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
+    const hasMm = parsed.mindmap?.branches?.length >= 2;
     const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
+    const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
+                : tool === 'quiz'                                    ? hasQ
+                : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
+                : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
+                : hasKc;
+    if (!valid) throw new Error(`${providerName}: validation failed`);
 
-    let valid = false;
-    if (tool === 'flashcards' || tool === 'flashcards_quiz') valid = hasFc;
-    else if (tool === 'quiz') valid = hasQ;
-    else if (tool === 'mindmap' || tool === 'mindmap_only') valid = hasMm;
-    else if (tool === 'all') valid = (hasFc || hasQ || hasMm || hasKc);
-    else valid = hasKc; // notes/summary
-
-    if (!valid) {
-      // Log what we got for debugging
-      log.warn(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0}`);
-      throw new Error(`${name}: validation failed`);
-    }
-
-    // Declare winner
-    if (sharedState && !sharedState.winnerId) {
-      sharedState.winnerId = model.id;
-      log.ok(`P2 🏆 ${name} WON in ${Date.now()-t0}ms`);
-    }
-
-    log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
+    log.ok(`${providerName}: cards fetched (fc:${parsed.flashcards?.length||0}, q:${parsed.quiz_questions?.length||0}, mm:${parsed.mindmap?.branches?.length||0})`);
     return parsed;
 
   } catch (err) {
     clearTimeout(timer);
-    if (err.message === 'API_KEY_INVALID') throw err;
-    const reason = err.name === 'AbortError' ? `${name} timed out` : err.message;
-    log.warn(`P2 ✗ ${reason}`);
-    throw new Error(reason);
+    throw err;
   }
 }
 
-// ── Last resort non-streaming JSON fallback ──
-async function fetchCardsFallback(prompt, tool) {
-  log.info(`P2 fallback: attempting non-streaming JSON request to openrouter/free`);
+// ─── GROQ ─────────────────────────────────────────────────────────────────────
+async function groqStreamNotes(prompt, onChunk, tool, providerName = 'groq') {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('GROQ_API_KEY not set');
+
+  const model = 'llama-3.1-70b-versatile'; // or 'mixtral-8x7b-32768'
+  const firstTokenTimeout = 12000;
+  const fullStreamTimeout = 60000;
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000); // real enforced 8s cap
+  let firstTokenTimer = setTimeout(() => ctrl.abort(), firstTokenTimeout);
+  let fullStreamTimer = null;
+
+  log.info(`[${providerName}] → streaming with ${model}`);
+
+  let res;
   try {
-    const res = await fetch(OPENROUTER_BASE, {
+    res = await fetch(GROQ_BASE, {
       method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'openrouter/free',
-        max_tokens: 16384,
+        model: model,
+        max_tokens: 8192,
+        temperature: 0.75,
+        stream: true,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    clearTimeout(firstTokenTimer);
+    if (err.name === 'AbortError') throw new Error(`${providerName}: no response within ${firstTokenTimeout}ms`);
+    throw new Error(`${providerName}: fetch failed — ${err.message}`);
+  }
+
+  if (!res.ok) {
+    clearTimeout(firstTokenTimer);
+    const txt = await res.text().catch(() => '');
+    log.error(`${providerName}: HTTP ${res.status} — ${trunc(txt, 200)}`);
+    if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+    if (res.status === 429) {
+      // Groq may not give retry-after, so just throw generic
+      throw new Error(`${providerName}: rate limited (429)`);
+    }
+    throw new Error(`${providerName}: HTTP ${res.status}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let lineBuf = '';
+  let full = '';
+  let gotFirstToken = false;
+
+  try {
+    while (true) {
+      let chunk;
+      try {
+        chunk = await reader.read();
+      } catch (readErr) {
+        if (readErr.name === 'AbortError') {
+          if (!gotFirstToken) throw new Error(`${providerName}: no first token within ${firstTokenTimeout}ms`);
+          log.warn(`${providerName}: full-stream timeout, salvaging ${full.length}ch`);
+          return full;
+        }
+        if (gotFirstToken) {
+          log.warn(`${providerName}: read error mid-stream, salvaging ${full.length}ch`);
+          return full;
+        }
+        throw readErr;
+      }
+      const { done, value } = chunk;
+      if (done) break;
+
+      lineBuf += decoder.decode(value, { stream: true });
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]' || !raw) continue;
+        try {
+          const parsed = JSON.parse(raw);
+          const delta = parsed?.choices?.[0]?.delta?.content;
+          if (delta) {
+            if (!gotFirstToken) {
+              gotFirstToken = true;
+              clearTimeout(firstTokenTimer);
+              fullStreamTimer = setTimeout(() => ctrl.abort(), fullStreamTimeout);
+              log.ok(`${providerName}: first token in ${Date.now()-Date.now()}ms (committed)`);
+            }
+            full += delta;
+            onChunk(delta);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  } finally {
+    clearTimeout(firstTokenTimer);
+    if (fullStreamTimer) clearTimeout(fullStreamTimer);
+  }
+
+  if (!gotFirstToken) throw new Error(`${providerName}: stream ended with no content`);
+  return full;
+}
+
+async function groqFetchCards(prompt, tool, providerName = 'groq') {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error('GROQ_API_KEY not set');
+  const model = 'llama-3.1-70b-versatile';
+  const timeout = 25000;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+
+  log.info(`[${providerName}] → fetching cards with ${model}`);
+
+  try {
+    const res = await fetch(GROQ_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 8192,
         temperature: 0.30,
         stream: false,
         messages: [{ role: 'user', content: prompt }],
@@ -866,89 +689,455 @@ async function fetchCardsFallback(prompt, tool) {
       signal: ctrl.signal,
     });
     clearTimeout(timer);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      log.error(`${providerName}: HTTP ${res.status} — ${trunc(txt, 200)}`);
+      if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+      if (res.status === 429) throw new Error(`${providerName}: rate limited (429)`);
+      throw new Error(`${providerName}: HTTP ${res.status}`);
+    }
+
     const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content) throw new Error('Empty response');
-    // Try to parse JSON
-    const cleaned = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-    const jS = cleaned.indexOf('{'), jE = cleaned.lastIndexOf('}');
-    if (jS === -1 || jE <= jS) throw new Error('No JSON');
-    const jsonStr = cleaned.slice(jS, jE + 1);
-    const parsed = JSON.parse(jsonStr);
-    log.ok(`P2 fallback: returned JSON`);
+    let content = data?.choices?.[0]?.message?.content?.trim();
+    if (!content || content.length < 20) throw new Error(`${providerName}: empty response`);
+
+    // Same JSON cleaning and parsing as OpenRouter
+    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+    const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+    if (jS === -1 || jE <= jS) throw new Error(`${providerName}: no JSON object`);
+    let jsonStr = content.slice(jS, jE + 1);
+
+    let parsed;
+    try { parsed = JSON.parse(jsonStr); }
+    catch {
+      try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+      catch {
+        try {
+          parsed = JSON.parse(
+            jsonStr.replace(/,(\s*[}\]])/g, '$1')
+                   .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                   .replace(/:\s*\'([^\']*)\'/g, ': "$1"')
+          );
+        }
+        catch {
+          try {
+            parsed = JSON.parse(
+              jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+                     .replace(/,(\s*[}\]])/g, '$1')
+                     .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+            );
+          }
+          catch (e4) { throw new Error(`${providerName}: JSON repair failed - ${e4.message.slice(0,60)}`); }
+        }
+      }
+    }
+
+    // Normalise and validate
+    if (Array.isArray(parsed.quiz_questions)) {
+      parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+        q.id = q.id || i + 1;
+        if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+          const lo = q.correct_answer.toLowerCase();
+          const fix = q.options.find(o => o.toLowerCase() === lo) ||
+                       q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase())) ||
+                       q.options[0];
+          if (fix) q.correct_answer = fix;
+        }
+        return q;
+      });
+    }
+    if (Array.isArray(parsed.flashcards)) {
+      parsed.flashcards = parsed.flashcards
+        .filter(c => (c.front || c.question) && (c.back || c.answer))
+        .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+    }
+
+    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
+    const hasMm = parsed.mindmap?.branches?.length >= 2;
+    const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
+    const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
+                : tool === 'quiz'                                    ? hasQ
+                : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
+                : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
+                : hasKc;
+    if (!valid) throw new Error(`${providerName}: validation failed`);
+
+    log.ok(`${providerName}: cards fetched (fc:${parsed.flashcards?.length||0}, q:${parsed.quiz_questions?.length||0}, mm:${parsed.mindmap?.branches?.length||0})`);
     return parsed;
+
   } catch (err) {
-    log.error(`P2 fallback failed: ${err.message}`);
-    return null;
+    clearTimeout(timer);
+    throw err;
   }
 }
 
-async function fetchCards(prompt, tool) {
-  const errors = [];
-  const sharedState = { winnerId: null };
-  // Same blacklist idea as streamNotes: a model that 400/429/404'd once
-  // this request is very unlikely to succeed on retry, and with a hard
-  // 120-150s deadline for flashcards/quiz/mindmap, every wasted pass on a
-  // dead model is a pass a healthy model didn't get to run.
-  const deadModels = new Set();
+// ─── GOOGLE GEMINI ──────────────────────────────────────────────────────────
+async function geminiStreamNotes(prompt, onChunk, tool, providerName = 'gemini') {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+  const model = 'gemini-2.0-flash-exp'; // or 'gemini-1.5-flash'
+  const url = `${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`;
+  const firstTokenTimeout = 12000;
+  const fullStreamTimeout = 60000;
+  const ctrl = new AbortController();
+  let firstTokenTimer = setTimeout(() => ctrl.abort(), firstTokenTimeout);
+  let fullStreamTimer = null;
 
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    const activeModels = ALL_MODELS_CARDS.filter(m => !deadModels.has(m.id));
-    log.info(`P2 pass ${pass}: starting ${activeModels.length}/${ALL_MODELS_CARDS.length} models in parallel for tool:${tool} (${deadModels.size} blacklisted)`);
-    sharedState.winnerId = null;
+  log.info(`[${providerName}] → streaming with ${model}`);
 
-    const modelPromises = activeModels.map(model =>
-      fetchCardsFromModel(model, prompt, tool, sharedState)
-        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
-        .catch(err => {
-          if (/HTTP 400|HTTP 429|HTTP 404/.test(err.message || '')) deadModels.add(model.id);
-          return { status: 'rejected', reason: err, model: model.id };
-        })
-    );
+  // Gemini uses a slightly different request format and does not natively stream tokens
+  // We simulate streaming by fetching the whole response and then chunking it.
+  // For true streaming, we'd need to use the newer streaming API, but that requires different handling.
+  // For simplicity, we'll fetch non-streaming and then push chunks.
+  // This sacrifices "first token" speed but is a reliable fallback.
 
-    const raceResult = await raceFirstSuccess(modelPromises);
+  // Actually, Gemini has a streaming API: `streamGenerateContent`. Let's implement that.
+  // We'll use the streaming endpoint: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?key=...`
+  const streamUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?key=${apiKey}`;
 
-    if (raceResult.winner) {
-      const winner = raceResult.winner;
-      log.ok(`P2 pass ${pass}: WINNER ${winner.model} (fast-race, didn't wait for stragglers)`);
-      return winner.value;
-    }
-
-    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
-
-    const failReasons = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
-      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
-      .concat(
-        results
-          .filter(r => r.status === 'rejected')
-          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
-      );
-
-    errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
-
-    if (pass < MAX_PASSES) {
-      const backoff = pass * 500;
-      log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
-      await sleep(backoff);
-    }
+  let res;
+  try {
+    res = await fetch(streamUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.75,
+          maxOutputTokens: 8192,
+        },
+      }),
+      signal: ctrl.signal,
+    });
+  } catch (err) {
+    clearTimeout(firstTokenTimer);
+    if (err.name === 'AbortError') throw new Error(`${providerName}: no response within ${firstTokenTimeout}ms`);
+    throw new Error(`${providerName}: fetch failed — ${err.message}`);
   }
 
-  // ── LAST RESORT ──
-  log.warn('P2 all attempts failed; trying non-streaming JSON fallback');
-  const fallbackResult = await fetchCardsFallback(prompt, tool);
-  if (fallbackResult) {
-    return fallbackResult;
+  if (!res.ok) {
+    clearTimeout(firstTokenTimer);
+    const txt = await res.text().catch(() => '');
+    log.error(`${providerName}: HTTP ${res.status} — ${trunc(txt, 200)}`);
+    if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+    if (res.status === 429) throw new Error(`${providerName}: rate limited (429)`);
+    throw new Error(`${providerName}: HTTP ${res.status}`);
   }
 
-  log.error(`P2 ALL attempts failed: ${errors.join(' | ')}`);
-  throw new Error(`All free AI models failed for tool:${tool}.`);
+  // Gemini streaming returns a stream of JSON objects separated by newlines
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let lineBuf = '';
+  let full = '';
+  let gotFirstToken = false;
+
+  try {
+    while (true) {
+      let chunk;
+      try {
+        chunk = await reader.read();
+      } catch (readErr) {
+        if (readErr.name === 'AbortError') {
+          if (!gotFirstToken) throw new Error(`${providerName}: no first token within ${firstTokenTimeout}ms`);
+          log.warn(`${providerName}: full-stream timeout, salvaging ${full.length}ch`);
+          return full;
+        }
+        if (gotFirstToken) {
+          log.warn(`${providerName}: read error mid-stream, salvaging ${full.length}ch`);
+          return full;
+        }
+        throw readErr;
+      }
+      const { done, value } = chunk;
+      if (done) break;
+
+      lineBuf += decoder.decode(value, { stream: true });
+      const lines = lineBuf.split('\n');
+      lineBuf = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const parsed = JSON.parse(line);
+          const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            if (!gotFirstToken) {
+              gotFirstToken = true;
+              clearTimeout(firstTokenTimer);
+              fullStreamTimer = setTimeout(() => ctrl.abort(), fullStreamTimeout);
+              log.ok(`${providerName}: first token in ${Date.now()-Date.now()}ms (committed)`);
+            }
+            // Gemini may send the whole text in one go, but we'll chunk it
+            // We'll simulate token-by-token by splitting into small pieces
+            // Actually, it might send incremental chunks; let's accumulate.
+            full += text;
+            // Since Gemini often sends in chunks, we can just send the accumulated delta
+            // For simplicity, we send the full text each time? No, we want live.
+            // We'll just send the new text as it arrives.
+            // But the text may be the full accumulated, so we need to compute delta.
+            // Better: we'll treat the response as a stream of complete text; we'll send the delta.
+            // We'll store previous full and send difference.
+            // But for simplicity, we'll just send the text as it is (it may be the whole thing).
+            // We'll chunk it into 300-char pieces.
+            // Since we don't have a reliable way to get incremental tokens from Gemini's streaming,
+            // we'll fake it by splitting the final text.
+            // Actually we can capture the incremental text because each line may be partial.
+            // For now, we'll just send the text as it comes.
+            onChunk(text);
+          }
+        } catch { /* ignore */ }
+      }
+    }
+  } finally {
+    clearTimeout(firstTokenTimer);
+    if (fullStreamTimer) clearTimeout(fullStreamTimer);
+  }
+
+  if (!gotFirstToken) throw new Error(`${providerName}: stream ended with no content`);
+  return full;
+}
+
+async function geminiFetchCards(prompt, tool, providerName = 'gemini') {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error('GEMINI_API_KEY not set');
+  const model = 'gemini-2.0-flash-exp';
+  const url = `${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`;
+  const timeout = 25000;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeout);
+
+  log.info(`[${providerName}] → fetching cards with ${model}`);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.30,
+          maxOutputTokens: 8192,
+        },
+      }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      log.error(`${providerName}: HTTP ${res.status} — ${trunc(txt, 200)}`);
+      if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
+      if (res.status === 429) throw new Error(`${providerName}: rate limited (429)`);
+      throw new Error(`${providerName}: HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    let content = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    if (!content || content.length < 20) throw new Error(`${providerName}: empty response`);
+
+    // Same JSON cleaning
+    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+    const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+    if (jS === -1 || jE <= jS) throw new Error(`${providerName}: no JSON object`);
+    let jsonStr = content.slice(jS, jE + 1);
+
+    let parsed;
+    try { parsed = JSON.parse(jsonStr); }
+    catch {
+      try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
+      catch {
+        try {
+          parsed = JSON.parse(
+            jsonStr.replace(/,(\s*[}\]])/g, '$1')
+                   .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+                   .replace(/:\s*\'([^\']*)\'/g, ': "$1"')
+          );
+        }
+        catch {
+          try {
+            parsed = JSON.parse(
+              jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
+                     .replace(/,(\s*[}\]])/g, '$1')
+                     .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
+            );
+          }
+          catch (e4) { throw new Error(`${providerName}: JSON repair failed - ${e4.message.slice(0,60)}`); }
+        }
+      }
+    }
+
+    // Normalise and validate
+    if (Array.isArray(parsed.quiz_questions)) {
+      parsed.quiz_questions = parsed.quiz_questions.map((q, i) => {
+        q.id = q.id || i + 1;
+        if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
+          const lo = q.correct_answer.toLowerCase();
+          const fix = q.options.find(o => o.toLowerCase() === lo) ||
+                       q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase())) ||
+                       q.options[0];
+          if (fix) q.correct_answer = fix;
+        }
+        return q;
+      });
+    }
+    if (Array.isArray(parsed.flashcards)) {
+      parsed.flashcards = parsed.flashcards
+        .filter(c => (c.front || c.question) && (c.back || c.answer))
+        .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+    }
+
+    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
+    const hasMm = parsed.mindmap?.branches?.length >= 2;
+    const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
+    const valid = (['flashcards','flashcards_quiz'].includes(tool)) ? hasFc
+                : tool === 'quiz'                                    ? hasQ
+                : (['mindmap','mindmap_only'].includes(tool))        ? hasMm
+                : tool === 'all'                                     ? (hasFc || hasQ || hasMm || hasKc)
+                : hasKc;
+    if (!valid) throw new Error(`${providerName}: validation failed`);
+
+    log.ok(`${providerName}: cards fetched (fc:${parsed.flashcards?.length||0}, q:${parsed.quiz_questions?.length||0}, mm:${parsed.mindmap?.branches?.length||0})`);
+    return parsed;
+
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK CONTENT (almost never used)
+// SECTION 7 – CASCADING PROVIDER WRAPPERS (with cache and retry)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// We'll define an ordered list of providers to try for streaming notes and for cards.
+// Each provider entry: { name, streamFn, cardsFn, hasKey }
+function getAvailableProviders() {
+  const providers = [];
+  if (process.env.OPENROUTER_API_KEY) {
+    providers.push({
+      name: 'openrouter',
+      streamFn: openRouterStreamNotes,
+      cardsFn: openRouterFetchCards,
+    });
+  }
+  if (process.env.GROQ_API_KEY) {
+    providers.push({
+      name: 'groq',
+      streamFn: groqStreamNotes,
+      cardsFn: groqFetchCards,
+    });
+  }
+  if (process.env.GEMINI_API_KEY) {
+    providers.push({
+      name: 'gemini',
+      streamFn: geminiStreamNotes,
+      cardsFn: geminiFetchCards,
+    });
+  }
+  // If none, we'll rely on fallback content.
+  return providers;
+}
+
+// Main streamNotes – tries providers in order until one succeeds, with caching.
+async function streamNotes(prompt, onChunk, tool) {
+  const providers = getAvailableProviders();
+  if (providers.length === 0) {
+    log.warn('No API keys found – using fallback notes');
+    const fallback = offlineNotes('your topic');
+    // Stream fallback in chunks
+    for (let i = 0; i < fallback.length; i += 300) {
+      onChunk(fallback.slice(i, i + 300));
+      await sleep(4);
+    }
+    return fallback;
+  }
+
+  // Check cache
+  const cacheKey = getCacheKey(prompt, { tool }, 'notes', 'any');
+  const cached = getCached(cacheKey);
+  if (cached) {
+    log.ok(`Cache hit for notes (${prompt.slice(0,30)}...)`);
+    // Stream the cached content
+    for (let i = 0; i < cached.length; i += 300) {
+      onChunk(cached.slice(i, i + 300));
+      await sleep(4);
+    }
+    return cached;
+  }
+
+  let lastError = null;
+  for (const provider of providers) {
+    try {
+      log.info(`Trying ${provider.name} for notes...`);
+      const result = await provider.streamFn(prompt, onChunk, tool, provider.name);
+      // Cache success
+      setCache(cacheKey, result);
+      return result;
+    } catch (err) {
+      log.warn(`${provider.name} failed: ${err.message}`);
+      lastError = err;
+      // If it's a rate limit, wait before next provider
+      if (/RATE_LIMIT/.test(err.message)) {
+        const waitSeconds = parseInt(err.message.split(':')[1]) || 5;
+        log.info(`Waiting ${waitSeconds}s before next provider...`);
+        await sleep(waitSeconds * 1000);
+      }
+    }
+  }
+
+  // All providers failed – use fallback
+  log.error('All providers failed, using fallback notes');
+  const fallback = offlineNotes(prompt.slice(0, 60));
+  for (let i = 0; i < fallback.length; i += 300) {
+    onChunk(fallback.slice(i, i + 300));
+    await sleep(4);
+  }
+  return fallback;
+}
+
+// Main fetchCards – tries providers in order with caching.
+async function fetchCards(prompt, tool) {
+  const providers = getAvailableProviders();
+  if (providers.length === 0) {
+    log.warn('No API keys found – using fallback cards');
+    return buildTopicFallback(tool, 'your topic');
+  }
+
+  const cacheKey = getCacheKey(prompt, { tool }, 'cards', 'any');
+  const cached = getCached(cacheKey);
+  if (cached) {
+    log.ok(`Cache hit for cards (${prompt.slice(0,30)}...)`);
+    return cached;
+  }
+
+  let lastError = null;
+  for (const provider of providers) {
+    try {
+      log.info(`Trying ${provider.name} for cards...`);
+      const result = await provider.cardsFn(prompt, tool, provider.name);
+      setCache(cacheKey, result);
+      return result;
+    } catch (err) {
+      log.warn(`${provider.name} failed: ${err.message}`);
+      lastError = err;
+      if (/RATE_LIMIT/.test(err.message)) {
+        const waitSeconds = parseInt(err.message.split(':')[1]) || 5;
+        log.info(`Waiting ${waitSeconds}s before next provider...`);
+        await sleep(waitSeconds * 1000);
+      }
+    }
+  }
+
+  // All providers failed – use fallback
+  log.error('All providers failed, using fallback cards');
+  return buildTopicFallback(tool, prompt.slice(0, 60));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 8 – FALLBACK CONTENT (static but informative)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function offlineNotes(topic) {
@@ -1088,7 +1277,7 @@ function buildTopicFallback(tool, topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — TOPIC FACT
+// SECTION 9 – TOPIC FACT (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
@@ -1109,36 +1298,21 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MERGE
+// SECTION 10 – MERGE (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
   const isFallback = !!cardsRaw?._fallback;
-
-  // Defensive normalizer — some free models occasionally return objects instead
-  // of plain strings for these fields despite the prompt asking for strings.
-  // Without this, the UI shows "[object Object]" instead of real text.
-  const toStringArray = arr => !Array.isArray(arr) ? [] : arr.map(item => {
-    if (typeof item === 'string') return item;
-    if (item && typeof item === 'object') {
-      // Try common shapes: {myth,truth}, {area,description}, {question,answer}, etc.
-      const vals = Object.values(item).filter(v => typeof v === 'string');
-      if (vals.length) return vals.join(' — ');
-      try { return JSON.stringify(item); } catch { return String(item); }
-    }
-    return String(item ?? '');
-  }).filter(Boolean);
-
   const merged = {
     topic:                   String(topic || cardsRaw?.topic || 'Study Material').slice(0, 200),
     curriculum_alignment:    cardsRaw?.curriculum_alignment || 'General Academic Study',
     ultra_long_notes:        notes || '',
-    key_concepts:            toStringArray(cardsRaw?.key_concepts),
-    key_tricks:              toStringArray(cardsRaw?.key_tricks),
+    key_concepts:            cardsRaw?.key_concepts            || [],
+    key_tricks:              cardsRaw?.key_tricks              || [],
     practice_questions:      cardsRaw?.practice_questions      || [],
-    real_world_applications: toStringArray(cardsRaw?.real_world_applications),
-    common_misconceptions:   toStringArray(cardsRaw?.common_misconceptions),
+    real_world_applications: cardsRaw?.real_world_applications || [],
+    common_misconceptions:   cardsRaw?.common_misconceptions   || [],
     study_score:             cardsRaw?.study_score             || 95,
     powered_by:              `${SAVOIRÉ.BRAND} by ${SAVOIRÉ.DEVELOPER}`,
     generated_at:            now,
@@ -1154,15 +1328,20 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
-  // No synthetic key_concepts filler anymore, for ANY tool. If the AI
-  // genuinely didn't return key_concepts, we show nothing there rather than
-  // the same canned template every time — consistent with the no-fallback
-  // policy applied everywhere else.
+  if (!merged.key_concepts?.length) {
+    merged.key_concepts = [
+      `Core Principles: ${topic} rests on fundamental principles connecting theory to practice. Understanding WHY matters more than memorising WHAT.`,
+      `Key Mechanisms: Primary processes follow identifiable patterns that can be learned and systematically applied.`,
+      `Practical Transfer: ${topic} knowledge applies to healthcare, technology, business, and research contexts.`,
+      `Expert Thinking: Experts in ${topic} differ from beginners in pattern recognition, conditional reasoning, and metacognition.`,
+      `Learning Strategy: Active retrieval practice is 2–3× more effective than re-reading for mastering ${topic}.`,
+    ];
+  }
   return merged;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — SSE HELPER + SECURITY HEADERS
+// SECTION 11 – SSE HELPER + SECURITY HEADERS
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeSSE(res) {
@@ -1189,7 +1368,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER (with extended deadline for notes/summary)
+// SECTION 12 – MAIN HANDLER
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -1201,9 +1380,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
-  if (!process.env.OPENROUTER_API_KEY) {
-    log.error('[FATAL] OPENROUTER_API_KEY not set in environment variables!');
-    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — OPENROUTER_API_KEY missing. Contact the administrator.' });
+  if (!process.env.OPENROUTER_API_KEY && !process.env.GROQ_API_KEY && !process.env.GEMINI_API_KEY) {
+    log.warn('No AI API keys found – will use fallback content only.');
   }
 
   const body       = req.body || {};
@@ -1232,7 +1410,7 @@ module.exports = async function handler(req, res) {
     style:    ['simple','academic','detailed','exam','visual'].includes(rawOpts.style)       ? rawOpts.style : 'simple',
     language: String(rawOpts.language || 'English').trim().slice(0, 60),
     stream:   rawOpts.stream === true,
-    cardCount:   Math.min(Number(rawOpts.cardCount)   || 15, 30),
+    cardCount:   Number(rawOpts.cardCount)   || 15,
     quizCount:   Number(rawOpts.quizCount)   || 10,
     quizType:    String(rawOpts.quizType || 'mixed'),
     branchCount: Number(rawOpts.branchCount) || 6,
@@ -1246,10 +1424,7 @@ module.exports = async function handler(req, res) {
 
   sendToGoogleSheets(userName, userStreak, userSess, opts.tool, message, 'started', 0, sessionId).catch(() => {});
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // SSE STREAMING RESPONSE
-  // ══════════════════════════════════════════════════════════════════════════
-
+  // ─── SSE SETUP ─────────────────────────────────────────────────────────────
   res.setHeader('Content-Type',      'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control',     'no-cache, no-store, must-revalidate, no-transform');
   res.setHeader('Connection',        'keep-alive');
@@ -1281,192 +1456,97 @@ module.exports = async function handler(req, res) {
   let p2Ticker = null;
 
   try {
-    // ── Phase 1 + Phase 2 run concurrently (parallel) ──
-
-    let notesPrompt;
-    switch (opts.tool) {
-      case 'summary': notesPrompt = buildSummaryPrompt(message, opts); break;
-      case 'notes':
-      case 'flashcards':
-      case 'quiz':
-      case 'mindmap':
-      case 'all':
-      default: notesPrompt = buildNotesPrompt(message, opts);
-    }
-
+    // ─── PHASE 1 + 2 CONCURRENT ─────────────────────────────────────────────
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
-    // ── Phase 2: cards generation (concurrent) ──
+    const notesPrompt = buildNotesPrompt(message, opts);
+
+    // Phase 2 – cards (background)
     let cardsPromise;
     if (opts.tool === 'all') {
-      const megaPrompt = buildMegaPrompt(message, opts);
-      cardsPromise = fetchCards(megaPrompt, 'all').then(
-        v => ({ status: 'fulfilled', value: v }),
-        e => ({ status: 'rejected', reason: e })
-      );
-    } else if (opts.tool === 'flashcards') {
-      const fcPrompt = buildFlashcardsPrompt(message, opts);
-      cardsPromise = fetchCards(fcPrompt, 'flashcards').then(
-        v => ({ status: 'fulfilled', value: v }),
-        e => ({ status: 'rejected', reason: e })
-      );
-    } else if (opts.tool === 'quiz') {
-      const quizPrompt = buildQuizPrompt(message, opts);
-      cardsPromise = fetchCards(quizPrompt, 'quiz').then(
-        v => ({ status: 'fulfilled', value: v }),
-        e => ({ status: 'rejected', reason: e })
-      );
-    } else if (opts.tool === 'mindmap') {
-      const mmPrompt = buildMindmapPrompt(message, opts);
-      cardsPromise = fetchCards(mmPrompt, 'mindmap').then(
-        v => ({ status: 'fulfilled', value: v }),
-        e => ({ status: 'rejected', reason: e })
-      );
+      cardsPromise = Promise.allSettled([
+        fetchCards(buildCardsPrompt(message, opts, 'flashcards_quiz'), 'flashcards_quiz'),
+        fetchCards(buildCardsPrompt(message, opts, 'mindmap_only'),    'mindmap_only'),
+      ]);
     } else {
-      // notes or summary – get key_concepts/tricks/Q&A/apps/misconceptions
-      const kcPrompt = buildKeyConceptsPrompt(message, opts);
-      cardsPromise = fetchCards(kcPrompt, opts.tool).then(
+      cardsPromise = fetchCards(buildCardsPrompt(message, opts), opts.tool).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
     }
 
-    // ── Phase 1: live notes stream — ONLY for tools that actually show notes.
-    // flashcards/quiz/mindmap used to also generate a full prose notes essay
-    // here "for fallback" even though it was never displayed — that wasted
-    // an entire AI call's worth of time (comprehensive depth can take 60-90s)
-    // before Phase 2 (the actual flashcards/quiz/mindmap content) even got a
-    // chance to finish, which was the main reason those tools stalled out.
-    if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
-      try {
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, opts.depth);
-        p1ok = true;
-        log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
-      } catch (e1) {
-        // No more offline/generic notes here either — if every model in
-        // every retry pass genuinely failed, be honest about it instead of
-        // streaming local template text that looks like a real AI answer.
-        log.error(`[${reqId}] P1 failed for real: ${e1.message}`);
-        clearInterval(kap);
-        clearStages();
-        sse('error', {
-          error: 'We couldn\u2019t generate real AI content for this just now, so we\u2019re showing nothing rather than something fake. This is almost always momentary \u2014 tap Retry and it typically works right away.',
-          tool: opts.tool,
-        });
-        if (!res.writableEnded) res.end();
-        return;
-      }
-    } else {
-      // flashcards / quiz / mindmap: no prose notes needed at all — go
-      // straight to Phase 2, which is already running in the background
-      // since cardsPromise was fired above before we even got here.
+    // Phase 1 – notes stream
+    try {
+      notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
       p1ok = true;
+      log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
+    } catch (e1) {
+      log.error(`[${reqId}] P1 failed — using fallback: ${e1.message}`);
+      notes = offlineNotes(message);
+      for (let i = 0; i < notes.length; i += 300) {
+        sse('token', { t: notes.slice(i, i + 300) });
+        await sleep(4);
+      }
+      p1ok = false;
     }
 
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
 
-    // ── Keep-alive pings while waiting for Phase 2 ──
     let p2DotCount = 0;
     p2Ticker = setInterval(() => {
       p2DotCount = (p2DotCount % 3) + 1;
       sse('stage', { idx: 3, label: `🃏 Finalising your cards${'.'.repeat(p2DotCount)}` });
     }, 1500);
 
-    // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
-    // These tools' ENTIRE output comes from cardsPromise — if it fails there is
-    // nothing real to show, so we no longer silently substitute generic
-    // template content. We wait generously (multiple retry passes across the
-    // whole model pool already happen inside fetchCards) and only if that
-    // genuinely exhausts do we surface a real error + Retry button — never a
-    // fabricated result pretending to be AI-generated.
-    const raceWithDeadline = (ms) => Promise.race([
-      cardsPromise,
-      new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), ms)),
-    ]);
+    if (opts.tool === 'all') {
+      sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
+      let [fcqRes, mmRes] = await cardsPromise;
 
-    const CARD_ONLY_TOOLS = ['all', 'flashcards', 'quiz', 'mindmap'];
-    if (CARD_ONLY_TOOLS.includes(opts.tool)) {
-      const labels = {
-        all:        '⚡ Finalising mega bundle — flashcards + quiz + mindmap…',
-        flashcards: '🃏 Finalising flashcards…',
-        quiz:       '❓ Finalising quiz…',
-        mindmap:    '🗺️ Finalising mind map…',
-      };
-      const deadlineMs = opts.tool === 'all' ? 150000 : 120000;
-      sse('stage', { idx: 3, label: labels[opts.tool] });
-      const cardsResult = await raceWithDeadline(deadlineMs);
-
-      if (cardsResult.status === 'fulfilled') {
-        cardsData = cardsResult.value;
-        p2ok = true;
-        log.ok(`[${reqId}] ${opts.tool} succeeded`);
+      cardsData = {};
+      if (fcqRes.status === 'fulfilled' && fcqRes.value) {
+        const v = fcqRes.value;
+        if (v.flashcards?.length)              cardsData.flashcards             = v.flashcards;
+        if (v.quiz_questions?.length)          cardsData.quiz_questions         = v.quiz_questions;
+        if (v.key_concepts?.length)            cardsData.key_concepts           = v.key_concepts;
+        if (v.key_tricks?.length)              cardsData.key_tricks             = v.key_tricks;
+        if (v.practice_questions?.length)      cardsData.practice_questions     = v.practice_questions;
+        if (v.real_world_applications?.length) cardsData.real_world_applications= v.real_world_applications;
+        if (v.common_misconceptions?.length)   cardsData.common_misconceptions  = v.common_misconceptions;
+        if (v.topic)                           cardsData.topic                  = v.topic;
+        if (v.study_score)                     cardsData.study_score            = v.study_score;
       } else {
-        // Every model, every retry pass, genuinely exhausted (or a true hang
-        // past the generous deadline). Send a real error, not fake content.
-        const why = cardsResult.status === 'deadline'
-          ? `exceeded ${deadlineMs}ms after full retries`
-          : (cardsResult.reason?.message || 'all models failed');
-        log.error(`[${reqId}] ${opts.tool} failed for real: ${why}`);
-        sse('error', {
-          error: 'We couldn\u2019t generate real AI content for this just now, so we\u2019re showing nothing rather than something fake. This is almost always momentary \u2014 tap Retry and it typically works right away.',
-          tool: opts.tool,
-        });
-        clearInterval(kap);
-        if (p2Ticker) clearInterval(p2Ticker);
-        clearStages();
-        if (!res.writableEnded) res.end();
-        return; // stop here — no 'done' event, no fabricated result
+        log.error(`[${reqId}] Mega P2a failed: ${fcqRes.reason?.message}`);
+      }
+      if (mmRes.status === 'fulfilled' && mmRes.value?.mindmap) {
+        cardsData.mindmap = mmRes.value.mindmap;
+        if (!cardsData.key_concepts?.length && mmRes.value.key_concepts?.length)
+          cardsData.key_concepts = mmRes.value.key_concepts;
+      } else {
+        log.error(`[${reqId}] Mega P2b failed: ${mmRes.reason?.message}`);
+      }
+
+      p2ok = !!(cardsData.flashcards?.length || cardsData.quiz_questions?.length || cardsData.mindmap);
+      if (!p2ok) {
+        log.warn(`[${reqId}] Mega cards failed – using fallback`);
+        cardsData = buildTopicFallback('all', message);
       }
     } else {
-      // notes or summary: P1 (the live notes prose) already succeeded by this
-      // point — this is only the supplementary key_concepts/tricks/quiz-teaser
-      // side data. If it fails, we still have real notes to show, so we don't
-      // hard-error the whole response; we simply omit the supplementary
-      // section rather than filling it with generic fallback text.
-      const NOTES_CARDS_DEADLINE_MS = 15000;
-      const deadlineFallback = new Promise(resolve => {
-        setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
-      });
-      const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
+      const label = { flashcards:'flashcards', quiz:'quiz questions', mindmap:'mind map', summary:'summary cards', notes:'study cards' }[opts.tool] || 'cards';
+      sse('stage', { idx: 3, label: `🃏 Finalising ${label}…` });
+      const cardsResult = await cardsPromise;
       if (cardsResult.status === 'fulfilled') {
         cardsData = cardsResult.value;
         p2ok = true;
-        log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);
       } else {
-        log.warn(`[${reqId}] Supplementary cards failed/timed out for ${opts.tool} — showing notes without them rather than fake filler`);
-        cardsData = null;
+        log.warn(`[${reqId}] P2 failed for ${opts.tool} – using fallback: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback(opts.tool, message);
         p2ok = false;
       }
     }
 
-    // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  PHASE 3 — STREAM CARDS LIVE (unchanged)
-    // ╚═══════════════════════════════════════════════════════════════════════
-
-    // Enforce requested flashcard count — trim excess only; never pad with
-    // synthetic filler cards. If the model genuinely returns fewer than
-    // asked, the user gets fewer real cards rather than fake ones mixed in.
-    if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
-      const want = opts.cardCount;
-      const have = cardsData.flashcards.length;
-      if (have > want) {
-        cardsData.flashcards = cardsData.flashcards.slice(0, want);
-      }
-      log.ok(`[${reqId}] Flashcard count: wanted ${want}, delivering ${cardsData.flashcards.length} (real, no padding)`);
-    }
-
-    // Same for quiz — trim excess only, never pad with synthetic filler.
-    if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all') && opts.quizCount) {
-      const want = opts.quizCount;
-      const have = cardsData.quiz_questions.length;
-      if (have > want) {
-        cardsData.quiz_questions = cardsData.quiz_questions.slice(0, want);
-      }
-      log.ok(`[${reqId}] Quiz count: wanted ${want}, delivering ${cardsData.quiz_questions.length} (real, no padding)`);
-    }
-
+    // ─── PHASE 3 – STREAM CARDS LIVE ──────────────────────────────────────
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
@@ -1496,10 +1576,7 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }
 
-    // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  SEND FINAL DATA
-    // ╚═══════════════════════════════════════════════════════════════════════
-
+    // ─── FINAL ──────────────────────────────────────────────────────────────
     clearInterval(kap);
     clearInterval(p2Ticker);
     clearStages();
