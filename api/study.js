@@ -31,7 +31,7 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // Only the official fallback that never returns 400/404
 const WORKING_MODELS = [
-  { id: 'openrouter/free', max_tokens: 8192, timeout_ms: 30000, temp: 0.75 },
+  { id: 'poolside/laguna-xs-2.1:free', max_tokens: 8192, timeout_ms: 30000, temp: 0.75 },
 ];
 
 // For cards, we use the same but with lower temperature
