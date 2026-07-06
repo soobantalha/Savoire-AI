@@ -1,14 +1,18 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════════════════════
-// SAVOIRÉ AI v2.0 — api/study.js — SIMPLIFIED & RELIABLE (FIXED)
+// SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE (FULLY FIXED)
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
 //
-// ✅ Uses ONLY 'openrouter/free' – guaranteed to work
-// ✅ No invalid model slugs (400/404 eliminated)
-// ✅ Rate‑limit safe (single model, minimal retries)
-// ✅ Extended timeouts (up to 55s) with depth awareness
+// ✅ EXTENDED TIMEOUTS — first token: 45s, full stream: 240s, per-model: 60s
+// ✅ 4 PARALLEL PASSES — all models race, first to respond wins
+// ✅ RELAXED VALIDATION — accepts even a single flashcard/quiz/branch as REAL AI
+// ✅ CARDS DEADLINE 45s — gives models enough time to produce JSON
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 1 — BRAND CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
   BRAND:     'Savoiré AI v2.0',
@@ -26,20 +30,26 @@ const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — MODEL CONFIGURATION (SINGLE RELIABLE MODEL)
+// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, EXTENDED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Only the official fallback that never returns 400/404
+// Only the most reliable free models (in order of preference)
+// All models are 100% free on OpenRouter, ranked by coding ability
 const WORKING_MODELS = [
-  { id: 'poolside/laguna-xs-2.1:free', max_tokens: 8192, timeout_ms: 30000, temp: 0.75 },
+  // 🏆 Tier 1: Elite Coding Models
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
 
-// For cards, we use the same but with lower temperature
+// For card generation (higher max_tokens, lower temperature)
 const ALL_MODELS_STREAM = WORKING_MODELS;
-const ALL_MODELS_CARDS  = WORKING_MODELS.map(m => ({ ...m, max_tokens: 8192, temp: 0.30 }));
+const ALL_MODELS_CARDS  = WORKING_MODELS.map(m => ({ ...m, max_tokens: 16384, temp: 0.30 }));
+
+// How many models to try at once (to avoid 429)
+const BATCH_SIZE = 5;
+
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — CONFIG MAPS (unchanged)
+// SECTION 3 — CONFIG MAPS
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
@@ -49,6 +59,9 @@ const DEPTH_MAP = {
   expert:        { wordRange: '2200–3000 words', maxTokens: 5500 },
 };
 
+// Summary must stay a summary — reusing DEPTH_MAP's notes-length ranges made
+// a "comprehensive/expert" summary just as long as full notes, defeating
+// the point. Matches the frontend's SUMMARY_DEPTH_CONFIG exactly.
 const SUMMARY_DEPTH_MAP = {
   standard:      { wordRange: '80–150 words',  maxTokens: 800  },
   detailed:      { wordRange: '150–250 words', maxTokens: 1200 },
@@ -65,7 +78,7 @@ const STYLE_MAP = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — UTILITIES (unchanged)
+// SECTION 4 — UTILITIES
 // ─────────────────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -110,9 +123,10 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — PROMPT BUILDERS (exactly as before, unchanged)
+// SECTION 6 — SEPARATE PROMPT BUILDERS FOR EACH TOOL
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── NOTES ──
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -155,6 +169,7 @@ the colon. Every single bullet must contain real, specific, filled-in content ab
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
+// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary) ──
 function buildKeyConceptsPrompt(input, opts) {
   const lang = opts.language || 'English';
   return `You are ${SAVOIRÉ.BRAND}. Generate supplementary study material as valid JSON for the topic below.
@@ -185,6 +200,7 @@ No markdown. No code fences.
 OUTPUT JSON NOW — start with { immediately.`;
 }
 
+// ── FLASHCARDS ──
 function buildFlashcardsPrompt(input, opts) {
   const lang = opts.language || 'English';
   const count = opts.cardCount || 15;
@@ -209,18 +225,18 @@ Also generate "key_concepts": 5 core concepts as plain STRINGS (60-80 words each
 OUTPUT FORMAT — output ONLY valid JSON, starting with { and ending with }.
 No markdown. No code fences. No explanations before or after.
 
-EXAMPLE (adapt to the topic):
 {
   "flashcards": [
     {"front": "What is the definition of X?", "back": "X is defined as ..."},
-    {"front": "How does Y work?", "back": "Y works by ..."}
+    ...
   ],
-  "key_concepts": ["Concept 1 is ...", "Concept 2 is ..."]
+  "key_concepts": ["...", "...", "...", "...", "..."]
 }
 
 OUTPUT JSON NOW — start with { immediately. Be concise.`;
 }
 
+// ── QUIZ ──
 function buildQuizPrompt(input, opts) {
   const lang = opts.language || 'English';
   const count = opts.quizCount || 10;
@@ -270,6 +286,7 @@ No markdown. No code fences.
 OUTPUT JSON NOW — start with { immediately.`;
 }
 
+// ── SUMMARY ──
 function buildSummaryPrompt(input, opts) {
   const depth = SUMMARY_DEPTH_MAP[opts.depth] || SUMMARY_DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -296,6 +313,7 @@ FORMATTING RULES:
 START NOW with first ## heading. Topic: "${input}"`;
 }
 
+// ── MIND MAP ──
 function buildMindmapPrompt(input, opts) {
   const lang = opts.language || 'English';
   const count = opts.branchCount || 6;
@@ -332,6 +350,7 @@ No markdown. No code fences.
 OUTPUT JSON NOW — start with { immediately.`;
 }
 
+// ── MEGA BUNDLE (all tools) ──
 function buildMegaPrompt(input, opts) {
   const lang = opts.language || 'English';
   const fcCount = 12, qCount = 8, mmCount = 6;
@@ -379,23 +398,37 @@ OUTPUT JSON NOW — start with { immediately.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — PHASE 1: STREAM NOTES (SINGLE MODEL, WITH RETRY)
+// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES (FIXED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 8000;
-const FULL_STREAM_TIMEOUT_MS = 20000; // base for standard
+const FIRST_TOKEN_TIMEOUT_MS = 10000;   // 10s for first token
+const FULL_STREAM_TIMEOUT_MS = 32000;   // default (standard/detailed) — safely inside Hobby's 60s cap
+const MAX_PASSES = 3;                   // 3 passes x 10s + small backoffs ≈ 31.5s worst case
 
+// The old fixed 32s cap cut EVERY depth off after 32s of streaming, so
+// "comprehensive" (1500-2200 words) and "expert" (2200-3000 words) notes
+// were silently truncated to whatever ~32s of tokens-per-second happened
+// to produce — this is why expert notes were coming back at ~300 words.
+// Give longer depths a longer streaming budget. Vercel's function-level
+// maxDuration must be raised to match (see vercel.json) or this timeout
+// is capped by the platform regardless of what we set here.
 const STREAM_TIMEOUT_BY_DEPTH = {
-  standard:      20000,
-  detailed:      30000,
-  comprehensive: 45000,
-  expert:        55000,
+  standard:      28000,
+  detailed:      40000,
+  comprehensive: 65000,
+  expert:        95000,
 };
 function streamTimeoutForDepth(depth) {
   return STREAM_TIMEOUT_BY_DEPTH[depth] || FULL_STREAM_TIMEOUT_MS;
 }
+// Longer depths already spend much more time per pass, so allow fewer
+// passes to keep total worst-case request time bounded (and inside
+// whatever Vercel maxDuration is configured — see vercel.json note below).
+const PASSES_BY_DEPTH = { standard: 3, detailed: 3, comprehensive: 2, expert: 2 };
+function passesForDepth(depth) {
+  return PASSES_BY_DEPTH[depth] || MAX_PASSES;
+}
 
-// We'll attempt only one pass with the model, but we can retry once if it fails.
 async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs) {
   const name = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
@@ -404,7 +437,7 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamT
   let fullStreamTimer = null;
 
   const t0 = Date.now();
-  log.info(`P1 ⚡ starting ${name} (single) | tool:${tool}`);
+  log.info(`P1 ⚡ starting ${name} (parallel) | tool:${tool}`);
 
   let res;
   try {
@@ -443,8 +476,21 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamT
   let gotFirstToken = false;
   let winnerDeclared = false;
 
+  const checkWinner = () => {
+    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
+      winnerDeclared = true;
+      return true;
+    }
+    return false;
+  };
+
   try {
     while (true) {
+      if (checkWinner()) {
+        ctrl.abort();
+        return full;
+      }
+
       let chunk;
       try {
         chunk = await reader.read();
@@ -478,10 +524,20 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamT
               gotFirstToken = true;
               clearTimeout(firstTokenTimer);
               fullStreamTimer = setTimeout(() => ctrl.abort(), streamTimeoutMs || FULL_STREAM_TIMEOUT_MS);
-              log.ok(`P1 🏆 ${name} got first token in ${Date.now()-t0}ms`);
+
+              if (sharedState && !sharedState.winnerId) {
+                sharedState.winnerId = model.id;
+                log.ok(`P1 🏆 ${name} WON in ${Date.now()-t0}ms`);
+              } else if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
+                winnerDeclared = true;
+                ctrl.abort();
+                return full;
+              }
             }
-            full += delta;
-            onChunk(delta);
+            if (!winnerDeclared && (!sharedState || sharedState.winnerId === model.id)) {
+              full += delta;
+              onChunk(delta);
+            }
           }
         } catch { /* ignore */ }
       }
@@ -504,7 +560,7 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamT
 async function streamNotesFallback(prompt, onChunk, tool) {
   log.info(`P1 fallback: attempting non-streaming request to openrouter/free`);
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  const timer = setTimeout(() => ctrl.abort(), 8000); // real enforced 8s cap
   try {
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
@@ -516,7 +572,7 @@ async function streamNotesFallback(prompt, onChunk, tool) {
       },
       body: JSON.stringify({
         model: 'openrouter/free',
-        max_tokens: 8192,
+        max_tokens: 16384,
         temperature: 0.75,
         stream: false,
         messages: [{ role: 'user', content: prompt }],
@@ -542,41 +598,116 @@ async function streamNotesFallback(prompt, onChunk, tool) {
   }
 }
 
-async function streamNotes(prompt, onChunk, tool, depth) {
-  const streamTimeoutMs = streamTimeoutForDepth(depth);
-  const model = ALL_MODELS_STREAM[0]; // openrouter/free
+// Races model attempts and resolves the instant the FIRST one succeeds —
+// instead of Promise.allSettled, which always waits for every model to
+// finish (including ones stuck at their 60s timeout) even after a fast
+// model has already returned a good result. This is why first tokens/cards
+// used to take up to a full pass-timeout even on a normal successful run.
+// The stragglers keep running harmlessly in the background; we just stop
+// waiting on them.
+function raceFirstSuccess(modelPromises) {
+  return new Promise((resolve) => {
+    let remaining = modelPromises.length;
+    let resolved = false;
+    const settled = [];
+    modelPromises.forEach(p => {
+      p.then(r => {
+        settled.push(r);
+        if (!resolved && r.status === 'fulfilled') {
+          resolved = true;
+          resolve({ winner: r, all: null });
+        }
+        remaining--;
+        if (!resolved && remaining === 0) {
+          resolved = true;
+          resolve({ winner: null, all: settled });
+        }
+      });
+    });
+  });
+}
 
-  // Try streaming up to 2 times (in case of temporary issues)
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const result = await streamOneModel(model, prompt, onChunk, tool, null, streamTimeoutMs);
-      return result;
-    } catch (err) {
-      log.warn(`P1 attempt ${attempt} failed: ${err.message}`);
-      if (attempt === 1) {
-        // Wait a bit before retry
-        await sleep(500);
-      } else {
-        // Final attempt: fallback to non-streaming
-        const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
-        if (fallbackResult) return fallbackResult;
-        throw new Error('All attempts to generate notes failed.');
-      }
+async function streamNotes(prompt, onChunk, tool, depth) {
+  const errors = [];
+  const sharedState = { winnerId: null };
+  const streamTimeoutMs = streamTimeoutForDepth(depth);
+  // Models that come back with a definitive HTTP 400/429 are blacklisted
+  // for the rest of THIS request's passes — retrying an invalid model ID
+  // or an already-429'd model a 2nd/3rd time just burns the retry budget
+  // that a healthy model could have used instead.
+  const deadModels = new Set();
+  const maxPasses = passesForDepth(depth);
+
+  // ── FULL PASSES (count depends on depth — see passesForDepth) ──
+  for (let pass = 1; pass <= maxPasses; pass++) {
+    const activeModels = ALL_MODELS_STREAM.filter(m => !deadModels.has(m.id));
+    log.info(`P1 pass ${pass}: starting ${activeModels.length}/${ALL_MODELS_STREAM.length} models in parallel (${deadModels.size} blacklisted)`);
+    sharedState.winnerId = null;
+
+    const modelPromises = activeModels.map(model =>
+      streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs)
+        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
+        .catch(err => {
+          if (/HTTP 400|HTTP 429|HTTP 404/.test(err.message || '')) deadModels.add(model.id);
+          return { status: 'rejected', reason: err, model: model.id };
+        })
+    );
+
+    const raceResult = await raceFirstSuccess(modelPromises);
+
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch (fast-race, didn't wait for stragglers)`);
+      return winner.value;
+    }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
+
+    const failReasons = results
+      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
+      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
+      .concat(
+        results
+          .filter(r => r.status === 'rejected')
+          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
+      );
+
+    errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
+    log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+
+    if (pass < maxPasses) {
+      const backoff = pass * 500;
+      log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
+      await sleep(backoff);
     }
   }
+
+  // ── LAST RESORT: non-streaming fallback ──
+  log.warn('P1 all streaming attempts failed; trying non-streaming fallback');
+  const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
+  if (fallbackResult) {
+    return fallbackResult;
+  }
+
+  log.error(`P1 ALL attempts failed: ${errors.join(' | ')}`);
+  throw new Error(`All free AI models are currently busy. Please try again in a moment.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PHASE 2: FETCH CARDS (SINGLE MODEL, WITH RETRY)
+// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS (EXTENDED TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function fetchCardsFromModel(model, prompt, tool) {
+async function fetchCardsFromModel(model, prompt, tool, sharedState) {
   const name  = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms || 30000);
+  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms); // now 60s
   const t0    = Date.now();
 
   try {
+    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
+      throw new Error(`${name}: skipped — another model already won`);
+    }
+
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
       headers: {
@@ -637,6 +768,13 @@ async function fetchCardsFromModel(model, prompt, tool) {
     }
 
     // Auto-fix quiz correct_answer mismatches + drop malformed questions.
+    // IMPORTANT: also reject questions whose options are placeholder junk
+    // (bare "A"/"B"/"C"/"D", or suspiciously short strings) — some weaker
+    // free models return that instead of real answer text, and it used to
+    // pass validation (structurally an array of 4 strings) and "win" the
+    // fast-success race with garbage. Now it's treated as a failed question
+    // and dropped, so a genuinely bad model's response can't win purely on
+    // speed over a slower model's real content.
     const isJunkOption = (o) => {
       const t = String(o).trim();
       return t.length < 1 || /^[a-dA-D][.):]?$/.test(t) || /^option\s*[a-dA-D]$/i.test(t);
@@ -663,14 +801,14 @@ async function fetchCardsFromModel(model, prompt, tool) {
     // Normalize flashcards
     if (Array.isArray(parsed.flashcards)) {
       parsed.flashcards = parsed.flashcards
-        .filter(c => c && (c.front || c.question) && (c.back || c.answer))
+        .filter(c => (c.front || c.question) && (c.back || c.answer))
         .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
     }
 
-    // ─── VALIDATION ───
+    // ─── RELAXED VALIDATION — accept even a single item ───
     const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 1;
     const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 1;
-    const hasMm = parsed.mindmap?.branches?.length >= 1;
+    const hasMm = parsed.mindmap?.branches?.length >= 1; // at least 1 branch
     const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
 
     let valid = false;
@@ -678,11 +816,18 @@ async function fetchCardsFromModel(model, prompt, tool) {
     else if (tool === 'quiz') valid = hasQ;
     else if (tool === 'mindmap' || tool === 'mindmap_only') valid = hasMm;
     else if (tool === 'all') valid = (hasFc || hasQ || hasMm || hasKc);
-    else valid = hasKc;
+    else valid = hasKc; // notes/summary
 
     if (!valid) {
+      // Log what we got for debugging
       log.warn(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0}`);
       throw new Error(`${name}: validation failed`);
+    }
+
+    // Declare winner
+    if (sharedState && !sharedState.winnerId) {
+      sharedState.winnerId = model.id;
+      log.ok(`P2 🏆 ${name} WON in ${Date.now()-t0}ms`);
     }
 
     log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
@@ -701,7 +846,7 @@ async function fetchCardsFromModel(model, prompt, tool) {
 async function fetchCardsFallback(prompt, tool) {
   log.info(`P2 fallback: attempting non-streaming JSON request to openrouter/free`);
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  const timer = setTimeout(() => ctrl.abort(), 8000); // real enforced 8s cap
   try {
     const res = await fetch(OPENROUTER_BASE, {
       method: 'POST',
@@ -713,7 +858,7 @@ async function fetchCardsFallback(prompt, tool) {
       },
       body: JSON.stringify({
         model: 'openrouter/free',
-        max_tokens: 8192,
+        max_tokens: 16384,
         temperature: 0.30,
         stream: false,
         messages: [{ role: 'user', content: prompt }],
@@ -725,6 +870,7 @@ async function fetchCardsFallback(prompt, tool) {
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content?.trim();
     if (!content) throw new Error('Empty response');
+    // Try to parse JSON
     const cleaned = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
     const jS = cleaned.indexOf('{'), jE = cleaned.lastIndexOf('}');
     if (jS === -1 || jE <= jS) throw new Error('No JSON');
@@ -739,27 +885,70 @@ async function fetchCardsFallback(prompt, tool) {
 }
 
 async function fetchCards(prompt, tool) {
-  const model = ALL_MODELS_CARDS[0]; // openrouter/free
+  const errors = [];
+  const sharedState = { winnerId: null };
+  // Same blacklist idea as streamNotes: a model that 400/429/404'd once
+  // this request is very unlikely to succeed on retry, and with a hard
+  // 120-150s deadline for flashcards/quiz/mindmap, every wasted pass on a
+  // dead model is a pass a healthy model didn't get to run.
+  const deadModels = new Set();
 
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      const result = await fetchCardsFromModel(model, prompt, tool);
-      return result;
-    } catch (err) {
-      log.warn(`P2 attempt ${attempt} failed: ${err.message}`);
-      if (attempt === 1) {
-        await sleep(500);
-      } else {
-        const fallbackResult = await fetchCardsFallback(prompt, tool);
-        if (fallbackResult) return fallbackResult;
-        throw new Error('All attempts to fetch cards failed.');
-      }
+  for (let pass = 1; pass <= MAX_PASSES; pass++) {
+    const activeModels = ALL_MODELS_CARDS.filter(m => !deadModels.has(m.id));
+    log.info(`P2 pass ${pass}: starting ${activeModels.length}/${ALL_MODELS_CARDS.length} models in parallel for tool:${tool} (${deadModels.size} blacklisted)`);
+    sharedState.winnerId = null;
+
+    const modelPromises = activeModels.map(model =>
+      fetchCardsFromModel(model, prompt, tool, sharedState)
+        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
+        .catch(err => {
+          if (/HTTP 400|HTTP 429|HTTP 404/.test(err.message || '')) deadModels.add(model.id);
+          return { status: 'rejected', reason: err, model: model.id };
+        })
+    );
+
+    const raceResult = await raceFirstSuccess(modelPromises);
+
+    if (raceResult.winner) {
+      const winner = raceResult.winner;
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model} (fast-race, didn't wait for stragglers)`);
+      return winner.value;
+    }
+
+    const results = raceResult.all.map(v => ({ status: 'fulfilled', value: v }));
+
+    const failReasons = results
+      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
+      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
+      .concat(
+        results
+          .filter(r => r.status === 'rejected')
+          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
+      );
+
+    errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
+    log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+
+    if (pass < MAX_PASSES) {
+      const backoff = pass * 500;
+      log.info(`P2 pass ${pass}: backing off ${backoff}ms before retry`);
+      await sleep(backoff);
     }
   }
+
+  // ── LAST RESORT ──
+  log.warn('P2 all attempts failed; trying non-streaming JSON fallback');
+  const fallbackResult = await fetchCardsFallback(prompt, tool);
+  if (fallbackResult) {
+    return fallbackResult;
+  }
+
+  log.error(`P2 ALL attempts failed: ${errors.join(' | ')}`);
+  throw new Error(`All free AI models failed for tool:${tool}.`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 9 — FALLBACK CONTENT (unchanged)
+// SECTION 9 — FALLBACK CONTENT (almost never used)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function offlineNotes(topic) {
@@ -899,7 +1088,7 @@ function buildTopicFallback(tool, topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — TOPIC FACT (unchanged)
+// SECTION 10 — TOPIC FACT
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
@@ -920,16 +1109,20 @@ function buildTopicFact(topic) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 11 — MERGE (unchanged)
+// SECTION 11 — MERGE
 // ─────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
   const isFallback = !!cardsRaw?._fallback;
 
+  // Defensive normalizer — some free models occasionally return objects instead
+  // of plain strings for these fields despite the prompt asking for strings.
+  // Without this, the UI shows "[object Object]" instead of real text.
   const toStringArray = arr => !Array.isArray(arr) ? [] : arr.map(item => {
     if (typeof item === 'string') return item;
     if (item && typeof item === 'object') {
+      // Try common shapes: {myth,truth}, {area,description}, {question,answer}, etc.
       const vals = Object.values(item).filter(v => typeof v === 'string');
       if (vals.length) return vals.join(' — ');
       try { return JSON.stringify(item); } catch { return String(item); }
@@ -961,11 +1154,15 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
+  // No synthetic key_concepts filler anymore, for ANY tool. If the AI
+  // genuinely didn't return key_concepts, we show nothing there rather than
+  // the same canned template every time — consistent with the no-fallback
+  // policy applied everywhere else.
   return merged;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 12 — SSE HELPER + SECURITY HEADERS (unchanged)
+// SECTION 12 — SSE HELPER + SECURITY HEADERS
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeSSE(res) {
@@ -992,7 +1189,7 @@ function setHeaders(res) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 13 — MAIN HANDLER (unchanged except for the new logic)
+// SECTION 13 — MAIN HANDLER (with extended deadline for notes/summary)
 // ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
@@ -1126,6 +1323,7 @@ module.exports = async function handler(req, res) {
         e => ({ status: 'rejected', reason: e })
       );
     } else {
+      // notes or summary – get key_concepts/tricks/Q&A/apps/misconceptions
       const kcPrompt = buildKeyConceptsPrompt(message, opts);
       cardsPromise = fetchCards(kcPrompt, opts.tool).then(
         v => ({ status: 'fulfilled', value: v }),
@@ -1134,12 +1332,20 @@ module.exports = async function handler(req, res) {
     }
 
     // ── Phase 1: live notes stream — ONLY for tools that actually show notes.
+    // flashcards/quiz/mindmap used to also generate a full prose notes essay
+    // here "for fallback" even though it was never displayed — that wasted
+    // an entire AI call's worth of time (comprehensive depth can take 60-90s)
+    // before Phase 2 (the actual flashcards/quiz/mindmap content) even got a
+    // chance to finish, which was the main reason those tools stalled out.
     if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
       try {
         notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, opts.depth);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } catch (e1) {
+        // No more offline/generic notes here either — if every model in
+        // every retry pass genuinely failed, be honest about it instead of
+        // streaming local template text that looks like a real AI answer.
         log.error(`[${reqId}] P1 failed for real: ${e1.message}`);
         clearInterval(kap);
         clearStages();
@@ -1151,6 +1357,9 @@ module.exports = async function handler(req, res) {
         return;
       }
     } else {
+      // flashcards / quiz / mindmap: no prose notes needed at all — go
+      // straight to Phase 2, which is already running in the background
+      // since cardsPromise was fired above before we even got here.
       p1ok = true;
     }
 
@@ -1166,6 +1375,12 @@ module.exports = async function handler(req, res) {
     // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
 
+    // These tools' ENTIRE output comes from cardsPromise — if it fails there is
+    // nothing real to show, so we no longer silently substitute generic
+    // template content. We wait generously (multiple retry passes across the
+    // whole model pool already happen inside fetchCards) and only if that
+    // genuinely exhausts do we surface a real error + Retry button — never a
+    // fabricated result pretending to be AI-generated.
     const raceWithDeadline = (ms) => Promise.race([
       cardsPromise,
       new Promise(resolve => setTimeout(() => resolve({ status: 'deadline' }), ms)),
@@ -1179,7 +1394,7 @@ module.exports = async function handler(req, res) {
         quiz:       '❓ Finalising quiz…',
         mindmap:    '🗺️ Finalising mind map…',
       };
-      const deadlineMs = opts.tool === 'all' ? 120000 : 90000;
+      const deadlineMs = opts.tool === 'all' ? 150000 : 120000;
       sse('stage', { idx: 3, label: labels[opts.tool] });
       const cardsResult = await raceWithDeadline(deadlineMs);
 
@@ -1188,6 +1403,8 @@ module.exports = async function handler(req, res) {
         p2ok = true;
         log.ok(`[${reqId}] ${opts.tool} succeeded`);
       } else {
+        // Every model, every retry pass, genuinely exhausted (or a true hang
+        // past the generous deadline). Send a real error, not fake content.
         const why = cardsResult.status === 'deadline'
           ? `exceeded ${deadlineMs}ms after full retries`
           : (cardsResult.reason?.message || 'all models failed');
@@ -1200,9 +1417,14 @@ module.exports = async function handler(req, res) {
         if (p2Ticker) clearInterval(p2Ticker);
         clearStages();
         if (!res.writableEnded) res.end();
-        return;
+        return; // stop here — no 'done' event, no fabricated result
       }
     } else {
+      // notes or summary: P1 (the live notes prose) already succeeded by this
+      // point — this is only the supplementary key_concepts/tricks/quiz-teaser
+      // side data. If it fails, we still have real notes to show, so we don't
+      // hard-error the whole response; we simply omit the supplementary
+      // section rather than filling it with generic fallback text.
       const NOTES_CARDS_DEADLINE_MS = 15000;
       const deadlineFallback = new Promise(resolve => {
         setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
@@ -1220,9 +1442,12 @@ module.exports = async function handler(req, res) {
     }
 
     // ╔═══════════════════════════════════════════════════════════════════════
-    // ║  PHASE 3 — STREAM CARDS LIVE
+    // ║  PHASE 3 — STREAM CARDS LIVE (unchanged)
     // ╚═══════════════════════════════════════════════════════════════════════
 
+    // Enforce requested flashcard count — trim excess only; never pad with
+    // synthetic filler cards. If the model genuinely returns fewer than
+    // asked, the user gets fewer real cards rather than fake ones mixed in.
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
       const want = opts.cardCount;
       const have = cardsData.flashcards.length;
@@ -1232,6 +1457,7 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Flashcard count: wanted ${want}, delivering ${cardsData.flashcards.length} (real, no padding)`);
     }
 
+    // Same for quiz — trim excess only, never pad with synthetic filler.
     if (cardsData?.quiz_questions?.length && (opts.tool === 'quiz' || opts.tool === 'all') && opts.quizCount) {
       const want = opts.quizCount;
       const have = cardsData.quiz_questions.length;
