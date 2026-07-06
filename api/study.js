@@ -43,11 +43,17 @@ const WORKING_MODELS = [
   { id: 'minimax/minimax-m3:free',                   max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 
   // 🥇 Tier 2: Premium Coding Agents
-  { id: 'glm/glm-4.7:free',                          max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'openai/gpt-oss-120b:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // NOTE: 'glm/glm-4.7:free' removed — OpenRouter returns HTTP 400
+  // "not a valid model ID" for it (a permanently broken slug, not a
+  // transient rate-limit), so it wasted a retry slot every single pass.
   { id: 'nvidia/nemotron-3-ultra:free',              max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-  { id: 'poolside/laguna-m.1:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
   { id: 'deepseek/deepseek-v4-flash:free',           max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  // gpt-oss-120b and laguna-m.1 are frequently 429 rate-limited upstream
+  // (per logs). Kept, but demoted lower in the list — with the new
+  // per-request bad-model blacklist below, a 429 on pass 1 now takes them
+  // out of passes 2/3 entirely instead of burning the retry budget again.
+  { id: 'openai/gpt-oss-120b:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
+  { id: 'poolside/laguna-m.1:free',                  max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
   { id: 'qwen/qwen3-7b:free',                        max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 
   // 🥈 Tier 3: Strong Open-Weight Models
@@ -439,10 +445,34 @@ OUTPUT JSON NOW — start with { immediately.`;
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FIRST_TOKEN_TIMEOUT_MS = 10000;   // 10s for first token
-const FULL_STREAM_TIMEOUT_MS = 32000;   // 32s total — safely inside Hobby's 60s cap
+const FULL_STREAM_TIMEOUT_MS = 32000;   // default (standard/detailed) — safely inside Hobby's 60s cap
 const MAX_PASSES = 3;                   // 3 passes x 10s + small backoffs ≈ 31.5s worst case
 
-async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
+// The old fixed 32s cap cut EVERY depth off after 32s of streaming, so
+// "comprehensive" (1500-2200 words) and "expert" (2200-3000 words) notes
+// were silently truncated to whatever ~32s of tokens-per-second happened
+// to produce — this is why expert notes were coming back at ~300 words.
+// Give longer depths a longer streaming budget. Vercel's function-level
+// maxDuration must be raised to match (see vercel.json) or this timeout
+// is capped by the platform regardless of what we set here.
+const STREAM_TIMEOUT_BY_DEPTH = {
+  standard:      28000,
+  detailed:      40000,
+  comprehensive: 65000,
+  expert:        95000,
+};
+function streamTimeoutForDepth(depth) {
+  return STREAM_TIMEOUT_BY_DEPTH[depth] || FULL_STREAM_TIMEOUT_MS;
+}
+// Longer depths already spend much more time per pass, so allow fewer
+// passes to keep total worst-case request time bounded (and inside
+// whatever Vercel maxDuration is configured — see vercel.json note below).
+const PASSES_BY_DEPTH = { standard: 3, detailed: 3, comprehensive: 2, expert: 2 };
+function passesForDepth(depth) {
+  return PASSES_BY_DEPTH[depth] || MAX_PASSES;
+}
+
+async function streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs) {
   const name = model.id.split('/').pop().replace(':free', '');
   const ctrl  = new AbortController();
 
@@ -536,7 +566,7 @@ async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
             if (!gotFirstToken) {
               gotFirstToken = true;
               clearTimeout(firstTokenTimer);
-              fullStreamTimer = setTimeout(() => ctrl.abort(), FULL_STREAM_TIMEOUT_MS);
+              fullStreamTimer = setTimeout(() => ctrl.abort(), streamTimeoutMs || FULL_STREAM_TIMEOUT_MS);
 
               if (sharedState && !sharedState.winnerId) {
                 sharedState.winnerId = model.id;
@@ -640,19 +670,30 @@ function raceFirstSuccess(modelPromises) {
   });
 }
 
-async function streamNotes(prompt, onChunk, tool) {
+async function streamNotes(prompt, onChunk, tool, depth) {
   const errors = [];
   const sharedState = { winnerId: null };
+  const streamTimeoutMs = streamTimeoutForDepth(depth);
+  // Models that come back with a definitive HTTP 400/429 are blacklisted
+  // for the rest of THIS request's passes — retrying an invalid model ID
+  // or an already-429'd model a 2nd/3rd time just burns the retry budget
+  // that a healthy model could have used instead.
+  const deadModels = new Set();
+  const maxPasses = passesForDepth(depth);
 
-  // ── 4 FULL PASSES ──
-  for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P1 pass ${pass}: starting ALL ${ALL_MODELS_STREAM.length} models in parallel`);
+  // ── FULL PASSES (count depends on depth — see passesForDepth) ──
+  for (let pass = 1; pass <= maxPasses; pass++) {
+    const activeModels = ALL_MODELS_STREAM.filter(m => !deadModels.has(m.id));
+    log.info(`P1 pass ${pass}: starting ${activeModels.length}/${ALL_MODELS_STREAM.length} models in parallel (${deadModels.size} blacklisted)`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_STREAM.map(model =>
-      streamOneModel(model, prompt, onChunk, tool, sharedState)
+    const modelPromises = activeModels.map(model =>
+      streamOneModel(model, prompt, onChunk, tool, sharedState, streamTimeoutMs)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
-        .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
+        .catch(err => {
+          if (/HTTP 400|HTTP 429|HTTP 404/.test(err.message || '')) deadModels.add(model.id);
+          return { status: 'rejected', reason: err, model: model.id };
+        })
     );
 
     const raceResult = await raceFirstSuccess(modelPromises);
@@ -677,7 +718,7 @@ async function streamNotes(prompt, onChunk, tool) {
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
     log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
 
-    if (pass < MAX_PASSES) {
+    if (pass < maxPasses) {
       const backoff = pass * 500;
       log.info(`P1 pass ${pass}: backing off ${backoff}ms before retry`);
       await sleep(backoff);
@@ -889,15 +930,24 @@ async function fetchCardsFallback(prompt, tool) {
 async function fetchCards(prompt, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
+  // Same blacklist idea as streamNotes: a model that 400/429/404'd once
+  // this request is very unlikely to succeed on retry, and with a hard
+  // 120-150s deadline for flashcards/quiz/mindmap, every wasted pass on a
+  // dead model is a pass a healthy model didn't get to run.
+  const deadModels = new Set();
 
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P2 pass ${pass}: starting ALL ${ALL_MODELS_CARDS.length} models in parallel for tool:${tool}`);
+    const activeModels = ALL_MODELS_CARDS.filter(m => !deadModels.has(m.id));
+    log.info(`P2 pass ${pass}: starting ${activeModels.length}/${ALL_MODELS_CARDS.length} models in parallel for tool:${tool} (${deadModels.size} blacklisted)`);
     sharedState.winnerId = null;
 
-    const modelPromises = ALL_MODELS_CARDS.map(model =>
+    const modelPromises = activeModels.map(model =>
       fetchCardsFromModel(model, prompt, tool, sharedState)
         .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
-        .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
+        .catch(err => {
+          if (/HTTP 400|HTTP 429|HTTP 404/.test(err.message || '')) deadModels.add(model.id);
+          return { status: 'rejected', reason: err, model: model.id };
+        })
     );
 
     const raceResult = await raceFirstSuccess(modelPromises);
@@ -1332,7 +1382,7 @@ module.exports = async function handler(req, res) {
     // chance to finish, which was the main reason those tools stalled out.
     if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
       try {
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, opts.depth);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } catch (e1) {
