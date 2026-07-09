@@ -59,16 +59,16 @@ const TOOL_CONFIG = {
     description: 'Comprehensive structured study notes with introduction, concepts, mechanisms, examples, and summary.',
   },
   flashcards: {
-    icon: 'fa-layer-group', label: 'Create Flashcards', sfpName: 'Flashcards', color: '#bf00ff',
-    placeholder: 'Enter a topic to create 15–20 interactive flashcards with spaced repetition…',
-    sfpLabel: 'Building your interactive flashcard deck (15–20 cards)…',
-    description: 'Create 15–20 interactive 3D flip flashcards perfect for spaced repetition study.',
+    // ...
+    placeholder: 'Enter a topic to create 10–20 interactive flashcards with spaced repetition…',
+    sfpLabel: 'Building your interactive flashcard deck (10–20 cards)…',
+    description: 'Create 10–20 interactive 3D flip flashcards perfect for spaced repetition study.',
   },
   quiz: {
-    icon: 'fa-question-circle', label: 'Build Quiz', sfpName: 'Quiz', color: '#00ff88',
-    placeholder: 'Enter a topic to generate 10–12 practice questions with detailed explanations…',
-    sfpLabel: 'Generating your 10–12 question practice quiz…',
-    description: 'Generate 10–12 self-scoring multiple-choice questions with detailed explanations.',
+    // ...
+    placeholder: 'Enter a topic to generate 5–20 practice questions with detailed explanations…',
+    sfpLabel: 'Generating your 5–20 question practice quiz…',
+    description: 'Generate 5–20 self-scoring multiple-choice questions with detailed explanations.',
   },
   summary: {
     icon: 'fa-align-left', label: 'Summarise', sfpName: 'Summary', color: '#ffae00',
@@ -1252,53 +1252,68 @@ Examples:
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
-  async _sendDirect(text, lang, depth, style, tool, counts) {
-    if (this.generating) return;
-    this.generating    = true;
-    this.streamBuffer  = '';
-    this.tool          = tool || 'notes';
+  // ─── In TOOL_CONFIG update flashcards and quiz max ───
 
-    // Reset live accumulators
-    this._liveCards     = [];
-    this._liveQuestions = [];
-    this._liveBranches  = [];
-    this._liveMMCentral = '';
-    this._liveMMConns   = [];
+// ─── Updated _sendDirect in app.js ───
+async _sendDirect(text, lang, depth, style, tool, counts) {
+  if (this.generating) return;
+  this.generating    = true;
+  this.streamBuffer  = '';
+  this.tool          = tool || 'notes';
 
-    this._showToolbar(false);
-    this._showStreamOverlay(text, this.tool);
-    this._startStages();
-    const t0 = Date.now();
+  this._liveCards     = [];
+  this._liveQuestions = [];
+  this._liveBranches  = [];
+  this._liveMMCentral = '';
+  this._liveMMConns   = [];
 
-    try {
-      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool, ...(counts || {}) });
-      this.currentData = data;
-      this._hideStreamOverlay();
-      this._renderResult(data);
-      this.totalWords += this._wordCount(data.ultra_long_notes || '');
-      localStorage.setItem('sv_total_words', String(this.totalWords));
-      this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now(), dur: Date.now() - t0 });
-      this._updateAllStats();
-      this._showToolbar(true);
-      this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.tool]?.sfpName} generated!`);
-      setTimeout(() => { if (this.el.outArea) this.el.outArea.scrollTop = 0; }, 200);
-    } catch (err) {
-      this._hideStreamOverlay();
-      if (err.name === 'AbortError') {
-        this._toast('info', 'fa-stop-circle', 'Generation cancelled.');
-        this._showState('empty');
-        this._showToolbar(false);
-      } else {
-        const msg = this._friendlyError(err.message);
-        this._showState('error', msg);
-        this._toast('error', 'fa-exclamation-circle', msg);
-        this._showToolbar(false);
-      }
-    } finally {
-      this.generating = false;
-      this._stopStages();
+  this._showToolbar(false);
+  this._showStreamOverlay(text, this.tool);
+  this._startStages();
+  const t0 = Date.now();
+
+  try {
+    // Enforce max 20 for flashcards and quiz
+    const cardCount = Math.min(counts?.cardCount || 15, 20);
+    const quizCount = Math.min(counts?.quizCount || 10, 20);
+
+    const data = await this._callAPI(text, {
+      depth,
+      language: lang,
+      style,
+      tool: this.tool,
+      cardCount,
+      quizCount,
+      quizType: counts?.quizType || 'mixed',
+      branchCount: counts?.branchCount || 6,
+    });
+    this.currentData = data;
+    this._hideStreamOverlay();
+    this._renderResult(data);
+    this.totalWords += this._wordCount(data.ultra_long_notes || '');
+    localStorage.setItem('sv_total_words', String(this.totalWords));
+    this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now(), dur: Date.now() - t0 });
+    this._updateAllStats();
+    this._showToolbar(true);
+    this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.tool]?.sfpName} generated!`);
+    setTimeout(() => { if (this.el.outArea) this.el.outArea.scrollTop = 0; }, 200);
+  } catch (err) {
+    this._hideStreamOverlay();
+    if (err.name === 'AbortError') {
+      this._toast('info', 'fa-stop-circle', 'Generation cancelled.');
+      this._showState('empty');
+      this._showToolbar(false);
+    } else {
+      const msg = this._friendlyError(err.message);
+      this._showState('error', msg);
+      this._toast('error', 'fa-exclamation-circle', msg);
+      this._showToolbar(false);
     }
+  } finally {
+    this.generating = false;
+    this._stopStages();
   }
+}
 
   _friendlyError(msg) {
     if (!msg) return 'Savoiré AI study tool is momentarily unavailable. Please try again.';
