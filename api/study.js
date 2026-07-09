@@ -34,31 +34,54 @@ const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 // SECTION 2 — MODEL LIST (MAXIMUM TOKENS, MASSIVE TIMEOUTS)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Only the most reliable free models (in order of preference)
+// ⚠️ FIXED: the previous list used OpenRouter model IDs that are DEAD as of
+// July 2026 — google/gemini-2.0-flash-exp:free, deepseek/deepseek-chat-v3-0324:free,
+// qwen/qwen2.5-72b-instruct:free, mistralai/mistral-7b-instruct-v0.3:free,
+// microsoft/phi-3-mini-128k-instruct:free, and z-ai/glm-4.5-air:free have ALL
+// been removed from OpenRouter's free tier (Gemini and Mistral currently have
+// ZERO free models on OpenRouter; the others were rotated out). Every one of
+// those calls was failing with a 404 "model not found", which is why nothing
+// ever produced live output or a final result. Replaced below with model IDs
+// confirmed LIVE on https://openrouter.ai/api/v1/models (checked directly,
+// July 2026). 'openrouter/free' is OpenRouter's own auto-router (always valid)
+// and is kept first for speed/reliability.
+
 const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'openrouter/free',                                    max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'google/gemma-4-31b-it:free',                         max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'poolside/laguna-m.1:free',                           max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
 ];
 
 const ALL_MODELS_STREAM = [
   ...RELIABLE_MODELS_STREAM,
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'nex-agi/nex-n2-pro:free',                            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'google/gemma-4-26b-a4b-it:free',                     max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'poolside/laguna-xs.2:free',                          max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'cohere/north-mini-code:free',                        max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
+  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
 ];
 
 const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'google/gemini-2.0-flash-exp:free',          max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'deepseek/deepseek-chat-v3-0324:free',       max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'meta-llama/llama-3.3-70b-instruct:free',    max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'qwen/qwen2.5-72b-instruct:free',            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'mistralai/mistral-7b-instruct-v0.3:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'microsoft/phi-3-mini-128k-instruct:free',   max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'z-ai/glm-4.5-air:free',                     max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'openrouter/free',                                    max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'google/gemma-4-31b-it:free',                         max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'poolside/laguna-m.1:free',                           max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'nex-agi/nex-n2-pro:free',                            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'google/gemma-4-26b-a4b-it:free',                     max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'poolside/laguna-xs.2:free',                          max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'cohere/north-mini-code:free',                        max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
+  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
+];
+
+// ── Hugging Face free Inference Providers router — absolute last resort ──
+// Free, OpenAI-compatible chat endpoint. Requires HUGGINGFACE_API_KEY env var
+// (a free HF token from https://huggingface.co/settings/tokens — no credit card).
+// This only gets used if EVERY OpenRouter model above fails across ALL passes,
+// so it costs nothing on the vast majority of requests.
+const HF_ROUTER_BASE = 'https://router.huggingface.co/v1/chat/completions';
+const HF_FALLBACK_MODELS = [
+  'meta-llama/Llama-3.1-8B-Instruct:featherless-ai',
+  'Qwen/Qwen2.5-7B-Instruct:together',
+  'mistralai/Mistral-7B-Instruct-v0.3:together',
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -570,6 +593,49 @@ async function streamNotesFallback(prompt, onChunk, tool) {
   }
 }
 
+// ── ABSOLUTE last resort: free Hugging Face router (only if OpenRouter fully fails) ──
+async function streamNotesFromHuggingFace(prompt, onChunk) {
+  if (!process.env.HUGGINGFACE_API_KEY) {
+    log.warn('P1 HF fallback: HUGGINGFACE_API_KEY not set — skipping HF tier');
+    return null;
+  }
+  for (const model of HF_FALLBACK_MODELS) {
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 60000);
+    try {
+      log.info(`P1 HF fallback: trying ${model}`);
+      const res = await fetch(HF_ROUTER_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model, max_tokens: 4096, temperature: 0.75, stream: false,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) { log.warn(`P1 HF ${model}: HTTP ${res.status}`); continue; }
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content?.trim();
+      if (!content || content.length < 80) { log.warn(`P1 HF ${model}: empty/short`); continue; }
+      const chunkSize = 300;
+      for (let i = 0; i < content.length; i += chunkSize) {
+        onChunk(content.slice(i, i + chunkSize));
+        await sleep(5);
+      }
+      log.ok(`P1 HF fallback: ${model} returned ${content.length}ch`);
+      return content;
+    } catch (err) {
+      clearTimeout(timer);
+      log.warn(`P1 HF ${model} failed: ${err.message}`);
+    }
+  }
+  return null;
+}
+
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
@@ -622,11 +688,18 @@ async function streamNotes(prompt, onChunk, tool) {
     }
   }
 
-  // ── LAST RESORT: non-streaming fallback ──
+  // ── LAST RESORT: non-streaming OpenRouter fallback ──
   log.warn('P1 all streaming attempts failed; trying non-streaming fallback');
   const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
   if (fallbackResult) {
     return fallbackResult;
+  }
+
+  // ── ABSOLUTE LAST RESORT: free Hugging Face router ──
+  log.warn('P1 OpenRouter fully exhausted; trying free Hugging Face router');
+  const hfResult = await streamNotesFromHuggingFace(prompt, onChunk);
+  if (hfResult) {
+    return hfResult;
   }
 
   log.error(`P1 ALL attempts failed: ${errors.join(' | ')}`);
@@ -810,6 +883,48 @@ async function fetchCardsFallback(prompt, tool) {
   }
 }
 
+// ── ABSOLUTE last resort: free Hugging Face router for JSON cards ──
+async function fetchCardsFromHuggingFace(prompt, tool) {
+  if (!process.env.HUGGINGFACE_API_KEY) {
+    log.warn('P2 HF fallback: HUGGINGFACE_API_KEY not set — skipping HF tier');
+    return null;
+  }
+  for (const model of HF_FALLBACK_MODELS) {
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 60000);
+    try {
+      log.info(`P2 HF fallback: trying ${model} for tool:${tool}`);
+      const res = await fetch(HF_ROUTER_BASE, {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model, max_tokens: 8192, temperature: 0.30, stream: false,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) { log.warn(`P2 HF ${model}: HTTP ${res.status}`); continue; }
+      const data = await res.json();
+      let content = data?.choices?.[0]?.message?.content?.trim();
+      if (!content) { log.warn(`P2 HF ${model}: empty`); continue; }
+      content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+      const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+      if (jS === -1 || jE <= jS) { log.warn(`P2 HF ${model}: no JSON object`); continue; }
+      const parsed = JSON.parse(content.slice(jS, jE + 1).replace(/,(\s*[}\]])/g, '$1'));
+      log.ok(`P2 HF fallback: ${model} returned JSON for tool:${tool}`);
+      return parsed;
+    } catch (err) {
+      clearTimeout(timer);
+      log.warn(`P2 HF ${model} failed: ${err.message}`);
+    }
+  }
+  return null;
+}
+
 async function fetchCards(prompt, tool) {
   const errors = [];
   const sharedState = { winnerId: null };
@@ -865,6 +980,13 @@ async function fetchCards(prompt, tool) {
   const fallbackResult = await fetchCardsFallback(prompt, tool);
   if (fallbackResult) {
     return fallbackResult;
+  }
+
+  // ── ABSOLUTE LAST RESORT: free Hugging Face router ──
+  log.warn('P2 OpenRouter fully exhausted; trying free Hugging Face router');
+  const hfResult = await fetchCardsFromHuggingFace(prompt, tool);
+  if (hfResult) {
+    return hfResult;
   }
 
   log.error(`P2 ALL attempts failed: ${errors.join(' | ')}`);
@@ -1137,9 +1259,12 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
+  if (!process.env.OPENROUTER_API_KEY && !process.env.HUGGINGFACE_API_KEY) {
+    log.error('[FATAL] Neither OPENROUTER_API_KEY nor HUGGINGFACE_API_KEY is set in environment variables!');
+    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — no free AI provider key found. Set OPENROUTER_API_KEY and/or HUGGINGFACE_API_KEY (both are free). Contact the administrator.' });
+  }
   if (!process.env.OPENROUTER_API_KEY) {
-    log.error('[FATAL] OPENROUTER_API_KEY not set in environment variables!');
-    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — OPENROUTER_API_KEY missing. Contact the administrator.' });
+    log.warn('[CONFIG] OPENROUTER_API_KEY not set — running in Hugging Face-only mode');
   }
 
   const body       = req.body || {};
