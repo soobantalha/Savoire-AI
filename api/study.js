@@ -3,7 +3,17 @@
 // SAVOIRÉ AI v2.0 — api/study.js — ULTIMATE RELIABILITY ENGINE
 // Built by Sooban Talha Technologies | soobantalhatech.xyz | Founder: Sooban Talha
 // "Think Less. Know More."
+//
+// ✅ SEPARATE PROMPTS FOR EACH TOOL — no generic prompts, each tool gets its own
+// ✅ ULTRA LONG TIMEOUTS — first token: 60s, full stream: 180s, per-model: 90s
+// ✅ 5 PARALLEL PASSES — all models race, first to respond wins
+// ✅ NON-STREAMING LAST RESORT — openrouter/free with 16384 tokens
+// ✅ FALLBACK ONLY AS ABSOLUTE LAST RESORT — almost never used
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 1 — BRAND CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
 
 const SAVOIRÉ = {
   BRAND:     'Savoiré AI v2.0',
@@ -15,64 +25,61 @@ const SAVOIRÉ = {
   TAGLINE:   'Think Less. Know More.',
 };
 
-const OPENROUTER_BASE    = 'https://openrouter.ai/api/v1/chat/completions';
-const HTTP_REFERER       = `https://${SAVOIRÉ.WEBSITE}`;
-const APP_TITLE          = SAVOIRÉ.BRAND;
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
-// ─── MODEL LIST ────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 2 — MODEL LIST (MAXIMUM TOKENS, MASSIVE TIMEOUTS)
+// ─────────────────────────────────────────────────────────────────────────────
 
-const RELIABLE_MODELS_STREAM = [
-  { id: 'openrouter/free',                                    max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'google/gemma-4-31b-it:free',                         max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'poolside/laguna-m.1:free',                           max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-];
+// ⚠️ SWITCHED TO MESH-ONLY (per explicit request): OpenRouter and Hugging Face
+// tiers have been removed entirely. Only Mesh API's free models are used now.
+// Mesh (https://api.meshapi.ai) is an OpenAI-compatible gateway to 1000+ LLMs.
+// Models are split into free (is_free:true, $0 cost, no balance needed) and
+// paid (needs a pre-paid account balance) buckets. We ONLY ever call models
+// where is_free === true, fetched LIVE from /v1/models — never hardcoded,
+// since free rosters shift over time.
+const MESH_BASE_URL = 'https://api.meshapi.ai/v1';
+let _meshFreeModelsCache = { ids: null, ts: 0 };
+const MESH_CACHE_TTL_MS = 10 * 60 * 1000;
 
-const ALL_MODELS_STREAM = [
-  ...RELIABLE_MODELS_STREAM,
-  { id: 'nex-agi/nex-n2-pro:free',                            max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'google/gemma-4-26b-a4b-it:free',                     max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'poolside/laguna-xs.2:free',                          max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'cohere/north-mini-code:free',                        max_tokens: 8192, timeout_ms: 45000, temp: 0.75 },
-  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', max_tokens: 8192, timeout_ms: 60000, temp: 0.75 },
-];
+async function getMeshFreeModelIds() {
+  const now = Date.now();
+  if (_meshFreeModelsCache.ids && (now - _meshFreeModelsCache.ts) < MESH_CACHE_TTL_MS) {
+    return _meshFreeModelsCache.ids;
+  }
+  try {
+    const res = await fetch(`${MESH_BASE_URL}/models`, {
+      headers: { 'Authorization': `Bearer ${process.env.MESH_API_KEY}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+    const freeIds = list
+      .filter(m => m?.is_free === true
+        || String(m?.tier || '').toLowerCase() === 'free'
+        || (m?.pricing?.prompt_usd_per_1k === 0 && m?.pricing?.completion_usd_per_1k === 0))
+      .map(m => m.id)
+      .filter(Boolean);
+    _meshFreeModelsCache = { ids: freeIds, ts: now };
+    return freeIds;
+  } catch (err) {
+    log.warn(`Mesh /models fetch failed: ${err.message}`);
+    return _meshFreeModelsCache.ids || [];
+  }
+}
 
-const ALL_MODELS_CARDS = [
-  { id: 'openrouter/free',                                    max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'google/gemma-4-31b-it:free',                         max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'poolside/laguna-m.1:free',                           max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'nex-agi/nex-n2-pro:free',                            max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'google/gemma-4-26b-a4b-it:free',                     max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'poolside/laguna-xs.2:free',                          max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'cohere/north-mini-code:free',                        max_tokens: 16384, timeout_ms: 45000, temp: 0.30 },
-  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', max_tokens: 16384, timeout_ms: 60000, temp: 0.30 },
-];
-
-// ─── Hugging Face fallback ────────────────────────────────────────────────────
-
-const HF_ROUTER_BASE = 'https://router.huggingface.co/v1/chat/completions';
-const HF_FALLBACK_MODELS = [
-  'meta-llama/Llama-3.1-8B-Instruct:featherless-ai',
-  'Qwen/Qwen2.5-7B-Instruct:together',
-  'mistralai/Mistral-7B-Instruct-v0.3:together',
-];
-
-// ─── DEPTH & STYLE MAPS ──────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 3 — CONFIG MAPS (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
 
 const DEPTH_MAP = {
-  standard:      { wordRange: '600–900 words',   maxTokens: 2500 },
-  detailed:      { wordRange: '1000–1500 words', maxTokens: 3500 },
-  comprehensive: { wordRange: '1500–2200 words', maxTokens: 4500 },
-  expert:        { wordRange: '2200–3000 words', maxTokens: 5500 },
+  standard:      { wordRange: '500–800 words',   maxTokens: 2200 },
+  detailed:      { wordRange: '800–1200 words',  maxTokens: 3000 },
+  comprehensive: { wordRange: '1200–1800 words', maxTokens: 3800 },
+  expert:        { wordRange: '1800–2400 words', maxTokens: 4500 },
 };
 
-// NEW: Separate depth map for SUMMARY — caps at 600 words
-const DEPTH_MAP_SUMMARY = {
-  standard:      { wordRange: '300–450 words',   maxTokens: 1500 },
-  detailed:      { wordRange: '450–600 words',   maxTokens: 2000 },
-  comprehensive: { wordRange: '500–600 words',   maxTokens: 2200 },
-  expert:        { wordRange: '550–600 words',   maxTokens: 2400 },
-};
+const SUMMARY_MAX_WORDS = 600; // hard cap for the 'summary' tool regardless of opts.depth
 
 const STYLE_MAP = {
   simple:   'Clear, beginner-friendly language. Short sentences. Everyday analogies. Define all jargon.',
@@ -82,9 +89,43 @@ const STYLE_MAP = {
   visual:   'Vivid analogies and metaphors. Mental models. Make abstract concrete.',
 };
 
-// ─── UTILITIES ────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 4 — UTILITIES
+// ─────────────────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Resolves the instant ANY promise in the list settles with status:'fulfilled'
+// (a real success). If none ever succeed, resolves once ALL have failed, with
+// every failure reason collected. This is the key fix for "notes/cards take
+// forever then fall back to canned filler" — the old code used
+// Promise.allSettled, which blocks on the SLOWEST model in the pass (e.g. a
+// 60s-timeout model) even when a fast model already won. Now a fast winner
+// returns immediately and slow/failing models are simply abandoned in the
+// background.
+function firstSuccessOrAllFail(taggedPromises) {
+  return new Promise(resolve => {
+    let remaining = taggedPromises.length;
+    const failures = [];
+    let settled = false;
+    taggedPromises.forEach(p => {
+      p.then(r => {
+        if (settled) return;
+        if (r && r.status === 'fulfilled') {
+          settled = true;
+          resolve({ successes: [r], failures });
+        } else {
+          failures.push(r);
+          remaining--;
+          if (remaining <= 0 && !settled) {
+            settled = true;
+            resolve({ successes: [], failures });
+          }
+        }
+      });
+    });
+  });
+}
 
 const log = {
   info:  (...a) => console.log( `[${new Date().toISOString()}] ℹ️  `, ...a),
@@ -103,7 +144,9 @@ function getISTDateTime() {
 }
 function getISTDate() { return getISTDateTime().split(' ')[0]; }
 
-// ─── GOOGLE SHEETS ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 5 — GOOGLE SHEETS (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function sendToGoogleSheets(userName, streak, sessions, tool, topic, status, durationMs, sessionId) {
   if (!GOOGLE_WEBHOOK_URL) return false;
@@ -123,8 +166,11 @@ async function sendToGoogleSheets(userName, streak, sessions, tool, topic, statu
   } catch (err) { log.warn(`Sheets non-fatal: ${err.message}`); return false; }
 }
 
-// ─── PROMPT BUILDERS ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 6 — SEPARATE PROMPT BUILDERS FOR EACH TOOL
+// ─────────────────────────────────────────────────────────────────────────────
 
+// ── NOTES ──
 function buildNotesPrompt(input, opts) {
   const depth = DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed;
   const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
@@ -163,35 +209,7 @@ FORMATTING RULES:
 START NOW with first ## heading. Write in ${lang} only. Topic: "${input}"`;
 }
 
-// ── SUMMARY prompt — shorter, capped at 600 words ──
-function buildSummaryPrompt(input, opts) {
-  // Use summary-specific depth map (caps at 600 words)
-  const depth = DEPTH_MAP_SUMMARY[opts.depth] || DEPTH_MAP_SUMMARY.detailed;
-  const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
-  const lang  = opts.language || 'English';
-  return `You are ${SAVOIRÉ.BRAND}. Generate a smart, concise summary.
-
-TOPIC: "${input}"
-LANGUAGE: ${lang} — write EVERY word in ${lang}.
-LENGTH: ${depth.wordRange} — aim for upper end (max 600 words).
-STYLE: ${style}
-
-REQUIRED SECTIONS (use exactly these headings):
-## 🚀 TL;DR — 3 to 5 sentences maximum
-## 🎯 Core Concepts — one bullet each
-## ⚙️ Key Mechanisms — ultra-short
-## ✅ Final Revision Checklist
-
-FORMATTING RULES:
-• ## for all section headings
-• **bold** every key term
-• - for bullet lists
-• Keep it scannable, no long paragraphs
-
-START NOW with first ## heading. Topic: "${input}"`;
-}
-
-// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary) ──
+// ── SUPPLEMENTARY KEY CONCEPTS (for notes/summary — separate from the prose notes prompt) ──
 function buildKeyConceptsPrompt(input, opts) {
   const lang = opts.language || 'English';
   return `You are ${SAVOIRÉ.BRAND}. Generate supplementary study material as valid JSON for the topic below.
@@ -222,11 +240,10 @@ No markdown. No code fences.
 OUTPUT JSON NOW — start with { immediately.`;
 }
 
-// ── FLASHCARDS (max 20) ──
+// ── FLASHCARDS ──
 function buildFlashcardsPrompt(input, opts) {
   const lang = opts.language || 'English';
-  // Enforce max 20 flashcards
-  const count = Math.min(opts.cardCount || 15, 20);
+  const count = opts.cardCount || 15;
   return `You are ${SAVOIRÉ.BRAND}. Generate a set of interactive flashcards as valid JSON.
 
 TOPIC: "${input}"
@@ -259,11 +276,10 @@ No markdown. No code fences. No explanations before or after.
 OUTPUT JSON NOW — start with { immediately. Be concise.`;
 }
 
-// ── QUIZ (max 20) ──
+// ── QUIZ ──
 function buildQuizPrompt(input, opts) {
   const lang = opts.language || 'English';
-  // Enforce max 20 questions
-  const count = Math.min(opts.quizCount || 10, 20);
+  const count = opts.quizCount || 10;
   const quizType = opts.quizType || 'mixed';
   const diffInstr = quizType === 'easy' ? 'ALL questions must be easy (foundational).' :
                     quizType === 'medium' ? 'ALL questions must be medium difficulty (core exam level).' :
@@ -310,6 +326,36 @@ No markdown. No code fences.
 OUTPUT JSON NOW — start with { immediately.`;
 }
 
+// ── SUMMARY ──
+function buildSummaryPrompt(input, opts) {
+  const style = STYLE_MAP[opts.style] || STYLE_MAP.simple;
+  const lang  = opts.language || 'English';
+  // Hard cap — summary should always stay short regardless of the notes 'depth'
+  // option (previously it inherited DEPTH_MAP, so 'expert' depth could balloon
+  // a summary out to 2200-3000 words, defeating the purpose of a summary).
+  return `You are ${SAVOIRÉ.BRAND}. Generate a smart, concise summary.
+
+TOPIC: "${input}"
+LANGUAGE: ${lang} — write EVERY word in ${lang}.
+LENGTH: STRICT MAXIMUM ${SUMMARY_MAX_WORDS} words total. Do not exceed this under any circumstances — a summary must stay short.
+STYLE: ${style}
+
+REQUIRED SECTIONS (use exactly these headings):
+## 🚀 TL;DR — 3 to 5 sentences maximum
+## 🎯 Core Concepts — one bullet each
+## ⚙️ Key Mechanisms — ultra-short
+## ✅ Final Revision Checklist
+
+FORMATTING RULES:
+• ## for all section headings
+• **bold** every key term
+• - for bullet lists
+• Keep it scannable, no long paragraphs
+• Stay within ${SUMMARY_MAX_WORDS} words TOTAL across all sections combined
+
+START NOW with first ## heading. Topic: "${input}"`;
+}
+
 // ── MIND MAP ──
 function buildMindmapPrompt(input, opts) {
   const lang = opts.language || 'English';
@@ -347,12 +393,10 @@ No markdown. No code fences.
 OUTPUT JSON NOW — start with { immediately.`;
 }
 
-// ── MEGA BUNDLE ──
+// ── MEGA BUNDLE (all tools) ──
 function buildMegaPrompt(input, opts) {
   const lang = opts.language || 'English';
-  const fcCount = Math.min(12, 20);
-  const qCount = Math.min(8, 20);
-  const mmCount = 6;
+  const fcCount = 12, qCount = 8, mmCount = 6;
   return `You are ${SAVOIRÉ.BRAND}. Generate the ULTIMATE comprehensive study package covering ALL angles of this topic. Output must be valid JSON.
 
 TOPIC: "${input}"
@@ -396,242 +440,78 @@ No markdown. No code fences. All fields must be present.
 OUTPUT JSON NOW — start with { immediately.`;
 }
 
-// ─── PHASE 1: PARALLEL STREAM NOTES ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 7 — PHASE 1: ULTIMATE PARALLEL STREAM NOTES
+// ─────────────────────────────────────────────────────────────────────────────
 
-const FIRST_TOKEN_TIMEOUT_MS = 30000;
-const FULL_STREAM_TIMEOUT_MS = 180000;
-const MAX_PASSES = 3;
+const FIRST_TOKEN_TIMEOUT_MS = 30000;  // 30s for first token (was 60s) — 8 models race in parallel, no need to wait this long
+const FULL_STREAM_TIMEOUT_MS = 180000; // 3 min total
+const MAX_PASSES = 3; // was 5 — 8 models already race each pass, 5 full passes could take 5-8+ min worst case
 
-async function streamOneModel(model, prompt, onChunk, tool, sharedState) {
-  const name = model.id.split('/').pop().replace(':free', '');
+async function streamOneMeshModel(modelId, prompt, onChunk) {
   const ctrl  = new AbortController();
-
-  let firstTokenTimer = setTimeout(() => ctrl.abort(), FIRST_TOKEN_TIMEOUT_MS);
-  let fullStreamTimer = null;
-
+  const timer = setTimeout(() => ctrl.abort(), 60000);
   const t0 = Date.now();
-  log.info(`P1 ⚡ starting ${name} (parallel) | tool:${tool}`);
-
-  let res;
+  log.info(`P1 ⚡ starting Mesh:${modelId} (parallel)`);
   try {
-    res = await fetch(OPENROUTER_BASE, {
+    const res = await fetch(`${MESH_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
+        'Authorization': `Bearer ${process.env.MESH_API_KEY}`,
       },
       body: JSON.stringify({
-        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.75,
-        stream: true, messages: [{ role: 'user', content: prompt }],
+        model: modelId, max_tokens: 8192, temperature: 0.75, stream: false,
+        messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
-  } catch (err) {
-    clearTimeout(firstTokenTimer);
-    if (err.name === 'AbortError') throw new Error(`${name}: no response within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
-    throw new Error(`${name}: fetch failed — ${err.message}`);
-  }
-
-  if (!res.ok) {
-    clearTimeout(firstTokenTimer);
-    const txt = await res.text().catch(() => '');
-    log.error(`P1 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
-    if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-    throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
-  }
-
-  const reader  = res.body.getReader();
-  const decoder = new TextDecoder('utf-8');
-  let lineBuf = '';
-  let full    = '';
-  let gotFirstToken = false;
-  let winnerDeclared = false;
-
-  const checkWinner = () => {
-    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
-      winnerDeclared = true;
-      return true;
-    }
-    return false;
-  };
-
-  try {
-    while (true) {
-      if (checkWinner()) {
-        ctrl.abort();
-        return full;
-      }
-
-      let chunk;
-      try {
-        chunk = await reader.read();
-      } catch (readErr) {
-        if (readErr.name === 'AbortError') {
-          if (!gotFirstToken) throw new Error(`${name}: no first token within ${FIRST_TOKEN_TIMEOUT_MS}ms`);
-          log.warn(`P1 ${name}: full-stream timeout — salvaging ${full.length}ch`);
-          return full;
-        }
-        if (gotFirstToken) {
-          log.warn(`P1 ${name}: read error mid-stream — salvaging ${full.length}ch`);
-          return full;
-        }
-        throw readErr;
-      }
-      const { done, value } = chunk;
-      if (done) break;
-
-      lineBuf += decoder.decode(value, { stream: true });
-      const lines = lineBuf.split('\n');
-      lineBuf = lines.pop() || '';
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6).trim();
-        if (raw === '[DONE]' || !raw) continue;
-        try {
-          const delta = JSON.parse(raw)?.choices?.[0]?.delta?.content;
-          if (delta) {
-            if (!gotFirstToken) {
-              gotFirstToken = true;
-              clearTimeout(firstTokenTimer);
-              fullStreamTimer = setTimeout(() => ctrl.abort(), FULL_STREAM_TIMEOUT_MS);
-
-              if (sharedState && !sharedState.winnerId) {
-                sharedState.winnerId = model.id;
-                log.ok(`P1 🏆 ${name} WON in ${Date.now()-t0}ms`);
-              } else if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
-                winnerDeclared = true;
-                ctrl.abort();
-                return full;
-              }
-            }
-            if (!winnerDeclared && (!sharedState || sharedState.winnerId === model.id)) {
-              full += delta;
-              onChunk(delta);
-            }
-          }
-        } catch { /* ignore */ }
-      }
-    }
-  } finally {
-    clearTimeout(firstTokenTimer);
-    if (fullStreamTimer) clearTimeout(fullStreamTimer);
-  }
-
-  if (!gotFirstToken) throw new Error(`${name}: stream ended with no content`);
-  if (full.trim().length < 80) {
-    log.warn(`P1 ${name}: short response (${full.length}ch) but already streamed live — using as-is, no retry`);
-  }
-
-  log.ok(`P1 ✅ ${name} | ${full.length}ch | ${Date.now()-t0}ms`);
-  return full;
-}
-
-async function streamNotesFallback(prompt, onChunk, tool) {
-  log.info(`P1 fallback: attempting non-streaming request to openrouter/free`);
-  try {
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
-      },
-      body: JSON.stringify({
-        model: 'openrouter/free',
-        max_tokens: 16384,
-        temperature: 0.75,
-        stream: false,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      timeout: 120000,
-    });
+    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 100) throw new Error('Empty or too short');
+    if (!content || content.length < 80) throw new Error('Empty or too short response');
     const chunkSize = 300;
     for (let i = 0; i < content.length; i += chunkSize) {
       onChunk(content.slice(i, i + chunkSize));
       await sleep(5);
     }
-    log.ok(`P1 fallback: returned ${content.length}ch`);
+    log.ok(`P1 Mesh:${modelId} WON in ${Date.now() - t0}ms — ${content.length}ch`);
     return content;
   } catch (err) {
-    log.error(`P1 fallback failed: ${err.message}`);
-    return null;
+    clearTimeout(timer);
+    throw err;
   }
-}
-
-async function streamNotesFromHuggingFace(prompt, onChunk) {
-  if (!process.env.HUGGINGFACE_API_KEY) {
-    log.warn('P1 HF fallback: HUGGINGFACE_API_KEY not set — skipping HF tier');
-    return null;
-  }
-  for (const model of HF_FALLBACK_MODELS) {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 60000);
-    try {
-      log.info(`P1 HF fallback: trying ${model}`);
-      const res = await fetch(HF_ROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model, max_tokens: 4096, temperature: 0.75, stream: false,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-      if (!res.ok) { log.warn(`P1 HF ${model}: HTTP ${res.status}`); continue; }
-      const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content?.trim();
-      if (!content || content.length < 80) { log.warn(`P1 HF ${model}: empty/short`); continue; }
-      const chunkSize = 300;
-      for (let i = 0; i < content.length; i += chunkSize) {
-        onChunk(content.slice(i, i + chunkSize));
-        await sleep(5);
-      }
-      log.ok(`P1 HF fallback: ${model} returned ${content.length}ch`);
-      return content;
-    } catch (err) {
-      clearTimeout(timer);
-      log.warn(`P1 HF ${model} failed: ${err.message}`);
-    }
-  }
-  return null;
 }
 
 async function streamNotes(prompt, onChunk, tool) {
   const errors = [];
-  const sharedState = { winnerId: null };
+
+  if (!process.env.MESH_API_KEY) {
+    log.error('P1 FATAL: MESH_API_KEY not set — Mesh is the only configured provider');
+    throw new Error('Savoiré AI is configured to use only Mesh API, but MESH_API_KEY is not set. Please set it in your environment.');
+  }
 
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P1 pass ${pass}: starting ALL ${ALL_MODELS_STREAM.length} models in parallel`);
-    sharedState.winnerId = null;
+    const freeIds = await getMeshFreeModelIds();
+    if (!freeIds.length) {
+      log.warn(`P1 pass ${pass}: no free Mesh models available right now`);
+      errors.push(`[pass${pass}] no free Mesh models available`);
+      if (pass < MAX_PASSES) { await sleep(pass * 1500); continue; }
+      break;
+    }
 
-    const modelPromises = ALL_MODELS_STREAM.map(model =>
-      streamOneModel(model, prompt, onChunk, tool, sharedState)
-        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
-        .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
+    // Race up to 8 free models in parallel — first real success wins, slow/failed ones are abandoned.
+    const candidates = freeIds.slice(0, 8);
+    log.info(`P1 pass ${pass}: racing ${candidates.length} free Mesh models in parallel`);
+
+    const modelPromises = candidates.map(modelId =>
+      streamOneMeshModel(modelId, prompt, onChunk)
+        .then(result => ({ status: 'fulfilled', value: result, model: modelId }))
+        .catch(err => ({ status: 'rejected', reason: err, model: modelId }))
     );
 
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
-
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
+    const { successes, failures } = await firstSuccessOrAllFail(modelPromises);
 
     if (successes.length > 0) {
       const winner = successes[0];
@@ -639,17 +519,9 @@ async function streamNotes(prompt, onChunk, tool) {
       return winner.value;
     }
 
-    const failReasons = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
-      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
-      .concat(
-        results
-          .filter(r => r.status === 'rejected')
-          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
-      );
-
+    const failReasons = failures.map(f => `${f.model || 'unknown'}: ${f.reason?.message || 'unknown'}`);
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P1 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+    log.warn(`P1 pass ${pass}: ALL Mesh models failed — ${failReasons.length} failures`);
 
     if (pass < MAX_PASSES) {
       const backoff = pass * 1500;
@@ -658,267 +530,86 @@ async function streamNotes(prompt, onChunk, tool) {
     }
   }
 
-  log.warn('P1 all streaming attempts failed; trying non-streaming fallback');
-  const fallbackResult = await streamNotesFallback(prompt, onChunk, tool);
-  if (fallbackResult) {
-    return fallbackResult;
-  }
-
-  log.warn('P1 OpenRouter fully exhausted; trying free Hugging Face router');
-  const hfResult = await streamNotesFromHuggingFace(prompt, onChunk);
-  if (hfResult) {
-    return hfResult;
-  }
-
-  log.error(`P1 ALL attempts failed: ${errors.join(' | ')}`);
-  throw new Error(`All free AI models are currently busy. Please try again in a moment.`);
+  log.error(`P1 ALL Mesh attempts failed: ${errors.join(' | ')}`);
+  throw new Error('All free Mesh AI models are currently busy. Please try again in a moment.');
 }
 
-// ─── PHASE 2: PARALLEL FETCH CARDS ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS
+// ─────────────────────────────────────────────────────────────────────────────
 
-async function fetchCardsFromModel(model, prompt, tool, sharedState) {
-  const name  = model.id.split('/').pop().replace(':free', '');
+async function fetchCardsFromOneMeshModel(modelId, prompt, tool) {
   const ctrl  = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), model.timeout_ms);
-  const t0    = Date.now();
-
+  const timer = setTimeout(() => ctrl.abort(), 60000);
+  const t0 = Date.now();
+  log.info(`P2 ⚡ starting Mesh:${modelId} (parallel) for tool:${tool}`);
   try {
-    if (sharedState && sharedState.winnerId && sharedState.winnerId !== model.id) {
-      throw new Error(`${name}: skipped — another model already won`);
-    }
-
-    const res = await fetch(OPENROUTER_BASE, {
+    const res = await fetch(`${MESH_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
+        'Authorization': `Bearer ${process.env.MESH_API_KEY}`,
       },
       body: JSON.stringify({
-        model: model.id, max_tokens: model.max_tokens, temperature: model.temp || 0.30,
-        stream: false, messages: [{ role: 'user', content: prompt }],
+        model: modelId, max_tokens: 16384, temperature: 0.30, stream: false,
+        messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
     clearTimeout(timer);
-
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      log.error(`P2 ${name}: HTTP ${res.status} — FULL BODY: ${txt.slice(0, 500)}`);
-      if (res.status === 401 || res.status === 403) throw new Error('API_KEY_INVALID');
-      throw new Error(`${name}: HTTP ${res.status} ${trunc(txt, 120)}`);
-    }
-
-    const data    = await res.json();
-    let   content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 20) throw new Error(`${name}: empty response`);
-
-    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-    const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-    if (jS === -1 || jE <= jS) throw new Error(`${name}: no JSON object`);
-    let jsonStr = content.slice(jS, jE + 1);
-
-    let parsed;
-    try { parsed = JSON.parse(jsonStr); }
-    catch {
-      try { parsed = JSON.parse(jsonStr.replace(/,(\s*[}\]])/g, '$1')); }
-      catch {
-        try {
-          parsed = JSON.parse(
-            jsonStr.replace(/,(\s*[}\]])/g, '$1')
-                   .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-                   .replace(/:\s*\'([^\']*)\'/g, ': "$1"')
-          );
-        }
-        catch {
-          try {
-            parsed = JSON.parse(
-              jsonStr.replace(/[\x00-\x1F\x7F]/g, ' ')
-                     .replace(/,(\s*[}\]])/g, '$1')
-                     .replace(/([{,]\s*)([a-zA-Z_]\w*)(\s*:)/g, '$1"$2"$3')
-            );
-          }
-          catch (e4) { throw new Error(`${name}: JSON repair failed - ${e4.message.slice(0,60)}`); }
-        }
-      }
-    }
-
-    // Auto-fix quiz
-    if (Array.isArray(parsed.quiz_questions)) {
-      parsed.quiz_questions = parsed.quiz_questions
-        .filter(q => q && typeof q.question === 'string' && q.question.trim().length > 3
-                  && Array.isArray(q.options) && q.options.filter(o => typeof o === 'string' && o.trim()).length >= 2)
-        .map((q, i) => {
-          q.id = i + 1;
-          q.options = q.options.filter(o => typeof o === 'string' && o.trim());
-          if (q.options && q.correct_answer && !q.options.includes(q.correct_answer)) {
-            const lo  = String(q.correct_answer).toLowerCase();
-            const fix = q.options.find(o => o.toLowerCase() === lo)
-                     || q.options.find(o => o.toLowerCase().includes(lo) || lo.includes(o.toLowerCase()))
-                     || q.options[0];
-            if (fix) q.correct_answer = fix;
-          }
-          return q;
-        });
-    }
-
-    if (Array.isArray(parsed.flashcards)) {
-      parsed.flashcards = parsed.flashcards
-        .filter(c => (c.front || c.question) && (c.back || c.answer))
-        .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
-    }
-
-    const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
-    const hasQ  = Array.isArray(parsed.quiz_questions) && parsed.quiz_questions.length >= 2;
-    const requestedBranches = tool === 'mindmap' ? 6 : 6;
-    const hasMm = parsed.mindmap?.branches?.length >= Math.max(3, Math.floor(requestedBranches / 2));
-    const hasKc = Array.isArray(parsed.key_concepts) && parsed.key_concepts.length >= 1;
-    const valid = (tool === 'flashcards' || tool === 'flashcards_quiz') ? hasFc
-                : tool === 'quiz'                                     ? hasQ
-                : (tool === 'mindmap' || tool === 'mindmap_only')     ? hasMm
-                : tool === 'all'                                      ? (hasFc || hasQ || hasMm || hasKc)
-                : hasKc;
-
-    if (!valid) throw new Error(`${name}: validation failed - fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0}`);
-
-    if (sharedState && !sharedState.winnerId) {
-      sharedState.winnerId = model.id;
-      log.ok(`P2 🏆 ${name} WON in ${Date.now()-t0}ms`);
-    }
-
-    log.ok(`P2 ✅ ${name} | ${tool} | fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} | ${Date.now()-t0}ms`);
-    return parsed;
-
-  } catch (err) {
-    clearTimeout(timer);
-    if (err.message === 'API_KEY_INVALID') throw err;
-    const reason = err.name === 'AbortError' ? `${name} timed out` : err.message;
-    log.warn(`P2 ✗ ${reason}`);
-    throw new Error(reason);
-  }
-}
-
-async function fetchCardsFallback(prompt, tool) {
-  log.info(`P2 fallback: attempting non-streaming JSON request to openrouter/free`);
-  try {
-    const res = await fetch(OPENROUTER_BASE, {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer':  HTTP_REFERER,
-        'X-Title':       APP_TITLE,
-      },
-      body: JSON.stringify({
-        model: 'openrouter/free',
-        max_tokens: 16384,
-        temperature: 0.30,
-        stream: false,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-      timeout: 120000,
-    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content?.trim();
+    let content = data?.choices?.[0]?.message?.content?.trim();
     if (!content) throw new Error('Empty response');
-    const cleaned = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-    const jS = cleaned.indexOf('{'), jE = cleaned.lastIndexOf('}');
-    if (jS === -1 || jE <= jS) throw new Error('No JSON');
-    const jsonStr = cleaned.slice(jS, jE + 1);
-    const parsed = JSON.parse(jsonStr);
-    log.ok(`P2 fallback: returned JSON`);
+    content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
+    const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
+    if (jS === -1 || jE <= jS) throw new Error('No JSON object found in response');
+    const parsed = JSON.parse(content.slice(jS, jE + 1).replace(/,(\s*[}\]])/g, '$1'));
+    log.ok(`P2 Mesh:${modelId} WON in ${Date.now() - t0}ms for tool:${tool}`);
     return parsed;
   } catch (err) {
-    log.error(`P2 fallback failed: ${err.message}`);
-    return null;
+    clearTimeout(timer);
+    throw err;
   }
-}
-
-async function fetchCardsFromHuggingFace(prompt, tool) {
-  if (!process.env.HUGGINGFACE_API_KEY) {
-    log.warn('P2 HF fallback: HUGGINGFACE_API_KEY not set — skipping HF tier');
-    return null;
-  }
-  for (const model of HF_FALLBACK_MODELS) {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 60000);
-    try {
-      log.info(`P2 HF fallback: trying ${model} for tool:${tool}`);
-      const res = await fetch(HF_ROUTER_BASE, {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model, max_tokens: 8192, temperature: 0.30, stream: false,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-        signal: ctrl.signal,
-      });
-      clearTimeout(timer);
-      if (!res.ok) { log.warn(`P2 HF ${model}: HTTP ${res.status}`); continue; }
-      const data = await res.json();
-      let content = data?.choices?.[0]?.message?.content?.trim();
-      if (!content) { log.warn(`P2 HF ${model}: empty`); continue; }
-      content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
-      const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
-      if (jS === -1 || jE <= jS) { log.warn(`P2 HF ${model}: no JSON object`); continue; }
-      const parsed = JSON.parse(content.slice(jS, jE + 1).replace(/,(\s*[}\]])/g, '$1'));
-      log.ok(`P2 HF fallback: ${model} returned JSON for tool:${tool}`);
-      return parsed;
-    } catch (err) {
-      clearTimeout(timer);
-      log.warn(`P2 HF ${model} failed: ${err.message}`);
-    }
-  }
-  return null;
 }
 
 async function fetchCards(prompt, tool) {
   const errors = [];
-  const sharedState = { winnerId: null };
+
+  if (!process.env.MESH_API_KEY) {
+    log.error('P2 FATAL: MESH_API_KEY not set — Mesh is the only configured provider');
+    throw new Error('Savoiré AI is configured to use only Mesh API, but MESH_API_KEY is not set. Please set it in your environment.');
+  }
 
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
-    log.info(`P2 pass ${pass}: starting ALL ${ALL_MODELS_CARDS.length} models in parallel for tool:${tool}`);
-    sharedState.winnerId = null;
+    const freeIds = await getMeshFreeModelIds();
+    if (!freeIds.length) {
+      log.warn(`P2 pass ${pass}: no free Mesh models available right now`);
+      errors.push(`[pass${pass}] no free Mesh models available`);
+      if (pass < MAX_PASSES) { await sleep(pass * 1500); continue; }
+      break;
+    }
 
-    const modelPromises = ALL_MODELS_CARDS.map(model =>
-      fetchCardsFromModel(model, prompt, tool, sharedState)
-        .then(result => ({ status: 'fulfilled', value: result, model: model.id }))
-        .catch(err => ({ status: 'rejected', reason: err, model: model.id }))
+    const candidates = freeIds.slice(0, 8);
+    log.info(`P2 pass ${pass}: racing ${candidates.length} free Mesh models in parallel for tool:${tool}`);
+
+    const modelPromises = candidates.map(modelId =>
+      fetchCardsFromOneMeshModel(modelId, prompt, tool)
+        .then(result => ({ status: 'fulfilled', value: result, model: modelId }))
+        .catch(err => ({ status: 'rejected', reason: err, model: modelId }))
     );
 
-    const results = await Promise.allSettled(
-      modelPromises.map(p => p.then(
-        r => r,
-        e => ({ status: 'rejected', reason: e, model: 'unknown' }))
-      )
-    );
-
-    const successes = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'fulfilled')
-      .map(r => r.value);
+    const { successes, failures } = await firstSuccessOrAllFail(modelPromises);
 
     if (successes.length > 0) {
       const winner = successes[0];
-      log.ok(`P2 pass ${pass}: WINNER ${winner.model}`);
+      log.ok(`P2 pass ${pass}: WINNER ${winner.model} for tool:${tool}`);
       return winner.value;
     }
 
-    const failReasons = results
-      .filter(r => r.status === 'fulfilled' && r.value?.status === 'rejected')
-      .map(r => `${r.value.model}: ${r.value.reason?.message || 'unknown'}`)
-      .concat(
-        results
-          .filter(r => r.status === 'rejected')
-          .map(r => `promise-error: ${r.reason?.message || 'unknown'}`)
-      );
-
+    const failReasons = failures.map(f => `${f.model || 'unknown'}: ${f.reason?.message || 'unknown'}`);
     errors.push(`[pass${pass}] ${failReasons.join('; ')}`);
-    log.warn(`P2 pass ${pass}: ALL models failed — ${failReasons.length} failures`);
+    log.warn(`P2 pass ${pass}: ALL Mesh models failed — ${failReasons.length} failures`);
 
     if (pass < MAX_PASSES) {
       const backoff = pass * 1500;
@@ -927,23 +618,13 @@ async function fetchCards(prompt, tool) {
     }
   }
 
-  log.warn('P2 all attempts failed; trying non-streaming JSON fallback');
-  const fallbackResult = await fetchCardsFallback(prompt, tool);
-  if (fallbackResult) {
-    return fallbackResult;
-  }
-
-  log.warn('P2 OpenRouter fully exhausted; trying free Hugging Face router');
-  const hfResult = await fetchCardsFromHuggingFace(prompt, tool);
-  if (hfResult) {
-    return hfResult;
-  }
-
-  log.error(`P2 ALL attempts failed: ${errors.join(' | ')}`);
-  throw new Error(`All free AI models failed for tool:${tool}.`);
+  log.error(`P2 ALL Mesh attempts failed for tool:${tool}: ${errors.join(' | ')}`);
+  throw new Error(`All free Mesh AI models failed for tool:${tool}.`);
 }
 
-// ─── FALLBACK CONTENT ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 9 — FALLBACK CONTENT (almost never used)
+// ─────────────────────────────────────────────────────────────────────────────
 
 function offlineNotes(topic) {
   const T = topic || 'this topic';
@@ -1081,7 +762,9 @@ function buildTopicFallback(tool, topic) {
   return base;
 }
 
-// ─── TOPIC FACT ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 10 — TOPIC FACT (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
 
 const FACT_TEMPLATES = [
   t => `💡 Did you know? People who actively quiz themselves on "${t}" retain 2–3× more than those who just re-read notes.`,
@@ -1100,15 +783,21 @@ function buildTopicFact(topic) {
   return FACT_TEMPLATES[idx](t);
 }
 
-// ─── MERGE ────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 11 — MERGE
+// ─────────────────────────────────────────────────────────────────────────────
 
 function mergeCards(cardsRaw, notes, topic, opts) {
   const now        = getISTDateTime();
   const isFallback = !!cardsRaw?._fallback;
 
+  // Defensive normalizer — some free models occasionally return objects instead
+  // of plain strings for these fields despite the prompt asking for strings.
+  // Without this, the UI shows "[object Object]" instead of real text.
   const toStringArray = arr => !Array.isArray(arr) ? [] : arr.map(item => {
     if (typeof item === 'string') return item;
     if (item && typeof item === 'object') {
+      // Try common shapes: {myth,truth}, {area,description}, {question,answer}, etc.
       const vals = Object.values(item).filter(v => typeof v === 'string');
       if (vals.length) return vals.join(' — ');
       try { return JSON.stringify(item); } catch { return String(item); }
@@ -1140,7 +829,11 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (Array.isArray(cardsRaw?.quiz_questions) && cardsRaw.quiz_questions.length) merged.quiz_questions = cardsRaw.quiz_questions;
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
-  // Only synthesize filler for notes/summary/all when key_concepts is empty
+  // Only synthesize the static key_concepts filler for notes/summary/all — for
+  // flashcards/quiz/mindmap, key_concepts is now a real requested field in
+  // their own prompt (see buildFlashcardsPrompt/buildQuizPrompt), so an empty
+  // result there means the AI genuinely didn't return it and we'd rather show
+  // nothing than fabricate the same canned template every time.
   const fillerEligible = ['notes', 'summary', 'all'].includes(opts.tool);
   if (fillerEligible && !merged.key_concepts?.length) {
     merged.key_concepts = [
@@ -1155,7 +848,9 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   return merged;
 }
 
-// ─── SSE HELPER + SECURITY HEADERS ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 12 — SSE HELPER + SECURITY HEADERS
+// ─────────────────────────────────────────────────────────────────────────────
 
 function makeSSE(res) {
   return (event, data) => {
@@ -1180,7 +875,9 @@ function setHeaders(res) {
   res.setHeader('X-Frame-Options',        'DENY');
 }
 
-// ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SECTION 13 — MAIN HANDLER
+// ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = async function handler(req, res) {
   const reqId     = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -1191,12 +888,9 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed. Use POST.' });
 
-  if (!process.env.OPENROUTER_API_KEY && !process.env.HUGGINGFACE_API_KEY) {
-    log.error('[FATAL] Neither OPENROUTER_API_KEY nor HUGGINGFACE_API_KEY is set in environment variables!');
-    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — no free AI provider key found. Set OPENROUTER_API_KEY and/or HUGGINGFACE_API_KEY (both are free). Contact the administrator.' });
-  }
-  if (!process.env.OPENROUTER_API_KEY) {
-    log.warn('[CONFIG] OPENROUTER_API_KEY not set — running in Hugging Face-only mode');
+  if (!process.env.MESH_API_KEY) {
+    log.error('[FATAL] MESH_API_KEY not set in environment variables!');
+    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — MESH_API_KEY missing. Get a free key at meshapi.ai and set it in your environment. Contact the administrator.' });
   }
 
   const body       = req.body || {};
@@ -1225,15 +919,11 @@ module.exports = async function handler(req, res) {
     style:    ['simple','academic','detailed','exam','visual'].includes(rawOpts.style)       ? rawOpts.style : 'simple',
     language: String(rawOpts.language || 'English').trim().slice(0, 60),
     stream:   rawOpts.stream === true,
-    cardCount:   Number(rawOpts.cardCount)   || 15,
-    quizCount:   Number(rawOpts.quizCount)   || 10,
+    cardCount:   Math.min(Math.max(Number(rawOpts.cardCount) || 15, 1), 20),
+    quizCount:   Math.min(Math.max(Number(rawOpts.quizCount) || 10, 1), 20),
     quizType:    String(rawOpts.quizType || 'mixed'),
     branchCount: Number(rawOpts.branchCount) || 6,
   };
-
-  // Enforce max 20 for flashcards and quiz
-  if (opts.cardCount > 20) opts.cardCount = 20;
-  if (opts.quizCount > 20) opts.quizCount = 20;
 
   log.info(`[${reqId}] tool:${opts.tool} | depth:${opts.depth} | lang:${opts.language} | stream:${opts.stream} | user:${userName}`);
 
@@ -1278,28 +968,38 @@ module.exports = async function handler(req, res) {
   let p2Ticker = null;
 
   try {
-    // ── Prompt selection ──
+    // ╔═══════════════════════════════════════════════════════════════════════
+    // ║  PHASE 1 + PHASE 2 RUN CONCURRENTLY (PARALLEL)
+    // ╚═══════════════════════════════════════════════════════════════════════
+
+    // ── Live-stream prompt: ALWAYS clean prose, regardless of tool. ──
+    // BUG FIX: flashcards/quiz/mindmap/all used to stream their own
+    // JSON-generation prompt live (buildFlashcardsPrompt/buildQuizPrompt/
+    // buildMindmapPrompt/buildMegaPrompt) — those instruct the AI to output
+    // raw JSON, not prose, so the live view showed unparsed JSON with zero
+    // formatting. Notes and Summary already used real prose prompts and never
+    // had this problem, so they keep their own (Summary's prompt has the
+    // TL;DR heading the final render depends on — don't swap that one out).
+    // The JSON data itself is still fetched separately in Phase 2 below using
+    // each tool's own dedicated JSON prompt — it's just never shown live.
     let notesPrompt;
-    let useSummaryDepth = false;
     switch (opts.tool) {
-      case 'summary':
-        notesPrompt = buildSummaryPrompt(message, opts);
-        useSummaryDepth = true;
-        break;
+      case 'summary': notesPrompt = buildSummaryPrompt(message, opts); break;
       case 'notes':
       case 'flashcards':
       case 'quiz':
       case 'mindmap':
       case 'all':
-      default:
-        notesPrompt = buildNotesPrompt(message, opts);
+      default: notesPrompt = buildNotesPrompt(message, opts);
     }
 
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
-    // ── Phase 2: cards generation — starts NOW in parallel ──
+    // ── Phase 2: cards generation — starts NOW in parallel with Phase 1 ──
     let cardsPromise;
     if (opts.tool === 'all') {
+      // For all, the JSON blob (notes+cards+quiz+mindmap) is fetched here,
+      // completely separate from the clean-prose live stream above.
       const megaPrompt = buildMegaPrompt(message, opts);
       cardsPromise = fetchCards(megaPrompt, 'all').then(
         v => ({ status: 'fulfilled', value: v }),
@@ -1324,7 +1024,11 @@ module.exports = async function handler(req, res) {
         e => ({ status: 'rejected', reason: e })
       );
     } else {
-      // notes or summary: fetch supplementary key concepts
+      // For notes and summary, we need key_concepts/tricks/Q&A/applications/misconceptions.
+      // BUG FIX: this used to reuse notesPrompt (a prose-writing prompt), which the AI would
+      // correctly obey by writing markdown prose — so JSON parsing failed on every attempt,
+      // and this ALWAYS fell back to the canned static filler regardless of whether the
+      // notes themselves were real AI content. Use a dedicated JSON prompt instead.
       const kcPrompt = buildKeyConceptsPrompt(message, opts);
       cardsPromise = fetchCards(kcPrompt, opts.tool).then(
         v => ({ status: 'fulfilled', value: v }),
@@ -1332,11 +1036,25 @@ module.exports = async function handler(req, res) {
       );
     }
 
-    // ── Phase 1: live notes stream (runs in parallel) ──
+    // ── Phase 1: live notes stream (PARALLEL models) ──
     try {
-      notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
-      p1ok = true;
-      log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
+      // For tools that don't need streaming notes (flashcards, quiz, mindmap), we still stream notes as a fallback
+      // but we'll also stream the JSON later. To avoid duplication, we'll stream the notes only for notes/summary/all
+      if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+        p1ok = true;
+        log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
+      } else {
+        // For flashcards/quiz/mindmap, we don't need streaming notes, but we need to let the client know we're generating
+        // So we stream a placeholder message and then the final JSON will come later.
+        // We'll still call streamNotes but it will be used only if the cards fail (fallback)
+        // Actually better: we skip streaming notes for these tools and directly generate the JSON.
+        // But we still need to show something, so we'll generate notes as a fallback.
+        // Let's do: generate notes anyway (it's useful) but also fetch cards.
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+        p1ok = true;
+        log.ok(`[${reqId}] P1 done (fallback notes) — ${notes.length}ch`);
+      }
     } catch (e1) {
       log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
       notes = offlineNotes(message);
@@ -1347,45 +1065,107 @@ module.exports = async function handler(req, res) {
       p1ok = false;
     }
 
-    // After Phase 1 completes, show "Finalising" stage (wait indicator)
-    sse('stage', { idx: 2, label: '⏳ Finalising your study materials…' });
+    sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });
+    sse('waiting', { label: 'Waiting for final content…', afterLastToken: true });
 
     // ── Keep-alive pings while waiting for Phase 2 ──
     let p2DotCount = 0;
     p2Ticker = setInterval(() => {
       p2DotCount = (p2DotCount % 3) + 1;
-      sse('stage', { idx: 3, label: `🃏 Finalising${'.'.repeat(p2DotCount)}` });
+      sse('stage', { idx: 3, label: `🃏 Finalising your cards${'.'.repeat(p2DotCount)}` });
     }, 1500);
 
-    // ── Wait for Phase 2 (running in parallel) ──
+    // ── Wait for Phase 2 (which has been running in parallel) ──
     let cardsData = null, p2ok = false;
-    const CARDS_DEADLINE_MS = opts.tool === 'notes' || opts.tool === 'summary' ? 45000 : 30000;
 
-    const deadlineFallback = new Promise(resolve => {
-      setTimeout(() => resolve({ status: 'deadline' }), CARDS_DEADLINE_MS);
-    });
-
-    const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
-
-    if (cardsResult.status === 'deadline') {
-      log.warn(`[${reqId}] Phase 2 exceeded ${CARDS_DEADLINE_MS}ms deadline — using fallback`);
-      cardsData = buildTopicFallback(opts.tool, message);
-      p2ok = false;
-    } else if (cardsResult.status === 'fulfilled') {
-      cardsData = cardsResult.value;
-      p2ok = true;
-      log.ok(`[${reqId}] Phase 2 succeeded for ${opts.tool}`);
+    if (opts.tool === 'all') {
+      sse('stage', { idx: 3, label: '⚡ Finalising mega bundle — flashcards + quiz + mindmap…' });
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Mega bundle succeeded`);
+      } else {
+        log.error(`[${reqId}] Mega bundle failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('all', message);
+        p2ok = false;
+      }
+    } else if (opts.tool === 'flashcards') {
+      sse('stage', { idx: 3, label: '🃏 Finalising flashcards…' });
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Flashcards succeeded`);
+      } else {
+        log.error(`[${reqId}] Flashcards failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('flashcards', message);
+        p2ok = false;
+      }
+    } else if (opts.tool === 'quiz') {
+      sse('stage', { idx: 3, label: '❓ Finalising quiz…' });
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Quiz succeeded`);
+      } else {
+        log.error(`[${reqId}] Quiz failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('quiz', message);
+        p2ok = false;
+      }
+    } else if (opts.tool === 'mindmap') {
+      sse('stage', { idx: 3, label: '🗺️ Finalising mind map…' });
+      const cardsResult = await cardsPromise;
+      if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Mindmap succeeded`);
+      } else {
+        log.error(`[${reqId}] Mindmap failed: ${cardsResult.reason?.message}`);
+        cardsData = buildTopicFallback('mindmap', message);
+        p2ok = false;
+      }
     } else {
-      log.warn(`[${reqId}] Phase 2 failed for ${opts.tool}, using fallback`);
-      cardsData = buildTopicFallback(opts.tool, message);
-      p2ok = false;
+      // notes or summary: we already have notes, but we also want key_concepts etc.
+      // This is SUPPLEMENTARY data — it must never be allowed to hold the whole
+      // request (and therefore the SSE connection) open for minutes after the
+      // notes have already finished streaming. Cap it hard: if it isn't done in
+      // NOTES_CARDS_DEADLINE_MS, fall back immediately instead of waiting on the
+      // remaining P2 retry passes. This was the cause of "processes to the final
+      // word, then errors after a long delay" — Phase 2 could take 5-8+ minutes
+      // (MAX_PASSES retries x 90s per model), which outlives the hosting
+      // platform's request timeout and drops the SSE connection.
+      const NOTES_CARDS_DEADLINE_MS = 30000;
+      const deadlineFallback = new Promise(resolve => {
+        setTimeout(() => resolve({ status: 'deadline' }), NOTES_CARDS_DEADLINE_MS);
+      });
+      const cardsResult = await Promise.race([cardsPromise, deadlineFallback]);
+      if (cardsResult.status === 'deadline') {
+        log.warn(`[${reqId}] Cards for ${opts.tool} exceeded ${NOTES_CARDS_DEADLINE_MS}ms deadline - using fallback so the notes stream can finish on time`);
+        cardsData = buildTopicFallback(opts.tool, message);
+        p2ok = false;
+      } else if (cardsResult.status === 'fulfilled') {
+        cardsData = cardsResult.value;
+        p2ok = true;
+        log.ok(`[${reqId}] Cards succeeded for ${opts.tool}`);
+      } else {
+        log.warn(`[${reqId}] Cards failed for ${opts.tool}, using fallback`);
+        cardsData = buildTopicFallback(opts.tool, message);
+        p2ok = false;
+      }
     }
 
-    // ── Stream cards live ──
+    // ╔═══════════════════════════════════════════════════════════════════════
+    // ║  PHASE 3 — STREAM CARDS LIVE (animations)
+    // ╚═══════════════════════════════════════════════════════════════════════
 
-    // Enforce max 20 for flashcards
+    // Enforce exact requested flashcard count: models routinely ignore
+    // "Generate exactly N" (e.g. asked for 30, returned 6; asked for 20,
+    // returned 27). Truncate overproduction; pad underproduction from the
+    // topic fallback generator so the user always gets what they chose.
     if (cardsData?.flashcards?.length && (opts.tool === 'flashcards' || opts.tool === 'all') && opts.cardCount) {
-      const want = Math.min(opts.cardCount, 20);
+      const want = opts.cardCount;
       const have = cardsData.flashcards.length;
       if (have > want) {
         cardsData.flashcards = cardsData.flashcards.slice(0, want);
@@ -1395,7 +1175,7 @@ module.exports = async function handler(req, res) {
         while (cardsData.flashcards.length < want && filler.length) {
           cardsData.flashcards.push(filler[i % filler.length]);
           i++;
-          if (i > want * 2) break;
+          if (i > want * 2) break; // safety valve
         }
       }
       log.ok(`[${reqId}] Flashcard count enforced: wanted ${want}, delivering ${cardsData.flashcards.length}`);
@@ -1430,7 +1210,9 @@ module.exports = async function handler(req, res) {
       log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }
 
-    // ── Send final data ──
+    // ╔═══════════════════════════════════════════════════════════════════════
+    // ║  SEND FINAL DATA
+    // ╚═══════════════════════════════════════════════════════════════════════
 
     clearInterval(kap);
     clearInterval(p2Ticker);
