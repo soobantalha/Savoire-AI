@@ -1,6 +1,6 @@
 'use strict';
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════════
-   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — FINAL ENHANCED
+   SAVOIRÉ AI v2.0 — app.js — WORLD CLASS ULTIMATE FRONTEND — FINAL ENHANCED (Mesh‑only)
    Built by Sooban Talha Technologies | soobantalhatech.xyz
    Founder: Sooban Talha
 
@@ -15,7 +15,7 @@
                   Final output = ONLY interactive quiz (no notes shown)
    ✅ MINDMAP: Live output shows branch-by-branch build animation
                   Final output = ONLY beautiful mindmap (no notes shown)
-   ✅ SUMMARY: Beautiful TL;DR summary with key points
+   ✅ SUMMARY: Beautiful TL;DR summary with key points — depth capped at 600 words
    ✅ MEGA:    All 5 tools — each section clearly separated
 
    ✅ FEATURE CHIPS: Notes/Flashcards/Quiz/Summary/Mind Map/All 5 — each opens Wizard with that tool
@@ -31,6 +31,10 @@
    ✅ FIXES applied: Avatar emojis instead of colors, default font='small', contrast fixes,
       PDF quality improved, demo works on all devices, mega bundle uses models for all tools,
       fast model selection, all 50+ errors resolved.
+
+   ✅ NEW: "Live Notes" renamed to "Raw Stream" for professionalism
+   ✅ NEW: All Mega Bundle entry points now open the wizard pre-set to 'all'
+   ✅ NEW: Mesh‑only backend integration (no OpenRouter / Hugging Face)
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -60,15 +64,15 @@ const TOOL_CONFIG = {
   },
   flashcards: {
     icon: 'fa-layer-group', label: 'Create Flashcards', sfpName: 'Flashcards', color: '#bf00ff',
-    placeholder: 'Enter a topic to create 15–20 interactive flashcards with spaced repetition…',
-    sfpLabel: 'Building your interactive flashcard deck (15–20 cards)…',
-    description: 'Create 15–20 interactive 3D flip flashcards perfect for spaced repetition study.',
+    placeholder: 'Enter a topic to create 5–20 interactive flashcards with spaced repetition…',
+    sfpLabel: 'Building your interactive flashcard deck (5–20 cards)…',
+    description: 'Create 5–20 interactive 3D flip flashcards perfect for spaced repetition study.',
   },
   quiz: {
     icon: 'fa-question-circle', label: 'Build Quiz', sfpName: 'Quiz', color: '#00ff88',
-    placeholder: 'Enter a topic to generate 10–12 practice questions with detailed explanations…',
-    sfpLabel: 'Generating your 10–12 question practice quiz…',
-    description: 'Generate 10–12 self-scoring multiple-choice questions with detailed explanations.',
+    placeholder: 'Enter a topic to generate 5–20 practice questions with detailed explanations…',
+    sfpLabel: 'Generating your 5–20 question practice quiz…',
+    description: 'Generate 5–20 self-scoring multiple-choice questions with detailed explanations.',
   },
   summary: {
     icon: 'fa-align-left', label: 'Summarise', sfpName: 'Summary', color: '#ffae00',
@@ -276,13 +280,10 @@ class SavoireApp {
 
     this.pdfTheme        = this.prefs.pdfTheme || 'dark';
     this.avatarEmojiIdx  = this._loadNum('sv_avatar_emoji', 0);
-    // Remove avatarColorIdx, use emoji only
 
-    // Set defaults for first time users
     if (!this.prefs.theme) this.prefs.theme = 'dark';
-    if (!this.prefs.fontSize) this.prefs.fontSize = 'small'; // default S size
+    if (!this.prefs.fontSize) this.prefs.fontSize = 'small';
 
-    // Live streaming card accumulators
     this._liveCards     = [];
     this._liveQuestions = [];
     this._liveBranches  = [];
@@ -691,7 +692,6 @@ class SavoireApp {
     const name  = this.userName || 'Scholar';
     const emoji = AVATAR_EMOJIS[this.avatarEmojiIdx % AVATAR_EMOJIS.length] || '🎓';
 
-    // Update all avatar elements with emoji
     [this.el.avBtn, this.el.avDropdownAvatar, this.el.sidebarAvatar].forEach(el => {
       if (!el) return;
       el.textContent = emoji;
@@ -742,11 +742,6 @@ class SavoireApp {
   // ─── WIZARD SYSTEM ──────────────────────────────────────────────────────────
 
   _openWizard(presetTool) {
-    // BUG FIX: this used to drop cardCount/quizCount/quizType/branchCount
-    // entirely on every open, leaving them `undefined` unless the user
-    // happened to click a count card. That undefined value then skipped the
-    // server-side exact-count enforcement and showed up as "undefined" in
-    // the review step / flashcard labels. Always reset to sane defaults.
     this.wizardData = {
       tool:        presetTool || this.tool || 'notes',
       topic:       '',
@@ -758,7 +753,6 @@ class SavoireApp {
       quizType:    'mixed',
       branchCount: 6,
     };
-    // If a tool is already pre-selected, skip step 0 (tool selection) and go straight to topic
     this.wizardStep = presetTool ? 1 : 0;
     this.wizardFile = null;
     this._renderWizardStep();
@@ -870,10 +864,8 @@ class SavoireApp {
     this._qsa('.wizard-tool-card').forEach(c => {
       c.onclick = () => {
         this.wizardData.tool = c.dataset.tool;
-        // Highlight selected card immediately for visual feedback
         this._qsa('.wizard-tool-card').forEach(x => x.classList.remove('selected'));
         c.classList.add('selected');
-        // Auto-advance to next step after brief delay (max step = 5)
         setTimeout(() => {
           if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
         }, 320);
@@ -969,7 +961,6 @@ Examples:
           inp.style.boxShadow = '0 0 0 3px rgba(0,212,255,.3)';
           b.style.background = 'rgba(0,212,255,.2)';
           b.style.borderColor = 'rgba(0,212,255,.5)';
-          // Auto-advance to next step after brief visual feedback (max step = 5)
           setTimeout(() => {
             inp.style.boxShadow = '';
             if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
@@ -1003,10 +994,8 @@ Examples:
     this._qsa('.wizard-language-card').forEach(c => {
       c.onclick = () => {
         this.wizardData.language = c.dataset.lang;
-        // Highlight selected card immediately
         this._qsa('.wizard-language-card').forEach(x => x.classList.remove('selected'));
         c.classList.add('selected');
-        // Auto-advance to next step after brief delay (max step = 5)
         setTimeout(() => {
           if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
         }, 280);
@@ -1040,15 +1029,15 @@ Examples:
   }
 
   _wStepCardCount() {
-    const options = [5, 10, 15, 20]; // max 20 flashcards, per request
+    const options = [5, 10, 15, 20]; // max 20
     return `
-      <div class="wizard-step-heading"><i class="fas fa-layer-group"></i> How many flashcards?</div>
+      <div class="wizard-step-heading"><i class="fas fa-layer-group"></i> How many flashcards? (max 20)</div>
       <div class="wizard-depth-grid">
         ${options.map(n => `
           <div class="wizard-depth-card ${this.wizardData.cardCount === n ? 'selected' : ''}" data-count="${n}">
             <i class="fas fa-clone wdc-icon"></i>
             <div class="wizard-depth-name">${n} cards</div>
-            <div class="wizard-depth-desc">${n <= 15 ? 'Quick review' : n <= 20 ? 'Standard deck' : 'Deep dive'}</div>
+            <div class="wizard-depth-desc">${n <= 10 ? 'Quick review' : n <= 15 ? 'Standard deck' : 'Deep dive'}</div>
           </div>
         `).join('')}
       </div>`;
@@ -1064,7 +1053,7 @@ Examples:
       { k: 'exam',   label: 'Exam-style', desc: 'Tricky, past-paper format' },
     ];
     return `
-      <div class="wizard-step-heading"><i class="fas fa-question-circle"></i> How many questions?</div>
+      <div class="wizard-step-heading"><i class="fas fa-question-circle"></i> How many questions? (max 20)</div>
       <div class="wizard-depth-grid">
         ${counts.map(n => `
           <div class="wizard-depth-card ${this.wizardData.quizCount === n ? 'selected' : ''}" data-count="${n}">
@@ -1148,7 +1137,6 @@ Examples:
     this._qsa('.wizard-depth-card[data-depth]').forEach(c => {
       c.onclick = () => {
         this.wizardData.depth = c.dataset.depth;
-        // Highlight selected card immediately
         this._qsa('.wizard-depth-card[data-depth]').forEach(x => x.classList.remove('selected'));
         c.classList.add('selected');
         this._wAdvance();
@@ -1174,10 +1162,8 @@ Examples:
     this._qsa('.wizard-style-card').forEach(c => {
       c.onclick = () => {
         this.wizardData.style = c.dataset.style;
-        // Highlight selected card immediately
         this._qsa('.wizard-style-card').forEach(x => x.classList.remove('selected'));
         c.classList.add('selected');
-        // Auto-advance to review step after brief delay (max step = 5)
         setTimeout(() => {
           if (this.wizardStep < 5) { this.wizardStep++; this._renderWizardStep(); }
         }, 280);
@@ -1233,35 +1219,17 @@ Examples:
     this.tool = this.wizardData.tool;
     this._checkStreak();
     await this._sendDirect(t, this.wizardData.language, this.wizardData.depth, this.wizardData.style, this.wizardData.tool, {
-      cardCount: this.wizardData.cardCount, quizCount: this.wizardData.quizCount,
-      quizType: this.wizardData.quizType, branchCount: this.wizardData.branchCount,
+      cardCount: this.wizardData.cardCount,
+      quizCount: this.wizardData.quizCount,
+      quizType: this.wizardData.quizType,
+      branchCount: this.wizardData.branchCount,
     });
   }
 
-  // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
-
+  // ─── MEGA BUNDLE ─────────────────────────────────────────────────────────────
+  // All Mega Bundle entry points now open the wizard pre-set to 'all'
   _openMega() {
-    // BUG FIX: the standalone Mega Bundle modal (megaModal) ran its own
-    // simplified generation path — no cardCount/quizCount/branchCount, and a
-    // different code path than the wizard. That path was the buggy/
-    // inconsistent one. The wizard's "All 5 tools" mega bundle path is the
-    // one that reliably works, so every Mega Bundle entry point (nav button,
-    // header button, empty-state button, chip, Ctrl+M) now opens the wizard
-    // pre-set to 'all' instead of the old standalone modal.
     this._openWizard('all');
-  }
-
-  _runMega() {
-    // Kept for the (now unused) megaModal markup, routed through the same
-    // reliable path as the wizard rather than the old simplified call.
-    const topic = this.el.megaTopicInput?.value?.trim();
-    if (!topic || topic.length < 2) { this._toast('error', 'fa-exclamation-circle', 'Please enter a topic!'); return; }
-    const lang  = this.el.megaLangSel?.value  || 'English';
-    const depth = this.el.megaDepthSel?.value || 'detailed';
-    this._closeModal('megaModal');
-    this.tool = 'all';
-    this._checkStreak();
-    this._sendDirect(topic, lang, depth, 'simple', 'all', { cardCount: 15, quizCount: 10, quizType: 'mixed', branchCount: 6 });
   }
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
@@ -1272,7 +1240,10 @@ Examples:
     this.streamBuffer  = '';
     this.tool          = tool || 'notes';
 
-    // Reset live accumulators
+    // Enforce max 20
+    const cardCount = Math.min(counts?.cardCount || 15, 20);
+    const quizCount = Math.min(counts?.quizCount || 10, 20);
+
     this._liveCards     = [];
     this._liveQuestions = [];
     this._liveBranches  = [];
@@ -1285,7 +1256,16 @@ Examples:
     const t0 = Date.now();
 
     try {
-      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool, ...(counts || {}) });
+      const data = await this._callAPI(text, {
+        depth,
+        language: lang,
+        style,
+        tool: this.tool,
+        cardCount,
+        quizCount,
+        quizType: counts?.quizType || 'mixed',
+        branchCount: counts?.branchCount || 6,
+      });
       this.currentData = data;
       this._hideStreamOverlay();
       this._renderResult(data);
@@ -1331,7 +1311,6 @@ Examples:
 
   async _callAPI(message, opts) {
     this.streamCtrl = new AbortController();
-    // Always stream — no JSON fallback (would return generic offline content)
     return await this._streamSSE(message, opts);
   }
 
@@ -1377,17 +1356,15 @@ Examples:
 
         const renderLive = () => {
           const now = Date.now();
-          if (now - renderThrottle < 16) return; // 60fps render
+          if (now - renderThrottle < 16) return;
           renderThrottle = now;
           if (!this.el.sfpText) return;
           try {
             const tool = opts.tool || 'notes';
-            // For notes/summary tool: show formatted text
             if (tool === 'notes' || tool === 'summary') {
               this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
               this.el.sfpText.classList.add('live-md');
             } else {
-              // For card tools: only show notes during phase 1
               if (this._liveCards.length === 0 && this._liveQuestions.length === 0 && this._liveBranches.length === 0) {
                 this.el.sfpText.innerHTML = this._renderMdLive(this.streamBuffer);
                 this.el.sfpText.classList.add('live-md');
@@ -1425,9 +1402,7 @@ Examples:
             while (true) {
               const { done, value } = await reader.read();
 
-              // When stream ends (done=true), flush remaining buffer
               if (done) {
-                // Process any remaining data in lineBuf
                 if (lineBuf.trim()) {
                   const line = lineBuf.trim();
                   if (line.startsWith('data: ')) {
@@ -1443,8 +1418,6 @@ Examples:
                     } catch { /* ignore */ }
                   }
                 }
-                // If we already resolved (stream ended after done event was received), that's fine
-                // Otherwise reject with connection error
                 reject(new Error('AI stream closed unexpectedly. Please try again.'));
                 return;
               }
@@ -1454,10 +1427,8 @@ Examples:
               lineBuf = lines.pop() || '';
 
               for (const line of lines) {
-                // Track SSE event type (event: token, event: done, etc.)
-                // We read the event: line to detect the 'done' event properly
                 if (line.startsWith('event: ')) {
-                  continue; // handled via data: payload content
+                  continue;
                 }
                 if (!line.startsWith('data: ')) continue;
                 const raw = line.slice(6).trim();
@@ -1465,72 +1436,53 @@ Examples:
                 try {
                   const evt = JSON.parse(raw);
 
-                  // token — live notes streaming
                   if (evt.t !== undefined) {
                     this.streamBuffer += evt.t;
                     chars += evt.t.length;
                     renderLive();
                     this._updateStageByProgress(chars);
 
-                  // card — flashcard streamed live
                   } else if (evt.card !== undefined) {
                     animateCard(evt.idx, evt.total, evt.card);
 
-                  // q — quiz question streamed live
                   } else if (evt.q !== undefined) {
                     animateQuestion(evt.idx, evt.total, evt.q);
 
-                  // branch — mindmap branch streamed live
                   } else if (evt.branch !== undefined) {
                     animateBranch(evt.idx, evt.total, evt.branch);
 
-                  // stage — progress update
                   } else if (evt.idx !== undefined && evt.label !== undefined) {
                     this._activateStage(evt.idx);
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label;
 
-                  // fact — floating topic fact pill
                   } else if (evt.fact !== undefined) {
                     if (this.el.sfpFact) this.el.sfpFact.textContent = evt.fact;
 
-                  // waiting — backend has sent the last notes token and is now
-                  // finalising the JSON cards/summary data. Without this the UI
-                  // just sat there looking frozen between the last token and
-                  // the 'done' event with no indication anything was still
-                  // happening.
                   } else if (evt.afterLastToken !== undefined) {
+                    // Show "Finalising…" while waiting for Phase 2
                     if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label || 'Finalising…';
-                    if (this.el.sfpText && !this.el.sfpText.querySelector('.typing-cursor')) {
-                      this.el.sfpText.insertAdjacentHTML('beforeend', '<span class="typing-cursor">▊</span>');
-                    }
 
-                  // done / final data object — topic or ultra_long_notes or _tool field present
                   } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
                     if (this.el.sfpText) {
                       this.el.sfpText.classList.remove('live-md');
                       this.el.sfpText.classList.add('done');
                     }
-                    // Merge live-streamed cards into final object
                     if (this._liveCards.length)     evt.flashcards     = this._liveCards;
                     if (this._liveQuestions.length)  evt.quiz_questions = this._liveQuestions;
                     if (this._liveBranches.length) {
                       evt.mindmap = { central: this._liveMMCentral, branches: this._liveBranches, connections: this._liveMMConns };
                     }
-                    // Preserve the streamed notes buffer
                     if (!evt.ultra_long_notes && this.streamBuffer) {
                       evt.ultra_long_notes = this.streamBuffer;
                     }
-                    // Save live notes for "View Live Notes" button
                     evt._live_notes_buffer = this.streamBuffer;
                     resolve(evt);
                     return;
 
-                  // error event — {error:'...'} from backend
                   } else if (evt.error !== undefined) {
                     reject(new Error(evt.error));
                     return;
                   }
-                  // heartbeat — ignore silently
                 } catch { /* ignore malformed SSE lines */ }
               }
             }
@@ -1617,7 +1569,6 @@ Examples:
     const qs  = this._liveQuestions;
     const pct = Math.round((qs.length / Math.max(total, 1)) * 100);
     const letters = ['A','B','C','D','E'];
-    const speed = qs.length > 0 ? Math.round((qs.length / total) * 100) : 0;
 
     container.classList.remove('live-md');
     container.innerHTML = `
@@ -1723,18 +1674,8 @@ Examples:
         ${branches.length < total
           ? `<div class="live-cards-loading" style="margin-top:10px"><div class="live-dots"><span style="background:#d4af37"></span><span style="background:#d4af37"></span><span style="background:#d4af37"></span></div> <span style="color:#d4af37;font-weight:600">Growing branch ${branches.length+1}…</span> <span style="color:rgba(255,255,255,.4);font-size:.75rem">(${total - branches.length} more)</span></div>`
           : `<div class="live-cards-done"><i class="fas fa-check-circle" style="color:#00ff88"></i> Mind map with ${total} branches complete! Rendering visual map…</div>`}
-      </div>`
-    ;
+      </div>`;
     if (this.el.sfpScroll) this.el.sfpScroll.scrollTop = this.el.sfpScroll.scrollHeight;
-  }
-
-  async _callAPIJson(message, opts) {
-    // Non-streaming fallback is no longer supported — always use SSE streaming
-    throw new Error('AI is momentarily unavailable. Please try again in a few seconds.');
-  }
-
-  _cancelGen() {
-    if (this.streamCtrl) { this.streamCtrl.abort(); this.streamCtrl = null; }
   }
 
   // ─── STREAM OVERLAY ─────────────────────────────────────────────────────────
@@ -1938,8 +1879,8 @@ Examples:
           <i class="fas fa-share-alt"></i><span>Share</span>
         </button>
         ${data._live_notes_buffer && data._live_notes_buffer.length > 50 ? `
-        <button class="exp-btn live-notes-btn" onclick="window._app._showLiveNotesModal()" style="color:#00ff88;border-color:rgba(0,255,136,.3)" title="View the live notes streamed during generation">
-          <i class="fas fa-bolt"></i><span>Live Notes</span>
+        <button class="exp-btn raw-stream-btn" onclick="window._app._showLiveNotesModal()" style="color:#00ff88;border-color:rgba(0,255,136,.3)" title="View the raw stream output from the AI">
+          <i class="fas fa-bolt"></i><span>Raw Stream</span>
         </button>` : ''}
         <button class="exp-btn new" onclick="window._app._openWizard()" style="color:#bf00ff;border-color:rgba(191,0,255,.3)">
           <i class="fas fa-magic"></i><span>New</span>
@@ -2004,13 +1945,12 @@ Examples:
   _buildFcHTML(data) {
     const cards = data.flashcards?.length ? data.flashcards : [];
 
-    if (!cards.length) return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> The AI didn't return real flashcards this time — showing fake ones made from key concepts would be misleading, so nothing is shown instead. <button class="wizard-btn wizard-btn-primary" onclick="window.__savoire && window.__savoire._runWizard && window.__savoire._runWizard()" style="margin-top:12px"><i class="fas fa-redo"></i> Try again</button></div>`;
+    if (!cards.length) return `<div class="empty-tool-msg"><i class="fas fa-layer-group"></i> No flashcards were returned. Please try again.</div>`;
 
     this.fcCards   = cards;
     this.fcCurrent = 0;
     this.fcFlipped = false;
 
-    // ONLY show flashcards — no notes section
     return `
       <div class="study-sec" id="sec-fc">
         <div class="ss-hdr">
@@ -2130,7 +2070,6 @@ Examples:
     this.quizIdx   = 0;
     this.quizScore = 0;
 
-    // ONLY show quiz — no notes
     return `
       <div class="study-sec" id="quizContainer">
         <div class="ss-hdr">
@@ -2402,7 +2341,6 @@ Examples:
           </div>
         </div>` : '';
 
-      // ONLY mindmap — no notes fallback
       return `
         <div class="study-sec" id="sec-mm">
           <div class="ss-hdr">
@@ -2419,7 +2357,6 @@ Examples:
         ${data.key_tricks?.length ? this._secTricks(data.key_tricks) : ''}`;
     }
 
-    // Fallback mindmap from concepts
     const branches = [
       { name: 'Core Concepts',  items: data.key_concepts || [],            color: '#d4af37' },
       { name: 'Study Tricks',   items: data.key_tricks || [],              color: '#00ff88' },
@@ -2661,7 +2598,7 @@ Examples:
   }
 
   // ─── WORLD-CLASS PDF GENERATION ─────────────────────────────────────────────
-
+  // (unchanged – preserves full PDF functionality)
   _downloadPDF() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Generate some content first.'); return; }
@@ -2971,12 +2908,11 @@ Examples:
       .catch(() => this._toast('error', 'fa-times', 'Copy failed.'));
   }
 
-  // ── LIVE NOTES MODAL — shows the streaming notes from generation ───────────
+  // ── RAW STREAM MODAL (formerly "Live Notes") ───────────────────────────────────────────
   _showLiveNotesModal() {
     const notes = this.currentData?._live_notes_buffer || this.currentData?.ultra_long_notes || '';
-    if (!notes || notes.length < 10) { this._toast('info', 'fa-info-circle', 'No live notes available.'); return; }
+    if (!notes || notes.length < 10) { this._toast('info', 'fa-info-circle', 'No raw stream data available.'); return; }
 
-    // Create or reuse modal
     let modal = document.getElementById('liveNotesModal');
     if (!modal) {
       modal = document.createElement('div');
@@ -2986,8 +2922,8 @@ Examples:
         <div class="modal-box" style="max-width:820px;width:95%;max-height:88vh;display:flex;flex-direction:column">
           <div class="modal-hdr" style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
             <i class="fas fa-bolt" style="color:#00ff88"></i>
-            <span style="font-weight:700;font-size:1rem;color:#00ff88">Live Stream Notes</span>
-            <span style="font-size:.75rem;color:rgba(255,255,255,.4);margin-left:4px">— exactly as streamed from the AI</span>
+            <span style="font-weight:700;font-size:1rem;color:#00ff88">Raw Stream</span>
+            <span style="font-size:.75rem;color:rgba(255,255,255,.4);margin-left:4px">— unprocessed AI output</span>
             <button onclick="document.getElementById('liveNotesModal').style.display='none'"
                     style="margin-left:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:.8rem">
               ✕ Close
@@ -2997,7 +2933,7 @@ Examples:
           <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px">
             <button onclick="window._app._copyTxt(document.getElementById('liveNotesContent').innerText)"
                     style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:#00ff88;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.8rem">
-              <i class="fas fa-copy"></i> Copy Notes
+              <i class="fas fa-copy"></i> Copy Stream
             </button>
             <span style="font-size:.7rem;color:rgba(255,255,255,.3);margin-left:auto;align-self:center">
               ${notes.length.toLocaleString()} characters
@@ -3511,7 +3447,6 @@ Examples:
     }
     hint.style.display = 'block';
 
-    // Canvas click → advance
     this.demoCanvas.onclick = () => {
       if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
       else this._closeDemo();
@@ -3750,13 +3685,11 @@ Examples:
     on(this.el.wizardHeaderBtn, 'click', () => this._openWizard());
     on(this.el.megaHeaderBtn,   'click', () => this._openMega());
 
-    // Empty state buttons
     const emptyWizBtn = this._el('emptyWizardBtn');
     on(emptyWizBtn, 'click', () => this._openWizard());
     const emptyMegBtn = this._el('emptyMegaBtn');
     on(emptyMegBtn, 'click', () => this._openMega());
 
-    // Feature chips — each opens wizard with pre-selected tool
     this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
       chip.addEventListener('click', () => {
         const tool = chip.dataset.tool;
@@ -3887,14 +3820,12 @@ Examples:
         }
       }
 
-      // Demo keyboard nav
       if (this.demoCanvas?.style.display !== 'none') {
         if (e.key === 'ArrowRight') this._nextDemo();
         else if (e.key === 'ArrowLeft') this._prevDemo();
         return;
       }
 
-      // Flashcard keyboard
       if (this.fcCards.length) {
         if (e.key === 'ArrowRight') this._fcNav(1);
         else if (e.key === 'ArrowLeft')  this._fcNav(-1);
