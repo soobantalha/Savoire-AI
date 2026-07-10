@@ -444,7 +444,13 @@ async function getMeshFreeModelIds() {
 }
 
 // ─── PHASE 1: STREAM NOTES (Parallel, first success wins) ──────────────────
-const MAX_PASSES = 2; // only 2 passes to keep latency low
+// Was reduced to 2 passes "to keep latency low" — but with the pinned model +
+// only 8 free models raced per pass, 2 passes meant giving up (→ fallback)
+// too easily whenever the first 8 candidates all happened to be flaky. Each
+// pass is cheap (a fast winner returns immediately, firstSuccessOrAllFail
+// doesn't wait for stragglers), so 3 passes costs little extra latency in the
+// common case but meaningfully lowers the fallback rate in the bad case.
+const MAX_PASSES = 3;
 
 async function streamOneMeshModel(modelId, prompt, onChunk, maxTokens) {
   const ctrl  = new AbortController();

@@ -472,7 +472,7 @@ class SavoireApp {
       'lpHistList','lpHistAll','lpSavedList','lpSavedAll',
       'aboutToggleBtn','aboutContent','aboutChevron',
       'streamFullpage','sfpText','sfpScroll','sfpToolIcon','sfpToolName',
-      'sfpTopic','sfpLabel','sscProgressBar',
+      'sfpTopic','sfpLabel','sfpFact','sscProgressBar',
       'ts0','ts1','ts2','ts3','ts4','ss0','ss1','ss2','ss3','ss4',
       'theCard','fcFront','fcBack','fcCur','fcTot','fcProgBar','fcPct','fcPrev','fcNext',
       'quizScoreNum','quizBody','quizReviewSection','quizReviewToggleLabel',
