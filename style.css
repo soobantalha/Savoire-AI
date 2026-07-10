@@ -9520,11 +9520,14 @@ input::placeholder, textarea::placeholder {
    across previous patches and made the live screen look inconsistent).
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════════════
+   LIVE STREAM SCREEN — FINAL DESIGN (fixed: hidden by default)
+   ═══════════════════════════════════════════════════════════════════════ */
 .stream-overlay {
   position: fixed !important;
   inset: 0 !important;
   z-index: 9999 !important;
-  display: flex !important;
+  display: none !important; /* hidden by default — JS toggles to flex */
   flex-direction: column !important;
   background:
     radial-gradient(1100px 620px at 15% -10%, rgba(0,212,255,.10), transparent 60%),
@@ -9534,6 +9537,16 @@ input::placeholder, textarea::placeholder {
   -webkit-backdrop-filter: blur(22px) saturate(1.2) !important;
   animation: sfpFadeIn .35s cubic-bezier(.22,1,.36,1) !important;
   overflow: hidden !important;
+}
+
+/* When JS needs to show it, it will set display:flex via inline style */
+.stream-overlay.active,
+.stream-overlay[style*="display: flex"] {
+  display: flex !important;
+}
+
+.stream-overlay.fading-out { 
+  animation: sfpFadeOut .25s ease forwards !important; 
 }
 .stream-overlay.fading-out { animation: sfpFadeOut .25s ease forwards !important; }
 @keyframes sfpFadeIn  { from { opacity: 0; } to { opacity: 1; } }
