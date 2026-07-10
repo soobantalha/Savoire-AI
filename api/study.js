@@ -42,6 +42,13 @@ const MESH_BASE_URL = 'https://api.meshapi.ai/v1';
 let _meshFreeModelsCache = { ids: null, ts: 0 };
 const MESH_CACHE_TTL_MS = 10 * 60 * 1000;
 
+// ── PINNED PRIORITY MODEL (paid, cheap) — tried FIRST, before free models ──
+// amazon/nova-micro-v1 is NOT free ($0.04/M input, $0.14/M output on Mesh) —
+// user explicitly asked for it and confirmed they'll keep a small Mesh balance
+// to cover it. If it fails (e.g. balance runs out -> HTTP 402), we fall
+// through to the free-model race below so the app never fully breaks.
+const PINNED_MODEL = 'amazon/nova-micro-v1';
+
 async function getMeshFreeModelIds() {
   const now = Date.now();
   if (_meshFreeModelsCache.ids && (now - _meshFreeModelsCache.ts) < MESH_CACHE_TTL_MS) {
@@ -492,6 +499,17 @@ async function streamNotes(prompt, onChunk, tool) {
     throw new Error('Savoiré AI is configured to use only Mesh API, but MESH_API_KEY is not set. Please set it in your environment.');
   }
 
+  // ── PRIORITY: pinned paid model tried first ──
+  try {
+    log.info(`P1 priority: trying pinned model ${PINNED_MODEL}`);
+    const pinnedResult = await streamOneMeshModel(PINNED_MODEL, prompt, onChunk);
+    log.ok(`P1 priority: ${PINNED_MODEL} succeeded — ${pinnedResult.length}ch`);
+    return pinnedResult;
+  } catch (err) {
+    log.warn(`P1 priority: ${PINNED_MODEL} failed (${err.message}) — falling back to free models`);
+    errors.push(`[pinned] ${PINNED_MODEL}: ${err.message}`);
+  }
+
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
     const freeIds = await getMeshFreeModelIds();
     if (!freeIds.length) {
@@ -579,6 +597,17 @@ async function fetchCards(prompt, tool) {
   if (!process.env.MESH_API_KEY) {
     log.error('P2 FATAL: MESH_API_KEY not set — Mesh is the only configured provider');
     throw new Error('Savoiré AI is configured to use only Mesh API, but MESH_API_KEY is not set. Please set it in your environment.');
+  }
+
+  // ── PRIORITY: pinned paid model tried first ──
+  try {
+    log.info(`P2 priority: trying pinned model ${PINNED_MODEL} for tool:${tool}`);
+    const pinnedResult = await fetchCardsFromOneMeshModel(PINNED_MODEL, prompt, tool);
+    log.ok(`P2 priority: ${PINNED_MODEL} succeeded for tool:${tool}`);
+    return pinnedResult;
+  } catch (err) {
+    log.warn(`P2 priority: ${PINNED_MODEL} failed (${err.message}) — falling back to free models`);
+    errors.push(`[pinned] ${PINNED_MODEL}: ${err.message}`);
   }
 
   for (let pass = 1; pass <= MAX_PASSES; pass++) {
