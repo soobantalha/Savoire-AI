@@ -34,7 +34,7 @@
 
    ✅ NEW: "Live Notes" renamed to "Raw Stream" for professionalism
    ✅ NEW: All Mega Bundle entry points now open the wizard pre-set to 'all'
-   ✅ NEW: Mesh‑only backend integration (no OpenRouter / Hugging Face)
+   ✅ NEW: Mesh API‑only backend integration
    ═══════════════════════════════════════════════════════════════════════════════════════════════════ */
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
