@@ -51,7 +51,7 @@ const PINNED_MODEL = 'amazon/nova-micro-v1';
 
 async function getMeshFreeModelIds() {
   const now = Date.now();
-  if (_meshFreeModelsCache.ids && (now - _meshFreeModelsCache.ts) < MESH_CACHE_TTL_MS) {
+  if (_meshFreeModelsCache.ids && _meshFreeModelsCache.ids.length && (now - _meshFreeModelsCache.ts) < MESH_CACHE_TTL_MS) {
     return _meshFreeModelsCache.ids;
   }
   try {
@@ -60,13 +60,50 @@ async function getMeshFreeModelIds() {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
-    const freeIds = list
-      .filter(m => m?.is_free === true
-        || String(m?.tier || '').toLowerCase() === 'free'
-        || (m?.pricing?.prompt_usd_per_1k === 0 && m?.pricing?.completion_usd_per_1k === 0))
-      .map(m => m.id)
-      .filter(Boolean);
+    const list = Array.isArray(data?.data)    ? data.data
+               : Array.isArray(data?.models)  ? data.models
+               : Array.isArray(data)          ? data
+               : [];
+
+    if (!list.length) {
+      log.warn(`Mesh /models: response had 0 models. Raw keys: ${Object.keys(data || {}).join(',')}`);
+      return _meshFreeModelsCache.ids || [];
+    }
+
+    // Defensive: is-it-free check tries every field name variant we've seen
+    // across model gateways, since Mesh's exact schema isn't fully documented.
+    const isFree = m => {
+      if (!m || typeof m !== 'object') return false;
+      if (m.is_free === true) return true;
+      if (m.free === true) return true;
+      const tier = String(m.tier ?? m.pricing_tier ?? '').toLowerCase();
+      if (tier === 'free') return true;
+      const p = m.pricing || m.price || {};
+      const numericFields = [
+        p.prompt_usd_per_1k, p.completion_usd_per_1k,
+        p.prompt, p.completion,
+        p.input_cost_per_token, p.output_cost_per_token,
+        p.input_price_per_1k, p.output_price_per_1k,
+        m.prompt_price, m.completion_price,
+      ].filter(v => v !== undefined && v !== null);
+      if (numericFields.length && numericFields.every(v => Number(v) === 0)) return true;
+      if (typeof m.cost === 'number' && m.cost === 0) return true;
+      if (String(m.id || '').toLowerCase().includes(':free')) return true;
+      return false;
+    };
+
+    const freeModels = list.filter(isFree);
+    const freeIds = freeModels.map(m => m.id || m.model || m.name).filter(Boolean);
+
+    if (!freeIds.length) {
+      // Diagnostics: log the shape of the first model so we can see the real
+      // field names Mesh is actually using and fix the filter next time.
+      const sample = list[0];
+      log.warn(`Mesh /models: fetched ${list.length} models but matched 0 as free. Sample model keys: ${Object.keys(sample || {}).join(',')} | sample: ${JSON.stringify(sample).slice(0, 400)}`);
+    } else {
+      log.ok(`Mesh /models: ${freeIds.length} free models found (of ${list.length} total)`);
+    }
+
     _meshFreeModelsCache = { ids: freeIds, ts: now };
     return freeIds;
   } catch (err) {
