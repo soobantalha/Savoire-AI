@@ -116,11 +116,14 @@ async function getMeshFreeModelIds() {
 // SECTION 3 — CONFIG MAPS (unchanged)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Trimmed slightly further per request — notes were still running a bit long
+// and using more tokens than needed for a "study notes" tool. Word ranges and
+// token budgets both reduced across every tier (also cuts cost/latency).
 const DEPTH_MAP = {
-  standard:      { wordRange: '500–800 words',   maxTokens: 2200 },
-  detailed:      { wordRange: '800–1200 words',  maxTokens: 3000 },
-  comprehensive: { wordRange: '1200–1800 words', maxTokens: 3800 },
-  expert:        { wordRange: '1800–2400 words', maxTokens: 4500 },
+  standard:      { wordRange: '400–650 words',   maxTokens: 1800 },
+  detailed:      { wordRange: '650–1000 words',  maxTokens: 2400 },
+  comprehensive: { wordRange: '1000–1500 words', maxTokens: 3000 },
+  expert:        { wordRange: '1500–2000 words', maxTokens: 3600 },
 };
 
 const SUMMARY_MAX_WORDS = 600; // hard cap for the 'summary' tool regardless of opts.depth
@@ -492,7 +495,7 @@ const FIRST_TOKEN_TIMEOUT_MS = 30000;  // 30s for first token (was 60s) — 8 mo
 const FULL_STREAM_TIMEOUT_MS = 180000; // 3 min total
 const MAX_PASSES = 3; // was 5 — 8 models already race each pass, 5 full passes could take 5-8+ min worst case
 
-async function streamOneMeshModel(modelId, prompt, onChunk) {
+async function streamOneMeshModel(modelId, prompt, onChunk, maxTokens) {
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 60000);
   const t0 = Date.now();
@@ -505,7 +508,9 @@ async function streamOneMeshModel(modelId, prompt, onChunk) {
         'Authorization': `Bearer ${process.env.MESH_API_KEY}`,
       },
       body: JSON.stringify({
-        model: modelId, max_tokens: 8192, temperature: 0.75, stream: false,
+        // Request only as many tokens as the chosen depth actually needs
+        // (was a flat 8192 for every request regardless of depth/tool).
+        model: modelId, max_tokens: maxTokens || 2400, temperature: 0.75, stream: false,
         messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
@@ -528,7 +533,7 @@ async function streamOneMeshModel(modelId, prompt, onChunk) {
   }
 }
 
-async function streamNotes(prompt, onChunk, tool) {
+async function streamNotes(prompt, onChunk, tool, maxTokens) {
   const errors = [];
 
   if (!process.env.MESH_API_KEY) {
@@ -539,7 +544,7 @@ async function streamNotes(prompt, onChunk, tool) {
   // ── PRIORITY: pinned paid model tried first ──
   try {
     log.info(`P1 priority: trying pinned model ${PINNED_MODEL}`);
-    const pinnedResult = await streamOneMeshModel(PINNED_MODEL, prompt, onChunk);
+    const pinnedResult = await streamOneMeshModel(PINNED_MODEL, prompt, onChunk, maxTokens);
     log.ok(`P1 priority: ${PINNED_MODEL} succeeded — ${pinnedResult.length}ch`);
     return pinnedResult;
   } catch (err) {
@@ -561,7 +566,7 @@ async function streamNotes(prompt, onChunk, tool) {
     log.info(`P1 pass ${pass}: racing ${candidates.length} free Mesh models in parallel`);
 
     const modelPromises = candidates.map(modelId =>
-      streamOneMeshModel(modelId, prompt, onChunk)
+      streamOneMeshModel(modelId, prompt, onChunk, maxTokens)
         .then(result => ({ status: 'fulfilled', value: result, model: modelId }))
         .catch(err => ({ status: 'rejected', reason: err, model: modelId }))
     );
@@ -593,7 +598,52 @@ async function streamNotes(prompt, onChunk, tool) {
 // SECTION 8 — PHASE 2: ULTIMATE PARALLEL FETCH CARDS
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function fetchCardsFromOneMeshModel(modelId, prompt, tool) {
+// Validates the parsed JSON actually contains usable content for the
+// requested tool before it's accepted as a "success". Without this, ANY
+// syntactically-valid JSON (even `{}` or a response missing the arrays the
+// tool needs) was accepted as a winner, and the empty key_concepts/
+// flashcards/etc. would silently trigger the static canned-filler text in
+// mergeCards()/buildTopicFallback() — this was the actual cause of notes and
+// summary always showing the same generic "key points" boilerplate.
+function normalizeCardsResult(parsed) {
+  if (Array.isArray(parsed.quiz_questions)) {
+    parsed.quiz_questions = parsed.quiz_questions.map(q => {
+      if (q && Array.isArray(q.options) && q.correct_answer &&
+          !q.options.includes(q.correct_answer)) {
+        const fix = q.options.find(o => String(o).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase())
+                 || q.options[0];
+        if (fix) q.correct_answer = fix;
+      }
+      return q;
+    });
+  }
+  if (Array.isArray(parsed.flashcards)) {
+    parsed.flashcards = parsed.flashcards
+      .filter(c => c && (c.front || c.question) && (c.back || c.answer))
+      .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+  }
+  return parsed;
+}
+
+function validateCardsResult(parsed, tool) {
+  if (!parsed || typeof parsed !== 'object') return false;
+  const hasFc = Array.isArray(parsed.flashcards) && parsed.flashcards.length >= 2;
+  const hasQ  = Array.isArray(parsed.quiz_questions) &&
+                parsed.quiz_questions.filter(q => q?.question && Array.isArray(q.options) && q.options.length >= 2).length >= 2;
+  const requestedBranches = 6;
+  const hasMm = parsed.mindmap?.branches?.length >= Math.max(3, Math.floor(requestedBranches / 2));
+  const hasKc = Array.isArray(parsed.key_concepts) &&
+                parsed.key_concepts.filter(x => (typeof x === 'string' ? x.trim().length > 10 : !!x)).length >= 1;
+  switch (tool) {
+    case 'flashcards': return hasFc;
+    case 'quiz':       return hasQ;
+    case 'mindmap':    return hasMm;
+    case 'all':        return hasFc || hasQ || hasMm || hasKc;
+    default:           return hasKc; // notes / summary — supplementary key-concepts JSON
+  }
+}
+
+async function fetchCardsFromOneMeshModel(modelId, prompt, tool, maxTokens) {
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 60000);
   const t0 = Date.now();
@@ -606,7 +656,10 @@ async function fetchCardsFromOneMeshModel(modelId, prompt, tool) {
         'Authorization': `Bearer ${process.env.MESH_API_KEY}`,
       },
       body: JSON.stringify({
-        model: modelId, max_tokens: 16384, temperature: 0.30, stream: false,
+        // Was a flat 16384 regardless of tool — with counts now capped at 20
+        // (flashcards/quiz) and mindmap fixed at 6-10 branches, nothing needs
+        // that much headroom. Caller passes a tool-appropriate budget.
+        model: modelId, max_tokens: maxTokens || 6144, temperature: 0.30, stream: false,
         messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
@@ -619,7 +672,11 @@ async function fetchCardsFromOneMeshModel(modelId, prompt, tool) {
     content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
     const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
     if (jS === -1 || jE <= jS) throw new Error('No JSON object found in response');
-    const parsed = JSON.parse(content.slice(jS, jE + 1).replace(/,(\s*[}\]])/g, '$1'));
+    let parsed = JSON.parse(content.slice(jS, jE + 1).replace(/,(\s*[}\]])/g, '$1'));
+    parsed = normalizeCardsResult(parsed);
+    if (!validateCardsResult(parsed, tool)) {
+      throw new Error(`${modelId}: validation failed — missing/empty required fields for tool:${tool} (fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0})`);
+    }
     log.ok(`P2 Mesh:${modelId} WON in ${Date.now() - t0}ms for tool:${tool}`);
     return parsed;
   } catch (err) {
@@ -628,7 +685,7 @@ async function fetchCardsFromOneMeshModel(modelId, prompt, tool) {
   }
 }
 
-async function fetchCards(prompt, tool) {
+async function fetchCards(prompt, tool, maxTokens) {
   const errors = [];
 
   if (!process.env.MESH_API_KEY) {
@@ -639,7 +696,7 @@ async function fetchCards(prompt, tool) {
   // ── PRIORITY: pinned paid model tried first ──
   try {
     log.info(`P2 priority: trying pinned model ${PINNED_MODEL} for tool:${tool}`);
-    const pinnedResult = await fetchCardsFromOneMeshModel(PINNED_MODEL, prompt, tool);
+    const pinnedResult = await fetchCardsFromOneMeshModel(PINNED_MODEL, prompt, tool, maxTokens);
     log.ok(`P2 priority: ${PINNED_MODEL} succeeded for tool:${tool}`);
     return pinnedResult;
   } catch (err) {
@@ -660,7 +717,7 @@ async function fetchCards(prompt, tool) {
     log.info(`P2 pass ${pass}: racing ${candidates.length} free Mesh models in parallel for tool:${tool}`);
 
     const modelPromises = candidates.map(modelId =>
-      fetchCardsFromOneMeshModel(modelId, prompt, tool)
+      fetchCardsFromOneMeshModel(modelId, prompt, tool, maxTokens)
         .then(result => ({ status: 'fulfilled', value: result, model: modelId }))
         .catch(err => ({ status: 'rejected', reason: err, model: modelId }))
     );
@@ -1062,30 +1119,32 @@ module.exports = async function handler(req, res) {
     sse('stage', { idx: 1, label: `📝 Writing ${opts.tool === 'summary' ? 'smart summary' : 'study notes'}…` });
 
     // ── Phase 2: cards generation — starts NOW in parallel with Phase 1 ──
+    // Token budgets sized to what each tool can actually need now that
+    // flashcards/quiz are capped at 20 items (was a flat 16384 for every tool).
     let cardsPromise;
     if (opts.tool === 'all') {
       // For all, the JSON blob (notes+cards+quiz+mindmap) is fetched here,
       // completely separate from the clean-prose live stream above.
       const megaPrompt = buildMegaPrompt(message, opts);
-      cardsPromise = fetchCards(megaPrompt, 'all').then(
+      cardsPromise = fetchCards(megaPrompt, 'all', 8192).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
     } else if (opts.tool === 'flashcards') {
       const fcPrompt = buildFlashcardsPrompt(message, opts);
-      cardsPromise = fetchCards(fcPrompt, 'flashcards').then(
+      cardsPromise = fetchCards(fcPrompt, 'flashcards', Math.min(6144, 400 + opts.cardCount * 220)).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
     } else if (opts.tool === 'quiz') {
       const quizPrompt = buildQuizPrompt(message, opts);
-      cardsPromise = fetchCards(quizPrompt, 'quiz').then(
+      cardsPromise = fetchCards(quizPrompt, 'quiz', Math.min(6144, 400 + opts.quizCount * 220)).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
     } else if (opts.tool === 'mindmap') {
       const mmPrompt = buildMindmapPrompt(message, opts);
-      cardsPromise = fetchCards(mmPrompt, 'mindmap').then(
+      cardsPromise = fetchCards(mmPrompt, 'mindmap', 3500).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
@@ -1096,18 +1155,29 @@ module.exports = async function handler(req, res) {
       // and this ALWAYS fell back to the canned static filler regardless of whether the
       // notes themselves were real AI content. Use a dedicated JSON prompt instead.
       const kcPrompt = buildKeyConceptsPrompt(message, opts);
-      cardsPromise = fetchCards(kcPrompt, opts.tool).then(
+      cardsPromise = fetchCards(kcPrompt, opts.tool, 3000).then(
         v => ({ status: 'fulfilled', value: v }),
         e => ({ status: 'rejected', reason: e })
       );
     }
+
+    // Token budget for the live-stream notes call — for notes/summary this is
+    // the real deliverable so it uses the full depth budget (summary is
+    // already short via SUMMARY_MAX_WORDS); for flashcards/quiz/mindmap the
+    // notes stream is just a "generating…" placeholder, so it doesn't need
+    // the full depth budget either.
+    const notesMaxTokens = opts.tool === 'summary'
+      ? 1400
+      : (opts.tool === 'notes' || opts.tool === 'all')
+        ? (DEPTH_MAP[opts.depth] || DEPTH_MAP.detailed).maxTokens
+        : 1800;
 
     // ── Phase 1: live notes stream (PARALLEL models) ──
     try {
       // For tools that don't need streaming notes (flashcards, quiz, mindmap), we still stream notes as a fallback
       // but we'll also stream the JSON later. To avoid duplication, we'll stream the notes only for notes/summary/all
       if (opts.tool === 'notes' || opts.tool === 'summary' || opts.tool === 'all') {
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, notesMaxTokens);
         p1ok = true;
         log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
       } else {
@@ -1117,7 +1187,7 @@ module.exports = async function handler(req, res) {
         // Actually better: we skip streaming notes for these tools and directly generate the JSON.
         // But we still need to show something, so we'll generate notes as a fallback.
         // Let's do: generate notes anyway (it's useful) but also fetch cards.
-        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool);
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, notesMaxTokens);
         p1ok = true;
         log.ok(`[${reqId}] P1 done (fallback notes) — ${notes.length}ch`);
       }

@@ -59,16 +59,16 @@ const TOOL_CONFIG = {
     description: 'Comprehensive structured study notes with introduction, concepts, mechanisms, examples, and summary.',
   },
   flashcards: {
-    // ...
-    placeholder: 'Enter a topic to create 10–20 interactive flashcards with spaced repetition…',
-    sfpLabel: 'Building your interactive flashcard deck (10–20 cards)…',
-    description: 'Create 10–20 interactive 3D flip flashcards perfect for spaced repetition study.',
+    icon: 'fa-layer-group', label: 'Create Flashcards', sfpName: 'Flashcards', color: '#bf00ff',
+    placeholder: 'Enter a topic to create 15–20 interactive flashcards with spaced repetition…',
+    sfpLabel: 'Building your interactive flashcard deck (15–20 cards)…',
+    description: 'Create 15–20 interactive 3D flip flashcards perfect for spaced repetition study.',
   },
   quiz: {
-    // ...
-    placeholder: 'Enter a topic to generate 5–20 practice questions with detailed explanations…',
-    sfpLabel: 'Generating your 5–20 question practice quiz…',
-    description: 'Generate 5–20 self-scoring multiple-choice questions with detailed explanations.',
+    icon: 'fa-question-circle', label: 'Build Quiz', sfpName: 'Quiz', color: '#00ff88',
+    placeholder: 'Enter a topic to generate 10–12 practice questions with detailed explanations…',
+    sfpLabel: 'Generating your 10–12 question practice quiz…',
+    description: 'Generate 10–12 self-scoring multiple-choice questions with detailed explanations.',
   },
   summary: {
     icon: 'fa-align-left', label: 'Summarise', sfpName: 'Summary', color: '#ffae00',
@@ -742,12 +742,21 @@ class SavoireApp {
   // ─── WIZARD SYSTEM ──────────────────────────────────────────────────────────
 
   _openWizard(presetTool) {
+    // BUG FIX: this used to drop cardCount/quizCount/quizType/branchCount
+    // entirely on every open, leaving them `undefined` unless the user
+    // happened to click a count card. That undefined value then skipped the
+    // server-side exact-count enforcement and showed up as "undefined" in
+    // the review step / flashcard labels. Always reset to sane defaults.
     this.wizardData = {
-      tool:     presetTool || this.tool || 'notes',
-      topic:    '',
-      language: this.prefs.defaultLanguage || 'English',
-      depth:    'detailed',
-      style:    'simple',
+      tool:        presetTool || this.tool || 'notes',
+      topic:       '',
+      language:    this.prefs.defaultLanguage || 'English',
+      depth:       'detailed',
+      style:       'simple',
+      cardCount:   15,
+      quizCount:   10,
+      quizType:    'mixed',
+      branchCount: 6,
     };
     // If a tool is already pre-selected, skip step 0 (tool selection) and go straight to topic
     this.wizardStep = presetTool ? 1 : 0;
@@ -1031,7 +1040,7 @@ Examples:
   }
 
   _wStepCardCount() {
-    const options = [10, 15, 20, 25, 30];
+    const options = [5, 10, 15, 20]; // max 20 flashcards, per request
     return `
       <div class="wizard-step-heading"><i class="fas fa-layer-group"></i> How many flashcards?</div>
       <div class="wizard-depth-grid">
@@ -1232,14 +1241,19 @@ Examples:
   // ─── MEGA BUNDLE MODAL ──────────────────────────────────────────────────────
 
   _openMega() {
-    if (this.el.megaTopicInput)  this.el.megaTopicInput.value = '';
-    if (this.el.megaCharCount)   this.el.megaCharCount.textContent = '0 / 4000';
-    if (this.el.megaLangSel)     this.el.megaLangSel.value = this.prefs.defaultLanguage || 'English';
-    if (this.el.megaDepthSel)    this.el.megaDepthSel.value = 'detailed';
-    this._openModal('megaModal');
+    // BUG FIX: the standalone Mega Bundle modal (megaModal) ran its own
+    // simplified generation path — no cardCount/quizCount/branchCount, and a
+    // different code path than the wizard. That path was the buggy/
+    // inconsistent one. The wizard's "All 5 tools" mega bundle path is the
+    // one that reliably works, so every Mega Bundle entry point (nav button,
+    // header button, empty-state button, chip, Ctrl+M) now opens the wizard
+    // pre-set to 'all' instead of the old standalone modal.
+    this._openWizard('all');
   }
 
   _runMega() {
+    // Kept for the (now unused) megaModal markup, routed through the same
+    // reliable path as the wizard rather than the old simplified call.
     const topic = this.el.megaTopicInput?.value?.trim();
     if (!topic || topic.length < 2) { this._toast('error', 'fa-exclamation-circle', 'Please enter a topic!'); return; }
     const lang  = this.el.megaLangSel?.value  || 'English';
@@ -1247,73 +1261,58 @@ Examples:
     this._closeModal('megaModal');
     this.tool = 'all';
     this._checkStreak();
-    this._sendDirect(topic, lang, depth, 'simple', 'all');
+    this._sendDirect(topic, lang, depth, 'simple', 'all', { cardCount: 15, quizCount: 10, quizType: 'mixed', branchCount: 6 });
   }
 
   // ─── CORE GENERATION PIPELINE ───────────────────────────────────────────────
 
-  // ─── In TOOL_CONFIG update flashcards and quiz max ───
+  async _sendDirect(text, lang, depth, style, tool, counts) {
+    if (this.generating) return;
+    this.generating    = true;
+    this.streamBuffer  = '';
+    this.tool          = tool || 'notes';
 
-// ─── Updated _sendDirect in app.js ───
-async _sendDirect(text, lang, depth, style, tool, counts) {
-  if (this.generating) return;
-  this.generating    = true;
-  this.streamBuffer  = '';
-  this.tool          = tool || 'notes';
+    // Reset live accumulators
+    this._liveCards     = [];
+    this._liveQuestions = [];
+    this._liveBranches  = [];
+    this._liveMMCentral = '';
+    this._liveMMConns   = [];
 
-  this._liveCards     = [];
-  this._liveQuestions = [];
-  this._liveBranches  = [];
-  this._liveMMCentral = '';
-  this._liveMMConns   = [];
+    this._showToolbar(false);
+    this._showStreamOverlay(text, this.tool);
+    this._startStages();
+    const t0 = Date.now();
 
-  this._showToolbar(false);
-  this._showStreamOverlay(text, this.tool);
-  this._startStages();
-  const t0 = Date.now();
-
-  try {
-    // Enforce max 20 for flashcards and quiz
-    const cardCount = Math.min(counts?.cardCount || 15, 20);
-    const quizCount = Math.min(counts?.quizCount || 10, 20);
-
-    const data = await this._callAPI(text, {
-      depth,
-      language: lang,
-      style,
-      tool: this.tool,
-      cardCount,
-      quizCount,
-      quizType: counts?.quizType || 'mixed',
-      branchCount: counts?.branchCount || 6,
-    });
-    this.currentData = data;
-    this._hideStreamOverlay();
-    this._renderResult(data);
-    this.totalWords += this._wordCount(data.ultra_long_notes || '');
-    localStorage.setItem('sv_total_words', String(this.totalWords));
-    this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now(), dur: Date.now() - t0 });
-    this._updateAllStats();
-    this._showToolbar(true);
-    this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.tool]?.sfpName} generated!`);
-    setTimeout(() => { if (this.el.outArea) this.el.outArea.scrollTop = 0; }, 200);
-  } catch (err) {
-    this._hideStreamOverlay();
-    if (err.name === 'AbortError') {
-      this._toast('info', 'fa-stop-circle', 'Generation cancelled.');
-      this._showState('empty');
-      this._showToolbar(false);
-    } else {
-      const msg = this._friendlyError(err.message);
-      this._showState('error', msg);
-      this._toast('error', 'fa-exclamation-circle', msg);
-      this._showToolbar(false);
+    try {
+      const data = await this._callAPI(text, { depth, language: lang, style, tool: this.tool, ...(counts || {}) });
+      this.currentData = data;
+      this._hideStreamOverlay();
+      this._renderResult(data);
+      this.totalWords += this._wordCount(data.ultra_long_notes || '');
+      localStorage.setItem('sv_total_words', String(this.totalWords));
+      this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now(), dur: Date.now() - t0 });
+      this._updateAllStats();
+      this._showToolbar(true);
+      this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.tool]?.sfpName} generated!`);
+      setTimeout(() => { if (this.el.outArea) this.el.outArea.scrollTop = 0; }, 200);
+    } catch (err) {
+      this._hideStreamOverlay();
+      if (err.name === 'AbortError') {
+        this._toast('info', 'fa-stop-circle', 'Generation cancelled.');
+        this._showState('empty');
+        this._showToolbar(false);
+      } else {
+        const msg = this._friendlyError(err.message);
+        this._showState('error', msg);
+        this._toast('error', 'fa-exclamation-circle', msg);
+        this._showToolbar(false);
+      }
+    } finally {
+      this.generating = false;
+      this._stopStages();
     }
-  } finally {
-    this.generating = false;
-    this._stopStages();
   }
-}
 
   _friendlyError(msg) {
     if (!msg) return 'Savoiré AI study tool is momentarily unavailable. Please try again.';
@@ -1493,6 +1492,17 @@ async _sendDirect(text, lang, depth, style, tool, counts) {
                   // fact — floating topic fact pill
                   } else if (evt.fact !== undefined) {
                     if (this.el.sfpFact) this.el.sfpFact.textContent = evt.fact;
+
+                  // waiting — backend has sent the last notes token and is now
+                  // finalising the JSON cards/summary data. Without this the UI
+                  // just sat there looking frozen between the last token and
+                  // the 'done' event with no indication anything was still
+                  // happening.
+                  } else if (evt.afterLastToken !== undefined) {
+                    if (this.el.sfpLabel) this.el.sfpLabel.textContent = evt.label || 'Finalising…';
+                    if (this.el.sfpText && !this.el.sfpText.querySelector('.typing-cursor')) {
+                      this.el.sfpText.insertAdjacentHTML('beforeend', '<span class="typing-cursor">▊</span>');
+                    }
 
                   // done / final data object — topic or ultra_long_notes or _tool field present
                   } else if (evt.topic !== undefined || evt.ultra_long_notes !== undefined || evt._tool !== undefined) {
