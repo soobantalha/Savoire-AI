@@ -2621,6 +2621,28 @@ Examples:
       const { jsPDF } = window.jspdf;
       const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
 
+      // jsPDF's built-in fonts (helvetica) only support Latin-1/WinAnsi — any
+      // emoji or exotic unicode renders as garbage glyphs. Strip/replace before
+      // it ever reaches doc.text(), for EVERY string (cover, headers, AI content).
+      const WINANSI_EXTRA = '\u2013\u2014\u2018\u2019\u201A\u201C\u201D\u201E\u2022\u2026\u2020\u2021\u2030\u2039\u203A\u20AC\u2122';
+      const pdfSafe = (s) => {
+        if (s == null) return s;
+        return String(s)
+          .replace(/[\u2713\u2714]/g, '(check)')
+          .replace(/[\u25B8\u25B6\u2023]/g, '>')
+          .replace(/\u2192/g, '->')
+          .replace(new RegExp(`[^\\u0000-\\u00FF${WINANSI_EXTRA}]`, 'gu'), '')
+          .replace(/[ \t]{2,}/g, ' ')
+          .trim();
+      };
+      const _rawText = doc.text.bind(doc);
+      doc.text = (txt, x, y, opts) => {
+        const clean = Array.isArray(txt) ? txt.map(pdfSafe) : pdfSafe(txt);
+        return _rawText(clean, x, y, opts);
+      };
+      const _rawSplit = doc.splitTextToSize.bind(doc);
+      doc.splitTextToSize = (txt, maxW) => _rawSplit(pdfSafe(txt), maxW);
+
       const PW=210, PH=297, ML=14, MR=14, CW=PW-ML-MR, MT=28, MB=16;
       const isDark = theme !== 'light';
       let Y=0, pageNum=1;
@@ -2687,7 +2709,7 @@ Examples:
       setBG(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
       setBG([0,140,220]); doc.roundedRect(ML,14,22,22,4,4,'F');
       doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
-      doc.text('Ś',ML+8,30);
+      doc.text('S',ML+8,30);
       doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
       doc.text('SAVOIRÉ AI',ML+28,22);
       doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
@@ -2698,7 +2720,7 @@ Examples:
       const tCfg=TOOL_CONFIG[this.tool]||TOOL_CONFIG.notes;
       setBG([0,80,160]); doc.roundedRect(ML,48,80,8,1.5,1.5,'F');
       doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG([200,228,255]);
-      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all'?' — ALL 5 TOOLS ⚡':''}`,ML+4,53.5);
+      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all'?' — ALL 5 TOOLS':''}`,ML+4,53.5);
 
       doc.setFontSize(20); doc.setFont('helvetica','bold'); setFG(C.head);
       const titleLines=doc.splitTextToSize(data.topic||'Study Notes',CW);
@@ -2735,7 +2757,7 @@ Examples:
       newPage('Study Content');
 
       if (data.ultra_long_notes) {
-        secHdr('📚  Study Notes', C.gold);
+        secHdr('STUDY NOTES', C.gold);
         const clean=this._stripMd(data.ultra_long_notes);
         let prevBlank=false;
         for (const raw of clean.split('\n')) {
@@ -2770,7 +2792,7 @@ Examples:
       }
 
       if(data.key_concepts?.length){
-        secHdr('💡  Key Concepts',C.gold);
+        secHdr('KEY CONCEPTS',C.gold);
         data.key_concepts.slice(0,10).forEach((c,i)=>{
           ck(16); setBG(C.card); doc.roundedRect(ML,Y,CW,14,2,2,'F');
           setBG(C.gold); doc.circle(ML+5,Y+7,3.5,'F');
@@ -2784,7 +2806,7 @@ Examples:
 
       if(data.flashcards?.length){
         newPage('Flashcards');
-        secHdr('🃏  Flashcards',C.purple);
+        secHdr('FLASHCARDS',C.purple);
         data.flashcards.forEach((fc,i)=>{
           ck(28);
           setBG(C.card); doc.roundedRect(ML,Y,CW,26,2,2,'F');
@@ -2805,7 +2827,7 @@ Examples:
 
       if(data.quiz_questions?.length){
         newPage('Practice Quiz');
-        secHdr('❓  Practice Quiz',C.green);
+        secHdr('PRACTICE QUIZ',C.green);
         const letters=['A','B','C','D','E'];
         data.quiz_questions.forEach((q,i)=>{
           ck(42);
@@ -2827,7 +2849,7 @@ Examples:
             const isCorrect=opt===q.correct_answer;
             if(isCorrect){setBG(isDark?[0,40,18]:[215,255,228]);doc.roundedRect(ML+2,Y-2,CW-2,7.5,1,1,'F');}
             doc.setFontSize(7.5); doc.setFont('helvetica',isCorrect?'bold':'normal'); setFG(isCorrect?C.correct:C.text);
-            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' ✓':''}`,ML+5,Y+3); Y+=8;
+            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' (Correct)':''}`,ML+5,Y+3); Y+=8;
           });
           if(q.explanation){
             ck(8); doc.setFontSize(6.8); doc.setFont('helvetica','italic'); setFG(C.muted);
@@ -2840,7 +2862,7 @@ Examples:
 
       if(data.mindmap?.branches?.length){
         newPage('Mind Map');
-        secHdr('🗺️  Mind Map',C.blue);
+        secHdr('MIND MAP',C.blue);
         setBG(C.gold); doc.roundedRect(ML+CW/2-40,Y,80,10,5,5,'F');
         doc.setFontSize(9.5); doc.setFont('helvetica','bold'); setFG([8,14,35]);
         doc.text((data.mindmap.central||data.topic||'').slice(0,30),ML+CW/2,Y+7,{align:'center'}); Y+=16;
@@ -2852,7 +2874,7 @@ Examples:
           setBG(C.card); doc.roundedRect(ML+4,Y,CW-4,9,1.5,1.5,'F');
           try{setFG(bRGB);}catch{setFG(C.blue);}
           doc.setFontSize(9); doc.setFont('helvetica','bold');
-          doc.text(`▸ ${b.name}`,ML+8,Y+6.2); Y+=12;
+          doc.text(`> ${b.name}`,ML+8,Y+6.2); Y+=12;
           (b.items||[]).slice(0,6).forEach(item=>{
             ck(6); setBG(C.hdr); doc.roundedRect(ML+8,Y,CW-8,6,1,1,'F');
             doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);

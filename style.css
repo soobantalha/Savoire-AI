@@ -9770,3 +9770,75 @@ input::placeholder, textarea::placeholder {
   .sfp-scroll { padding: 22px 16px 40px !important; }
   .stream-overlay::before { width: 500px; height: 200px; top: -140px; }
 }
+/* ────────────────────────────────────────────────────────────────────────
+   LIGHT THEME CONTRAST SAFETY-NET
+   Several older rules force white/near-white text colors that were written
+   for the dark theme only and never got a light-theme override, causing
+   invisible ("white on white") text in the output/content area. This block
+   sits last in the cascade so it wins on equal specificity and restores
+   readable contrast without touching the dark theme.
+   ──────────────────────────────────────────────────────────────────────── */
+[data-theme="light"] body,
+[data-theme="light"] .app,
+[data-theme="light"] .main-panel,
+[data-theme="light"] .output-panel,
+[data-theme="light"] .result-panel,
+[data-theme="light"] .content-panel,
+[data-theme="light"] .study-output,
+[data-theme="light"] .out-panel {
+  color: #1a1f3a;
+}
+
+[data-theme="light"] .md-content,
+[data-theme="light"] .md-content *,
+[data-theme="light"] .sfp-text,
+[data-theme="light"] .sfp-text *,
+[data-theme="light"] .study-sec,
+[data-theme="light"] .study-sec *,
+[data-theme="light"] .out-panel,
+[data-theme="light"] .out-panel *,
+[data-theme="light"] .result-panel,
+[data-theme="light"] .result-panel *,
+[data-theme="light"] .content-panel,
+[data-theme="light"] .content-panel * {
+  color: #1e2540;
+}
+
+/* Headings should stay dark and bold, not washed-out gray */
+[data-theme="light"] .md-content h1,
+[data-theme="light"] .md-content h2,
+[data-theme="light"] .md-content h3,
+[data-theme="light"] .md-content h4,
+[data-theme="light"] .sfp-text h1,
+[data-theme="light"] .sfp-text h2,
+[data-theme="light"] .sfp-text h3,
+[data-theme="light"] .sfp-text h4 {
+  color: #0f1730;
+}
+
+/* Cards / chips / badges that use a translucent dark fill in dark mode need
+   a light-mode fill so their text (often white) stays legible */
+[data-theme="light"] .flashcard,
+[data-theme="light"] .quiz-card,
+[data-theme="light"] .mindmap-branch,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .concept-card {
+  background: rgba(255,255,255,.92);
+  color: #1a1f3a;
+  border-color: rgba(0,0,0,.1);
+}
+[data-theme="light"] .flashcard *,
+[data-theme="light"] .quiz-card *,
+[data-theme="light"] .mindmap-branch *,
+[data-theme="light"] .stat-card *,
+[data-theme="light"] .concept-card * {
+  color: inherit;
+}
+
+/* Guard against any element accidentally left with a pure-white background
+   AND default (often white) text — the classic invisible-text bug */
+[data-theme="light"] [style*="background: #fff"],
+[data-theme="light"] [style*="background:#fff"],
+[data-theme="light"] [style*="background: white"] {
+  color: #1a1f3a !important;
+}
