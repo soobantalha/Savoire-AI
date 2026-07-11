@@ -2599,39 +2599,97 @@ Examples:
 
   // ─── WORLD-CLASS PDF GENERATION ─────────────────────────────────────────────
   // (unchanged – preserves full PDF functionality)
-  _downloadPDF() {
+  async _downloadPDF() {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Generate some content first.'); return; }
 
     if (typeof window.jspdf === 'undefined' || !window.jspdf?.jsPDF) {
       this._toast('info', 'fa-spinner fa-pulse', 'Loading PDF library…');
-      const sc    = document.createElement('script');
-      sc.src      = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      sc.onload   = () => setTimeout(() => this._generatePDF(data, this.pdfTheme), 200);
-      sc.onerror  = () => this._toast('error', 'fa-times', 'Could not load PDF library.');
-      document.head.appendChild(sc);
-      return;
+      await new Promise((resolve) => {
+        const sc    = document.createElement('script');
+        sc.src      = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        sc.onload   = resolve;
+        sc.onerror  = () => { this._toast('error', 'fa-times', 'Could not load PDF library.'); resolve(); };
+        document.head.appendChild(sc);
+      });
+      if (!window.jspdf?.jsPDF) return;
     }
-    this._generatePDF(data, this.pdfTheme);
+    const fontData = await this._ensurePdfUnicodeFont();
+    this._generatePDF(data, this.pdfTheme, fontData);
   }
 
-  _generatePDF(data, theme = 'dark') {
+  // Loads a Unicode font (Noto Sans — covers Latin + Cyrillic + Greek, so
+  // Russian/European-language content actually renders) once, and caches it
+  // on the instance. Falls back silently to jsPDF's built-in Latin-only
+  // 'helvetica' if the font can't be fetched (e.g. offline).
+  async _ensurePdfUnicodeFont() {
+    if (this._pdfFontCache !== undefined) return this._pdfFontCache;
+    try {
+      this._toast('info', 'fa-spinner fa-pulse', 'Loading fonts…');
+      const toBase64 = (buf) => {
+        let binary = '';
+        const bytes = new Uint8Array(buf);
+        const chunk = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunk) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+        }
+        return btoa(binary);
+      };
+      const [regRes, boldRes] = await Promise.all([
+        fetch('https://cdn.jsdelivr.net/gh/openmaptiles/fonts@master/noto-sans/NotoSans-Regular.ttf'),
+        fetch('https://cdn.jsdelivr.net/gh/openmaptiles/fonts@master/noto-sans/NotoSans-Bold.ttf'),
+      ]);
+      if (!regRes.ok || !boldRes.ok) throw new Error('font fetch failed');
+      const [regBuf, boldBuf] = await Promise.all([regRes.arrayBuffer(), boldRes.arrayBuffer()]);
+      this._pdfFontCache = { regular: toBase64(regBuf), bold: toBase64(boldBuf) };
+    } catch (err) {
+      console.warn('Unicode PDF font unavailable, falling back to Latin-only font:', err);
+      this._pdfFontCache = null;
+    }
+    return this._pdfFontCache;
+  }
+
+  _generatePDF(data, theme = 'dark', fontData = null) {
     this._toast('info', 'fa-spinner fa-pulse', `Generating ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
     try {
       const { jsPDF } = window.jspdf;
       const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
 
-      // jsPDF's built-in fonts (helvetica) only support Latin-1/WinAnsi — any
-      // emoji or exotic unicode renders as garbage glyphs. Strip/replace before
-      // it ever reaches doc.text(), for EVERY string (cover, headers, AI content).
-      const WINANSI_EXTRA = '\u2013\u2014\u2018\u2019\u201A\u201C\u201D\u201E\u2022\u2026\u2020\u2021\u2030\u2039\u203A\u20AC\u2122';
+      // Register the Unicode font if we have it; otherwise fall back to
+      // jsPDF's built-in Latin-only helvetica (still fine for English content).
+      let FONT = 'helvetica';
+      if (fontData) {
+        try {
+          doc.addFileToVFS('NotoSans-Regular.ttf', fontData.regular);
+          doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+          doc.addFileToVFS('NotoSans-Bold.ttf', fontData.bold);
+          doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+          FONT = 'NotoSans';
+        } catch (fontErr) {
+          console.warn('Failed to register Unicode PDF font:', fontErr);
+          FONT = 'helvetica';
+        }
+      }
+      // Only normal/bold weights are registered for the Unicode font — map
+      // italic/bolditalic requests onto bold so styling degrades gracefully
+      // instead of silently reverting to Latin-only helvetica mid-document.
+      const fontStyle = (style) => {
+        if (FONT !== 'NotoSans') return style;
+        return (style === 'italic' || style === 'bolditalic') ? 'bold' : style;
+      };
+      const _rawSetFont = doc.setFont.bind(doc);
+      doc.setFont = (family, style) => _rawSetFont(FONT, fontStyle(style));
+
+      // Strip/replace only true emoji and unsupported symbol glyphs — actual
+      // language scripts (Cyrillic, Greek, accented Latin, etc.) are left
+      // alone since the Unicode font above can render them.
       const pdfSafe = (s) => {
         if (s == null) return s;
         return String(s)
           .replace(/[\u2713\u2714]/g, '(check)')
           .replace(/[\u25B8\u25B6\u2023]/g, '>')
           .replace(/\u2192/g, '->')
-          .replace(new RegExp(`[^\\u0000-\\u00FF${WINANSI_EXTRA}]`, 'gu'), '')
+          .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]/gu, '')
           .replace(/[ \t]{2,}/g, ' ')
           .trim();
       };
@@ -2881,6 +2939,20 @@ Examples:
             doc.text(`• ${String(item).slice(0,85)}`,ML+12,Y+4.2); Y+=7;
           }); Y+=4;
         });
+        if(data.mindmap.connections?.length){
+          Y+=3; secHdr('CROSS-CONNECTIONS',C.purple);
+          data.mindmap.connections.forEach(c=>{
+            ck(14);
+            setBG(C.card); doc.roundedRect(ML,Y,CW,12,2,2,'F');
+            setBG(C.purple); doc.rect(ML,Y,2.5,12,'F');
+            doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG(C.purple);
+            doc.text(`${String(c.from||'').slice(0,35)}  <->  ${String(c.to||'').slice(0,35)}`,ML+6,Y+5);
+            const descLines=doc.splitTextToSize(String(c.description||'').slice(0,180),CW-10);
+            doc.setFontSize(7.2); doc.setFont('helvetica','normal'); setFG(C.text);
+            doc.text(descLines.slice(0,2),ML+6,Y+9.5);
+            Y+=13;
+          });
+        }
       }
 
       addFooter();
