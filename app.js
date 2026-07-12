@@ -1358,7 +1358,7 @@ Examples:
       if (data._live_notes_buffer && data._live_notes_buffer.length > 50) {
         this._toast('info', 'fa-bolt', 'Live Notes are available in the toolbar and download menu.');
         if (this._liveNotesNudgeTimer) clearTimeout(this._liveNotesNudgeTimer);
-        this._liveNotesNudgeTimer = setTimeout(() => this._showLiveNotesNudge(), 12000);
+        this._liveNotesNudgeTimer = setTimeout(() => this._showLiveNotesNudge(), 10000);
       }
       setTimeout(() => { if (this.el.outArea) this.el.outArea.scrollTop = 0; }, 200);
     } catch (err) {
@@ -1905,13 +1905,13 @@ Examples:
   _buildResultHTML(data) {
     const topic = this._esc(data.topic || 'Study Material');
     const score = data.study_score || 96;
-    const pct   = Math.min(100, Math.max(0, score));
-    const wc    = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
-    const lang  = data._language || 'English';
-    const tool  = this.tool;
-    const cfg   = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
-    const isMega = tool === 'all';
-    const hasLiveNotes = !!(data._live_notes_buffer && data._live_notes_buffer.length > 50);
+      const pct   = Math.min(100, Math.max(0, score));
+      const wc    = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
+      const lang  = data._language || 'English';
+      const tool  = this.tool;
+      const cfg   = TOOL_CONFIG[tool] || TOOL_CONFIG.notes;
+      const isMega = tool === 'all';
+      const hasLiveNotes = !!(data._live_notes_buffer && data._live_notes_buffer.length > 50);
 
     const header = `
       <div class="result-hdr">
@@ -1932,6 +1932,7 @@ Examples:
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank" rel="noopener">${SAVOIRÉ.DEVELOPER}</a>
           </div>
           ${hasLiveNotes ? `<div class="live-notes-pill"><i class="fas fa-bolt"></i> Live Notes Available</div>` : ''}
+          ${hasLiveNotes ? `<div class="result-live-notes-banner"><div class="result-live-notes-copy"><strong>Live Notes captured.</strong> You can view the original stream output any time.</div><button class="result-live-notes-btn" onclick="window._app._showLiveNotesModal()">View Live Notes</button></div>` : ''}
         </div>
         <div class="score-ring-wrap">
           <div class="rh-score" style="--pct:${pct}">
@@ -3317,7 +3318,7 @@ Examples:
         nudge.classList.remove('visible');
         setTimeout(() => nudge.parentNode && nudge.remove(), 300);
       }
-    }, 12000);
+    }, 18000);
   }
 
   _saveNote() {

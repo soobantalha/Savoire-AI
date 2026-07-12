@@ -11731,3 +11731,54 @@ html[data-theme="light"] .live-notes-nudge-close {
     justify-content: space-between;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   UI HOTFIX PATCH 7 — result live notes banner + landing page premium polish
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.result-live-notes-banner {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(0,255,136,.12), rgba(0,212,255,.08));
+  border: 1px solid rgba(0,255,136,.2);
+}
+
+.result-live-notes-copy {
+  font-size: .8rem;
+  color: rgba(255,255,255,.78);
+  line-height: 1.55;
+}
+
+.result-live-notes-copy strong {
+  color: #86ffd3;
+}
+
+.result-live-notes-btn {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0ee6a2, #00c8ff);
+  color: #07131d;
+  font-size: .78rem;
+  font-weight: 900;
+  box-shadow: 0 12px 22px rgba(14,230,162,.18);
+}
+
+html[data-theme="light"] .result-live-notes-banner {
+  background: linear-gradient(135deg, rgba(16,185,129,.10), rgba(14,165,233,.08)) !important;
+  border-color: rgba(16,185,129,.18) !important;
+}
+
+html[data-theme="light"] .result-live-notes-copy {
+  color: #334155 !important;
+}
+
+html[data-theme="light"] .result-live-notes-copy strong {
+  color: #0f8d70 !important;
+}
