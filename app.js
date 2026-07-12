@@ -3660,9 +3660,10 @@ Examples:
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     if (rect) {
-      const pad=10, r=12;
-      const x=rect.left-pad, y=rect.top-pad;
-      const w=rect.width+pad*2, h=rect.height+pad*2;
+      const pad = Math.min(8, Math.max(4, rect.width * 0.04));
+      const r = 12;
+      const x = rect.left - pad, y = rect.top - pad;
+      const w = rect.width + pad * 2, h = rect.height + pad * 2;
 
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
@@ -3701,7 +3702,7 @@ Examples:
       hint = document.createElement('div');
       hint.id = 'demoCHint';
       hint.className = 'demo-canvas-hint';
-      hint.innerHTML = '<i class="fas fa-hand-pointer"></i> Click dark area to advance · <kbd>→</kbd> or <kbd>Esc</kbd>';
+      hint.innerHTML = '<i class="fas fa-hand-pointer"></i> Tap dark area to continue · <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd>';
       document.body.appendChild(hint);
     }
     hint.style.display = 'block';
@@ -3767,45 +3768,57 @@ Examples:
         <i class="fas fa-play"></i> ${step.action.label}
       </button>` : '';
 
+    const youtubeBtn = `
+      <a class="demo-youtube-link" href="https://www.youtube.com/watch?v=5uK0gRKC8oc" target="_blank" rel="noopener">
+        <i class="fab fa-youtube"></i> Watch Video Demo
+      </a>`;
+
     this.demoTooltip.innerHTML = `
-      <div class="demo-tt-top">
-        <div class="demo-tt-step-badge">Step ${step.step} of ${DEMO_STEPS.length}</div>
-        <button class="demo-tt-x" onclick="window._app._closeDemo()" title="Close (Esc)">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="demo-tt-icon-row">
-        <div class="demo-tt-icon-wrap" style="--demo-color:${step.color};background:${step.color}18;border:2px solid ${step.color}44">
-          <i class="fas ${step.icon}" style="color:${step.color};font-size:1.6rem"></i>
+      <div class="demo-tt-shell">
+        <div class="demo-tt-top">
+          <div class="demo-tt-step-badge">Step ${step.step} of ${DEMO_STEPS.length}</div>
+          <button class="demo-tt-x" onclick="window._app._closeDemo()" title="Close (Esc)">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <div class="demo-tt-titles">
-          <div class="demo-tt-title" style="color:${step.color}">${step.title}</div>
-          <div class="demo-tt-subtitle">${step.subtitle}</div>
+        <div class="demo-tt-icon-row">
+          <div class="demo-tt-icon-wrap" style="--demo-color:${step.color};background:${step.color}18;border:2px solid ${step.color}44">
+            <i class="fas ${step.icon}" style="color:${step.color};font-size:1.6rem"></i>
+          </div>
+          <div class="demo-tt-titles">
+            <div class="demo-tt-title" style="color:${step.color}">${step.title}</div>
+            <div class="demo-tt-subtitle">${step.subtitle}</div>
+          </div>
         </div>
-      </div>
-      <div class="demo-tt-progress">
-        <div class="demo-tt-prog-bar">
-          <div class="demo-tt-prog-fill" style="width:${pct}%;background:${step.color}"></div>
+        <div class="demo-tt-progress">
+          <div class="demo-tt-prog-bar">
+            <div class="demo-tt-prog-fill" style="width:${pct}%;background:${step.color}"></div>
+          </div>
+          <div class="demo-tt-dots">${dotsHtml}</div>
         </div>
-        <div class="demo-tt-dots">${dotsHtml}</div>
-      </div>
-      <div class="demo-tt-content">${step.content}</div>
-      <div class="demo-tt-tips">${tipsHtml}</div>
-      ${actionBtn}
-      <div class="demo-tt-footer">
-        <button class="demo-btn-prev" onclick="window._app._prevDemo()" ${isFirst ? 'disabled' : ''} title="Previous (←)">
-          <i class="fas fa-arrow-left"></i> Back
-        </button>
-        <div class="demo-tt-nav-info">
-          <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd> close
+        <div class="demo-tt-content">${step.content}</div>
+        <div class="demo-tt-tips">${tipsHtml}</div>
+        <div class="demo-tt-actions">
+          ${actionBtn}
+          ${youtubeBtn}
         </div>
-        ${isLast
-          ? `<button class="demo-btn-finish" onclick="window._app._closeDemo();window._app._openWizard();">
-               <i class="fas fa-rocket"></i> Start Studying!
-             </button>`
-          : `<button class="demo-btn-next" onclick="window._app._nextDemo()">
-               ${step.cta || 'Next →'}
-             </button>`}
+        <div class="demo-tt-footer">
+          <div class="demo-tt-nav-row">
+            <button class="demo-btn-prev" onclick="window._app._prevDemo()" ${isFirst ? 'disabled' : ''} title="Previous (←)">
+              <i class="fas fa-arrow-left"></i> Back
+            </button>
+            ${isLast
+              ? `<button class="demo-btn-finish" onclick="window._app._closeDemo();window._app._openWizard();">
+                   <i class="fas fa-rocket"></i> Start Studying!
+                 </button>`
+              : `<button class="demo-btn-next" onclick="window._app._nextDemo()">
+                   ${step.cta || 'Next →'}
+                 </button>`}
+          </div>
+          <div class="demo-tt-nav-info">
+            <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd> close · tap outside to continue
+          </div>
+        </div>
       </div>`;
   }
 
@@ -3815,56 +3828,87 @@ Examples:
 
   _placeDemoTooltip(rect, preferredArrow) {
     if (!this.demoTooltip || !rect) { this._placeDemoTooltipCenter(); return; }
-    if (window.innerWidth <= 640) { this._placeDemoTooltipCenter(); return; }
-    const TW=380, TH=520, M=16;
-    const vw=window.innerWidth, vh=window.innerHeight;
-    const w=Math.min(TW, vw-M*2);
-    this.demoTooltip.style.transform='';
-    this.demoTooltip.style.width=w+'px';
-    this.demoTooltip.style.maxHeight=(vh-M*2)+'px';
-    this.demoTooltip.style.overflowY='auto';
-    this.demoTooltip.style.bottom='auto';
-    this.demoTooltip.style.right='auto';
+    if (window.innerWidth <= 760) { this._placeDemoTooltipCenter(); return; }
 
-    const fits={
-      below: rect.bottom+TH+M<vh, above: rect.top-TH-M>0,
-      right:  rect.right+w+M<vw, left:  rect.left-w-M>0,
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const M  = 22;
+    const w  = Math.min(430, vw - M * 2);
+    const h  = Math.min(620, vh - M * 2);
+
+    this.demoTooltip.style.transform = '';
+    this.demoTooltip.style.width = w + 'px';
+    this.demoTooltip.style.maxHeight = h + 'px';
+    this.demoTooltip.style.overflowY = 'auto';
+    this.demoTooltip.style.bottom = 'auto';
+    this.demoTooltip.style.right = 'auto';
+
+    const fits = {
+      below: rect.bottom + h + M < vh,
+      above: rect.top - h - M > 0,
+      right: rect.right + w + M < vw,
+      left: rect.left - w - M > 0,
     };
 
-    let top, left, placed=false;
-    const tryDir=(dir)=>{
-      if(dir==='down' &&fits.below){top=rect.bottom+M;left=Math.max(M,Math.min(vw-w-M,rect.left+rect.width/2-w/2));return true;}
-      if(dir==='up'  &&fits.above){top=rect.top-TH-M;left=Math.max(M,Math.min(vw-w-M,rect.left+rect.width/2-w/2));return true;}
-      if(dir==='right'&&fits.right){top=Math.max(M,Math.min(vh-TH-M,rect.top+rect.height/2-TH/2));left=rect.right+M;return true;}
-      if(dir==='left' &&fits.left) {top=Math.max(M,Math.min(vh-TH-M,rect.top+rect.height/2-TH/2));left=rect.left-w-M;return true;}
+    let top, left, placed = false;
+    const tryDir = (dir) => {
+      if (dir === 'right' && fits.right) {
+        top = Math.max(M, Math.min(vh - h - M, rect.top + rect.height / 2 - h / 2));
+        left = rect.right + M;
+        return true;
+      }
+      if (dir === 'left' && fits.left) {
+        top = Math.max(M, Math.min(vh - h - M, rect.top + rect.height / 2 - h / 2));
+        left = rect.left - w - M;
+        return true;
+      }
+      if (dir === 'down' && fits.below) {
+        top = rect.bottom + M;
+        left = Math.max(M, Math.min(vw - w - M, rect.left + rect.width / 2 - w / 2));
+        return true;
+      }
+      if (dir === 'up' && fits.above) {
+        top = rect.top - h - M;
+        left = Math.max(M, Math.min(vw - w - M, rect.left + rect.width / 2 - w / 2));
+        return true;
+      }
       return false;
     };
 
-    const order=['below','right','above','left'];
-    if(preferredArrow){const mapped={down:'below',up:'above',right:'right',left:'left'};placed=tryDir(mapped[preferredArrow]||preferredArrow);}
-    if(!placed){for(const dir of order){if(tryDir(dir)){placed=true;break;}}}
-    if(!placed){this._placeDemoTooltipCenter();return;}
+    const mapped = { down: 'down', up: 'up', right: 'right', left: 'left' };
+    if (preferredArrow) placed = tryDir(mapped[preferredArrow] || preferredArrow);
 
-    this.demoTooltip.style.top=top+'px';
-    this.demoTooltip.style.left=left+'px';
+    if (!placed) {
+      const order = rect.left < vw * 0.33 ? ['right', 'down', 'up', 'left']
+        : rect.right > vw * 0.66 ? ['left', 'down', 'up', 'right']
+        : ['down', 'right', 'left', 'up'];
+      for (const dir of order) {
+        if (tryDir(dir)) { placed = true; break; }
+      }
+    }
+
+    if (!placed) { this._placeDemoTooltipCenter(); return; }
+
+    this.demoTooltip.style.top = top + 'px';
+    this.demoTooltip.style.left = left + 'px';
   }
 
   _placeDemoTooltipCenter() {
     if (!this.demoTooltip) return;
-    const isMobile = window.innerWidth <= 640;
+    const isMobile = window.innerWidth <= 760;
     if (isMobile) {
       Object.assign(this.demoTooltip.style, {
         position: 'fixed', bottom: '0', left: '0', right: '0', top: 'auto',
         transform: 'none', width: '100%', maxWidth: '100%',
-        borderRadius: '24px 24px 0 0', padding: '20px',
-        maxHeight: '70vh', overflowY: 'auto',
+        borderRadius: '28px 28px 0 0', padding: '18px',
+        maxHeight: '76vh', overflowY: 'auto',
       });
     } else {
-      const w = Math.min(380, window.innerWidth - 32);
+      const w = Math.min(440, window.innerWidth - 40);
       Object.assign(this.demoTooltip.style, {
         width: w + 'px', top: '50%', left: '50%',
         transform: 'translate(-50%,-50%)', bottom: 'auto', right: 'auto',
-        maxHeight: (window.innerHeight - 40) + 'px', overflowY: 'auto',
+        maxHeight: (window.innerHeight - 44) + 'px', overflowY: 'auto',
       });
     }
   }
