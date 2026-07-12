@@ -94,6 +94,57 @@ const TOOL_CONFIG = {
   },
 };
 
+const FEATURE_DETAIL_CONFIG = {
+  notes: {
+    icon: 'fa-book-open',
+    color: '#00d4ff',
+    title: 'Notes Generator',
+    summary: 'Get structured, exam-ready notes with headings, explanations, examples, revision points and clean formatting.',
+    points: ['Long-form study notes', 'Clear sectioned explanations', 'Revision checklist at the end'],
+    cta: 'Open Notes Wizard',
+  },
+  flashcards: {
+    icon: 'fa-layer-group',
+    color: '#bf00ff',
+    title: 'Flashcards Deck',
+    summary: 'Create interactive recall cards for fast revision with question-answer style learning.',
+    points: ['Interactive flip cards', 'Perfect for spaced repetition', 'Great for memorisation-heavy topics'],
+    cta: 'Open Flashcards Wizard',
+  },
+  quiz: {
+    icon: 'fa-question-circle',
+    color: '#00ff88',
+    title: 'Practice Quiz',
+    summary: 'Generate MCQ-based testing with instant explanations to quickly find weak areas.',
+    points: ['Auto-graded questions', 'Difficulty-aware practice', 'Explanation after each answer'],
+    cta: 'Open Quiz Wizard',
+  },
+  summary: {
+    icon: 'fa-align-left',
+    color: '#ffae00',
+    title: 'Smart Summary',
+    summary: 'Turn long topics into compact high-retention summaries with key takeaways and fast scanning.',
+    points: ['Short TL;DR output', 'Perfect before exams', 'Key bullets and highlights'],
+    cta: 'Open Summary Wizard',
+  },
+  mindmap: {
+    icon: 'fa-project-diagram',
+    color: '#d4af37',
+    title: 'Visual Mind Map',
+    summary: 'See topics visually with branches, relations, categories and cross-connections for faster understanding.',
+    points: ['Branch-based visual layout', 'Cross-connections included', 'Best for concept linking'],
+    cta: 'Open Mind Map Wizard',
+  },
+  all: {
+    icon: 'fa-bolt',
+    color: '#d4af37',
+    title: 'Mega Bundle',
+    summary: 'Generate all 5 tools in one premium flow: Notes, Flashcards, Quiz, Summary and Mind Map.',
+    points: ['All-in-one study pack', 'Most complete output mode', 'Best for deep revision sessions'],
+    cta: 'Launch Mega Bundle',
+  },
+};
+
 const DEPTH_CONFIG = {
   standard:      { label: 'Standard',      desc: '600–900 words',   subDesc: 'Core concepts',    icon: 'fa-flag',       words: '600-900'   },
   detailed:      { label: 'Detailed',      desc: '1000–1500 words', subDesc: 'Comprehensive',     icon: 'fa-chart-line', words: '1000-1500' },
@@ -299,6 +350,7 @@ class SavoireApp {
     this._renderSidebarHistory();
     this._renderSidebarSaved();
     this._updateUserUI();
+    this._showFeatureDetails('notes');
     this._initBackToTop();
     this._initSwipeGestures();
     this._initParticles();
@@ -477,7 +529,7 @@ class SavoireApp {
       'theCard','fcFront','fcBack','fcCur','fcTot','fcProgBar','fcPct','fcPrev','fcNext',
       'quizScoreNum','quizBody','quizReviewSection','quizReviewToggleLabel',
       'megaTopicInput','megaCharCount','megaLangSel','megaDepthSel','megaGenerateBtn',
-      'particleCanvas','toastContainer',
+      'featureDetailPanel','particleCanvas','toastContainer',
     ];
     IDS.forEach(id => { this.el[id] = g(id); });
   }
@@ -711,6 +763,35 @@ class SavoireApp {
       const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
       this.el.dhGreeting.textContent = `${greet}, ${name}`;
     }
+  }
+
+  _showFeatureDetails(tool = 'notes') {
+    const panel = this.el.featureDetailPanel || this._el('featureDetailPanel');
+    const cfg = FEATURE_DETAIL_CONFIG[tool] || FEATURE_DETAIL_CONFIG.notes;
+    if (!panel) return;
+
+    this._qsa('.es-feat-chip').forEach(chip => {
+      chip.classList.toggle('active-detail', chip.dataset.tool === tool);
+    });
+
+    panel.innerHTML = `
+      <div class="feature-detail-card" style="--fd-color:${cfg.color}">
+        <div class="feature-detail-header">
+          <div class="feature-detail-icon"><i class="fas ${cfg.icon}"></i></div>
+          <div>
+            <div class="feature-detail-title">${cfg.title}</div>
+            <div class="feature-detail-summary">${cfg.summary}</div>
+          </div>
+        </div>
+        <div class="feature-detail-points">
+          ${cfg.points.map(point => `<div class="feature-detail-point"><i class="fas fa-check-circle"></i><span>${point}</span></div>`).join('')}
+        </div>
+        <div class="feature-detail-actions">
+          <button class="feature-detail-launch" onclick="window._app.${tool === 'all' ? '_openMega()' : `_openWizard('${tool}')`} ">
+            <i class="fas ${cfg.icon}"></i> ${cfg.cta}
+          </button>
+        </div>
+      </div>`;
   }
 
   // ─── AVATAR PICKER ──────────────────────────────────────────────────────────
@@ -3730,23 +3811,8 @@ Examples:
     if (!step || !this.demoTooltip) return;
 
     this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
-    let targetRect = null;
-
-    if (step.targetId) {
-      const target = this._el(step.targetId);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        setTimeout(() => {
-          targetRect = target.getBoundingClientRect();
-          this._drawDemoSpotlight(targetRect);
-          this._placeDemoTooltip(targetRect, step.arrow);
-          target.classList.add('demo-highlighted');
-        }, 200);
-      }
-    } else {
-      this._drawDemoSpotlight(null);
-      this._placeDemoTooltipCenter();
-    }
+    this._drawDemoSpotlight(null);
+    this._placeDemoTooltipCenter();
 
     const pct = Math.round(((this.demoStep + 1) / DEMO_STEPS.length) * 100);
 
@@ -3797,6 +3863,7 @@ Examples:
           <div class="demo-tt-dots">${dotsHtml}</div>
         </div>
         <div class="demo-tt-content">${step.content}</div>
+        <div class="demo-tt-visual">${this._getDemoVisual(step.step)}</div>
         <div class="demo-tt-tips">${tipsHtml}</div>
         <div class="demo-tt-actions">
           ${actionBtn}
@@ -3820,6 +3887,58 @@ Examples:
           </div>
         </div>
       </div>`;
+  }
+
+  _getDemoVisual(stepNo) {
+    switch (stepNo) {
+      case 1:
+        return `
+          <div class="demo-flow-grid">
+            <div class="demo-flow-pill active">Topic</div>
+            <div class="demo-flow-line"></div>
+            <div class="demo-flow-pill">Tool</div>
+            <div class="demo-flow-line"></div>
+            <div class="demo-flow-pill">Generate</div>
+            <div class="demo-flow-line"></div>
+            <div class="demo-flow-pill">Study</div>
+          </div>`;
+      case 2:
+        return `
+          <div class="demo-mini-stack">
+            <span>1. Tool</span><span>2. Topic</span><span>3. Language</span><span>4. Depth</span><span>5. Style</span><span>6. Generate</span>
+          </div>`;
+      case 3:
+        return `
+          <div class="demo-mini-stack colorful">
+            <span>Notes</span><span>Flashcards</span><span>Quiz</span><span>Summary</span><span>Mind Map</span>
+          </div>`;
+      case 4:
+        return `
+          <div class="demo-chip-cloud">
+            <span>Notes</span><span>Flashcards</span><span>Quiz</span><span>Summary</span><span>Mind Map</span><span>All 5</span>
+          </div>`;
+      case 5:
+        return `
+          <div class="demo-stage-stack">
+            <div>🎯 Analysing</div><div>📝 Writing</div><div>🔍 Building</div><div>✨ Crafting</div><div>✅ Ready</div>
+          </div>`;
+      case 6:
+        return `
+          <div class="demo-chip-cloud interactive">
+            <span>Flip Cards</span><span>Instant Quiz Feedback</span><span>Mindmap Branches</span><span>Live Notes</span>
+          </div>`;
+      case 7:
+        return `
+          <div class="demo-flow-grid compact">
+            <div class="demo-flow-pill gold">Final Output PDF</div>
+            <div class="demo-flow-pill green">Live Notes PDF</div>
+          </div>`;
+      default:
+        return `
+          <div class="demo-chip-cloud">
+            <span>Streak</span><span>Sessions</span><span>Saved</span><span>Theme</span><span>Font</span>
+          </div>`;
+    }
   }
 
   _nextDemo() { if (this.demoStep < DEMO_STEPS.length-1) { this.demoStep++; this._renderDemoStep(); } }
@@ -3996,8 +4115,7 @@ Examples:
     this._qsa('.es-feat-chip[data-tool]').forEach(chip => {
       chip.addEventListener('click', () => {
         const tool = chip.dataset.tool;
-        if (tool === 'all') this._openMega();
-        else if (tool) this._openWizard(tool);
+        if (tool) this._showFeatureDetails(tool);
       });
       chip.style.cursor = 'pointer';
     });
