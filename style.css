@@ -10196,3 +10196,304 @@ html[data-theme="light"] .rh-mi i,
 html[data-theme="light"] .quiz-score-display i {
   color: #b7791f !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   UI HOTFIX PATCH 2 — wizard layout, stream placeholder, mindmap connections
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.wizard-review-info,
+.wizard-review-tip {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+}
+
+.wizard-review-copy {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.65;
+  word-break: normal;
+}
+
+.wizard-review-copy strong {
+  font-weight: 800;
+}
+
+.wizard-footer {
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wizard-step-info {
+  min-width: 72px;
+  text-align: center;
+}
+
+.wizard-btn,
+.mega-generate-btn,
+.empty-wizard-btn,
+.empty-mega-btn,
+.quiz-nav-btn,
+.fc-btn.primary,
+.exp-btn,
+.ss-copy-btn,
+.settings-btn,
+.theme-btn,
+.font-btn,
+.hist-filter,
+.hist-action,
+.otb-btn {
+  border-radius: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.wizard-btn-primary,
+.mega-generate-btn,
+.empty-wizard-btn,
+.empty-mega-btn,
+.quiz-nav-btn,
+.fc-btn.primary {
+  background: linear-gradient(135deg, #dcb54a 0%, #c89617 100%) !important;
+  color: #111827 !important;
+  border: none !important;
+}
+
+.wizard-btn-primary:hover,
+.mega-generate-btn:hover,
+.empty-wizard-btn:hover,
+.empty-mega-btn:hover,
+.quiz-nav-btn:hover,
+.fc-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(200, 150, 23, 0.28) !important;
+}
+
+.stream-placeholder {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.stream-placeholder-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #d4af37;
+  margin-bottom: 6px;
+}
+
+.stream-placeholder-sub {
+  font-size: .85rem;
+  color: rgba(255,255,255,.58);
+  margin-bottom: 18px;
+}
+
+.stream-placeholder-lines {
+  display: grid;
+  gap: 10px;
+}
+
+.stream-placeholder-lines span {
+  display: block;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.14), rgba(255,255,255,.06));
+  background-size: 220% 100%;
+  animation: streamPlaceholderShimmer 1.6s linear infinite;
+}
+
+.stream-placeholder-lines span:nth-child(1) { width: 92%; }
+.stream-placeholder-lines span:nth-child(2) { width: 84%; }
+.stream-placeholder-lines span:nth-child(3) { width: 88%; }
+.stream-placeholder-lines span:nth-child(4) { width: 68%; }
+
+@keyframes streamPlaceholderShimmer {
+  to { background-position: -220% 0; }
+}
+
+.mm-meta-count {
+  font-size: .68rem;
+  color: rgba(255,255,255,.45);
+  font-family: var(--font-mono);
+}
+
+.mm-conn-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.mm-conn-desc {
+  color: rgba(255,255,255,.72);
+}
+
+html[data-theme="light"] .wizard-review-info,
+html[data-theme="light"] .wizard-review-tip {
+  box-shadow: 0 10px 22px rgba(15,23,42,.06);
+}
+
+html[data-theme="light"] .wizard-review-copy,
+html[data-theme="light"] .wizard-review-copy strong,
+html[data-theme="light"] .wizard-review-value,
+html[data-theme="light"] .wizard-review-badge,
+html[data-theme="light"] .wizard-step-info,
+html[data-theme="light"] .wizard-step-label,
+html[data-theme="light"] .wizard-step-desc,
+html[data-theme="light"] .wizard-tool-name,
+html[data-theme="light"] .wizard-tool-desc,
+html[data-theme="light"] .wizard-depth-name,
+html[data-theme="light"] .wizard-depth-desc,
+html[data-theme="light"] .wizard-style-name,
+html[data-theme="light"] .wizard-style-desc,
+html[data-theme="light"] .wizard-char-count,
+html[data-theme="light"] .wizard-character-count,
+html[data-theme="light"] .wizard-sugg-label,
+html[data-theme="light"] .mega-desc,
+html[data-theme="light"] .mega-sugg-label,
+html[data-theme="light"] .mega-char-count,
+html[data-theme="light"] .mm-meta-count,
+html[data-theme="light"] .mm-conn-desc,
+html[data-theme="light"] .stream-placeholder-sub,
+html[data-theme="light"] .summary-tldr-content,
+html[data-theme="light"] .summary-point-text,
+html[data-theme="light"] .quiz-exp-text,
+html[data-theme="light"] .qa-answer-inner,
+html[data-theme="light"] .concept-text,
+html[data-theme="light"] .trick-text,
+html[data-theme="light"] .li-text {
+  color: #24324a !important;
+}
+
+html[data-theme="light"] .stream-placeholder {
+  background: rgba(255,255,255,.88) !important;
+  border-color: rgba(148,163,184,.25) !important;
+}
+
+html[data-theme="light"] .stream-placeholder-title {
+  color: #9a6700 !important;
+}
+
+html[data-theme="light"] .stream-placeholder-lines span {
+  background: linear-gradient(90deg, rgba(148,163,184,.14), rgba(59,130,246,.18), rgba(148,163,184,.14));
+}
+
+html[data-theme="light"] .wizard-btn-secondary,
+html[data-theme="light"] .wizard-btn-ghost,
+html[data-theme="light"] .fc-btn,
+html[data-theme="light"] .exp-btn,
+html[data-theme="light"] .ss-copy-btn,
+html[data-theme="light"] .hist-filter,
+html[data-theme="light"] .hist-action,
+html[data-theme="light"] .theme-btn,
+html[data-theme="light"] .font-btn,
+html[data-theme="light"] .settings-btn,
+html[data-theme="light"] .otb-btn {
+  background: rgba(255,255,255,.95) !important;
+  border: 1px solid rgba(148,163,184,.32) !important;
+  color: #23314a !important;
+}
+
+html[data-theme="light"] .wizard-btn-secondary:hover,
+html[data-theme="light"] .wizard-btn-ghost:hover,
+html[data-theme="light"] .fc-btn:hover,
+html[data-theme="light"] .exp-btn:hover,
+html[data-theme="light"] .ss-copy-btn:hover,
+html[data-theme="light"] .hist-filter:hover,
+html[data-theme="light"] .hist-action:hover,
+html[data-theme="light"] .theme-btn:hover,
+html[data-theme="light"] .font-btn:hover,
+html[data-theme="light"] .settings-btn:hover,
+html[data-theme="light"] .otb-btn:hover {
+  color: #0b76b7 !important;
+  border-color: rgba(14,165,233,.4) !important;
+}
+
+html[data-theme="light"] .theme-btn.active,
+html[data-theme="light"] .font-btn.active,
+html[data-theme="light"] .wizard-btn-primary,
+html[data-theme="light"] .mega-generate-btn,
+html[data-theme="light"] .empty-wizard-btn,
+html[data-theme="light"] .empty-mega-btn,
+html[data-theme="light"] .quiz-nav-btn,
+html[data-theme="light"] .fc-btn.primary {
+  background: linear-gradient(135deg, #dcb54a 0%, #c89617 100%) !important;
+  color: #182235 !important;
+}
+
+html[data-theme="light"] .md-content h1,
+html[data-theme="light"] .md-content h2,
+html[data-theme="light"] .md-content h3,
+html[data-theme="light"] .md-content h4,
+html[data-theme="light"] .sfp-text.live-md h1,
+html[data-theme="light"] .sfp-text.live-md h2,
+html[data-theme="light"] .sfp-text.live-md h3,
+html[data-theme="light"] .sfp-text.live-md h4 {
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: #10233f !important;
+}
+
+html[data-theme="light"] .rh-topic,
+html[data-theme="light"] .es-title,
+html[data-theme="light"] .welcome-title,
+html[data-theme="light"] .about-name,
+html[data-theme="light"] .modal-title {
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  color: #10233f !important;
+}
+
+html[data-theme="light"] .flashcard,
+html[data-theme="light"] .fc-front,
+html[data-theme="light"] .fc-back {
+  background: linear-gradient(135deg, rgba(255,255,255,.98), rgba(240,246,255,.96)) !important;
+  color: #1b2a41 !important;
+  border-color: rgba(59,130,246,.15) !important;
+}
+
+html[data-theme="light"] .fc-front .fc-lbl,
+html[data-theme="light"] .fc-back .fc-lbl,
+html[data-theme="light"] .fc-content,
+html[data-theme="light"] .quiz-question-num,
+html[data-theme="light"] .quiz-review-num,
+html[data-theme="light"] .summary-point-num,
+html[data-theme="light"] .qa-albl,
+html[data-theme="light"] .mm-conn-title,
+html[data-theme="light"] .mm-branch-hdr,
+html[data-theme="light"] .wizard-review-header {
+  color: #9a6700 !important;
+}
+
+html[data-theme="light"] .mm-root {
+  background: linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%) !important;
+  color: #ffffff !important;
+}
+
+@media (max-width: 640px) {
+  .wizard-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wizard-step-info {
+    grid-column: 1 / -1;
+    order: -1;
+    margin-bottom: 2px;
+  }
+
+  .wizard-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stream-placeholder {
+    padding: 18px;
+  }
+}

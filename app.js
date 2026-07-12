@@ -1194,13 +1194,12 @@ Examples:
           </div>`).join('')}
       </div>
       <div class="wizard-review-info">
-        <i class="fas fa-clock"></i> Generation typically takes <strong>20–40 seconds</strong>.
-        Content will <strong>stream live to your screen</strong> as it's written!
+        <i class="fas fa-clock"></i>
+        <div class="wizard-review-copy">Generation typically takes <strong>20–40 seconds</strong>. Content will <strong>stream live to your screen</strong> as it's written!</div>
       </div>
       <div class="wizard-review-tip">
         <i class="fas fa-lightbulb"></i>
-        <strong>Pro tip:</strong> The more specific your topic, the better the output quality.
-        Include context like subject level, exam board, or specific subtopics.
+        <div class="wizard-review-copy"><strong>Pro tip:</strong> The more specific your topic, the better the output quality. Include context like subject level, exam board, or specific subtopics.</div>
       </div>`;
   }
 
@@ -1687,7 +1686,14 @@ Examples:
     if (this.el.sfpToolName) this.el.sfpToolName.textContent = cfg.sfpName;
     if (this.el.sfpLabel)    this.el.sfpLabel.textContent   = cfg.sfpLabel;
     if (this.el.sfpText) {
-      this.el.sfpText.innerHTML = '<span class="typing-cursor">▊</span>';
+      this.el.sfpText.innerHTML = `
+        <div class="stream-placeholder">
+          <div class="stream-placeholder-title">Preparing live output…</div>
+          <div class="stream-placeholder-sub">Your content will appear here as soon as the model starts returning text.</div>
+          <div class="stream-placeholder-lines">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>`;
       this.el.sfpText.classList.remove('done');
       this.el.sfpText.classList.add('live-md');
     }
@@ -2309,12 +2315,109 @@ Examples:
     return h || this._buildNotesHTML(data);
   }
 
+  _normalizeMindmapForUI(mm, fallbackTopic = 'Topic') {
+    const palette = ['#00d4ff', '#bf00ff', '#00ff88', '#ffae00', '#d4af37', '#ff4444', '#e84393'];
+    const raw = mm && typeof mm === 'object' ? mm : {};
+    const central = typeof raw.central === 'string' && raw.central.trim()
+      ? raw.central.trim()
+      : fallbackTopic;
+
+    const branches = (Array.isArray(raw.branches) ? raw.branches : []).map((branch, index) => {
+      if (typeof branch === 'string') {
+        const name = branch.trim();
+        return name ? { name, color: palette[index % palette.length], items: [] } : null;
+      }
+      if (!branch || typeof branch !== 'object') return null;
+
+      const name = [branch.name, branch.title, branch.branch, branch.label]
+        .find(v => typeof v === 'string' && v.trim()) || `Branch ${index + 1}`;
+
+      const itemsSource = Array.isArray(branch.items) ? branch.items
+        : Array.isArray(branch.points) ? branch.points
+        : Array.isArray(branch.children) ? branch.children
+        : [];
+
+      const items = itemsSource
+        .map(item => {
+          if (typeof item === 'string') return item.trim();
+          if (item && typeof item === 'object') {
+            const val = [item.text, item.name, item.label, item.value, item.title]
+              .find(v => typeof v === 'string' && v.trim());
+            return val ? val.trim() : '';
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .slice(0, 8);
+
+      if (!name && !items.length) return null;
+      return {
+        name: String(name).trim(),
+        color: typeof branch.color === 'string' && branch.color.trim() ? branch.color.trim() : palette[index % palette.length],
+        items,
+      };
+    }).filter(Boolean);
+
+    let connections = (Array.isArray(raw.connections) ? raw.connections : []).map((conn) => {
+      if (!conn) return null;
+      if (typeof conn === 'string') {
+        const clean = conn.trim();
+        if (!clean) return null;
+        const match = clean.match(/(.+?)(?:↔|<->|->|—|-)\s*(.+?)(?::\s*(.+))?$/);
+        if (!match) return null;
+        return {
+          from: match[1].trim(),
+          to: match[2].trim(),
+          description: (match[3] || 'These concepts are closely related within the topic.').trim(),
+        };
+      }
+      if (typeof conn !== 'object') return null;
+      const from = [conn.from, conn.source, conn.branch1, conn.a, conn.left]
+        .find(v => typeof v === 'string' && v.trim());
+      const to = [conn.to, conn.target, conn.branch2, conn.b, conn.right]
+        .find(v => typeof v === 'string' && v.trim());
+      const description = [conn.description, conn.relation, conn.reason, conn.note, conn.link, conn.why]
+        .find(v => typeof v === 'string' && v.trim());
+      if (!from || !to) return null;
+      return {
+        from: from.trim(),
+        to: to.trim(),
+        description: description ? description.trim() : 'These concepts are closely related within the topic.',
+      };
+    }).filter(conn => conn && conn.from && conn.to);
+
+    if (!connections.length && branches.length >= 2) {
+      connections = branches.slice(0, Math.min(branches.length - 1, 4)).map((branch, index) => ({
+        from: branch.name,
+        to: branches[index + 1].name,
+        description: 'These ideas build on one another and should be revised together.',
+      }));
+    }
+
+    return { central, branches, connections };
+  }
+
+  _renderMindmapConnections(connections) {
+    if (!connections?.length) return '';
+    return `
+      <div class="mm-connections">
+        <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
+        <div class="mm-conn-list">
+          ${connections.map(c => `
+            <div class="mm-conn-item">
+              <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>
+              <span class="mm-conn-desc">${this._esc(c.description || 'These concepts are closely related within the topic.')}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
   // ── MINDMAP — ONLY MINDMAP OUTPUT ──────────────────────────────────────────
   _buildMindmapHTML(data) {
-    const mm    = data.mindmap;
     const topic = data.topic || 'Topic';
+    const mm = this._normalizeMindmapForUI(data.mindmap, topic);
 
-    if (mm?.branches?.length) {
+    if (mm.branches.length) {
       const branchHtml = mm.branches.map(b => `
         <div class="mm-branch" style="border-top:3px solid ${b.color || '#d4af37'}">
           <div class="mm-branch-hdr" style="color:${b.color || '#d4af37'}">
@@ -2329,28 +2432,16 @@ Examples:
           </div>
         </div>`).join('');
 
-      const connHtml = mm.connections?.length ? `
-        <div class="mm-connections">
-          <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
-          <div class="mm-conn-list">
-            ${mm.connections.map(c => `
-              <div class="mm-conn-item">
-                <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
-                ${this._esc(c.description)}
-              </div>`).join('')}
-          </div>
-        </div>` : '';
-
       return `
         <div class="study-sec" id="sec-mm">
           <div class="ss-hdr">
             <div class="ss-title"><i class="fas fa-project-diagram"></i> Visual Mind Map — ${this._esc(mm.central || topic)}</div>
-            <span style="font-size:.65rem;color:rgba(255,255,255,.4)">${mm.branches.length} branches · ${mm.connections?.length || 0} connections</span>
+            <span class="mm-meta-count">${mm.branches.length} branches · ${mm.connections?.length || 0} connections</span>
           </div>
           <div class="ss-body">
             <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm.central || topic)}</div>
             <div class="mm-branches">${branchHtml}</div>
-            ${connHtml}
+            ${this._renderMindmapConnections(mm.connections)}
           </div>
         </div>
         ${data.key_concepts?.length ? this._secConcepts(data.key_concepts) : ''}
@@ -2378,6 +2469,14 @@ Examples:
         </div>
       </div>`).join('');
 
+    const derivedConnections = branches.length >= 2
+      ? branches.slice(0, Math.min(branches.length - 1, 3)).map((b, i) => ({
+          from: b.name,
+          to: branches[i + 1].name,
+          description: 'These sections overlap and should be revised together.',
+        }))
+      : [];
+
     return `
       <div class="study-sec" id="sec-mm">
         <div class="ss-hdr">
@@ -2386,15 +2485,17 @@ Examples:
         <div class="ss-body">
           <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(topic)}</div>
           <div class="mm-branches">${bh || '<p style="color:rgba(255,255,255,.4);padding:16px">Mind map content generated…</p>'}</div>
+          ${this._renderMindmapConnections(derivedConnections)}
         </div>
       </div>`;
   }
 
   // ── MEGA BUNDLE — ALL 5 TOOLS ────────────────────────────────────────────────
   _buildAllHTML(data) {
+    const normalizedMM  = this._normalizeMindmapForUI(data.mindmap, data.topic || 'Topic');
     const hasFlashcards = data.flashcards?.length > 0;
     const hasQuiz       = data.quiz_questions?.length > 0;
-    const hasMindmap    = data.mindmap?.branches?.length > 0;
+    const hasMindmap    = normalizedMM.branches.length > 0;
     const hasNotes      = !!data.ultra_long_notes;
 
     let h = `<div class="mega-result-banner" style="background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(191,0,255,.08));border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:16px 24px;margin-bottom:24px;display:flex;flex-wrap:wrap;align-items:center;gap:12px">
@@ -2404,7 +2505,7 @@ Examples:
         ${hasNotes       ? `<span style="padding:3px 12px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);border-radius:20px;font-size:.7rem;color:#00d4ff">📚 Notes</span>` : ''}
         ${hasFlashcards  ? `<span style="padding:3px 12px;background:rgba(191,0,255,.1);border:1px solid rgba(191,0,255,.2);border-radius:20px;font-size:.7rem;color:#bf00ff">🃏 ${data.flashcards.length} Cards</span>` : ''}
         ${hasQuiz        ? `<span style="padding:3px 12px;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);border-radius:20px;font-size:.7rem;color:#00ff88">❓ ${data.quiz_questions.length} Qs</span>` : ''}
-        ${hasMindmap     ? `<span style="padding:3px 12px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.2);border-radius:20px;font-size:.7rem;color:#d4af37">🗺️ ${data.mindmap.branches.length} Branches</span>` : ''}
+        ${hasMindmap     ? `<span style="padding:3px 12px;background:rgba(212,175,55,.1);border:1px solid rgba(212,175,55,.2);border-radius:20px;font-size:.7rem;color:#d4af37">🗺️ ${normalizedMM.branches.length} Branches</span>` : ''}
       </span>
     </div>`;
 
@@ -2466,11 +2567,12 @@ Examples:
     }
 
     // 5. MIND MAP
-    if (data.mindmap?.branches?.length) {
-      const mm = data.mindmap;
+    if (normalizedMM.branches.length) {
+      const mm = normalizedMM;
       h += `<div class="study-sec section-anchor mega-section" id="sec-mm">
         <div class="ss-hdr mega-hdr">
           <div class="ss-title"><span class="mega-num">5</span><i class="fas fa-project-diagram"></i> Visual Mind Map</div>
+          <span class="mm-meta-count">${mm.branches.length} branches · ${mm.connections?.length || 0} connections</span>
         </div>
         <div class="ss-body">
           <div class="mm-root"><i class="fas fa-brain"></i> ${this._esc(mm.central || data.topic || 'Topic')}</div>
@@ -2489,17 +2591,7 @@ Examples:
                 </div>
               </div>`).join('')}
           </div>
-          ${mm.connections?.length ? `
-            <div class="mm-connections">
-              <div class="mm-conn-title"><i class="fas fa-link"></i> Cross-Connections</div>
-              <div class="mm-conn-list">
-                ${mm.connections.map(c => `
-                  <div class="mm-conn-item">
-                    <strong>${this._esc(c.from)}</strong> ↔ <strong>${this._esc(c.to)}</strong>:
-                    ${this._esc(c.description)}
-                  </div>`).join('')}
-              </div>
-            </div>` : ''}
+          ${this._renderMindmapConnections(mm.connections)}
         </div>
       </div>`;
     }

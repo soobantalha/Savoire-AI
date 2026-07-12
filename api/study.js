@@ -559,12 +559,70 @@ function normalizeCardsResult(parsed) {
         if (fix) q.correct_answer = fix;
       }
       return q;
-    });
+    }).filter(q => q && q.question && Array.isArray(q.options) && q.options.length >= 2);
   }
   if (Array.isArray(parsed.flashcards)) {
     parsed.flashcards = parsed.flashcards
       .filter(c => c && (c.front || c.question) && (c.back || c.answer))
       .map(c => ({ front: String(c.front || c.question || '').trim(), back: String(c.back || c.answer || '').trim() }));
+  }
+
+  if (parsed.mindmap && typeof parsed.mindmap === 'object') {
+    const palette = ['#00d4ff', '#bf00ff', '#00ff88', '#ffae00', '#d4af37', '#ff4444', '#e84393'];
+    parsed.mindmap.central = typeof parsed.mindmap.central === 'string' && parsed.mindmap.central.trim()
+      ? parsed.mindmap.central.trim()
+      : 'Topic Overview';
+
+    parsed.mindmap.branches = (Array.isArray(parsed.mindmap.branches) ? parsed.mindmap.branches : []).map((branch, index) => {
+      if (typeof branch === 'string') {
+        const name = branch.trim();
+        return name ? { name, color: palette[index % palette.length], items: [] } : null;
+      }
+      if (!branch || typeof branch !== 'object') return null;
+      const name = [branch.name, branch.title, branch.branch, branch.label]
+        .find(v => typeof v === 'string' && v.trim()) || `Branch ${index + 1}`;
+      const itemsSource = Array.isArray(branch.items) ? branch.items
+        : Array.isArray(branch.points) ? branch.points
+        : Array.isArray(branch.children) ? branch.children
+        : [];
+      const items = itemsSource.map(item => {
+        if (typeof item === 'string') return item.trim();
+        if (item && typeof item === 'object') {
+          const val = [item.text, item.name, item.label, item.value, item.title]
+            .find(v => typeof v === 'string' && v.trim());
+          return val ? val.trim() : '';
+        }
+        return '';
+      }).filter(Boolean).slice(0, 8);
+      return { name: String(name).trim(), color: branch.color || palette[index % palette.length], items };
+    }).filter(branch => branch && branch.name);
+
+    let connections = (Array.isArray(parsed.mindmap.connections) ? parsed.mindmap.connections : []).map(conn => {
+      if (!conn) return null;
+      if (typeof conn === 'string') {
+        const clean = conn.trim();
+        if (!clean) return null;
+        const match = clean.match(/(.+?)(?:↔|<->|->|—|-)\s*(.+?)(?::\s*(.+))?$/);
+        if (!match) return null;
+        return { from: match[1].trim(), to: match[2].trim(), description: (match[3] || 'These concepts are closely related within the topic.').trim() };
+      }
+      if (typeof conn !== 'object') return null;
+      const from = [conn.from, conn.source, conn.branch1, conn.a, conn.left].find(v => typeof v === 'string' && v.trim());
+      const to = [conn.to, conn.target, conn.branch2, conn.b, conn.right].find(v => typeof v === 'string' && v.trim());
+      const description = [conn.description, conn.relation, conn.reason, conn.note, conn.link, conn.why].find(v => typeof v === 'string' && v.trim());
+      if (!from || !to) return null;
+      return { from: from.trim(), to: to.trim(), description: description ? description.trim() : 'These concepts are closely related within the topic.' };
+    }).filter(conn => conn && conn.from && conn.to);
+
+    if (!connections.length && parsed.mindmap.branches.length >= 2) {
+      connections = parsed.mindmap.branches.slice(0, Math.min(parsed.mindmap.branches.length - 1, 4)).map((branch, index) => ({
+        from: branch.name,
+        to: parsed.mindmap.branches[index + 1].name,
+        description: 'These ideas build on one another and should be revised together.',
+      }));
+    }
+
+    parsed.mindmap.connections = connections;
   }
   return parsed;
 }
