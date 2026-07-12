@@ -1357,6 +1357,8 @@ Examples:
       this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.tool]?.sfpName} generated!`);
       if (data._live_notes_buffer && data._live_notes_buffer.length > 50) {
         this._toast('info', 'fa-bolt', 'Live Notes are available in the toolbar and download menu.');
+        if (this._liveNotesNudgeTimer) clearTimeout(this._liveNotesNudgeTimer);
+        this._liveNotesNudgeTimer = setTimeout(() => this._showLiveNotesNudge(), 12000);
       }
       setTimeout(() => { if (this.el.outArea) this.el.outArea.scrollTop = 0; }, 200);
     } catch (err) {
@@ -3289,6 +3291,33 @@ Examples:
     modal.style.display = 'flex';
     modal.style.alignItems = 'center';
     modal.style.justifyContent = 'center';
+  }
+
+  _showLiveNotesNudge() {
+    if (!this.currentData?._live_notes_buffer || this.currentData._live_notes_buffer.length < 10) return;
+    const existing = document.getElementById('liveNotesNudge');
+    if (existing) existing.remove();
+
+    const nudge = document.createElement('div');
+    nudge.id = 'liveNotesNudge';
+    nudge.className = 'live-notes-nudge';
+    nudge.innerHTML = `
+      <div class="live-notes-nudge-copy">
+        <div class="live-notes-nudge-title"><i class="fas fa-bolt"></i> View Live Notes Also</div>
+        <div class="live-notes-nudge-sub">Open the original live stream notes captured during generation.</div>
+      </div>
+      <div class="live-notes-nudge-actions">
+        <button class="live-notes-nudge-btn" onclick="window._app._showLiveNotesModal(); document.getElementById('liveNotesNudge')?.remove();">View Live Notes</button>
+        <button class="live-notes-nudge-close" onclick="document.getElementById('liveNotesNudge')?.remove();">✕</button>
+      </div>`;
+    document.body.appendChild(nudge);
+    setTimeout(() => nudge.classList.add('visible'), 40);
+    setTimeout(() => {
+      if (nudge.parentNode) {
+        nudge.classList.remove('visible');
+        setTimeout(() => nudge.parentNode && nudge.remove(), 300);
+      }
+    }, 12000);
   }
 
   _saveNote() {

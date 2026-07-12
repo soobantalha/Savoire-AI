@@ -11447,3 +11447,287 @@ html[data-theme="light"] .es-feat-chip.active-detail {
     width: 100%;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   UI HOTFIX PATCH 6 — sticky wizard, denser output, mega bundle glow, notes nudge
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Wizard header/footer should remain fixed while body scrolls */
+#wizardModal .modal {
+  display: flex;
+  flex-direction: column;
+  max-height: min(92vh, 980px);
+}
+
+#wizardModal .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  background:
+    linear-gradient(180deg, rgba(10,14,34,.98), rgba(10,14,34,.92)) !important;
+  backdrop-filter: blur(16px);
+}
+
+#wizardModal .modal-body {
+  padding-bottom: 0 !important;
+}
+
+#wizardContent {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.wizard-progress-bar,
+.wizard-steps,
+#wizardBody {
+  position: relative;
+  z-index: 1;
+}
+
+.wizard-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 9;
+  margin-top: auto !important;
+  padding: 16px 0 18px !important;
+  background:
+    linear-gradient(180deg, rgba(10,14,34,.18), rgba(10,14,34,.98) 38%, rgba(10,14,34,.99));
+  backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(255,255,255,.06) !important;
+}
+
+/* Tighten main output area and remove awkward side spacing */
+.out-area {
+  padding: 14px 14px 10px !important;
+}
+
+.result-wrap {
+  width: 100%;
+  max-width: none !important;
+}
+
+.study-sec,
+.result-hdr,
+.result-branding-footer,
+.compare-table,
+.mm-connections,
+.summary-tldr-box {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Better dark-mode output readability */
+html[data-theme="dark"] .study-sec {
+  background:
+    linear-gradient(180deg, rgba(12,18,42,.96), rgba(9,13,31,.95)) !important;
+  border-color: rgba(0,212,255,.12) !important;
+}
+
+html[data-theme="dark"] .ss-hdr,
+html[data-theme="dark"] .mega-section .ss-hdr,
+html[data-theme="dark"] .result-hdr,
+html[data-theme="dark"] .out-toolbar {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012)),
+    rgba(7,11,27,.92) !important;
+}
+
+html[data-theme="dark"] .md-content,
+html[data-theme="dark"] .md-content p,
+html[data-theme="dark"] .md-content li,
+html[data-theme="dark"] .concept-text,
+html[data-theme="dark"] .summary-point-text,
+html[data-theme="dark"] .trick-text,
+html[data-theme="dark"] .qa-answer-inner,
+html[data-theme="dark"] .li-text,
+html[data-theme="dark"] .mm-node-text,
+html[data-theme="dark"] .quiz-question-text,
+html[data-theme="dark"] .quiz-exp-text {
+  color: #dfe7f7 !important;
+}
+
+html[data-theme="dark"] .md-content h1,
+html[data-theme="dark"] .md-content h2,
+html[data-theme="dark"] .md-content h3,
+html[data-theme="dark"] .md-content h4 {
+  color: #f5f8ff !important;
+}
+
+/* Keep Mega Bundle same size but more premium/highlighted */
+.nav-item-mega {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(255,174,0,.08)) !important;
+  border: 1px solid rgba(212,175,55,.28) !important;
+  box-shadow: 0 0 0 1px rgba(212,175,55,.06), 0 12px 22px rgba(212,175,55,.10);
+}
+
+.nav-item-mega::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+  transform: translateX(-120%);
+  animation: megaSweep 3.2s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes megaSweep {
+  to { transform: translateX(120%); }
+}
+
+.nav-item-mega:hover {
+  background: linear-gradient(135deg, rgba(212,175,55,.18), rgba(255,174,0,.12)) !important;
+  border-color: rgba(212,175,55,.5) !important;
+  box-shadow: 0 0 24px rgba(212,175,55,.18), 0 14px 26px rgba(212,175,55,.14) !important;
+}
+
+/* Live notes nudge */
+.live-notes-nudge {
+  position: fixed;
+  right: 18px;
+  bottom: 22px;
+  z-index: 10060;
+  width: min(420px, calc(100vw - 24px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(0,255,136,.22);
+  background:
+    radial-gradient(circle at top right, rgba(0,255,136,.09), transparent 28%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)),
+    rgba(9,14,30,.96);
+  box-shadow: 0 24px 60px rgba(0,0,0,.36), 0 0 0 1px rgba(255,255,255,.03) inset;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all .28s ease;
+}
+
+.live-notes-nudge.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.live-notes-nudge-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.live-notes-nudge-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .92rem;
+  font-weight: 900;
+  color: #86ffd3;
+  margin-bottom: 4px;
+}
+
+.live-notes-nudge-sub {
+  font-size: .76rem;
+  line-height: 1.5;
+  color: rgba(255,255,255,.66);
+}
+
+.live-notes-nudge-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-notes-nudge-btn {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0ee6a2, #00bcd4);
+  color: #07131d;
+  font-size: .78rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 12px 24px rgba(14,230,162,.18);
+}
+
+.live-notes-nudge-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.72);
+}
+
+/* Stronger light theme fixes */
+html[data-theme="light"] #wizardModal .modal-header {
+  background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(245,248,255,.94)) !important;
+}
+
+html[data-theme="light"] .wizard-footer {
+  background: linear-gradient(180deg, rgba(255,255,255,.25), rgba(255,255,255,.98) 42%, rgba(255,255,255,.99)) !important;
+  border-top-color: rgba(148,163,184,.18) !important;
+}
+
+html[data-theme="light"] .study-sec,
+html[data-theme="light"] .result-hdr,
+html[data-theme="light"] .out-toolbar,
+html[data-theme="light"] .ss-hdr,
+html[data-theme="light"] .mega-section .ss-hdr {
+  background: rgba(255,255,255,.95) !important;
+}
+
+html[data-theme="light"] .md-content,
+html[data-theme="light"] .md-content p,
+html[data-theme="light"] .md-content li,
+html[data-theme="light"] .concept-text,
+html[data-theme="light"] .summary-point-text,
+html[data-theme="light"] .trick-text,
+html[data-theme="light"] .qa-answer-inner,
+html[data-theme="light"] .li-text,
+html[data-theme="light"] .mm-node-text,
+html[data-theme="light"] .quiz-question-text,
+html[data-theme="light"] .quiz-exp-text {
+  color: #1f2f47 !important;
+}
+
+html[data-theme="light"] .nav-item-mega {
+  background: linear-gradient(135deg, rgba(212,175,55,.12), rgba(14,165,233,.06)) !important;
+  border-color: rgba(212,175,55,.22) !important;
+}
+
+html[data-theme="light"] .live-notes-nudge {
+  background: rgba(255,255,255,.98) !important;
+  border-color: rgba(16,185,129,.22) !important;
+  box-shadow: 0 22px 50px rgba(15,23,42,.12) !important;
+}
+
+html[data-theme="light"] .live-notes-nudge-title {
+  color: #0f8d70 !important;
+}
+
+html[data-theme="light"] .live-notes-nudge-sub {
+  color: #475569 !important;
+}
+
+html[data-theme="light"] .live-notes-nudge-close {
+  color: #334155 !important;
+  border-color: rgba(148,163,184,.2) !important;
+  background: rgba(248,250,255,.94) !important;
+}
+
+@media (max-width: 760px) {
+  .live-notes-nudge {
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    width: auto;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .live-notes-nudge-actions {
+    justify-content: space-between;
+  }
+}
