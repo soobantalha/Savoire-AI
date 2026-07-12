@@ -9842,3 +9842,357 @@ input::placeholder, textarea::placeholder {
 [data-theme="light"] [style*="background: white"] {
   color: #1a1f3a !important;
 }
+/* ═══════════════════════════════════════════════════════════════════════════════
+   UI HOTFIX PATCH — readability, logo swap, button cleanup, light theme polish
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Use dependable local fallbacks even when external fonts fail to load */
+body,
+button,
+input,
+textarea,
+select {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.md-content,
+.summary-tldr-content,
+.qa-answer-inner,
+.quiz-exp-text {
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+/* Shared logo image support */
+.brand-logo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dh-mark,
+.about-logo,
+.welcome-logo,
+.rbf-logo {
+  overflow: hidden;
+}
+
+.dh-mark {
+  width: 42px !important;
+  height: 42px !important;
+  padding: 5px !important;
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,.22);
+}
+
+.dh-mark:hover {
+  transform: translateY(-1px) scale(1.02) !important;
+  box-shadow: 0 0 0 1px rgba(0,212,255,.25), 0 10px 24px rgba(0,0,0,.28) !important;
+}
+
+.about-logo,
+.welcome-logo {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  padding: 12px !important;
+}
+
+.rbf-logo {
+  padding: 4px !important;
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+}
+
+/* Normalize the main UI buttons so they stop looking mismatched */
+button,
+.dh-btn,
+.otb-btn,
+.result-nav-btn,
+.fc-btn,
+.quiz-opt-btn,
+.quiz-nav-btn,
+.theme-btn,
+.font-btn,
+.settings-btn,
+.hist-filter,
+.hist-action,
+.lp-hist-all,
+.demo-replay-btn,
+.about-toggle-btn,
+.av-item,
+.confirm-btn,
+.wizard-btn,
+.empty-wizard-btn,
+.empty-mega-btn,
+.mega-generate-btn,
+.exp-btn,
+.ss-copy-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  line-height: 1.2;
+}
+
+/* Fix invisible output text in dark mode caused by earlier broken light-theme selectors */
+html[data-theme="dark"] .md-content,
+html[data-theme="dark"] .md-content p,
+html[data-theme="dark"] .md-content li,
+html[data-theme="dark"] .summary-point-text,
+html[data-theme="dark"] .concept-text,
+html[data-theme="dark"] .trick-text,
+html[data-theme="dark"] .qa-q,
+html[data-theme="dark"] .qa-answer-inner,
+html[data-theme="dark"] .li-text,
+html[data-theme="dark"] .mm-node-text,
+html[data-theme="dark"] .quiz-question-text,
+html[data-theme="dark"] .quiz-exp-text,
+html[data-theme="dark"] .quiz-review-q,
+html[data-theme="dark"] .sfp-text,
+html[data-theme="dark"] .sfp-text.live-md p,
+html[data-theme="dark"] .sfp-text.live-md li {
+  color: #d8e0f1 !important;
+}
+
+html[data-theme="dark"] .md-content strong,
+html[data-theme="dark"] .sfp-text strong {
+  color: #ffffff !important;
+}
+
+/* Final light theme pass — softer backgrounds, readable text, cleaner controls */
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="light"] body {
+  background: linear-gradient(135deg, #f8fbff 0%, #eef4ff 52%, #e7eefc 100%) !important;
+  color: #182235 !important;
+}
+
+html[data-theme="light"] body::after {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(15,23,42,.025) 3px,
+    rgba(15,23,42,.025) 6px
+  ) !important;
+  opacity: .35 !important;
+}
+
+html[data-theme="light"] .left-panel,
+html[data-theme="light"] .dash-hdr,
+html[data-theme="light"] .out-toolbar,
+html[data-theme="light"] .study-sec,
+html[data-theme="light"] .result-hdr,
+html[data-theme="light"] .result-branding-footer,
+html[data-theme="light"] .modal,
+html[data-theme="light"] .av-dropdown,
+html[data-theme="light"] .hist-item,
+html[data-theme="light"] .lp-hist-item,
+html[data-theme="light"] .stat-card-sidebar,
+html[data-theme="light"] .concept-card,
+html[data-theme="light"] .trick-item,
+html[data-theme="light"] .qa-card,
+html[data-theme="light"] .list-item,
+html[data-theme="light"] .quiz-question-wrap,
+html[data-theme="light"] .quiz-explanation,
+html[data-theme="light"] .summary-point,
+html[data-theme="light"] .wizard-tool-card,
+html[data-theme="light"] .wizard-depth-card,
+html[data-theme="light"] .wizard-style-card,
+html[data-theme="light"] .wizard-language-card,
+html[data-theme="light"] .hist-search,
+html[data-theme="light"] .thinking-card,
+html[data-theme="light"] .live-cards-wrapper,
+html[data-theme="light"] .live-quiz-wrapper,
+html[data-theme="light"] .live-mm-wrapper {
+  background: rgba(255,255,255,.86) !important;
+  border-color: rgba(148,163,184,.28) !important;
+  box-shadow: 0 12px 30px rgba(15,23,42,.06) !important;
+}
+
+html[data-theme="light"] .left-panel {
+  background: rgba(250,252,255,.92) !important;
+}
+
+html[data-theme="light"] .dash-hdr,
+html[data-theme="light"] .out-toolbar {
+  background: rgba(248,250,255,.82) !important;
+}
+
+html[data-theme="light"] .ss-hdr,
+html[data-theme="light"] .mega-section .ss-hdr,
+html[data-theme="light"] .modal-header {
+  background: rgba(241,245,255,.85) !important;
+  border-color: rgba(148,163,184,.2) !important;
+}
+
+html[data-theme="light"] .nav-item,
+html[data-theme="light"] .nav-text,
+html[data-theme="light"] .dh-name,
+html[data-theme="light"] .dh-ver,
+html[data-theme="light"] .dh-greeting,
+html[data-theme="light"] .rh-mi,
+html[data-theme="light"] .rh-powered,
+html[data-theme="light"] .result-nav-btn,
+html[data-theme="light"] .otb-btn,
+html[data-theme="light"] .fc-btn,
+html[data-theme="light"] .fc-prog,
+html[data-theme="light"] .fc-hint,
+html[data-theme="light"] .fc-swipe-hint,
+html[data-theme="light"] .quiz-q-counter,
+html[data-theme="light"] .quiz-question-text,
+html[data-theme="light"] .quiz-exp-label,
+html[data-theme="light"] .quiz-exp-text,
+html[data-theme="light"] .quiz-result-pct,
+html[data-theme="light"] .quiz-result-grade,
+html[data-theme="light"] .quiz-review-q,
+html[data-theme="light"] .quiz-review-correct,
+html[data-theme="light"] .hist-topic,
+html[data-theme="light"] .hist-meta,
+html[data-theme="light"] .lp-hist-topic,
+html[data-theme="light"] .lp-hist-time,
+html[data-theme="light"] .settings-label,
+html[data-theme="light"] .wizard-tool-name,
+html[data-theme="light"] .wizard-tool-desc,
+html[data-theme="light"] .wizard-depth-name,
+html[data-theme="light"] .wizard-depth-desc,
+html[data-theme="light"] .wizard-style-name,
+html[data-theme="light"] .wizard-style-desc,
+html[data-theme="light"] .wizard-review-label,
+html[data-theme="light"] .wizard-review-value,
+html[data-theme="light"] .wizard-step-label,
+html[data-theme="light"] .wizard-step-desc,
+html[data-theme="light"] .lp-title,
+html[data-theme="light"] .lp-hist-title,
+html[data-theme="light"] .shortcut,
+html[data-theme="light"] .about-text,
+html[data-theme="light"] .av-item,
+html[data-theme="light"] .av-u-name,
+html[data-theme="light"] .av-u-sub,
+html[data-theme="light"] .stat-label-sidebar,
+html[data-theme="light"] .user-name-sidebar,
+html[data-theme="light"] .user-tagline-sidebar,
+html[data-theme="light"] .ss-copy-btn,
+html[data-theme="light"] .exp-btn,
+html[data-theme="light"] .rbf-text,
+html[data-theme="light"] .rbf-ts,
+html[data-theme="light"] .empty-tool-msg,
+html[data-theme="light"] .ths,
+html[data-theme="light"] .live-card-front,
+html[data-theme="light"] .live-card-back,
+html[data-theme="light"] .live-quiz-q-text,
+html[data-theme="light"] .live-quiz-opt,
+html[data-theme="light"] .live-mm-item,
+html[data-theme="light"] .live-cards-loading,
+html[data-theme="light"] .sfp-fact,
+html[data-theme="light"] .sfp-topic,
+html[data-theme="light"] .md-content,
+html[data-theme="light"] .md-content p,
+html[data-theme="light"] .md-content li,
+html[data-theme="light"] .sfp-text,
+html[data-theme="light"] .sfp-text.live-md p,
+html[data-theme="light"] .sfp-text.live-md li {
+  color: #24324a !important;
+}
+
+html[data-theme="light"] .dh-btn,
+html[data-theme="light"] .otb-btn,
+html[data-theme="light"] .theme-btn,
+html[data-theme="light"] .font-btn,
+html[data-theme="light"] .settings-btn,
+html[data-theme="light"] .hist-filter,
+html[data-theme="light"] .hist-action,
+html[data-theme="light"] .lp-hist-all,
+html[data-theme="light"] .demo-replay-btn,
+html[data-theme="light"] .about-toggle-btn,
+html[data-theme="light"] .result-nav-btn,
+html[data-theme="light"] .fc-btn,
+html[data-theme="light"] .av-item,
+html[data-theme="light"] .modal-close,
+html[data-theme="light"] #histSearchClear,
+html[data-theme="light"] .demo-action-btn,
+html[data-theme="light"] .demo-btn-prev,
+html[data-theme="light"] .ss-copy-btn,
+html[data-theme="light"] .exp-btn {
+  background: rgba(255,255,255,.92) !important;
+  border: 1px solid rgba(148,163,184,.32) !important;
+  color: #22324d !important;
+}
+
+html[data-theme="light"] .dh-btn:hover,
+html[data-theme="light"] .otb-btn:hover,
+html[data-theme="light"] .theme-btn:hover,
+html[data-theme="light"] .font-btn:hover,
+html[data-theme="light"] .settings-btn:hover,
+html[data-theme="light"] .hist-filter:hover,
+html[data-theme="light"] .hist-action:hover,
+html[data-theme="light"] .lp-hist-all:hover,
+html[data-theme="light"] .demo-replay-btn:hover,
+html[data-theme="light"] .result-nav-btn:hover,
+html[data-theme="light"] .fc-btn:hover,
+html[data-theme="light"] .ss-copy-btn:hover,
+html[data-theme="light"] .exp-btn:hover {
+  background: rgba(239,246,255,.98) !important;
+  border-color: rgba(14,165,233,.42) !important;
+  color: #0369a1 !important;
+  box-shadow: 0 10px 18px rgba(59,130,246,.08) !important;
+}
+
+html[data-theme="light"] .theme-btn.active,
+html[data-theme="light"] .font-btn.active,
+html[data-theme="light"] [data-pdf-theme].active {
+  background: linear-gradient(135deg, #0ea5e9, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+html[data-theme="light"] input,
+html[data-theme="light"] textarea,
+html[data-theme="light"] select,
+html[data-theme="light"] .settings-input,
+html[data-theme="light"] .mega-textarea,
+html[data-theme="light"] .mega-select,
+html[data-theme="light"] .wizard-topic-input {
+  background: #ffffff !important;
+  color: #172033 !important;
+  border-color: rgba(148,163,184,.35) !important;
+}
+
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .stream-overlay {
+  background:
+    radial-gradient(1000px 600px at 15% -10%, rgba(14,165,233,.10), transparent 60%),
+    radial-gradient(900px 680px at 100% 100%, rgba(99,102,241,.08), transparent 55%),
+    rgba(248,250,255,.98) !important;
+}
+
+html[data-theme="light"] .sfp-label,
+html[data-theme="light"] .modal-title,
+html[data-theme="light"] .ss-title,
+html[data-theme="light"] .settings-title,
+html[data-theme="light"] .wizard-step-heading {
+  color: #9a6700 !important;
+}
+
+html[data-theme="light"] .score-ring-label,
+html[data-theme="light"] .quiz-result-denom,
+html[data-theme="light"] .quiz-result-stat-lbl,
+html[data-theme="light"] .otb-hint,
+html[data-theme="light"] .otb-hint kbd,
+html[data-theme="light"] .hist-time,
+html[data-theme="light"] .wizard-step-info {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .ss-title i,
+html[data-theme="light"] .settings-title i,
+html[data-theme="light"] .rh-mi i,
+html[data-theme="light"] .quiz-score-display i {
+  color: #b7791f !important;
+}
