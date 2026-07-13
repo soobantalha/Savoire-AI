@@ -1986,7 +1986,7 @@ Examples:
     const footer = `
       <div class="result-branding-footer">
         <div class="rbf-left">
-          <div class="rbf-logo"><img src="logo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
+          <div class="rbf-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
           <div class="rbf-text">
             <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank" style="font-family:'Orbitron',sans-serif;letter-spacing:.05em">${SAVOIRÉ.BRAND}</a> ·
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> ·
