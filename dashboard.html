@@ -122,8 +122,20 @@
       to   { opacity: 1; }
     }
   </style>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    .token-meter{display:flex;align-items:center;gap:8px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);padding:6px 14px;border-radius:999px;font-size:.72rem;color:#f0d383}
+    .token-track{width:84px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+    .token-fill{height:100%;background:linear-gradient(90deg,#d4af37,#ffae00);transition:width .4s ease;width:100%}
+    #authLoading{position:fixed;inset:0;z-index:99999;background:#03050c;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    #authLoading .spin{width:40px;height:40px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
 </head>
 <body>
+<div id="authLoading"><div class="spin"></div><div style="color:#d4af37;font-family:monospace;font-size:.8rem">Checking login...</div></div>
+
 
   <!-- ═══════════ NOSCRIPT MESSAGE ═══════════ -->
   <noscript>
@@ -320,6 +332,11 @@
 
         <!-- Header Stats -->
         <div class="dh-stats">
+          <div class="token-meter" id="tokenMeter" title="Your tokens">
+            <i class="fas fa-coins" style="color:#d4af37"></i>
+            <div class="token-track"><div class="token-fill" id="tokenBar"></div></div>
+            <span id="tokenCount">-- / --</span>
+          </div>
           <div class="dh-stat dh-stat-streak" id="headerStreakWrap">
             <i class="fas fa-fire"></i>
             <span id="headerStreak" class="dh-streak-val">0</span>
@@ -923,6 +940,96 @@
   </script>
 
   <!-- ═══════════════════════════════════ MAIN APPLICATION SCRIPT ═══════════════════════════════════ -->
+  
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// YOUR REAL CONFIG - savoire-ai (apiKey is public, safe to show - Firebase docs says so)
+const firebaseConfig = {
+  apiKey: "AIzaSyBDgKVvzsOAb0ZrsSooTEU0mgvLxadphoM",
+  authDomain: "savoire-ai.firebaseapp.com",
+  projectId: "savoire-ai",
+  storageBucket: "savoire-ai.firebasestorage.app",
+  messagingSenderId: "528576008706",
+  appId: "1:528576008706:web:4514bd93193df05ba7cd1b"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+window.firebaseAuthInstance = auth;
+
+// Global token bar updater
+window._updatePaidTokenBar = (remaining, limit, plan) => {
+  const bar = document.getElementById('tokenBar');
+  const count = document.getElementById('tokenCount');
+  if (!bar || !count) return;
+  if (limit) {
+    const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
+    bar.style.width = pct + '%';
+    count.textContent = `${remaining.toLocaleString()} / ${limit.toLocaleString()}`;
+    if (plan && plan !== 'free') {
+      count.textContent += ' • ' + plan;
+      bar.style.background = 'linear-gradient(90deg,#00d4ff,#bf00ff)';
+    }
+    if (remaining < 1000) {
+      bar.style.background = '#ff4444';
+      document.getElementById('tokenMeter').style.borderColor = '#ff4444';
+    } else if (remaining < 3000) {
+      bar.style.background = '#ffae00';
+    }
+  } else {
+    // only remaining from header
+    count.textContent = `${remaining.toLocaleString()} left`;
+  }
+  window.PAID_REMAINING = remaining;
+};
+
+window._showPaidLoginNeeded = () => {
+  alert('Please login first! Redirecting...');
+  window.location.href = '/login.html';
+};
+
+window._showPaidUpgradeModal = (data) => {
+  const existing = document.getElementById('paidUpgradeModal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'paidUpgradeModal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#0f172a;border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.6)">
+      <div style="font-size:2.2rem;margin-bottom:12px">🔋</div>
+      <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
+      <p style="color:#aab2cc;font-size:.88rem;line-height:1.6;margin-bottom:6px">${(data && data.message) || 'Your free tokens finished. Buy 1M for just ₹49 via UPI.'}</p>
+      <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '15000'}</p>
+      <a href="/pricing.html" style="display:block;padding:14px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:12px;font-weight:800;text-decoration:none">Buy 1M Tokens - ₹49 UPI ⚡</a>
+      <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
+    </div>
+  `;
+  modal.onclick = (e) => { if(e.target===modal) modal.remove(); };
+  document.body.appendChild(modal);
+};
+
+onAuthStateChanged(auth, async (user) => {
+  const loader = document.getElementById('authLoading');
+  if (loader) loader.style.display = 'none';
+  if (!user) {
+    window.location.href = '/login.html';
+  } else {
+    const token = await user.getIdToken();
+    localStorage.setItem('sv_firebase_token', token);
+    localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
+    // fetch balance
+    try {
+      const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
+      if (res.ok) {
+        const bal = await res.json();
+        window._updatePaidTokenBar(bal.remaining, bal.limit, bal.plan);
+      }
+    } catch(e) { console.log('balance fetch failed', e.message); }
+  }
+});
+</script>
+
   <script src="app.js"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1d99b8eb8b7d1',t:'MTc4Mzg3ODIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

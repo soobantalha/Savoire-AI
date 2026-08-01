@@ -389,9 +389,12 @@ class SavoireApp {
 
   _warmupAndTrack() {
     const sessionId = this._genId();
+    const _fbToken = (typeof localStorage !== 'undefined') ? localStorage.getItem('sv_firebase_token') : '';
+    const _headers = { 'Content-Type': 'application/json' };
+    if (_fbToken) _headers['Authorization'] = 'Bearer ' + _fbToken;
     fetch(SAVOIRÉ.API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: _headers,
       body: JSON.stringify({
         message:   'ping',
         userName:  this.userName || 'Anonymous',
@@ -402,6 +405,8 @@ class SavoireApp {
       }),
     }).catch(() => {});
     this._currentSessionId = sessionId;
+    // PAID: fetch token balance
+    if (this._fetchPaidTokenBalance) { try { this._fetchPaidTokenBalance(); } catch(e){} }
   }
 
   // ─── STREAK MANAGEMENT ──────────────────────────────────────────────────────
@@ -1416,12 +1421,38 @@ Examples:
       this._liveMMCentral = '';
       this._liveMMConns   = [];
 
+      const _fbTok = (typeof localStorage !== 'undefined') ? localStorage.getItem('sv_firebase_token') : '';
+      const _h = { 'Content-Type': 'application/json' };
+      if (_fbTok) _h['Authorization'] = 'Bearer ' + _fbTok;
       fetch(SAVOIRÉ.API_URL, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: _h,
         body,
         signal:  this.streamCtrl?.signal,
       }).then(async res => {
+        // PAID: handle auth errors
+        if (res.status === 401) {
+          const _d = await res.json().catch(()=>({}));
+          if (typeof window !== 'undefined') {
+            if (window._showPaidLoginNeeded) window._showPaidLoginNeeded();
+            else { alert('Please login first!'); window.location.href = '/login.html'; }
+          }
+          reject(new Error('LOGIN_REQUIRED'));
+          return;
+        }
+        if (res.status === 402) {
+          const _d = await res.json().catch(()=>({}));
+          if (typeof window !== 'undefined' && window._showPaidUpgradeModal) window._showPaidUpgradeModal(_d);
+          reject(new Error('TOKEN_EXHAUSTED: ' + (_d.message||'Buy 1M for Rs 49')));
+          return;
+        }
+        // update token bar from header if present
+        try {
+          const _rem = res.headers.get('X-Tokens-Remaining');
+          const _used = res.headers.get('X-Tokens-Used');
+          if (_rem && window._updatePaidTokenBar) window._updatePaidTokenBar(parseInt(_rem), null);
+        } catch(e){}
+
         if (!res.ok) {
           const d = await res.json().catch(() => ({}));
           reject(new Error(d.error || `Server error (${res.status})`));
@@ -3665,7 +3696,34 @@ Examples:
     if (this.prefs.pdfTheme) this.pdfTheme = this.prefs.pdfTheme;
   }
 
+
+  // ─── PAID TOKEN SYSTEM (Added for Razorpay + Firebase) ────────────────────
+  async _fetchPaidTokenBalance() {
+    try {
+      const fbToken = localStorage.getItem('sv_firebase_token');
+      if (!fbToken) return;
+      const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
+      // also update cache
+      window.PAID_TOKENS = data;
+    } catch(e) { console.log('token balance fetch failed', e.message); }
+  }
+
+  _showPaidUpgradeNudge(remaining) {
+    if (document.getElementById('paidUpgradeNudge')) return;
+    const n = document.createElement('div');
+    n.id = 'paidUpgradeNudge';
+    n.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:linear-gradient(135deg,#1a1408,#0d1330);border:1px solid rgba(212,175,55,.4);border-radius:16px;padding:16px 20px;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5)';
+    n.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:1.4rem">⚠️</div><div style="flex:1"><div style="font-weight:800;color:#f0d383;font-size:.9rem">Tokens Low! ${remaining||0} left</div><div style="font-size:.78rem;color:#aab2cc;margin:4px 0 12px;line-height:1.5">Get 1M tokens for just ₹49 via UPI and continue unlimited.</div><div style="display:flex;gap:8px"><a href="/pricing.html" style="padding:8px 16px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:10px;font-weight:800;font-size:.8rem;text-decoration:none">Buy 1M - ₹49</a><button onclick="this.closest('#paidUpgradeNudge').remove()" style="padding:8px 12px;background:transparent;border:1px solid rgba(255,255,255,.1);color:#aab2cc;border-radius:10px;font-size:.8rem">Later</button></div></div></div>`;
+    document.body.appendChild(n);
+  }
+
+  // ─── END PAID SYSTEM ────────────────────────────────────────────────────────
+
   // ─── SIDEBAR & FOCUS MODE ────────────────────────────────────────────────────
+
 
   _toggleSidebar() {
     if (!this.el.leftPanel) return;

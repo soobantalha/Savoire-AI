@@ -23,6 +23,24 @@ const SAVOIRÉ = {
 
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
+const admin = require('firebase-admin');
+if (!admin.apps.length) {
+  try {
+    const sa = JSON.parse(process.env.FIREBASE_ADMIN_KEY);
+    admin.initializeApp({ credential: admin.credential.cert(sa) });
+  } catch(e) {
+    console.error('Firebase admin init failed', e.message);
+  }
+}
+const db = admin.firestore();
+
+function estimateTokens(text) {
+  if (!text) return 0;
+  const words = String(text).trim().split(/\s+/).filter(Boolean).length;
+  return Math.ceil(words * 1.33);
+}
+
+
 // ─── MESH API CONFIG ──────────────────────────────────────────────────────────
 const MESH_BASE_URL = 'https://api.meshapi.ai/v1';
 const MESH_TIMEOUT_MS = 90000; // 90 seconds per model
@@ -991,6 +1009,63 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: 'Savoiré AI service is misconfigured — MESH_API_KEY missing. Get a free key at meshapi.ai and set it in your environment. Contact the administrator.' });
   }
 
+  // === PAID AUTH LOGIC ===
+  let firebaseUid = null;
+  let firebaseUserData = null;
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  const _bodyForAuth = req.body || {};
+  const isPing = String(_bodyForAuth.message||'').trim() === 'ping' || String(_bodyForAuth.message||'').trim() === '';
+
+  if (!isPing) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 15k free tokens await!' });
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+    try {
+      const decoded = await admin.auth().verifyIdToken(idToken);
+      firebaseUid = decoded.uid;
+      const userRef = db.collection('users').doc(firebaseUid);
+      let userSnap = await userRef.get();
+      if (!userSnap.exists) {
+        await userRef.set({
+          uid: firebaseUid,
+          email: decoded.email || '',
+          displayName: decoded.name || 'Scholar',
+          plan: 'free',
+          tokens_limit: 15000,
+          tokens_used: 0,
+          totalGenerations: 0,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          cycle_start: new Date().toISOString()
+        });
+        userSnap = await userRef.get();
+      }
+      firebaseUserData = userSnap.data();
+      const remaining = (firebaseUserData.tokens_limit||15000) - (firebaseUserData.tokens_used||0);
+      const cycleStart = new Date(firebaseUserData.cycle_start || new Date());
+      const daysSince = Math.floor((Date.now() - cycleStart.getTime())/(1000*60*60*24));
+      if (firebaseUserData.plan === 'free' && daysSince >= 30) {
+        await userRef.update({ tokens_used: 0, cycle_start: new Date().toISOString(), tokens_limit: 15000 });
+        firebaseUserData.tokens_used = 0;
+        firebaseUserData.tokens_limit = 15000;
+      }
+      if (remaining < 500) {
+        return res.status(402).json({
+          error: 'TOKEN_EXHAUSTED',
+          message: `Tokens finished! Used ${firebaseUserData.tokens_used}/${firebaseUserData.tokens_limit}. Buy 1M for just ₹49`,
+          tokens_used: firebaseUserData.tokens_used,
+          tokens_limit: firebaseUserData.tokens_limit,
+          tokens_remaining: remaining,
+          upgrade_url: '/pricing.html'
+        });
+      }
+    } catch (authErr) {
+      console.error('Firebase auth failed', authErr.message);
+      return res.status(401).json({ error: 'INVALID_TOKEN', message: 'Session expired. Please login again.' });
+    }
+  }
+
+
   const body       = req.body || {};
   const message    = String(body.message   || '').trim();
   const userName   = String(body.userName  || 'Anonymous').trim();
@@ -1229,6 +1304,35 @@ module.exports = async function handler(req, res) {
 
     const final = mergeCards(cardsData, notes, message, opts);
     final._duration_ms  = Date.now() - startTime;
+
+    // === PAID TOKEN DEDUCTION ===
+    if (firebaseUid && !isPing) {
+      try {
+        const totalUsed = estimateTokens(final.ultra_long_notes||'') + estimateTokens(JSON.stringify(cardsData||'')) + estimateTokens(message);
+        const userRef = db.collection('users').doc(firebaseUid);
+        await userRef.update({
+          tokens_used: admin.firestore.FieldValue.increment(totalUsed),
+          totalGenerations: admin.firestore.FieldValue.increment(1),
+          totalWords: admin.firestore.FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length)
+        });
+        await userRef.collection('history').add({
+          topic: message.slice(0,200),
+          tool: opts.tool,
+          tokens_consumed: totalUsed,
+          wordCount: (final.ultra_long_notes||'').split(/\s+/).length,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          durationMs: final._duration_ms
+        });
+        final._tokens_used_this_request = totalUsed;
+        final._tokens_remaining = (firebaseUserData.tokens_limit - firebaseUserData.tokens_used - totalUsed);
+        // Set header for frontend
+        res.setHeader('X-Tokens-Remaining', String(final._tokens_remaining));
+        res.setHeader('X-Tokens-Used', String(totalUsed));
+      } catch (deductErr) {
+        console.error('Token deduction failed', deductErr.message);
+      }
+    }
+
     final._request_id   = reqId;
     final._phase1_ok    = p1ok;
     final._phase2_ok    = p2ok;
