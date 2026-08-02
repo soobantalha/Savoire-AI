@@ -3376,6 +3376,7 @@ Examples:
     this._renderSidebarSaved();
     this._renderSavedModal();
     this._toast('success', 'fa-star', 'Saved to your library!');
+    try { this._saveSavedToCloud(note); } catch(e){}
   }
 
   _shareResult() {
@@ -3420,6 +3421,8 @@ Examples:
     this._save('sv_history', this.history);
     this._renderSidebarHistory();
     this._updateAllStats();
+    // Cloud sync
+    try { this._saveHistoryToCloud(item); } catch(e){}
   }
 
   _renderSidebarHistory() {
@@ -3501,7 +3504,7 @@ Examples:
   }
 
   _loadHistory(id)   { const h = this.history.find(x=>x.id===id); if(!h?.data)return; this._closeModal('histModal'); this.currentData=h.data; this.tool=h.tool||'notes'; this._renderResult(h.data); this._showToolbar(true); this._toast('info','fa-history',`Loaded: ${(h.topic||'').slice(0,40)}`); }
-  _delHistory(id)    { this.history=this.history.filter(x=>x.id!==id); this._save('sv_history',this.history); this._renderSidebarHistory(); this._updateAllStats(); this._renderHistModal(); }
+  _delHistory(id)    { this.history=this.history.filter(x=>x.id!==id); this._save('sv_history',this.history); this._renderSidebarHistory(); this._updateAllStats(); this._renderHistModal(); try { this._deleteHistoryFromCloud(id); } catch(e){} }
   _openSavedModal()  { this._renderSavedModal(); this._openModal('savedModal'); }
 
   _renderSavedModal() {
@@ -3535,7 +3538,7 @@ Examples:
   }
 
   _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
-  _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); }
+  _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); try { this._deleteSavedFromCloud(id); } catch(e){} }
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
@@ -3803,10 +3806,134 @@ Examples:
       if (!res.ok) return;
       const data = await res.json();
       if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
-      // also update cache
       window.PAID_TOKENS = data;
+      // Also sync cloud history/saved after balance
+      if (this._fetchCloudHistory) { try { await this._fetchCloudHistory(); } catch(e){} }
+      if (this._fetchCloudSaved) { try { await this._fetchCloudSaved(); } catch(e){} }
     } catch(e) { console.log('token balance fetch failed', e.message); }
   }
+
+  // ─── CLOUD SYNC - History & Saved across devices ─────────────────────────
+  _getFbToken() { try { return localStorage.getItem('sv_firebase_token')||''; } catch{ return ''; } }
+
+  async _fetchCloudHistory() {
+    const tok = this._getFbToken();
+    if (!tok) return;
+    try {
+      const res = await fetch('/api/history', { headers: { 'Authorization': 'Bearer ' + tok } });
+      if (!res.ok) return;
+      const j = await res.json();
+      const cloudHist = j.history || [];
+      if (!cloudHist.length) return;
+      // Merge cloud into local: cloud wins, but keep local that not in cloud
+      const localIds = new Set(this.history.map(h=>h.id));
+      let added = 0;
+      for (const ch of cloudHist) {
+        if (!localIds.has(ch.id)) {
+          // Convert ts if firestore timestamp
+          this.history.push({
+            id: ch.id,
+            topic: ch.topic||'Untitled',
+            tool: ch.tool||'notes',
+            data: ch.data||null,
+            ts: ch.ts||Date.now(),
+            dur: ch.dur||0
+          });
+          added++;
+        }
+      }
+      if (added>0) {
+        // Sort by ts desc
+        this.history.sort((a,b)=> (b.ts||0)-(a.ts||0));
+        if (this.history.length > 60) this.history = this.history.slice(0,60);
+        this._save('sv_history', this.history);
+        this._renderSidebarHistory();
+        this._updateAllStats();
+        console.log(`☁️ Synced ${added} history items from cloud`);
+      }
+    } catch(e){ console.log('cloud history fetch failed', e.message); }
+  }
+
+  async _fetchCloudSaved() {
+    const tok = this._getFbToken();
+    if (!tok) return;
+    try {
+      const res = await fetch('/api/saved', { headers: { 'Authorization': 'Bearer ' + tok } });
+      if (!res.ok) return;
+      const j = await res.json();
+      const cloudSaved = j.saved || [];
+      if (!cloudSaved.length) return;
+      const localIds = new Set(this.saved.map(s=>s.id));
+      let added = 0;
+      for (const cs of cloudSaved) {
+        if (!localIds.has(cs.id)) {
+          this.saved.push({
+            id: cs.id,
+            topic: cs.topic||'Untitled',
+            tool: cs.tool||'notes',
+            data: cs.data||null,
+            savedAt: cs.savedAt||Date.now()
+          });
+          added++;
+        }
+      }
+      if (added>0) {
+        this.saved.sort((a,b)=> (b.savedAt||0)-(a.savedAt||0));
+        if (this.saved.length > 120) this.saved = this.saved.slice(0,120);
+        this._save('sv_saved', this.saved);
+        this._renderSidebarSaved();
+        this._updateAllStats();
+        console.log(`☁️ Synced ${added} saved items from cloud`);
+      }
+    } catch(e){ console.log('cloud saved fetch failed', e.message); }
+  }
+
+  async _saveHistoryToCloud(item) {
+    const tok = this._getFbToken();
+    if (!tok) return;
+    try {
+      await fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+        body: JSON.stringify({ id: item.id, topic: item.topic, tool: item.tool, data: item.data, ts: item.ts, dur: item.dur })
+      });
+    } catch(e){ console.log('cloud history save failed', e.message); }
+  }
+
+  async _deleteHistoryFromCloud(id) {
+    const tok = this._getFbToken();
+    if (!tok) return;
+    try {
+      await fetch('/api/history?id=' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + tok }
+      });
+    } catch(e){ console.log('cloud history delete failed', e.message); }
+  }
+
+  async _saveSavedToCloud(note) {
+    const tok = this._getFbToken();
+    if (!tok) return;
+    try {
+      await fetch('/api/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+        body: JSON.stringify({ id: note.id, topic: note.topic, tool: note.tool, data: note.data, savedAt: note.savedAt })
+      });
+    } catch(e){ console.log('cloud saved save failed', e.message); }
+  }
+
+  async _deleteSavedFromCloud(id) {
+    const tok = this._getFbToken();
+    if (!tok) return;
+    try {
+      await fetch('/api/saved?id=' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + tok }
+      });
+    } catch(e){ console.log('cloud saved delete failed', e.message); }
+  }
+
 
   _showPaidUpgradeNudge(remaining) {
     if (document.getElementById('paidUpgradeNudge')) return;
