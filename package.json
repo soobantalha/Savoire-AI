@@ -1,5 +1,30 @@
 {
+  "name": "savoire-ai",
+  "version": "2.0.0",
+  "description": "Savoir\u00e9 AI v2.0 - Think Less. Know More. | Built by Sooban Talha Technologies",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build needed - static + serverless functions'"
+  },
   "dependencies": {
-    "@vercel/analytics": "^1.5.0"
-  }
+    "firebase-admin": "^11.11.1",
+    "razorpay": "^2.9.2",
+    "resend": "^3.2.0",
+    "nodemailer": "^6.9.13"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": [
+    "ai",
+    "study",
+    "notes",
+    "flashcards",
+    "quiz",
+    "edtech",
+    "savoire"
+  ],
+  "author": "Sooban Talha Technologies",
+  "license": "MIT"
 }
