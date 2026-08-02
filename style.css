@@ -11782,3 +11782,65 @@ html[data-theme="light"] .result-live-notes-copy {
 html[data-theme="light"] .result-live-notes-copy strong {
   color: #0f8d70 !important;
 }
+
+/* ===== PAID CREDIT SYSTEM STYLES - Added for Razorpay Lifetime Packs ===== */
+.token-meter{position:relative}
+.token-meter .token-fill{transition:width .5s cubic-bezier(.22,1,.36,1)}
+.credit-sidebar{
+  margin:16px 12px;padding:16px;
+  background:linear-gradient(180deg,rgba(212,175,55,.08),rgba(0,212,255,.04)),rgba(255,255,255,.03);
+  border:1px solid rgba(212,175,55,.18);border-radius:16px;
+}
+.credit-sidebar-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.credit-sidebar-title{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#f0d383;font-family:'JetBrains Mono',monospace}
+.credit-balance{font-size:1.6rem;font-weight:800;color:#fff;line-height:1}
+.credit-balance span{font-size:.9rem;color:#aab2cc;font-weight:400}
+.credit-progress{height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin:12px 0 8px}
+.credit-progress-fill{height:100%;background:linear-gradient(90deg,#d4af37,#ffae00);border-radius:999px;transition:width .5s ease}
+.credit-meta{display:flex;justify-content:space-between;font-size:.65rem;color:rgba(255,255,255,.45);font-family:monospace}
+.credit-actions{display:flex;gap:8px;margin-top:14px}
+.credit-btn{flex:1;padding:9px 12px;border-radius:10px;border:none;font-weight:700;font-size:.75rem;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.credit-btn-buy{background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;box-shadow:0 6px 18px rgba(212,175,55,.2)}
+.credit-btn-buy:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(212,175,55,.3)}
+.credit-btn-history{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#aab2cc}
+.credit-btn-history:hover{background:rgba(255,255,255,.1);color:#fff}
+.quick-buy{margin-top:12px;padding:10px 12px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:space-between}
+.quick-buy-left{font-size:.7rem;color:#aab2cc}
+.quick-buy-left b{color:#00d4ff;display:block;font-size:.85rem}
+.quick-buy-btn{padding:6px 14px;background:linear-gradient(135deg,#00d4ff,#1970ff);color:#fff;border:none;border-radius:999px;font-weight:700;font-size:.7rem;cursor:pointer}
+
+.buy-credits-overlay{position:fixed;inset:0;z-index:10050;display:none;align-items:center;justify-content:center;padding:20px;background:radial-gradient(600px at 20% 20%,rgba(212,175,55,.12),transparent 60%),radial-gradient(600px at 80% 80%,rgba(0,212,255,.1),transparent 60%),rgba(2,6,18,.82);backdrop-filter:blur(18px)}
+.buy-credits-overlay.active{display:flex}
+.buy-credits-modal{width:min(960px,100%);max-height:90vh;overflow-y:auto;background:rgba(13,19,48,.96);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+.buy-credits-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:20px 0}
+@media(max-width:1100px){.buy-credits-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){.buy-credits-grid{grid-template-columns:1fr}}
+.buy-plan{position:relative;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:20px;transition:all .25s;overflow:hidden}
+.buy-plan:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.15);box-shadow:0 16px 40px rgba(0,0,0,.3)}
+.buy-plan.popular{border-color:rgba(212,175,55,.45);background:linear-gradient(180deg,rgba(26,20,8,.9),rgba(13,19,48,.9));box-shadow:0 0 0 1px rgba(212,175,55,.2),0 20px 60px rgba(212,175,55,.12)}
+.buy-plan-badge{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;padding:3px 8px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.06em}
+.buy-plan h4{font-size:15px;font-weight:800;margin-bottom:4px}
+.buy-plan .credits{font-family:monospace;font-size:12px;color:#00d4ff;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);padding:4px 8px;border-radius:999px;display:inline-block;margin:8px 0}
+.buy-plan .price{font-size:22px;font-weight:800;margin:8px 0 2px}
+.buy-plan .price small{font-size:12px;color:#aab2cc;font-weight:400}
+.buy-plan .per{font-size:10px;color:#6b7394;font-family:monospace}
+.buy-plan ul{list-style:none;margin:12px 0 14px;display:flex;flex-direction:column;gap:6px}
+.buy-plan ul li{font-size:11.5px;color:#c9cfdd;display:flex;gap:6px;align-items:center}
+.buy-plan ul li::before{content:'✓';color:#00ff88;font-weight:700;font-size:10px}
+.buy-plan button{width:100%;padding:10px;border-radius:10px;border:none;font-weight:800;font-size:.8rem;cursor:pointer;transition:.2s}
+.buy-plan button.buy{background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00}
+.buy-plan.popular button.buy{background:linear-gradient(135deg,#f0d383,#d4af37 55%,#9c7726);box-shadow:0 8px 20px rgba(212,175,55,.25)}
+.buy-plan button.buy:hover{transform:translateY(-1px)}
+
+.credit-history-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;margin-bottom:8px}
+.credit-history-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex:none}
+.credit-history-info{flex:1;min-width:0}
+.credit-history-title{font-size:.82rem;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.credit-history-sub{font-size:.68rem;color:rgba(255,255,255,.45);margin-top:2px}
+.credit-history-change{font-weight:800;font-family:monospace;font-size:.85rem}
+.credit-history-change.neg{color:#ff6b6b}
+.credit-history-change.pos{color:#00ff88}
+.credit-history-remaining{font-size:.65rem;color:rgba(255,255,255,.4);font-family:monospace;text-align:right}
+
+.delete-account-step{padding:16px;background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.15);border-radius:12px;margin-top:12px}
+.delete-account-step input{width:100%;margin-top:10px;padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff}

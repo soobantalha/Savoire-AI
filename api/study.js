@@ -1305,33 +1305,78 @@ module.exports = async function handler(req, res) {
     const final = mergeCards(cardsData, notes, message, opts);
     final._duration_ms  = Date.now() - startTime;
 
-    // === PAID TOKEN DEDUCTION ===
-    if (firebaseUid && !isPing) {
+    // === PAID CREDIT DEDUCTION - ONLY ON SUCCESS (as per spec) ===
+    // This block runs ONLY if generation succeeded (final exists)
+    // If generation failed, this block is never reached, so no credits deducted - correct!
+    if (firebaseUid && !isPing && final) {
       try {
-        const totalUsed = estimateTokens(final.ultra_long_notes||'') + estimateTokens(JSON.stringify(cardsData||'')) + estimateTokens(message);
+        const inputChars = message.length;
+        const outputChars = (final.ultra_long_notes||'').length + JSON.stringify(cardsData||'').length;
+        const baseCredits = Math.ceil((inputChars + outputChars)/4);
+        const multipliers = { notes: 1.0, summary: 0.6, flashcards: 1.2, quiz: 1.1, mindmap: 1.3, all: 2.8 };
+        const mult = multipliers[opts.tool] || 1.0;
+        const totalUsed = Math.max(500, Math.ceil(baseCredits * mult)); // Min 500 as per spec
+
         const userRef = db.collection('users').doc(firebaseUid);
+        // Update balance (new system) + keep old fields for compat
         await userRef.update({
-          tokens_used: admin.firestore.FieldValue.increment(totalUsed),
+          balance: admin.firestore.FieldValue.increment(-totalUsed),
+          totalUsed: admin.firestore.FieldValue.increment(totalUsed),
           totalGenerations: admin.firestore.FieldValue.increment(1),
-          totalWords: admin.firestore.FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length)
+          totalWords: admin.firestore.FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
+          tokens_used: admin.firestore.FieldValue.increment(totalUsed),
+          tokens_limit: admin.firestore.FieldValue.increment(0) // keep for compat
         });
+
+        // Usage History sub-collection (new) + history (old)
+        const histData = {
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          type: 'generation',
+          tool: opts.tool,
+          topic: message.slice(0,200),
+          creditsChange: -totalUsed,
+          creditsUsed: totalUsed,
+          creditsRemaining: 0, // will be calculated in frontend, or fetch again
+          description: `Generated ${opts.tool}`,
+          inputChars,
+          outputChars,
+          multiplier: mult,
+          durationMs: final._duration_ms,
+          createdAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        await userRef.collection('usageHistory').add(histData);
         await userRef.collection('history').add({
           topic: message.slice(0,200),
           tool: opts.tool,
           tokens_consumed: totalUsed,
+          creditsUsed: totalUsed,
           wordCount: (final.ultra_long_notes||'').split(/\s+/).length,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           durationMs: final._duration_ms
         });
+
         final._tokens_used_this_request = totalUsed;
-        final._tokens_remaining = (firebaseUserData.tokens_limit - firebaseUserData.tokens_used - totalUsed);
-        // Set header for frontend
-        res.setHeader('X-Tokens-Remaining', String(final._tokens_remaining));
+        final._credits_used = totalUsed;
+        // Calculate remaining
+        const freshSnap = await userRef.get();
+        const freshData = freshSnap.data();
+        const newRemaining = freshData.balance || 0;
+        final._tokens_remaining = newRemaining;
+        final._credits_remaining = newRemaining;
+
+        res.setHeader('X-Tokens-Remaining', String(newRemaining));
         res.setHeader('X-Tokens-Used', String(totalUsed));
+        res.setHeader('X-Credits-Remaining', String(newRemaining));
+        res.setHeader('X-Credits-Used', String(totalUsed));
+
+        // Also log to Google Sheets (existing logic kept)
+        // GOOGLE_WEBHOOK_URL usage already handled via sendToGoogleSheets
       } catch (deductErr) {
-        console.error('Token deduction failed', deductErr.message);
+        console.error('Credit deduction failed', deductErr.message);
+        // Even if deduction fails, don't fail generation - log it
       }
     }
+
 
     final._request_id   = reqId;
     final._phase1_ok    = p1ok;
