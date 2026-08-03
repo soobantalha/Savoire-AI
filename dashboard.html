@@ -1043,21 +1043,27 @@ window._showPaidUpgradeModal = (data) => {
   document.body.appendChild(modal);
 };
 
-// Auto-hide loader after 4 sec even if auth hangs (fix for stuck screen)
-setTimeout(()=>{
+// Auto-hide loader after 3 sec even if auth hangs (fix for stuck screen) + emergency bypass button
+const _authTimeout = setTimeout(()=>{
   const loader = document.getElementById('authLoading');
   if (loader && loader.style.display !== 'none') {
-    console.warn('Auth timeout, hiding loader');
-    loader.style.display = 'none';
-    // If no user after timeout, redirect to login
-    if (!auth.currentUser) {
-      const hasToken = localStorage.getItem('sv_firebase_token');
-      if (!hasToken) {
-        window.location.href = '/login.html';
-      }
-    }
+    console.warn('Auth timeout, hiding loader - showing emergency bypass');
+    loader.innerHTML = `
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+        <div style="color:#f0d383;font-weight:700;margin-bottom:8px">Login check taking too long</div>
+        <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">This happens when token expired or Firebase auth blocked.<br>Try clearing cache or login again.</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
+          <button onclick="document.getElementById('authLoading').style.display='none'" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
+        </div>
+      </div>
+    `;
+    loader.style.background = 'rgba(3,5,12,.96)';
   }
-}, 4000);
+}, 3000);
+
+
 
 onAuthStateChanged(auth, async (user) => {
   const loader = document.getElementById('authLoading');
@@ -1236,7 +1242,7 @@ onAuthStateChanged(auth, async (user) => {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a256d3987e2b7ec6',t:'MTc4NTc3NTg4MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a256e052591c9648',t:'MTc4NTc3NjQwMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
