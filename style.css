@@ -11844,3 +11844,140 @@ html[data-theme="light"] .result-live-notes-copy strong {
 
 .delete-account-step{padding:16px;background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.15);border-radius:12px;margin-top:12px}
 .delete-account-step input{width:100%;margin-top:10px;padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff}
+
+/* ===== MOBILE GUI FIXES - Premium Responsive ===== */
+@media (max-width: 1024px) {
+  .left-panel {
+    position: fixed !important;
+    top: 0; left: 0; bottom: 0;
+    width: 300px; max-width: 85vw;
+    transform: translateX(-100%);
+    transition: transform .35s cubic-bezier(.22,1,.36,1);
+    z-index: 100;
+    box-shadow: 20px 0 60px rgba(0,0,0,.5);
+  }
+  .left-panel.mobile-open {
+    transform: translateX(0);
+  }
+  .right-panel {
+    width: 100% !important;
+  }
+  .dash-hdr {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .dh-stats {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .token-meter {
+    order: -1;
+    width: 100%;
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+  .token-track {
+    flex: 1;
+    max-width: none;
+  }
+  .dh-greeting {
+    display: none !important;
+  }
+  .dh-stat-hide-md {
+    display: none !important;
+  }
+  .credit-sidebar {
+    margin: 12px;
+    padding: 14px;
+  }
+  .out-area {
+    padding: 12px !important;
+  }
+  .empty-state {
+    padding: 30px 16px !important;
+    min-height: auto !important;
+  }
+  .es-cta-row {
+    flex-direction: column;
+    width: 100%;
+  }
+  .es-cta-row button {
+    width: 100%;
+  }
+  .es-features {
+    gap: 8px;
+  }
+  .result-hdr {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .result-nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 8px;
+  }
+  .result-nav::-webkit-scrollbar { display: none; }
+  .concepts-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .mm-branches {
+    grid-template-columns: 1fr !important;
+  }
+  .quiz-options-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .dash-hdr .dh-left {
+    gap: 8px;
+  }
+  .dh-logo .dh-text {
+    display: none;
+  }
+  .credit-sidebar .credit-balance {
+    font-size: 1.3rem;
+  }
+  .buy-credits-modal {
+    padding: 18px !important;
+    margin: 10px;
+  }
+  .buy-credits-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .credit-history-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .modal {
+    margin: 10px;
+    max-width: calc(100% - 20px) !important;
+  }
+}
+
+/* Fix for sidebar scrolling on mobile */
+.left-panel {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.left-panel::-webkit-scrollbar {
+  width: 4px;
+}
+.left-panel::-webkit-scrollbar-thumb {
+  background: rgba(212,175,55,.3);
+  border-radius: 4px;
+}
+
+/* Backdrop for mobile sidebar */
+.sb-backdrop.visible {
+  display: block !important;
+  background: rgba(0,0,0,.6);
+  backdrop-filter: blur(4px);
+}
+
+/* Ensure token meter always visible */
+#tokenMeter {
+  background: linear-gradient(135deg,rgba(212,175,55,.12),rgba(255,174,0,.08)) !important;
+  border: 1px solid rgba(212,175,55,.25) !important;
+}

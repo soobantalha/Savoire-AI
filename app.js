@@ -1358,6 +1358,13 @@ Examples:
       localStorage.setItem('sv_total_words', String(this.totalWords));
       this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now(), dur: Date.now() - t0 });
       this._updateAllStats();
+      // Refresh credit balance from cloud after generation (shows updated remaining)
+      try { this._fetchPaidTokenBalance(); } catch(e){}
+      // Also update local credit display from response headers if available
+      if (data._credits_remaining !== undefined || data._tokens_remaining !== undefined) {
+        const rem = data._credits_remaining ?? data._tokens_remaining ?? 0;
+        if (window._updatePaidTokenBar) window._updatePaidTokenBar(rem, null, null);
+      }
       this._showToolbar(true);
       this._toast('success', 'fa-check-circle', `${TOOL_CONFIG[this.tool]?.sfpName} generated!`);
       if (data._live_notes_buffer && data._live_notes_buffer.length > 50) {
@@ -3821,16 +3828,20 @@ Examples:
     if (!tok) return;
     try {
       const res = await fetch('/api/history', { headers: { 'Authorization': 'Bearer ' + tok } });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.log('cloud history fetch failed status', res.status);
+        return;
+      }
       const j = await res.json();
       const cloudHist = j.history || [];
-      if (!cloudHist.length) return;
-      // Merge cloud into local: cloud wins, but keep local that not in cloud
       const localIds = new Set(this.history.map(h=>h.id));
-      let added = 0;
+      const cloudIds = new Set(cloudHist.map(h=>h.id));
+      let addedFromCloud = 0;
+      let pushedToCloud = 0;
+
+      // 1. Cloud -> Local (for new device)
       for (const ch of cloudHist) {
         if (!localIds.has(ch.id)) {
-          // Convert ts if firestore timestamp
           this.history.push({
             id: ch.id,
             topic: ch.topic||'Untitled',
@@ -3839,17 +3850,29 @@ Examples:
             ts: ch.ts||Date.now(),
             dur: ch.dur||0
           });
-          added++;
+          addedFromCloud++;
         }
       }
-      if (added>0) {
-        // Sort by ts desc
+
+      // 2. Local -> Cloud (push old local data to cloud for first time sync)
+      // Only push if local has items and cloud is smaller
+      const localToPush = this.history.filter(h => !cloudIds.has(h.id)).slice(0,20); // push max 20 at a time to avoid spam
+      for (const lh of localToPush) {
+        try {
+          await this._saveHistoryToCloud(lh);
+          pushedToCloud++;
+          await new Promise(r=>setTimeout(r, 200)); // small delay to avoid rate limit
+        } catch(e){}
+      }
+
+      if (addedFromCloud>0 || pushedToCloud>0) {
         this.history.sort((a,b)=> (b.ts||0)-(a.ts||0));
         if (this.history.length > 60) this.history = this.history.slice(0,60);
         this._save('sv_history', this.history);
         this._renderSidebarHistory();
         this._updateAllStats();
-        console.log(`☁️ Synced ${added} history items from cloud`);
+        if (addedFromCloud>0) console.log(`☁️ Synced ${addedFromCloud} history from cloud to local`);
+        if (pushedToCloud>0) console.log(`☁️ Pushed ${pushedToCloud} local history to cloud`);
       }
     } catch(e){ console.log('cloud history fetch failed', e.message); }
   }
@@ -3862,9 +3885,11 @@ Examples:
       if (!res.ok) return;
       const j = await res.json();
       const cloudSaved = j.saved || [];
-      if (!cloudSaved.length) return;
       const localIds = new Set(this.saved.map(s=>s.id));
-      let added = 0;
+      const cloudIds = new Set(cloudSaved.map(s=>s.id));
+      let addedFromCloud = 0;
+      let pushedToCloud = 0;
+
       for (const cs of cloudSaved) {
         if (!localIds.has(cs.id)) {
           this.saved.push({
@@ -3874,16 +3899,23 @@ Examples:
             data: cs.data||null,
             savedAt: cs.savedAt||Date.now()
           });
-          added++;
+          addedFromCloud++;
         }
       }
-      if (added>0) {
+
+      const localToPush = this.saved.filter(s => !cloudIds.has(s.id)).slice(0,15);
+      for (const ls of localToPush) {
+        try { await this._saveSavedToCloud(ls); pushedToCloud++; await new Promise(r=>setTimeout(r,200)); } catch(e){}
+      }
+
+      if (addedFromCloud>0 || pushedToCloud>0) {
         this.saved.sort((a,b)=> (b.savedAt||0)-(a.savedAt||0));
         if (this.saved.length > 120) this.saved = this.saved.slice(0,120);
         this._save('sv_saved', this.saved);
         this._renderSidebarSaved();
         this._updateAllStats();
-        console.log(`☁️ Synced ${added} saved items from cloud`);
+        if (addedFromCloud>0) console.log(`☁️ Synced ${addedFromCloud} saved from cloud`);
+        if (pushedToCloud>0) console.log(`☁️ Pushed ${pushedToCloud} saved to cloud`);
       }
     } catch(e){ console.log('cloud saved fetch failed', e.message); }
   }

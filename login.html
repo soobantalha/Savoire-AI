@@ -247,32 +247,42 @@ async function loadConfig() {
 
 async function initFirebase() {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
-  const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, setPersistence, browserLocalPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+  const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, setPersistence, browserLocalPersistence, browserPopupRedirectResolver, inMemoryPersistence, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
   const { getFirestore, doc, getDoc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
 
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
-  // FIX: Set persistence to LOCAL to fix "missing initial state" on mobile
+  // FIX for mobile: Try local persistence, fallback to inMemory if blocked
   try {
     await setPersistence(auth, browserLocalPersistence);
-  } catch(e) { console.log('Persistence set failed', e.message); }
+  } catch(e) {
+    console.log('Local persistence failed, trying inMemory', e.message);
+    try { await setPersistence(auth, inMemoryPersistence); } catch(e2) { console.log('InMemory persistence also failed', e2.message); }
+  }
   provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   provider.addScope('profile');
   provider.addScope('email');
 
-  // Handle redirect result for mobile popup blocked
+  // Handle redirect result IMMEDIATELY for mobile popup blocked - must be called early
   try {
-    const redirectResult = await getRedirectResult(auth);
+    const redirectResult = await getRedirectResult(auth, browserPopupRedirectResolver);
     if (redirectResult && redirectResult.user) {
       document.getElementById('loading').classList.add('active');
-      // Show name choice for redirect users too
       window.pendingGoogleUser = redirectResult.user;
       showNameChoice(redirectResult.user);
       return;
     }
-  } catch(e) { console.log('No redirect result', e.message); }
+  } catch(e) {
+    console.log('No redirect result or redirect failed', e.code, e.message);
+    // If redirect failed due to missing initial state, clear storage and try popup
+    if (e.code === 'auth/missing-initial-state' || e.message.includes('missing initial state')) {
+      console.warn('Redirect failed due to partitioned storage, will use popup on next click');
+      // Clear any corrupted state
+      try { sessionStorage.clear(); } catch(e){}
+    }
+  }
 
   // Hide loading
   document.getElementById('loading').classList.remove('active');
@@ -477,25 +487,39 @@ async function initFirebase() {
     try {
       let result;
       try {
-        result = await signInWithPopup(auth, provider);
+        // Use browserPopupRedirectResolver for better mobile support
+        result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
       } catch (popupErr) {
-        console.warn('Popup failed, trying redirect', popupErr.code);
-        if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request' || /popup/i.test(popupErr.message) || popupErr.code === 'auth/unauthorized-domain') {
-          toast('info', 'Opening Google login in new page...');
-          await signInWithRedirect(auth, provider);
+        console.warn('Popup failed, trying redirect', popupErr.code, popupErr.message);
+        if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request' || /popup/i.test(popupErr.message) || popupErr.code === 'auth/unauthorized-domain' || popupErr.code === 'auth/missing-initial-state') {
+          toast('info', 'Popup blocked, opening Google login...');
+          try {
+            await signInWithRedirect(auth, provider, browserPopupRedirectResolver);
+          } catch (redirectErr) {
+            console.error('Redirect also failed', redirectErr);
+            if (redirectErr.code === 'auth/missing-initial-state' || redirectErr.message.includes('missing initial state')) {
+              toast('error', 'Phone browser is blocking third-party cookies. Please: 1) Use Chrome, 2) Allow popups, 3) Try Email login, or 4) Open in desktop mode. Alternatively use Email/Password login below.');
+              document.getElementById('loading').classList.remove('active');
+              // Fallback: show email login focused
+              document.getElementById('emailInput')?.focus();
+              return;
+            }
+            throw redirectErr;
+          }
           return;
         } else {
           throw popupErr;
         }
       }
-      // Instead of direct login, show name choice
       document.getElementById('loading').classList.remove('active');
       showNameChoice(result.user);
     } catch(e) {
       document.getElementById('loading').classList.remove('active');
       console.error(e);
       if (e.code === 'auth/unauthorized-domain') {
-        toast('error', 'Domain not authorized. Add your domain in Firebase -> Auth -> Authorized domains');
+        toast('error', 'Domain not authorized. Add your domain in Firebase -> Auth -> Authorized domains: ' + window.location.hostname);
+      } else if (e.code === 'auth/missing-initial-state' || e.message.includes('missing initial state')) {
+        toast('error', 'Mobile browser blocked login. Please allow 3rd party cookies or use Email login. On iPhone, open in Safari not Chrome, or enable Popups in settings.');
       } else {
         toast('error', e.message);
       }
@@ -591,5 +615,5 @@ async function initFirebase() {
 
 loadConfig();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a254ef6dded214c8',t:'MTc4NTc1NjA0OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2551d14c921b62a',t:'MTc4NTc1NzkxOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
