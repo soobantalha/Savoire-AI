@@ -973,11 +973,15 @@
 
   <!-- ═══════════════════════════════════ MAIN APPLICATION SCRIPT ═══════════════════════════════════ -->
   
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// YOUR REAL CONFIG - savoire-ai (apiKey is public, safe to show - Firebase docs says so)
+
+  
+<script type="module">
+// CLEAN FIREBASE INIT - Single instance, fixes db is not defined and token expired
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, browserPopupRedirectResolver, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyBDgKVvzsOAb0ZrsSooTEU0mgvLxadphoM",
   authDomain: "savoire-ai.firebaseapp.com",
@@ -986,160 +990,191 @@ const firebaseConfig = {
   messagingSenderId: "528576008706",
   appId: "1:528576008706:web:4514bd93193df05ba7cd1b"
 };
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-window.firebaseAuthInstance = auth;
-window.firebaseDB = db;
-window.firebaseAppInstance = app;
 
-// Global token bar updater
-window._updatePaidTokenBar = (remaining, limit, plan) => {
-  const bar = document.getElementById('tokenBar');
-  const count = document.getElementById('tokenCount');
-  if (!bar || !count) return;
-  if (limit) {
-    const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
-    bar.style.width = pct + '%';
-    count.textContent = `${remaining.toLocaleString()} / ${limit.toLocaleString()}`;
-    if (plan && plan !== 'free') {
-      count.textContent += ' • ' + plan;
-      bar.style.background = 'linear-gradient(90deg,#00d4ff,#bf00ff)';
-    }
-    if (remaining < 1000) {
-      bar.style.background = '#ff4444';
-      document.getElementById('tokenMeter').style.borderColor = '#ff4444';
-    } else if (remaining < 3000) {
-      bar.style.background = '#ffae00';
-    }
+let app, auth, db;
+try {
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
   } else {
-    // only remaining from header
-    count.textContent = `${remaining.toLocaleString()} left`;
+    app = getApps()[0];
   }
-  window.PAID_REMAINING = remaining;
-};
+  auth = getAuth(app);
+  db = getFirestore(app);
+  
+  // Expose globally for app.js to use
+  window.firebaseAppInstance = app;
+  window.firebaseAuthInstance = auth;
+  window.firebaseDB = db;
+  
+  // Set persistence for mobile fix
+  try { await setPersistence(auth, browserLocalPersistence); } catch(e){ console.log('Persistence failed', e.message); }
 
-window._showPaidLoginNeeded = () => {
-  alert('Please login first! Redirecting...');
-  window.location.href = '/login.html';
-};
+  // Global token bar updater
+  window._updatePaidTokenBar = (remaining, limit, plan) => {
+    const bar = document.getElementById('tokenBar');
+    const count = document.getElementById('tokenCount');
+    if (!bar || !count) return;
+    if (limit) {
+      const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
+      bar.style.width = pct + '%';
+      count.textContent = `${remaining.toLocaleString()} / ${limit.toLocaleString()}`;
+      if (plan && plan !== 'free') {
+        count.textContent += ' • ' + plan;
+        bar.style.background = 'linear-gradient(90deg,#00d4ff,#bf00ff)';
+      }
+      if (remaining < 1000) {
+        bar.style.background = '#ff4444';
+        const meter = document.getElementById('tokenMeter');
+        if (meter) meter.style.borderColor = '#ff4444';
+      } else if (remaining < 3000) {
+        bar.style.background = '#ffae00';
+      }
+    } else {
+      count.textContent = `${remaining.toLocaleString()} left`;
+    }
+    window.PAID_REMAINING = remaining;
+    // Also update sidebar
+    const cb = document.getElementById('creditBalance');
+    if (cb) cb.innerHTML = `${remaining.toLocaleString()} <span>credits</span>`;
+    const cr = document.getElementById('creditRemaining');
+    if (cr) cr.textContent = `Remaining: ${remaining.toLocaleString()}`;
+    const pf = document.getElementById('creditProgressFill');
+    if (pf && limit) {
+      const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
+      pf.style.width = pct + '%';
+    }
+  };
 
-window._showPaidUpgradeModal = (data) => {
-  const existing = document.getElementById('paidUpgradeModal');
-  if (existing) existing.remove();
-  const modal = document.createElement('div');
-  modal.id = 'paidUpgradeModal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px';
-  modal.innerHTML = `
-    <div style="background:#0f172a;border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.6)">
-      <div style="font-size:2.2rem;margin-bottom:12px">🔋</div>
-      <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
-      <p style="color:#aab2cc;font-size:.88rem;line-height:1.6;margin-bottom:6px">${(data && data.message) || 'Your free tokens finished. Buy 1M for just ₹49 via UPI.'}</p>
-      <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '15000'}</p>
-      <a href="/pricing.html" style="display:block;padding:14px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:12px;font-weight:800;text-decoration:none">Buy 1M Tokens - ₹49 UPI ⚡</a>
-      <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
-    </div>
-  `;
-  modal.onclick = (e) => { if(e.target===modal) modal.remove(); };
-  document.body.appendChild(modal);
-};
+  window._showPaidLoginNeeded = () => {
+    window.location.href = '/login.html';
+  };
 
-// Auto-hide loader after 3 sec even if auth hangs (fix for stuck screen) + emergency bypass button
-const _authTimeout = setTimeout(()=>{
-  const loader = document.getElementById('authLoading');
-  if (loader && loader.style.display !== 'none') {
-    console.warn('Auth timeout, hiding loader - showing emergency bypass');
-    loader.innerHTML = `
-      <div style="text-align:center;padding:20px">
-        <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
-        <div style="color:#f0d383;font-weight:700;margin-bottom:8px">Login check taking too long</div>
-        <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">This happens when token expired or Firebase auth blocked.<br>Try clearing cache or login again.</div>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
-          <button onclick="document.getElementById('authLoading').style.display='none'" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
-        </div>
+  window._showPaidUpgradeModal = (data) => {
+    const existing = document.getElementById('paidUpgradeModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'paidUpgradeModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+      <div style="background:#0f172a;border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center">
+        <div style="font-size:2.2rem;margin-bottom:12px">🔋</div>
+        <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
+        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your free credits finished. Buy 100k for just ₹29 via UPI.'}</p>
+        <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '10,000'}</p>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits - ₹29 UPI ⚡</a>
+        <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
       </div>
     `;
-    loader.style.background = 'rgba(3,5,12,.96)';
+    modal.onclick = (e) => { if(e.target===modal) modal.remove(); };
+    document.body.appendChild(modal);
+  };
+
+  // Handle redirect result for mobile
+  try {
+    const redirectResult = await getRedirectResult(auth, browserPopupRedirectResolver);
+    if (redirectResult && redirectResult.user) {
+      const loader = document.getElementById('authLoading');
+      if (loader) loader.innerHTML = '<div class="spin"></div><div style="color:#f0d383;font-size:.8rem">Login success, redirecting...</div>';
+      const token = await redirectResult.user.getIdToken();
+      localStorage.setItem('sv_firebase_token', token);
+      localStorage.setItem('sv_user', redirectResult.user.displayName || redirectResult.user.email);
+      if (redirectResult.user.photoURL) localStorage.setItem('sv_user_photo', redirectResult.user.photoURL);
+      setTimeout(()=> window.location.href = '/dashboard.html', 500);
+      // Don't continue, let redirect handle
+    }
+  } catch(e) {
+    console.log('No redirect result', e.code, e.message);
   }
-}, 3000);
 
+  // Timeout to avoid stuck screen
+  setTimeout(()=>{
+    const loader = document.getElementById('authLoading');
+    if (loader && loader.style.display !== 'none') {
+      console.warn('Auth timeout - showing bypass');
+      loader.innerHTML = `
+        <div style="text-align:center;padding:20px">
+          <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+          <div style="color:#f0d383;font-weight:700;margin-bottom:8px">Login check taking too long</div>
+          <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">Token expired or Firebase blocked.<br>Clear cache and login again.</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
+            <button onclick="document.getElementById('authLoading').style.display='none'" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
+          </div>
+        </div>
+      `;
+      loader.style.background = 'rgba(3,5,12,.96)';
+    }
+  }, 3500);
 
-
-onAuthStateChanged(auth, async (user) => {
-  const loader = document.getElementById('authLoading');
-  if (loader) loader.style.display = 'none';
-  if (!user) {
-    // Check if we have cached user to avoid redirect loop on token expiry
-    const cachedUser = localStorage.getItem('sv_user');
-    if (cachedUser) {
-      // Try to refresh token silently
-      try {
-        const token = localStorage.getItem('sv_firebase_token');
-        if (token) {
-          // Try to fetch new token via refresh
-          const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
+  onAuthStateChanged(auth, async (user) => {
+    const loader = document.getElementById('authLoading');
+    if (loader) loader.style.display = 'none';
+    if (!user) {
+      const hasToken = localStorage.getItem('sv_firebase_token');
+      if (!hasToken) {
+        window.location.href = '/login.html';
+      } else {
+        // Token exists but no user - try to refresh or go to login
+        try {
+          const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + hasToken } });
           if (res.status === 401) {
-            // Token expired, clear and redirect to login
-            console.log('Token expired, redirecting to login');
             localStorage.removeItem('sv_firebase_token');
             window.location.href = '/login.html';
-            return;
           }
-        }
-      } catch(e) {}
-    }
-    if (!localStorage.getItem('sv_firebase_token')) {
-      window.location.href = '/login.html';
-    }
-    return;
-  } else {
-    try {
-      // Force refresh token to avoid expiry (get fresh token)
-      const token = await user.getIdToken(true);
-      localStorage.setItem('sv_firebase_token', token);
-      localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
-      if (user.photoURL) localStorage.setItem('sv_user_photo', user.photoURL);
-      if (window.updateUserPhoto) window.updateUserPhoto(user.photoURL, user.displayName);
-      // fetch balance
-      try {
-        const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
-        if (res.ok) {
-          const bal = await res.json();
-          if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
-        } else if (res.status === 401) {
-          // Token expired even after refresh, try one more time after 1 sec
-          setTimeout(async ()=>{
-            try {
-              const newToken = await user.getIdToken(true);
-              localStorage.setItem('sv_firebase_token', newToken);
-              const res2 = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + newToken } });
-              if (res2.ok) {
-                const bal = await res2.json();
-                if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
-              }
-            } catch(e) { console.log('Retry token fetch failed', e.message); }
-          }, 1000);
-        }
-      } catch(e) { console.log('balance fetch failed', e.message); }
-      
-      // Setup token refresh every 50 minutes to prevent expiry
-      if (!window._tokenRefreshInterval) {
-        window._tokenRefreshInterval = setInterval(async ()=>{
-          try {
-            if (auth.currentUser) {
-              const freshToken = await auth.currentUser.getIdToken(true);
-              localStorage.setItem('sv_firebase_token', freshToken);
-              console.log('🔄 Token refreshed');
-            }
-          } catch(e) { console.log('Token refresh failed', e.message); }
-        }, 50*60*1000);
+        } catch(e) {}
       }
-    } catch(e) {
-      console.error('Auth handling error', e);
-      if (loader) loader.style.display = 'none';
+      return;
+    } else {
+      try {
+        const token = await user.getIdToken(true);
+        localStorage.setItem('sv_firebase_token', token);
+        localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
+        if (user.photoURL) {
+          localStorage.setItem('sv_user_photo', user.photoURL);
+          if (window.updateUserPhoto) window.updateUserPhoto(user.photoURL, user.displayName);
+        }
+        try {
+          const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
+          if (res.ok) {
+            const bal = await res.json();
+            if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
+          } else if (res.status === 401) {
+            // Try once more with fresh token
+            const newToken = await user.getIdToken(true);
+            localStorage.setItem('sv_firebase_token', newToken);
+            const res2 = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + newToken } });
+            if (res2.ok) {
+              const bal = await res2.json();
+              if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
+            }
+          }
+        } catch(e) { console.log('balance fetch failed', e.message); }
+
+        if (!window._tokenRefreshInterval) {
+          window._tokenRefreshInterval = setInterval(async ()=>{
+            try {
+              if (auth.currentUser) {
+                const freshToken = await auth.currentUser.getIdToken(true);
+                localStorage.setItem('sv_firebase_token', freshToken);
+                console.log('🔄 Token refreshed');
+              }
+            } catch(e) {}
+          }, 50*60*1000);
+        }
+      } catch(e) {
+        console.error('Auth handling error', e);
+        if (loader) loader.style.display = 'none';
+      }
     }
+  });
+
+} catch(e) {
+  console.error('Firebase init failed', e);
+  const loader = document.getElementById('authLoading');
+  if (loader) {
+    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
   }
-});
+}
 </script>
 
   <script src="app.js"></script>
@@ -1242,7 +1277,7 @@ onAuthStateChanged(auth, async (user) => {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a256e052591c9648',t:'MTc4NTc3NjQwMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a256f44b7f172141',t:'MTc4NTc3NzIyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
