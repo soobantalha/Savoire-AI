@@ -1,10 +1,13 @@
-// Shared Firebase Admin Helper - Robust parsing for Vercel ENV - Supports both JSON and BASE64
+// Shared Firebase Admin Helper - FINAL ROBUST VERSION - Supports JSON and BASE64 in any ENV
 let adminApp = null;
 let dbInstance = null;
 
 function tryParseJson(str) {
+  if (!str || typeof str !== 'string') return null;
   try {
-    const parsed = JSON.parse(str);
+    const trimmed = str.trim();
+    if (!trimmed) return null;
+    const parsed = JSON.parse(trimmed);
     if (parsed.private_key) parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
     return parsed;
   } catch (e) {
@@ -12,95 +15,81 @@ function tryParseJson(str) {
   }
 }
 
-function parseServiceAccount() {
-  const rawBase64 = process.env.FIREBASE_ADMIN_KEY_BASE64 || process.env.FIREBASE_ADMIN_BASE64;
-  const rawJson = process.env.FIREBASE_ADMIN_KEY;
-
-  // 1. Try BASE64 env first (most reliable)
-  if (rawBase64) {
-    try {
-      const trimmed = rawBase64.trim();
-      // Handle if user pasted base64 with quotes or spaces
-      const cleanB64 = trimmed.replace(/^["']|["']$/g, '').replace(/\s/g, '');
-      const decoded = Buffer.from(cleanB64, 'base64').toString('utf-8');
-      const parsed = tryParseJson(decoded);
-      if (parsed) {
-        console.log('Firebase: Using BASE64 env decoded OK - project:', parsed.project_id);
-        return parsed;
-      }
-      // If decoded is not JSON, maybe it's already JSON string that was base64 encoded twice? Try again
-      console.log('Firebase: BASE64 decoded but not valid JSON, trying raw JSON fallback');
-    } catch (e) {
-      console.log('Firebase: BASE64 env decode failed:', e.message);
+function tryBase64Json(b64Str) {
+  if (!b64Str || typeof b64Str !== 'string') return null;
+  try {
+    let clean = b64Str.trim().replace(/^["']|["']$/g, '').replace(/\s+/g, '');
+    // Handle URL-safe base64: - -> +, _ -> /
+    clean = clean.replace(/-/g, '+').replace(/_/g, '/');
+    // Add padding if needed
+    while (clean.length % 4) clean += '=';
+    const decoded = Buffer.from(clean, 'base64').toString('utf-8');
+    // Decoded should be JSON
+    const parsed = tryParseJson(decoded);
+    if (parsed) return parsed;
+    // If decoded still looks like base64 (double encoded), try again
+    if (decoded.length > 100 && !decoded.trim().startsWith('{')) {
+      const decoded2 = Buffer.from(decoded.replace(/\s/g, ''), 'base64').toString('utf-8');
+      return tryParseJson(decoded2);
     }
+    return null;
+  } catch (e) {
+    return null;
   }
+}
 
-  // 2. Try raw JSON env - it might actually be base64 string mistakenly put in JSON env
-  if (rawJson) {
-    const trimmed = rawJson.trim();
+function parseServiceAccount() {
+  const candidates = [];
+
+  // Collect all possible env vars that might contain the key
+  const envsToTry = [
+    { name: 'FIREBASE_ADMIN_KEY_BASE64', value: process.env.FIREBASE_ADMIN_KEY_BASE64, isBase64: true },
+    { name: 'FIREBASE_ADMIN_BASE64', value: process.env.FIREBASE_ADMIN_BASE64, isBase64: true },
+    { name: 'FIREBASE_ADMIN_KEY', value: process.env.FIREBASE_ADMIN_KEY, isBase64: false },
+    { name: 'FIREBASE_SERVICE_ACCOUNT', value: process.env.FIREBASE_SERVICE_ACCOUNT, isBase64: false },
+    { name: 'GOOGLE_APPLICATION_CREDENTIALS_JSON', value: process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON, isBase64: false },
+  ];
+
+  for (const env of envsToTry) {
+    if (!env.value) continue;
+    const raw = env.value;
     
-    // If it looks like base64 (starts with eyJ or ewog and no { ), try base64 decode
-    const looksLikeBase64 = !trimmed.includes('{"type"') && !trimmed.startsWith('{') && trimmed.length > 200 && /^[A-Za-z0-9+/=_\-\s]+$/.test(trimmed.slice(0,100));
-    if (looksLikeBase64 || trimmed.startsWith('ey') || trimmed.startsWith('ewog')) {
-      try {
-        const cleanB64 = trimmed.replace(/^["']|["']$/g, '').replace(/\s/g, '');
-        const decoded = Buffer.from(cleanB64, 'base64').toString('utf-8');
-        const parsed = tryParseJson(decoded);
-        if (parsed) {
-          console.log('Firebase: Raw env was actually BASE64, decoded OK - project:', parsed.project_id);
+    // Try as JSON first if it looks like JSON
+    if (!env.isBase64) {
+      // If starts with { try direct parse
+      if (raw.trim().startsWith('{')) {
+        const parsed = tryParseJson(raw);
+        if (parsed && parsed.private_key) {
+          console.log(`Firebase: Parsed OK from ${env.name} as direct JSON - project: ${parsed.project_id}`);
           return parsed;
         }
-      } catch (e) {
-        console.log('Firebase: Raw env as BASE64 decode failed:', e.message);
+        // Try fixing real newlines inside private_key
+        try {
+          let fixed = raw.replace(/"private_key"\s*:\s*"([\s\S]*?)"/, (m, p1) => {
+            return `"private_key": "${p1.replace(/\r\n/g, '\\n').replace(/\n/g, '\\n').replace(/\r/g, '\\n').replace(/\\\\n/g, '\\n')}"`;
+          });
+          const parsed2 = tryParseJson(fixed);
+          if (parsed2 && parsed2.private_key) {
+            console.log(`Firebase: Fixed real newlines in ${env.name}`);
+            return parsed2;
+          }
+        } catch(e) {}
       }
     }
 
-    // Try direct JSON parse
-    let parsed = tryParseJson(trimmed);
-    if (parsed) {
-      console.log('Firebase: Raw JSON parsed OK - project:', parsed.project_id);
-      return parsed;
+    // Try as base64 (both for BASE64 env and for JSON env that might contain base64)
+    const b64Parsed = tryBase64Json(raw);
+    if (b64Parsed && b64Parsed.private_key) {
+      console.log(`Firebase: Parsed OK from ${env.name} as BASE64 decoded JSON - project: ${b64Parsed.project_id}`);
+      return b64Parsed;
     }
 
-    // Try fixing real newlines inside private_key
-    try {
-      let fixed = trimmed;
-      // Fix: If private_key contains real newlines (not \n), escape them
-      fixed = fixed.replace(/"private_key"\s*:\s*"([\s\S]*?)"/, (match, p1) => {
-        // p1 may contain real newlines, replace them with \n
-        let escaped = p1.replace(/\r\n/g, '\\n').replace(/\n/g, '\\n').replace(/\r/g, '\\n');
-        // Ensure we don't double-escape already escaped \n
-        escaped = escaped.replace(/\\\\n/g, '\\n');
-        return `"private_key": "${escaped}"`;
-      });
-      parsed = tryParseJson(fixed);
-      if (parsed) {
-        console.log('Firebase: Fixed real newlines in private_key');
-        return parsed;
-      }
-    } catch (e) {
-      console.log('Fix newlines failed', e.message);
-    }
-
-    // Try unescaping double escaped
-    try {
-      const unescaped = trimmed.replace(/\\n/g, '\n');
-      // Now it has real newlines, need to re-escape for JSON
-      const reEscaped = unescaped.replace(/\n/g, '\\n');
-      // Actually need to parse original with real newlines? Let's try direct with real newlines replaced
-      let fixed2 = trimmed.replace(/\\n/g, '\n').replace(/\r/g, '');
-      // Now fix private_key again
-      fixed2 = fixed2.replace(/"private_key"\s*:\s*"([\s\S]*?)"/, (m, p1) => {
-        return `"private_key": "${p1.replace(/\n/g, '\\n')}"`;
-      });
-      parsed = tryParseJson(fixed2);
-      if (parsed) return parsed;
-    } catch (e) {}
+    candidates.push({ name: env.name, sample: raw.slice(0,100) });
   }
 
   // If we reach here, failed
-  const sample = (rawBase64 || rawJson || '').slice(0,100);
-  throw new Error(`Failed to parse FIREBASE_ADMIN_KEY. Sample start: ${sample}... Make sure you pasted entire JSON file or base64 string. Try: 1) Use base64 method - upload JSON to base64.guru, copy base64, paste into FIREBASE_ADMIN_KEY_BASE64 env. 2) Or paste raw JSON directly into FIREBASE_ADMIN_KEY with multiline support.`);
+  const samples = candidates.map(c => `${c.name}: ${c.sample}...`).join(' | ');
+  throw new Error(`Failed to parse Firebase service account from any ENV. Tried: ${samples}. FIX: 1) Go to base64.guru, upload your service-account.json, copy base64, 2) In Vercel, create ENV named FIREBASE_ADMIN_KEY_BASE64 with that base64 value (no quotes, no spaces), 3) Save and Redeploy. OR paste raw one-line JSON (use jq -c . file.json) into FIREBASE_ADMIN_KEY.`);
 }
 
 function getAdmin() {
@@ -113,10 +102,10 @@ function getAdmin() {
     }
     const serviceAccount = parseServiceAccount();
     adminApp = initializeApp({ credential: cert(serviceAccount) });
-    console.log('Firebase Admin initialized for project:', serviceAccount.project_id);
+    console.log('✅ Firebase Admin initialized for project:', serviceAccount.project_id);
     return adminApp;
   } catch (e) {
-    console.error('Firebase Admin init failed:', e.message);
+    console.error('❌ Firebase Admin init failed:', e.message);
     throw e;
   }
 }
@@ -136,4 +125,3 @@ function getAuth() {
 }
 
 module.exports = { getAdmin, getDb, getAuth, parseServiceAccount };
-1
