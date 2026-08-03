@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy | Savoiré AI</title>
+<meta name="description" content="Privacy Policy for Savoiré AI - How we protect your data. Built by Sooban Talha Technologies.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{--bg-void:#03050c;--bg-panel:#0d1330;--ink:#eef1f8;--ink-soft:#aab2cc;--ink-faint:#6b7394;--gold:#d4af37;--gold-soft:#f0d383;--blue:#00d4ff;--line:rgba(238,241,248,0.08)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg-void);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+.atmosphere{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(800px at 20% 10%,rgba(212,175,55,.08),transparent 60%),radial-gradient(800px at 80% 20%,rgba(0,212,255,.06),transparent 60%),linear-gradient(180deg,#03050c 0%,#070b1a 100%)}
+.container{max-width:800px;margin:0 auto;padding:120px 24px 80px;position:relative;z-index:2}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);display:inline-flex;gap:10px;align-items:center;margin-bottom:18px}
+.eyebrow::before{content:'';width:22px;height:1px;background:var(--gold);display:inline-block}
+h1{font-family:'Fraunces',serif;font-size:clamp(32px,5vw,48px);line-height:1.05;margin-bottom:12px}
+h1 em{font-style:italic;color:var(--gold-soft)}
+.sub{color:var(--ink-soft);font-size:14px;margin-bottom:40px}
+.card{background:rgba(13,19,48,.7);border:1px solid var(--line);border-radius:18px;padding:28px;margin-bottom:20px;backdrop-filter:blur(12px)}
+.card h2{font-family:'Fraunces',serif;font-size:20px;margin-bottom:12px;color:#fff}
+.card h3{font-size:14px;font-weight:700;color:var(--gold-soft);margin:18px 0 8px;text-transform:uppercase;letter-spacing:.06em}
+.card p{color:var(--ink-soft);font-size:14px;margin-bottom:12px;line-height:1.7}
+.card ul{margin:10px 0 14px 18px;color:var(--ink-soft);font-size:13.5px;line-height:1.7}
+.card a{color:var(--gold-soft);text-decoration:none;border-bottom:1px solid rgba(212,175,55,.2)}
+.card a:hover{color:var(--gold);border-bottom-color:var(--gold)}
+.badge{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;border-radius:999px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);font-size:11px;color:var(--gold-soft);font-family:'JetBrains Mono',monospace}
+.footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-faint);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+</style>
+</head>
+<body>
+<div class="atmosphere"></div>
+<div class="container">
+  <span class="eyebrow">Legal • Privacy</span>
+  <h1>Privacy <em>Policy</em></h1>
+  <p class="sub">Last updated: August 3, 2026 • Savoiré AI v2.0 by Sooban Talha Technologies • Founder: Sooban Talha</p>
+  <div style="margin-bottom:28px"><span class="badge">🔒 Your data is safe • No selling • Encrypted • Firebase + Razorpay Secure</span></div>
+
+  <div class="card">
+    <h2>1. Introduction</h2>
+    <p>Welcome to <b>Savoiré AI</b> (<a href="https://savoireai.vercel.app" target="_blank">savoireai.vercel.app</a>), a product of <b>Sooban Talha Technologies</b>. We build AI-powered study tools - Notes, Flashcards, Quiz, Summary, Mind Maps. This Privacy Policy explains what data we collect, how we use it, and your rights.</p>
+    <p>By using Savoiré AI, you agree to this policy. If you don't agree, please don't use the service.</p>
+  </div>
+
+  <div class="card">
+    <h2>2. What We Collect</h2>
+    <h3>A) Account Info (via Firebase Auth)</h3>
+    <ul>
+      <li>Email, Display Name, Profile Photo (if you use Google Login)</li>
+      <li>Firebase UID (anonymous identifier)</li>
+      <li>Login timestamps</li>
+    </ul>
+    <h3>B) Study Data (via Firestore)</h3>
+    <ul>
+      <li>Topics you enter, Generated study content (notes, flashcards, quiz, etc.) - stored in <code>users/{uid}/history</code> and <code>saved</code></li>
+      <li>Credit balance: free credits (10,000 welcome), purchased credits, used credits, plan</li>
+      <li>Streak, sessions, total words, best streak</li>
+      <li>Usage history: tool used, credits consumed, timestamps</li>
+    </ul>
+    <h3>C) Payment Data (via Razorpay)</h3>
+    <ul>
+      <li>We <b>DO NOT</b> store your card number, UPI PIN, CVV, or bank password. Razorpay handles all payment securely (PCI DSS Level 1, RBI authorized).</li>
+      <li>We store: Payment ID, Order ID, Amount, Plan, Credits added, Status - in <code>transactions</code> collection and optional Google Sheet for your records</li>
+      <li>Razorpay may collect phone number for UPI verification - handled by Razorpay, not us</li>
+    </ul>
+    <h3>D) Technical Data</h3>
+    <ul>
+      <li>Device type, browser, IP (for rate limiting and abuse prevention)</li>
+      <li>AI generation logs: topic, tool, duration, tokens used (for debugging and Google Sheets analytics if you enabled GOOGLE_WEBHOOK_URL)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>3. How We Use Your Data</h2>
+    <ul>
+      <li>To provide AI study generation (Mesh API - amazon/nova-micro)</li>
+      <li>To show your credit balance, history, saved notes across devices</li>
+      <li>To process payments and add credits via Razorpay</li>
+      <li>To send you welcome email via Resend/Gmail (<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="86e8e9f4e3f6eaffc6f5e7f0e9eff4e3e7efa8f0e3f4e5e3eaa8e7f6f6">[email&#160;protected]</a>) - only if you enabled RESEND_API_KEY</li>
+      <li>To improve our AI prompts and reliability (anonymized usage stats)</li>
+      <li>To prevent abuse (rate limiting, token exhaustion check)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>4. Where We Store Data</h2>
+    <ul>
+      <li><b>Firebase Authentication & Firestore:</b> Google Cloud, location asia-south1 (Mumbai) - Encrypted at rest and in transit</li>
+      <li><b>Vercel:</b> Serverless functions hosting (Washington DC) - Logs for debugging, env vars encrypted</li>
+      <li><b>Razorpay:</b> Payment data - PCI DSS Level 1, RBI authorized Payment Aggregator, settlement to your bank via NEFT/IMPS</li>
+      <li><b>Mesh API:</b> AI generation - Topic sent to generate notes, not stored long-term by Mesh</li>
+      <li><b>Google Sheets (optional):</b> If you set GOOGLE_WEBHOOK_URL, we log anonymized usage (user, topic, tool, duration) for your analytics</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>5. Third-Party Services</h2>
+    <ul>
+      <li><b>Firebase (Google):</b> Auth + Firestore - <a href="https://firebase.google.com/support/privacy" target="_blank">Privacy Policy</a></li>
+      <li><b>Razorpay:</b> Payments (UPI, Cards, NetBanking) - <a href="https://razorpay.com/privacy/" target="_blank">Privacy Policy</a> - PCI DSS Level 1</li>
+      <li><b>Mesh API:</b> AI models - <a href="https://meshapi.ai/privacy" target="_blank">Privacy</a></li>
+      <li><b>Vercel:</b> Hosting - <a href="https://vercel.com/legal/privacy-policy" target="_blank">Privacy</a></li>
+      <li><b>Resend / Gmail (optional):</b> Welcome emails - only if you configure</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>6. What We DON'T Do</h2>
+    <ul>
+      <li>We <b>DO NOT</b> sell your data to advertisers</li>
+      <li>We <b>DO NOT</b> store your UPI PIN, Card CVV, or bank password - ever</li>
+      <li>We <b>DO NOT</b> read your private study content for ads - only for generation</li>
+      <li>We <b>DO NOT</b> share your email with third parties except as needed for service (Firebase, Razorpay)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>7. Your Rights</h2>
+    <ul>
+      <li><b>Access:</b> See all your data in Dashboard -> Settings -> Export Data (JSON backup)</li>
+      <li><b>Delete:</b> Dashboard -> Settings -> Delete Account (3-step confirmation) - Deletes Firestore data + Firebase Auth user + all history/saved. Takes 1-2 minutes to prevent exploit.</li>
+      <li><b>Logout:</b> Avatar dropdown -> Log Out clears localStorage and signs out</li>
+      <li><b>Correction:</b> Change display name/photo in Settings or via Google account</li>
+      <li><b>Data Portability:</b> Export JSON from Settings</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>8. Google OAuth Email - Why You Get "You shared data..." Email?</h2>
+    <p>When you login with Google, Google sends you a security email "You granted access to Savoiré AI to see your name and photo" - This is from Google, not from us, for your safety. It cannot be disabled as per Google policy. It shows our app name <b>Savoiré AI</b> and logo. You also get our custom welcome email from <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5937362b3c293520192a382f36302b3c3830772f3c2b3a3c3577382929">[email&#160;protected]</a></code> with 10,000 free credits info.</p>
+  </div>
+
+  <div class="card">
+    <h2>9. Cookies & Storage</h2>
+    <ul>
+      <li>We use <b>localStorage</b> for: Firebase ID token (sv_firebase_token), user name, avatar, streak, sessions, theme prefs - to work offline and fast</li>
+      <li>We use <b>sessionStorage</b> for Firebase Auth redirect handling (for mobile login)</li>
+      <li>We use <b>Firestore</b> for cloud sync across devices (history, saved, credits, streak)</li>
+      <li>No third-party tracking cookies, no ads</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>10. Children's Privacy</h2>
+    <p>Savoiré AI is for students 13+. If you are under 13, use with parent/guardian consent. We do not knowingly collect data from children under 13 without parental consent.</p>
+  </div>
+
+  <div class="card">
+    <h2>11. Changes</h2>
+    <p>We may update this policy. We will show new date at top. Continued use after update means acceptance.</p>
+  </div>
+
+  <div class="card">
+    <h2>12. Contact</h2>
+    <p>Company: <b>Sooban Talha Technologies</b> - Product: <b>Savoiré AI</b><br>
+    Founder: Sooban Talha<br>
+    Website: <a href="https://savoireai.vercel.app">savoireai.vercel.app</a> / <a href="https://soobantalhatech.xyz">soobantalhatech.xyz</a><br>
+    Email: <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f685999994979882979a9e978293959e98999a99919f9385b6919b979f9ad895999b">[email&#160;protected]</a></code> or via Instagram: <a href="https://instagram.com/developer_sooban" target="_blank" style="color:#d4af37">@developer_sooban</a><br>
+    Address: Moradabad, UP, India</p>
+  </div>
+
+  <div class="footer">
+    <span>© 2026 Sooban Talha Technologies. All rights reserved.</span>
+    <span><a href="terms.html" style="color:var(--gold-soft)">Terms</a> • <a href="index.html" style="color:var(--gold-soft)">Home</a> • <a href="dashboard.html" style="color:var(--gold-soft)">Dashboard</a></span>
+  </div>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a256e08b5a419648',t:'MTc4NTc3NjQxMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
