@@ -3703,7 +3703,41 @@ Examples:
   }
 
   _clearAllData() {
-    this._confirm('⚠️ Delete ALL data? This cannot be undone.', () => {
+    this._confirm('Clear all chats & saved notes? Your credits and account will NOT be deleted. This only clears local history.', () => {
+      // Clear only history and saved - not user, streak, sessions, prefs
+      this.history = [];
+      this.saved = [];
+      localStorage.removeItem('sv_history');
+      localStorage.removeItem('sv_saved');
+      localStorage.removeItem('sv_wiz_draft');
+      // Also clear from cloud if possible
+      try {
+        if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+          const uid = window.firebaseAuthInstance.currentUser.uid;
+          import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({ collection, getDocs, deleteDoc }) => {
+            getDocs(collection(window.firebaseDB, `users/${uid}/history`)).then(snap => snap.forEach(d => deleteDoc(d.ref).catch(()=>{})));
+            getDocs(collection(window.firebaseDB, `users/${uid}/saved`)).then(snap => snap.forEach(d => deleteDoc(d.ref).catch(()=>{})));
+          });
+        }
+      } catch(e){}
+      // Also call cloud APIs to delete
+      try {
+        const tok = this._getFbToken();
+        if (tok) {
+          fetch('/api/history', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + tok } }).catch(()=>{});
+          fetch('/api/saved', { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + tok } }).catch(()=>{});
+        }
+      } catch(e){}
+      this._renderSidebarHistory();
+      this._renderSidebarSaved();
+      this._updateAllStats();
+      this._toast('info', 'fa-trash', 'Chats & saved notes cleared. Credits are safe.');
+    });
+  }
+
+  _clearAllDataFull() {
+    // Full clear - only used internally if user really wants
+    this._confirm('⚠️ Delete ALL local data? This cannot be undone.', () => {
       Object.keys(localStorage).filter(k => k.startsWith('sv_')).forEach(k => localStorage.removeItem(k));
       this._toast('info', 'fa-trash', 'All data cleared. Reloading…');
       setTimeout(() => window.location.reload(), 1500);

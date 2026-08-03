@@ -144,6 +144,19 @@
 }
 </style>
 
+
+<style>
+/* Premium dashboard mobile fixes */
+@media (max-width: 768px) {
+  .dash-hdr{backdrop-filter:blur(20px);background:rgba(7,10,24,.9)!important}
+  .es-cta-row{flex-direction:column;gap:10px}
+  .es-cta-row .empty-wizard-btn, .es-cta-row .empty-mega-btn{width:100%;justify-content:center}
+  .credit-sidebar{border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .out-toolbar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:8px}
+  .out-toolbar::-webkit-scrollbar{display:none}
+}
+</style>
+
 </head>
 <body>
 <div id="authLoading"><div class="spin"></div><div style="color:#d4af37;font-family:monospace;font-size:.8rem">Checking login...</div></div>
@@ -1277,7 +1290,7 @@ try {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a256f44b7f172141',t:'MTc4NTc3NzIyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a257366e78b58af8',t:'MTc4NTc3OTkyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
