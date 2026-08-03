@@ -23,16 +23,7 @@ const SAVOIRÉ = {
 
 const GOOGLE_WEBHOOK_URL = process.env.GOOGLE_WEBHOOK_URL || '';
 
-const admin = require('firebase-admin');
-if (!admin.apps.length) {
-  try {
-    const sa = JSON.parse(process.env.FIREBASE_ADMIN_KEY);
-    admin.initializeApp({ credential: admin.credential.cert(sa) });
-  } catch(e) {
-    console.error('Firebase admin init failed', e.message);
-  }
-}
-const db = admin.firestore();
+const { getAdmin, getDb, getAuth } = require('./_firebase');
 
 function estimateTokens(text) {
   if (!text) return 0;
@@ -1018,44 +1009,57 @@ module.exports = async function handler(req, res) {
 
   if (!isPing) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 15k free tokens await!' });
+      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 10k free credits await!' });
     }
     const idToken = authHeader.split('Bearer ')[1];
     try {
-      const decoded = await admin.auth().verifyIdToken(idToken);
+      getAdmin(); // ensure admin init
+      const _auth = getAuth();
+      const decoded = await _auth.verifyIdToken(idToken);
       firebaseUid = decoded.uid;
-      const userRef = db.collection('users').doc(firebaseUid);
+      const _db = getDb();
+      const userRef = _db.collection('users').doc(firebaseUid);
       let userSnap = await userRef.get();
       if (!userSnap.exists) {
+        const { FieldValue } = require('firebase-admin/firestore');
         await userRef.set({
           uid: firebaseUid,
           email: decoded.email || '',
           displayName: decoded.name || 'Scholar',
+          photoURL: decoded.picture || '',
           plan: 'free',
-          tokens_limit: 15000,
+          balance: 10000,
+          totalPurchased: 0,
+          totalUsed: 0,
+          freeCreditsGiven: 10000,
+          tokens_limit: 10000,
           tokens_used: 0,
           totalGenerations: 0,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
           cycle_start: new Date().toISOString()
         });
         userSnap = await userRef.get();
       }
       firebaseUserData = userSnap.data();
-      const remaining = (firebaseUserData.tokens_limit||15000) - (firebaseUserData.tokens_used||0);
-      const cycleStart = new Date(firebaseUserData.cycle_start || new Date());
-      const daysSince = Math.floor((Date.now() - cycleStart.getTime())/(1000*60*60*24));
-      if (firebaseUserData.plan === 'free' && daysSince >= 30) {
-        await userRef.update({ tokens_used: 0, cycle_start: new Date().toISOString(), tokens_limit: 15000 });
-        firebaseUserData.tokens_used = 0;
-        firebaseUserData.tokens_limit = 15000;
+      // Fix old users
+      if (firebaseUserData.balance === undefined) {
+        const oldRem = (firebaseUserData.tokens_limit||0) - (firebaseUserData.tokens_used||0);
+        let newBal = oldRem;
+        if (!firebaseUserData.tokens_limit || firebaseUserData.tokens_limit < 1000) newBal = 10000;
+        else if (oldRem < 0) newBal = 0;
+        const { FieldValue } = require('firebase-admin/firestore');
+        await userRef.update({ balance: newBal, freeCreditsGiven: firebaseUserData.freeCreditsGiven||10000 });
+        firebaseUserData.balance = newBal;
       }
+      const remaining = firebaseUserData.balance || 0;
       if (remaining < 500) {
         return res.status(402).json({
           error: 'TOKEN_EXHAUSTED',
-          message: `Tokens finished! Used ${firebaseUserData.tokens_used}/${firebaseUserData.tokens_limit}. Buy 1M for just ₹49`,
-          tokens_used: firebaseUserData.tokens_used,
-          tokens_limit: firebaseUserData.tokens_limit,
+          message: `Tokens finished! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Buy 1M for just ₹49`,
+          tokens_used: firebaseUserData.totalUsed||0,
+          tokens_limit: (firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0),
           tokens_remaining: remaining,
+          balance: remaining,
           upgrade_url: '/pricing.html'
         });
       }
@@ -1305,9 +1309,7 @@ module.exports = async function handler(req, res) {
     const final = mergeCards(cardsData, notes, message, opts);
     final._duration_ms  = Date.now() - startTime;
 
-    // === PAID CREDIT DEDUCTION - ONLY ON SUCCESS (as per spec) ===
-    // This block runs ONLY if generation succeeded (final exists)
-    // If generation failed, this block is never reached, so no credits deducted - correct!
+    // === PAID CREDIT DEDUCTION - ONLY ON SUCCESS ===
     if (firebaseUid && !isPing && final) {
       try {
         const inputChars = message.length;
@@ -1315,68 +1317,57 @@ module.exports = async function handler(req, res) {
         const baseCredits = Math.ceil((inputChars + outputChars)/4);
         const multipliers = { notes: 1.0, summary: 0.6, flashcards: 1.2, quiz: 1.1, mindmap: 1.3, all: 2.8 };
         const mult = multipliers[opts.tool] || 1.0;
-        const totalUsed = Math.max(500, Math.ceil(baseCredits * mult)); // Min 500 as per spec
+        const totalUsed = Math.max(500, Math.ceil(baseCredits * mult));
 
-        const userRef = db.collection('users').doc(firebaseUid);
-        // Update balance (new system) + keep old fields for compat
+        const _db2 = getDb();
+        const userRef = _db2.collection('users').doc(firebaseUid);
+        const { FieldValue } = require('firebase-admin/firestore');
         await userRef.update({
-          balance: admin.firestore.FieldValue.increment(-totalUsed),
-          totalUsed: admin.firestore.FieldValue.increment(totalUsed),
-          totalGenerations: admin.firestore.FieldValue.increment(1),
-          totalWords: admin.firestore.FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
-          tokens_used: admin.firestore.FieldValue.increment(totalUsed),
-          tokens_limit: admin.firestore.FieldValue.increment(0) // keep for compat
+          balance: FieldValue.increment(-totalUsed),
+          totalUsed: FieldValue.increment(totalUsed),
+          totalGenerations: FieldValue.increment(1),
+          totalWords: FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
+          tokens_used: FieldValue.increment(totalUsed)
         });
-
-        // Usage History sub-collection (new) + history (old)
-        const histData = {
-          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        await userRef.collection('usageHistory').add({
+          timestamp: FieldValue.serverTimestamp(),
           type: 'generation',
           tool: opts.tool,
           topic: message.slice(0,200),
           creditsChange: -totalUsed,
           creditsUsed: totalUsed,
-          creditsRemaining: 0, // will be calculated in frontend, or fetch again
           description: `Generated ${opts.tool}`,
           inputChars,
           outputChars,
           multiplier: mult,
           durationMs: final._duration_ms,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        };
-        await userRef.collection('usageHistory').add(histData);
+          createdAt: FieldValue.serverTimestamp()
+        });
         await userRef.collection('history').add({
           topic: message.slice(0,200),
           tool: opts.tool,
           tokens_consumed: totalUsed,
           creditsUsed: totalUsed,
           wordCount: (final.ultra_long_notes||'').split(/\s+/).length,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          durationMs: final._duration_ms
+          createdAt: FieldValue.serverTimestamp(),
+          durationMs: final._duration_ms,
+          ts: Date.now()
         });
-
         final._tokens_used_this_request = totalUsed;
         final._credits_used = totalUsed;
-        // Calculate remaining
         const freshSnap = await userRef.get();
         const freshData = freshSnap.data();
         const newRemaining = freshData.balance || 0;
         final._tokens_remaining = newRemaining;
         final._credits_remaining = newRemaining;
-
         res.setHeader('X-Tokens-Remaining', String(newRemaining));
         res.setHeader('X-Tokens-Used', String(totalUsed));
         res.setHeader('X-Credits-Remaining', String(newRemaining));
         res.setHeader('X-Credits-Used', String(totalUsed));
-
-        // Also log to Google Sheets (existing logic kept)
-        // GOOGLE_WEBHOOK_URL usage already handled via sendToGoogleSheets
       } catch (deductErr) {
         console.error('Credit deduction failed', deductErr.message);
-        // Even if deduction fails, don't fail generation - log it
       }
     }
-
 
     final._request_id   = reqId;
     final._phase1_ok    = p1ok;

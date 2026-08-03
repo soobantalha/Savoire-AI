@@ -1151,7 +1151,7 @@ onAuthStateChanged(auth, async (user) => {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a24eadd06f619baf',t:'MTc4NTY5MDQ0Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a254f129e9390aea',t:'MTc4NTc1NjEyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
@@ -1251,8 +1251,13 @@ window.buyPlanDirect = async function(plan) {
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + fbToken },
       body: JSON.stringify({ plan })
     });
-    const data = await res.json();
-    if (!res.ok) { alert(data.error||'Order failed'); return; }
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(parseErr) {
+      console.error('Create-order non-JSON response:', text.slice(0,500));
+      throw new Error(`Server error: ${text.slice(0,200)}. Check Vercel logs -> Functions -> create-order. Usually FIREBASE_ADMIN_KEY or RAZORPAY keys missing.`);
+    }
+    if (!res.ok) { alert(data.error||'Order failed: '+text.slice(0,200)); return; }
     
     const options = {
       key: data.key,
