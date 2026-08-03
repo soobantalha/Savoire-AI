@@ -412,7 +412,8 @@
         <button class="av-item" id="avSaved"><i class="fas fa-star"></i> Saved Notes</button>
         <button class="av-item" id="avSettings"><i class="fas fa-cog"></i> Settings</button>
         <div class="av-divider"></div>
-        <button class="av-item av-danger" id="avClear"><i class="fas fa-trash-alt"></i> Clear All Data</button>
+        <button class="av-item" id="avLogout" style="color:#00d4ff"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+        <button class="av-item av-danger" id="avClear" style="display:none"><i class="fas fa-trash-alt"></i> Clear All Data</button>
       </div>
 
       <!-- ═══════════ OUTPUT TOOLBAR (hidden until generation) ═══════════ -->
@@ -1151,7 +1152,7 @@ onAuthStateChanged(auth, async (user) => {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a254f129e9390aea',t:'MTc4NTc1NjEyMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
@@ -1353,6 +1354,32 @@ window._updatePaidTokenBar = function(remaining, limit, plan) {
   
   // Header tokenCount already updated
 };
+
+// Logout function
+window.performLogout = async function() {
+  try {
+    const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+    const auth = getAuth();
+    await signOut(auth);
+  } catch(e) { console.log('Signout failed', e.message); }
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.href = '/login.html';
+};
+
+document.getElementById('avLogout')?.addEventListener('click', () => {
+  window.performLogout();
+});
+
+// Also add logout to settings if exists
+document.addEventListener('click', (e)=>{
+  if (e.target.closest('#clearDataBtn')) {
+    e.preventDefault();
+    if (confirm('Log out instead of clearing data? Your data is saved in cloud and will be available after login.')) {
+      window.performLogout();
+    }
+  }
+});
 
 // Photo handling - update avatars with photoURL
 window.updateUserPhoto = function(photoURL, displayName) {
