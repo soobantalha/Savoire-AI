@@ -1,15 +1,6 @@
 {
   "functions": {
-    "api/study.js": { "maxDuration": 60 },
-    "api/create-order.js": { "maxDuration": 30 },
-    "api/verify-payment.js": { "maxDuration": 30 },
-    "api/user-tokens.js": { "maxDuration": 10 },
-    "api/firebase-config.js": { "maxDuration": 10 },
-    "api/delete-account.js": { "maxDuration": 30 },
-    "api/history.js": { "maxDuration": 15 },
-    "api/saved.js": { "maxDuration": 15 },
-    "api/send-welcome-email.js": { "maxDuration": 15 },
-    "api/health.js": { "maxDuration": 10 }
+    "api/study.js": { "maxDuration": 60 }
   },
   "headers": [
     {
