@@ -1,11 +1,15 @@
 {
   "name": "savoire-ai",
   "version": "2.0.0",
+  "description": "Savoiré AI v2.0 - Think Less. Know More. | Built by Sooban Talha Technologies",
+  "main": "index.html",
   "dependencies": {
-    "firebase-admin": "^11.11.1",
+    "firebase-admin": "^12.4.0",
     "razorpay": "^2.9.2",
     "resend": "^3.2.0",
     "nodemailer": "^6.9.13"
   },
-  "engines": { "node": "18.x" }
+  "engines": {
+    "node": "24.x"
+  }
 }
