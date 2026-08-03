@@ -1043,23 +1043,95 @@ window._showPaidUpgradeModal = (data) => {
   document.body.appendChild(modal);
 };
 
+// Auto-hide loader after 4 sec even if auth hangs (fix for stuck screen)
+setTimeout(()=>{
+  const loader = document.getElementById('authLoading');
+  if (loader && loader.style.display !== 'none') {
+    console.warn('Auth timeout, hiding loader');
+    loader.style.display = 'none';
+    // If no user after timeout, redirect to login
+    if (!auth.currentUser) {
+      const hasToken = localStorage.getItem('sv_firebase_token');
+      if (!hasToken) {
+        window.location.href = '/login.html';
+      }
+    }
+  }
+}, 4000);
+
 onAuthStateChanged(auth, async (user) => {
   const loader = document.getElementById('authLoading');
   if (loader) loader.style.display = 'none';
   if (!user) {
-    window.location.href = '/login.html';
+    // Check if we have cached user to avoid redirect loop on token expiry
+    const cachedUser = localStorage.getItem('sv_user');
+    if (cachedUser) {
+      // Try to refresh token silently
+      try {
+        const token = localStorage.getItem('sv_firebase_token');
+        if (token) {
+          // Try to fetch new token via refresh
+          const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
+          if (res.status === 401) {
+            // Token expired, clear and redirect to login
+            console.log('Token expired, redirecting to login');
+            localStorage.removeItem('sv_firebase_token');
+            window.location.href = '/login.html';
+            return;
+          }
+        }
+      } catch(e) {}
+    }
+    if (!localStorage.getItem('sv_firebase_token')) {
+      window.location.href = '/login.html';
+    }
+    return;
   } else {
-    const token = await user.getIdToken();
-    localStorage.setItem('sv_firebase_token', token);
-    localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
-    // fetch balance
     try {
-      const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
-      if (res.ok) {
-        const bal = await res.json();
-        window._updatePaidTokenBar(bal.remaining, bal.limit, bal.plan);
+      // Force refresh token to avoid expiry (get fresh token)
+      const token = await user.getIdToken(true);
+      localStorage.setItem('sv_firebase_token', token);
+      localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
+      if (user.photoURL) localStorage.setItem('sv_user_photo', user.photoURL);
+      if (window.updateUserPhoto) window.updateUserPhoto(user.photoURL, user.displayName);
+      // fetch balance
+      try {
+        const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
+        if (res.ok) {
+          const bal = await res.json();
+          if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
+        } else if (res.status === 401) {
+          // Token expired even after refresh, try one more time after 1 sec
+          setTimeout(async ()=>{
+            try {
+              const newToken = await user.getIdToken(true);
+              localStorage.setItem('sv_firebase_token', newToken);
+              const res2 = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + newToken } });
+              if (res2.ok) {
+                const bal = await res2.json();
+                if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
+              }
+            } catch(e) { console.log('Retry token fetch failed', e.message); }
+          }, 1000);
+        }
+      } catch(e) { console.log('balance fetch failed', e.message); }
+      
+      // Setup token refresh every 50 minutes to prevent expiry
+      if (!window._tokenRefreshInterval) {
+        window._tokenRefreshInterval = setInterval(async ()=>{
+          try {
+            if (auth.currentUser) {
+              const freshToken = await auth.currentUser.getIdToken(true);
+              localStorage.setItem('sv_firebase_token', freshToken);
+              console.log('🔄 Token refreshed');
+            }
+          } catch(e) { console.log('Token refresh failed', e.message); }
+        }, 50*60*1000);
       }
-    } catch(e) { console.log('balance fetch failed', e.message); }
+    } catch(e) {
+      console.error('Auth handling error', e);
+      if (loader) loader.style.display = 'none';
+    }
   }
 });
 </script>
@@ -1164,7 +1236,7 @@ onAuthStateChanged(auth, async (user) => {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2568dfeedf4c1d9',t:'MTc4NTc3MzAzMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a256d3987e2b7ec6',t:'MTc4NTc3NTg4MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
