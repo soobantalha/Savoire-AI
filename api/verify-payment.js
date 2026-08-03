@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
     const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(orderId + '|' + paymentId).digest('hex');
     if (expectedSignature !== signature) return res.status(400).json({ error: 'Invalid payment signature' });
     const creditsMap = { micro: 1000000, starter: 3000000, popular: 6000000, pro: 12000000, ultra: 25000000 };
-    const amountMap = { micro: 49, starter: 99, popular: 179, pro: 329, ultra: 599 };
+    const amountMap = { micro: 9, starter: 99, popular: 179, pro: 329, ultra: 599 };
     const creditsToAdd = creditsMap[plan];
     if (!creditsToAdd) return res.status(400).json({ error: 'Invalid plan' });
     const adminApp = getAdmin();

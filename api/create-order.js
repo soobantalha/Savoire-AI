@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
     const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });
     const { plan } = req.body;
     const pricing = {
-      micro:   { amount: 4900,  credits: 1000000 },
+      micro:   { amount: 900,  credits: 1000000 },
       starter: { amount: 9900,  credits: 3000000 },
       popular: { amount: 17900, credits: 6000000 },
       pro:     { amount: 32900, credits: 12000000 },
