@@ -132,6 +132,18 @@
     #authLoading .spin{width:40px;height:40px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
   </style>
+
+<style>
+/* Hide old 15k/15k token bar - use new credit sidebar only */
+#headerStreakWrap, #statSessions, #statHistory, #statSaved { display:none !important; }
+.dh-stat-streak, .dh-stat-hide-md, .dh-stat-hide-sm { display:none !important; }
+#tokenMeter { display:flex !important; }
+@media (max-width: 1024px) {
+  #tokenMeter { display:flex !important; width:100%; order:-1; }
+  .dh-stats { display:flex !important; }
+}
+</style>
+
 </head>
 <body>
 <div id="authLoading"><div class="spin"></div><div style="color:#d4af37;font-family:monospace;font-size:.8rem">Checking login...</div></div>
@@ -977,6 +989,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 window.firebaseAuthInstance = auth;
+window.firebaseDB = db;
+window.firebaseAppInstance = app;
 
 // Global token bar updater
 window._updatePaidTokenBar = (remaining, limit, plan) => {
@@ -1060,47 +1074,45 @@ onAuthStateChanged(auth, async (user) => {
       <button onclick="document.getElementById('buyCreditsOverlay').classList.remove('active')" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;cursor:pointer">✕</button>
     </div>
     <p style="color:#aab2cc;font-size:.85rem;line-height:1.6">Pay once, use forever. No monthly expiry. UPI, Card, NetBanking supported via Razorpay.</p>
-    <div class="buy-credits-grid">
+    <div class="buy-credits-grid" style="grid-template-columns:repeat(4,1fr)">
       <div class="buy-plan">
-        <h4>🪙 Micro</h4>
-        <div class="credits">1M Credits</div>
-        <div class="price">₹49 <small>/ lifetime</small></div>
-        <div class="per">₹49 per 1M</div>
-        <ul><li>~500 Notes</li><li>~125 Mega Bundle</li><li>Validity: Lifetime</li></ul>
-        <button class="buy" onclick="window.buyPlanDirect('micro')">Buy Micro</button>
+        <h4>🪙 Starter</h4>
+        <div class="credits">100k Credits</div>
+        <div class="price">₹29 <small>/ lifetime</small></div>
+        <div class="per">₹290 per 1M • Try Once</div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:11px">💰 <b style="color:#00ff88">Save Trial</b> - Best for first try</div>
+        <ul><li>~50 Notes</li><li>~12 Mega Bundle</li><li>~33 Flashcards</li><li>Validity: ♾️ Lifetime</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('starter')">Buy Starter - ₹29</button>
       </div>
       <div class="buy-plan popular">
         <div class="buy-plan-badge">MOST POPULAR 🔥</div>
-        <h4>🚀 Starter</h4>
-        <div class="credits">3M Credits</div>
-        <div class="price">₹99 <small>/ lifetime</small></div>
-        <div class="per">₹33 per 1M • Save 33%</div>
-        <ul><li>~1,500 Notes</li><li>~375 Mega Bundle</li><li>+50k Bonus</li><li>Lifetime</li></ul>
-        <button class="buy" onclick="window.buyPlanDirect('starter')">Buy Starter - ₹99</button>
+        <h4>🚀 Pro</h4>
+        <div class="credits">300k Credits</div>
+        <div class="price">₹69 <small>/ lifetime</small></div>
+        <div class="per">₹230 per 1M • <b style="color:#00ff88">Save 21%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(0,212,255,.06));border-radius:8px;font-size:11px;border:1px solid rgba(212,175,55,.2)">🔥 <b>Most Popular</b> - Light users</div>
+        <ul><li>~150 Notes</li><li>~37 Mega Bundle</li><li>~100 Flashcards</li><li>♾️ Lifetime</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('pro')">Buy Pro - ₹69 🔥</button>
       </div>
-      <div class="buy-plan">
+      <div class="buy-plan" style="border-color:rgba(0,212,255,.35);box-shadow:0 0 0 1px rgba(0,212,255,.15),0 12px 30px rgba(0,212,255,.1)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#00d4ff,#1970ff)">BEST VALUE ⭐</div>
         <h4>⭐ Popular</h4>
-        <div class="credits">6M Credits</div>
-        <div class="price">₹179 <small>/ lifetime</small></div>
-        <div class="per">₹29.8 per 1M • Save 39%</div>
-        <ul><li>~3,000 Notes</li><li>~750 Mega Bundle</li><li>+100k Bonus</li><li>Lifetime</li></ul>
-        <button class="buy" onclick="window.buyPlanDirect('popular')">Buy Popular</button>
+        <div class="credits">600k Credits</div>
+        <div class="price">₹129 <small>/ lifetime</small></div>
+        <div class="per">₹215 per 1M • <b style="color:#00ff88">Save 26%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(0,212,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(0,212,255,.15)">⭐ <b>Best Value</b> - Most students</div>
+        <ul><li>~300 Notes</li><li>~75 Mega Bundle</li><li>~200 Flashcards</li><li>♾️ Lifetime</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('popular')">Buy Popular - ₹129</button>
       </div>
-      <div class="buy-plan">
-        <h4>💎 Pro</h4>
-        <div class="credits">12M Credits</div>
-        <div class="price">₹329 <small>/ lifetime</small></div>
-        <div class="per">₹27.4 per 1M • Save 44%</div>
-        <ul><li>~6,000 Notes</li><li>~1,500 Mega Bundle</li><li>+250k Bonus</li><li>Lifetime</li></ul>
-        <button class="buy" onclick="window.buyPlanDirect('pro')">Buy Pro</button>
-      </div>
-      <div class="buy-plan">
-        <h4>👑 Ultra</h4>
-        <div class="credits">25M Credits</div>
-        <div class="price">₹599 <small>/ lifetime</small></div>
-        <div class="per">₹23.9 per 1M • Save 51%</div>
-        <ul><li>~12,500 Notes</li><li>~3,125 Mega Bundle</li><li>+500k Bonus</li><li>Year-long</li></ul>
-        <button class="buy" onclick="window.buyPlanDirect('ultra')">Buy Ultra</button>
+      <div class="buy-plan" style="border-color:rgba(191,0,255,.3)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#bf00ff,#7a00ff)">PREMIUM 💎</div>
+        <h4>💎 Ultra</h4>
+        <div class="credits">1.2M Credits</div>
+        <div class="price">₹249 <small>/ lifetime</small></div>
+        <div class="per">₹207 per 1M • <b style="color:#00ff88">Save 29%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(191,0,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(191,0,255,.15)">💎 <b>Premium</b> - Heavy users</div>
+        <ul><li>~600 Notes</li><li>~150 Mega Bundle</li><li>~400 Flashcards</li><li>♾️ Lifetime</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('ultra')">Buy Ultra - ₹249</button>
       </div>
     </div>
     <div style="text-align:center;color:#6b7394;font-size:.7rem;margin-top:16px">Secure payments via Razorpay • UPI, Cards, NetBanking, Wallets • Instant credit • GST included • Lifetime validity • No monthly cut</div>
@@ -1152,7 +1164,7 @@ onAuthStateChanged(auth, async (user) => {
   </div>
 </div>
 
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2568dfeedf4c1d9',t:'MTc4NTc3MzAzMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {

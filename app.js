@@ -377,7 +377,17 @@ class SavoireApp {
   }
 
   _loadSessions() { return this._loadNum('sv_sessions', 0); }
-  _saveSessions()  { localStorage.setItem('sv_sessions', String(this.sessions)); }
+  _saveSessions()  { 
+    localStorage.setItem('sv_sessions', String(this.sessions));
+    try {
+      if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+        import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({ doc, setDoc }) => {
+          const uid = window.firebaseAuthInstance.currentUser.uid;
+          setDoc(doc(window.firebaseDB, `users/${uid}`), { sessions: this.sessions, totalWords: this.totalWords }, { merge: true }).catch(()=>{});
+        });
+      }
+    } catch(e){}
+  }
 
   _incrementSession() {
     this.sessions++;
@@ -417,7 +427,29 @@ class SavoireApp {
     return { count: 0, lastDate: null, bestStreak: 0 };
   }
 
-  _saveStreak() { localStorage.setItem('sv_streak', JSON.stringify(this.streak)); }
+  _saveStreak() { 
+    localStorage.setItem('sv_streak', JSON.stringify(this.streak));
+    // Cloud sync streak
+    try {
+      if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+        import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({ doc, setDoc }) => {
+          const uid = window.firebaseAuthInstance.currentUser.uid;
+          setDoc(doc(window.firebaseDB, `users/${uid}`), { 
+            streak: this.streak.count,
+            bestStreak: this.streak.bestStreak,
+            lastStreakDate: this.streak.lastDate,
+            totalWords: this.totalWords,
+            sessions: this.sessions
+          }, { merge: true }).catch(()=>{});
+        });
+      } else {
+        const tok = this._getFbToken();
+        if (tok) {
+          fetch('/api/user-tokens', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok }, body: JSON.stringify({ action: 'updateStreak', streak: this.streak, totalWords: this.totalWords, sessions: this.sessions }) }).catch(()=>{});
+        }
+      }
+    } catch(e){}
+  }
 
   _loadNum(key, def) {
     try { const v = localStorage.getItem(key); return v ? parseInt(v, 10) : def; }
@@ -2014,10 +2046,7 @@ Examples:
         <button class="exp-btn share" onclick="window._app._shareResult()">
           <i class="fas fa-share-alt"></i><span>Share</span>
         </button>
-        ${data._live_notes_buffer && data._live_notes_buffer.length > 50 ? `
-        <button class="exp-btn raw-stream-btn" onclick="window._app._showLiveNotesModal()" style="color:#00ff88;border-color:rgba(0,255,136,.3)" title="View the live notes stream from the AI">
-          <i class="fas fa-bolt"></i><span>Live Notes</span>
-        </button>` : ''}
+        <!-- Live Notes button removed to avoid duplicate - kept only banner -->
         <button class="exp-btn new" onclick="window._app._openWizard()" style="color:#bf00ff;border-color:rgba(191,0,255,.3)">
           <i class="fas fa-magic"></i><span>New</span>
         </button>
@@ -2037,7 +2066,7 @@ Examples:
         <div class="rbf-ts">${new Date().toLocaleString()}</div>
       </div>`;
 
-    return `<div class="result-wrap">${header}${nav}${body}${exportBar}${footer}</div>`;
+    return `<div class="result-wrap" style="width:100%;max-width:100%">${header}${nav}${body}${exportBar}${footer}</div>`;
   }
 
   _buildNavItems(data) {
@@ -3809,14 +3838,69 @@ Examples:
     try {
       const fbToken = localStorage.getItem('sv_firebase_token');
       if (!fbToken) return;
-      const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
-      window.PAID_TOKENS = data;
-      // Also sync cloud history/saved after balance
-      if (this._fetchCloudHistory) { try { await this._fetchCloudHistory(); } catch(e){} }
-      if (this._fetchCloudSaved) { try { await this._fetchCloudSaved(); } catch(e){} }
+      try {
+        const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
+        if (res.ok) {
+          const data = await res.json();
+          if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
+          window.PAID_TOKENS = data;
+          if (this._fetchCloudHistory) { try { await this._fetchCloudHistory(); } catch(e){} }
+          if (this._fetchCloudSaved) { try { await this._fetchCloudSaved(); } catch(e){} }
+          return;
+        }
+      } catch(e) { console.log('API token fetch failed, trying client SDK', e.message); }
+
+      // Fallback to client SDK directly - also sync streak/sessions
+      try {
+        if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+          const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+          const uid = window.firebaseAuthInstance.currentUser.uid;
+          const snap = await getDoc(doc(window.firebaseDB, `users/${uid}`));
+          if (snap.exists()) {
+            const data = snap.data();
+            const remaining = data.balance ?? ((data.tokens_limit||0)-(data.tokens_used||0));
+            const limit = (data.balance||0) + (data.totalUsed||0) || data.tokens_limit || 10000;
+            if (window._updatePaidTokenBar) window._updatePaidTokenBar(remaining, limit, data.plan||'free');
+            window.PAID_TOKENS = { remaining, limit, plan: data.plan, balance: data.balance, totalUsed: data.totalUsed, totalPurchased: data.totalPurchased };
+            // Sync streak, sessions, words from cloud if cloud is newer/bigger
+            try {
+              if (data.streak !== undefined || data.bestStreak !== undefined) {
+                const cloudStreak = { count: data.streak||0, bestStreak: data.bestStreak||0, lastDate: data.lastStreakDate||null };
+                const localBest = this.streak.bestStreak||0;
+                const cloudBest = cloudStreak.bestStreak||0;
+                if (cloudBest > localBest || (cloudStreak.count||0) > (this.streak.count||0)) {
+                  this.streak.count = Math.max(this.streak.count||0, cloudStreak.count||0);
+                  this.streak.bestStreak = Math.max(localBest, cloudBest);
+                  if (cloudStreak.lastDate) this.streak.lastDate = cloudStreak.lastDate;
+                  this._save('sv_streak', this.streak);
+                  localStorage.setItem('sv_streak', JSON.stringify(this.streak));
+                  console.log(`☁️ Synced streak from cloud: ${this.streak.count} (best ${this.streak.bestStreak})`);
+                }
+              }
+              if (data.sessions !== undefined) {
+                const cloudSessions = data.sessions||0;
+                if (cloudSessions > this.sessions) {
+                  this.sessions = cloudSessions;
+                  this._saveSessions();
+                  console.log(`☁️ Synced sessions from cloud: ${this.sessions}`);
+                }
+              }
+              if (data.totalWords !== undefined) {
+                const cloudWords = data.totalWords||0;
+                if (cloudWords > this.totalWords) {
+                  this.totalWords = cloudWords;
+                  localStorage.setItem('sv_total_words', String(this.totalWords));
+                }
+              }
+              this._updateAllStats();
+            } catch(e) { console.log('streak sync failed', e.message); }
+
+            if (this._fetchCloudHistory) { try { await this._fetchCloudHistory(); } catch(e){} }
+            if (this._fetchCloudSaved) { try { await this._fetchCloudSaved(); } catch(e){} }
+            console.log(`☁️ Fetched balance via client SDK: ${remaining}`);
+          }
+        }
+      } catch(e) { console.log('client SDK balance fetch failed', e.message); }
     } catch(e) { console.log('token balance fetch failed', e.message); }
   }
 
@@ -3826,110 +3910,164 @@ Examples:
   async _fetchCloudHistory() {
     const tok = this._getFbToken();
     if (!tok) return;
+    let cloudHist = [];
+    let fetchedVia = 'none';
+
+    // Try API first
     try {
       const res = await fetch('/api/history', { headers: { 'Authorization': 'Bearer ' + tok } });
-      if (!res.ok) {
-        console.log('cloud history fetch failed status', res.status);
-        return;
+      if (res.ok) {
+        const j = await res.json();
+        cloudHist = j.history || [];
+        fetchedVia = 'api';
+      } else {
+        console.log('cloud history API failed status', res.status, 'trying client SDK');
       }
-      const j = await res.json();
-      const cloudHist = j.history || [];
-      const localIds = new Set(this.history.map(h=>h.id));
-      const cloudIds = new Set(cloudHist.map(h=>h.id));
-      let addedFromCloud = 0;
-      let pushedToCloud = 0;
+    } catch(e) { console.log('cloud history API error, trying client SDK', e.message); }
 
-      // 1. Cloud -> Local (for new device)
-      for (const ch of cloudHist) {
-        if (!localIds.has(ch.id)) {
-          this.history.push({
-            id: ch.id,
-            topic: ch.topic||'Untitled',
-            tool: ch.tool||'notes',
-            data: ch.data||null,
-            ts: ch.ts||Date.now(),
-            dur: ch.dur||0
-          });
-          addedFromCloud++;
+    // Fallback to client-side Firestore directly (works even if admin key broken, as long as frontend config ok)
+    if (!cloudHist.length) {
+      try {
+        if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+          const { collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+          const uid = window.firebaseAuthInstance.currentUser.uid;
+          const q = query(collection(window.firebaseDB, `users/${uid}/history`), orderBy('ts','desc'), limit(60));
+          const snap = await getDocs(q);
+          cloudHist = snap.docs.map(d => ({ id: d.id, ...d.data(), ts: d.data().ts || d.data().createdAt?.toMillis?.() || Date.now() }));
+          fetchedVia = 'client-sdk';
+          console.log(`☁️ Fetched ${cloudHist.length} history via client SDK`);
         }
-      }
+      } catch(e) { console.log('client SDK history fetch failed', e.message); }
+    }
 
-      // 2. Local -> Cloud (push old local data to cloud for first time sync)
-      // Only push if local has items and cloud is smaller
-      const localToPush = this.history.filter(h => !cloudIds.has(h.id)).slice(0,20); // push max 20 at a time to avoid spam
-      for (const lh of localToPush) {
-        try {
-          await this._saveHistoryToCloud(lh);
-          pushedToCloud++;
-          await new Promise(r=>setTimeout(r, 200)); // small delay to avoid rate limit
-        } catch(e){}
-      }
+    if (!cloudHist.length) return;
 
-      if (addedFromCloud>0 || pushedToCloud>0) {
-        this.history.sort((a,b)=> (b.ts||0)-(a.ts||0));
-        if (this.history.length > 60) this.history = this.history.slice(0,60);
-        this._save('sv_history', this.history);
-        this._renderSidebarHistory();
-        this._updateAllStats();
-        if (addedFromCloud>0) console.log(`☁️ Synced ${addedFromCloud} history from cloud to local`);
-        if (pushedToCloud>0) console.log(`☁️ Pushed ${pushedToCloud} local history to cloud`);
+    const localIds = new Set(this.history.map(h=>h.id));
+    const cloudIds = new Set(cloudHist.map(h=>h.id));
+    let addedFromCloud = 0;
+    let pushedToCloud = 0;
+
+    for (const ch of cloudHist) {
+      if (!localIds.has(ch.id)) {
+        this.history.push({
+          id: ch.id,
+          topic: ch.topic||'Untitled',
+          tool: ch.tool||'notes',
+          data: ch.data||null,
+          ts: ch.ts||Date.now(),
+          dur: ch.dur||0
+        });
+        addedFromCloud++;
       }
-    } catch(e){ console.log('cloud history fetch failed', e.message); }
+    }
+
+    const localToPush = this.history.filter(h => !cloudIds.has(h.id)).slice(0,20);
+    for (const lh of localToPush) {
+      try { await this._saveHistoryToCloud(lh); pushedToCloud++; await new Promise(r=>setTimeout(r,200)); } catch(e){}
+    }
+
+    if (addedFromCloud>0 || pushedToCloud>0) {
+      this.history.sort((a,b)=> (b.ts||0)-(a.ts||0));
+      if (this.history.length > 60) this.history = this.history.slice(0,60);
+      this._save('sv_history', this.history);
+      this._renderSidebarHistory();
+      this._updateAllStats();
+      if (addedFromCloud>0) console.log(`☁️ Synced ${addedFromCloud} history from cloud (${fetchedVia}) to local`);
+      if (pushedToCloud>0) console.log(`☁️ Pushed ${pushedToCloud} local history to cloud (${fetchedVia})`);
+    }
   }
 
   async _fetchCloudSaved() {
     const tok = this._getFbToken();
     if (!tok) return;
+    let cloudSaved = [];
+    let fetchedVia = 'none';
     try {
       const res = await fetch('/api/saved', { headers: { 'Authorization': 'Bearer ' + tok } });
-      if (!res.ok) return;
-      const j = await res.json();
-      const cloudSaved = j.saved || [];
-      const localIds = new Set(this.saved.map(s=>s.id));
-      const cloudIds = new Set(cloudSaved.map(s=>s.id));
-      let addedFromCloud = 0;
-      let pushedToCloud = 0;
+      if (res.ok) {
+        const j = await res.json();
+        cloudSaved = j.saved || [];
+        fetchedVia = 'api';
+      }
+    } catch(e) { console.log('saved API failed, trying client SDK', e.message); }
 
-      for (const cs of cloudSaved) {
-        if (!localIds.has(cs.id)) {
-          this.saved.push({
-            id: cs.id,
-            topic: cs.topic||'Untitled',
-            tool: cs.tool||'notes',
-            data: cs.data||null,
-            savedAt: cs.savedAt||Date.now()
-          });
-          addedFromCloud++;
+    if (!cloudSaved.length) {
+      try {
+        if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+          const { collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+          const uid = window.firebaseAuthInstance.currentUser.uid;
+          const q = query(collection(window.firebaseDB, `users/${uid}/saved`), orderBy('savedAt','desc'), limit(120));
+          const snap = await getDocs(q);
+          cloudSaved = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          fetchedVia = 'client-sdk';
+          console.log(`☁️ Fetched ${cloudSaved.length} saved via client SDK`);
         }
-      }
+      } catch(e) { console.log('client SDK saved fetch failed', e.message); }
+    }
 
-      const localToPush = this.saved.filter(s => !cloudIds.has(s.id)).slice(0,15);
-      for (const ls of localToPush) {
-        try { await this._saveSavedToCloud(ls); pushedToCloud++; await new Promise(r=>setTimeout(r,200)); } catch(e){}
-      }
+    if (!cloudSaved.length) return;
 
-      if (addedFromCloud>0 || pushedToCloud>0) {
-        this.saved.sort((a,b)=> (b.savedAt||0)-(a.savedAt||0));
-        if (this.saved.length > 120) this.saved = this.saved.slice(0,120);
-        this._save('sv_saved', this.saved);
-        this._renderSidebarSaved();
-        this._updateAllStats();
-        if (addedFromCloud>0) console.log(`☁️ Synced ${addedFromCloud} saved from cloud`);
-        if (pushedToCloud>0) console.log(`☁️ Pushed ${pushedToCloud} saved to cloud`);
+    const localIds = new Set(this.saved.map(s=>s.id));
+    const cloudIds = new Set(cloudSaved.map(s=>s.id));
+    let addedFromCloud = 0;
+    let pushedToCloud = 0;
+
+    for (const cs of cloudSaved) {
+      if (!localIds.has(cs.id)) {
+        this.saved.push({
+          id: cs.id,
+          topic: cs.topic||'Untitled',
+          tool: cs.tool||'notes',
+          data: cs.data||null,
+          savedAt: cs.savedAt||Date.now()
+        });
+        addedFromCloud++;
       }
-    } catch(e){ console.log('cloud saved fetch failed', e.message); }
+    }
+
+    const localToPush = this.saved.filter(s => !cloudIds.has(s.id)).slice(0,15);
+    for (const ls of localToPush) {
+      try { await this._saveSavedToCloud(ls); pushedToCloud++; await new Promise(r=>setTimeout(r,200)); } catch(e){}
+    }
+
+    if (addedFromCloud>0 || pushedToCloud>0) {
+      this.saved.sort((a,b)=> (b.savedAt||0)-(a.savedAt||0));
+      if (this.saved.length > 120) this.saved = this.saved.slice(0,120);
+      this._save('sv_saved', this.saved);
+      this._renderSidebarSaved();
+      this._updateAllStats();
+      if (addedFromCloud>0) console.log(`☁️ Synced ${addedFromCloud} saved from cloud (${fetchedVia})`);
+      if (pushedToCloud>0) console.log(`☁️ Pushed ${pushedToCloud} saved to cloud (${fetchedVia})`);
+    }
   }
 
   async _saveHistoryToCloud(item) {
     const tok = this._getFbToken();
     if (!tok) return;
+    // Try API first
     try {
-      await fetch('/api/history', {
+      const res = await fetch('/api/history', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
         body: JSON.stringify({ id: item.id, topic: item.topic, tool: item.tool, data: item.data, ts: item.ts, dur: item.dur })
       });
-    } catch(e){ console.log('cloud history save failed', e.message); }
+      if (res.ok) return;
+    } catch(e){ console.log('API history save failed, trying client SDK', e.message); }
+    // Fallback to client SDK
+    try {
+      if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+        const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+        const uid = window.firebaseAuthInstance.currentUser.uid;
+        let dataToSave = item.data;
+        if (dataToSave && dataToSave.ultra_long_notes && dataToSave.ultra_long_notes.length > 20000) {
+          dataToSave = { ...dataToSave, ultra_long_notes: dataToSave.ultra_long_notes.slice(0,20000) + '... [truncated]' };
+        }
+        await setDoc(doc(window.firebaseDB, `users/${uid}/history/${item.id}`), {
+          id: item.id, topic: String(item.topic).slice(0,200), tool: item.tool, data: dataToSave||null, ts: item.ts||Date.now(), dur: item.dur||0
+        }, { merge: true });
+        console.log('☁️ Saved history via client SDK', item.id);
+      }
+    } catch(e){ console.log('client SDK history save failed', e.message); }
   }
 
   async _deleteHistoryFromCloud(id) {
@@ -3947,12 +4085,27 @@ Examples:
     const tok = this._getFbToken();
     if (!tok) return;
     try {
-      await fetch('/api/saved', {
+      const res = await fetch('/api/saved', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
         body: JSON.stringify({ id: note.id, topic: note.topic, tool: note.tool, data: note.data, savedAt: note.savedAt })
       });
-    } catch(e){ console.log('cloud saved save failed', e.message); }
+      if (res.ok) return;
+    } catch(e){ console.log('API saved save failed, trying client SDK', e.message); }
+    try {
+      if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+        const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+        const uid = window.firebaseAuthInstance.currentUser.uid;
+        let dataToSave = note.data;
+        if (dataToSave && dataToSave.ultra_long_notes && dataToSave.ultra_long_notes.length > 20000) {
+          dataToSave = { ...dataToSave, ultra_long_notes: dataToSave.ultra_long_notes.slice(0,20000) + '... [truncated]' };
+        }
+        await setDoc(doc(window.firebaseDB, `users/${uid}/saved/${note.id}`), {
+          id: note.id, topic: String(note.topic).slice(0,200), tool: note.tool, data: dataToSave||null, savedAt: note.savedAt||Date.now()
+        }, { merge: true });
+        console.log('☁️ Saved note via client SDK', note.id);
+      }
+    } catch(e){ console.log('client SDK saved save failed', e.message); }
   }
 
   async _deleteSavedFromCloud(id) {
@@ -4475,7 +4628,9 @@ Examples:
     on(this.el.avHist,     'click', () => { this._closeDropdown(); this._openHistModal(); });
     on(this.el.avSaved,    'click', () => { this._closeDropdown(); this._openSavedModal(); });
     on(this.el.avSettings, 'click', () => { this._closeDropdown(); this._openSettingsModal(); });
-    on(this.el.avClear,    'click', () => { this._closeDropdown(); this._confirm('Clear ALL data? Cannot be undone.', () => this._clearAllData()); });
+    on(this.el.avClear,    'click', () => { this._closeDropdown(); /* Clear data hidden, use logout instead */ if (window.performLogout) window.performLogout(); else this._confirm('Clear ALL data? Cannot be undone.', () => this._clearAllData()); });
+    const avLogout = this._el('avLogout');
+    if (avLogout) avLogout.addEventListener('click', () => { this._closeDropdown(); if (window.performLogout) window.performLogout(); });
     document.addEventListener('click', e => {
       if (!e.target.closest('#avBtn') && !e.target.closest('#avDropdown')) this._closeDropdown();
     });

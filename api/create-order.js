@@ -23,18 +23,19 @@ module.exports = async function handler(req, res) {
     const uid = decoded.uid;
     const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });
     const { plan } = req.body;
+    // NEW PRICING - 4 Plans - Lifetime - As per user latest spec
     const pricing = {
-      micro:   { amount: 4900,  credits: 1000000 },
-      starter: { amount: 9900,  credits: 3000000 },
-      popular: { amount: 17900, credits: 6000000 },
-      pro:     { amount: 32900, credits: 12000000 },
-      ultra:   { amount: 59900, credits: 25000000 }
+      starter: { amount: 2900,  credits: 100000,   name: 'Starter 🪙 - 100k Credits' },
+      pro:     { amount: 6900,  credits: 300000,   name: 'Pro 🚀 - 300k Credits - Popular' },
+      popular: { amount: 12900, credits: 600000,   name: 'Popular ⭐ - 600k Credits - Best Value' },
+      ultra:   { amount: 24900, credits: 1200000,  name: 'Ultra 💎 - 1.2M Credits' }
     };
-    if (!pricing[plan]) return res.status(400).json({ error: `Invalid plan ${plan}` });
+    if (!pricing[plan]) return res.status(400).json({ error: `Invalid plan ${plan}. Use starter, pro, popular, ultra` });
     let order;
     try {
       order = await razorpay.orders.create({
-        amount: pricing[plan].amount, currency: 'INR',
+        amount: pricing[plan].amount,
+        currency: 'INR',
         receipt: `savoire_${uid}_${Date.now()}`.slice(0,40),
         notes: { uid, plan, credits: String(pricing[plan].credits), email: decoded.email||'' }
       });
@@ -47,4 +48,3 @@ module.exports = async function handler(req, res) {
     res.status(500).json({ error: 'Server error in create-order: ' + err.message });
   }
 };
-
