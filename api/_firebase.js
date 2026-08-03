@@ -136,3 +136,4 @@ function getAuth() {
 }
 
 module.exports = { getAdmin, getDb, getAuth, parseServiceAccount };
+1
