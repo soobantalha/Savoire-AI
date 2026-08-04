@@ -1185,7 +1185,7 @@ try {
   console.error('Firebase init failed', e);
   const loader = document.getElementById('authLoading');
   if (loader) {
-    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
+    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html/\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
   }
 }
 </script>
