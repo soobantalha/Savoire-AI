@@ -223,9 +223,15 @@
           <button class="credit-btn credit-btn-buy" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()"><i class="fas fa-coins"></i> Buy</button>
           <button class="credit-btn credit-btn-history" onclick="window.openCreditHistory && window.openCreditHistory()"><i class="fas fa-chart-bar"></i> History</button>
         </div>
-        <div class="quick-buy">
-          <div class="quick-buy-left"><b>🚀 Starter - 3M</b>₹99 • Most Popular</div>
-          <button class="quick-buy-btn" onclick="window.buyPlanDirect && window.buyPlanDirect('starter')">Buy</button>
+        <div class="quick-buy" style="flex-direction:column;align-items:flex-start;gap:8px">
+          <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center">
+            <div class="quick-buy-left"><b>🚀 Pro - 300k</b>₹69 • Most Popular</div>
+            <button class="quick-buy-btn" onclick="window.buyPlanDirect && window.buyPlanDirect('pro')">Buy ₹69</button>
+          </div>
+          <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center;background:rgba(0,212,255,.06);padding:6px 8px;border-radius:8px;border:1px solid rgba(0,212,255,.1)">
+            <div class="quick-buy-left"><b>⭐ Popular - 600k</b>₹129 • Best Value</div>
+            <button class="quick-buy-btn" style="background:linear-gradient(135deg,#00d4ff,#1970ff)" onclick="window.buyPlanDirect && window.buyPlanDirect('popular')">Buy ₹129</button>
+          </div>
         </div>
       </div>
 
@@ -798,14 +804,50 @@
           <div class="stats-grid" id="dsStats"></div>
         </div>
 
-        <!-- Backup & Restore -->
-        <div class="settings-section">
-          <div class="settings-title"><i class="fas fa-database"></i> Backup &amp; Restore</div>
-          <div class="settings-buttons">
-            <button id="exportDataBtn" class="settings-btn"><i class="fas fa-download"></i> Export</button>
-            <button id="importBackupBtn" class="settings-btn"><i class="fas fa-upload"></i> Import</button>
-            <button id="clearDataBtn" class="settings-btn danger"><i class="fas fa-trash"></i> Clear All</button>
+        <!-- Credits & Billing -->
+        <div class="settings-section" style="background:linear-gradient(135deg,rgba(212,175,55,.06),rgba(0,212,255,.04));border:1px solid rgba(212,175,55,.15);border-radius:16px;padding:16px">
+          <div class="settings-title"><i class="fas fa-coins"></i> Credits & Billing</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+            <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#fff" id="settingsBalance">--</div>
+              <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Available</div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#aab2cc" id="settingsUsed">--</div>
+              <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Used</div>
+            </div>
+            <div style="background:rgba(212,175,55,.1);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(212,175,55,.2)">
+              <div style="font-size:1.2rem;font-weight:800;color:#f0d383" id="settingsPlan">FREE</div>
+              <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Plan</div>
+            </div>
           </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="flex:1;padding:10px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer"><i class="fas fa-coins"></i> Buy Credits</button>
+            <button onclick="window.openCreditHistory && window.openCreditHistory()" style="padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer"><i class="fas fa-history"></i> History</button>
+            <a href="/pricing.html" style="padding:10px 16px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:600">View Plans</a>
+          </div>
+          <div style="margin-top:12px;font-size:.7rem;color:rgba(255,255,255,.4);line-height:1.5">💡 1 credit ≈ 4 characters • Lifetime validity • UPI via Razorpay</div>
+        </div>
+
+        <!-- Account -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-user-shield"></i> Account</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="window.performLogout && window.performLogout()" style="padding:10px 18px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;font-weight:700;cursor:pointer"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+            <button onclick="window._app && window._app._deleteAccountFlow && window._app._deleteAccountFlow()" style="padding:10px 18px;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:#ff6b6b;border-radius:10px;cursor:pointer;font-size:.8rem"><i class="fas fa-trash"></i> Delete Account (3-step)</button>
+          </div>
+          <div style="margin-top:10px;font-size:.65rem;color:rgba(255,255,255,.35)">Log out clears local cache, your cloud data stays safe. Delete account removes everything forever (credits lost).</div>
+        </div>
+
+        <!-- Backup & Restore - Only chats/saved -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-database"></i> Backup & Restore</div>
+          <div class="settings-buttons">
+            <button id="exportDataBtn" class="settings-btn"><i class="fas fa-download"></i> Export JSON</button>
+            <button id="importBackupBtn" class="settings-btn"><i class="fas fa-upload"></i> Import</button>
+            <button id="clearDataBtn" class="settings-btn" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#aab2cc"><i class="fas fa-broom"></i> Clear Chats & Saved</button>
+          </div>
+          <div style="font-size:.65rem;color:rgba(255,255,255,.35);margin-top:8px">Clear only removes local chats & saved notes, not credits or account. Use Log Out for full logout.</div>
         </div>
 
         <!-- About -->
@@ -1185,7 +1227,7 @@ try {
   console.error('Firebase init failed', e);
   const loader = document.getElementById('authLoading');
   if (loader) {
-    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html/\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
+    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
   }
 }
 </script>
@@ -1290,7 +1332,7 @@ try {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a257366e78b58af8',t:'MTc4NTc3OTkyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26e1c7d6deb8eac',t:'MTc4NjAyMDAzOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
@@ -1545,5 +1587,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (user && user.photoURL) window.updateUserPhoto(user.photoURL, user.displayName);
     } catch(e){}
   }, 2000);
+});
+</script>
+<script>
+// Auto-open sidebar on mobile so user sees credits + last work
+document.addEventListener('DOMContentLoaded', () => {
+  const isMobile = window.innerWidth <= 1024;
+  const leftPanel = document.getElementById('leftPanel');
+  const backdrop = document.getElementById('sbBackdrop');
+  if (isMobile && leftPanel) {
+    // Delay 400ms so auth check finishes first
+    setTimeout(() => {
+      if (!leftPanel.classList.contains('mobile-open')) {
+        leftPanel.classList.add('mobile-open');
+        if (backdrop) backdrop.classList.add('visible');
+        console.log('📱 Sidebar auto-opened on mobile for credits visibility');
+      }
+    }, 600);
+  }
+  // Close sidebar when clicking backdrop
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      leftPanel?.classList.remove('mobile-open');
+      backdrop.classList.remove('visible');
+    });
+  }
 });
 </script>

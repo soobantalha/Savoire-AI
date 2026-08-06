@@ -3593,14 +3593,18 @@ Examples:
 
     if (this.el.dsStats) {
       const kb = Math.round((JSON.stringify(this.history).length + JSON.stringify(this.saved).length) / 1024);
+      const best = this.streak.bestStreak || this.streak.count || 0;
+      const streakCount = this.streak.count || 0;
+      const balance = (window.PAID_TOKENS?.remaining ?? window.PAID_REMAINING ?? 0);
       this.el.dsStats.innerHTML = `
         <div class="ds-stat"><span class="ds-val">${this.history.length}</span><div class="ds-lbl">History</div></div>
         <div class="ds-stat"><span class="ds-val">${this.saved.length}</span><div class="ds-lbl">Saved</div></div>
         <div class="ds-stat"><span class="ds-val">${this.sessions}</span><div class="ds-lbl">Sessions</div></div>
         <div class="ds-stat"><span class="ds-val">${kb}KB</span><div class="ds-lbl">Storage</div></div>
         <div class="ds-stat"><span class="ds-val">${this.totalWords.toLocaleString()}</span><div class="ds-lbl">Words</div></div>
-        <div class="ds-stat"><span class="ds-val">${this.streak.count}</span><div class="ds-lbl">Streak</div></div>
-        <div class="ds-stat"><span class="ds-val">${this.streak.bestStreak}</span><div class="ds-lbl">Best</div></div>`;
+        <div class="ds-stat"><span class="ds-val">${streakCount}</span><div class="ds-lbl">Streak</div></div>
+        <div class="ds-stat"><span class="ds-val">${best}</span><div class="ds-lbl">Best</div></div>
+        <div class="ds-stat"><span class="ds-val" style="color:#f0d383">${balance.toLocaleString()}</span><div class="ds-lbl">Credits</div></div>`;
     }
 
     this._renderAvatarPickerInSettings();
