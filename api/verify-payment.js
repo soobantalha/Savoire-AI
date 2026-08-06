@@ -10,10 +10,10 @@ module.exports = async function handler(req, res) {
     const { orderId, paymentId, signature, plan, uid } = req.body;
     if (!orderId || !paymentId || !signature || !plan || !uid) return res.status(400).json({ error: 'Missing fields' });
     const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(orderId + '|' + paymentId).digest('hex');
-    if (expectedSignature !== signature) return res.status(400).json({ error: 'Invalid payment signature' });
-    // NEW PRICING - 4 Plans
-    const creditsMap = { starter: 100000, pro: 300000, popular: 600000, ultra: 1200000 };
-    const amountMap = { starter: 1, pro: 69, popular: 129, ultra: 249 };
+    if (expectedSignature !== signature) return res.status(400).json({ error: 'Invalid signature' });
+    // NEW MONTHLY PRICING
+    const creditsMap = { starter: 200000, pro: 500000, popular: 1000000, ultra: 2000000, mega: 3000000 };
+    const amountMap = { starter: 29, pro: 69, popular: 129, ultra: 249, mega: 349 };
     const creditsToAdd = creditsMap[plan];
     if (!creditsToAdd) return res.status(400).json({ error: 'Invalid plan' });
     const adminApp = getAdmin();
@@ -27,8 +27,7 @@ module.exports = async function handler(req, res) {
     await db.runTransaction(async (t) => {
       const docSnap = await t.get(userRef);
       if (!docSnap.exists) throw new Error('User not found');
-      const validityDays = 36500;
-      const validTill = new Date(); validTill.setDate(validTill.getDate()+validityDays);
+      const validTill = new Date(); validTill.setDate(validTill.getDate()+30);
       t.update(userRef, {
         balance: FieldValue.increment(creditsToAdd),
         totalPurchased: FieldValue.increment(creditsToAdd),
@@ -42,15 +41,16 @@ module.exports = async function handler(req, res) {
     await userRef.collection('purchaseHistory').add({
       timestamp: FieldValue.serverTimestamp(), type: 'purchase', plan, credits: creditsToAdd,
       amount: amountMap[plan], paymentId, orderId, status: 'success',
-      creditsRemaining: prevBalance + creditsToAdd, description: `Purchased ${plan} pack`
+      creditsRemaining: prevBalance + creditsToAdd, description: `Purchased ${plan} - Monthly 30 Days`,
+      validity: '30 Days', validTill: new Date(Date.now()+30*24*60*60*1000).toISOString()
     });
     await db.collection('transactions').add({ uid, orderId, paymentId, signature, plan, amount: amountMap[plan], credits_credited: creditsToAdd, status: 'success', createdAt: FieldValue.serverTimestamp() });
     if (process.env.PAYMENT_SHEET_WEBHOOK_URL) {
       try {
         const userData = (await userRef.get()).data();
         await fetch(process.env.PAYMENT_SHEET_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid, email: userData.email||'', name: userData.displayName||'', plan, amount: amountMap[plan], paymentId, orderId, tokens: creditsToAdd, newLimit: prevBalance + creditsToAdd }) });
-      } catch(e) { console.log('Sheet webhook failed', e.message); }
+      } catch(e) {}
     }
     res.json({ success: true, credits_added: creditsToAdd, plan, new_balance: prevBalance + creditsToAdd });
-  } catch (err) { console.error('Verify payment error', err); res.status(500).json({ error: err.message }); }
+  } catch (err) { console.error('Verify error', err); res.status(500).json({ error: err.message }); }
 };

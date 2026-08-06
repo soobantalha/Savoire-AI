@@ -210,28 +210,31 @@
         </div>
       </div>
 
-      <!-- Credit Sidebar - NEW PAID SYSTEM -->
-      <div class="credit-sidebar" id="creditSidebar">
+      <!-- Credit Sidebar - UPGRADED PREMIUM - 10k Monthly Free -->
+      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent)"></div>
         <div class="credit-sidebar-hdr">
-          <span class="credit-sidebar-title">💰 CREDITS</span>
-          <span id="creditPlanBadge" style="font-size:.6rem;padding:2px 8px;background:rgba(212,175,55,.15);border-radius:999px;color:#f0d383">FREE</span>
+          <span class="credit-sidebar-title">💰 CREDITS • 10K/MONTH FREE</span>
+          <span id="creditPlanBadge" style="font-size:.6rem;padding:3px 8px;background:linear-gradient(135deg,rgba(212,175,55,.2),rgba(255,174,0,.1));border:1px solid rgba(212,175,55,.3);border-radius:999px;color:#f0d383;font-weight:700">FREE • Lifetime</span>
         </div>
-        <div class="credit-balance" id="creditBalance">10,000 <span>credits</span></div>
-        <div class="credit-progress"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%"></div></div>
+        <div class="credit-balance" id="creditBalance" style="background:linear-gradient(135deg,#fff,#f0d383);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 8px rgba(212,175,55,.3))">10,000 <span>credits</span></div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">Free: 10,000 / Month • Valid 30 Days • Resets monthly</div>
+        <div class="credit-progress"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#f0d383,#d4af37 55%,#ffae00);box-shadow:0 0 10px rgba(212,175,55,.4)"></div></div>
         <div class="credit-meta"><span id="creditUsed">Used: 0</span><span id="creditRemaining">Remaining: 10,000</span></div>
         <div class="credit-actions">
-          <button class="credit-btn credit-btn-buy" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()"><i class="fas fa-coins"></i> Buy</button>
+          <button class="credit-btn credit-btn-buy" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="position:relative;overflow:hidden"><i class="fas fa-coins"></i> Buy Credits • From ₹29</button>
           <button class="credit-btn credit-btn-history" onclick="window.openCreditHistory && window.openCreditHistory()"><i class="fas fa-chart-bar"></i> History</button>
         </div>
         <div class="quick-buy" style="flex-direction:column;align-items:flex-start;gap:8px">
           <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center">
-            <div class="quick-buy-left"><b>🚀 Pro - 300k</b>₹69 • Most Popular</div>
+            <div class="quick-buy-left"><b>🚀 Pro - 500k</b>₹69 • Most Popular</div>
             <button class="quick-buy-btn" onclick="window.buyPlanDirect && window.buyPlanDirect('pro')">Buy ₹69</button>
           </div>
           <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center;background:rgba(0,212,255,.06);padding:6px 8px;border-radius:8px;border:1px solid rgba(0,212,255,.1)">
-            <div class="quick-buy-left"><b>⭐ Popular - 600k</b>₹129 • Best Value</div>
+            <div class="quick-buy-left"><b>⭐ Popular - 1M</b>₹129 • Best Value</div>
             <button class="quick-buy-btn" style="background:linear-gradient(135deg,#00d4ff,#1970ff)" onclick="window.buyPlanDirect && window.buyPlanDirect('popular')">Buy ₹129</button>
           </div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">Free: 10,000 / month • Validity 30 Days from purchase</div>
         </div>
       </div>
 
@@ -487,14 +490,18 @@
           <div class="es-title">Ready to Study Smarter?</div>
           <div class="es-sub">Use the Wizard to generate Notes, Flashcards, Quiz, Summary, or Mind Map — all powered by AI in real-time</div>
 
-          <div class="es-cta-row">
+          <div class="es-cta-row" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
             <button class="empty-wizard-btn" id="emptyWizardBtn">
               <i class="fas fa-magic"></i> Open Study Wizard
             </button>
             <button class="empty-mega-btn" id="emptyMegaBtn">
               <i class="fas fa-bolt"></i> ⚡ Mega Bundle — All 5
             </button>
+            <button class="credit-btn credit-btn-buy" id="emptyBuyBtn" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="padding:14px 28px;border-radius:14px;font-weight:700">
+              <i class="fas fa-coins"></i> 🛒 Buy Credits - From ₹29
+            </button>
           </div>
+          <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.4);font-size:.7rem">💡 Free: 10,000 Credits / Month • Validity: 30 Days • UPI Ready</div>
 
           <div class="es-features">
             <span class="es-feat es-feat-chip" data-tool="notes" title="Generate comprehensive study notes">
@@ -1242,48 +1249,57 @@ try {
       <button onclick="document.getElementById('buyCreditsOverlay').classList.remove('active')" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;cursor:pointer">✕</button>
     </div>
     <p style="color:#aab2cc;font-size:.85rem;line-height:1.6">Pay once, use forever. No monthly expiry. UPI, Card, NetBanking supported via Razorpay.</p>
-    <div class="buy-credits-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="buy-credits-grid" style="grid-template-columns:repeat(5,1fr)">
       <div class="buy-plan">
         <h4>🪙 Starter</h4>
-        <div class="credits">100k Credits</div>
-        <div class="price">₹29 <small>/ lifetime</small></div>
-        <div class="per">₹290 per 1M • Try Once</div>
-        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:11px">💰 <b style="color:#00ff88">Save Trial</b> - Best for first try</div>
-        <ul><li>~50 Notes</li><li>~12 Mega Bundle</li><li>~33 Flashcards</li><li>Validity: ♾️ Lifetime</li></ul>
+        <div class="credits">200k Credits</div>
+        <div class="price">₹29 <small>/ 30 Days</small></div>
+        <div class="per">₹145 per 1M • Monthly</div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:11px">💰 <b style="color:#00ff88">Save Trial</b> - Try Once</div>
+        <ul><li>~100 Notes</li><li>~25 Mega Bundle</li><li>~66 Flashcards</li><li>Validity: 30 Days</li><li>Per Credit: ₹0.000145</li></ul>
         <button class="buy" onclick="window.buyPlanDirect('starter')">Buy Starter - ₹29</button>
       </div>
       <div class="buy-plan popular">
         <div class="buy-plan-badge">MOST POPULAR 🔥</div>
         <h4>🚀 Pro</h4>
-        <div class="credits">300k Credits</div>
-        <div class="price">₹69 <small>/ lifetime</small></div>
-        <div class="per">₹230 per 1M • <b style="color:#00ff88">Save 21%</b></div>
+        <div class="credits">500k Credits</div>
+        <div class="price">₹69 <small>/ 30 Days</small></div>
+        <div class="per">₹138 per 1M • <b style="color:#00ff88">Save 5%</b></div>
         <div style="margin:8px 0;padding:6px 10px;background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(0,212,255,.06));border-radius:8px;font-size:11px;border:1px solid rgba(212,175,55,.2)">🔥 <b>Most Popular</b> - Light users</div>
-        <ul><li>~150 Notes</li><li>~37 Mega Bundle</li><li>~100 Flashcards</li><li>♾️ Lifetime</li></ul>
+        <ul><li>~250 Notes</li><li>~62 Mega Bundle</li><li>~166 Flashcards</li><li>30 Days • ₹0.000138</li></ul>
         <button class="buy" onclick="window.buyPlanDirect('pro')">Buy Pro - ₹69 🔥</button>
       </div>
       <div class="buy-plan" style="border-color:rgba(0,212,255,.35);box-shadow:0 0 0 1px rgba(0,212,255,.15),0 12px 30px rgba(0,212,255,.1)">
         <div class="buy-plan-badge" style="background:linear-gradient(135deg,#00d4ff,#1970ff)">BEST VALUE ⭐</div>
         <h4>⭐ Popular</h4>
-        <div class="credits">600k Credits</div>
-        <div class="price">₹129 <small>/ lifetime</small></div>
-        <div class="per">₹215 per 1M • <b style="color:#00ff88">Save 26%</b></div>
+        <div class="credits">1M Credits</div>
+        <div class="price">₹129 <small>/ 30 Days</small></div>
+        <div class="per">₹129 per 1M • <b style="color:#00ff88">Save 11%</b></div>
         <div style="margin:8px 0;padding:6px 10px;background:rgba(0,212,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(0,212,255,.15)">⭐ <b>Best Value</b> - Most students</div>
-        <ul><li>~300 Notes</li><li>~75 Mega Bundle</li><li>~200 Flashcards</li><li>♾️ Lifetime</li></ul>
+        <ul><li>~500 Notes</li><li>~125 Mega Bundle</li><li>~333 Flashcards</li><li>30 Days • ₹0.000129 • Monthly 🔥</li></ul>
         <button class="buy" onclick="window.buyPlanDirect('popular')">Buy Popular - ₹129</button>
       </div>
       <div class="buy-plan" style="border-color:rgba(191,0,255,.3)">
         <div class="buy-plan-badge" style="background:linear-gradient(135deg,#bf00ff,#7a00ff)">PREMIUM 💎</div>
         <h4>💎 Ultra</h4>
-        <div class="credits">1.2M Credits</div>
-        <div class="price">₹249 <small>/ lifetime</small></div>
-        <div class="per">₹207 per 1M • <b style="color:#00ff88">Save 29%</b></div>
+        <div class="credits">2M Credits</div>
+        <div class="price">₹249 <small>/ 30 Days</small></div>
+        <div class="per">₹124.5 per 1M • <b style="color:#00ff88">Save 14%</b></div>
         <div style="margin:8px 0;padding:6px 10px;background:rgba(191,0,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(191,0,255,.15)">💎 <b>Premium</b> - Heavy users</div>
-        <ul><li>~600 Notes</li><li>~150 Mega Bundle</li><li>~400 Flashcards</li><li>♾️ Lifetime</li></ul>
+        <ul><li>~1000 Notes</li><li>~250 Mega Bundle</li><li>~666 Flashcards</li><li>30 Days • ₹0.000124</li></ul>
         <button class="buy" onclick="window.buyPlanDirect('ultra')">Buy Ultra - ₹249</button>
       </div>
+      <div class="buy-plan" style="border-color:rgba(255,174,0,.35)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#ffae00,#ff8c00)">MEGA 👑</div>
+        <h4>👑 Mega</h4>
+        <div class="credits">3M Credits</div>
+        <div class="price">₹349 <small>/ 30 Days</small></div>
+        <div class="per">₹116 per 1M • <b style="color:#00ff88">Save 20%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,174,0,.08);border-radius:8px;font-size:11px;border:1px solid rgba(255,174,0,.15)">👑 <b>Mega Saver</b> - Year plan value</div>
+        <ul><li>~1500 Notes</li><li>~375 Mega Bundle</li><li>~1000 Flashcards</li><li>30 Days • ₹0.000116</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('mega')">Buy Mega - ₹349</button>
+      </div>
     </div>
-    <div style="text-align:center;color:#6b7394;font-size:.7rem;margin-top:16px">Secure payments via Razorpay • UPI, Cards, NetBanking, Wallets • Instant credit • GST included • Lifetime validity • No monthly cut</div>
   </div>
 </div>
 
@@ -1332,7 +1348,7 @@ try {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26e1c7d6deb8eac',t:'MTc4NjAyMDAzOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26f144d7890f043',t:'MTc4NjAzMDE4OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
