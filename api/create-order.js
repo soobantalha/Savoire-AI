@@ -25,7 +25,7 @@ module.exports = async function handler(req, res) {
     const { plan } = req.body;
     // NEW PRICING - 4 Plans - Lifetime - As per user latest spec
     const pricing = {
-      starter: { amount: 2900,  credits: 100000,   name: 'Starter 🪙 - 100k Credits' },
+      starter: { amount: 100,  credits: 100000,   name: 'Starter 🪙 - 100k Credits' },
       pro:     { amount: 6900,  credits: 300000,   name: 'Pro 🚀 - 300k Credits - Popular' },
       popular: { amount: 12900, credits: 600000,   name: 'Popular ⭐ - 600k Credits - Best Value' },
       ultra:   { amount: 24900, credits: 1200000,  name: 'Ultra 💎 - 1.2M Credits' }

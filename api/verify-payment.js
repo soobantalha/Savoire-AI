@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
     if (expectedSignature !== signature) return res.status(400).json({ error: 'Invalid payment signature' });
     // NEW PRICING - 4 Plans
     const creditsMap = { starter: 100000, pro: 300000, popular: 600000, ultra: 1200000 };
-    const amountMap = { starter: 29, pro: 69, popular: 129, ultra: 249 };
+    const amountMap = { starter: 1, pro: 69, popular: 129, ultra: 249 };
     const creditsToAdd = creditsMap[plan];
     if (!creditsToAdd) return res.status(400).json({ error: 'Invalid plan' });
     const adminApp = getAdmin();
