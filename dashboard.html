@@ -211,15 +211,15 @@
       </div>
 
       <!-- Credit Sidebar - UPGRADED PREMIUM - 10k Monthly Free -->
-      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:hidden;cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view credit analytics & usage history">
+      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view credit analytics, usage & plans">
         <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent)"></div>
         <div class="credit-sidebar-hdr">
           <span class="credit-sidebar-title">💰 CREDITS • 10K/MONTH FREE</span>
           <span id="creditPlanBadge" style="font-size:.6rem;padding:3px 8px;background:linear-gradient(135deg,rgba(212,175,55,.2),rgba(255,174,0,.1));border:1px solid rgba(212,175,55,.3);border-radius:999px;color:#f0d383;font-weight:700">FREE • Lifetime</span>
         </div>
-        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:1.8rem;font-weight:800;line-height:1;text-shadow:0 0 12px rgba(212,175,55,.3)">10,000 <span style="font-size:.9rem;color:#f0d383;font-weight:600">credits</span></div>
+        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(212,175,55,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view usage analytics">10,000 <span style="font-size:.95rem;color:#f0d383;font-weight:700">credits</span></div>
         <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">Free: 10,000 / Month • Valid 30 Days • Resets monthly</div>
-        <div class="credit-progress"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#f0d383,#d4af37 55%,#ffae00);box-shadow:0 0 10px rgba(212,175,55,.4)"></div></div>
+        <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#f0d383,#d4af37 55%,#ffae00);box-shadow:0 0 10px rgba(212,175,55,.4)"></div></div>
         <div class="credit-meta"><span id="creditUsed">Used: 0</span><span id="creditRemaining">Remaining: 10,000</span></div>
         <div class="credit-actions">
           <button class="credit-btn credit-btn-buy" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="position:relative;overflow:hidden"><i class="fas fa-coins"></i> Buy Credits • From ₹29</button>
@@ -1348,7 +1348,7 @@ try {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a26fa1516f63b62c',t:'MTc4NjAzNTk2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a28854e7abfd77d3',t:'MTc4NjI5NDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {

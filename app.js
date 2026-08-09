@@ -50,8 +50,8 @@ const SAVOIRÉ = {
   FOUNDER:     'Sooban Talha',
   TAGLINE:     'Think Less. Know More.',
   API_URL:     '/api/study',
-  MAX_HISTORY: 60,
-  MAX_SAVED:   120,
+  MAX_HISTORY: 30,
+  MAX_SAVED:   30,
   NTFY:        'savoireai_new_users',
 };
 
@@ -422,8 +422,17 @@ class SavoireApp {
   // ─── STREAK MANAGEMENT ──────────────────────────────────────────────────────
 
   _loadStreak() {
-    try { const s = localStorage.getItem('sv_streak'); if (s) return JSON.parse(s); }
-    catch {}
+    try { 
+      const s = localStorage.getItem('sv_streak'); 
+      if (s) {
+        const parsed = JSON.parse(s);
+        return { 
+          count: parsed.count || 0, 
+          lastDate: parsed.lastDate || null, 
+          bestStreak: parsed.bestStreak || parsed.count || 0 
+        };
+      }
+    } catch {}
     return { count: 0, lastDate: null, bestStreak: 0 };
   }
 
@@ -1390,9 +1399,25 @@ Examples:
       localStorage.setItem('sv_total_words', String(this.totalWords));
       this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now(), dur: Date.now() - t0 });
       this._updateAllStats();
+      // Save totalWords, sessions, streak to Firestore for cross-device sync
+      try { 
+        this._saveStreak();
+        this._saveSessions();
+        // Also save totalWords explicitly via client SDK
+        if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
+          import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({ doc, setDoc }) => {
+            const uid = window.firebaseAuthInstance.currentUser.uid;
+            setDoc(doc(window.firebaseDB, `users/${uid}`), { 
+              totalWords: this.totalWords,
+              sessions: this.sessions,
+              lastActive: this._getISTDate(),
+              totalGenerations: (this.history?.length||0)
+            }, { merge: true }).catch(()=>{});
+          });
+        }
+      } catch(e){}
       // Refresh credit balance from cloud after generation (shows updated remaining)
       try { this._fetchPaidTokenBalance(); } catch(e){}
-      // Also update local credit display from response headers if available
       if (data._credits_remaining !== undefined || data._tokens_remaining !== undefined) {
         const rem = data._credits_remaining ?? data._tokens_remaining ?? 0;
         if (window._updatePaidTokenBar) window._updatePaidTokenBar(rem, null, null);
@@ -4006,7 +4031,7 @@ Examples:
 
     if (addedFromCloud>0 || pushedToCloud>0) {
       this.history.sort((a,b)=> (b.ts||0)-(a.ts||0));
-      if (this.history.length > 60) this.history = this.history.slice(0,60);
+      if (this.history.length > 30) this.history = this.history.slice(0,60);
       this._save('sv_history', this.history);
       this._renderSidebarHistory();
       this._updateAllStats();
@@ -4070,7 +4095,7 @@ Examples:
 
     if (addedFromCloud>0 || pushedToCloud>0) {
       this.saved.sort((a,b)=> (b.savedAt||0)-(a.savedAt||0));
-      if (this.saved.length > 120) this.saved = this.saved.slice(0,120);
+      if (this.saved.length > 30) this.saved = this.saved.slice(0,120);
       this._save('sv_saved', this.saved);
       this._renderSidebarSaved();
       this._updateAllStats();
