@@ -3,103 +3,386 @@
 <head>
 <meta charset="UTF-8">
 <meta name="google-site-verification" content="4BDDXS2yt8nxlysyoEk3UzFg4qKsxu1z49c7sbjl4Po" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Terms of Service | Savoiré AI</title>
-<meta name="description" content="Terms of Service for Savoiré AI - EdTech SaaS Platform.">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<meta name="description" content="Terms of Service for Savoiré AI — the premium AI study companion by Sooban Talha Technologies.">
+<meta name="theme-color" content="#06070d">
+<link rel="icon" href="clogo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg-void:#03050c;--bg-panel:#0d1330;--ink:#eef1f8;--ink-soft:#aab2cc;--ink-faint:#6b7394;--gold:#d4af37;--gold-soft:#f0d383;--blue:#00d4ff;--line:rgba(238,241,248,0.08)}
+/* ═══════════════════════════════════════════════════════════════
+   SAVOIRÉ AI — Legal page (aurora on obsidian, paired with index)
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --void:#06070d;
+  --obsidian:#0a0c16;
+  --panel:#10131f;
+  --panel-2:#161a28;
+  --hairline:rgba(255,255,255,0.06);
+  --hairline-strong:rgba(255,255,255,0.12);
+  --ink:#f3f5fb;
+  --ink-2:#c2c8d8;
+  --ink-3:#8b91a6;
+  --ink-4:#5b6178;
+  --brass:#d4af37;
+  --brass-soft:#f0d27a;
+  --aurora-violet:#8b5cf6;
+  --aurora-cyan:#22d3ee;
+  --aurora-teal:#14b8a6;
+  --success:#34d399;
+  --warn:#fbbf24;
+  --danger:#f87171;
+  --ease:cubic-bezier(.16,.84,.44,1);
+  --serif:'Instrument Serif', 'Times New Roman', serif;
+  --sans:'Inter','Manrope', system-ui, sans-serif;
+  --display:'Manrope', var(--sans);
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg-void);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.7}
-.atmosphere{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(800px at 20% 10%,rgba(212,175,55,.08),transparent 60%),linear-gradient(180deg,#03050c 0%,#070b1a 100%)}
-.container{max-width:800px;margin:0 auto;padding:120px 24px 80px;position:relative;z-index:2}
-.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);margin-bottom:18px;display:inline-flex;gap:10px;align-items:center}
-.eyebrow::before{content:'';width:22px;height:1px;background:var(--gold);display:inline-block}
-h1{font-family:'Fraunces',serif;font-size:clamp(32px,5vw,48px);line-height:1.05;margin-bottom:12px}
-h1 em{font-style:italic;color:var(--gold-soft)}
-.sub{color:var(--ink-soft);font-size:14px;margin-bottom:40px}
-.card{background:rgba(13,19,48,.7);border:1px solid var(--line);border-radius:18px;padding:28px;margin-bottom:20px;backdrop-filter:blur(12px)}
-.card h2{font-family:'Fraunces',serif;font-size:20px;margin-bottom:12px}
-.card p{color:var(--ink-soft);font-size:14px;margin-bottom:12px}
-.card ul{margin:10px 0 14px 18px;color:var(--ink-soft);font-size:13.5px}
-.card a{color:var(--gold-soft);text-decoration:none;border-bottom:1px solid rgba(212,175,55,.2)}
-.footer{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);color:var(--ink-faint);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
-.badge{display:inline-flex;padding:6px 12px;border-radius:999px;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.2);font-size:11px;color:var(--blue);font-family:'JetBrains Mono',monospace}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--void);color:var(--ink);font-family:var(--sans);font-weight:400;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;min-height:100vh;letter-spacing:-0.005em}
+::selection{background:var(--brass-soft);color:#100c00}
+a{color:var(--brass-soft);text-decoration:none;border-bottom:1px solid rgba(212,175,55,0.18);transition:color .25s,border-color .25s}
+a:hover{color:var(--brass);border-bottom-color:var(--brass)}
+img{display:block;max-width:100%}
+button{font-family:inherit;border:0;background:none;cursor:pointer;color:inherit}
 
-/* Premium legal extra */
-.card:hover{border-color:rgba(212,175,55,.15);transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.2)}
+/* AURORA */
+.aurora-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--void)}
+.aurora-bg::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(60% 40% at 18% 8%, rgba(139,92,246,0.16), transparent 60%),
+    radial-gradient(55% 38% at 84% 14%, rgba(34,211,238,0.14), transparent 60%),
+    radial-gradient(50% 36% at 50% 90%, rgba(20,184,166,0.12), transparent 60%),
+    radial-gradient(40% 28% at 70% 60%, rgba(212,175,55,0.08), transparent 60%);
+  filter:saturate(115%);
+}
+.aurora-bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size:80px 80px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+}
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.45}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.04;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.65'/></svg>")}
+
+/* LAYOUT */
+.shell{position:relative;z-index:5;max-width:880px;margin:0 auto;padding:120px 28px 80px}
+@media (max-width:640px){.shell{padding:100px 20px 60px}}
+
+/* NAV */
+.legal-nav{position:fixed;top:0;left:0;right:0;z-index:50;padding:18px 0;transition:padding .35s var(--ease)}
+.legal-nav-inner{max-width:880px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:rgba(10,12,22,0.55);border:1px solid var(--hairline);border-radius:16px;backdrop-filter:blur(20px) saturate(140%);box-shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px rgba(0,0,0,0.25)}
+.legal-nav.scrolled .legal-nav-inner{background:rgba(10,12,22,0.85)}
+.legal-nav.scrolled{padding:10px 0}
+.legal-brand{display:flex;align-items:center;gap:10px;text-decoration:none;border:none;color:inherit}
+.legal-brand-mark{width:32px;height:32px;border-radius:10px;background:radial-gradient(circle at 30% 30%, #f3d27a, #d4af37 55%, #6a4f0d 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(212,175,55,0.3), 0 6px 16px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.4);overflow:hidden}
+.legal-brand-mark img{width:22px;height:22px;object-fit:contain}
+.legal-brand-name{font-family:var(--display);font-weight:800;letter-spacing:0.1em;text-transform:uppercase;font-size:12.5px;color:#fff}
+.legal-brand-ai{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:0;text-transform:none;color:var(--brass-soft);font-size:13.5px;margin-top:1px;display:block}
+.legal-nav-links{display:flex;gap:4px}
+.legal-nav-links a{border:none;padding:7px 12px;font-size:13px;color:var(--ink-2);border-radius:8px;transition:all .25s}
+.legal-nav-links a:hover{color:#fff;background:rgba(255,255,255,0.05)}
+.legal-nav-links a.active{color:var(--brass-soft);background:rgba(212,175,55,0.08)}
+@media (max-width:600px){.legal-nav-links a span{display:none}.legal-nav-links a{padding:7px 10px}}
+
+/* HEADINGS */
+.eyebrow{display:inline-flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--brass-soft);font-weight:500;margin-bottom:18px}
+.eyebrow::before{content:'';width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--brass))}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(36px, 5.4vw, 64px);line-height:1.02;letter-spacing:-0.03em;color:#fff;margin-bottom:14px}
+h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--brass-soft)}
+.sub{color:var(--ink-2);font-size:15px;margin-bottom:36px;line-height:1.6}
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:36px}
+.badge{display:inline-flex;gap:6px;align-items:center;padding:6px 12px;border-radius:999px;font-family:var(--mono);font-size:11px;letter-spacing:0.06em;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.25);color:var(--brass-soft)}
+.badge.cyan{background:rgba(34,211,238,0.08);border-color:rgba(34,211,238,0.22);color:var(--aurora-cyan)}
+.badge.violet{background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.22);color:#c4b5fd}
+.badge.green{background:rgba(52,211,153,0.08);border-color:rgba(52,211,153,0.22);color:var(--success)}
+
+/* CARDS */
+.card{position:relative;background:linear-gradient(180deg, rgba(22,26,40,0.7), rgba(10,12,22,0.7));border:1px solid var(--hairline);border-radius:20px;padding:32px;margin-bottom:18px;backdrop-filter:blur(14px);transition:border-color .3s, transform .3s, box-shadow .3s}
+.card:hover{border-color:var(--hairline-strong);transform:translateY(-2px);box-shadow:0 20px 50px rgba(0,0,0,0.25)}
+.card h2{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-0.015em;color:#fff;margin-bottom:14px;display:flex;align-items:baseline;gap:14px}
+.card h2 .num{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--brass-soft);letter-spacing:0.16em}
+.card h3{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--brass-soft);text-transform:uppercase;letter-spacing:0.14em;margin:20px 0 8px}
+.card p{color:var(--ink-2);font-size:14.5px;line-height:1.7;margin-bottom:12px}
+.card p:last-child{margin-bottom:0}
+.card ul{margin:8px 0 14px 0;color:var(--ink-2);font-size:14px;line-height:1.7;list-style:none}
+.card ul li{padding:6px 0 6px 22px;position:relative}
+.card ul li::before{content:'';position:absolute;left:4px;top:14px;width:6px;height:6px;border-radius:50%;background:var(--brass-soft);box-shadow:0 0 8px var(--brass-soft)}
+.card code{font-family:var(--mono);font-size:12.5px;color:var(--aurora-cyan);background:rgba(34,211,238,0.06);padding:2px 8px;border-radius:5px;border:1px solid rgba(34,211,238,0.12)}
+.card b{color:#fff;font-weight:600}
+
+.callout{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:14px;background:rgba(34,211,238,0.05);border:1px solid rgba(34,211,238,0.18);font-size:13.5px;color:var(--ink-2);line-height:1.65;margin-top:14px}
+.callout .ic{font-size:18px;flex:none;margin-top:2px}
+.callout strong{color:var(--aurora-cyan)}
+.callout.warn{background:rgba(251,191,36,0.05);border-color:rgba(251,191,36,0.18)}
+.callout.warn strong{color:var(--warn)}
+.callout.danger{background:rgba(248,113,113,0.05);border-color:rgba(248,113,113,0.18)}
+.callout.danger strong{color:var(--danger)}
+
+/* PLAN GRID */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+@media (max-width:600px){.plans{grid-template-columns:1fr}}
+.plan{
+  padding:18px;border-radius:14px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--hairline);
+  position:relative;
+}
+.plan.featured{border-color:rgba(212,175,55,0.35);background:linear-gradient(180deg, rgba(212,175,55,0.06), rgba(255,255,255,0.025))}
+.plan-tag{position:absolute;top:-8px;right:12px;font-family:var(--mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:linear-gradient(135deg,#f0d27a,#d4af37);color:#0a0a0a;font-weight:700}
+.plan .name{font-family:var(--display);font-weight:700;font-size:14px;color:#fff;letter-spacing:-0.005em}
+.plan .credits{font-size:11px;color:var(--ink-3);font-family:var(--mono);margin:4px 0 8px}
+.plan .price{font-family:var(--display);font-size:22px;font-weight:800;color:var(--brass-soft);letter-spacing:-0.02em}
+.plan .price small{font-size:11px;color:var(--ink-3);font-weight:500;font-family:var(--mono);margin-left:4px}
+
+/* FOOTER */
+.legal-foot{margin-top:48px;padding-top:24px;border-top:1px solid var(--hairline);display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;color:var(--ink-4);font-size:12.5px}
+.legal-foot .legal-links{display:flex;gap:18px;flex-wrap:wrap}
+.legal-foot a{border:none;color:var(--ink-2)}
+.legal-foot a:hover{color:var(--brass-soft)}
+
+/* TOC */
+.toc{background:rgba(255,255,255,0.02);border:1px solid var(--hairline);border-radius:16px;padding:18px 22px;margin-bottom:28px}
+.toc h4{font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-4);margin-bottom:12px;font-weight:500}
+.toc ul{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+@media (max-width:600px){.toc ul{grid-template-columns:1fr}}
+.toc a{border:none;padding:6px 0;font-size:13.5px;color:var(--ink-2);display:flex;align-items:center;gap:10px}
+.toc a:hover{color:var(--brass-soft)}
+.toc a::before{content:'';width:14px;height:1px;background:currentColor;opacity:0.4;flex:none}
 </style>
-
 </head>
 <body>
-<div class="atmosphere"></div>
-<div class="container">
-  <span class="eyebrow">Legal • Terms</span>
+
+<div class="aurora-bg"></div>
+<canvas id="starfield"></canvas>
+<div class="grain"></div>
+
+<nav class="legal-nav" id="legalNav">
+  <div class="legal-nav-inner">
+    <a class="legal-brand" href="index.html" aria-label="Savoiré AI home">
+      <div class="legal-brand-mark"><img src="clogo.png" alt=""></div>
+      <div>
+        <div class="legal-brand-name">Savoiré</div>
+        <div class="legal-brand-ai">AI</div>
+      </div>
+    </a>
+    <div class="legal-nav-links">
+      <a href="index.html"><span>Home</span></a>
+      <a href="privacy.html"><span>Privacy</span></a>
+      <a href="terms.html" class="active"><span>Terms</span></a>
+    </div>
+  </div>
+</nav>
+
+<main class="shell">
+
+  <span class="eyebrow">Legal · Terms</span>
   <h1>Terms of <em>Service</em></h1>
-  <p class="sub">Last updated: August 3, 2026 • Savoiré AI v2.0 • Product of Sooban Talha Technologies</p>
-  <div style="margin-bottom:28px"><span class="badge">📄 Please read carefully • Lifetime credits • No refund for used credits</span></div>
+  <p class="sub">Last updated: <strong style="color:#fff">10 August 2026</strong> · Savoiré AI v2.0 · Product of <strong style="color:#fff">Sooban Talha Technologies</strong></p>
 
-  <div class="card"><h2>1. Acceptance</h2><p>By accessing <b>savoireai.vercel.app</b> or using Savoiré AI apps, you agree to these Terms. If you don't agree, don't use. We may update Terms, continued use means acceptance.</p></div>
+  <div class="badge-row">
+    <span class="badge">📄 Read carefully</span>
+    <span class="badge cyan">∞ Lifetime credit validity</span>
+    <span class="badge violet">🇮🇳 Governed by Indian law</span>
+    <span class="badge green">✓ 7-day refund window for unused credits</span>
+  </div>
 
-  <div class="card"><h2>2. What is Savoiré AI?</h2><p>Savoiré AI is an <b>EdTech SaaS</b> (Software as a Service) that generates study materials using AI (Mesh API - amazon/nova-micro). Features: Notes, Flashcards, Quiz, Summary, Mind Map, Mega Bundle. Built by <b>Sooban Talha Technologies</b>, Founder Sooban Talha. Tagline: "Think Less. Know More."</p></div>
-
-  <div class="card"><h2>3. Accounts</h2>
+  <div class="toc">
+    <h4>On this page</h4>
     <ul>
-      <li>You must be 13+ or have guardian consent.</li>
-      <li>Google Login or Email/Password via Firebase Auth. You are responsible for password secrecy.</li>
-      <li>One account per person. Creating multiple accounts to exploit free credits (10k welcome) is prohibited. Delete Account has 3-step confirmation to prevent exploit.</li>
-      <li>We may suspend accounts for abuse, spam, illegal content generation.</li>
+      <li><a href="#s1">1. Acceptance</a></li>
+      <li><a href="#s2">2. What Savoiré AI is</a></li>
+      <li><a href="#s3">3. Accounts</a></li>
+      <li><a href="#s4">4. Credits &amp; payments</a></li>
+      <li><a href="#s5">5. Acceptable use</a></li>
+      <li><a href="#s6">6. Intellectual property</a></li>
+      <li><a href="#s7">7. AI accuracy &amp; warranty</a></li>
+      <li><a href="#s8">8. Privacy</a></li>
+      <li><a href="#s9">9. Changes &amp; termination</a></li>
+      <li><a href="#s10">10. Contact &amp; jurisdiction</a></li>
     </ul>
   </div>
 
-  <div class="card"><h2>4. Credits & Payments</h2>
+  <section id="s1" class="card">
+    <h2><span class="num">§ 1</span> Acceptance</h2>
+    <p>By accessing <a href="https://savoireai.vercel.app" target="_blank" rel="noopener">savoireai.vercel.app</a> or any application operated by Sooban Talha Technologies under the Savoiré AI name, you agree to be bound by these Terms of Service. If you do not agree, please do not use the service.</p>
+    <p>We may revise these Terms from time to time. Material changes will be announced inside the dashboard, and the "Last updated" date at the top of this page will be changed. Your continued use of Savoiré AI after a revision constitutes acceptance of the updated Terms.</p>
+  </section>
+
+  <section id="s2" class="card">
+    <h2><span class="num">§ 2</span> What Savoiré AI is</h2>
+    <p>Savoiré AI is a <b>premium AI study workspace</b> — a Software-as-a-Service product that generates study material (Notes, Flashcards, Quiz, Summary, Mind Map and the Mega Bundle) using a multi-model AI orchestration layer called <b>Mesh API</b>.</p>
+    <p>It is developed and operated by <b>Sooban Talha Technologies</b>, founded by Sooban Talha. Our tagline: <i>Study less. Know everything.</i></p>
+  </section>
+
+  <section id="s3" class="card">
+    <h2><span class="num">§ 3</span> Accounts</h2>
     <ul>
-      <li><b>Free:</b> 10,000 credits on signup, lifetime validity, for trial. No card needed.</li>
-      <li><b>Paid Packs (Lifetime):</b> Starter 100k ₹29, Pro 300k ₹69, Popular 600k ₹129, Ultra 1.2M ₹249. Prices in INR, GST included. Credits never expire (lifetime).</li>
-      <li><b>Usage:</b> (Input chars + Output chars)/4 × Tool Multiplier (Notes 1.0x, Summary 0.6x, Flashcards 1.2x, Quiz 1.1x, MindMap 1.3x, Mega 2.8x). Min 500 credits per generation. Deducted ONLY after successful generation (if AI fails, no deduction).</li>
-      <li><b>Payments:</b> Via Razorpay (UPI, Cards, NetBanking, Wallets). Razorpay is RBI authorized, PCI DSS Level 1. We don't store card/UPI PIN. 2% + GST fee deducted by Razorpay, you get ~₹47.84 on ₹49.</li>
-      <li><b>No Refund for Used Credits:</b> Once credits are used to generate content, they are consumed. Unused credits can be refunded within 7 days if not used, minus Razorpay fees, via support email.</li>
-      <li><b>Settlement:</b> Razorpay settles to our bank in T+2/T+3 days.</li>
+      <li>You must be at least 13 years of age, or have the verifiable consent of a parent or legal guardian, to use Savoiré AI.</li>
+      <li>You may sign in with Google (Firebase Authentication) or with email + password. You are responsible for keeping your credentials confidential.</li>
+      <li>One account per person. Creating multiple accounts to exploit welcome credits is prohibited. Account deletion uses a 3-step confirmation flow to prevent accidental or exploitative deletion.</li>
+      <li>We may suspend or terminate accounts that abuse the service, generate illegal or harmful content, attempt to bypass rate limits, or interfere with other users.</li>
     </ul>
-  </div>
+  </section>
 
-  <div class="card"><h2>5. Acceptable Use</h2>
+  <section id="s4" class="card">
+    <h2><span class="num">§ 4</span> Credits &amp; payments</h2>
+    <p>Savoiré AI uses a credit system. The current pack offerings and prices (inclusive of GST) are published in the dashboard under <i>Settings → Buy Credits</i> and on our marketing pages. As of the date of these Terms:</p>
+
+    <div class="plans">
+      <div class="plan">
+        <div class="name">Starter</div>
+        <div class="credits">200,000 credits</div>
+        <div class="price">₹29<small>/ 30 days</small></div>
+      </div>
+      <div class="plan featured">
+        <div class="plan-tag">Popular</div>
+        <div class="name">Pro</div>
+        <div class="credits">500,000 credits</div>
+        <div class="price">₹69<small>/ 30 days</small></div>
+      </div>
+      <div class="plan">
+        <div class="name">Mega</div>
+        <div class="credits">3,000,000 credits</div>
+        <div class="price">₹349<small>/ 30 days</small></div>
+      </div>
+    </div>
+
+    <h3>How credits are charged</h3>
     <ul>
-      <li>Use for lawful study purposes only. Don't generate illegal, harmful, hateful, or copyrighted textbook verbatim content to circumvent paywalls.</li>
-      <li>Don't attempt to hack, reverse engineer, or overload AI (rate limit 5 req/min per user).</li>
-      <li>Generated content may have errors (AI <1% error). Verify with textbooks for exams. We are not liable for exam results.</li>
-      <li>Don't resell credits or share account to bypass limits.</li>
+      <li>Credits are calculated as <code>(input characters + output characters) ÷ 4</code> multiplied by a per-tool factor (Notes 1.0×, Summary 0.6×, Flashcards 1.2×, Quiz 1.1×, Mind Map 1.3×, Mega Bundle 2.8×).</li>
+      <li>A minimum of 500 credits is required to start a generation. If a generation fails server-side, no credits are deducted.</li>
+      <li>All pack credits are valid for 30 days from the date of purchase. We may extend validity for promotional packs at our discretion.</li>
     </ul>
-  </div>
 
-  <div class="card"><h2>6. Intellectual Property</h2>
+    <h3>Payments</h3>
     <ul>
-      <li>App design, logo, code © Sooban Talha Technologies.</li>
-      <li>Generated study content: You own the output for personal study use. You can export PDF, copy, share for non-commercial study.</li>
-      <li>Don't claim generated content as your own researched work for academic misconduct (plagiarism policies of your institution apply).</li>
+      <li>All payments are processed by <b>Razorpay</b>, an RBI-authorised Payment Aggregator with PCI DSS Level 1 certification.</li>
+      <li>Supported instruments: UPI, Credit &amp; Debit Cards, NetBanking, Wallets. Razorpay deducts its standard fee (≈2% + GST) before settlement to our bank via NEFT / IMPS in T+2 / T+3 working days.</li>
+      <li>We never see or store your card number, CVV, UPI PIN or bank password.</li>
     </ul>
+
+    <h3>Refunds</h3>
+    <ul>
+      <li>Credits that have been used to generate content are non-refundable. Once consumed, the output is yours but the credits are spent.</li>
+      <li>Unused credits on a freshly purchased pack can be refunded within 7 days of purchase, minus Razorpay processing fees, by writing to our support email. We process eligible refunds within 7 working days.</li>
+    </ul>
+
+    <div class="callout">
+      <span class="ic">💡</span>
+      <div><strong>Promotional credits.</strong> Welcome credits issued at first sign-in (where applicable) are non-refundable but are valid for the full 30-day cycle from issue.</div>
+    </div>
+  </section>
+
+  <section id="s5" class="card">
+    <h2><span class="num">§ 5</span> Acceptable use</h2>
+    <ul>
+      <li>Use Savoiré AI for lawful study and learning purposes only.</li>
+      <li>Do not use the service to generate content that is illegal, harmful, hateful, harassing, sexually explicit, or that infringes the intellectual property rights of others.</li>
+      <li>Do not attempt to hack, reverse-engineer, decompile or otherwise interfere with the service, or to bypass rate limits, quotas or other access controls.</li>
+      <li>Do not resell or sub-license credits, accounts or generated content as a competing service.</li>
+      <li>Generated content is created with a state-of-the-art model orchestrated through Mesh API. It is tested to under 1% error across 1,500+ benchmark generations, but it may contain mistakes. Always verify critical information against authoritative sources for exams, medical, legal or financial decisions.</li>
+    </ul>
+  </section>
+
+  <section id="s6" class="card">
+    <h2><span class="num">§ 6</span> Intellectual property</h2>
+    <ul>
+      <li>The Savoiré AI product, brand, logo, design, code and copy are © Sooban Talha Technologies, all rights reserved.</li>
+      <li>You own the study material generated <b>for your personal learning use</b>. You may export, copy and share it for non-commercial study purposes (for example, with classmates or tutors).</li>
+      <li>Generated content must not be presented as your own original researched work where academic-integrity rules require disclosure of AI assistance. Plagiarism policies of your institution always apply.</li>
+      <li>You retain ownership of the topic and any source material you submit; you grant us a limited, revocable licence to process it for the purpose of generating your study material.</li>
+    </ul>
+  </section>
+
+  <section id="s7" class="card">
+    <h2><span class="num">§ 7</span> AI accuracy &amp; warranty</h2>
+    <p>Savoiré AI is provided on an <b>"as is"</b> and <b>"as available"</b> basis. We design, test and operate the service with care, and we benchmark it to under 1% error across 1,500+ test generations. However, no AI is perfect, and the underlying model output is not guaranteed to be 100% accurate at all times.</p>
+    <p>To the maximum extent permitted by applicable law, we disclaim all warranties, express or implied, including warranties of merchantability, fitness for a particular purpose and non-infringement.</p>
+    <p>Our maximum aggregate liability to you for any claim arising out of or relating to the service is limited to the greater of (a) the amount you paid us in the 30 days immediately preceding the claim, or (b) INR 100. We are not liable for indirect, incidental, special, consequential or punitive damages, or for any loss of data, business, marks or reputation.</p>
+    <div class="callout warn">
+      <span class="ic">⚠️</span>
+      <div><strong>Verify before you act.</strong> Do not rely on Savoiré AI for medical, legal, financial or other professional decisions. Cross-check critical information against authoritative sources.</div>
+    </div>
+  </section>
+
+  <section id="s8" class="card">
+    <h2><span class="num">§ 8</span> Privacy</h2>
+    <p>Your use of Savoiré AI is also governed by our <a href="privacy.html">Privacy Policy</a>, which is incorporated into these Terms by reference. The Privacy Policy explains what data we collect, how we use it, where it lives (Firebase Firestore, Mumbai region), who the sub-processors are (Firebase, Razorpay, Mesh API, Vercel, optional Resend), and how to exercise your rights (export, delete, sign out).</p>
+  </section>
+
+  <section id="s9" class="card">
+    <h2><span class="num">§ 9</span> Changes &amp; termination</h2>
+    <ul>
+      <li>We may add, change or remove features, credit-pack prices, or third-party sub-processors at any time. Changes to the credit system will not retroactively affect credits you have already purchased.</li>
+      <li>We may suspend or terminate the service, in whole or in part, with reasonable notice where practical (for example, for planned maintenance or where required by law).</li>
+      <li>We may immediately suspend or terminate accounts that breach these Terms, including by abusing credits, generating prohibited content, or attempting to compromise the service.</li>
+      <li>You may stop using the service at any time. You may also delete your account at any time via <i>Dashboard → Settings → Delete Account</i> (3-step confirmation).</li>
+    </ul>
+  </section>
+
+  <section id="s10" class="card">
+    <h2><span class="num">§ 10</span> Contact &amp; jurisdiction</h2>
+    <p><b>Company:</b> Sooban Talha Technologies<br>
+    <b>Product:</b> Savoiré AI<br>
+    <b>Founder:</b> Sooban Talha<br>
+    <b>Website:</b> <a href="https://savoireai.vercel.app">savoireai.vercel.app</a> · <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a><br>
+    <b>Email:</b> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d2a0bda3a7bca6bda0b3bda192a1b3a4bdbda6b1b5bdfca1bdbf">[email&#160;protected]</a><br>
+    <b>Instagram:</b> <a href="https://instagram.com/developer_sooban" target="_blank" rel="noopener">@developer_sooban</a><br>
+    <b>Registered address:</b> Moradabad, Uttar Pradesh, India</p>
+    <p>These Terms are governed by the laws of the Republic of India. Any dispute arising out of or in connection with these Terms is subject to the exclusive jurisdiction of the competent courts at <b>Bareilly, Uttar Pradesh, India</b>.</p>
+  </section>
+
+  <div class="legal-foot">
+    <span>© 2026 Sooban Talha Technologies. All rights reserved.</span>
+    <span class="legal-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+    </span>
   </div>
 
-  <div class="card"><h2>7. Warranties & Liability</h2>
-    <p>Savoiré AI provided "as is". We strive for <1% error (tested 1500+ generations) but don't guarantee 100% accuracy. Not liable for indirect damages, exam failures, data loss. Max liability limited to amount you paid in last 30 days (or ₹100 if free user). Use at your own risk, verify critical info.</p>
-  </div>
+</main>
 
-  <div class="card"><h2>8. Data & Privacy</h2>
-    <p>See <a href="privacy.html">Privacy Policy</a>. We store data in Firebase Firestore (Mumbai), use Razorpay for payments, Mesh API for AI. We don't sell data. You can export and delete account via Settings (3-step).</p>
-  </div>
+<script>
+const nav = document.getElementById('legalNav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 24), {passive:true});
 
-  <div class="card"><h2>9. Changes & Termination</h2>
-    <p>We may change features, pricing (new pricing won't affect already purchased lifetime credits), or suspend service with notice. We may terminate abusive accounts. You may delete account anytime via Settings -> Delete Account (3-step).</p>
-  </div>
-
-  <div class="card"><h2>10. Contact & Governing Law</h2>
-    <p>Company: Sooban Talha Technologies<br>Founder: Sooban Talha<br>Website: savoireai.vercel.app / soobantalhatech.xyz<br>Email: soobantalhatechnologies@gmail.com<br>Address: Moradabad, UP, India<br>Governing Law: India. Disputes subject to Bareilly jurisdiction.</p>
-  </div>
-
-  <div class="footer">
-    <span>© 2026 Sooban Talha Technologies</span>
-    <span><a href="privacy.html" style="color:var(--gold-soft)">Privacy</a> • <a href="index.html" style="color:var(--gold-soft)">Home</a></span>
-  </div>
-</div>
+(function(){
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let w, h, stars = [];
+  const COLORS = ['#d4af37','#22d3ee','#8b5cf6','#f3f5fb'];
+  function resize(){ w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  function init(){
+    resize();
+    const count = Math.min(160, Math.floor(w*h/11000));
+    stars = Array.from({length:count}, () => ({
+      x: Math.random()*w, y: Math.random()*h,
+      r: Math.random()*1.3+0.2,
+      c: COLORS[Math.floor(Math.random()*COLORS.length)],
+      s: Math.random()*0.18+0.03, o: Math.random()*0.45+0.15
+    }));
+  }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    for(const s of stars){
+      s.y -= s.s; if(s.y < -5) s.y = h+5;
+      ctx.beginPath(); ctx.fillStyle = s.c; ctx.globalAlpha = s.o;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 1; requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', resize); init(); draw();
+})();
+</script>
 </body>
 </html>

@@ -2,243 +2,354 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login | Savoiré AI - Think Less. Know More.</title>
-<meta name="theme-color" content="#03050c">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Orbitron:wght@600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sign in | Savoiré AI</title>
+<meta name="description" content="Sign in to Savoiré AI — the premium AI study workspace.">
+<meta name="theme-color" content="#06070d">
+<link rel="icon" href="clogo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <style>
+/* ═══════════════════════════════════════════════════════════════
+   SAVOIRÉ AI — LOGIN (Aurora on obsidian, paired with index)
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --void:#06070d;
+  --panel:#10131f;
+  --panel-2:#161a28;
+  --hairline:rgba(255,255,255,0.06);
+  --hairline-strong:rgba(255,255,255,0.12);
+  --ink:#f3f5fb;
+  --ink-2:#c2c8d8;
+  --ink-3:#8b91a6;
+  --ink-4:#5b6178;
+  --brass:#d4af37;
+  --brass-soft:#f0d27a;
+  --aurora-violet:#8b5cf6;
+  --aurora-cyan:#22d3ee;
+  --aurora-teal:#14b8a6;
+  --success:#34d399;
+  --danger:#f87171;
+  --ease:cubic-bezier(.16,.84,.44,1);
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  --serif:'Instrument Serif', serif;
+  --sans:'Inter','Manrope', system-ui, sans-serif;
+  --display:'Manrope', var(--sans);
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;height:100%}
 body{
-  background:#03050c;color:#eef1f8;font-family:'Inter',sans-serif;
+  background:var(--void);color:var(--ink);
+  font-family:var(--sans);font-weight:400;line-height:1.55;
   min-height:100vh;display:flex;align-items:center;justify-content:center;
-  padding:20px;position:relative;overflow:hidden
+  padding:32px 20px;position:relative;overflow:hidden;
+  -webkit-font-smoothing:antialiased;letter-spacing:-0.005em;
 }
-/* Atmosphere - same as index.html */
-.atmosphere{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 900px 600px at 18% 8%, rgba(212,175,55,0.10), transparent 60%),
-    radial-gradient(ellipse 1000px 700px at 85% 20%, rgba(0,212,255,0.08), transparent 60%),
-    radial-gradient(ellipse 900px 900px at 50% 100%, rgba(155,107,255,0.08), transparent 60%),
-    linear-gradient(180deg, #03050c 0%, #070b1a 40%, #0a1128 100%);
-}
-#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.75}
-.gridlines{
-  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35;
-  background-image:linear-gradient(rgba(0,212,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,212,255,0.05) 1px, transparent 1px);
-  background-size:64px 64px;
-  mask-image:radial-gradient(ellipse 70% 50% at 50% 0%, black 30%, transparent 75%);
-}
-.card-wrap{position:relative;z-index:2;width:min(440px,100%);perspective:1200px}
-.card{
-  width:100%;background:rgba(13,19,48,.68);backdrop-filter:blur(24px) saturate(1.2);
-  border:1px solid rgba(255,255,255,.08);border-radius:28px;padding:36px 32px;
-  box-shadow:0 30px 90px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.06);
-  transform-style:preserve-3d;overflow:hidden;position:relative
-}
-.card::before{
-  content:'';position:absolute;inset:-1px;border-radius:28px;padding:1px;
-  background:linear-gradient(135deg, rgba(212,175,55,.35), rgba(0,212,255,.15), rgba(155,107,255,.15));
-  mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite:xor;-webkit-mask-composite:xor;pointer-events:none;opacity:.6
-}
-.card::after{
-  content:'';position:absolute;top:-120px;left:-120px;width:240px;height:240px;
-  background:radial-gradient(circle, rgba(0,212,255,.15), transparent 70%);
-  filter:blur(20px);pointer-events:none;animation:orbFloat 6s ease-in-out infinite
-}
-.card::before{
-  content:'';position:absolute;inset:-1px;border-radius:28px;padding:1px;
-  background:linear-gradient(135deg, rgba(212,175,55,.35), rgba(0,212,255,.15), rgba(155,107,255,.15));
-  mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite:xor;-webkit-mask-composite:xor;pointer-events:none;opacity:.6;
-  animation:borderRotate 8s linear infinite
-}
-@keyframes borderRotate{0%{filter:hue-rotate(0deg)}100%{filter:hue-rotate(360deg)}}
-.ultra-glow{
-  position:absolute;bottom:-80px;right:-80px;width:200px;height:200px;
-  background:radial-gradient(circle, rgba(191,0,255,.12), transparent 70%);
-  filter:blur(24px);pointer-events:none;animation:orbFloat 8s ease-in-out infinite reverse
-}
+::selection{background:var(--brass-soft);color:#100c00}
+a{color:var(--brass-soft);text-decoration:none}
+img{display:block;max-width:100%}
 
-@keyframes orbFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,20px)}}
-.brand-lockup{
-  font-family:'Orbitron',sans-serif;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;
-  font-size:14px;text-align:center;margin-bottom:16px;
-  background:linear-gradient(180deg,#fdfdfd 0%,#c9cfdd 38%,#7c8399 52%,#eef1f8 60%,#9aa0b5 100%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 18px rgba(0,212,255,0.22));
+/* AURORA */
+.aurora-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--void)}
+.aurora-bg::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(60% 50% at 16% 12%, rgba(139,92,246,0.20), transparent 60%),
+    radial-gradient(55% 45% at 86% 22%, rgba(34,211,238,0.18), transparent 60%),
+    radial-gradient(60% 50% at 50% 100%, rgba(20,184,166,0.14), transparent 60%),
+    radial-gradient(40% 30% at 70% 60%, rgba(212,175,55,0.08), transparent 60%);
+  filter:saturate(115%);
 }
-.brand-lockup .ai{color:#00d4ff;-webkit-text-fill-color:#00d4ff;text-shadow:0 0 18px rgba(0,212,255,0.6);}
-.logo{
-  width:64px;height:64px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
-  border-radius:18px;border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 0 0 1px rgba(212,175,55,.1), 0 10px 30px rgba(0,0,0,.3);
-  font-size:32px;position:relative;overflow:hidden;
-  animation:logoPulse 3s ease-in-out infinite
+.aurora-bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size:80px 80px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
 }
-.logo img{width:70%;height:70%;object-fit:contain;filter:drop-shadow(0 0 12px rgba(212,175,55,.3))}
-@keyframes logoPulse{0%,100%{box-shadow:0 0 0 1px rgba(212,175,55,.1), 0 10px 30px rgba(0,0,0,.3), 0 0 20px rgba(212,175,55,.15)}50%{box-shadow:0 0 0 1px rgba(0,212,255,.2), 0 10px 40px rgba(0,0,0,.4), 0 0 30px rgba(0,212,255,.25)}}
-.horizon{width:100%;height:1px;margin:0 auto 20px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.7),#f0d383,rgba(0,212,255,0.7),transparent);box-shadow:0 0 18px rgba(0,212,255,0.5);position:relative}
-.horizon::after{content:'';position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 16px 4px rgba(255,255,255,0.9);}
-h1{font-family:'Fraunces',serif;font-size:30px;font-weight:700;text-align:center;line-height:1.1;margin-bottom:8px;letter-spacing:-0.01em}
-h1 em{font-style:italic;color:#f0d383;font-weight:500}
-.sub{text-align:center;color:#aab2cc;font-size:13.5px;margin-bottom:22px;line-height:1.6;font-weight:300}
-.token-badge{
-  display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(212,175,55,.14),rgba(255,174,0,.08));
-  border:1px solid rgba(212,175,55,.28);padding:8px 16px;border-radius:999px;font-size:12px;color:#f0d383;margin:0 auto 20px;justify-content:center;width:fit-content;
-  box-shadow:0 0 20px rgba(212,175,55,.15);position:relative;overflow:hidden;
-  animation:badgeShine 3s linear infinite
+.aurora-orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.5;animation:orbDrift 22s ease-in-out infinite}
+.aurora-orb.a{width:520px;height:520px;top:-160px;left:-160px;background:radial-gradient(circle, rgba(139,92,246,0.55), transparent 60%)}
+.aurora-orb.b{width:560px;height:560px;top:30%;right:-180px;background:radial-gradient(circle, rgba(34,211,238,0.45), transparent 60%);animation-delay:-7s}
+.aurora-orb.c{width:480px;height:480px;bottom:-160px;left:30%;background:radial-gradient(circle, rgba(20,184,166,0.42), transparent 60%);animation-delay:-14s}
+@keyframes orbDrift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.06)}66%{transform:translate(-30px,40px) scale(0.97)}}
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.45}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.04;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.65'/></svg>")}
+
+/* CARD */
+.wrap{position:relative;z-index:5;width:100%;max-width:440px;perspective:1400px}
+@media (min-width:980px){
+  body{align-items:center;justify-content:center;padding:32px}
+  .stage{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;max-width:1080px;width:100%;margin:0 auto}
+  .wrap{max-width:440px;margin:0 auto}
+  .promo{display:block}
 }
-.token-badge::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);animation:shimmer 2.5s ease-in-out infinite}
-@keyframes badgeShine{0%,100%{box-shadow:0 0 20px rgba(212,175,55,.15)}50%{box-shadow:0 0 30px rgba(212,175,55,.25)}}
-@keyframes shimmer{to{transform:translateX(100%)}}
+.promo{display:none;position:relative;z-index:5;color:var(--ink);padding:32px;max-width:480px}
+.promo .eyebrow{display:inline-flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--brass-soft);margin-bottom:24px}
+.promo .eyebrow::before{content:'';width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--brass))}
+.promo h1{font-family:var(--display);font-weight:800;font-size:clamp(36px,4.4vw,56px);line-height:1.02;letter-spacing:-0.03em;color:#fff;margin-bottom:18px}
+.promo h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--brass-soft)}
+.promo p{color:var(--ink-2);font-size:16px;line-height:1.65;margin-bottom:28px;max-width:380px}
+.promo ul{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.promo li{display:flex;gap:12px;align-items:center;font-size:14px;color:var(--ink-2)}
+.promo li .ic{width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid var(--hairline-strong);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.promo li b{color:#fff;font-weight:600}
+.promo .testi{
+  padding:18px 20px;border-radius:16px;
+  background:linear-gradient(180deg, rgba(22,26,40,0.6), rgba(10,12,22,0.6));
+  border:1px solid var(--hairline);backdrop-filter:blur(14px);
+}
+.promo .testi .q{font-family:var(--serif);font-size:18px;color:var(--ink);line-height:1.5;letter-spacing:-0.01em;margin-bottom:14px;position:relative}
+.promo .testi .q::before{content:'“';position:absolute;top:-18px;left:-4px;font-size:50px;color:rgba(212,175,55,0.2);line-height:1}
+.promo .testi .who{display:flex;align-items:center;gap:10px}
+.promo .testi .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--brass),var(--aurora-violet));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:13px;color:#0a0a0a;font-weight:800}
+.promo .testi .nm{font-size:12.5px;color:#fff;font-weight:600}
+.promo .testi .rl{font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+
+.card{
+  width:100%;
+  background:linear-gradient(180deg, rgba(22,26,40,0.85), rgba(10,12,22,0.85));
+  backdrop-filter:blur(28px) saturate(140%);
+  border:1px solid var(--hairline-strong);
+  border-radius:28px;padding:36px 32px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.05) inset, 0 0 0 1px rgba(255,255,255,0.02);
+  position:relative;transform-style:preserve-3d;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;inset:-1px;border-radius:28px;padding:1px;
+  background:conic-gradient(from 0deg, rgba(212,175,55,0.5), rgba(139,92,246,0.35), rgba(34,211,238,0.35), rgba(20,184,166,0.3), rgba(212,175,55,0.5));
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:0.5;
+  animation:borderSpin 16s linear infinite;
+}
+@keyframes borderSpin{to{transform:rotate(360deg)}}
+
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center;flex-direction:column}
+.brand-mark{
+  width:56px;height:56px;border-radius:16px;
+  background:radial-gradient(circle at 30% 30%, #f3d27a, #d4af37 55%, #6a4f0d 100%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px rgba(212,175,55,0.3), 0 12px 30px rgba(212,175,55,0.25), inset 0 1px 0 rgba(255,255,255,0.4);
+  position:relative;overflow:hidden;
+  animation:logoPulse 3s ease-in-out infinite;
+}
+.brand-mark img{width:64%;height:64%;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.3))}
+@keyframes logoPulse{0%,100%{box-shadow:0 0 0 1px rgba(212,175,55,0.3), 0 12px 30px rgba(212,175,55,0.25), inset 0 1px 0 rgba(255,255,255,0.4)}50%{box-shadow:0 0 0 1px rgba(34,211,238,0.4), 0 14px 40px rgba(34,211,238,0.25), inset 0 1px 0 rgba(255,255,255,0.5)}}
+.brand-text{font-family:var(--mono);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin-top:12px;font-weight:500}
+.brand-text .ai{color:var(--brass-soft)}
+
+h1.title{font-family:var(--display);font-size:30px;font-weight:800;text-align:center;line-height:1.05;letter-spacing:-0.025em;color:#fff;margin-bottom:6px}
+h1.title em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--brass-soft)}
+.sub{text-align:center;color:var(--ink-2);font-size:13.5px;margin-bottom:24px;line-height:1.6}
+.sub em{font-family:var(--serif);font-style:italic;color:var(--brass-soft);font-size:14px;display:block;margin-bottom:6px}
+.sub .small{font-size:11px;color:var(--ink-3);font-family:var(--mono);letter-spacing:0.04em;margin-top:8px;display:inline-block}
+
 .btn{
-  width:100%;padding:14px;border-radius:14px;border:none;font-weight:700;font-size:14px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:10px;transition:all .3s cubic-bezier(.16,.84,.44,1);
-  position:relative;overflow:hidden;letter-spacing:.01em
+  width:100%;padding:14px;border-radius:14px;border:none;
+  font-weight:700;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  position:relative;overflow:hidden;letter-spacing:0.005em;
+  transition:all .3s var(--ease);color:inherit;
 }
-.btn-google{background:#fff;color:#111;box-shadow:0 8px 24px rgba(255,255,255,.12)}
-.btn-google:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 14px 36px rgba(255,255,255,.18)}
-.btn-google:active{transform:scale(.98)}
-.btn .ripple{position:absolute;border-radius:50%;background:rgba(0,0,0,.1);transform:scale(0);animation:ripple .6s ease;pointer-events:none}
+.btn-google{background:#fff;color:#0a0a0a;box-shadow:0 8px 24px rgba(255,255,255,0.12), 0 0 0 1px rgba(255,255,255,0.1)}
+.btn-google:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(255,255,255,0.18)}
+.btn-google:active{transform:scale(0.99)}
+.btn .ripple{position:absolute;border-radius:50%;background:rgba(0,0,0,0.08);transform:scale(0);animation:ripple .6s var(--ease);pointer-events:none}
 @keyframes ripple{to{transform:scale(3.5);opacity:0}}
-.divider{display:flex;align-items:center;gap:12px;margin:22px 0;color:#6b7394;font-size:10px;text-transform:uppercase;letter-spacing:.18em;font-family:'Inter',sans-serif}
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
-.input{
-  width:100%;padding:13px 16px;border-radius:12px;background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.1);color:#fff;font-size:14px;margin-bottom:12px;outline:none;
-  transition:all .25s;font-family:'Inter',sans-serif
-}
-.input:focus{border-color:rgba(0,212,255,.5);box-shadow:0 0 0 3px rgba(0,212,255,.15), inset 0 1px 0 rgba(255,255,255,.08);background:rgba(255,255,255,.07)}
-.input::placeholder{color:rgba(255,255,255,.35)}
-.btn-email{
-  background:linear-gradient(135deg,#f0d383,#d4af37 55%,#9c7726);color:#140f00;
-  box-shadow:0 0 30px rgba(212,175,55,.25);margin-top:6px
-}
-.btn-email:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(212,175,55,.35)}
-.benefits{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
-.benefit{
-  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:12px 12px;
-  font-size:11.5px;color:#aab2cc;display:flex;gap:9px;align-items:center;transition:all .25s
-}
-.benefit:hover{background:rgba(0,212,255,.06);border-color:rgba(0,212,255,.15);transform:translateY(-2px)}
-.benefit b{color:#fff;display:block;font-size:12.5px;margin-bottom:2px}
-.footer{text-align:center;margin-top:22px;font-size:10.5px;color:#6b7394;line-height:1.6}
-.footer b{color:#f0d383}
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--ink-4);font-size:10px;text-transform:uppercase;letter-spacing:0.18em;font-family:var(--mono)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--hairline-strong),transparent)}
+.input{width:100%;padding:13px 16px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid var(--hairline-strong);color:#fff;font-size:14px;margin-bottom:10px;outline:none;transition:all .25s;font-family:inherit}
+.input:focus{border-color:rgba(34,211,238,0.5);box-shadow:0 0 0 3px rgba(34,211,238,0.12), inset 0 1px 0 rgba(255,255,255,0.05);background:rgba(255,255,255,0.06)}
+.input::placeholder{color:rgba(255,255,255,0.3)}
+.btn-email{background:linear-gradient(135deg,#f0d27a,#d4af37 55%,#8a6a1e);color:#0a0a0a;box-shadow:0 12px 30px rgba(212,175,55,0.3), 0 1px 0 rgba(255,255,255,0.3) inset;border:1px solid rgba(255,255,255,0.15);margin-top:6px}
+.btn-email:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(212,175,55,0.4)}
+
+.benefits{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}
+.benefit{background:rgba(255,255,255,0.025);border:1px solid var(--hairline);border-radius:12px;padding:11px 12px;font-size:11.5px;color:var(--ink-2);display:flex;gap:9px;align-items:center;transition:all .25s}
+.benefit:hover{background:rgba(34,211,238,0.04);border-color:rgba(34,211,238,0.18);transform:translateY(-1px)}
+.benefit .ic{font-size:14px;flex:none}
+.benefit b{color:#fff;display:block;font-size:12px;font-weight:600;margin-bottom:1px}
+.benefit span{font-size:10.5px;color:var(--ink-3);font-family:var(--mono)}
+
+.foot{text-align:center;margin-top:20px;font-size:10.5px;color:var(--ink-4);line-height:1.6}
+.foot b{color:var(--brass-soft)}
+.foot a{color:var(--ink-2);border-bottom:1px solid var(--hairline)}
+.foot a:hover{color:var(--brass-soft);border-color:var(--brass-soft)}
+
 #toastContainer{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{pointer-events:auto;display:flex;gap:10px;align-items:center;padding:12px 16px;background:rgba(15,23,42,.96);border:1px solid rgba(212,175,55,.2);border-radius:12px;font-size:.82rem;color:#fff;animation:toastIn .3s ease;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-.toast.error{border-left:4px solid #ff4444}
-.toast.success{border-left:4px solid #00ff88}
+.toast{pointer-events:auto;display:flex;gap:10px;align-items:center;padding:12px 16px;background:rgba(15,17,27,0.96);border:1px solid var(--hairline-strong);border-radius:12px;font-size:13px;color:#fff;animation:toastIn .3s var(--ease);box-shadow:0 14px 40px rgba(0,0,0,0.4);max-width:340px}
+.toast.error{border-left:3px solid var(--danger)}
+.toast.success{border-left:3px solid var(--success)}
+.toast.info{border-left:3px solid var(--aurora-cyan)}
 @keyframes toastIn{from{opacity:0;transform:translateX(20px) translateY(10px)}to{opacity:1;transform:translateX(0) translateY(0)}}
-.loading{display:none;position:absolute;inset:0;background:rgba(3,5,12,.82);backdrop-filter:blur(12px);border-radius:28px;z-index:5;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loading{display:none;position:absolute;inset:0;background:rgba(6,7,13,0.85);backdrop-filter:blur(14px);border-radius:28px;z-index:5;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 .loading.active{display:flex}
-.loading .spin{width:36px;height:36px;border:3px solid rgba(212,175,55,.15);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite}
+.loading .spin{width:36px;height:36px;border:3px solid rgba(212,175,55,0.15);border-top-color:var(--brass);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.loading .msg{color:var(--brass-soft);font-size:13px;font-weight:500;letter-spacing:0.02em}
+
+/* Back link */
+.back-link{position:fixed;top:24px;left:24px;z-index:50;display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--hairline-strong);backdrop-filter:blur(14px);font-size:12.5px;color:var(--ink-2);font-weight:500;transition:all .25s}
+.back-link:hover{color:#fff;background:rgba(255,255,255,0.07);border-color:var(--brass)}
+.back-link .arrow{transition:transform .25s}
+.back-link:hover .arrow{transform:translateX(-2px)}
+
+/* Name choice modal */
+#nameChoiceModal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(2,6,18,0.85);backdrop-filter:blur(20px);align-items:center;justify-content:center;padding:20px}
+.name-modal{width:min(440px,100%);background:linear-gradient(180deg, rgba(22,26,40,0.95), rgba(10,12,22,0.95));border:1px solid var(--hairline-strong);border-radius:24px;padding:28px;box-shadow:0 40px 100px rgba(0,0,0,0.6);animation:modalPop .3s var(--ease-spring)}
+@keyframes modalPop{from{opacity:0;transform:scale(.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.name-modal h3{font-family:var(--display);font-size:22px;font-weight:700;text-align:center;margin-bottom:8px;color:#fff;letter-spacing:-0.02em}
+.name-modal h3 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--brass-soft)}
+.name-modal .sub{text-align:center;color:var(--ink-2);font-size:13.5px;line-height:1.55;margin-bottom:18px}
+.name-modal .av-frame{width:72px;height:72px;margin:0 auto 14px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,0.04);border:2px solid rgba(212,175,55,0.3);display:flex;align-items:center;justify-content:center;font-size:32px}
+.name-modal .opt-grid{display:grid;gap:10px;margin-bottom:18px}
+.opt-card{padding:14px 16px;background:rgba(255,255,255,0.04);border:1.5px solid var(--hairline-strong);border-radius:14px;text-align:left;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .25s;color:inherit;width:100%}
+.opt-card:hover{background:rgba(255,255,255,0.06);border-color:var(--hairline-strong)}
+.opt-card.featured{border-color:rgba(212,175,55,0.35);background:linear-gradient(135deg, rgba(212,175,55,0.08), rgba(34,211,238,0.04))}
+.opt-card .ic{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--brass),var(--aurora-violet));display:flex;align-items:center;justify-content:center;font-weight:800;color:#0a0a0a;font-family:var(--display);font-size:14px;flex:none;overflow:hidden}
+.opt-card .ic img{width:100%;height:100%;object-fit:cover}
+.opt-card .body{flex:1;min-width:0}
+.opt-card .nm{font-weight:600;color:#fff;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opt-card .desc{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.opt-card .check{width:22px;height:22px;border-radius:50%;border:2px solid var(--hairline-strong);display:flex;align-items:center;justify-content:center;flex:none}
+.opt-card .check i{width:10px;height:10px;border-radius:50%;background:var(--success);display:none}
+.opt-card.selected .check{border-color:var(--success)}
+.opt-card.selected .check i{display:block}
+.opt-input{padding:14px 16px;background:linear-gradient(135deg, rgba(212,175,55,0.06), rgba(34,211,238,0.03));border:1.5px solid rgba(212,175,55,0.3);border-radius:14px}
+.opt-input .label{font-weight:700;color:var(--brass-soft);font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.opt-input .label .rec{font-size:9.5px;background:var(--brass-soft);color:#0a0a0a;padding:2px 6px;border-radius:999px;letter-spacing:0.06em}
+.opt-input input{width:100%;padding:12px 14px;background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.2);border-radius:10px;color:#fff;font-size:14px;outline:none;transition:.2s}
+.opt-input input:focus{border-color:rgba(212,175,55,0.5);box-shadow:0 0 0 3px rgba(212,175,55,0.12)}
+.av-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.av-row .lbl{font-size:11px;color:var(--ink-3);font-family:var(--mono);letter-spacing:0.04em}
+.avPick{width:30px;height:30px;border-radius:50%;border:2px solid var(--hairline-strong);background:rgba(255,255,255,0.04);font-size:15px;cursor:pointer;transition:.2s}
+.avPick:hover{transform:scale(1.1);background:rgba(255,255,255,0.07)}
+.avPick.active{border-color:var(--brass);background:rgba(212,175,55,0.18);transform:scale(1.1)}
+.confirm-btn{width:100%;padding:14px;background:linear-gradient(135deg,#f0d27a,#d4af37);color:#0a0a0a;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 12px 30px rgba(212,175,55,0.3);transition:.25s}
+.confirm-btn:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(212,175,55,0.4)}
+.modal-foot{text-align:center;margin-top:14px;color:var(--ink-4);font-size:11px;line-height:1.5}
 </style>
 </head>
 <body>
-<div class="atmosphere"></div>
-<div class="gridlines"></div>
-<canvas id="starfield"></canvas>
 
-<div class="card-wrap" id="cardWrap">
-  <div class="card" id="loginCard">
-    <div class="loading" id="loading"><div class="spin"></div><div style="color:#f0d383;font-size:.85rem;font-weight:600">Securing login...</div></div>
-    
-    <div class="ultra-glow"></div>
-    <div class="brand-lockup">SAVOIRÉ <span class="ai">AI</span></div>
-    <div class="logo">🎓</div>
-    <div class="horizon"></div>
-    
-    <h1>Welcome <em>Back</em></h1>
-    <p class="sub" style="text-align:center">
-      <span style="font-family:'Fraunces',serif;font-style:italic;color:#f0d383;font-size:16px;display:block;margin-bottom:6px">Think Less. Know More.</span>
-      <span style="color:#aab2cc">Savoiré AI • <b style="color:#f0d383">10,000 Credits / Month FREE</b> • No card needed</span><br>
-      <span style="font-size:11px;color:#6b7394;margin-top:4px;display:inline-block">Lifetime Validity • UPI Ready • 20+ Languages</span>
-    </p>
-    
-    <div class="token-badge">✨ <span>🎁 10,000 Credits FREE / Month</span> <span style="opacity:.6">•</span> <span style="font-family:monospace;font-size:11px">UPI Ready • Lifetime</span></div>
-    
-    <button class="btn btn-google" id="googleBtn" data-ripple>
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-      Continue with Google
-    </button>
-    
-    <div class="divider">or continue with email</div>
-    
-    <input class="input" id="emailInput" type="email" placeholder="your@email.com" autocomplete="email">
-    <input class="input" id="passInput" type="password" placeholder="Password (min 6 chars)" autocomplete="current-password">
-    <button class="btn btn-email" id="emailBtn" data-ripple>Login / Sign Up →</button>
-    
-    <div class="benefits">
-      <div class="benefit"><span>📝</span><div><b>Notes</b>Exam-ready</div></div>
-      <div class="benefit"><span>🗂️</span><div><b>Flashcards</b>AI Deck</div></div>
-      <div class="benefit"><span>❓</span><div><b>Quiz</b>Auto-graded</div></div>
-      <div class="benefit"><span>🗺️</span><div><b>Mind Map</b>Visual</div></div>
+<div class="aurora-bg">
+  <div class="aurora-orb a"></div>
+  <div class="aurora-orb b"></div>
+  <div class="aurora-orb c"></div>
+</div>
+<canvas id="starfield"></canvas>
+<div class="grain"></div>
+
+<a href="index.html" class="back-link"><span class="arrow">←</span> Back to home</a>
+
+<div class="stage">
+  <aside class="promo">
+    <div class="eyebrow">Savoiré AI · v2.0</div>
+    <h1>Your premium <em>AI study</em> workspace.</h1>
+    <p>Five formats, one orchestration layer, lifetime credits. Built for students who take their learning seriously.</p>
+    <ul>
+      <li><span class="ic">📝</span> <div><b>Notes</b> — exam-grade structure, on demand</div></li>
+      <li><span class="ic">🗂️</span> <div><b>Flashcards</b> — spaced-repetition ready</div></li>
+      <li><span class="ic">❓</span> <div><b>Quiz</b> — auto-graded with explanations</div></li>
+      <li><span class="ic">🗺️</span> <div><b>Mind maps</b> — visual, branch by branch</div></li>
+    </ul>
+    <div class="testi">
+      <p class="q">Hindi mein poori notes bana deta hai, seconds mein. Board exams ki tayari ka sabse tez tareeka mil gaya.</p>
+      <div class="who">
+        <div class="av">N</div>
+        <div><div class="nm">Noor Hasan</div><div class="rl">Hindi student · India</div></div>
+      </div>
     </div>
-    
-    <div class="footer">
-      Secure login via Firebase • API keys are restricted to your domain • UPI via Razorpay<br>
-      Built by <b>Sooban Talha Technologies</b> • Free plan: 15k tokens/month
+  </aside>
+
+  <div class="wrap" id="cardWrap">
+    <div class="card" id="loginCard">
+      <div class="loading" id="loading"><div class="spin"></div><div class="msg">Securing sign-in…</div></div>
+
+      <div class="brand">
+        <div class="brand-mark"><img src="clogo.png" alt=""></div>
+        <div class="brand-text">SAVOIRÉ <span class="ai">AI</span></div>
+      </div>
+
+      <h1 class="title">Welcome <em>back</em></h1>
+      <p class="sub">
+        <em>"Study less. Know everything."</em>
+        Sign in to open your premium AI study workspace.
+      </p>
+
+      <button class="btn btn-google" id="googleBtn" data-ripple>
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="divider">or continue with email</div>
+
+      <input class="input" id="emailInput" type="email" placeholder="your@email.com" autocomplete="email">
+      <input class="input" id="passInput" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password">
+      <button class="btn btn-email" id="emailBtn" data-ripple>Sign in or Create account →</button>
+
+      <div class="benefits">
+        <div class="benefit"><span class="ic">📝</span><div><b>Notes</b><span>Exam-ready</span></div></div>
+        <div class="benefit"><span class="ic">🗂️</span><div><b>Flashcards</b><span>AI deck</span></div></div>
+        <div class="benefit"><span class="ic">❓</span><div><b>Quiz</b><span>Auto-graded</span></div></div>
+        <div class="benefit"><span class="ic">🗺️</span><div><b>Mind Map</b><span>Visual</span></div></div>
+      </div>
+
+      <div class="foot">
+        Secure sign-in via Firebase · Payments by Razorpay · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a><br>
+        Built by <b>Sooban Talha Technologies</b>
+      </div>
     </div>
   </div>
 </div>
 
-
-<div id="nameChoiceModal" style="display:none;position:fixed;inset:0;z-index:10000;background:radial-gradient(600px at 20% 20%,rgba(212,175,55,.12),transparent 60%),rgba(2,6,18,.88);backdrop-filter:blur(20px);align-items:center;justify-content:center;padding:20px">
-  <div style="width:min(440px,100%);background:rgba(13,19,48,.94);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.6);animation:modalPop .3s cubic-bezier(.34,1.56,.64,1)">
-    <div style="text-align:center;margin-bottom:20px">
-      <div style="width:64px;height:64px;margin:0 auto 12px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.06);border:2px solid rgba(212,175,55,.3);display:flex;align-items:center;justify-content:center" id="nameChoiceAvatar">🎓</div>
-      <h3 style="font-family:'Fraunces',serif;font-size:22px;margin-bottom:6px">Welcome! How should we call you?</h3>
-      <p style="color:#aab2cc;font-size:.85rem;line-height:1.6">Choose how you want to appear on your dashboard</p>
+<div id="nameChoiceModal">
+  <div class="name-modal">
+    <div style="text-align:center;margin-bottom:18px">
+      <div class="av-frame" id="nameChoiceAvatar">🎓</div>
+      <h3>Welcome — how should <em>we call you</em>?</h3>
+      <p class="sub">Choose how you want to appear on your dashboard.</p>
     </div>
-    
-    <div style="display:grid;gap:12px;margin-bottom:20px">
-      <button id="continueWithGoogleBtn" style="padding:14px 16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;text-align:left;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.2s">
-        <img id="googlePhotoPreview" src="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;display:none">
-        <div id="googleInitialPreview" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#d4af37,#ffae00);display:flex;align-items:center;justify-content:center;font-weight:800;color:#140f00">S</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;color:#fff;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="googleNamePreview">Sooban Hindustani Gamer</div>
-          <div style="font-size:.7rem;color:#aab2cc">Continue with Google name & photo</div>
+
+    <div class="opt-grid">
+      <button class="opt-card" id="continueWithGoogleBtn" type="button">
+        <div class="ic" id="googleInitialPreview">S</div>
+        <div class="body">
+          <div class="nm" id="googleNamePreview">Continue with Google</div>
+          <div class="desc">Use your Google name and photo</div>
         </div>
-        <div style="width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:50%;background:#00ff88;display:none" id="googleCheck"></div></div>
+        <div class="check"><i></i></div>
       </button>
-      
-      <div style="text-align:center;color:#6b7394;font-size:.7rem;text-transform:uppercase;letter-spacing:.12em">or</div>
-      
-      <div style="padding:14px 16px;background:linear-gradient(135deg,rgba(212,175,55,.08),rgba(0,212,255,.04));border:1.5px solid rgba(212,175,55,.35);border-radius:14px;box-shadow:0 0 20px rgba(212,175,55,.12)">
-        <div style="font-weight:700;color:#f0d383;font-size:.85rem;margin-bottom:10px;display:flex;align-items:center;gap:6px">✏️ Enter Your Name <span style="font-size:.65rem;background:#f0d383;color:#140f00;padding:2px 6px;border-radius:999px">Recommended</span></div>
-        <input id="customNameInput" type="text" placeholder="e.g. Rahul, Noor, Alex..." style="width:100%;padding:12px 14px;background:rgba(0,0,0,.3);border:1px solid rgba(212,175,55,.2);border-radius:10px;color:#fff;font-size:14px;outline:none;transition:.2s" autofocus>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <div style="display:flex;align-items:center;gap:6px;font-size:.7rem;color:#aab2cc"><span style="width:12px;height:12px;border-radius:50%;background:#d4af37;display:inline-block"></span> Choose Avatar:</div>
-          <div id="avatarPicker" style="display:flex;gap:6px;flex-wrap:wrap">
-            <button type="button" class="avPick" data-emoji="🎓" style="width:28px;height:28px;border-radius:50%;border:2px solid #d4af37;background:rgba(212,175,55,.15);font-size:14px;cursor:pointer">🎓</button>
-            <button type="button" class="avPick" data-emoji="🧠" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:14px;cursor:pointer">🧠</button>
-            <button type="button" class="avPick" data-emoji="⚡" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:14px;cursor:pointer">⚡</button>
-            <button type="button" class="avPick" data-emoji="🔥" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:14px;cursor:pointer">🔥</button>
-            <button type="button" class="avPick" data-emoji="🚀" style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);font-size:14px;cursor:pointer">🚀</button>
-          </div>
+
+      <div class="opt-input">
+        <div class="label">✏️ Enter your name <span class="rec">Recommended</span></div>
+        <input id="customNameInput" type="text" placeholder="e.g. Rahul, Noor, Alex…" autocomplete="given-name">
+        <div class="av-row">
+          <span class="lbl">Avatar</span>
+          <button type="button" class="avPick active" data-emoji="🎓">🎓</button>
+          <button type="button" class="avPick" data-emoji="🧠">🧠</button>
+          <button type="button" class="avPick" data-emoji="⚡">⚡</button>
+          <button type="button" class="avPick" data-emoji="🔥">🔥</button>
+          <button type="button" class="avPick" data-emoji="🚀">🚀</button>
         </div>
       </div>
     </div>
-    
-    <button id="confirmNameBtn" style="width:100%;padding:14px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:12px;font-weight:800;font-size:.9rem;cursor:pointer;box-shadow:0 8px 20px rgba(212,175,55,.3)">Continue with Custom Name →</button>
-    <div style="text-align:center;margin-top:12px;color:#6b7394;font-size:.7rem">You can change this later in Settings • 10,000 FREE Credits included</div>
+
+    <button id="confirmNameBtn" class="confirm-btn">Continue with custom name →</button>
+    <div class="modal-foot">You can change this later in <b>Settings</b>.</div>
   </div>
 </div>
-<style>
-@keyframes modalPop{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.avPick.active{border-color:#d4af37!important;background:rgba(212,175,55,.2)!important;transform:scale(1.1)}
-</style>
 
 <div id="toastContainer"></div>
 
 <script type="module">
-// NO KEYS IN SOURCE - Fetch from backend /api/firebase-config
+// Fetch Firebase config from backend
 let firebaseConfig = null;
 let auth = null, db = null, provider = null;
 
@@ -247,11 +358,8 @@ async function loadConfig() {
     const res = await fetch('/api/firebase-config');
     if (!res.ok) throw new Error('Config fetch failed');
     firebaseConfig = await res.json();
-    console.log('🔒 Config loaded securely from backend');
-    initFirebase();
   } catch(e) {
-    console.error('Config load failed', e);
-    // Fallback - direct config (restricted by domain, safe)
+    console.warn('Config load failed, using restricted fallback', e.message);
     firebaseConfig = {
       apiKey: "AIzaSyBDgKVvzsOAb0ZrsSooTEU0mgvLxadphoM",
       authDomain: "savoire-ai.firebaseapp.com",
@@ -260,8 +368,8 @@ async function loadConfig() {
       messagingSenderId: "528576008706",
       appId: "1:528576008706:web:4514bd93193df05ba7cd1b"
     };
-    initFirebase();
   }
+  initFirebase();
 }
 
 async function initFirebase() {
@@ -272,19 +380,14 @@ async function initFirebase() {
   const app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
-  // FIX for mobile: Try local persistence, fallback to inMemory if blocked
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-  } catch(e) {
-    console.log('Local persistence failed, trying inMemory', e.message);
-    try { await setPersistence(auth, inMemoryPersistence); } catch(e2) { console.log('InMemory persistence also failed', e2.message); }
-  }
+  try { await setPersistence(auth, browserLocalPersistence); }
+  catch(e) { try { await setPersistence(auth, inMemoryPersistence); } catch(e2) {} }
+
   provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   provider.addScope('profile');
   provider.addScope('email');
 
-  // Handle redirect result IMMEDIATELY for mobile popup blocked - must be called early
   try {
     const redirectResult = await getRedirectResult(auth, browserPopupRedirectResolver);
     if (redirectResult && redirectResult.user) {
@@ -293,17 +396,8 @@ async function initFirebase() {
       showNameChoice(redirectResult.user);
       return;
     }
-  } catch(e) {
-    console.log('No redirect result or redirect failed', e.code, e.message);
-    // If redirect failed due to missing initial state, clear storage and try popup
-    if (e.code === 'auth/missing-initial-state' || e.message.includes('missing initial state')) {
-      console.warn('Redirect failed due to partitioned storage, will use popup on next click');
-      // Clear any corrupted state
-      try { sessionStorage.clear(); } catch(e){}
-    }
-  }
+  } catch(e) { console.log('No redirect result', e.code); }
 
-  // Hide loading
   document.getElementById('loading').classList.remove('active');
 
   async function createUserDoc(user) {
@@ -312,30 +406,20 @@ async function initFirebase() {
     let isNewUser = false;
     if (!snap.exists()) {
       await setDoc(ref, {
-        uid: user.uid,
-        email: user.email,
+        uid: user.uid, email: user.email,
         displayName: user.displayName || user.email.split('@')[0],
         photoURL: user.photoURL || '',
-        plan: 'free',
-        balance: 10000,
-        tokens_limit: 10000,
-        tokens_used: 0,
-        freeCreditsGiven: 10000,
-        totalPurchased: 0,
-        totalUsed: 0,
-        totalGenerations: 0,
-        createdAt: serverTimestamp(),
-        cycle_start: new Date().toISOString()
+        plan: 'free', balance: 10000, tokens_limit: 10000, tokens_used: 0,
+        freeCreditsGiven: 10000, totalPurchased: 0, totalUsed: 0, totalGenerations: 0,
+        createdAt: serverTimestamp(), cycle_start: new Date().toISOString()
       });
       isNewUser = true;
-      console.log('✅ New user: 10k credits granted');
     } else {
       const data = snap.data();
       if (!data.tokens_limit || data.tokens_limit < 1000) {
         await setDoc(ref, { tokens_limit: 10000, balance: 10000, freeCreditsGiven: 10000, tokens_used: data.tokens_used||0, plan: data.plan||'free', cycle_start: data.cycle_start||new Date().toISOString() }, { merge: true });
       }
     }
-    // Send custom welcome email from your no-reply (not Google's security email)
     if (isNewUser) {
       try {
         const token = await user.getIdToken();
@@ -344,7 +428,7 @@ async function initFirebase() {
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
           body: JSON.stringify({ email: user.email, name: user.displayName || user.email.split('@')[0], photoURL: user.photoURL || '' })
         }).catch(()=>{});
-      } catch(e) { console.log('Welcome email trigger failed', e.message); }
+      } catch(e) {}
     }
   }
 
@@ -352,58 +436,37 @@ async function initFirebase() {
     const c = document.getElementById('toastContainer');
     const t = document.createElement('div');
     t.className = `toast ${type}`;
-    t.innerHTML = `<span>${type==='error'?'❌':'✅'}</span><span>${msg}</span>`;
+    t.innerHTML = `<span>${type==='error'?'✕':type==='info'?'ⓘ':'✓'}</span><span>${msg}</span>`;
     c.appendChild(t);
-    setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4000);
+    setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(20px)'; setTimeout(()=>t.remove(),300); }, 4500);
   }
 
-  // Handle redirect result (for mobile popup blocked case)
-  try {
-    const { getRedirectResult } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
-    const redirectResult = await getRedirectResult(auth);
-    if (redirectResult && redirectResult.user) {
-      document.getElementById('loading').classList.add('active');
-      await createUserDoc(redirectResult.user);
-      const token = await redirectResult.user.getIdToken();
-      localStorage.setItem('sv_firebase_token', token);
-      localStorage.setItem('sv_user', redirectResult.user.displayName || redirectResult.user.email);
-      toast('success', `Welcome ${redirectResult.user.displayName || 'Scholar'}! 🎓`);
-      setTimeout(()=> window.location.href = '/dashboard.html', 800);
-      return;
-    }
-  } catch(e) { console.log('No redirect result', e.message); }
-
-  // Name choice logic
   let selectedEmoji = '🎓';
   let selectedGoogleUser = null;
-  
+
   window.showNameChoice = function(googleUser) {
     selectedGoogleUser = googleUser;
     window.pendingGoogleUser = googleUser;
     const modal = document.getElementById('nameChoiceModal');
     const namePrev = document.getElementById('googleNamePreview');
     const avatarDiv = document.getElementById('nameChoiceAvatar');
-    const photoPrev = document.getElementById('googlePhotoPreview');
     const initialPrev = document.getElementById('googleInitialPreview');
-    
+
     if (namePrev) namePrev.textContent = googleUser.displayName || googleUser.email.split('@')[0];
     if (googleUser.photoURL) {
-      if (photoPrev) { photoPrev.src = googleUser.photoURL; photoPrev.style.display = 'block'; }
-      if (initialPrev) initialPrev.style.display = 'none';
-      avatarDiv.innerHTML = `<img src="${googleUser.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+      initialPrev.innerHTML = `<img src="${googleUser.photoURL}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${(googleUser.displayName||'S')[0].toUpperCase()}'">`;
+      avatarDiv.innerHTML = `<img src="${googleUser.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
     } else {
-      if (photoPrev) photoPrev.style.display = 'none';
-      if (initialPrev) { initialPrev.style.display = 'flex'; initialPrev.textContent = (googleUser.displayName||'S')[0].toUpperCase(); }
+      initialPrev.textContent = (googleUser.displayName||'S')[0].toUpperCase();
     }
     modal.style.display = 'flex';
     setTimeout(()=> document.getElementById('customNameInput')?.focus(), 300);
   };
 
   document.getElementById('continueWithGoogleBtn')?.addEventListener('click', () => {
-    document.getElementById('googleCheck').style.display = 'block';
-    document.getElementById('continueWithGoogleBtn').style.borderColor = '#00ff88';
-    document.getElementById('continueWithGoogleBtn').style.background = 'rgba(0,255,136,.08)';
-    setTimeout(()=> completeLoginWithChoice('google'), 300);
+    document.getElementById('continueWithGoogleBtn').classList.add('selected');
+    document.getElementById('customNameInput').parentElement.parentElement.querySelector('.opt-input')?.classList.remove('selected');
+    setTimeout(()=> completeLoginWithChoice('google'), 280);
   });
 
   document.querySelectorAll('.avPick').forEach(btn=>{
@@ -419,77 +482,55 @@ async function initFirebase() {
     const customName = document.getElementById('customNameInput')?.value.trim();
     const googleUser = selectedGoogleUser || window.pendingGoogleUser;
     if (!googleUser) return;
-    
+
     document.getElementById('loading').classList.add('active');
     modal.style.display = 'none';
-    
+
     try {
       let finalName = googleUser.displayName || googleUser.email.split('@')[0];
       let finalPhoto = googleUser.photoURL || '';
       let finalEmoji = '🎓';
-      
+
       if (choice === 'custom' && customName && customName.length >= 2) {
         finalName = customName;
-        finalPhoto = ''; // Don't use Google photo if custom name
+        finalPhoto = '';
         finalEmoji = selectedEmoji;
       } else if (choice === 'google') {
         finalEmoji = selectedEmoji;
-      } else {
-        // If custom name entered but google button not clicked, use custom
-        if (customName && customName.length >= 2) {
-          finalName = customName;
-          finalPhoto = '';
-          finalEmoji = selectedEmoji;
-        }
+      } else if (customName && customName.length >= 2) {
+        finalName = customName;
+        finalPhoto = '';
+        finalEmoji = selectedEmoji;
       }
-      
-      // Create user doc with chosen name
+
       const ref = doc(db, 'users', googleUser.uid);
       const snap = await getDoc(ref);
       let isNewUser = !snap.exists();
       if (!snap.exists()) {
         await setDoc(ref, {
-          uid: googleUser.uid,
-          email: googleUser.email,
-          displayName: finalName,
-          photoURL: finalPhoto,
-          avatarEmoji: finalEmoji,
-          displayNameSource: choice,
-          originalGoogleName: googleUser.displayName || '',
-          plan: 'free',
-          balance: 10000,
-          tokens_limit: 10000,
-          tokens_used: 0,
-          freeCreditsGiven: 10000,
-          totalPurchased: 0,
-          totalUsed: 0,
-          totalGenerations: 0,
-          createdAt: serverTimestamp(),
-          cycle_start: new Date().toISOString()
+          uid: googleUser.uid, email: googleUser.email,
+          displayName: finalName, photoURL: finalPhoto, avatarEmoji: finalEmoji,
+          displayNameSource: choice, originalGoogleName: googleUser.displayName || '',
+          plan: 'free', balance: 10000, tokens_limit: 10000, tokens_used: 0,
+          freeCreditsGiven: 10000, totalPurchased: 0, totalUsed: 0, totalGenerations: 0,
+          createdAt: serverTimestamp(), cycle_start: new Date().toISOString()
         });
-      } else {
-        // Update name if custom chosen
-        if (choice === 'custom' && customName) {
-          await setDoc(ref, { displayName: finalName, photoURL: finalPhoto, avatarEmoji: finalEmoji }, { merge: true });
-        }
+      } else if (choice === 'custom' && customName) {
+        await setDoc(ref, { displayName: finalName, photoURL: finalPhoto, avatarEmoji: finalEmoji }, { merge: true });
       }
-      
+
       const token = await googleUser.getIdToken();
       localStorage.setItem('sv_firebase_token', token);
       localStorage.setItem('sv_user', finalName);
       localStorage.setItem('sv_avatar_emoji', finalEmoji);
       localStorage.setItem('sv_user_photo', finalPhoto);
-      
-      // Only show 10k added for NEW users, welcome back for returning - FIX for double 10k message
+
       if (isNewUser) {
-        toast('success', `Welcome ${finalName}! 🎉 10,000 Credits added! Free credits valid 30 days.`);
-        console.log('New user, 10k welcome bonus given');
+        toast('success', `Welcome ${finalName}! Your account is ready.`);
       } else {
-        toast('success', `Welcome back ${finalName}! 👋 Your credits and history synced.`);
-        console.log('Returning user, welcome back - no extra credits');
+        toast('success', `Welcome back, ${finalName}!`);
       }
-      
-      // Send welcome email
+
       try {
         fetch('/api/send-welcome-email', {
           method: 'POST',
@@ -497,7 +538,7 @@ async function initFirebase() {
           body: JSON.stringify({ email: googleUser.email, name: finalName, photoURL: finalPhoto })
         }).catch(()=>{});
       } catch(e) {}
-      
+
       setTimeout(()=> window.location.href = '/dashboard.html', 800);
     } catch(e) {
       document.getElementById('loading').classList.remove('active');
@@ -514,49 +555,36 @@ async function initFirebase() {
     try {
       let result;
       try {
-        // Use browserPopupRedirectResolver for better mobile support
         result = await signInWithPopup(auth, provider, browserPopupRedirectResolver);
       } catch (popupErr) {
-        console.warn('Popup failed, trying redirect', popupErr.code, popupErr.message);
         if (popupErr.code === 'auth/popup-blocked' || popupErr.code === 'auth/popup-closed-by-user' || popupErr.code === 'auth/cancelled-popup-request' || /popup/i.test(popupErr.message) || popupErr.code === 'auth/unauthorized-domain' || popupErr.code === 'auth/missing-initial-state') {
-          toast('info', 'Popup blocked, opening Google login...');
-          try {
-            await signInWithRedirect(auth, provider, browserPopupRedirectResolver);
-          } catch (redirectErr) {
-            console.error('Redirect also failed', redirectErr);
+          toast('info', 'Popup blocked, opening Google sign-in…');
+          try { await signInWithRedirect(auth, provider, browserPopupRedirectResolver); return; }
+          catch (redirectErr) {
             if (redirectErr.code === 'auth/missing-initial-state' || redirectErr.message.includes('missing initial state')) {
-              toast('error', 'Phone browser is blocking third-party cookies. Please: 1) Use Chrome, 2) Allow popups, 3) Try Email login, or 4) Open in desktop mode. Alternatively use Email/Password login below.');
+              toast('error', 'Mobile browser blocked sign-in. Allow 3rd-party cookies or use Email.');
               document.getElementById('loading').classList.remove('active');
-              // Fallback: show email login focused
               document.getElementById('emailInput')?.focus();
               return;
             }
             throw redirectErr;
           }
-          return;
-        } else {
-          throw popupErr;
-        }
+        } else { throw popupErr; }
       }
       document.getElementById('loading').classList.remove('active');
       showNameChoice(result.user);
     } catch(e) {
       document.getElementById('loading').classList.remove('active');
-      console.error(e);
-      if (e.code === 'auth/unauthorized-domain') {
-        toast('error', 'Domain not authorized. Add your domain in Firebase -> Auth -> Authorized domains: ' + window.location.hostname);
-      } else if (e.code === 'auth/missing-initial-state' || e.message.includes('missing initial state')) {
-        toast('error', 'Mobile browser blocked login. Please allow 3rd party cookies or use Email login. On iPhone, open in Safari not Chrome, or enable Popups in settings.');
-      } else {
-        toast('error', e.message);
-      }
+      if (e.code === 'auth/unauthorized-domain') toast('error', 'Domain not authorized: ' + window.location.hostname);
+      else if (e.code === 'auth/missing-initial-state' || e.message.includes('missing initial state')) toast('error', 'Mobile browser blocked sign-in. Allow 3rd-party cookies or use Email.');
+      else toast('error', e.message);
     }
   };
 
   document.getElementById('emailBtn').onclick = async () => {
     const email = document.getElementById('emailInput').value.trim();
     const pass = document.getElementById('passInput').value.trim();
-    if(!email || pass.length<6) { toast('error','Enter valid email and 6+ char password'); return; }
+    if(!email || pass.length<6) { toast('error','Enter a valid email and a 6+ character password.'); return; }
     document.getElementById('loading').classList.add('active');
     try {
       let cred;
@@ -566,7 +594,7 @@ async function initFirebase() {
       const token = await cred.user.getIdToken();
       localStorage.setItem('sv_firebase_token', token);
       localStorage.setItem('sv_user', cred.user.email.split('@')[0]);
-      toast('success','Login success! Redirecting...');
+      toast('success','Signed in. Opening your dashboard…');
       setTimeout(()=> window.location.href = '/dashboard.html', 800);
     } catch(e){
       document.getElementById('loading').classList.remove('active');
@@ -576,14 +604,10 @@ async function initFirebase() {
 
   onAuthStateChanged(auth, async (user) => {
     if (user) {
-      const token = await user.getIdToken();
-      localStorage.setItem('sv_firebase_token', token);
-      // Auto redirect if already logged in and came to login page
-      // window.location.href = '/dashboard.html';
+      try { const token = await user.getIdToken(); localStorage.setItem('sv_firebase_token', token); } catch(e){}
     }
   });
 
-  // Ripple effect
   document.querySelectorAll('[data-ripple]').forEach(btn => {
     btn.addEventListener('click', function(e){
       const rect = this.getBoundingClientRect();
@@ -595,9 +619,29 @@ async function initFirebase() {
   });
 }
 
-// Starfield + Card tilt + GSAP entrance
+/* Card tilt */
 (function(){
-  // Starfield
+  const card = document.getElementById('loginCard');
+  const wrap = document.getElementById('cardWrap');
+  if(!wrap) return;
+  wrap.addEventListener('mousemove', e => {
+    if(window.innerWidth < 980) return;
+    const r = wrap.getBoundingClientRect();
+    const px = (e.clientX-r.left)/r.width - 0.5;
+    const py = (e.clientY-r.top)/r.height - 0.5;
+    card.style.transform = `rotateY(${px*6}deg) rotateX(${-py*6}deg) translateZ(10px)`;
+  });
+  wrap.addEventListener('mouseleave', () => { card.style.transform = 'rotateY(0) rotateX(0)'; });
+})();
+
+/* GSAP entrance */
+gsap.fromTo('#loginCard', {y:30, opacity:0, scale:0.97}, {y:0, opacity:1, scale:1, duration:0.9, ease:'power4.out', delay:0.15});
+if(window.innerWidth >= 980){
+  gsap.fromTo('.promo > *', {y:18, opacity:0}, {y:0, opacity:1, duration:0.8, stagger:0.08, ease:'power3.out', delay:0.4});
+}
+
+/* Starfield */
+(function(){
   const canvas = document.getElementById('starfield');
   const ctx = canvas.getContext('2d');
   let w,h,stars=[];
@@ -605,7 +649,7 @@ async function initFirebase() {
   function init(){
     resize();
     const count = Math.min(180, Math.floor(w*h/9000));
-    const COLORS = ['#d4af37','#00d4ff','#9b6bff','#eef1f8'];
+    const COLORS = ['#d4af37','#22d3ee','#8b5cf6','#f3f5fb'];
     stars = Array.from({length:count}, ()=>({
       x:Math.random()*w, y:Math.random()*h, r:Math.random()*1.4+0.2,
       c:COLORS[Math.floor(Math.random()*COLORS.length)], s:Math.random()*0.18+0.03, o:Math.random()*0.5+0.2
@@ -624,23 +668,9 @@ async function initFirebase() {
   }
   window.addEventListener('resize', resize);
   init(); draw();
-
-  // Card tilt
-  const card = document.getElementById('loginCard');
-  const wrap = document.getElementById('cardWrap');
-  wrap.addEventListener('mousemove', e=>{
-    const r = wrap.getBoundingClientRect();
-    const px = (e.clientX-r.left)/r.width -0.5;
-    const py = (e.clientY-r.top)/r.height -0.5;
-    card.style.transform = `rotateY(${px*8}deg) rotateX(${-py*8}deg) translateZ(10px)`;
-  });
-  wrap.addEventListener('mouseleave', ()=>{ card.style.transform='rotateY(0) rotateX(0)'; });
-
-  // GSAP entrance
-  gsap.fromTo('#loginCard', {y:40, opacity:0, scale:0.96}, {y:0, opacity:1, scale:1, duration:1, ease:'power4.out', delay:0.2});
 })();
 
 loadConfig();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2885e9ef8b88af8',t:'MTc4NjI5NTM3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
