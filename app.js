@@ -48,7 +48,7 @@ const SAVOIRÉ = {
   DEVSITE:     'soobantalhatech.xyz',
   WEBSITE:     'savoireai.vercel.app',
   FOUNDER:     'Sooban Talha',
-  TAGLINE:     'Think Less. Know More.',
+  TAGLINE:     'Think less. Know more.',
   API_URL:     '/api/study',
   MAX_HISTORY: 30,
   MAX_SAVED:   30,
@@ -174,11 +174,11 @@ const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','�
 const DEMO_STEPS = [
   {
     step: 1, title: 'Welcome to Savoiré AI ✨',
-    subtitle: "The World's Most Advanced Free AI Study Assistant",
-    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
+    subtitle: "The World's Most Advanced AI Study Assistant",
+    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models.',
     icon: 'fa-graduation-cap', color: '#d4af37', targetId: null, arrow: null,
     tips: [
-      { icon: 'fa-infinity',   text: '100% Free — No login, no payment, ever' },
+      { icon: 'fa-infinity',   text: '10,000 welcome credits on signup — top-up packs from ₹19' },
       { icon: 'fa-globe',      text: 'Works in 20+ languages including Urdu, Hindi, Arabic' },
       { icon: 'fa-shield-alt', text: 'All your data stays on your device — private & secure' },
       { icon: 'fa-bolt',       text: 'Powered by 14+ cutting-edge AI models with live fallback' },
@@ -1507,7 +1507,7 @@ Examples:
         if (res.status === 402) {
           const _d = await res.json().catch(()=>({}));
           if (typeof window !== 'undefined' && window._showPaidUpgradeModal) window._showPaidUpgradeModal(_d);
-          reject(new Error('TOKEN_EXHAUSTED: ' + (_d.message||'Buy 1M for Rs 49')));
+          reject(new Error('TOKEN_EXHAUSTED: ' + (_d.message||'Top up with Popular - 1M for just ₹99')));
           return;
         }
         // update token bar from header if present
@@ -2085,7 +2085,7 @@ Examples:
           <div class="rbf-text">
             <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank" style="font-family:'Orbitron',sans-serif;letter-spacing:.05em">${SAVOIRÉ.BRAND}</a> ·
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> ·
-            Free forever.
+            Welcome credits on signup.
           </div>
         </div>
         <div class="rbf-ts">${new Date().toLocaleString()}</div>
@@ -3110,7 +3110,7 @@ Examples:
       doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
       doc.text('SAVOIRÉ AI',ML+28,22);
       doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text("v2.0 — World's Most Advanced Free AI Study Assistant",ML+28,29);
+      doc.text("v2.0 — World's Most Advanced AI Study Assistant",ML+28,29);
       doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`,ML+28,36);
       setDC(C.gold); doc.setLineWidth(0.4); doc.line(ML,43,PW-MR,43);
 
@@ -4188,7 +4188,7 @@ Examples:
     const n = document.createElement('div');
     n.id = 'paidUpgradeNudge';
     n.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:linear-gradient(135deg,#1a1408,#0d1330);border:1px solid rgba(212,175,55,.4);border-radius:16px;padding:16px 20px;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5)';
-    n.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:1.4rem">⚠️</div><div style="flex:1"><div style="font-weight:800;color:#f0d383;font-size:.9rem">Tokens Low! ${remaining||0} left</div><div style="font-size:.78rem;color:#aab2cc;margin:4px 0 12px;line-height:1.5">Get 1M tokens for just ₹49 via UPI and continue unlimited.</div><div style="display:flex;gap:8px"><a href="/pricing.html" style="padding:8px 16px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:10px;font-weight:800;font-size:.8rem;text-decoration:none">Buy 1M - ₹49</a><button onclick="this.closest('#paidUpgradeNudge').remove()" style="padding:8px 12px;background:transparent;border:1px solid rgba(255,255,255,.1);color:#aab2cc;border-radius:10px;font-size:.8rem">Later</button></div></div></div>`;
+    n.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:1.4rem">⚠️</div><div style="flex:1"><div style="font-weight:800;color:#22d3ee;font-size:.9rem">Credits Low! ${remaining||0} left</div><div style="font-size:.78rem;color:#aab2cc;margin:4px 0 12px;line-height:1.5">Top up with the Popular plan — 1M credits for just ₹99 via UPI and keep studying.</div><div style="display:flex;gap:8px"><a href="#" onclick="event.preventDefault();window.openBuyCreditsModal&&window.openBuyCreditsModal()" style="padding:8px 16px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#040918;border-radius:10px;font-weight:800;font-size:.8rem;text-decoration:none">View Plans</a><button onclick="this.closest('#paidUpgradeNudge').remove()" style="padding:8px 12px;background:transparent;border:1px solid rgba(255,255,255,.1);color:#aab2cc;border-radius:10px;font-size:.8rem">Later</button></div></div></div>`;
     document.body.appendChild(n);
   }
 
@@ -4866,6 +4866,6 @@ window.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
 // END OF FILE — app.js v2.0 WORLD CLASS MAXIMUM LINES — ALL BUGS FIXED
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
-// Founder: Sooban Talha | "Think Less. Know More."
-// Free forever for every student on Earth.
+// Founder: Sooban Talha | "Think less. Know more."
+// Welcome credits on signup. Top-up packs from ₹19.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════
