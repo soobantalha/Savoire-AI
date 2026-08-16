@@ -11,9 +11,9 @@ module.exports = async function handler(req, res) {
     if (!orderId || !paymentId || !signature || !plan || !uid) return res.status(400).json({ error: 'Missing fields' });
     const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(orderId + '|' + paymentId).digest('hex');
     if (expectedSignature !== signature) return res.status(400).json({ error: 'Invalid signature' });
-    // NEW MONTHLY PRICING
-    const creditsMap = { starter: 200000, pro: 500000, popular: 1000000, ultra: 2000000, mega: 3000000 };
-    const amountMap = { starter: 29, pro: 69, popular: 129, ultra: 249, mega: 349 };
+    // NEW 4-TIER PRICING - 30 Days validity
+    const creditsMap = { starter: 100000, pro: 500000, popular: 1000000, ultra: 2000000 };
+    const amountMap = { starter: 19, pro: 49, popular: 99, ultra: 199 };
     const creditsToAdd = creditsMap[plan];
     if (!creditsToAdd) return res.status(400).json({ error: 'Invalid plan' });
     const adminApp = getAdmin();

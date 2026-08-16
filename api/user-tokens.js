@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
     const { FieldValue } = require('firebase-admin/firestore');
 
     if (!snap.exists) {
-      // New user - 10k free per month
+      // New user - 10k welcome credits on signup
       await userRef.set({
         uid: decoded.uid, email: decoded.email||'', displayName: decoded.name||decoded.email?.split('@')[0]||'Scholar',
         photoURL: decoded.picture||'', plan: 'free', balance: 10000, totalPurchased: 0, totalUsed: 0,

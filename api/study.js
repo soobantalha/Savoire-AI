@@ -1009,7 +1009,7 @@ module.exports = async function handler(req, res) {
 
   if (!isPing) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 10k free credits await!' });
+      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 10,000 welcome credits await!' });
     }
     const idToken = authHeader.split('Bearer ')[1];
     try {
@@ -1055,12 +1055,12 @@ module.exports = async function handler(req, res) {
       if (remaining < 500) {
         return res.status(402).json({
           error: 'TOKEN_EXHAUSTED',
-          message: `Tokens finished! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Buy 1M for just ₹49`,
+          message: `Credits running low! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Top up with Popular - 1M for just ₹99`,
           tokens_used: firebaseUserData.totalUsed||0,
           tokens_limit: (firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0),
           tokens_remaining: remaining,
           balance: remaining,
-          upgrade_url: '/pricing.html'
+          upgrade_url: '/dashboard.html#buyCreditsModal'
         });
       }
     } catch (authErr) {

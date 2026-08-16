@@ -21,15 +21,14 @@ module.exports = async function handler(req, res) {
     const uid = decoded.uid;
     const razorpay = new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET });
     const { plan } = req.body;
-    // NEW MONTHLY PLANS - 30 Days validity, 10k free per month
+    // NEW 4-TIER PLANS - 30 Days validity, 10k welcome credits on signup
     const pricing = {
-      starter: { amount: 2900,  credits: 200000,  name: 'Starter 🪙 - 200k Credits - Monthly' },
-      pro:     { amount: 6900,  credits: 500000,  name: 'Pro 🚀 - 500k Credits - Monthly' },
-      popular: { amount: 12900, credits: 1000000, name: 'Popular ⭐ - 1M Credits - Monthly 🔥' },
-      ultra:   { amount: 24900, credits: 2000000, name: 'Ultra 💎 - 2M Credits - Monthly' },
-      mega:    { amount: 34900, credits: 3000000, name: 'Mega 👑 - 3M Credits - Monthly' }
+      starter: { amount: 1900,   credits: 100000,  name: 'Starter 🪙 - 100k Credits - 30 Days' },
+      pro:     { amount: 4900,   credits: 500000,  name: 'Pro 🚀 - 500k Credits - 30 Days' },
+      popular: { amount: 9900,   credits: 1000000, name: 'Popular ⭐ - 1M Credits - 30 Days (Best Seller)' },
+      ultra:   { amount: 19900,  credits: 2000000, name: 'Ultra 💎 - 2M Credits - 30 Days' }
     };
-    if (!pricing[plan]) return res.status(400).json({ error: `Invalid plan ${plan}. Use starter, pro, popular, ultra, mega` });
+    if (!pricing[plan]) return res.status(400).json({ error: `Invalid plan ${plan}. Use starter, pro, popular, ultra` });
     const order = await razorpay.orders.create({
       amount: pricing[plan].amount,
       currency: 'INR',

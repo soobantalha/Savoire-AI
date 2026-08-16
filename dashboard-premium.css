@@ -1,0 +1,422 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SAVOIRÉ AI — DASHBOARD PREMIUM (Aurora-on-Obsidian Re-skin)
+   Replaces the legacy gold-on-gold "nursery" dashboard with the aurora
+   design system introduced on the landing page (PR #1).
+   Obsidian base · Aurora gradients (violet / cyan / teal / pink) · Brass rules
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --dp-obsidian: #070c20;
+  --dp-obsidian-2: #0b1030;
+  --dp-ink: #e8ecf8;
+  --dp-mute: #9aa3c0;
+  --dp-cyan: #22d3ee;
+  --dp-blue: #1970ff;
+  --dp-violet: #8b5cf6;
+  --dp-purple: #bf00ff;
+  --dp-teal: #2dd4bf;
+  --dp-pink: #f472b6;
+  --dp-brass: #d4af37;
+  --dp-aurora: linear-gradient(135deg, #22d3ee, #1970ff 45%, #bf00ff);
+  --dp-aurora-soft: linear-gradient(135deg, rgba(34,211,238,.16), rgba(25,112,255,.10) 45%, rgba(191,0,255,.14));
+  --dp-glass: rgba(255,255,255,.035);
+  --dp-stroke: rgba(139,92,246,.18);
+  --dp-stroke-cyan: rgba(34,211,238,.22);
+  --dp-radius: 16px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   1. AURORA SURFACE — global dashboard ambience
+   ───────────────────────────────────────────────────────────── */
+body {
+  background:
+    radial-gradient(1100px 600px at 85% -10%, rgba(139,92,246,.14), transparent 60%),
+    radial-gradient(900px 520px at -10% 30%, rgba(34,211,238,.10), transparent 55%),
+    radial-gradient(760px 500px at 55% 115%, rgba(244,114,182,.08), transparent 60%),
+    var(--dp-obsidian) !important;
+  color: var(--dp-ink);
+}
+
+/* Thin aurora hairline under the dashboard header */
+.dash-header, .dh {
+  border-bottom: 1px solid transparent !important;
+  background:
+    linear-gradient(var(--dp-obsidian), var(--dp-obsidian)) padding-box,
+    linear-gradient(90deg, transparent, rgba(34,211,238,.45), rgba(191,0,255,.45), transparent) border-box !important;
+}
+
+/* Glassmorphism surfaces with aurora edge */
+.credit-sidebar,
+.stat-card-sidebar,
+.settings-section,
+.feature-detail-panel,
+.modal,
+.about-card-settings {
+  background: linear-gradient(160deg, rgba(255,255,255,.05), rgba(255,255,255,.015)) !important;
+  border: 1px solid var(--dp-stroke) !important;
+  box-shadow: 0 18px 44px rgba(2,6,23,.55), inset 0 1px 0 rgba(255,255,255,.05) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.credit-sidebar:hover {
+  border-color: var(--dp-stroke-cyan) !important;
+  box-shadow: 0 18px 44px rgba(2,6,23,.55), 0 0 24px rgba(34,211,238,.12) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. AURORA BUTTONS — kill gold-on-gold once and for all
+   ───────────────────────────────────────────────────────────── */
+.credit-btn-buy,
+.quick-buy-btn,
+.empty-wizard-btn,
+.dh-mega-btn,
+.welcome-btn {
+  background: var(--dp-aurora) !important;
+  color: #040918 !important;
+  border: none !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+  box-shadow: 0 8px 22px rgba(25,112,255,.32), inset 0 1px 0 rgba(255,255,255,.28) !important;
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+
+.credit-btn-buy:hover,
+.quick-buy-btn:hover,
+.empty-wizard-btn:hover,
+.dh-mega-btn:hover,
+.welcome-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 12px 30px rgba(34,211,238,.38), inset 0 1px 0 rgba(255,255,255,.32) !important;
+}
+
+.credit-btn-buy:active,
+.quick-buy-btn:active { transform: translateY(0); }
+
+.credit-btn-history {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  color: var(--dp-ink) !important;
+}
+
+/* Primary CTA shimmer sweep */
+.credit-btn-buy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform .6s ease;
+  pointer-events: none;
+}
+.credit-btn-buy:hover::after { transform: translateX(120%); }
+
+/* ─────────────────────────────────────────────────────────────
+   3. WELCOME 10K BADGE — cyan pill (was the gold-yellow FREE badge)
+   ───────────────────────────────────────────────────────────── */
+#creditPlanBadge {
+  background: linear-gradient(135deg, rgba(34,211,238,.20), rgba(25,112,255,.12)) !important;
+  border: 1px solid rgba(34,211,238,.40) !important;
+  color: var(--dp-cyan) !important;
+  font-weight: 800 !important;
+  letter-spacing: .04em;
+  box-shadow: 0 0 14px rgba(34,211,238,.18);
+}
+
+.credit-sidebar-title {
+  color: var(--dp-mute) !important;
+  letter-spacing: .10em;
+  font-weight: 700;
+}
+
+.credit-balance span { color: var(--dp-cyan) !important; }
+
+.credit-progress-fill {
+  background: linear-gradient(90deg, #22d3ee, #1970ff 55%, #bf00ff) !important;
+  box-shadow: 0 0 10px rgba(34,211,238,.45) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. PREMIUM BUY CREDITS MODAL — 4-tier grid
+   ───────────────────────────────────────────────────────────── */
+#buyCreditsModal.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3,6,18,.86);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+#buyCreditsModal.modal-overlay[style*="flex"] { display: flex !important; }
+
+#buyCreditsModal .modal-box {
+  width: 100%;
+  max-width: 880px;
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 24px;
+  background:
+    radial-gradient(600px 260px at 20% -10%, rgba(34,211,238,.12), transparent 60%),
+    radial-gradient(520px 260px at 90% -10%, rgba(191,0,255,.12), transparent 60%),
+    #0a1028;
+  border: 1px solid var(--dp-stroke);
+  box-shadow: 0 40px 120px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.06);
+  animation: dpModalIn .28s cubic-bezier(.2,.9,.3,1.2);
+}
+
+@keyframes dpModalIn {
+  from { opacity: 0; transform: translateY(18px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#buyCreditsModal .modal-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 26px 14px;
+  border-bottom: 1px solid transparent;
+  background:
+    linear-gradient(#0a1028, #0a1028) padding-box,
+    linear-gradient(90deg, transparent, rgba(212,175,55,.4), transparent) border-box;
+}
+
+#buyCreditsModal .modal-hdr h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: var(--dp-ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#buyCreditsModal .modal-hdr h3 i { color: var(--dp-cyan); }
+
+#buyCreditsModal .modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.05);
+  color: var(--dp-ink);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+#buyCreditsModal .modal-close:hover {
+  background: rgba(244,114,182,.16);
+  border-color: rgba(244,114,182,.4);
+  color: var(--dp-pink);
+  transform: rotate(90deg);
+}
+
+#buyCreditsModal .modal-body { padding: 18px 26px 26px; }
+
+#buyCreditsModal .welcome-msg {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  font-size: .82rem;
+  line-height: 1.55;
+  color: #bfe9ff;
+  background: var(--dp-aurora-soft);
+  border: 1px solid var(--dp-stroke-cyan);
+  border-radius: 12px;
+}
+
+/* Tier grid — 4 columns on desktop */
+#buyCreditsModal .tier-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+#buyCreditsModal .tier-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 14px 16px;
+  border-radius: 18px;
+  background: linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+  border: 1px solid rgba(255,255,255,.09);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+#buyCreditsModal .tier-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--dp-stroke-cyan);
+  box-shadow: 0 18px 40px rgba(2,6,23,.6), 0 0 26px rgba(34,211,238,.12);
+}
+
+#buyCreditsModal .tier-card[data-plan="starter"]:hover { border-color: rgba(45,212,191,.45); box-shadow: 0 18px 40px rgba(2,6,23,.6), 0 0 26px rgba(45,212,191,.14); }
+#buyCreditsModal .tier-card[data-plan="pro"]:hover     { border-color: rgba(139,92,246,.5);  box-shadow: 0 18px 40px rgba(2,6,23,.6), 0 0 26px rgba(139,92,246,.16); }
+#buyCreditsModal .tier-card[data-plan="ultra"]:hover   { border-color: rgba(244,114,182,.45); box-shadow: 0 18px 40px rgba(2,6,23,.6), 0 0 26px rgba(244,114,182,.14); }
+
+/* BEST SELLER — the hero tier */
+#buyCreditsModal .tier-card.tier-popular {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(170deg, rgba(34,211,238,.14), rgba(25,112,255,.07) 55%, rgba(191,0,255,.12)) padding-box,
+    var(--dp-aurora) border-box;
+  box-shadow: 0 20px 50px rgba(25,112,255,.28);
+  transform: scale(1.03);
+}
+#buyCreditsModal .tier-card.tier-popular:hover {
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 26px 60px rgba(25,112,255,.38), 0 0 34px rgba(34,211,238,.2);
+}
+
+#buyCreditsModal .tier-badge {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: #040918;
+  background: var(--dp-aurora);
+  box-shadow: 0 6px 18px rgba(34,211,238,.4);
+}
+
+#buyCreditsModal .tier-icon { font-size: 1.9rem; margin-bottom: 8px; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
+
+#buyCreditsModal .tier-name {
+  font-size: .95rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+  color: var(--dp-ink);
+}
+
+#buyCreditsModal .tier-credits {
+  margin-top: 4px;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--dp-mute);
+}
+
+#buyCreditsModal .tier-price {
+  margin: 10px 0 2px;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
+  background: var(--dp-aurora);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+#buyCreditsModal .tier-validity {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.38);
+  margin-bottom: 12px;
+}
+
+#buyCreditsModal .tier-buy-btn {
+  width: 100%;
+  margin-top: auto;
+  padding: 10px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .09em;
+  color: #040918;
+  background: var(--dp-aurora);
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(25,112,255,.28);
+  transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+}
+#buyCreditsModal .tier-buy-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 10px 26px rgba(34,211,238,.34);
+}
+#buyCreditsModal .tier-buy-btn:active { transform: translateY(0); }
+
+#buyCreditsModal .payment-info {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  text-align: center;
+  font-size: .72rem;
+  color: var(--dp-mute);
+}
+#buyCreditsModal .payment-info i { color: var(--dp-teal); margin-right: 6px; }
+
+/* ─────────────────────────────────────────────────────────────
+   5. MISC AURORA POLISH
+   ───────────────────────────────────────────────────────────── */
+/* Quick-buy rows in the sidebar */
+.quick-buy-left b { color: var(--dp-ink); }
+.quick-buy-left { color: var(--dp-mute); font-size: .72rem; }
+
+/* Brass gold-rule dividers keep their accent but soften */
+.dash-mini-footer {
+  border-top: 1px solid rgba(212,175,55,.18) !important;
+  color: var(--dp-mute) !important;
+}
+.dash-mini-footer a { color: var(--dp-cyan) !important; }
+
+/* History filter chips */
+.hist-filter {
+  border: 1px solid rgba(255,255,255,.10) !important;
+  color: var(--dp-mute) !important;
+}
+.hist-filter.active {
+  background: var(--dp-aurora-soft) !important;
+  border-color: var(--dp-stroke-cyan) !important;
+  color: var(--dp-cyan) !important;
+}
+
+/* Scrollbars inside modals */
+#buyCreditsModal .modal-box::-webkit-scrollbar { width: 8px; }
+#buyCreditsModal .modal-box::-webkit-scrollbar-thumb {
+  background: rgba(139,92,246,.3);
+  border-radius: 8px;
+}
+
+/* Selection tint */
+::selection { background: rgba(34,211,238,.28); color: #fff; }
+
+/* ─────────────────────────────────────────────────────────────
+   6. MOBILE RESPONSIVE
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  #buyCreditsModal .tier-grid { grid-template-columns: repeat(2, 1fr); }
+  #buyCreditsModal .modal-box { max-width: 560px; border-radius: 20px; }
+  #buyCreditsModal .tier-card.tier-popular { transform: none; }
+  #buyCreditsModal .tier-card.tier-popular:hover { transform: translateY(-3px); }
+}
+
+@media (max-width: 420px) {
+  #buyCreditsModal.modal-overlay { padding: 12px; }
+  #buyCreditsModal .modal-hdr { padding: 18px 18px 12px; }
+  #buyCreditsModal .modal-body { padding: 14px 18px 20px; }
+  #buyCreditsModal .tier-grid { gap: 10px; }
+  #buyCreditsModal .tier-price { font-size: 1.35rem; }
+  #buyCreditsModal .tier-icon { font-size: 1.55rem; }
+  #buyCreditsModal .tier-buy-btn { padding: 12px 0; } /* touch-friendly */
+}
+
+/* Reduced motion respect */
+@media (prefers-reduced-motion: reduce) {
+  #buyCreditsModal .modal-box { animation: none; }
+  .credit-btn-buy::after { display: none; }
+  .credit-btn-buy, .quick-buy-btn, .tier-buy-btn { transition: none; }
+}
