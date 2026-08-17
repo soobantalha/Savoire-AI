@@ -1322,12 +1322,24 @@ module.exports = async function handler(req, res) {
         const _db2 = getDb();
         const userRef = _db2.collection('users').doc(firebaseUid);
         const { FieldValue } = require('firebase-admin/firestore');
-        await userRef.update({
-          balance: FieldValue.increment(-totalUsed),
-          totalUsed: FieldValue.increment(totalUsed),
-          totalGenerations: FieldValue.increment(1),
-          totalWords: FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
-          tokens_used: FieldValue.increment(totalUsed)
+
+        // ATOMIC DEDUCTION — run inside a transaction so concurrent requests can
+        // never double-spend and the balance can never go negative. NO FREE
+        // GENERATIONS: every successful response costs the exact tokens it used.
+        let balanceAfter = 0;
+        await _db2.runTransaction(async (t) => {
+          const snap = await t.get(userRef);
+          const cur = snap.exists ? (snap.data().balance || 0) : 0;
+          const charge = Math.min(totalUsed, Math.max(0, cur)); // clamp: never below zero
+          balanceAfter = Math.max(0, cur - charge);
+          t.update(userRef, {
+            balance: balanceAfter,
+            totalUsed: FieldValue.increment(charge),
+            totalGenerations: FieldValue.increment(1),
+            totalWords: FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
+            tokens_used: FieldValue.increment(charge),
+            lastUsedAt: FieldValue.serverTimestamp()
+          });
         });
         await userRef.collection('usageHistory').add({
           timestamp: FieldValue.serverTimestamp(),
@@ -1355,9 +1367,7 @@ module.exports = async function handler(req, res) {
         });
         final._tokens_used_this_request = totalUsed;
         final._credits_used = totalUsed;
-        const freshSnap = await userRef.get();
-        const freshData = freshSnap.data();
-        const newRemaining = freshData.balance || 0;
+        const newRemaining = balanceAfter;
         final._tokens_remaining = newRemaining;
         final._credits_remaining = newRemaining;
         res.setHeader('X-Tokens-Remaining', String(newRemaining));
@@ -1365,7 +1375,11 @@ module.exports = async function handler(req, res) {
         res.setHeader('X-Credits-Remaining', String(newRemaining));
         res.setHeader('X-Credits-Used', String(totalUsed));
       } catch (deductErr) {
+        // Surface the failure instead of silently granting a free generation.
         console.error('Credit deduction failed', deductErr.message);
+        final._credit_deduction_error = true;
+        final._credit_deduction_message = 'Credits could not be updated for this request.';
+        res.setHeader('X-Credit-Deduction', 'failed');
       }
     }
 
