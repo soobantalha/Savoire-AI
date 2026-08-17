@@ -12490,7 +12490,13 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
-#buyCreditsModal.modal-overlay[style*="flex"] { display: flex !important; }
+#buyCreditsModal.modal-overlay[style*="flex"],
+#buyCreditsModal.modal-overlay.is-open { display: flex !important; }
+
+/* The overlay must never intercept pointer events while hidden — this is what
+   made every dashboard button look "dead" when a modal failed to close. */
+#buyCreditsModal.modal-overlay[style*="none"] { pointer-events: none !important; }
+#buyCreditsModal.modal-overlay.is-open { pointer-events: auto !important; }
 
 #buyCreditsModal .modal-box {
   width: 100%;

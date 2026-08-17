@@ -342,22 +342,28 @@ class SavoireApp {
     this._liveMMCentral = '';
     this._liveMMConns   = [];
 
-    this._incrementSession();
-    this._cacheEl();
-    this._applyPrefs();
-    this._bindAll();
-    this._initWelcome();
-    this._updateAllStats();
-    this._renderSidebarHistory();
-    this._renderSidebarSaved();
-    this._updateUserUI();
-    this._showFeatureDetails('notes');
-    this._initBackToTop();
-    this._initSwipeGestures();
-    this._initParticles();
-    this._checkStreak();
-    this._initDemoSystem();
-    this._warmupAndTrack();
+    // Each init step is isolated: one failure must never take the whole dashboard
+    // down (that is what turned every button and animation dead in v2.0).
+    const boot = (name, fn) => {
+      try { fn.call(this); }
+      catch (e) { console.error(`[Savoiré] init step "${name}" failed:`, e && e.message); }
+    };
+    boot('session',        this._incrementSession);
+    boot('cacheEl',        this._cacheEl);
+    boot('prefs',          this._applyPrefs);
+    boot('bindAll',        this._bindAll);
+    boot('welcome',        this._initWelcome);
+    boot('stats',          this._updateAllStats);
+    boot('sidebarHistory', this._renderSidebarHistory);
+    boot('sidebarSaved',   this._renderSidebarSaved);
+    boot('userUI',         this._updateUserUI);
+    boot('featureDetails', () => this._showFeatureDetails('notes'));
+    boot('backToTop',      this._initBackToTop);
+    boot('swipe',          this._initSwipeGestures);
+    boot('particles',      this._initParticles);
+    boot('streak',         this._checkStreak);
+    boot('demo',           this._initDemoSystem);
+    boot('warmup',         this._warmupAndTrack);
 
     console.log(`%c✨ ${SAVOIRÉ.BRAND} — ${SAVOIRÉ.TAGLINE}`, 'color:#d4af37;font-size:16px;font-weight:bold');
     console.log(`%c🔧 Built by ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}`, 'color:#00d4ff;font-size:12px');
@@ -592,8 +598,14 @@ class SavoireApp {
 
   _initParticles() {
     const canvas = this.el.particleCanvas;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    if (!canvas || typeof canvas.getContext !== 'function') return;
+    let ctx = null;
+    try { ctx = canvas.getContext('2d'); } catch (e) { ctx = null; }
+    // Guard: a null 2D context (blocked canvas / reduced-capability browser) used to
+    // throw inside the animation loop and abort the whole constructor, which left
+    // window._app undefined — that is why every button stopped responding.
+    if (!ctx) { console.warn('[Savoiré] Canvas 2D unavailable — particles disabled.'); return; }
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', resize);
     resize();
@@ -4965,8 +4977,29 @@ window._welcomeValidateName = function() {
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  window._app = new SavoireApp();
+  // Boot inside a guard. Previously a single throwing init step (canvas, storage,
+  // a missing element) aborted the constructor, left window._app undefined and made
+  // every `window._app.*` onclick in the markup silently dead.
+  try {
+    window._app = new SavoireApp();
+  } catch (bootErr) {
+    console.error('[Savoiré] Dashboard boot failed:', bootErr);
+    // Expose a safe stub so inline onclick handlers degrade instead of throwing.
+    window._app = window._app || new Proxy({}, {
+      get: () => () => console.warn('[Savoiré] Dashboard is running in degraded mode.')
+    });
+  }
   window._sav = window._app;
+
+  // Make sure the auth overlay can never keep blocking the UI after boot.
+  if (typeof window.__savoireDismissAuthLoader === 'function') {
+    setTimeout(() => {
+      const l = document.getElementById('authLoading');
+      if (l && l.style.display !== 'none' && !window.firebaseAuthInstance) {
+        window.__savoireDismissAuthLoader();
+      }
+    }, 5000);
+  }
 
   const wInp = document.getElementById('welcomeNameInput');
   if (wInp) wInp.addEventListener('input', window._welcomeValidateName);

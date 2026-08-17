@@ -1341,26 +1341,28 @@ module.exports = async function handler(req, res) {
         const userRef = _db2.collection('users').doc(firebaseUid);
         const { FieldValue } = require('firebase-admin/firestore');
 
-        // Never let the balance go negative: clamp to what the user actually has
-        const preSnap = await userRef.get();
-        const preBalance = preSnap.exists ? (preSnap.data().balance || 0) : 0;
+        // ATOMIC DEDUCTION — run inside a transaction so concurrent requests can
+        // never double-spend and the balance can never go negative. EXACT TOKEN
+        // ACCOUNTING: the user is charged the real tokens the winning models
+        // consumed (provider-reported usage, char-based fallback otherwise).
         let deducted = totalUsed;
         let refunded = 0;
-        if (deducted > preBalance && preBalance >= 0) {
-          refunded = deducted - preBalance;
-          deducted = preBalance;
-        }
-
-        await userRef.update({
-          balance: FieldValue.increment(-deducted),
-          totalUsed: FieldValue.increment(deducted),
-          totalGenerations: FieldValue.increment(1),
-          totalWords: FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
-          tokens_used: FieldValue.increment(deducted)
+        let balanceAfter = 0;
+        await _db2.runTransaction(async (t) => {
+          const snap = await t.get(userRef);
+          const cur = snap.exists ? (snap.data().balance || 0) : 0;
+          if (deducted > cur) { refunded = deducted - cur; deducted = cur; }
+          balanceAfter = Math.max(0, cur - deducted);
+          t.update(userRef, {
+            balance: balanceAfter,
+            totalUsed: FieldValue.increment(deducted),
+            totalGenerations: FieldValue.increment(1),
+            totalWords: FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
+            tokens_used: FieldValue.increment(deducted),
+            lastUsedAt: FieldValue.serverTimestamp()
+          });
         });
-        const freshSnap = await userRef.get();
-        const freshData = freshSnap.data();
-        const newRemaining = freshData.balance || 0;
+        const newRemaining = balanceAfter;
 
         await userRef.collection('usageHistory').add({
           timestamp: FieldValue.serverTimestamp(),
@@ -1408,7 +1410,11 @@ module.exports = async function handler(req, res) {
         res.setHeader('X-Credits-Used', String(deducted));
         console.log(`[TOKEN DEDUCTION] Exact tokens used: ${totalUsed} | deducted: ${deducted}${refunded > 0 ? ` | refunded: ${refunded}` : ''} | remaining: ${newRemaining}`);
       } catch (deductErr) {
+        // Surface the failure instead of silently granting a free generation.
         console.error('Credit deduction failed', deductErr.message);
+        final._credit_deduction_error = true;
+        final._credit_deduction_message = 'Credits could not be updated for this request.';
+        res.setHeader('X-Credit-Deduction', 'failed');
       }
     }
 
