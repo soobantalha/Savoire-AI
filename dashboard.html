@@ -15,7 +15,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="dashboard-premium.css">
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -238,8 +237,7 @@
         <div class="lp-hdr-row">
           <span class="lp-title">MENU</span>
           <div class="lp-header-links">
-            <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
-            <a href="index.html" class="lp-home-link lp-landing-link" id="landingLink"><i class="fas fa-rocket"></i> Main Page</a>
+            <a href="index.html" class="lp-home-link lp-landing-link" id="landingLink"><i class="fas fa-home"></i> Home</a>
           </div>
         </div>
       </div>
@@ -452,7 +450,7 @@
         <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think less. Know more.</div>
 
         <a href="index.html" class="hdr-landing-btn dh-stat-hide-md" title="Open main page">
-          <i class="fas fa-compass"></i> Main Page
+          <i class="fas fa-home"></i> Home
         </a>
 
         <!-- Header Actions -->
@@ -1148,6 +1146,8 @@ try {
       const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
       pf.style.width = pct + '%';
     }
+    // Extra sidebar hooks (defined by the inline script below)
+    if (window._updatePaidSidebarExtra) window._updatePaidSidebarExtra(remaining, limit, plan);
   };
 
   window._showPaidLoginNeeded = () => {
@@ -1182,7 +1182,7 @@ try {
       if (loader) loader.innerHTML = '<div class="spin"></div><div style="color:#22d3ee;font-size:.8rem">Login success, redirecting...</div>';
       const token = await redirectResult.user.getIdToken();
       localStorage.setItem('sv_firebase_token', token);
-      localStorage.setItem('sv_user', redirectResult.user.displayName || redirectResult.user.email);
+      localStorage.setItem('sv_user', (redirectResult.user.displayName && String(redirectResult.user.displayName).trim()) || (redirectResult.user.email ? String(redirectResult.user.email).split('@')[0] : 'Scholar'));
       if (redirectResult.user.photoURL) localStorage.setItem('sv_user_photo', redirectResult.user.photoURL);
       setTimeout(()=> window.location.href = '/dashboard.html', 500);
       // Don't continue, let redirect handle
@@ -1202,7 +1202,7 @@ try {
           <div style="color:#22d3ee;font-weight:700;margin-bottom:8px">Login check taking too long</div>
           <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">Token expired or Firebase blocked.<br>Clear cache and login again.</div>
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#040918;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
+            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
             <button onclick="window.__savoireDismissAuthLoader()" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
           </div>
         </div>
@@ -1232,7 +1232,7 @@ try {
       try {
         const token = await user.getIdToken(true);
         localStorage.setItem('sv_firebase_token', token);
-        localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
+        localStorage.setItem('sv_user', (user.displayName && String(user.displayName).trim()) || (user.email ? String(user.email).split('@')[0] : 'Scholar'));
         if (user.photoURL) {
           localStorage.setItem('sv_user_photo', user.photoURL);
           if (window.updateUserPhoto) window.updateUserPhoto(user.photoURL, user.displayName);
@@ -1282,6 +1282,7 @@ try {
 </script>
 
   <script src="app.js"></script>
+
 <!-- Premium Buy Credits Modal - 4-Tier -->
 <div class="modal-overlay" id="buyCreditsModal" style="display:none">
   <div class="modal-box buy-credits-modal">
@@ -1419,85 +1420,63 @@ document.addEventListener('click', function(e) {
   const plan = card && card.dataset.plan;
   if (plan) { e.preventDefault(); window.buyPlan(plan); }
 });
-window.openCreditHistory = async function() {
-  document.getElementById('creditHistoryModal').style.display = 'flex';
+window.openCreditHistory = function() {
+  // Real Firestore-backed history (see app.js _openCreditHistory)
+  if (window._app && window._app._openCreditHistory) {
+    window._app._openCreditHistory();
+    return;
+  }
+  // Fallback: open the modal and fetch directly
+  const modal = document.getElementById('creditHistoryModal');
+  if (modal) modal.style.display = 'flex';
   const listEl = document.getElementById('creditHistoryList');
   if (!listEl) return;
-  listEl.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.4)">Loading...</div>';
-  try {
-    const fbToken = localStorage.getItem('sv_firebase_token');
-    if (!fbToken) { listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#ffae00">Please login</div>'; return; }
-    // Fetch from Firestore via user-tokens? For now show local history + purchase
-    // Try to fetch purchaseHistory and usageHistory via custom endpoint or Firestore directly
-    // For MVP, show localStorage history + call /api/user-tokens for summary
-    const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
-    const bal = res.ok ? await res.json() : { balance: 0, totalPurchased: 0, totalUsed: 0 };
-    
-    // Mock history from localStorage + Firestore (we will fetch from Firestore via Firebase JS if available)
-    let items = [];
-    // Try Firestore direct via Firebase if available
-    try {
-      const { getFirestore, collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-      // We need db instance - try to get from window
-      // For simplicity, we will just show balance summary and local history
-    } catch(e) {}
-    
-    // Build mock entries from local history
-    const localHist = JSON.parse(localStorage.getItem('sv_history')||'[]').slice(0,10).map(h => ({
-      type: 'generation',
-      tool: h.tool||'notes',
-      topic: h.topic||'Topic',
-      creditsChange: - Math.floor(Math.random()*2000+800),
-      creditsRemaining: bal.remaining||0,
-      timestamp: h.ts||Date.now(),
-      description: `Generated ${h.tool||'Notes'}`
-    }));
-    
-    items = [
-      { type: 'bonus', tool: 'bonus', topic: 'Welcome Bonus', creditsChange: 10000, creditsRemaining: 10000, timestamp: Date.now()-86400000*2, description: 'Welcome Bonus - First login' },
-      ...localHist
-    ];
-    
-    // Filter logic
-    const filter = document.querySelector('.hist-filter.active[data-ch-filter]')?.dataset.chFilter || 'all';
-    let filtered = items;
-    if (filter !== 'all') filtered = items.filter(i => i.type === filter || (filter==='generation' && i.type==='generation'));
-    
-    if (!filtered.length) {
-      listEl.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.4)">No history yet</div>';
-    } else {
-      listEl.innerHTML = filtered.map(it => {
-        const isPos = it.creditsChange > 0;
-        const icon = it.type==='purchase' ? '💳' : it.type==='bonus' ? '🎁' : '📝';
-        const color = it.type==='purchase' ? 'rgba(0,212,255,.12)' : it.type==='bonus' ? 'rgba(0,255,136,.12)' : 'rgba(255,255,255,.04)';
-        const time = new Date(it.timestamp).toLocaleString();
-        return `<div class="credit-history-item" style="background:${color}">
-          <div class="credit-history-icon" style="background:rgba(255,255,255,.06)">${icon}</div>
-          <div class="credit-history-info">
-            <div class="credit-history-title">${it.description||it.topic}</div>
-            <div class="credit-history-sub">${it.topic||''} • ${time}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="credit-history-change ${isPos?'pos':'neg'}">${isPos?'+':''}${it.creditsChange.toLocaleString()}</div>
-            <div class="credit-history-remaining">Rem: ${it.creditsRemaining.toLocaleString()}</div>
-          </div>
-        </div>`;
-      }).join('');
-    }
-    
-    document.getElementById('creditHistorySummary').innerHTML = `<span>Total Purchased: ${(bal.totalPurchased||0).toLocaleString()}</span><span>Used: ${(bal.totalUsed||bal.used||0).toLocaleString()}</span><span>Remaining: ${(bal.remaining||bal.balance||0).toLocaleString()}</span>`;
-  } catch(e) {
-    console.error(e);
-    listEl.innerHTML = `<div style="color:#ff6b6b;padding:20px">Failed to load: ${e.message}</div>`;
-  }
+  const fbToken = localStorage.getItem('sv_firebase_token');
+  if (!fbToken) { listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#ffae00">Please login to view credit history.</div>'; return; }
+  fetch('/api/credit-history', { headers: { 'Authorization': 'Bearer ' + fbToken } })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      const items = data.history || [];
+      if (!items.length) {
+        listEl.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.4)">No history yet</div>';
+      } else {
+        listEl.innerHTML = items.map(it => {
+          const isPos = (it.creditsChange||0) > 0;
+          const icon = it.icon || (it.type==='purchase' ? '💳' : it.type==='bonus' ? '🎁' : '📝');
+          const color = it.type==='purchase' ? 'rgba(34,211,238,.10)' : it.type==='bonus' ? 'rgba(0,255,136,.10)' : 'rgba(255,255,255,.04)';
+          const time = it.timestamp ? new Date(it.timestamp).toLocaleString() : '';
+          return `<div class="credit-history-item" style="background:${color}">
+            <div class="credit-history-icon">${icon}</div>
+            <div class="credit-history-info">
+              <div class="credit-history-title">${it.description||it.topic}</div>
+              <div class="credit-history-sub">${it.topic||''}${time ? ' • '+time : ''}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="credit-history-amount ${isPos?'positive':'negative'}">${isPos?'+':''}${(it.creditsChange||0).toLocaleString()}</div>
+              <div class="credit-history-remaining">Rem: ${(it.creditsRemaining??0).toLocaleString()}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      const sumEl = document.getElementById('creditHistorySummary');
+      if (sumEl) sumEl.innerHTML = `<span>Total Purchased: ${(data.totalPurchased||0).toLocaleString()}</span><span>Used: ${(data.totalUsed||0).toLocaleString()}</span><span>Remaining: ${(data.balance??0).toLocaleString()}</span>`;
+    })
+    .catch(e => {
+      console.error('Credit history fetch failed', e);
+      listEl.innerHTML = `<div style="color:#ff6b6b;padding:20px;text-align:center">Could not load credit history.<br><span style="font-size:.75rem;color:#aab2cc">${e.message}</span></div>`;
+    });
 };
 
-// Attach filter clicks
+// Attach filter clicks (re-render cached data instead of refetching)
 document.addEventListener('click', (e)=>{
   if (e.target.matches('.hist-filter[data-ch-filter]')) {
     document.querySelectorAll('.hist-filter[data-ch-filter]').forEach(b=>b.classList.remove('active'));
     e.target.classList.add('active');
-    window.openCreditHistory();
+    if (window._app && window._app.creditHistory && window._app.creditHistory.length) {
+      window._app._renderCreditHistoryModal();
+    } else {
+      window.openCreditHistory();
+    }
   }
 });
 
@@ -1586,15 +1565,8 @@ window.buyPlanDirect = async function(plan) {
   }
 };
 
-// Override token bar to also update sidebar credit
-const origUpdate = window._updatePaidTokenBar;
-window._updatePaidTokenBar = function(remaining, limit, plan) {
-  if (origUpdate) origUpdate(remaining, limit, plan);
-  // Sidebar
-  const cb = document.getElementById('creditBalance');
-  if (cb) cb.innerHTML = `${remaining.toLocaleString()} <span>credits</span>`;
-  const cr = document.getElementById('creditRemaining');
-  if (cr) cr.textContent = `Remaining: ${remaining.toLocaleString()}`;
+// Extra sidebar updates — called by the base _updatePaidTokenBar (module script)
+window._updatePaidSidebarExtra = function(remaining, limit, plan) {
   if (limit) {
     const cu = document.getElementById('creditUsed');
     if (cu) {
@@ -1609,8 +1581,6 @@ window._updatePaidTokenBar = function(remaining, limit, plan) {
   }
   const badge = document.getElementById('creditPlanBadge');
   if (badge && plan) badge.textContent = (plan === 'free') ? 'WELCOME 10K' : plan.toUpperCase();
-  
-  // Header tokenCount already updated
 };
 
 // Logout function
@@ -1654,7 +1624,7 @@ window.updateUserPhoto = function(photoURL, displayName) {
     }
   });
   const nameEl = document.getElementById('sidebarUserName');
-  if (nameEl && displayName) nameEl.textContent = displayName;
+  if (nameEl && displayName && String(displayName).trim()) nameEl.textContent = String(displayName).trim();
 };
 
 // Listen for auth to get photo
@@ -1668,21 +1638,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script>
-// Auto-open sidebar on mobile so user sees credits + last work
+// Mobile: sidebar hidden by default — toggle with the hamburger button (sbToggle)
 document.addEventListener('DOMContentLoaded', () => {
-  const isMobile = window.innerWidth <= 1024;
   const leftPanel = document.getElementById('leftPanel');
   const backdrop = document.getElementById('sbBackdrop');
-  if (isMobile && leftPanel) {
-    // Delay 400ms so auth check finishes first
-    setTimeout(() => {
-      if (!leftPanel.classList.contains('mobile-open')) {
-        leftPanel.classList.add('mobile-open');
-        if (backdrop) backdrop.classList.add('visible');
-        console.log('📱 Sidebar auto-opened on mobile for credits visibility');
-      }
-    }, 600);
-  }
   // Close sidebar when clicking backdrop
   if (backdrop) {
     backdrop.addEventListener('click', () => {

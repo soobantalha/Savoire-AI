@@ -407,7 +407,7 @@ async function initFirebase() {
     if (!snap.exists()) {
       await setDoc(ref, {
         uid: user.uid, email: user.email,
-        displayName: user.displayName || user.email.split('@')[0],
+        displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Scholar'),
         photoURL: user.photoURL || '',
         plan: 'free', balance: 10000, tokens_limit: 10000, tokens_used: 0,
         freeCreditsGiven: 10000, totalPurchased: 0, totalUsed: 0, totalGenerations: 0,
@@ -426,7 +426,7 @@ async function initFirebase() {
         fetch('/api/send-welcome-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ email: user.email, name: user.displayName || user.email.split('@')[0], photoURL: user.photoURL || '' })
+          body: JSON.stringify({ email: user.email, name: user.displayName || (user.email ? user.email.split('@')[0] : 'Scholar'), photoURL: user.photoURL || '' })
         }).catch(()=>{});
       } catch(e) {}
     }
@@ -452,7 +452,7 @@ async function initFirebase() {
     const avatarDiv = document.getElementById('nameChoiceAvatar');
     const initialPrev = document.getElementById('googleInitialPreview');
 
-    if (namePrev) namePrev.textContent = googleUser.displayName || googleUser.email.split('@')[0];
+    if (namePrev) namePrev.textContent = googleUser.displayName || (googleUser.email ? googleUser.email.split('@')[0] : 'Scholar');
     if (googleUser.photoURL) {
       initialPrev.innerHTML = `<img src="${googleUser.photoURL}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='${(googleUser.displayName||'S')[0].toUpperCase()}'">`;
       avatarDiv.innerHTML = `<img src="${googleUser.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
@@ -487,7 +487,7 @@ async function initFirebase() {
     modal.style.display = 'none';
 
     try {
-      let finalName = googleUser.displayName || googleUser.email.split('@')[0];
+      let finalName = googleUser.displayName || (googleUser.email ? googleUser.email.split('@')[0] : 'Scholar');
       let finalPhoto = googleUser.photoURL || '';
       let finalEmoji = '🎓';
 
@@ -593,7 +593,7 @@ async function initFirebase() {
       await createUserDoc(cred.user);
       const token = await cred.user.getIdToken();
       localStorage.setItem('sv_firebase_token', token);
-      localStorage.setItem('sv_user', cred.user.email.split('@')[0]);
+      localStorage.setItem('sv_user', cred.user.displayName || (cred.user.email ? cred.user.email.split('@')[0] : 'Scholar'));
       toast('success','Signed in. Opening your dashboard…');
       setTimeout(()=> window.location.href = '/dashboard.html', 800);
     } catch(e){
