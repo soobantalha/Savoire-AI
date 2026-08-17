@@ -126,13 +126,55 @@
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
-    .token-meter{display:flex;align-items:center;gap:8px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);padding:6px 14px;border-radius:999px;font-size:.72rem;color:#f0d383}
+    .token-meter{display:flex;align-items:center;gap:8px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.28);padding:6px 14px;border-radius:999px;font-size:.72rem;color:#22d3ee}
     .token-track{width:84px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
-    .token-fill{height:100%;background:linear-gradient(90deg,#d4af37,#ffae00);transition:width .4s ease;width:100%}
+    .token-fill{height:100%;background:linear-gradient(90deg,#22d3ee,#1970ff 55%,#bf00ff);transition:width .4s ease;width:100%}
     #authLoading{position:fixed;inset:0;z-index:99999;background:#03050c;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-    #authLoading .spin{width:40px;height:40px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite}
+    #authLoading .spin{width:40px;height:40px;border:3px solid rgba(34,211,238,.18);border-top-color:#22d3ee;border-radius:50%;animation:spin .8s linear infinite}
+    /* Once dismissed the overlay must never swallow clicks again */
+    #authLoading[hidden],#authLoading.auth-done{display:none!important;pointer-events:none!important;visibility:hidden!important}
     @keyframes spin{to{transform:rotate(360deg)}}
   </style>
+
+  <!-- ═══════════ AUTH-OVERLAY FAILSAFE (classic script, runs even if ES modules / Firebase CDN fail) ═══════════
+       Without this, a failed `<script type="module">` leaves #authLoading (z-index 99999) covering the whole
+       page forever: every button looks dead and no animation is reachable. -->
+  <script>
+    (function () {
+      window.__savoireDismissAuthLoader = function () {
+        var l = document.getElementById('authLoading');
+        if (!l) return;
+        l.classList.add('auth-done');
+        l.style.display = 'none';
+        l.style.pointerEvents = 'none';
+        l.setAttribute('hidden', '');
+      };
+      // Hard failsafe: never let the loader block the UI for more than 6s.
+      setTimeout(function () {
+        var l = document.getElementById('authLoading');
+        if (l && l.style.display !== 'none' && !l.classList.contains('auth-done')) {
+          console.warn('[Savoiré] Auth overlay failsafe fired — dismissing blocking loader.');
+          window.__savoireDismissAuthLoader();
+        }
+      }, 6000);
+      // If the Firebase module never boots at all, dismiss immediately on load.
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          if (!window.firebaseAuthInstance) {
+            console.warn('[Savoiré] Firebase module did not initialise — UI unblocked in offline mode.');
+            window.__savoireDismissAuthLoader();
+          }
+        }, 2500);
+      });
+      // Surface real script errors instead of failing silently.
+      window.addEventListener('error', function (e) {
+        if (e && e.message) console.error('[Savoiré] Runtime error:', e.message, e.filename + ':' + e.lineno);
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        console.error('[Savoiré] Unhandled promise rejection:', (e && e.reason && e.reason.message) || e.reason);
+      });
+    })();
+  </script>
 
 <style>
 /* Hide old 15k/15k token bar - use new credit sidebar only */
@@ -1137,7 +1179,7 @@ try {
     const redirectResult = await getRedirectResult(auth, browserPopupRedirectResolver);
     if (redirectResult && redirectResult.user) {
       const loader = document.getElementById('authLoading');
-      if (loader) loader.innerHTML = '<div class="spin"></div><div style="color:#f0d383;font-size:.8rem">Login success, redirecting...</div>';
+      if (loader) loader.innerHTML = '<div class="spin"></div><div style="color:#22d3ee;font-size:.8rem">Login success, redirecting...</div>';
       const token = await redirectResult.user.getIdToken();
       localStorage.setItem('sv_firebase_token', token);
       localStorage.setItem('sv_user', redirectResult.user.displayName || redirectResult.user.email);
@@ -1157,11 +1199,11 @@ try {
       loader.innerHTML = `
         <div style="text-align:center;padding:20px">
           <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
-          <div style="color:#f0d383;font-weight:700;margin-bottom:8px">Login check taking too long</div>
+          <div style="color:#22d3ee;font-weight:700;margin-bottom:8px">Login check taking too long</div>
           <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">Token expired or Firebase blocked.<br>Clear cache and login again.</div>
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
-            <button onclick="document.getElementById('authLoading').style.display='none'" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
+            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#040918;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
+            <button onclick="window.__savoireDismissAuthLoader()" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
           </div>
         </div>
       `;
@@ -1170,8 +1212,7 @@ try {
   }, 3500);
 
   onAuthStateChanged(auth, async (user) => {
-    const loader = document.getElementById('authLoading');
-    if (loader) loader.style.display = 'none';
+    window.__savoireDismissAuthLoader && window.__savoireDismissAuthLoader();
     if (!user) {
       const hasToken = localStorage.getItem('sv_firebase_token');
       if (!hasToken) {
@@ -1226,7 +1267,7 @@ try {
         }
       } catch(e) {
         console.error('Auth handling error', e);
-        if (loader) loader.style.display = 'none';
+        window.__savoireDismissAuthLoader && window.__savoireDismissAuthLoader();
       }
     }
   });
@@ -1235,19 +1276,18 @@ try {
   console.error('Firebase init failed', e);
   const loader = document.getElementById('authLoading');
   if (loader) {
-    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
+    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#040918;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
   }
 }
 </script>
 
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1d99b8eb8b7d1',t:'MTc4Mzg3ODIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 <!-- Premium Buy Credits Modal - 4-Tier -->
 <div class="modal-overlay" id="buyCreditsModal" style="display:none">
   <div class="modal-box buy-credits-modal">
     <div class="modal-hdr">
       <h3><i class="fas fa-coins"></i> Buy Credits</h3>
-      <button class="modal-close" onclick="closeBuyCreditsModal()">×</button>
+      <button class="modal-close" type="button" onclick="window.closeBuyCreditsModal()">×</button>
     </div>
     <div class="modal-body">
       <p class="welcome-msg">10,000 welcome credits on signup. Top up packs from ₹19. All packs valid 30 Days.</p>
@@ -1258,7 +1298,7 @@ try {
           <div class="tier-credits">100,000 credits</div>
           <div class="tier-price">₹19</div>
           <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" onclick="buyPlan('starter')">BUY NOW</button>
+          <button class="tier-buy-btn" type="button" data-plan="starter">BUY NOW</button>
         </div>
         <div class="tier-card" data-plan="pro">
           <div class="tier-icon">🚀</div>
@@ -1266,7 +1306,7 @@ try {
           <div class="tier-credits">500,000 credits</div>
           <div class="tier-price">₹49</div>
           <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" onclick="buyPlan('pro')">BUY NOW</button>
+          <button class="tier-buy-btn" type="button" data-plan="pro">BUY NOW</button>
         </div>
         <div class="tier-card tier-popular" data-plan="popular">
           <div class="tier-badge">⭐ BEST SELLER</div>
@@ -1275,7 +1315,7 @@ try {
           <div class="tier-credits">1,000,000 credits</div>
           <div class="tier-price">₹99</div>
           <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" onclick="buyPlan('popular')">BUY NOW</button>
+          <button class="tier-buy-btn" type="button" data-plan="popular">BUY NOW</button>
         </div>
         <div class="tier-card" data-plan="ultra">
           <div class="tier-icon">💎</div>
@@ -1283,7 +1323,7 @@ try {
           <div class="tier-credits">2,000,000 credits</div>
           <div class="tier-price">₹199</div>
           <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" onclick="buyPlan('ultra')">BUY NOW</button>
+          <button class="tier-buy-btn" type="button" data-plan="ultra">BUY NOW</button>
         </div>
       </div>
       <div class="payment-info">
@@ -1338,25 +1378,46 @@ try {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a28854e7abfd77d3',t:'MTc4NjI5NDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html><script>
+<script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
   const m = document.getElementById('buyCreditsModal');
-  if (m) m.style.display = 'flex';
+  if (!m) { console.error('[Savoiré] #buyCreditsModal missing from DOM'); return; }
+  m.style.display = 'flex';
+  m.classList.add('is-open');
+  document.body.style.overflow = 'hidden';
 };
 window.closeBuyCreditsModal = function() {
   const m = document.getElementById('buyCreditsModal');
-  if (m) m.style.display = 'none';
+  if (!m) return;
+  m.style.display = 'none';
+  m.classList.remove('is-open');
+  document.body.style.overflow = '';
 };
 // Alias used by the premium 4-tier modal buttons
 window.buyPlan = function(plan) {
-  if (window.buyPlanDirect) window.buyPlanDirect(plan);
+  if (typeof window.buyPlanDirect === 'function') return window.buyPlanDirect(plan);
+  console.error('[Savoiré] buyPlanDirect not ready yet');
+  alert('Payment module is still loading. Please try again in a moment.');
 };
-// Close premium modal on backdrop click
+// Close premium modal on backdrop click / Escape
 document.addEventListener('click', function(e) {
   const m = document.getElementById('buyCreditsModal');
-  if (m && e.target === m) m.style.display = 'none';
+  if (m && e.target === m) window.closeBuyCreditsModal();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  const m = document.getElementById('buyCreditsModal');
+  if (m && m.style.display === 'flex') window.closeBuyCreditsModal();
+});
+// Delegated fallback: guarantees the 4 tier buttons work even if an inline
+// onclick is stripped by a CSP or the handler loads late.
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest && e.target.closest('#buyCreditsModal .tier-buy-btn');
+  if (!btn || btn.dataset.bound === '1') return;
+  const card = btn.closest('.tier-card');
+  const plan = card && card.dataset.plan;
+  if (plan) { e.preventDefault(); window.buyPlan(plan); }
 });
 window.openCreditHistory = async function() {
   document.getElementById('creditHistoryModal').style.display = 'flex';
@@ -1631,3 +1692,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+
+</body>
+</html>
