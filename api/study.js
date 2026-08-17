@@ -484,13 +484,14 @@ async function streamOneMeshModel(modelId, prompt, onChunk, maxTokens) {
     const data = await res.json();
     const content = data?.choices?.[0]?.message?.content?.trim();
     if (!content || content.length < 80) throw new Error('Empty or too short response');
+    const usage = data?.usage || null;
     const chunkSize = 300;
     for (let i = 0; i < content.length; i += chunkSize) {
       onChunk(content.slice(i, i + chunkSize));
       await sleep(5);
     }
     log.ok(`P1 Mesh:${modelId} WON in ${Date.now() - t0}ms — ${content.length}ch`);
-    return content;
+    return { text: content, usage };
   } catch (err) {
     clearTimeout(timer);
     throw err;
@@ -509,7 +510,7 @@ async function streamNotes(prompt, onChunk, tool, maxTokens) {
   try {
     log.info(`P1 priority: trying pinned model ${PINNED_MODEL}`);
     const pinnedResult = await streamOneMeshModel(PINNED_MODEL, prompt, onChunk, maxTokens);
-    log.ok(`P1 priority: ${PINNED_MODEL} succeeded — ${pinnedResult.length}ch`);
+    log.ok(`P1 priority: ${PINNED_MODEL} succeeded — ${pinnedResult.text.length}ch`);
     return pinnedResult;
   } catch (err) {
     log.warn(`P1 priority: ${PINNED_MODEL} failed (${err.message}) — falling back to free models`);
@@ -538,7 +539,7 @@ async function streamNotes(prompt, onChunk, tool, maxTokens) {
 
     if (successes.length > 0) {
       const winner = successes[0];
-      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.length}ch`);
+      log.ok(`P1 pass ${pass}: WINNER ${winner.model} — returning ${winner.value.text.length}ch`);
       return winner.value;
     }
 
@@ -676,6 +677,7 @@ async function fetchCardsFromOneMeshModel(modelId, prompt, tool, maxTokens) {
     const data = await res.json();
     let content = data?.choices?.[0]?.message?.content?.trim();
     if (!content) throw new Error('Empty response');
+    const usage = data?.usage || null;
     content = content.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/im, '').trim();
     const jS = content.indexOf('{'), jE = content.lastIndexOf('}');
     if (jS === -1 || jE <= jS) throw new Error('No JSON object found in response');
@@ -685,7 +687,7 @@ async function fetchCardsFromOneMeshModel(modelId, prompt, tool, maxTokens) {
       throw new Error(`${modelId}: validation failed — missing/empty required fields for tool:${tool} (fc:${parsed.flashcards?.length||0} q:${parsed.quiz_questions?.length||0} mm:${parsed.mindmap?.branches?.length||0} kc:${parsed.key_concepts?.length||0})`);
     }
     log.ok(`P2 Mesh:${modelId} WON in ${Date.now() - t0}ms for tool:${tool}`);
-    return parsed;
+    return { parsed, usage };
   } catch (err) {
     clearTimeout(timer);
     throw err;
@@ -997,7 +999,7 @@ module.exports = async function handler(req, res) {
 
   if (!process.env.MESH_API_KEY) {
     log.error('[FATAL] MESH_API_KEY not set in environment variables!');
-    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — MESH_API_KEY missing. Get a free key at meshapi.ai and set it in your environment. Contact the administrator.' });
+    return res.status(500).json({ error: 'Savoiré AI service is misconfigured — MESH_API_KEY missing. Get your key at meshapi.ai and set it in your environment. Contact the administrator.' });
   }
 
   // === PAID AUTH LOGIC ===
@@ -1055,7 +1057,7 @@ module.exports = async function handler(req, res) {
       if (remaining < 500) {
         return res.status(402).json({
           error: 'TOKEN_EXHAUSTED',
-          message: `Credits running low! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Top up with Popular - 1M for just ₹99`,
+          message: `Credits running low! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Top up with the Popular plan — 1M credits for just ₹99.`,
           tokens_used: firebaseUserData.totalUsed||0,
           tokens_limit: (firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0),
           tokens_remaining: remaining,
@@ -1139,6 +1141,7 @@ module.exports = async function handler(req, res) {
   sse('token',     { t: '' });
 
   let notes = '', p1ok = false;
+  let notesUsage = null;
   let p2Ticker = null;
 
   try {
@@ -1208,7 +1211,9 @@ module.exports = async function handler(req, res) {
         : 1800;
 
     try {
-      notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, notesMaxTokens);
+      const notesResult = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, notesMaxTokens);
+      notes = notesResult?.text || '';
+      notesUsage = notesResult?.usage || null;
       p1ok = true;
       log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
     } catch (e1) {
@@ -1232,7 +1237,7 @@ module.exports = async function handler(req, res) {
     }, 1500);
 
     // ── Wait for Phase 2 ──
-    let cardsData = null, p2ok = false;
+    let cardsData = null, p2ok = false, cardsUsage = null;
     const deadline = opts.tool === 'notes' || opts.tool === 'summary' ? 45000 : 30000;
     const deadlineFallback = new Promise(resolve => {
       setTimeout(() => resolve({ status: 'deadline' }), deadline);
@@ -1245,7 +1250,9 @@ module.exports = async function handler(req, res) {
       cardsData = buildTopicFallback(opts.tool, message);
       p2ok = false;
     } else if (cardsResult.status === 'fulfilled') {
-      cardsData = cardsResult.value;
+      // fetchCards may return { parsed, usage } (Mesh) or a plain fallback object
+      cardsData  = cardsResult.value?.parsed || cardsResult.value || null;
+      cardsUsage = cardsResult.value?.usage || null;
       p2ok = true;
       log.ok(`[${reqId}] Phase 2 succeeded for ${opts.tool}`);
     } else {
@@ -1309,61 +1316,97 @@ module.exports = async function handler(req, res) {
     const final = mergeCards(cardsData, notes, message, opts);
     final._duration_ms  = Date.now() - startTime;
 
-    // === PAID CREDIT DEDUCTION - ONLY ON SUCCESS ===
+    // === PAID CREDIT DEDUCTION - EXACT TOKENS USED, ONLY ON SUCCESS ===
     if (firebaseUid && !isPing && final) {
       try {
-        const inputChars = message.length;
-        const outputChars = (final.ultra_long_notes||'').length + JSON.stringify(cardsData||'').length;
-        const baseCredits = Math.ceil((inputChars + outputChars)/4);
-        const multipliers = { notes: 1.0, summary: 0.6, flashcards: 1.2, quiz: 1.1, mindmap: 1.3, all: 2.8 };
-        const mult = multipliers[opts.tool] || 1.0;
-        const totalUsed = Math.max(500, Math.ceil(baseCredits * mult));
+        // ── Exact token accounting: prefer the AI provider's usage report ──
+        // (counts the ACTUAL tokens consumed by the winning model responses)
+        const usageSum = (u) => {
+          if (!u || typeof u !== 'object') return 0;
+          if (typeof u.total_tokens === 'number') return u.total_tokens;
+          const prompt = typeof u.prompt_tokens === 'number' ? u.prompt_tokens
+                       : typeof u.input_tokens === 'number' ? u.input_tokens : 0;
+          const completion = typeof u.completion_tokens === 'number' ? u.completion_tokens
+                           : typeof u.output_tokens === 'number' ? u.output_tokens : 0;
+          return prompt + completion;
+        };
+        const exactTokens = usageSum(notesUsage) + usageSum(cardsUsage);
+        // Fallback when the provider doesn't report usage (~4 chars per token)
+        const responseText = (final.ultra_long_notes || '') + ' ' + JSON.stringify(cardsData || '');
+        const fallbackTokens = Math.ceil(responseText.length / 4);
+        let totalUsed = exactTokens > 0 ? exactTokens : fallbackTokens;
+        if (!totalUsed || totalUsed < 1) totalUsed = 1;
 
         const _db2 = getDb();
         const userRef = _db2.collection('users').doc(firebaseUid);
         const { FieldValue } = require('firebase-admin/firestore');
+
+        // Never let the balance go negative: clamp to what the user actually has
+        const preSnap = await userRef.get();
+        const preBalance = preSnap.exists ? (preSnap.data().balance || 0) : 0;
+        let deducted = totalUsed;
+        let refunded = 0;
+        if (deducted > preBalance && preBalance >= 0) {
+          refunded = deducted - preBalance;
+          deducted = preBalance;
+        }
+
         await userRef.update({
-          balance: FieldValue.increment(-totalUsed),
-          totalUsed: FieldValue.increment(totalUsed),
+          balance: FieldValue.increment(-deducted),
+          totalUsed: FieldValue.increment(deducted),
           totalGenerations: FieldValue.increment(1),
           totalWords: FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
-          tokens_used: FieldValue.increment(totalUsed)
+          tokens_used: FieldValue.increment(deducted)
         });
+        const freshSnap = await userRef.get();
+        const freshData = freshSnap.data();
+        const newRemaining = freshData.balance || 0;
+
         await userRef.collection('usageHistory').add({
           timestamp: FieldValue.serverTimestamp(),
           type: 'generation',
           tool: opts.tool,
           topic: message.slice(0,200),
-          creditsChange: -totalUsed,
-          creditsUsed: totalUsed,
+          creditsChange: -deducted,
+          creditsUsed: deducted,
+          creditsRemaining: newRemaining,
           description: `Generated ${opts.tool}`,
-          inputChars,
-          outputChars,
-          multiplier: mult,
+          exactTokens,
+          fallbackTokens,
+          refunded,
           durationMs: final._duration_ms,
+          createdAt: FieldValue.serverTimestamp()
+        });
+        // CRITICAL: also log to top-level creditHistory so the history modal shows it
+        await _db2.collection('creditHistory').add({
+          uid: firebaseUid,
+          type: 'generation',
+          tool: opts.tool,
+          topic: message.slice(0, 200),
+          credits: -deducted,
+          description: `Generated ${opts.tool} - ${deducted} tokens used`,
+          balanceAfter: newRemaining,
           createdAt: FieldValue.serverTimestamp()
         });
         await userRef.collection('history').add({
           topic: message.slice(0,200),
           tool: opts.tool,
-          tokens_consumed: totalUsed,
-          creditsUsed: totalUsed,
+          tokens_consumed: deducted,
+          creditsUsed: deducted,
           wordCount: (final.ultra_long_notes||'').split(/\s+/).length,
           createdAt: FieldValue.serverTimestamp(),
           durationMs: final._duration_ms,
           ts: Date.now()
         });
-        final._tokens_used_this_request = totalUsed;
-        final._credits_used = totalUsed;
-        const freshSnap = await userRef.get();
-        const freshData = freshSnap.data();
-        const newRemaining = freshData.balance || 0;
+        final._tokens_used_this_request = deducted;
+        final._credits_used = deducted;
         final._tokens_remaining = newRemaining;
         final._credits_remaining = newRemaining;
         res.setHeader('X-Tokens-Remaining', String(newRemaining));
-        res.setHeader('X-Tokens-Used', String(totalUsed));
+        res.setHeader('X-Tokens-Used', String(deducted));
         res.setHeader('X-Credits-Remaining', String(newRemaining));
-        res.setHeader('X-Credits-Used', String(totalUsed));
+        res.setHeader('X-Credits-Used', String(deducted));
+        console.log(`[TOKEN DEDUCTION] Exact tokens used: ${totalUsed} | deducted: ${deducted}${refunded > 0 ? ` | refunded: ${refunded}` : ''} | remaining: ${newRemaining}`);
       } catch (deductErr) {
         console.error('Credit deduction failed', deductErr.message);
       }
