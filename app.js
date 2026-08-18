@@ -1507,7 +1507,7 @@ Examples:
         if (res.status === 402) {
           const _d = await res.json().catch(()=>({}));
           if (typeof window !== 'undefined' && window._showPaidUpgradeModal) window._showPaidUpgradeModal(_d);
-          reject(new Error('TOKEN_EXHAUSTED: ' + (_d.message||'Buy 1M for Rs 49')));
+          reject(new Error('TOKEN_EXHAUSTED: ' + (_d.message||'Top up with Popular - 1M for just Rs 99')));
           return;
         }
         // update token bar from header if present
@@ -2027,8 +2027,6 @@ Examples:
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank" rel="noopener">${SAVOIRÉ.DEVELOPER}</a>
           </div>
           ${ (data._tokens_used_this_request || data._tokens_remaining) ? `<div class="credit-result-banner" style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(0,212,255,.08));border:1px solid rgba(212,175,55,.22);border-radius:12px;font-size:.78rem;color:#c9cfdd"><span style="display:inline-flex;align-items:center;gap:6px"><i class="fas fa-coins" style="color:#f0d383"></i> Credits Used: <b style="color:#f0d383">${(data._tokens_used_this_request||0).toLocaleString()}</b></span><span style="opacity:.4">|</span><span>Remaining: <b style="color:#00ff88">${(data._tokens_remaining||0).toLocaleString()}</b></span><span style="margin-left:auto;display:flex;gap:8px"><a href="#" onclick="event.preventDefault(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="padding:4px 10px;background:rgba(212,175,55,.15);border-radius:999px;color:#f0d383;text-decoration:none;font-weight:700;font-size:.7rem">Buy More</a><a href="#" onclick="event.preventDefault(); window.openCreditHistory && window.openCreditHistory()" style="padding:4px 10px;background:rgba(255,255,255,.06);border-radius:999px;color:#aab2cc;text-decoration:none;font-size:.7rem">History</a></span></div>` : '' }
-          ${hasLiveNotes ? `<div class="live-notes-pill"><i class="fas fa-bolt"></i> Live Notes Available</div>` : ''}
-          ${hasLiveNotes ? `<div class="result-live-notes-banner"><div class="result-live-notes-copy"><strong>Live Notes captured.</strong> You can view the original stream output any time.</div><button class="result-live-notes-btn" onclick="window._app._showLiveNotesModal()">View Live Notes</button></div>` : ''}
           ${hasLiveNotes ? `<div class="live-notes-pill"><i class="fas fa-bolt"></i> Live Notes Available</div>` : ''}
           ${hasLiveNotes ? `<div class="result-live-notes-banner"><div class="result-live-notes-copy"><strong>Live Notes captured.</strong> You can view the original stream output any time.</div><button class="result-live-notes-btn" onclick="window._app._showLiveNotesModal()">View Live Notes</button></div>` : ''}
         </div>
@@ -3421,8 +3419,9 @@ Examples:
     if (this.saved.find(s => s.topic === this.currentData.topic && s.tool === this.tool)) {
       this._toast('info', 'fa-star', 'Already saved!'); return;
     }
-    if (this.saved.length >= SAVOIRÉ.MAX_SAVED) {
-      this._toast('error', 'fa-archive', `Library full (max ${SAVOIRÉ.MAX_SAVED}).`); return;
+    if (this.saved.length > 30) {
+      this.saved = this.saved.slice(0, 30);
+      this._save('sv_saved', this.saved);
     }
     const note = {
       id:      this._genId(),
@@ -3432,6 +3431,7 @@ Examples:
       savedAt: Date.now(),
     };
     this.saved.unshift(note);
+    if (this.saved.length > 30) this.saved = this.saved.slice(0, 30);
     this._save('sv_saved', this.saved);
     this._updateAllStats();
     this._renderSidebarSaved();
@@ -3478,7 +3478,7 @@ Examples:
   _addHistory(item) {
     this.history = this.history.filter(h => !(h.topic === item.topic && h.tool === item.tool));
     this.history.unshift(item);
-    if (this.history.length > SAVOIRÉ.MAX_HISTORY) this.history = this.history.slice(0, SAVOIRÉ.MAX_HISTORY);
+    if (this.history.length > 30) this.history = this.history.slice(0, 30);
     this._save('sv_history', this.history);
     this._renderSidebarHistory();
     this._updateAllStats();
@@ -3970,6 +3970,22 @@ Examples:
   // ─── CLOUD SYNC - History & Saved across devices ─────────────────────────
   _getFbToken() { try { return localStorage.getItem('sv_firebase_token')||''; } catch{ return ''; } }
 
+  async _openCreditHistory() {
+    const tok = this._getFbToken();
+    if (!tok) return;
+    try {
+      const res = await fetch('/api/credit-history', {
+        headers: { 'Authorization': 'Bearer ' + tok }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        this.creditHistory = data.history || [];
+        if (typeof this._renderCreditHistoryModal === 'function') this._renderCreditHistoryModal();
+        else if (window.openCreditHistory) window.openCreditHistory();
+      }
+    } catch(e) { console.error('Credit history fetch failed', e); }
+  }
+
   async _fetchCloudHistory() {
     const tok = this._getFbToken();
     if (!tok) return;
@@ -4095,7 +4111,7 @@ Examples:
 
     if (addedFromCloud>0 || pushedToCloud>0) {
       this.saved.sort((a,b)=> (b.savedAt||0)-(a.savedAt||0));
-      if (this.saved.length > 30) this.saved = this.saved.slice(0,120);
+      if (this.saved.length > 30) this.saved = this.saved.slice(0, 30);
       this._save('sv_saved', this.saved);
       this._renderSidebarSaved();
       this._updateAllStats();
@@ -4188,7 +4204,7 @@ Examples:
     const n = document.createElement('div');
     n.id = 'paidUpgradeNudge';
     n.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:linear-gradient(135deg,#1a1408,#0d1330);border:1px solid rgba(212,175,55,.4);border-radius:16px;padding:16px 20px;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5)';
-    n.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:1.4rem">⚠️</div><div style="flex:1"><div style="font-weight:800;color:#f0d383;font-size:.9rem">Tokens Low! ${remaining||0} left</div><div style="font-size:.78rem;color:#aab2cc;margin:4px 0 12px;line-height:1.5">Get 1M tokens for just ₹49 via UPI and continue unlimited.</div><div style="display:flex;gap:8px"><a href="/pricing.html" style="padding:8px 16px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:10px;font-weight:800;font-size:.8rem;text-decoration:none">Buy 1M - ₹49</a><button onclick="this.closest('#paidUpgradeNudge').remove()" style="padding:8px 12px;background:transparent;border:1px solid rgba(255,255,255,.1);color:#aab2cc;border-radius:10px;font-size:.8rem">Later</button></div></div></div>`;
+    n.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start"><div style="font-size:1.4rem">⚠️</div><div style="flex:1"><div style="font-weight:800;color:#22d3ee;font-size:.9rem">Tokens Low! ${remaining||0} left</div><div style="font-size:.78rem;color:#aab2cc;margin:4px 0 12px;line-height:1.5">Top up with the Popular plan - 1M credits for just Rs 99 via UPI and keep studying.</div><div style="display:flex;gap:8px"><a href="#" onclick="event.preventDefault();window.openBuyCreditsModal&&window.openBuyCreditsModal()" style="padding:8px 16px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border-radius:10px;font-weight:800;font-size:.8rem;text-decoration:none">View Plans</a><button onclick="this.closest('#paidUpgradeNudge').remove()" style="padding:8px 12px;background:transparent;border:1px solid rgba(255,255,255,.1);color:#aab2cc;border-radius:10px;font-size:.8rem">Later</button></div></div></div>`;
     document.body.appendChild(n);
   }
 
@@ -4868,4 +4884,4 @@ window.addEventListener('DOMContentLoaded', () => {
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | "Think Less. Know More."
 // Free forever for every student on Earth.
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════�

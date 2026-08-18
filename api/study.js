@@ -1009,7 +1009,7 @@ module.exports = async function handler(req, res) {
 
   if (!isPing) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 10k free credits await!' });
+      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 10k welcome credits await!' });
     }
     const idToken = authHeader.split('Bearer ')[1];
     try {
@@ -1055,7 +1055,7 @@ module.exports = async function handler(req, res) {
       if (remaining < 500) {
         return res.status(402).json({
           error: 'TOKEN_EXHAUSTED',
-          message: `Tokens finished! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Buy 1M for just ₹49`,
+          message: `Tokens finished! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Top up with Popular - 1M for just Rs 99`,
           tokens_used: firebaseUserData.totalUsed||0,
           tokens_limit: (firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0),
           tokens_remaining: remaining,
@@ -1312,12 +1312,14 @@ module.exports = async function handler(req, res) {
     // === PAID CREDIT DEDUCTION - ONLY ON SUCCESS ===
     if (firebaseUid && !isPing && final) {
       try {
+        // EXACT token deduction (not estimate)
+        const responseText = final.ultra_long_notes || final.response || message || '';
+        const tokensUsed = (final.usage && final.usage.total_tokens) || Math.ceil(String(responseText).length / 4);
+        console.log(`[EXACT TOKEN DEDUCTION] ${tokensUsed} tokens used for ${opts.tool}`);
         const inputChars = message.length;
         const outputChars = (final.ultra_long_notes||'').length + JSON.stringify(cardsData||'').length;
-        const baseCredits = Math.ceil((inputChars + outputChars)/4);
-        const multipliers = { notes: 1.0, summary: 0.6, flashcards: 1.2, quiz: 1.1, mindmap: 1.3, all: 2.8 };
-        const mult = multipliers[opts.tool] || 1.0;
-        const totalUsed = Math.max(500, Math.ceil(baseCredits * mult));
+        const totalUsed = tokensUsed;
+        const mult = 1;
 
         const _db2 = getDb();
         const userRef = _db2.collection('users').doc(firebaseUid);
@@ -1360,6 +1362,12 @@ module.exports = async function handler(req, res) {
         const newRemaining = freshData.balance || 0;
         final._tokens_remaining = newRemaining;
         final._credits_remaining = newRemaining;
+        await _db2.collection('creditHistory').add({
+          uid: firebaseUid, type: 'generation', tool: opts.tool, credits: -tokensUsed,
+          description: 'Generated ' + opts.tool + ' - ' + tokensUsed + ' tokens used',
+          balanceAfter: newRemaining,
+          createdAt: FieldValue.serverTimestamp()
+        });
         res.setHeader('X-Tokens-Remaining', String(newRemaining));
         res.setHeader('X-Tokens-Used', String(totalUsed));
         res.setHeader('X-Credits-Remaining', String(newRemaining));

@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <meta name="description" content="Savoiré AI v2.0 — World's Most Advanced Free AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
+  <meta name="description" content="Savoiré AI v2.0 — Advanced AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
   <meta name="author" content="Sooban Talha Technologies">
   <meta name="theme-color" content="#0a1128">
   <meta property="og:title" content="Savoiré AI v2.0 — Ultimate AI Study Assistant">
-  <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI — completely free forever.">
+  <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI. 10,000 welcome credits on signup.">
   <link rel="icon" href="clogo.png">
   <title>Dashboard | Savoire AI v2.0</title>
 
@@ -159,6 +159,9 @@
 
 </head>
 <body>
+<button class="mobile-menu-btn" onclick="document.querySelector('.sidebar, .left-panel, #leftPanel')?.classList.toggle('open'); document.querySelector('#leftPanel')?.classList.toggle('mobile-open')">
+  <i class="fas fa-bars"></i>
+</button>
 <div id="authLoading"><div class="spin"></div><div style="color:#d4af37;font-family:monospace;font-size:.8rem">Checking login...</div></div>
 
 
@@ -196,7 +199,6 @@
           <span class="lp-title">MENU</span>
           <div class="lp-header-links">
             <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
-            <a href="index.html" class="lp-home-link lp-landing-link" id="landingLink"><i class="fas fa-rocket"></i> Main Page</a>
           </div>
         </div>
       </div>
@@ -215,10 +217,10 @@
         <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent)"></div>
         <div class="credit-sidebar-hdr">
           <span class="credit-sidebar-title">💰 CREDITS • 10K/MONTH FREE</span>
-          <span id="creditPlanBadge" style="font-size:.6rem;padding:3px 8px;background:linear-gradient(135deg,rgba(212,175,55,.2),rgba(255,174,0,.1));border:1px solid rgba(212,175,55,.3);border-radius:999px;color:#f0d383;font-weight:700">FREE • Lifetime</span>
+          <span id="creditPlanBadge" class="welcome-badge" style="font-size:.6rem;padding:3px 8px;border-radius:999px;font-weight:700">WELCOME CREDITS</span>
         </div>
         <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(212,175,55,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view usage analytics">10,000 <span style="font-size:.95rem;color:#f0d383;font-weight:700">credits</span></div>
-        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">Free: 10,000 / Month • Valid 30 Days • Resets monthly</div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">Welcome credits: 10,000 on signup • Packs valid 30 Days</div>
         <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#f0d383,#d4af37 55%,#ffae00);box-shadow:0 0 10px rgba(212,175,55,.4)"></div></div>
         <div class="credit-meta"><span id="creditUsed">Used: 0</span><span id="creditRemaining">Remaining: 10,000</span></div>
         <div class="credit-actions">
@@ -234,7 +236,7 @@
             <div class="quick-buy-left"><b>⭐ Popular - 1M</b>₹129 • Best Value</div>
             <button class="quick-buy-btn" style="background:linear-gradient(135deg,#00d4ff,#1970ff)" onclick="window.buyPlanDirect && window.buyPlanDirect('popular')">Buy ₹129</button>
           </div>
-          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">Free: 10,000 / month • Validity 30 Days from purchase</div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">10,000 welcome credits • Validity 30 Days from purchase</div>
         </div>
       </div>
 
@@ -356,7 +358,7 @@
             "Think Less. Know More." — Sooban Talha
           </div>
           <div class="about-text">
-            <i class="fas fa-heart" style="color:#ff4444"></i> Free forever for every student on Earth.
+            <i class="fas fa-heart" style="color:#ff4444"></i> 10,000 welcome credits for every student.
           </div>
         </div>
       </div>
@@ -408,8 +410,8 @@
 
         <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think Less. Know More.</div>
 
-        <a href="index.html" class="hdr-landing-btn dh-stat-hide-md" title="Open main page">
-          <i class="fas fa-compass"></i> Main Page
+        <a href="index.html" class="hdr-landing-btn dh-stat-hide-md" title="Home">
+          <i class="fas fa-home"></i> Home
         </a>
 
         <!-- Header Actions -->
@@ -501,7 +503,7 @@
               <i class="fas fa-coins"></i> 🛒 Buy Credits - From ₹29
             </button>
           </div>
-          <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.4);font-size:.7rem">💡 Free: 10,000 Credits / Month • Validity: 30 Days • UPI Ready</div>
+          <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.4);font-size:.7rem">💡 10,000 welcome credits on signup • Validity: 30 Days • UPI Ready</div>
 
           <div class="es-features">
             <span class="es-feat es-feat-chip" data-tool="notes" title="Generate comprehensive study notes">
@@ -824,7 +826,7 @@
               <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Used</div>
             </div>
             <div style="background:rgba(212,175,55,.1);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(212,175,55,.2)">
-              <div style="font-size:1.2rem;font-weight:800;color:#f0d383" id="settingsPlan">FREE</div>
+              <div style="font-size:1.2rem;font-weight:800;color:#22d3ee" id="settingsPlan">Welcome</div>
               <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Plan</div>
             </div>
           </div>
@@ -864,7 +866,7 @@
             <div class="about-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
             <div class="about-name">Savoiré <span class="about-name-ai">AI</span> <span class="about-name-ver">v2.0</span></div>
             <div class="about-tagline">"Think Less. Know More."</div>
-            <div class="about-desc">A completely free AI study companion built for students everywhere. No login, no payment, no subscription — ever.</div>
+            <div class="about-desc">An AI study companion built for students everywhere. 10,000 welcome credits on signup.</div>
             <div class="about-founder">
               <div class="founder-avatar">ST</div>
               <div class="founder-info">
@@ -912,7 +914,7 @@
         <div class="welcome-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
         <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré <span class="welcome-brand-ai">AI</span></span></h2>
         <p class="welcome-tagline">"Think Less. Know More."</p>
-        <p class="welcome-subtitle">The world's most advanced AI study assistant — free forever</p>
+        <p class="welcome-subtitle">The world's most advanced AI study assistant — 10,000 welcome credits on signup</p>
         <div class="welcome-features">
           <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
           <span class="welcome-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
@@ -929,7 +931,7 @@
         <button id="welcomeBtn" class="welcome-btn">
           <i class="fas fa-graduation-cap"></i> Start Studying →
         </button>
-        <p class="welcome-footer">Free forever · No login required · Built by Sooban Talha Technologies · Powered by <a href="https://app.meshapi.ai/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Mesh API</a></p>
+        <p class="welcome-footer">10,000 welcome credits on signup · Built by Sooban Talha Technologies</p>
       </div>
     </div>
   </div>
@@ -1121,7 +1123,7 @@ try {
       <div style="background:#0f172a;border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center">
         <div style="font-size:2.2rem;margin-bottom:12px">🔋</div>
         <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
-        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your free credits finished. Buy 100k for just ₹29 via UPI.'}</p>
+        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your welcome credits finished. Top up with Popular - 1M for just Rs 99 via UPI.'}</p>
         <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '10,000'}</p>
         <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits - ₹29 UPI ⚡</a>
         <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
@@ -1348,7 +1350,115 @@ try {
   </div>
 </div>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a28854e7abfd77d3',t:'MTc4NjI5NDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a28854e7abfd77d3',t:'MTc4NjI5NDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<div class="modal-overlay" id="buyCreditsModal" style="display:none">
+  <div class="modal-box buy-credits-modal" style="max-width:720px">
+    <div class="modal-hdr" style="display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--border-glass)">
+      <h3 style="margin:0;font-size:1.2rem"><i class="fas fa-coins" style="color:var(--aurora-cyan)"></i> Buy Credits</h3>
+      <button class="modal-close" onclick="closeBuyCreditsModal()" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <p style="text-align:center;color:var(--text-muted);margin-bottom:20px">10,000 welcome credits on signup. Top up packs from Rs 19. All packs valid 30 Days.</p>
+      <div class="tier-grid">
+        <div class="tier-card" data-plan="starter" onclick="buyPlan('starter')">
+          <div class="tier-icon">🪙</div>
+          <div class="tier-name">Starter</div>
+          <div class="tier-credits">100,000 credits</div>
+          <div class="tier-price">₹19</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+        <div class="tier-card" data-plan="pro" onclick="buyPlan('pro')">
+          <div class="tier-icon">🚀</div>
+          <div class="tier-name">Pro</div>
+          <div class="tier-credits">500,000 credits</div>
+          <div class="tier-price">₹49</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+        <div class="tier-card tier-popular" data-plan="popular" onclick="buyPlan('popular')">
+          <div class="tier-badge">⭐ BEST SELLER</div>
+          <div class="tier-icon">⭐</div>
+          <div class="tier-name">Popular</div>
+          <div class="tier-credits">1,000,000 credits</div>
+          <div class="tier-price">₹99</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+        <div class="tier-card" data-plan="ultra" onclick="buyPlan('ultra')">
+          <div class="tier-icon">💎</div>
+          <div class="tier-name">Ultra</div>
+          <div class="tier-credits">2,000,000 credits</div>
+          <div class="tier-price">₹199</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:20px;color:var(--text-muted);font-size:0.85rem">
+        <i class="fas fa-shield-alt" style="color:var(--aurora-cyan)"></i> Secure payment via Razorpay (UPI, Cards, NetBanking)
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function openBuyCreditsModal() {
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeBuyCreditsModal() {
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+}
+window.openBuyCreditsModal = openBuyCreditsModal;
+window.closeBuyCreditsModal = closeBuyCreditsModal;
+
+function buyPlan(plan) {
+  const token = localStorage.getItem('sv_firebase_token');
+  if (!token) { alert('Please login first'); window.location.href = '/login.html'; return; }
+  fetch('/api/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ plan: plan })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { alert('Error: ' + data.error); return; }
+    const options = {
+      key: data.key, amount: data.amount, currency: data.currency, order_id: data.orderId,
+      name: 'Savoiré AI', description: data.plan + ' - ' + data.credits.toLocaleString() + ' credits',
+      image: '/clogo.png',
+      handler: function(response) {
+        fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: response.razorpay_order_id,
+            paymentId: response.razorpay_payment_id,
+            signature: response.razorpay_signature,
+            plan: plan,
+            uid: (window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser && window.firebaseAuthInstance.currentUser.uid) || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid) || localStorage.getItem('sv_uid')
+          })
+        })
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            alert('Payment successful! ' + d.credits_added.toLocaleString() + ' credits added.');
+            closeBuyCreditsModal();
+            location.reload();
+          }
+        });
+      },
+      prefill: { name: localStorage.getItem('sv_user') || '', email: '' },
+      theme: { color: '#22d3ee' }
+    };
+    const rzp = new Razorpay(options);
+    rzp.open();
+  });
+}
+window.buyPlan = buyPlan;
+</script>
+
+</body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
@@ -1630,3 +1740,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 </script>
+
