@@ -13,7 +13,7 @@
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
   <!-- Libraries -->
@@ -208,35 +208,35 @@
         <div class="user-avatar-sidebar" id="sidebarAvatar">🎓</div>
         <div class="user-info-sidebar">
           <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
-          <div class="user-tagline-sidebar">Think Less. Know More.</div>
+          <div class="user-tagline-sidebar"><strong style="color:#fff">Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37;font-style:italic">Know more.</em></div>
         </div>
       </div>
 
-      <!-- Credit Sidebar - UPGRADED PREMIUM - 10k Monthly Free -->
+      <!-- Credit Sidebar -->
       <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view credit analytics, usage & plans">
-        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent)"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.5),transparent)"></div>
         <div class="credit-sidebar-hdr">
-          <span class="credit-sidebar-title">💰 CREDITS • 10K/MONTH FREE</span>
-          <span id="creditPlanBadge" class="welcome-badge" style="font-size:.6rem;padding:3px 8px;border-radius:999px;font-weight:700">WELCOME CREDITS</span>
+          <span class="credit-sidebar-title">CREDITS</span>
+          <span id="creditPlanBadge" class="welcome-badge">WELCOME 10K</span>
         </div>
-        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(212,175,55,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view usage analytics">10,000 <span style="font-size:.95rem;color:#f0d383;font-weight:700">credits</span></div>
-        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">Welcome credits: 10,000 on signup • Packs valid 30 Days</div>
-        <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#f0d383,#d4af37 55%,#ffae00);box-shadow:0 0 10px rgba(212,175,55,.4)"></div></div>
+        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(34,211,238,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view usage analytics">10,000 <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span></div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">10,000 welcome credits on signup • Top up packs from Rs 19</div>
+        <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#22d3ee,#1970ff);box-shadow:0 0 10px rgba(34,211,238,.4)"></div></div>
         <div class="credit-meta"><span id="creditUsed">Used: 0</span><span id="creditRemaining">Remaining: 10,000</span></div>
         <div class="credit-actions">
-          <button class="credit-btn credit-btn-buy" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="position:relative;overflow:hidden"><i class="fas fa-coins"></i> Buy Credits • From ₹29</button>
-          <button class="credit-btn credit-btn-history" onclick="window.openCreditHistory && window.openCreditHistory()"><i class="fas fa-chart-bar"></i> History</button>
+          <button class="credit-btn credit-btn-buy" onclick="event.stopPropagation(); window.openBuyCreditsModal && window.openBuyCreditsModal()"><i class="fas fa-coins"></i> Buy Credits • From Rs 19</button>
+          <button class="credit-btn credit-btn-history" onclick="event.stopPropagation(); window.openCreditHistory && window.openCreditHistory()"><i class="fas fa-chart-bar"></i> History</button>
         </div>
         <div class="quick-buy" style="flex-direction:column;align-items:flex-start;gap:8px">
           <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center">
-            <div class="quick-buy-left"><b>🚀 Pro - 500k</b>₹69 • Most Popular</div>
-            <button class="quick-buy-btn" onclick="window.buyPlanDirect && window.buyPlanDirect('pro')">Buy ₹69</button>
+            <div class="quick-buy-left"><b>🚀 Pro - 500k</b> Regular study</div>
+            <button class="quick-buy-btn" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('pro')">Buy Rs 49</button>
           </div>
-          <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center;background:rgba(0,212,255,.06);padding:6px 8px;border-radius:8px;border:1px solid rgba(0,212,255,.1)">
-            <div class="quick-buy-left"><b>⭐ Popular - 1M</b>₹129 • Best Value</div>
-            <button class="quick-buy-btn" style="background:linear-gradient(135deg,#00d4ff,#1970ff)" onclick="window.buyPlanDirect && window.buyPlanDirect('popular')">Buy ₹129</button>
+          <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center;background:rgba(34,211,238,.06);padding:6px 8px;border-radius:8px;border:1px solid rgba(34,211,238,.15)">
+            <div class="quick-buy-left"><b>⭐ Popular - 1M</b> Best Seller</div>
+            <button class="quick-buy-btn" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('popular')">Buy Rs 99</button>
           </div>
-          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">10,000 welcome credits • Validity 30 Days from purchase</div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">Packs valid 30 Days from purchase · Razorpay UPI</div>
         </div>
       </div>
 
@@ -345,7 +345,7 @@
           <i class="fas fa-info-circle"></i> About Savoiré AI
           <i class="fas fa-chevron-down about-chevron" id="aboutChevron"></i>
         </button>
-        <div class="about-content" id="aboutContent">
+        <div class="abouabout-content" id="aboutContent">
           <div class="about-text">
             <strong>Savoiré AI v2.0</strong> — World's most advanced AI study assistant.
             Generate notes, flashcards, quizzes, summaries &amp; mind maps.
@@ -408,7 +408,7 @@
           </div>
         </div>
 
-        <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think Less. Know More.</div>
+        <div class="dh-greeting dh-stat-hide-md" id="dhGreeting"><strong>Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37">Know more.</em></div>
 
         <a href="index.html" class="hdr-landing-btn dh-stat-hide-md" title="Home">
           <i class="fas fa-home"></i> Home
@@ -500,7 +500,7 @@
               <i class="fas fa-bolt"></i> ⚡ Mega Bundle — All 5
             </button>
             <button class="credit-btn credit-btn-buy" id="emptyBuyBtn" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="padding:14px 28px;border-radius:14px;font-weight:700">
-              <i class="fas fa-coins"></i> 🛒 Buy Credits - From ₹29
+              <i class="fas fa-coins"></i> Buy Credits — From Rs 19
             </button>
           </div>
           <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.4);font-size:.7rem">💡 10,000 welcome credits on signup • Validity: 30 Days • UPI Ready</div>
@@ -831,7 +831,7 @@
             </div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="flex:1;padding:10px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer"><i class="fas fa-coins"></i> Buy Credits</button>
+            <button onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="flex:1;padding:10px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer"><i class="fas fa-coins"></i> Buy Credits</button>
             <button onclick="window.openCreditHistory && window.openCreditHistory()" style="padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer"><i class="fas fa-history"></i> History</button>
             <a href="/pricing.html" style="padding:10px 16px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:600">View Plans</a>
           </div>
@@ -865,8 +865,8 @@
           <div class="about-card-settings">
             <div class="about-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
             <div class="about-name">Savoiré <span class="about-name-ai">AI</span> <span class="about-name-ver">v2.0</span></div>
-            <div class="about-tagline">"Think Less. Know More."</div>
-            <div class="about-desc">An AI study companion built for students everywhere. 10,000 welcome credits on signup.</div>
+            <div class="about-tagline"><strong>Think less.</strong> <em>Know more.</em></div>
+            <div class="about-desc">A premium AI study companion built for students everywhere. 10,000 welcome credits on signup — top-up packs from Rs 19.</div>
             <div class="about-founder">
               <div class="founder-avatar">ST</div>
               <div class="founder-info">
@@ -913,7 +913,7 @@
       <div class="modal-body" style="text-align:center;padding:32px">
         <div class="welcome-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
         <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré <span class="welcome-brand-ai">AI</span></span></h2>
-        <p class="welcome-tagline">"Think Less. Know More."</p>
+        <p class="welcome-tagline"><strong style="color:#fff">Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37">Know more.</em></p>
         <p class="welcome-subtitle">The world's most advanced AI study assistant — 10,000 welcome credits on signup</p>
         <div class="welcome-features">
           <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
@@ -1125,7 +1125,7 @@ try {
         <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
         <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your welcome credits finished. Top up with Popular - 1M for just Rs 99 via UPI.'}</p>
         <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '10,000'}</p>
-        <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits - ₹29 UPI ⚡</a>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits — From Rs 19</a>
         <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
       </div>
     `;
@@ -1243,8 +1243,8 @@ try {
 
   <script src="app.js"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1d99b8eb8b7d1',t:'MTc4Mzg3ODIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
-<!-- BUY CREDITS MODAL - Lifetime Packs -->
-<div class="buy-credits-overlay" id="buyCreditsOverlay">
+<!-- OLD PACKS HIDDEN — use #buyCreditsModal -->
+<div class="buy-credits-overlay" id="buyCreditsOverlay" style="display:none!important">
   <div class="buy-credits-modal">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <h3 style="font-family:'Fraunces',serif;font-size:22px">💎 Choose Your Plan <span style="font-size:11px;background:rgba(212,175,55,.15);padding:3px 8px;border-radius:999px;color:#f0d383;margin-left:8px">Lifetime Validity</span></h3>
@@ -1462,10 +1462,12 @@ window.buyPlan = buyPlan;
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
-  document.getElementById('buyCreditsOverlay')?.classList.add('active');
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
 };
 window.closeBuyCreditsModal = function() {
-  document.getElementById('buyCreditsOverlay')?.classList.remove('active');
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
 };
 window.openCreditHistory = async function() {
   document.getElementById('creditHistoryModal').style.display = 'flex';
@@ -1475,9 +1477,29 @@ window.openCreditHistory = async function() {
   try {
     const fbToken = localStorage.getItem('sv_firebase_token');
     if (!fbToken) { listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#ffae00">Please login</div>'; return; }
-    // Fetch from Firestore via user-tokens? For now show local history + purchase
-    // Try to fetch purchaseHistory and usageHistory via custom endpoint or Firestore directly
-    // For MVP, show localStorage history + call /api/user-tokens for summary
+    try {
+      const histRes = await fetch('/api/credit-history', { headers: { 'Authorization': 'Bearer ' + fbToken } });
+      if (histRes.ok) {
+        const histData = await histRes.json();
+        if (Array.isArray(histData.history) && histData.history.length) {
+          const list = histData.history.map(it => {
+            const amt = Number(it.credits || it.creditsChange || 0);
+            const isPos = amt > 0;
+            const icon = it.type==='purchase' ? '💳' : it.type==='bonus' ? '🎁' : '📝';
+            const time = it.createdAt?.seconds ? new Date(it.createdAt.seconds*1000).toLocaleString() : (it.timestamp ? new Date(it.timestamp).toLocaleString() : '');
+            return `<div class="credit-history-item">
+              <div class="credit-history-icon">${icon}</div>
+              <div class="credit-history-info">
+                <div class="credit-history-title">${it.description||it.tool||it.type||'Transaction'}</div>
+                <div class="credit-history-sub">${time}</div>
+              </div>
+              <div class="credit-history-amount ${isPos?'positive':'negative'}">${isPos?'+':''}${amt.toLocaleString()}</div>
+            </div>`;
+          }).join('');
+          listEl.innerHTML = list;
+        }
+      }
+    } catch (e) { console.log('credit-history api', e.message); }
     const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
     const bal = res.ok ? await res.json() : { balance: 0, totalPurchased: 0, totalUsed: 0 };
     
@@ -1656,7 +1678,7 @@ window._updatePaidTokenBar = function(remaining, limit, plan) {
     }
   }
   const badge = document.getElementById('creditPlanBadge');
-  if (badge && plan) badge.textContent = plan.toUpperCase();
+  if (badge && plan) badge.textContent = (plan === 'free' || !plan) ? 'WELCOME 10K' : plan.toUpperCase();
   
   // Header tokenCount already updated
 };
@@ -1668,8 +1690,8 @@ window.performLogout = async function() {
     const auth = getAuth();
     await signOut(auth);
   } catch(e) { console.log('Signout failed', e.message); }
-  localStorage.clear();
-  sessionStorage.clear();
+  localStorage.removeItem('sv_firebase_token');
+  sessionStorage.removeItem('sv_firebase_token');
   window.location.href = '/login.html';
 };
 

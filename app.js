@@ -48,7 +48,7 @@ const SAVOIRÉ = {
   DEVSITE:     'soobantalhatech.xyz',
   WEBSITE:     'savoireai.vercel.app',
   FOUNDER:     'Sooban Talha',
-  TAGLINE:     'Think Less. Know More.',
+  TAGLINE:     'Think less. Know more.',
   API_URL:     '/api/study',
   MAX_HISTORY: 30,
   MAX_SAVED:   30,
@@ -174,11 +174,11 @@ const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','�
 const DEMO_STEPS = [
   {
     step: 1, title: 'Welcome to Savoiré AI ✨',
-    subtitle: "The World's Most Advanced Free AI Study Assistant",
-    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps using the most powerful AI models — completely free, forever.',
+    subtitle: "The premium AI study companion",
+    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps. 10,000 welcome credits on signup — top-up packs from Rs 19.',
     icon: 'fa-graduation-cap', color: '#d4af37', targetId: null, arrow: null,
     tips: [
-      { icon: 'fa-infinity',   text: '100% Free — No login, no payment, ever' },
+      { icon: 'fa-infinity',   text: '10,000 welcome credits on signup' },
       { icon: 'fa-globe',      text: 'Works in 20+ languages including Urdu, Hindi, Arabic' },
       { icon: 'fa-shield-alt', text: 'All your data stays on your device — private & secure' },
       { icon: 'fa-bolt',       text: 'Powered by 14+ cutting-edge AI models with live fallback' },
@@ -4884,4 +4884,4 @@ window.addEventListener('DOMContentLoaded', () => {
 // Built by Sooban Talha Technologies | soobantalhatech.xyz
 // Founder: Sooban Talha | "Think Less. Know More."
 // Free forever for every student on Earth.
-// ═══════════════════════════════════════════════════════════════════════════════════════════════════�
+// ═══════════════════════════════════════════════════════════════════════════════════════════════════�
