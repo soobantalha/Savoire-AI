@@ -1440,52 +1440,12 @@ window.openBuyCreditsModal = openBuyCreditsModal;
 window.closeBuyCreditsModal = closeBuyCreditsModal;
 
 function buyPlan(plan) {
-  const token = localStorage.getItem('sv_firebase_token');
-  if (!token) { alert('Please login first'); window.location.href = '/login.html'; return; }
-  fetch('/api/create-order', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-    body: JSON.stringify({ plan: plan })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.error) { alert('Error: ' + data.error); return; }
-    const options = {
-      key: data.key, amount: data.amount, currency: data.currency, order_id: data.orderId,
-      name: 'Savoiré AI', description: data.plan + ' - ' + data.credits.toLocaleString() + ' credits',
-      image: '/clogo.png',
-      handler: function(response) {
-        fetch('/api/verify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-            plan: plan,
-            uid: (window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser && window.firebaseAuthInstance.currentUser.uid) || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid) || localStorage.getItem('sv_uid')
-          })
-        })
-        .then(r => r.json())
-        .then(d => {
-          if (d.success) {
-            alert('Payment successful! ' + d.credits_added.toLocaleString() + ' credits added.');
-            closeBuyCreditsModal();
-            location.reload();
-          }
-        });
-      },
-      prefill: { name: localStorage.getItem('sv_user') || '', email: '' },
-      theme: { color: '#22d3ee' }
-    };
-    const rzp = new Razorpay(options);
-    rzp.open();
-  });
+  if (window.buyPlanDirect) return window.buyPlanDirect(plan);
 }
 window.buyPlan = buyPlan;
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2da77ec2f48756a',t:'MTc4NzE1NjI0Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2daa7627eae4e7b',t:'MTc4NzE1ODE5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
@@ -1672,10 +1632,18 @@ window.buyPlanDirect = async function(plan) {
           alert('Payment verification failed: ' + (vData.error||'Unknown'));
         }
       },
-      prefill: { email: (window.firebaseAuthInstance?.currentUser?.email||''), name: (window.firebaseAuthInstance?.currentUser?.displayName||'') },
-      theme: { color: '#d4af37' }
+      prefill: {
+        email: (window.firebaseAuthInstance?.currentUser?.email||''),
+        name: (window.firebaseAuthInstance?.currentUser?.displayName|| localStorage.getItem('sv_user') || '')
+      },
+      notes: { plan: plan, app: 'savoire' },
+      theme: { color: '#22d3ee' }
     };
     const rzp = new Razorpay(options);
+    rzp.on('payment.failed', function (resp) {
+      const msg = (resp && resp.error && (resp.error.description || resp.error.reason)) || 'Payment failed';
+      alert('Payment failed: ' + msg + '\n\nFamPay tip: Razorpay checkout me UPI → Pay via any UPI app choose karo (intent). Collect/VPA enter mat karo. PhonePe / GPay / BHIM bhi chalega.');
+    });
     rzp.open();
   } catch(e) {
     alert('Buy failed: ' + e.message);

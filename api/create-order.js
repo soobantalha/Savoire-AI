@@ -29,8 +29,9 @@ module.exports = async function handler(req, res) {
     const order = await razorpay.orders.create({
       amount: pricing[plan].amount,
       currency: 'INR',
-      receipt: 'savoire_' + uid + '_' + Date.now(),
-      notes: { uid, plan, credits: String(pricing[plan].credits) }
+      receipt: ('sv' + Date.now().toString(36) + uid.slice(0, 8)).slice(0, 40),
+      payment_capture: 1,
+      notes: { uid, plan, credits: String(pricing[plan].credits), app: 'savoire' }
     });
     res.json({ orderId: order.id, amount: order.amount, currency: order.currency, key: process.env.RAZORPAY_KEY_ID, plan, credits: pricing[plan].credits });
   } catch (err) {
