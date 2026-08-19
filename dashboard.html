@@ -345,7 +345,7 @@
           <i class="fas fa-info-circle"></i> About Savoiré AI
           <i class="fas fa-chevron-down about-chevron" id="aboutChevron"></i>
         </button>
-        <div class="abouabout-content" id="aboutContent">
+        <div class="about-content" id="aboutContent">
           <div class="about-text">
             <strong>Savoiré AI v2.0</strong> — World's most advanced AI study assistant.
             Generate notes, flashcards, quizzes, summaries &amp; mind maps.
@@ -488,22 +488,22 @@
 
         <!-- Empty State -->
         <div id="emptyState" class="empty-state">
-          <div class="es-mark">✨</div>
-          <div class="es-title">Ready to Study Smarter?</div>
-          <div class="es-sub">Use the Wizard to generate Notes, Flashcards, Quiz, Summary, or Mind Map — all powered by AI in real-time</div>
+          <div class="es-kicker">Savoiré AI · v2.0</div>
+          <div class="es-title">Think less. <em>Know more.</em></div>
+          <div class="es-sub">A premium study workspace. Open the wizard, pick a format, and watch notes, flashcards, quizzes, summaries and mind maps stream in live.</div>
 
           <div class="es-cta-row" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
             <button class="empty-wizard-btn" id="emptyWizardBtn">
               <i class="fas fa-magic"></i> Open Study Wizard
             </button>
             <button class="empty-mega-btn" id="emptyMegaBtn">
-              <i class="fas fa-bolt"></i> ⚡ Mega Bundle — All 5
+              <i class="fas fa-bolt"></i> Mega Bundle — All 5
             </button>
             <button class="credit-btn credit-btn-buy" id="emptyBuyBtn" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="padding:14px 28px;border-radius:14px;font-weight:700">
               <i class="fas fa-coins"></i> Buy Credits — From Rs 19
             </button>
           </div>
-          <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.4);font-size:.7rem">💡 10,000 welcome credits on signup • Validity: 30 Days • UPI Ready</div>
+          <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.45);font-size:.75rem">10,000 welcome credits on signup · Top-up packs from Rs 19 · Valid 30 days from purchase</div>
 
           <div class="es-features">
             <span class="es-feat es-feat-chip" data-tool="notes" title="Generate comprehensive study notes">
@@ -543,7 +543,7 @@
 
       <footer class="dash-mini-footer">
         <span>Developed by <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">Sooban Talha Technologies</a></span>
-        <span>Powered by <a href="https://app.meshapi.ai/" target="_blank" rel="noopener">Mesh API</a></span>
+        <span><strong>Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37">Know more.</em></span>
       </footer>
 
       <!-- ═══════════ BACK TO TOP BUTTON ═══════════ -->
@@ -1352,51 +1352,78 @@ try {
 
 <script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a28854e7abfd77d3',t:'MTc4NjI5NDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 <div class="modal-overlay" id="buyCreditsModal" style="display:none">
-  <div class="modal-box buy-credits-modal" style="max-width:720px">
-    <div class="modal-hdr" style="display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--border-glass)">
-      <h3 style="margin:0;font-size:1.2rem"><i class="fas fa-coins" style="color:var(--aurora-cyan)"></i> Buy Credits</h3>
-      <button class="modal-close" onclick="closeBuyCreditsModal()" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer">×</button>
+  <div class="modal-box plan-atelier" onclick="event.stopPropagation()">
+    <div class="plan-atelier-glow"></div>
+    <div class="plan-atelier-hdr">
+      <div>
+        <div class="plan-kicker">Savoiré Credits · 30-day packs</div>
+        <h3>Choose the depth of your study.</h3>
+        <p>10,000 welcome credits on signup. Top-up from Rs 19. Valid 30 days from purchase. Pay with UPI, cards or netbanking via Razorpay.</p>
+      </div>
+      <button class="plan-x" onclick="closeBuyCreditsModal()" aria-label="Close">×</button>
     </div>
-    <div class="modal-body" style="padding:20px">
-      <p style="text-align:center;color:var(--text-muted);margin-bottom:20px">10,000 welcome credits on signup. Top up packs from Rs 19. All packs valid 30 Days.</p>
-      <div class="tier-grid">
-        <div class="tier-card" data-plan="starter" onclick="buyPlan('starter')">
-          <div class="tier-icon">🪙</div>
-          <div class="tier-name">Starter</div>
-          <div class="tier-credits">100,000 credits</div>
-          <div class="tier-price">₹19</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn">BUY NOW</button>
-        </div>
-        <div class="tier-card" data-plan="pro" onclick="buyPlan('pro')">
-          <div class="tier-icon">🚀</div>
-          <div class="tier-name">Pro</div>
-          <div class="tier-credits">500,000 credits</div>
-          <div class="tier-price">₹49</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn">BUY NOW</button>
-        </div>
-        <div class="tier-card tier-popular" data-plan="popular" onclick="buyPlan('popular')">
-          <div class="tier-badge">⭐ BEST SELLER</div>
-          <div class="tier-icon">⭐</div>
-          <div class="tier-name">Popular</div>
-          <div class="tier-credits">1,000,000 credits</div>
-          <div class="tier-price">₹99</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn">BUY NOW</button>
-        </div>
-        <div class="tier-card" data-plan="ultra" onclick="buyPlan('ultra')">
-          <div class="tier-icon">💎</div>
-          <div class="tier-name">Ultra</div>
-          <div class="tier-credits">2,000,000 credits</div>
-          <div class="tier-price">₹199</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn">BUY NOW</button>
-        </div>
-      </div>
-      <div style="text-align:center;margin-top:20px;color:var(--text-muted);font-size:0.85rem">
-        <i class="fas fa-shield-alt" style="color:var(--aurora-cyan)"></i> Secure payment via Razorpay (UPI, Cards, NetBanking)
-      </div>
+    <div class="plan-atelier-grid">
+      <article class="plan-sheet" data-plan="starter" onclick="buyPlan('starter')">
+        <div class="plan-sheet-top"><span class="plan-emoji">🪙</span><span class="plan-role">Try karne ke liye</span></div>
+        <h4>Starter</h4>
+        <div class="plan-price">₹19 <small>/ 30 days</small></div>
+        <div class="plan-credits">100,000 credits</div>
+        <ul class="plan-facts">
+          <li>~80–120 study notes</li>
+          <li>~15–25 Mega Bundles</li>
+          <li>~50–70 flashcard decks</li>
+          <li>Exact token deduction</li>
+          <li>UPI · Cards · NetBanking</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Starter</button>
+      </article>
+      <article class="plan-sheet" data-plan="pro" onclick="buyPlan('pro')">
+        <div class="plan-sheet-top"><span class="plan-emoji">🚀</span><span class="plan-role">Regular study</span></div>
+        <h4>Pro</h4>
+        <div class="plan-price">₹49 <small>/ 30 days</small></div>
+        <div class="plan-credits">500,000 credits</div>
+        <ul class="plan-facts">
+          <li>~400–600 study notes</li>
+          <li>~70–90 Mega Bundles</li>
+          <li>~250+ flashcard decks</li>
+          <li>Quiz + mind map headroom</li>
+          <li>Best for daily revision</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Pro</button>
+      </article>
+      <article class="plan-sheet plan-sheet-star" data-plan="popular" onclick="buyPlan('popular')">
+        <div class="tier-badge">BEST SELLER · 80% choose this</div>
+        <div class="plan-sheet-top"><span class="plan-emoji">⭐</span><span class="plan-role">Serious students</span></div>
+        <h4>Popular</h4>
+        <div class="plan-price">₹99 <small>/ 30 days</small></div>
+        <div class="plan-credits">1,000,000 credits</div>
+        <ul class="plan-facts">
+          <li>~800–1,200 notes</li>
+          <li>~140–180 Mega Bundles</li>
+          <li>Full exam-cycle runway</li>
+          <li>Lowest cost per 1M</li>
+          <li>Priority checkout</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Popular</button>
+      </article>
+      <article class="plan-sheet" data-plan="ultra" onclick="buyPlan('ultra')">
+        <div class="plan-sheet-top"><span class="plan-emoji">💎</span><span class="plan-role">Heavy usage</span></div>
+        <h4>Ultra</h4>
+        <div class="plan-price">₹199 <small>/ 30 days</small></div>
+        <div class="plan-credits">2,000,000 credits</div>
+        <ul class="plan-facts">
+          <li>~1,600–2,400 notes</li>
+          <li>~280–360 Mega Bundles</li>
+          <li>Coaching / batch volume</li>
+          <li>All 5 tools, all month</li>
+          <li>Maximum headroom</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Ultra</button>
+      </article>
+    </div>
+    <div class="plan-atelier-foot">
+      <span><i class="fas fa-shield-alt"></i> Secure payment via Razorpay</span>
+      <span>Credits deduct exactly as used · unused pack expires in 30 days</span>
     </div>
   </div>
 </div>
@@ -1458,7 +1485,7 @@ function buyPlan(plan) {
 window.buyPlan = buyPlan;
 </script>
 
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2da77ec2f48756a',t:'MTc4NzE1NjI0Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
