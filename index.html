@@ -285,7 +285,6 @@ input,textarea,select{font-family:inherit;color:inherit}
   font-size:clamp(15.5px, 1.55vw, 18px);
   color:var(--ink-2);max-width:580px;margin:0 auto 36px;line-height:1.6;font-weight:400;
   letter-spacing:-0.005em;
-  word-wrap:break-word;overflow-wrap:break-word;
 }
 .hero-sub strong{color:#fff;font-weight:500}
 .hero-sub .type-cursor{display:inline-block;width:1.5px;height:1.05em;background:var(--brass-soft);vertical-align:-3px;margin-left:2px;animation:blink 1.1s step-end infinite}
@@ -738,7 +737,6 @@ footer{
 }
 @media (max-width:480px){
   .hero-headline{font-size:clamp(36px, 10vw, 52px)}
-  .hero-sub{font-size:15px;max-width:100%;padding:0 8px;word-wrap:break-word;overflow-wrap:break-word}
   .hero-ctas{flex-direction:column;width:100%}
   .hero-ctas .btn{width:100%}
   .stats-strip{grid-template-columns:1fr 1fr}
@@ -817,10 +815,10 @@ footer{
   <div class="hero-content">
     <span class="eyebrow hero-eyebrow">Savoiré AI · v2.0 · Premium Edition</span>
     <h1 class="hero-headline">
-      <span class="line"><span>Think less.</span></span>
-      <span class="line"><span class="accent">Know more.</span></span>
+      <span class="line"><span>Study less.</span></span>
+      <span class="line"><span class="accent">Know everything.</span></span>
     </h1>
-    <p class="hero-sub" id="heroTyping">Five premium study formats from a single topic — Notes, Flashcards, Quiz, Summary &amp; Mind Map<span class="type-cursor"></span></p>
+    <p class="hero-sub" id="heroTyping">Five premium study formats from a single topic — Notes, Flashcards, Quiz, Summary & Mind Map<span class="type-cursor"></span></p>
     <div class="hero-ctas">
       <a href="dashboard.html" class="btn btn-mega" data-ripple>Open the Dashboard <i>→</i></a>
       <a href="#features" class="btn btn-ghost btn-mega" data-ripple>Explore the toolkit</a>
@@ -923,8 +921,7 @@ footer{
         <p style="color:var(--ink-2);font-weight:400;line-height:1.65;font-size:15.5px;max-width:460px">
           Every format streams line-by-line inside a glass dashboard. No spinners, no blank screens — you watch the material form, like a private tutor dictating.
         </p>
-        <ul class="demo-checklist">
-          <li><span class="dot"></span>Live streaming output for every format</li>
+        <ul class="demo-checklist"="dot"></span>Live streaming output for every format</li>
           <li><span class="dot"></span>Glass dashboard, dark and light themes</li>
           <li><span class="dot"></span>One-tap PDF export, clean and on-brand</li>
           <li><span class="dot"></span>20+ languages, auto-detected from your topic</li>
@@ -1272,9 +1269,9 @@ document.querySelectorAll('[data-ripple]').forEach(btn => {
 
 /* ── HERO TYPEWRITER ─────────────────────────────────── */
 const heroLines = [
-  'Five premium study formats from a single topic',
-  'Notes, Flashcards, Quiz, Summary & Mind Map',
+  'Five premium study formats from a single topic — Notes, Flashcards, Quiz, Summary & Mind Map',
   'Instantly, in 20+ languages',
+  'Notes, flashcards, quiz, summary, mind map',
   'Streaming live, in under a minute'
 ];
 const typeEl = document.getElementById('heroTyping');

@@ -16,7 +16,6 @@ module.exports = async function handler(req, res) {
     const creditsToAdd = creditsMap[plan];
     if (!creditsToAdd) return res.status(400).json({ error: 'Invalid plan' });
     const db = getDb();
-    // Idempotency: if this payment was already credited anywhere, don't credit twice
     const existingTx = await db.collection('creditHistory').where('paymentId', '==', paymentId).get();
     if (!existingTx.empty) return res.json({ success: true, message: 'Already credited', credits_added: creditsToAdd });
     const userRef = db.collection('users').doc(uid);
@@ -37,29 +36,20 @@ module.exports = async function handler(req, res) {
         tokens_limit: FieldValue.increment(creditsToAdd)
       });
     });
-    // Write to BOTH purchaseHistory AND creditHistory
     await userRef.collection('purchaseHistory').add({
       timestamp: FieldValue.serverTimestamp(), type: 'purchase', plan, credits: creditsToAdd,
       amount: amountMap[plan], paymentId, orderId, status: 'success',
       creditsRemaining: prevBalance + creditsToAdd, description: 'Purchased ' + plan + ' - Monthly 30 Days',
       validity: '30 Days', validTill: new Date(Date.now()+30*24*60*60*1000).toISOString()
     });
-    // CRITICAL: Write to creditHistory so it shows in history modal
     await db.collection('creditHistory').add({
       uid, type: 'purchase', plan, credits: creditsToAdd,
       amount: amountMap[plan], paymentId, orderId,
-      description: 'Purchased ' + plan + ' - 1,000,000 credits for Rs 99'.replace('1,000,000', creditsToAdd.toLocaleString()).replace('99', amountMap[plan].toString()),
+      description: 'Purchased ' + plan + ' - ' + creditsToAdd.toLocaleString() + ' credits for Rs ' + amountMap[plan],
       balanceAfter: prevBalance + creditsToAdd,
       createdAt: FieldValue.serverTimestamp()
     });
     await db.collection('transactions').add({ uid, orderId, paymentId, signature, plan, amount: amountMap[plan], credits_credited: creditsToAdd, status: 'success', createdAt: FieldValue.serverTimestamp() });
-    // Optional payment spreadsheet/webhook notify (kept from previous version)
-    if (process.env.PAYMENT_SHEET_WEBHOOK_URL) {
-      try {
-        const userData = (await userRef.get()).data();
-        await fetch(process.env.PAYMENT_SHEET_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid, email: userData.email||'', name: userData.displayName||'', plan, amount: amountMap[plan], paymentId, orderId, tokens: creditsToAdd, newLimit: prevBalance + creditsToAdd }) });
-      } catch(e) {}
-    }
     res.json({ success: true, credits_added: creditsToAdd, plan, new_balance: prevBalance + creditsToAdd });
   } catch (err) { console.error('Verify error', err); res.status(500).json({ error: err.message }); }
 };

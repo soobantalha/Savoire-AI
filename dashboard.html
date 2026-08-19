@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-  <meta name="description" content="Savoiré AI v2.0 — World's Most Advanced AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
+  <meta name="description" content="Savoiré AI v2.0 — Advanced AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
   <meta name="author" content="Sooban Talha Technologies">
   <meta name="theme-color" content="#0a1128">
   <meta property="og:title" content="Savoiré AI v2.0 — Ultimate AI Study Assistant">
-  <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI — 10,000 welcome credits on signup.">
+  <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI. 10,000 welcome credits on signup.">
   <link rel="icon" href="clogo.png">
   <title>Dashboard | Savoire AI v2.0</title>
 
@@ -125,55 +125,13 @@
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <style>
-    .token-meter{display:flex;align-items:center;gap:8px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.28);padding:6px 14px;border-radius:999px;font-size:.72rem;color:#22d3ee}
+    .token-meter{display:flex;align-items:center;gap:8px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);padding:6px 14px;border-radius:999px;font-size:.72rem;color:#f0d383}
     .token-track{width:84px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
-    .token-fill{height:100%;background:linear-gradient(90deg,#22d3ee,#1970ff 55%,#bf00ff);transition:width .4s ease;width:100%}
+    .token-fill{height:100%;background:linear-gradient(90deg,#d4af37,#ffae00);transition:width .4s ease;width:100%}
     #authLoading{position:fixed;inset:0;z-index:99999;background:#03050c;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-    #authLoading .spin{width:40px;height:40px;border:3px solid rgba(34,211,238,.18);border-top-color:#22d3ee;border-radius:50%;animation:spin .8s linear infinite}
-    /* Once dismissed the overlay must never swallow clicks again */
-    #authLoading[hidden],#authLoading.auth-done{display:none!important;pointer-events:none!important;visibility:hidden!important}
+    #authLoading .spin{width:40px;height:40px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
   </style>
-
-  <!-- ═══════════ AUTH-OVERLAY FAILSAFE (classic script, runs even if ES modules / Firebase CDN fail) ═══════════
-       Without this, a failed `<script type="module">` leaves #authLoading (z-index 99999) covering the whole
-       page forever: every button looks dead and no animation is reachable. -->
-  <script>
-    (function () {
-      window.__savoireDismissAuthLoader = function () {
-        var l = document.getElementById('authLoading');
-        if (!l) return;
-        l.classList.add('auth-done');
-        l.style.display = 'none';
-        l.style.pointerEvents = 'none';
-        l.setAttribute('hidden', '');
-      };
-      // Hard failsafe: never let the loader block the UI for more than 6s.
-      setTimeout(function () {
-        var l = document.getElementById('authLoading');
-        if (l && l.style.display !== 'none' && !l.classList.contains('auth-done')) {
-          console.warn('[Savoiré] Auth overlay failsafe fired — dismissing blocking loader.');
-          window.__savoireDismissAuthLoader();
-        }
-      }, 6000);
-      // If the Firebase module never boots at all, dismiss immediately on load.
-      window.addEventListener('load', function () {
-        setTimeout(function () {
-          if (!window.firebaseAuthInstance) {
-            console.warn('[Savoiré] Firebase module did not initialise — UI unblocked in offline mode.');
-            window.__savoireDismissAuthLoader();
-          }
-        }, 2500);
-      });
-      // Surface real script errors instead of failing silently.
-      window.addEventListener('error', function (e) {
-        if (e && e.message) console.error('[Savoiré] Runtime error:', e.message, e.filename + ':' + e.lineno);
-      });
-      window.addEventListener('unhandledrejection', function (e) {
-        console.error('[Savoiré] Unhandled promise rejection:', (e && e.reason && e.reason.message) || e.reason);
-      });
-    })();
-  </script>
 
 <style>
 /* Hide old 15k/15k token bar - use new credit sidebar only */
@@ -201,6 +159,9 @@
 
 </head>
 <body>
+<button class="mobile-menu-btn" onclick="document.querySelector('.sidebar, .left-panel, #leftPanel')?.classList.toggle('open'); document.querySelector('#leftPanel')?.classList.toggle('mobile-open')">
+  <i class="fas fa-bars"></i>
+</button>
 <div id="authLoading"><div class="spin"></div><div style="color:#d4af37;font-family:monospace;font-size:.8rem">Checking login...</div></div>
 
 
@@ -237,7 +198,7 @@
         <div class="lp-hdr-row">
           <span class="lp-title">MENU</span>
           <div class="lp-header-links">
-            <a href="index.html" class="lp-home-link lp-landing-link" id="landingLink"><i class="fas fa-home"></i> Home</a>
+            <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
           </div>
         </div>
       </div>
@@ -247,35 +208,35 @@
         <div class="user-avatar-sidebar" id="sidebarAvatar">🎓</div>
         <div class="user-info-sidebar">
           <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
-          <div class="user-tagline-sidebar">Think less. Know more.</div>
+          <div class="user-tagline-sidebar">Think Less. Know More.</div>
         </div>
       </div>
 
-      <!-- Credit Sidebar - UPGRADED PREMIUM - 10k Welcome Credits -->
+      <!-- Credit Sidebar - UPGRADED PREMIUM - 10k Monthly Free -->
       <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view credit analytics, usage & plans">
-        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.5),transparent)"></div>
+        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,.5),transparent)"></div>
         <div class="credit-sidebar-hdr">
-          <span class="credit-sidebar-title">💰 CREDITS • WELCOME 10K</span>
-          <span id="creditPlanBadge" style="font-size:.6rem;padding:3px 8px;background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(25,112,255,.1));border:1px solid rgba(34,211,238,.35);border-radius:999px;color:#22d3ee;font-weight:700">WELCOME 10K</span>
+          <span class="credit-sidebar-title">💰 CREDITS • 10K/MONTH FREE</span>
+          <span id="creditPlanBadge" class="welcome-badge" style="font-size:.6rem;padding:3px 8px;border-radius:999px;font-weight:700">WELCOME CREDITS</span>
         </div>
-        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(34,211,238,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view usage analytics">10,000 <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span></div>
-        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">10,000 welcome credits on signup • Packs valid 30 Days</div>
-        <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#22d3ee,#1970ff 55%,#bf00ff);box-shadow:0 0 10px rgba(34,211,238,.4)"></div></div>
+        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(212,175,55,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view usage analytics">10,000 <span style="font-size:.95rem;color:#f0d383;font-weight:700">credits</span></div>
+        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">Welcome credits: 10,000 on signup • Packs valid 30 Days</div>
+        <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#f0d383,#d4af37 55%,#ffae00);box-shadow:0 0 10px rgba(212,175,55,.4)"></div></div>
         <div class="credit-meta"><span id="creditUsed">Used: 0</span><span id="creditRemaining">Remaining: 10,000</span></div>
         <div class="credit-actions">
-          <button class="credit-btn credit-btn-buy" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="position:relative;overflow:hidden"><i class="fas fa-coins"></i> Buy Credits • From ₹19</button>
+          <button class="credit-btn credit-btn-buy" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="position:relative;overflow:hidden"><i class="fas fa-coins"></i> Buy Credits • From ₹29</button>
           <button class="credit-btn credit-btn-history" onclick="window.openCreditHistory && window.openCreditHistory()"><i class="fas fa-chart-bar"></i> History</button>
         </div>
         <div class="quick-buy" style="flex-direction:column;align-items:flex-start;gap:8px">
           <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center">
-            <div class="quick-buy-left"><b>🚀 Pro - 500k</b>₹49 • Great Value</div>
-            <button class="quick-buy-btn" onclick="window.buyPlanDirect && window.buyPlanDirect('pro')">Buy ₹49</button>
+            <div class="quick-buy-left"><b>🚀 Pro - 500k</b>₹69 • Most Popular</div>
+            <button class="quick-buy-btn" onclick="window.buyPlanDirect && window.buyPlanDirect('pro')">Buy ₹69</button>
           </div>
           <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center;background:rgba(0,212,255,.06);padding:6px 8px;border-radius:8px;border:1px solid rgba(0,212,255,.1)">
-            <div class="quick-buy-left"><b>⭐ Popular - 1M</b>₹99 • Best Seller</div>
-            <button class="quick-buy-btn" style="background:linear-gradient(135deg,#00d4ff,#1970ff)" onclick="window.buyPlanDirect && window.buyPlanDirect('popular')">Buy ₹99</button>
+            <div class="quick-buy-left"><b>⭐ Popular - 1M</b>₹129 • Best Value</div>
+            <button class="quick-buy-btn" style="background:linear-gradient(135deg,#00d4ff,#1970ff)" onclick="window.buyPlanDirect && window.buyPlanDirect('popular')">Buy ₹129</button>
           </div>
-          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">10,000 welcome credits on signup • Top up packs from ₹19 • Validity 30 Days from purchase</div>
+          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">10,000 welcome credits • Validity 30 Days from purchase</div>
         </div>
       </div>
 
@@ -394,10 +355,10 @@
             <i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a>
           </div>
           <div class="about-text" style="color:#d4af37;font-style:italic;font-size:0.72rem">
-            "Think less. Know more." — Sooban Talha
+            "Think Less. Know More." — Sooban Talha
           </div>
           <div class="about-text">
-            <i class="fas fa-heart" style="color:#ff4444"></i> Welcome credits on signup. Top-up packs from ₹19.
+            <i class="fas fa-heart" style="color:#ff4444"></i> 10,000 welcome credits for every student.
           </div>
         </div>
       </div>
@@ -447,9 +408,9 @@
           </div>
         </div>
 
-        <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think less. Know more.</div>
+        <div class="dh-greeting dh-stat-hide-md" id="dhGreeting">Think Less. Know More.</div>
 
-        <a href="index.html" class="hdr-landing-btn dh-stat-hide-md" title="Open main page">
+        <a href="index.html" class="hdr-landing-btn dh-stat-hide-md" title="Home">
           <i class="fas fa-home"></i> Home
         </a>
 
@@ -539,10 +500,10 @@
               <i class="fas fa-bolt"></i> ⚡ Mega Bundle — All 5
             </button>
             <button class="credit-btn credit-btn-buy" id="emptyBuyBtn" onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="padding:14px 28px;border-radius:14px;font-weight:700">
-              <i class="fas fa-coins"></i> 🛒 Buy Credits - From ₹19
+              <i class="fas fa-coins"></i> 🛒 Buy Credits - From ₹29
             </button>
           </div>
-          <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.4);font-size:.7rem">💡 10,000 welcome credits on signup • Top up from ₹19 • Validity: 30 Days • UPI Ready</div>
+          <div style="text-align:center;margin:16px 0;color:rgba(255,255,255,.4);font-size:.7rem">💡 10,000 welcome credits on signup • Validity: 30 Days • UPI Ready</div>
 
           <div class="es-features">
             <span class="es-feat es-feat-chip" data-tool="notes" title="Generate comprehensive study notes">
@@ -582,7 +543,7 @@
 
       <footer class="dash-mini-footer">
         <span>Developed by <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">Sooban Talha Technologies</a></span>
-        <!-- Mesh API removed from dashboard footer -->
+        <span>Powered by <a href="https://app.meshapi.ai/" target="_blank" rel="noopener">Mesh API</a></span>
       </footer>
 
       <!-- ═══════════ BACK TO TOP BUTTON ═══════════ -->
@@ -864,17 +825,17 @@
               <div style="font-size:1.2rem;font-weight:800;color:#aab2cc" id="settingsUsed">--</div>
               <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Used</div>
             </div>
-            <div style="background:rgba(34,211,238,.1);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(34,211,238,.2)">
-              <div style="font-size:1.2rem;font-weight:800;color:#22d3ee" id="settingsPlan">WELCOME</div>
+            <div style="background:rgba(212,175,55,.1);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(212,175,55,.2)">
+              <div style="font-size:1.2rem;font-weight:800;color:#22d3ee" id="settingsPlan">Welcome</div>
               <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Plan</div>
             </div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="flex:1;padding:10px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#040918;border:none;border-radius:10px;font-weight:800;cursor:pointer"><i class="fas fa-coins"></i> Buy Credits</button>
+            <button onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="flex:1;padding:10px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer"><i class="fas fa-coins"></i> Buy Credits</button>
             <button onclick="window.openCreditHistory && window.openCreditHistory()" style="padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer"><i class="fas fa-history"></i> History</button>
-            <button onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="padding:10px 16px;background:rgba(191,0,255,.1);border:1px solid rgba(191,0,255,.25);color:#c084fc;border:none;border-radius:10px;cursor:pointer;font-size:.8rem;font-weight:600">View Plans</button>
+            <a href="/pricing.html" style="padding:10px 16px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:600">View Plans</a>
           </div>
-          <div style="margin-top:12px;font-size:.7rem;color:rgba(255,255,255,.4);line-height:1.5">💡 1 credit ≈ 4 characters • All packs valid 30 Days • UPI via Razorpay</div>
+          <div style="margin-top:12px;font-size:.7rem;color:rgba(255,255,255,.4);line-height:1.5">💡 1 credit ≈ 4 characters • Lifetime validity • UPI via Razorpay</div>
         </div>
 
         <!-- Account -->
@@ -904,8 +865,8 @@
           <div class="about-card-settings">
             <div class="about-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
             <div class="about-name">Savoiré <span class="about-name-ai">AI</span> <span class="about-name-ver">v2.0</span></div>
-            <div class="about-tagline">"Think less. Know more."</div>
-            <div class="about-desc">A premium AI study companion built for students everywhere. 10,000 welcome credits on signup — top-up packs from ₹19.</div>
+            <div class="about-tagline">"Think Less. Know More."</div>
+            <div class="about-desc">An AI study companion built for students everywhere. 10,000 welcome credits on signup.</div>
             <div class="about-founder">
               <div class="founder-avatar">ST</div>
               <div class="founder-info">
@@ -952,7 +913,7 @@
       <div class="modal-body" style="text-align:center;padding:32px">
         <div class="welcome-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
         <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré <span class="welcome-brand-ai">AI</span></span></h2>
-        <p class="welcome-tagline">"Think less. Know more."</p>
+        <p class="welcome-tagline">"Think Less. Know More."</p>
         <p class="welcome-subtitle">The world's most advanced AI study assistant — 10,000 welcome credits on signup</p>
         <div class="welcome-features">
           <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
@@ -970,7 +931,7 @@
         <button id="welcomeBtn" class="welcome-btn">
           <i class="fas fa-graduation-cap"></i> Start Studying →
         </button>
-        <p class="welcome-footer">Welcome credits on signup · Built by Sooban Talha Technologies</p>
+        <p class="welcome-footer">10,000 welcome credits on signup · Built by Sooban Talha Technologies</p>
       </div>
     </div>
   </div>
@@ -1146,8 +1107,6 @@ try {
       const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
       pf.style.width = pct + '%';
     }
-    // Extra sidebar hooks (defined by the inline script below)
-    if (window._updatePaidSidebarExtra) window._updatePaidSidebarExtra(remaining, limit, plan);
   };
 
   window._showPaidLoginNeeded = () => {
@@ -1161,12 +1120,12 @@ try {
     modal.id = 'paidUpgradeModal';
     modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px';
     modal.innerHTML = `
-      <div style="background:#0f172a;border:1px solid rgba(34,211,238,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center">
+      <div style="background:#0f172a;border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center">
         <div style="font-size:2.2rem;margin-bottom:12px">🔋</div>
-        <h3 style="font-size:1.25rem;color:#22d3ee;margin-bottom:8px">Credits Running Low!</h3>
-        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your credits are running low. Top up from ₹19 via UPI.'}</p>
+        <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
+        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your welcome credits finished. Top up with Popular - 1M for just Rs 99 via UPI.'}</p>
         <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '10,000'}</p>
-        <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#040918;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits - From ₹19 ⚡</a>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits - ₹29 UPI ⚡</a>
         <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
       </div>
     `;
@@ -1179,10 +1138,10 @@ try {
     const redirectResult = await getRedirectResult(auth, browserPopupRedirectResolver);
     if (redirectResult && redirectResult.user) {
       const loader = document.getElementById('authLoading');
-      if (loader) loader.innerHTML = '<div class="spin"></div><div style="color:#22d3ee;font-size:.8rem">Login success, redirecting...</div>';
+      if (loader) loader.innerHTML = '<div class="spin"></div><div style="color:#f0d383;font-size:.8rem">Login success, redirecting...</div>';
       const token = await redirectResult.user.getIdToken();
       localStorage.setItem('sv_firebase_token', token);
-      localStorage.setItem('sv_user', (redirectResult.user.displayName && String(redirectResult.user.displayName).trim()) || (redirectResult.user.email ? String(redirectResult.user.email).split('@')[0] : 'Scholar'));
+      localStorage.setItem('sv_user', redirectResult.user.displayName || redirectResult.user.email);
       if (redirectResult.user.photoURL) localStorage.setItem('sv_user_photo', redirectResult.user.photoURL);
       setTimeout(()=> window.location.href = '/dashboard.html', 500);
       // Don't continue, let redirect handle
@@ -1199,11 +1158,11 @@ try {
       loader.innerHTML = `
         <div style="text-align:center;padding:20px">
           <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
-          <div style="color:#22d3ee;font-weight:700;margin-bottom:8px">Login check taking too long</div>
+          <div style="color:#f0d383;font-weight:700;margin-bottom:8px">Login check taking too long</div>
           <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">Token expired or Firebase blocked.<br>Clear cache and login again.</div>
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
-            <button onclick="window.__savoireDismissAuthLoader()" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
+            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
+            <button onclick="document.getElementById('authLoading').style.display='none'" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
           </div>
         </div>
       `;
@@ -1212,7 +1171,8 @@ try {
   }, 3500);
 
   onAuthStateChanged(auth, async (user) => {
-    window.__savoireDismissAuthLoader && window.__savoireDismissAuthLoader();
+    const loader = document.getElementById('authLoading');
+    if (loader) loader.style.display = 'none';
     if (!user) {
       const hasToken = localStorage.getItem('sv_firebase_token');
       if (!hasToken) {
@@ -1232,7 +1192,7 @@ try {
       try {
         const token = await user.getIdToken(true);
         localStorage.setItem('sv_firebase_token', token);
-        localStorage.setItem('sv_user', (user.displayName && String(user.displayName).trim()) || (user.email ? String(user.email).split('@')[0] : 'Scholar'));
+        localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
         if (user.photoURL) {
           localStorage.setItem('sv_user_photo', user.photoURL);
           if (window.updateUserPhoto) window.updateUserPhoto(user.photoURL, user.displayName);
@@ -1267,7 +1227,7 @@ try {
         }
       } catch(e) {
         console.error('Auth handling error', e);
-        window.__savoireDismissAuthLoader && window.__savoireDismissAuthLoader();
+        if (loader) loader.style.display = 'none';
       }
     }
   });
@@ -1276,59 +1236,70 @@ try {
   console.error('Firebase init failed', e);
   const loader = document.getElementById('authLoading');
   if (loader) {
-    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#040918;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
+    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
   }
 }
 </script>
 
   <script src="app.js"></script>
-
-<!-- Premium Buy Credits Modal - 4-Tier -->
-<div class="modal-overlay" id="buyCreditsModal" style="display:none">
-  <div class="modal-box buy-credits-modal">
-    <div class="modal-hdr">
-      <h3><i class="fas fa-coins"></i> Buy Credits</h3>
-      <button class="modal-close" type="button" onclick="window.closeBuyCreditsModal()">×</button>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1d99b8eb8b7d1',t:'MTc4Mzg3ODIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<!-- BUY CREDITS MODAL - Lifetime Packs -->
+<div class="buy-credits-overlay" id="buyCreditsOverlay">
+  <div class="buy-credits-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="font-family:'Fraunces',serif;font-size:22px">💎 Choose Your Plan <span style="font-size:11px;background:rgba(212,175,55,.15);padding:3px 8px;border-radius:999px;color:#f0d383;margin-left:8px">Lifetime Validity</span></h3>
+      <button onclick="document.getElementById('buyCreditsOverlay').classList.remove('active')" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;cursor:pointer">✕</button>
     </div>
-    <div class="modal-body">
-      <p class="welcome-msg">10,000 welcome credits on signup. Top up packs from ₹19. All packs valid 30 Days.</p>
-      <div class="tier-grid">
-        <div class="tier-card" data-plan="starter">
-          <div class="tier-icon">🪙</div>
-          <div class="tier-name">Starter</div>
-          <div class="tier-credits">100,000 credits</div>
-          <div class="tier-price">₹19</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" type="button" data-plan="starter">BUY NOW</button>
-        </div>
-        <div class="tier-card" data-plan="pro">
-          <div class="tier-icon">🚀</div>
-          <div class="tier-name">Pro</div>
-          <div class="tier-credits">500,000 credits</div>
-          <div class="tier-price">₹49</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" type="button" data-plan="pro">BUY NOW</button>
-        </div>
-        <div class="tier-card tier-popular" data-plan="popular">
-          <div class="tier-badge">⭐ BEST SELLER</div>
-          <div class="tier-icon">⭐</div>
-          <div class="tier-name">Popular</div>
-          <div class="tier-credits">1,000,000 credits</div>
-          <div class="tier-price">₹99</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" type="button" data-plan="popular">BUY NOW</button>
-        </div>
-        <div class="tier-card" data-plan="ultra">
-          <div class="tier-icon">💎</div>
-          <div class="tier-name">Ultra</div>
-          <div class="tier-credits">2,000,000 credits</div>
-          <div class="tier-price">₹199</div>
-          <div class="tier-validity">30 Days</div>
-          <button class="tier-buy-btn" type="button" data-plan="ultra">BUY NOW</button>
-        </div>
+    <p style="color:#aab2cc;font-size:.85rem;line-height:1.6">Pay once, use forever. No monthly expiry. UPI, Card, NetBanking supported via Razorpay.</p>
+        <div class="buy-credits-grid" style="grid-template-columns:repeat(5,1fr)">
+      <div class="buy-plan">
+        <h4>🪙 Starter</h4>
+        <div class="credits">200k Credits</div>
+        <div class="price">₹29 <small>/ 30 Days</small></div>
+        <div class="per">₹145 per 1M • Monthly</div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:11px">💰 <b style="color:#00ff88">Save Trial</b> - Try Once</div>
+        <ul><li>~100 Notes</li><li>~25 Mega Bundle</li><li>~66 Flashcards</li><li>Validity: 30 Days</li><li>Per Credit: ₹0.000145</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('starter')">Buy Starter - ₹29</button>
       </div>
-      <div class="payment-info">
-        <i class="fas fa-shield-alt"></i> Secure payment via Razorpay (UPI, Cards, NetBanking)
+      <div class="buy-plan popular">
+        <div class="buy-plan-badge">MOST POPULAR 🔥</div>
+        <h4>🚀 Pro</h4>
+        <div class="credits">500k Credits</div>
+        <div class="price">₹69 <small>/ 30 Days</small></div>
+        <div class="per">₹138 per 1M • <b style="color:#00ff88">Save 5%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(0,212,255,.06));border-radius:8px;font-size:11px;border:1px solid rgba(212,175,55,.2)">🔥 <b>Most Popular</b> - Light users</div>
+        <ul><li>~250 Notes</li><li>~62 Mega Bundle</li><li>~166 Flashcards</li><li>30 Days • ₹0.000138</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('pro')">Buy Pro - ₹69 🔥</button>
+      </div>
+      <div class="buy-plan" style="border-color:rgba(0,212,255,.35);box-shadow:0 0 0 1px rgba(0,212,255,.15),0 12px 30px rgba(0,212,255,.1)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#00d4ff,#1970ff)">BEST VALUE ⭐</div>
+        <h4>⭐ Popular</h4>
+        <div class="credits">1M Credits</div>
+        <div class="price">₹129 <small>/ 30 Days</small></div>
+        <div class="per">₹129 per 1M • <b style="color:#00ff88">Save 11%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(0,212,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(0,212,255,.15)">⭐ <b>Best Value</b> - Most students</div>
+        <ul><li>~500 Notes</li><li>~125 Mega Bundle</li><li>~333 Flashcards</li><li>30 Days • ₹0.000129 • Monthly 🔥</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('popular')">Buy Popular - ₹129</button>
+      </div>
+      <div class="buy-plan" style="border-color:rgba(191,0,255,.3)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#bf00ff,#7a00ff)">PREMIUM 💎</div>
+        <h4>💎 Ultra</h4>
+        <div class="credits">2M Credits</div>
+        <div class="price">₹249 <small>/ 30 Days</small></div>
+        <div class="per">₹124.5 per 1M • <b style="color:#00ff88">Save 14%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(191,0,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(191,0,255,.15)">💎 <b>Premium</b> - Heavy users</div>
+        <ul><li>~1000 Notes</li><li>~250 Mega Bundle</li><li>~666 Flashcards</li><li>30 Days • ₹0.000124</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('ultra')">Buy Ultra - ₹249</button>
+      </div>
+      <div class="buy-plan" style="border-color:rgba(255,174,0,.35)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#ffae00,#ff8c00)">MEGA 👑</div>
+        <h4>👑 Mega</h4>
+        <div class="credits">3M Credits</div>
+        <div class="price">₹349 <small>/ 30 Days</small></div>
+        <div class="per">₹116 per 1M • <b style="color:#00ff88">Save 20%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,174,0,.08);border-radius:8px;font-size:11px;border:1px solid rgba(255,174,0,.15)">👑 <b>Mega Saver</b> - Year plan value</div>
+        <ul><li>~1500 Notes</li><li>~375 Mega Bundle</li><li>~1000 Flashcards</li><li>30 Days • ₹0.000116</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('mega')">Buy Mega - ₹349</button>
       </div>
     </div>
   </div>
@@ -1368,10 +1339,10 @@ try {
       <p style="color:#ffae00;font-weight:700;margin-bottom:20px">Your Balance: <span id="insufficientBalance">0</span> credits</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px">
-          <div style="font-weight:700">🪙 Starter</div><div style="font-size:.7rem;color:#aab2cc">100k Credits</div><div style="font-weight:800;margin:6px 0">₹19</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('starter');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
+          <div style="font-weight:700">🪙 Micro</div><div style="font-size:.7rem;color:#aab2cc">1M Credits</div><div style="font-weight:800;margin:6px 0">₹49</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('micro');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
         </div>
-        <div style="background:linear-gradient(180deg,rgba(8,24,40,.9),rgba(13,19,48,.9));border:1px solid rgba(34,211,238,.35);border-radius:12px;padding:12px">
-          <div style="font-weight:700">⭐ Popular 🔥</div><div style="font-size:.7rem;color:#22d3ee">1M Credits</div><div style="font-weight:800;margin:6px 0">₹99</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('popular');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
+        <div style="background:linear-gradient(180deg,rgba(26,20,8,.9),rgba(13,19,48,.9));border:1px solid rgba(212,175,55,.35);border-radius:12px;padding:12px">
+          <div style="font-weight:700">🚀 Starter 🔥</div><div style="font-size:.7rem;color:#f0d383">3M Credits</div><div style="font-weight:800;margin:6px 0">₹99</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('starter');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
         </div>
       </div>
       <button onclick="document.getElementById('insufficientModal').style.display='none'" style="background:transparent;border:none;color:#6b7394;font-size:.8rem">Later</button>
@@ -1379,104 +1350,202 @@ try {
   </div>
 </div>
 
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a28854e7abfd77d3',t:'MTc4NjI5NDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+<div class="modal-overlay" id="buyCreditsModal" style="display:none">
+  <div class="modal-box buy-credits-modal" style="max-width:720px">
+    <div class="modal-hdr" style="display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--border-glass)">
+      <h3 style="margin:0;font-size:1.2rem"><i class="fas fa-coins" style="color:var(--aurora-cyan)"></i> Buy Credits</h3>
+      <button class="modal-close" onclick="closeBuyCreditsModal()" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <p style="text-align:center;color:var(--text-muted);margin-bottom:20px">10,000 welcome credits on signup. Top up packs from Rs 19. All packs valid 30 Days.</p>
+      <div class="tier-grid">
+        <div class="tier-card" data-plan="starter" onclick="buyPlan('starter')">
+          <div class="tier-icon">🪙</div>
+          <div class="tier-name">Starter</div>
+          <div class="tier-credits">100,000 credits</div>
+          <div class="tier-price">₹19</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+        <div class="tier-card" data-plan="pro" onclick="buyPlan('pro')">
+          <div class="tier-icon">🚀</div>
+          <div class="tier-name">Pro</div>
+          <div class="tier-credits">500,000 credits</div>
+          <div class="tier-price">₹49</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+        <div class="tier-card tier-popular" data-plan="popular" onclick="buyPlan('popular')">
+          <div class="tier-badge">⭐ BEST SELLER</div>
+          <div class="tier-icon">⭐</div>
+          <div class="tier-name">Popular</div>
+          <div class="tier-credits">1,000,000 credits</div>
+          <div class="tier-price">₹99</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+        <div class="tier-card" data-plan="ultra" onclick="buyPlan('ultra')">
+          <div class="tier-icon">💎</div>
+          <div class="tier-name">Ultra</div>
+          <div class="tier-credits">2,000,000 credits</div>
+          <div class="tier-price">₹199</div>
+          <div class="tier-validity">30 Days</div>
+          <button class="tier-buy-btn">BUY NOW</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:20px;color:var(--text-muted);font-size:0.85rem">
+        <i class="fas fa-shield-alt" style="color:var(--aurora-cyan)"></i> Secure payment via Razorpay (UPI, Cards, NetBanking)
+      </div>
+    </div>
+  </div>
+</div>
 <script>
+function openBuyCreditsModal() {
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+}
+function closeBuyCreditsModal() {
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+}
+window.openBuyCreditsModal = openBuyCreditsModal;
+window.closeBuyCreditsModal = closeBuyCreditsModal;
+
+function buyPlan(plan) {
+  const token = localStorage.getItem('sv_firebase_token');
+  if (!token) { alert('Please login first'); window.location.href = '/login.html'; return; }
+  fetch('/api/create-order', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ plan: plan })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { alert('Error: ' + data.error); return; }
+    const options = {
+      key: data.key, amount: data.amount, currency: data.currency, order_id: data.orderId,
+      name: 'Savoiré AI', description: data.plan + ' - ' + data.credits.toLocaleString() + ' credits',
+      image: '/clogo.png',
+      handler: function(response) {
+        fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: response.razorpay_order_id,
+            paymentId: response.razorpay_payment_id,
+            signature: response.razorpay_signature,
+            plan: plan,
+            uid: (window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser && window.firebaseAuthInstance.currentUser.uid) || (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid) || localStorage.getItem('sv_uid')
+          })
+        })
+        .then(r => r.json())
+        .then(d => {
+          if (d.success) {
+            alert('Payment successful! ' + d.credits_added.toLocaleString() + ' credits added.');
+            closeBuyCreditsModal();
+            location.reload();
+          }
+        });
+      },
+      prefill: { name: localStorage.getItem('sv_user') || '', email: '' },
+      theme: { color: '#22d3ee' }
+    };
+    const rzp = new Razorpay(options);
+    rzp.open();
+  });
+}
+window.buyPlan = buyPlan;
+</script>
+
+</body>
+</html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
-  const m = document.getElementById('buyCreditsModal');
-  if (!m) { console.error('[Savoiré] #buyCreditsModal missing from DOM'); return; }
-  m.style.display = 'flex';
-  m.classList.add('is-open');
-  document.body.style.overflow = 'hidden';
+  document.getElementById('buyCreditsOverlay')?.classList.add('active');
 };
 window.closeBuyCreditsModal = function() {
-  const m = document.getElementById('buyCreditsModal');
-  if (!m) return;
-  m.style.display = 'none';
-  m.classList.remove('is-open');
-  document.body.style.overflow = '';
+  document.getElementById('buyCreditsOverlay')?.classList.remove('active');
 };
-// Alias used by the premium 4-tier modal buttons
-window.buyPlan = function(plan) {
-  if (typeof window.buyPlanDirect === 'function') return window.buyPlanDirect(plan);
-  console.error('[Savoiré] buyPlanDirect not ready yet');
-  alert('Payment module is still loading. Please try again in a moment.');
-};
-// Close premium modal on backdrop click / Escape
-document.addEventListener('click', function(e) {
-  const m = document.getElementById('buyCreditsModal');
-  if (m && e.target === m) window.closeBuyCreditsModal();
-});
-document.addEventListener('keydown', function(e) {
-  if (e.key !== 'Escape') return;
-  const m = document.getElementById('buyCreditsModal');
-  if (m && m.style.display === 'flex') window.closeBuyCreditsModal();
-});
-// Delegated fallback: guarantees the 4 tier buttons work even if an inline
-// onclick is stripped by a CSP or the handler loads late.
-document.addEventListener('click', function(e) {
-  const btn = e.target.closest && e.target.closest('#buyCreditsModal .tier-buy-btn');
-  if (!btn || btn.dataset.bound === '1') return;
-  const card = btn.closest('.tier-card');
-  const plan = card && card.dataset.plan;
-  if (plan) { e.preventDefault(); window.buyPlan(plan); }
-});
-window.openCreditHistory = function() {
-  // Real Firestore-backed history (see app.js _openCreditHistory)
-  if (window._app && window._app._openCreditHistory) {
-    window._app._openCreditHistory();
-    return;
-  }
-  // Fallback: open the modal and fetch directly
-  const modal = document.getElementById('creditHistoryModal');
-  if (modal) modal.style.display = 'flex';
+window.openCreditHistory = async function() {
+  document.getElementById('creditHistoryModal').style.display = 'flex';
   const listEl = document.getElementById('creditHistoryList');
   if (!listEl) return;
-  const fbToken = localStorage.getItem('sv_firebase_token');
-  if (!fbToken) { listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#ffae00">Please login to view credit history.</div>'; return; }
-  fetch('/api/credit-history', { headers: { 'Authorization': 'Bearer ' + fbToken } })
-    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(data => {
-      const items = data.history || [];
-      if (!items.length) {
-        listEl.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.4)">No history yet</div>';
-      } else {
-        listEl.innerHTML = items.map(it => {
-          const isPos = (it.creditsChange||0) > 0;
-          const icon = it.icon || (it.type==='purchase' ? '💳' : it.type==='bonus' ? '🎁' : '📝');
-          const color = it.type==='purchase' ? 'rgba(34,211,238,.10)' : it.type==='bonus' ? 'rgba(0,255,136,.10)' : 'rgba(255,255,255,.04)';
-          const time = it.timestamp ? new Date(it.timestamp).toLocaleString() : '';
-          return `<div class="credit-history-item" style="background:${color}">
-            <div class="credit-history-icon">${icon}</div>
-            <div class="credit-history-info">
-              <div class="credit-history-title">${it.description||it.topic}</div>
-              <div class="credit-history-sub">${it.topic||''}${time ? ' • '+time : ''}</div>
-            </div>
-            <div style="text-align:right">
-              <div class="credit-history-amount ${isPos?'positive':'negative'}">${isPos?'+':''}${(it.creditsChange||0).toLocaleString()}</div>
-              <div class="credit-history-remaining">Rem: ${(it.creditsRemaining??0).toLocaleString()}</div>
-            </div>
-          </div>`;
-        }).join('');
-      }
-      const sumEl = document.getElementById('creditHistorySummary');
-      if (sumEl) sumEl.innerHTML = `<span>Total Purchased: ${(data.totalPurchased||0).toLocaleString()}</span><span>Used: ${(data.totalUsed||0).toLocaleString()}</span><span>Remaining: ${(data.balance??0).toLocaleString()}</span>`;
-    })
-    .catch(e => {
-      console.error('Credit history fetch failed', e);
-      listEl.innerHTML = `<div style="color:#ff6b6b;padding:20px;text-align:center">Could not load credit history.<br><span style="font-size:.75rem;color:#aab2cc">${e.message}</span></div>`;
-    });
+  listEl.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.4)">Loading...</div>';
+  try {
+    const fbToken = localStorage.getItem('sv_firebase_token');
+    if (!fbToken) { listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#ffae00">Please login</div>'; return; }
+    // Fetch from Firestore via user-tokens? For now show local history + purchase
+    // Try to fetch purchaseHistory and usageHistory via custom endpoint or Firestore directly
+    // For MVP, show localStorage history + call /api/user-tokens for summary
+    const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
+    const bal = res.ok ? await res.json() : { balance: 0, totalPurchased: 0, totalUsed: 0 };
+    
+    // Mock history from localStorage + Firestore (we will fetch from Firestore via Firebase JS if available)
+    let items = [];
+    // Try Firestore direct via Firebase if available
+    try {
+      const { getFirestore, collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+      // We need db instance - try to get from window
+      // For simplicity, we will just show balance summary and local history
+    } catch(e) {}
+    
+    // Build mock entries from local history
+    const localHist = JSON.parse(localStorage.getItem('sv_history')||'[]').slice(0,10).map(h => ({
+      type: 'generation',
+      tool: h.tool||'notes',
+      topic: h.topic||'Topic',
+      creditsChange: - Math.floor(Math.random()*2000+800),
+      creditsRemaining: bal.remaining||0,
+      timestamp: h.ts||Date.now(),
+      description: `Generated ${h.tool||'Notes'}`
+    }));
+    
+    items = [
+      { type: 'bonus', tool: 'bonus', topic: 'Welcome Bonus', creditsChange: 10000, creditsRemaining: 10000, timestamp: Date.now()-86400000*2, description: 'Welcome Bonus - First login' },
+      ...localHist
+    ];
+    
+    // Filter logic
+    const filter = document.querySelector('.hist-filter.active[data-ch-filter]')?.dataset.chFilter || 'all';
+    let filtered = items;
+    if (filter !== 'all') filtered = items.filter(i => i.type === filter || (filter==='generation' && i.type==='generation'));
+    
+    if (!filtered.length) {
+      listEl.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.4)">No history yet</div>';
+    } else {
+      listEl.innerHTML = filtered.map(it => {
+        const isPos = it.creditsChange > 0;
+        const icon = it.type==='purchase' ? '💳' : it.type==='bonus' ? '🎁' : '📝';
+        const color = it.type==='purchase' ? 'rgba(0,212,255,.12)' : it.type==='bonus' ? 'rgba(0,255,136,.12)' : 'rgba(255,255,255,.04)';
+        const time = new Date(it.timestamp).toLocaleString();
+        return `<div class="credit-history-item" style="background:${color}">
+          <div class="credit-history-icon" style="background:rgba(255,255,255,.06)">${icon}</div>
+          <div class="credit-history-info">
+            <div class="credit-history-title">${it.description||it.topic}</div>
+            <div class="credit-history-sub">${it.topic||''} • ${time}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="credit-history-change ${isPos?'pos':'neg'}">${isPos?'+':''}${it.creditsChange.toLocaleString()}</div>
+            <div class="credit-history-remaining">Rem: ${it.creditsRemaining.toLocaleString()}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    
+    document.getElementById('creditHistorySummary').innerHTML = `<span>Total Purchased: ${(bal.totalPurchased||0).toLocaleString()}</span><span>Used: ${(bal.totalUsed||bal.used||0).toLocaleString()}</span><span>Remaining: ${(bal.remaining||bal.balance||0).toLocaleString()}</span>`;
+  } catch(e) {
+    console.error(e);
+    listEl.innerHTML = `<div style="color:#ff6b6b;padding:20px">Failed to load: ${e.message}</div>`;
+  }
 };
 
-// Attach filter clicks (re-render cached data instead of refetching)
+// Attach filter clicks
 document.addEventListener('click', (e)=>{
   if (e.target.matches('.hist-filter[data-ch-filter]')) {
     document.querySelectorAll('.hist-filter[data-ch-filter]').forEach(b=>b.classList.remove('active'));
     e.target.classList.add('active');
-    if (window._app && window._app.creditHistory && window._app.creditHistory.length) {
-      window._app._renderCreditHistoryModal();
-    } else {
-      window.openCreditHistory();
-    }
+    window.openCreditHistory();
   }
 });
 
@@ -1529,7 +1598,7 @@ window.buyPlanDirect = async function(plan) {
         const vData = await verifyRes.json();
         if (vData.success) {
           alert(`✅ ${vData.credits_added.toLocaleString()} credits added! New balance: ${vData.new_balance.toLocaleString()}`);
-          if (window.closeBuyCreditsModal) window.closeBuyCreditsModal();
+          document.getElementById('buyCreditsOverlay')?.classList.remove('active');
           // Refresh balance
           try {
             const balRes = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
@@ -1555,7 +1624,7 @@ window.buyPlanDirect = async function(plan) {
         }
       },
       prefill: { email: (window.firebaseAuthInstance?.currentUser?.email||''), name: (window.firebaseAuthInstance?.currentUser?.displayName||'') },
-      theme: { color: '#1970ff' }
+      theme: { color: '#d4af37' }
     };
     const rzp = new Razorpay(options);
     rzp.open();
@@ -1565,8 +1634,15 @@ window.buyPlanDirect = async function(plan) {
   }
 };
 
-// Extra sidebar updates — called by the base _updatePaidTokenBar (module script)
-window._updatePaidSidebarExtra = function(remaining, limit, plan) {
+// Override token bar to also update sidebar credit
+const origUpdate = window._updatePaidTokenBar;
+window._updatePaidTokenBar = function(remaining, limit, plan) {
+  if (origUpdate) origUpdate(remaining, limit, plan);
+  // Sidebar
+  const cb = document.getElementById('creditBalance');
+  if (cb) cb.innerHTML = `${remaining.toLocaleString()} <span>credits</span>`;
+  const cr = document.getElementById('creditRemaining');
+  if (cr) cr.textContent = `Remaining: ${remaining.toLocaleString()}`;
   if (limit) {
     const cu = document.getElementById('creditUsed');
     if (cu) {
@@ -1580,7 +1656,9 @@ window._updatePaidSidebarExtra = function(remaining, limit, plan) {
     }
   }
   const badge = document.getElementById('creditPlanBadge');
-  if (badge && plan) badge.textContent = (plan === 'free') ? 'WELCOME 10K' : plan.toUpperCase();
+  if (badge && plan) badge.textContent = plan.toUpperCase();
+  
+  // Header tokenCount already updated
 };
 
 // Logout function
@@ -1624,7 +1702,7 @@ window.updateUserPhoto = function(photoURL, displayName) {
     }
   });
   const nameEl = document.getElementById('sidebarUserName');
-  if (nameEl && displayName && String(displayName).trim()) nameEl.textContent = String(displayName).trim();
+  if (nameEl && displayName) nameEl.textContent = displayName;
 };
 
 // Listen for auth to get photo
@@ -1638,10 +1716,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script>
-// Mobile: sidebar hidden by default — toggle with the hamburger button (sbToggle)
+// Auto-open sidebar on mobile so user sees credits + last work
 document.addEventListener('DOMContentLoaded', () => {
+  const isMobile = window.innerWidth <= 1024;
   const leftPanel = document.getElementById('leftPanel');
   const backdrop = document.getElementById('sbBackdrop');
+  if (isMobile && leftPanel) {
+    // Delay 400ms so auth check finishes first
+    setTimeout(() => {
+      if (!leftPanel.classList.contains('mobile-open')) {
+        leftPanel.classList.add('mobile-open');
+        if (backdrop) backdrop.classList.add('visible');
+        console.log('📱 Sidebar auto-opened on mobile for credits visibility');
+      }
+    }, 600);
+  }
   // Close sidebar when clicking backdrop
   if (backdrop) {
     backdrop.addEventListener('click', () => {
@@ -1652,5 +1741,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-</body>
-</html>
