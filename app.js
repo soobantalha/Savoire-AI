@@ -2911,17 +2911,15 @@ Examples:
         real_world_applications: [],
         common_misconceptions: [],
       };
-      this._generatePDF(liveData, this.pdfTheme, fontData, {
-        labelOverride: 'Live Notes',
-        fileSuffix: 'live_notes',
-      });
+      const packL = { labelOverride: 'Live Notes', fileSuffix: 'live_notes' };
+      if (this._needsShapedPdf(liveData)) await this._generatePdfFromHtml(liveData, this.pdfTheme, packL);
+      else this._generatePDF(liveData, this.pdfTheme, fontData, packL);
       return;
     }
 
-    this._generatePDF(data, this.pdfTheme, fontData, {
-      labelOverride: 'Final Output',
-      fileSuffix: 'final_output',
-    });
+    const pack = { labelOverride: 'Final Output', fileSuffix: 'final_output' };
+    if (this._needsShapedPdf(data)) await this._generatePdfFromHtml(data, this.pdfTheme, pack);
+    else this._generatePDF(data, this.pdfTheme, fontData, pack);
   }
 
   // Loads a Unicode font (Noto Sans — covers Latin + Cyrillic + Greek, so
@@ -2995,6 +2993,88 @@ Examples:
       </div>`;
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
     document.body.appendChild(modal);
+  }
+
+
+  _needsShapedPdf(data) {
+    const blob = [data?.topic, data?.ultra_long_notes, data?._language, JSON.stringify(data?.flashcards||[]), JSON.stringify(data?.quiz_questions||[])].join(' ');
+    return /[^\u0000-\u024F]/.test(blob);
+  }
+
+  async _loadHtml2Canvas() {
+    if (window.html2canvas) return window.html2canvas;
+    await new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+    return window.html2canvas;
+  }
+
+  async _generatePdfFromHtml(data, theme, options = {}) {
+    this._toast('info', 'fa-spinner fa-pulse', 'Composing language-perfect PDF…');
+    const h2c = await this._loadHtml2Canvas();
+    const { jsPDF } = window.jspdf;
+    const light = theme !== 'dark';
+    const bg = light ? '#ffffff' : '#0b1020';
+    const ink = light ? '#1a2030' : '#e8eef8';
+    const muted = light ? '#5b6478' : '#9aa3b8';
+    const gold = '#b8860b';
+    const wrap = document.createElement('div');
+    wrap.setAttribute('dir', /urdu|arabic|persian|farsi/i.test(String(data._language||'')) ? 'rtl' : 'ltr');
+    wrap.style.cssText = `position:fixed;left:-16000px;top:0;width:794px;padding:48px 52px 64px;background:${bg};color:${ink};font-family:'Noto Sans Devanagari','Noto Naskh Arabic',Inter,'Nirmala UI',serif;line-height:1.75;font-size:15px;z-index:-1;`;
+    const topic = this._esc(data.topic || 'Study notes');
+    const notes = this._renderMd(data.ultra_long_notes || '');
+    let extra = '';
+    if (data.mindmap?.branches?.length) {
+      extra += `<h2 style="color:${gold};margin:28px 0 12px">Mind map</h2>` + data.mindmap.branches.map(b =>
+        `<div style="border-left:4px solid ${b.color||gold};padding:10px 14px;margin:8px 0;background:${light?'#f6f7fb':'#151b2e'};border-radius:10px"><strong style="color:${b.color||gold}">${this._esc(b.name)}</strong><div>${(b.items||[]).map(i=>`• ${this._esc(i)}`).join('<br>')}</div></div>`
+      ).join('');
+    }
+    if (data.flashcards?.length) {
+      extra += `<h2 style="color:${gold};margin:28px 0 12px">Flashcards</h2>` + data.flashcards.map((c,i)=>
+        `<p><strong>Q${i+1}.</strong> ${this._esc(c.front||c.question||'')}<br><span style="color:${muted}">${this._esc(c.back||c.answer||'')}</span></p>`
+      ).join('');
+    }
+    wrap.innerHTML = `
+      <div style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:${gold};margin-bottom:10px">SAVOIRÉ AI · STUDY PACK</div>
+      <div style="font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px">${topic}</div>
+      <div style="color:${muted};margin-bottom:22px">${this._esc(data._language||'')} · ${new Date().toLocaleDateString()} · Think less. Know more.</div>
+      <div class="pdf-notes">${notes}</div>
+      ${extra}
+      <div style="margin-top:28px;font-size:12px;color:${muted}">Sooban Talha Technologies · savoireai.vercel.app</div>`;
+    wrap.querySelectorAll('h1,h2,h3').forEach(h => { h.style.color = gold; h.style.margin = '1.1em 0 .4em'; });
+    document.body.appendChild(wrap);
+    try {
+      const canvas = await h2c(wrap, { scale: 2, backgroundColor: bg, useCORS: true, windowWidth: 794 });
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+      const pageW = 210, pageH = 297;
+      const imgW = pageW;
+      const imgH = canvas.height * (pageW / canvas.width);
+      const pageCanvas = document.createElement('canvas');
+      const pagePxH = Math.floor(canvas.width * (pageH / pageW));
+      pageCanvas.width = canvas.width;
+      let y = 0, first = true;
+      while (y < canvas.height - 4) {
+        const slice = Math.min(pagePxH, canvas.height - y);
+        pageCanvas.height = slice;
+        const ctx = pageCanvas.getContext('2d');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, pageCanvas.width, slice);
+        ctx.drawImage(canvas, 0, y, canvas.width, slice, 0, 0, canvas.width, slice);
+        const img = pageCanvas.toDataURL('image/jpeg', 0.92);
+        if (!first) doc.addPage();
+        first = false;
+        doc.addImage(img, 'JPEG', 0, 0, imgW, slice * (pageW / canvas.width));
+        y += slice;
+      }
+      const safe = (data.topic || 'Study').replace(/[^\w\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
+      doc.save(`SavoireAI_${safe}_${new Date().toISOString().slice(0,10)}_${options.fileSuffix||'notes'}.pdf`);
+      this._toast('success', 'fa-file-pdf', `PDF ready — ${doc.getNumberOfPages()} pages`);
+    } finally {
+      wrap.remove();
+    }
   }
 
   _generatePDF(data, theme = 'dark', fontData = null, options = {}) {

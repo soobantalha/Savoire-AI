@@ -13,7 +13,7 @@
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="premium-ui.css">
 
@@ -140,8 +140,11 @@
 .dh-stat-streak, .dh-stat-hide-md, .dh-stat-hide-sm { display:none !important; }
 #tokenMeter { display:flex !important; }
 @media (max-width: 1024px) {
-  #tokenMeter { display:flex !important; width:100%; order:-1; }
-  .dh-stats { display:flex !important; }
+  #tokenMeter { display:none !important; }
+  .dh-stats { display:none !important; }
+  #wizardHeaderBtn, #megaHeaderBtn, #themeBtn { display:none !important; }
+  .dh-text { display:none !important; }
+  .mobile-menu-btn { display:none !important; }
 }
 </style>
 
@@ -1454,7 +1457,7 @@ function buyPlan(plan) {
 window.buyPlan = buyPlan;
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2e32eb1abaa8800',t:'MTc4NzI0NzYxOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2e34b18889624b8',t:'MTc4NzI0ODc4Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
@@ -1744,19 +1747,8 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 // Auto-open sidebar on mobile so user sees credits + last work
 document.addEventListener('DOMContentLoaded', () => {
-  const isMobile = window.innerWidth <= 1024;
   const leftPanel = document.getElementById('leftPanel');
   const backdrop = document.getElementById('sbBackdrop');
-  if (isMobile && leftPanel) {
-    // Delay 400ms so auth check finishes first
-    setTimeout(() => {
-      if (!leftPanel.classList.contains('mobile-open')) {
-        leftPanel.classList.add('mobile-open');
-        if (backdrop) backdrop.classList.add('visible');
-        console.log('📱 Sidebar auto-opened on mobile for credits visibility');
-      }
-    }, 600);
-  }
   // Close sidebar when clicking backdrop
   if (backdrop) {
     backdrop.addEventListener('click', () => {

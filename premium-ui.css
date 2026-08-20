@@ -467,3 +467,37 @@ html[data-theme="light"] .concept-text{color:#1e293b!important}
 .es-feat{min-height:40px;padding:8px 16px!important}
 .es-feat-chip.active-detail{border-color:#22d3ee!important;color:#22d3ee!important}
 
+.es-brand{
+  font-family:'Instrument Serif',Georgia,serif!important;
+  font-weight:400!important;
+  font-style:italic;
+  letter-spacing:-.02em!important;
+  text-transform:none!important;
+}
+.es-brand span{font-family:Inter,sans-serif!important;font-style:normal;font-weight:900!important;letter-spacing:.12em}
+
+.mm-branches{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr))!important;
+  gap:16px!important;
+}
+.mm-branch{
+  border-top-width:4px!important;
+  min-height:140px;
+  padding:16px!important;
+  background:rgba(255,255,255,.04)!important;
+}
+.mm-branch-hdr{font-size:1rem!important;font-weight:800!important}
+.mm-node-text{white-space:normal!important;line-height:1.55!important}
+
+#liveNotesContent, .sfp-text.md-content, .md-content{
+  font-family:'Noto Sans Devanagari','Noto Naskh Arabic',Inter,system-ui,sans-serif!important;
+}
+
+@media (max-width:900px){
+  .dash-hdr{padding:8px 10px!important;gap:8px!important}
+  #tokenMeter,.dh-stats,#wizardHeaderBtn,#megaHeaderBtn,#themeBtn,.dh-greeting,.hdr-landing-btn{display:none!important}
+  .dh-actions{gap:6px!important}
+  .sv-dock{display:grid!important}
+}
+
