@@ -755,8 +755,42 @@ async function fetchCards(prompt, tool, maxTokens) {
 }
 
 // ─── FALLBACK CONTENT (only when truly nothing works) ──────────────────────
-function offlineNotes(topic) {
+function offlineNotes(topic, lang) {
   const T = topic || 'this topic';
+  const L = String(lang || 'English').toLowerCase();
+  if (L.includes('hindi') || L.includes('हिंद') || L.includes('हिन्दी')) {
+    return `## परिचय और अवलोकन
+
+**${T}** एक महत्वपूर्ण अध्ययन विषय है। नीचे मुख्य बिंदु दिए गए हैं — पूरा विस्तृत नोट्स अगली जनरेशन में फिर से माँगें यदि यह संक्षिप्त लगे।
+
+---
+
+## मुख्य अवधारणाएँ
+
+- **${T}** के मूल सिद्धांत समझें — क्या, क्यों और कैसे।
+- कारण और परिणाम की कड़ी याद रखें, केवल परिभाषाएँ नहीं।
+- उदाहरणों से सिद्धांत को रोज़मर्रा से जोड़ें।
+
+---
+
+## कैसे काम करता है
+
+1. विषय को छोटे भागों में बाँटें
+2. हर भाग का तंत्र लिखें
+3. एक उदाहरण से जाँचें
+4. अंत में 5 बिंदुओं में सार लिखें
+
+---
+
+## परीक्षा टेकअवे
+
+- सक्रिय याद (self-test) री-रीडिंग से बेहतर है
+- ${T} को अपने शब्दों में समझाएँ
+- गलतियाँ नोट करें और सुधारें
+
+---
+*Savoiré AI*`;
+  }
   return `## 📚 Introduction to ${T}
 
 **${T}** is an important area of study with significant theoretical foundations and practical applications. This guide covers the essential concepts, mechanisms, and real-world uses.
@@ -949,7 +983,8 @@ function mergeCards(cardsRaw, notes, topic, opts) {
   if (cardsRaw?.mindmap?.branches?.length)                                      merged.mindmap        = cardsRaw.mindmap;
 
   // Only fill if key_concepts is completely empty (not just sparse)
-  const fillerEligible = ['notes', 'summary', 'all'].includes(opts.tool);
+  const langIsEn = String(opts.language || 'English').toLowerCase().startsWith('english');
+  const fillerEligible = langIsEn && ['notes', 'summary', 'all'].includes(opts.tool);
   if (fillerEligible && (!merged.key_concepts || merged.key_concepts.length === 0)) {
     merged.key_concepts = [
       `Core Principles: ${topic} rests on fundamental principles connecting theory to practice. Understanding WHY matters more than memorising WHAT.`,
@@ -1215,13 +1250,20 @@ module.exports = async function handler(req, res) {
       p1ok = true;
       log.ok(`[${reqId}] P1 done — ${notes.length}ch`);
     } catch (e1) {
-      log.error(`[${reqId}] P1 FAILED — using offline notes: ${e1.message}`);
-      notes = offlineNotes(message);
+      log.warn(`[${reqId}] P1 first try failed (${e1.message}) — retrying once`);
+      try {
+        notes = await streamNotes(notesPrompt, chunk => sse('token', { t: chunk }), opts.tool, notesMaxTokens);
+        p1ok = true;
+        log.ok(`[${reqId}] P1 retry done — ${notes.length}ch`);
+      } catch (e2) {
+      log.error(`[${reqId}] P1 FAILED — using language-matched notes: ${e2.message}`);
+      notes = offlineNotes(message, opts.language);
       for (let i = 0; i < notes.length; i += 300) {
         sse('token', { t: notes.slice(i, i + 300) });
         await sleep(4);
       }
       p1ok = false;
+      }
     }
 
     sse('stage', { idx: 2, label: '✅ Notes complete! Finalising interactive cards…' });

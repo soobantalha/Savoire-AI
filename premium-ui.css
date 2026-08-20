@@ -357,3 +357,48 @@ html[data-theme="light"] #liveNotesContent p {
   color: #1e293b !important;
 }
 
+/* Result chips + application/concept rows — readable cards, not hairline strips */
+.result-nav{
+  position:relative!important;
+  top:auto!important;
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  overflow:visible!important;
+  background:transparent!important;
+  padding:4px 0 16px!important;
+  border:0!important;
+}
+.result-nav-btn{
+  white-space:nowrap;
+  font-size:.8rem!important;
+  padding:8px 14px!important;
+  min-height:38px;
+}
+.list-item,.trick-item,.concept-card,.summary-point,.qa-card{
+  display:flex!important;
+  align-items:flex-start!important;
+  gap:12px!important;
+  min-height:64px!important;
+  height:auto!important;
+  padding:16px 18px!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  flex-wrap:nowrap;
+}
+.li-text,.trick-text,.concept-text,.summary-point-text,.qa-q{
+  display:block!important;
+  white-space:normal!important;
+  word-break:break-word!important;
+  overflow-wrap:anywhere!important;
+  line-height:1.7!important;
+  font-size:1.02rem!important;
+  color:#e8eef8!important;
+  max-width:100%!important;
+}
+.items-list,.tricks-list,.concepts-grid{display:flex;flex-direction:column;gap:12px}
+.concepts-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))!important;gap:14px!important}
+html[data-theme="light"] .li-text,
+html[data-theme="light"] .trick-text,
+html[data-theme="light"] .concept-text{color:#1e293b!important}
+
