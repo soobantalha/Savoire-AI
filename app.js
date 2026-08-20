@@ -329,7 +329,7 @@ class SavoireApp {
     this.prefs    = this._load('sv_prefs',   {});
     this.userName = localStorage.getItem('sv_user') || '';
 
-    this.pdfTheme        = this.prefs.pdfTheme || 'dark';
+    this.pdfTheme        = this.prefs.pdfTheme || 'light';
     this.avatarEmojiIdx  = this._loadNum('sv_avatar_emoji', 0);
 
     if (!this.prefs.theme) this.prefs.theme = 'dark';
@@ -674,11 +674,12 @@ class SavoireApp {
     }
     let h = String(text)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    h = h.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
-    h = h.replace(/^#### (.+)$/gm,  '<h4>$1</h4>');
-    h = h.replace(/^### (.+)$/gm,   '<h3>$1</h3>');
-    h = h.replace(/^## (.+)$/gm,    '<h2>$1</h2>');
-    h = h.replace(/^# (.+)$/gm,     '<h1>$1</h1>');
+    h = h.replace(/^######\s*(.+)$/gm, '<h6>$1</h6>');
+    h = h.replace(/^#####\s*(.+)$/gm, '<h5>$1</h5>');
+    h = h.replace(/^####\s*(.+)$/gm,  '<h4>$1</h4>');
+    h = h.replace(/^###\s*(.+)$/gm,   '<h3>$1</h3>');
+    h = h.replace(/^##\s*(.+)$/gm,    '<h2>$1</h2>');
+    h = h.replace(/^#\s*(.+)$/gm,     '<h1>$1</h1>');
     h = h.replace(/```[\w]*\n([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
     h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
     h = h.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
@@ -2987,10 +2988,11 @@ Examples:
   }
 
   _generatePDF(data, theme = 'dark', fontData = null, options = {}) {
-    this._toast('info', 'fa-spinner fa-pulse', `Composing premium ${theme === 'dark' ? 'dark' : 'light'} PDF…`);
+    const useDark = theme === 'dark';
+    this._toast('info', 'fa-spinner fa-pulse', 'Building study PDF…');
     try {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true, putOnlyUsedFonts: true });
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
 
       let FONT = 'helvetica';
       if (fontData) {
@@ -3002,323 +3004,257 @@ Examples:
           FONT = 'NotoSans';
         } catch (e) { FONT = 'helvetica'; }
       }
-      const fontStyle = (style) => {
-        if (FONT !== 'NotoSans') return style;
-        return (style === 'italic' || style === 'bolditalic') ? 'bold' : style;
+      const setF = (bold, size) => {
+        doc.setFont(FONT, bold ? 'bold' : 'normal');
+        doc.setFontSize(size);
       };
-      const _rawSetFont = doc.setFont.bind(doc);
-      doc.setFont = (family, style) => _rawSetFont(FONT, fontStyle(style));
+      const clean = (s) => String(s == null ? '' : s)
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]/gu, '')
+        .replace(/[^\S\n]+/g, ' ')
+        .replace(/[ \t]+\n/g, '\n')
+        .trim();
 
-      const pdfSafe = (s) => {
-        if (s == null) return '';
-        return String(s)
-          .replace(/[\u2713\u2714]/g, '✓')
-          .replace(/[\u25B8\u25B6\u2023]/g, '>')
-          .replace(/\u2192/g, '→')
-          .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]/gu, '')
-          .replace(/[ \t]{2,}/g, ' ')
-          .trim();
-      };
-      const _rawText = doc.text.bind(doc);
-      doc.text = (txt, x, y, opts) => _rawText(Array.isArray(txt) ? txt.map(pdfSafe) : pdfSafe(txt), x, y, opts);
-      const _rawSplit = doc.splitTextToSize.bind(doc);
-      doc.splitTextToSize = (txt, maxW) => _rawSplit(pdfSafe(txt), maxW);
+      const PW = 210, PH = 297, ML = 18, MR = 18, CW = PW - ML - MR;
+      const HEADER = 16, FOOTER = 14;
+      const ink = useDark ? [232, 236, 245] : [28, 32, 44];
+      const muted = useDark ? [150, 158, 176] : [90, 96, 112];
+      const paper = useDark ? [12, 16, 28] : [255, 255, 255];
+      const gold = useDark ? [212, 175, 55] : [140, 108, 20];
+      const rule = useDark ? [50, 58, 78] : [220, 224, 232];
+      const accent = useDark ? [34, 211, 238] : [14, 116, 180];
+      const card = useDark ? [20, 26, 42] : [246, 247, 251];
 
-      const PW = 210, PH = 297, ML = 18, MR = 18, CW = PW - ML - MR, MT = 22, MB = 18;
-      const isDark = theme !== 'light';
-      let Y = 0;
+      let Y = HEADER + 6;
+      const bg = () => { doc.setFillColor(...paper); doc.rect(0, 0, PW, PH, 'F'); };
 
-      const C = isDark ? {
-        bg:[8,10,22], gold:[212,175,55], cyan:[34,211,238], ink:[226,230,242],
-        muted:[140,148,170], card:[16,20,38], line:[40,48,72], white:[255,255,255],
-        head:[248,250,255], rule:[212,175,55]
-      } : {
-        bg:[255,255,255], gold:[154,122,28], cyan:[14,116,180], ink:[22,28,44],
-        muted:[90,98,118], card:[246,247,252], line:[220,224,236], white:[255,255,255],
-        head:[12,18,36], rule:[154,122,28]
-      };
-
-      const rgb = (a) => { doc.setTextColor(a[0], a[1], a[2]); };
-      const fill = (a) => { doc.setFillColor(a[0], a[1], a[2]); };
-      const stroke = (a) => { doc.setDrawColor(a[0], a[1], a[2]); };
-      const pageBg = () => { fill(C.bg); doc.rect(0, 0, PW, PH, 'F'); };
-
-      const paintChrome = (page, total) => {
-        fill(C.bg); doc.rect(0, 0, PW, MT - 2, 'F');
-        fill(C.rule); doc.rect(0, 0, PW, 2.2, 'F');
-        doc.setFont(FONT, 'bold'); doc.setFontSize(8); rgb(C.gold);
-        doc.text('SAVOIRÉ AI', ML, 12);
-        doc.setFont(FONT, 'normal'); rgb(C.muted); doc.setFontSize(7.5);
-        doc.text(pdfSafe((data.topic || 'Study notes').slice(0, 48)), PW - MR, 12, { align: 'right' });
-        stroke(C.line); doc.setLineWidth(0.2); doc.line(ML, MT - 3, PW - MR, MT - 3);
-
-        fill(isDark ? [10,12,24] : [248,249,252]);
-        doc.rect(0, PH - MB, PW, MB, 'F');
-        fill(C.rule); doc.rect(0, PH - MB, PW, 0.6, 'F');
-        doc.setFont(FONT, 'normal'); doc.setFontSize(7); rgb(C.muted);
-        doc.text('Think less. Know more.  ·  Sooban Talha Technologies', ML, PH - 8);
-        doc.text(`${page} / ${total}`, PW - MR, PH - 8, { align: 'right' });
-      };
-
-      const ensure = (need = 12) => {
-        if (Y + need > PH - MB - 4) {
+      const need = (h) => {
+        if (Y + h > PH - FOOTER - 4) {
           doc.addPage();
-          pageBg();
-          Y = MT + 4;
+          bg();
+          Y = HEADER + 8;
         }
       };
 
-      const write = (txt, x, maxW, sz, bold, color, extra = 0.6) => {
-        if (!txt) return 0;
-        doc.setFont(FONT, bold ? 'bold' : 'normal');
-        doc.setFontSize(sz);
-        rgb(color);
-        const lines = doc.splitTextToSize(String(txt), maxW);
-        const lh = sz * 0.42;
-        ensure(lines.length * lh + 2);
-        doc.text(lines, x, Y);
-        Y += lines.length * lh + extra;
-        return lines.length;
+      const para = (text, size, bold, color, indent = 0, lhMul = 0.42, gap = 2.2) => {
+        const t = clean(text);
+        if (!t) return;
+        setF(bold, size);
+        doc.setTextColor(...color);
+        const lines = doc.splitTextToSize(t, CW - indent);
+        const lh = size * lhMul;
+        need(lines.length * lh + gap);
+        doc.text(lines, ML + indent, Y);
+        Y += lines.length * lh + gap;
       };
 
-      const band = (label) => {
-        ensure(16);
-        fill(C.card);
-        doc.roundedRect(ML, Y, CW, 10, 1.6, 1.6, 'F');
-        fill(C.gold);
-        doc.rect(ML, Y, 2.4, 10, 'F');
-        doc.setFont(FONT, 'bold'); doc.setFontSize(9); rgb(C.gold);
-        doc.text(label, ML + 7, Y + 6.6);
-        Y += 16;
-      };
+      const tCfg = options.labelOverride
+        ? { sfpName: options.labelOverride }
+        : (TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes);
+      const topic = clean(data.topic || 'Study notes');
+      const wc = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
 
-      const stripInline = (t) => String(t || '')
+      // COVER
+      bg();
+      doc.setFillColor(...gold);
+      doc.rect(0, 0, 8, PH, 'F');
+      setF(true, 9);
+      doc.setTextColor(...gold);
+      doc.text('SAVOIRÉ AI  ·  STUDY PACK', ML + 6, 28);
+      setF(true, 22);
+      doc.setTextColor(...ink);
+      const titleLines = doc.splitTextToSize(topic, CW - 10);
+      doc.text(titleLines.slice(0, 4), ML + 6, 44);
+      Y = 44 + titleLines.slice(0, 4).length * 9 + 8;
+      setF(false, 11);
+      doc.setTextColor(...muted);
+      doc.text(`${tCfg.sfpName}   ·   ${data._language || 'English'}   ·   ${new Date().toLocaleDateString()}`, ML + 6, Y);
+      Y += 14;
+      setF(true, 14);
+      doc.setTextColor(...gold);
+      doc.text('Think less.  Know more.', ML + 6, Y);
+      Y += 16;
+      const stats = [
+        ['Score', String(data.study_score || 96)],
+        ['Words', `~${wc.toLocaleString()}`],
+        ['Flashcards', String(data.flashcards?.length || 0)],
+        ['Quiz', String(data.quiz_questions?.length || 0)],
+      ];
+      stats.forEach((st, i) => {
+        const x = ML + 6 + (i % 2) * 85;
+        const y = Y + Math.floor(i / 2) * 22;
+        doc.setFillColor(...card);
+        doc.roundedRect(x, y, 78, 18, 2, 2, 'F');
+        setF(true, 12); doc.setTextColor(...gold);
+        doc.text(st[1], x + 8, y + 8);
+        setF(false, 7.5); doc.setTextColor(...muted);
+        doc.text(st[0].toUpperCase(), x + 8, y + 14);
+      });
+      Y += 56;
+      para(data.curriculum_alignment || 'Personal study dossier. Verify facts against your syllabus.', 10, false, muted);
+      setF(false, 8);
+      doc.setTextColor(...muted);
+      doc.text('Sooban Talha Technologies  ·  savoireai.vercel.app', ML + 6, PH - 22);
+
+      const stripMdInline = (t) => clean(t)
         .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
         .replace(/\*\*(.+?)\*\*/g, '$1')
         .replace(/\*(.+?)\*/g, '$1')
         .replace(/`(.+?)`/g, '$1')
         .replace(/_{1,2}(.+?)_{1,2}/g, '$1');
 
-      // ── COVER ──
-      pageBg();
-      fill(C.gold); doc.rect(0, 0, PW, 6, 'F');
-      fill(C.cyan); doc.rect(0, 6, PW, 1.2, 'F');
-
-      fill(C.card);
-      doc.roundedRect(ML, 28, CW, 52, 4, 4, 'F');
-      doc.setFont(FONT, 'bold'); doc.setFontSize(11); rgb(C.gold);
-      doc.text('SAVOIRÉ AI  ·  STUDY DOSSIER', ML + 8, 42);
-      doc.setFont(FONT, 'bold'); doc.setFontSize(22); rgb(C.head);
-      const title = doc.splitTextToSize(data.topic || 'Study notes', CW - 16);
-      doc.text(title.slice(0, 3), ML + 8, 56);
-      doc.setFont(FONT, 'normal'); doc.setFontSize(10); rgb(C.muted);
-      const tCfg = options.labelOverride ? { sfpName: options.labelOverride } : (TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes);
-      doc.text(`${tCfg.sfpName}${this.tool === 'all' && !options.labelOverride ? '  ·  Mega Bundle' : ''}   ·   ${data._language || 'English'}`, ML + 8, 72);
-
-      Y = 92;
-      doc.setFont(FONT, 'italic'); doc.setFontSize(16); rgb(C.gold);
-      doc.text('Think less.  Know more.', PW / 2, Y, { align: 'center' });
-      Y = 108;
-
-      const wc = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
-      const stats = [
-        ['Score', `${data.study_score || 96}`],
-        ['Words', `~${wc.toLocaleString()}`],
-        ['Format', tCfg.sfpName],
-        ['Date', new Date().toLocaleDateString('en-IN')],
-        ['Cards', String(data.flashcards?.length || 0)],
-        ['Quiz', String(data.quiz_questions?.length || 0)],
-      ];
-      const colW = CW / 3;
-      stats.forEach((s, i) => {
-        const sx = ML + (i % 3) * colW;
-        const sy = Y + Math.floor(i / 3) * 22;
-        fill(C.card);
-        doc.roundedRect(sx + 1, sy, colW - 4, 18, 2.2, 2.2, 'F');
-        doc.setFont(FONT, 'bold'); doc.setFontSize(12); rgb(C.gold);
-        doc.text(s[1], sx + (colW - 4) / 2 + 1, sy + 8.5, { align: 'center' });
-        doc.setFont(FONT, 'normal'); doc.setFontSize(7); rgb(C.muted);
-        doc.text(s[0].toUpperCase(), sx + (colW - 4) / 2 + 1, sy + 14.5, { align: 'center' });
-      });
-
-      Y = 168;
-      write(data.curriculum_alignment || 'Premium academic study pack — structured for revision, exams and teaching.', ML, CW, 10, false, C.ink, 4);
-      Y += 8;
-      fill(C.card);
-      doc.roundedRect(ML, Y, CW, 28, 3, 3, 'F');
-      doc.setFont(FONT, 'normal'); doc.setFontSize(8.5); rgb(C.muted);
-      doc.text('Generated for personal study use. Always verify critical facts against your syllabus.', ML + 8, Y + 11);
-      doc.text(`Sooban Talha Technologies  ·  savoireai.vercel.app  ·  ${new Date().toLocaleString()}`, ML + 8, Y + 20);
-
-      // ── TOC ──
-      doc.addPage(); pageBg(); Y = MT + 8;
-      band('CONTENTS');
-      const toc = [];
-      if (data.ultra_long_notes) toc.push('01  Study notes');
-      if (data.key_concepts?.length) toc.push('02  Key concepts');
-      if (data.flashcards?.length) toc.push('03  Flashcards');
-      if (data.quiz_questions?.length) toc.push('04  Practice quiz');
-      if (data.mindmap?.branches?.length) toc.push('05  Mind map');
-      toc.forEach((line) => {
-        ensure(10);
-        doc.setFont(FONT, 'normal'); doc.setFontSize(11); rgb(C.ink);
-        doc.text(line, ML + 2, Y);
-        stroke(C.line); doc.setLineWidth(0.15);
-        doc.line(ML + 52, Y - 1, PW - MR, Y - 1);
-        Y += 9;
-      });
-
-      // ── NOTES ──
       const renderNotes = (raw) => {
         if (!raw) return;
-        doc.addPage(); pageBg(); Y = MT + 6;
-        band('STUDY NOTES');
-        const lines = String(raw).replace(/\r\n/g, '\n').split('\n');
-        let blank = 0;
-        for (const rawLine of lines) {
-          const line = rawLine.replace(/\t/g, '  ');
+        doc.addPage(); bg(); Y = HEADER + 8;
+        setF(true, 11); doc.setTextColor(...gold);
+        doc.text('STUDY NOTES', ML, Y);
+        doc.setDrawColor(...gold); doc.setLineWidth(0.5);
+        doc.line(ML, Y + 2.5, ML + 28, Y + 2.5);
+        Y += 10;
+
+        const src = String(raw).replace(/\r\n/g, '\n');
+        for (let rawLine of src.split('\n')) {
+          let line = rawLine.replace(/\t/g, ' ').replace(/^\uFEFF/, '');
           const tr = line.trim();
-          if (!tr) {
-            blank++;
-            if (blank === 1) Y += 2.4;
-            continue;
-          }
-          blank = 0;
-          ensure(12);
-          if (/^#{1,6}\s/.test(tr)) {
-            const lv = (tr.match(/^#+/) || ['#'])[0].length;
-            const txt = stripInline(tr.replace(/^#+\s*/, ''));
+          if (!tr) { Y += 2.6; continue; }
+
+          const hMatch = tr.match(/^(#{1,6})\s*(.+)$/);
+          if (hMatch) {
+            const lv = hMatch[1].length;
+            const txt = stripMdInline(hMatch[2]);
             Y += lv <= 2 ? 5 : 3;
-            if (lv === 1) {
-              fill(C.gold); doc.rect(ML, Y - 1, 2.2, 8, 'F');
-              write(txt, ML + 6, CW - 6, 14, true, C.gold, 3);
-            } else if (lv === 2) {
-              write(txt, ML, CW, 12, true, C.cyan, 2.4);
-              stroke(C.line); doc.setLineWidth(0.25); doc.line(ML, Y - 1, ML + 42, Y - 1);
-              Y += 2;
-            } else {
-              write(txt, ML, CW, 10.5, true, C.head, 1.8);
-            }
-          } else if (/^[-*•]\s+/.test(tr)) {
-            const txt = stripInline(tr.replace(/^[-*•]\s+/, ''));
-            fill(C.gold); doc.circle(ML + 2.2, Y - 1.4, 0.9, 'F');
-            write(txt, ML + 7, CW - 7, 10, false, C.ink, 1.2);
-          } else if (/^\d+[.)]\s+/.test(tr)) {
-            const m = tr.match(/^(\d+)[.)]\s+(.*)$/);
-            doc.setFont(FONT, 'bold'); doc.setFontSize(10); rgb(C.gold);
-            ensure(8);
-            doc.text(`${m[1]}.`, ML, Y);
-            write(stripInline(m[2]), ML + 8, CW - 8, 10, false, C.ink, 1.2);
-          } else if (tr.startsWith('>')) {
-            const q = stripInline(tr.replace(/^>\s*/, ''));
-            ensure(14);
-            fill(C.card); doc.roundedRect(ML, Y - 4, CW, 12, 1.5, 1.5, 'F');
-            fill(C.gold); doc.rect(ML, Y - 4, 2, 12, 'F');
-            write(q, ML + 7, CW - 10, 9.5, false, C.ink, 4);
-          } else if (/^---+$/.test(tr) || /^\*\*\*+$/.test(tr)) {
-            stroke(C.line); doc.setLineWidth(0.2); doc.line(ML, Y, PW - MR, Y); Y += 5;
-          } else if (tr.startsWith('```')) {
+            if (lv === 1) para(txt, 14, true, gold, 0, 0.48, 3.5);
+            else if (lv === 2) para(txt, 12, true, accent, 0, 0.46, 3);
+            else para(txt, 11, true, ink, 0, 0.44, 2.4);
             continue;
-          } else {
-            write(stripInline(tr), ML, CW, 10, false, C.ink, 2.2);
           }
+          if (/^(-|\*|•|–|—)\s+/.test(tr)) {
+            const txt = stripMdInline(tr.replace(/^(-|\*|•|–|—)\s+/, ''));
+            doc.setFillColor(...gold);
+            need(8);
+            doc.circle(ML + 1.8, Y - 1.2, 0.85, 'F');
+            para(txt, 10.5, false, ink, 6, 0.42, 1.8);
+            continue;
+          }
+          const nMatch = tr.match(/^(\d+)[.)]\s+(.+)$/);
+          if (nMatch) {
+            setF(true, 10.5); doc.setTextColor(...gold);
+            need(8);
+            doc.text(`${nMatch[1]}.`, ML, Y);
+            para(stripMdInline(nMatch[2]), 10.5, false, ink, 8, 0.42, 1.8);
+            continue;
+          }
+          if (tr.startsWith('>')) {
+            para(stripMdInline(tr.replace(/^>\s*/, '')), 10, false, muted, 6, 0.42, 2.5);
+            continue;
+          }
+          if (/^(-{3,}|\*{3,}|_{3,})$/.test(tr)) {
+            need(6);
+            doc.setDrawColor(...rule); doc.setLineWidth(0.2);
+            doc.line(ML, Y, PW - MR, Y);
+            Y += 5;
+            continue;
+          }
+          if (tr.startsWith('```')) continue;
+          para(stripMdInline(tr), 10.5, false, ink, 0, 0.43, 2.4);
         }
       };
+
       renderNotes(data.ultra_long_notes);
 
       if (data.key_concepts?.length) {
-        ensure(24); band('KEY CONCEPTS');
-        data.key_concepts.slice(0, 16).forEach((c, i) => {
-          ensure(16);
-          fill(C.card); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'F');
-          fill(C.gold); doc.circle(ML + 7, Y + 7, 3.4, 'F');
-          doc.setFont(FONT, 'bold'); doc.setFontSize(8); rgb([12, 14, 24]);
-          doc.text(String(i + 1), ML + 7, Y + 8.4, { align: 'center' });
-          doc.setFont(FONT, 'normal'); doc.setFontSize(9); rgb(C.ink);
-          const ls = doc.splitTextToSize(String(c).slice(0, 240), CW - 18);
-          doc.text(ls.slice(0, 2), ML + 13, Y + 6);
-          Y += 16;
+        need(20);
+        Y += 4;
+        setF(true, 11); doc.setTextColor(...gold);
+        doc.text('KEY CONCEPTS', ML, Y); Y += 8;
+        data.key_concepts.slice(0, 18).forEach((c, i) => {
+          need(16);
+          doc.setFillColor(...card);
+          doc.roundedRect(ML, Y - 4, CW, 13, 1.8, 1.8, 'F');
+          setF(true, 9); doc.setTextColor(...gold);
+          doc.text(String(i + 1).padStart(2, '0'), ML + 4, Y + 3);
+          setF(false, 9); doc.setTextColor(...ink);
+          const ls = doc.splitTextToSize(clean(c).slice(0, 220), CW - 16);
+          doc.text(ls.slice(0, 2), ML + 14, Y + 3);
+          Y += 15;
         });
       }
 
       if (data.flashcards?.length) {
-        doc.addPage(); pageBg(); Y = MT + 6;
-        band('FLASHCARDS');
+        doc.addPage(); bg(); Y = HEADER + 8;
+        setF(true, 11); doc.setTextColor(...gold);
+        doc.text('FLASHCARDS', ML, Y); Y += 10;
         data.flashcards.forEach((fc, i) => {
-          ensure(32);
-          fill(C.card); doc.roundedRect(ML, Y, CW, 28, 2.4, 2.4, 'F');
-          stroke(C.line); doc.setLineWidth(0.2); doc.roundedRect(ML, Y, CW, 28, 2.4, 2.4, 'S');
-          doc.setFont(FONT, 'bold'); doc.setFontSize(7); rgb(C.gold);
+          need(30);
+          doc.setFillColor(...card);
+          doc.roundedRect(ML, Y, CW, 26, 2, 2, 'F');
+          setF(true, 7.5); doc.setTextColor(...gold);
           doc.text(`CARD ${i + 1}`, ML + 5, Y + 6);
-          write(fc.front || fc.question || '', ML + 5, CW - 10, 10, true, C.head, 1);
-          stroke(C.line); doc.setLineWidth(0.12); doc.line(ML + 5, Y, PW - MR - 5, Y);
-          Y += 2;
-          write(stripInline(fc.back || fc.answer || ''), ML + 5, CW - 10, 9, false, C.ink, 4);
-          Y += 4;
+          setF(true, 10); doc.setTextColor(...ink);
+          const q = doc.splitTextToSize(clean(fc.front || fc.question || ''), CW - 12);
+          doc.text(q.slice(0, 2), ML + 5, Y + 12);
+          setF(false, 9); doc.setTextColor(...muted);
+          const a = doc.splitTextToSize(stripMdInline(fc.back || fc.answer || ''), CW - 12);
+          doc.text(a.slice(0, 2), ML + 5, Y + 20);
+          Y += 30;
         });
       }
 
       if (data.quiz_questions?.length) {
-        doc.addPage(); pageBg(); Y = MT + 6;
-        band('PRACTICE QUIZ');
+        doc.addPage(); bg(); Y = HEADER + 8;
+        setF(true, 11); doc.setTextColor(...gold);
+        doc.text('PRACTICE QUIZ', ML, Y); Y += 10;
         const letters = ['A', 'B', 'C', 'D', 'E'];
         data.quiz_questions.forEach((q, i) => {
-          ensure(28);
-          doc.setFont(FONT, 'bold'); doc.setFontSize(10); rgb(C.gold);
-          doc.text(`Q${i + 1}`, ML, Y);
-          write(q.question, ML + 12, CW - 12, 10, true, C.head, 2);
+          need(22);
+          para(`Q${i + 1}.  ${clean(q.question)}`, 10.5, true, ink, 0, 0.42, 2);
           (q.options || []).forEach((opt, oi) => {
             const ok = opt === q.correct_answer;
-            ensure(8);
-            if (ok) { fill(isDark ? [12, 40, 32] : [226, 246, 234]); doc.roundedRect(ML + 4, Y - 3.5, CW - 8, 7.2, 1, 1, 'F'); }
-            write(`${letters[oi]}.  ${opt}${ok ? '   ✓ correct' : ''}`, ML + 8, CW - 12, 9, ok, ok ? C.cyan : C.ink, 1.4);
+            para(`${letters[oi]}.  ${clean(opt)}${ok ? '   (correct)' : ''}`, 9.5, ok, ok ? accent : ink, 6, 0.4, 1.4);
           });
-          if (q.explanation) {
-            write('Explanation: ' + stripInline(String(q.explanation).slice(0, 280)), ML + 8, CW - 12, 8, false, C.muted, 4);
-          }
-          Y += 3;
+          if (q.explanation) para('Note: ' + stripMdInline(String(q.explanation).slice(0, 260)), 8.5, false, muted, 6, 0.4, 4);
         });
       }
 
       if (data.mindmap?.branches?.length) {
-        doc.addPage(); pageBg(); Y = MT + 6;
-        band('MIND MAP');
-        fill(C.gold);
-        doc.roundedRect(ML + 20, Y, CW - 40, 11, 5, 5, 'F');
-        doc.setFont(FONT, 'bold'); doc.setFontSize(10); rgb([12, 14, 24]);
-        doc.text(pdfSafe((data.mindmap.central || data.topic || '').slice(0, 40)), PW / 2, Y + 7.2, { align: 'center' });
-        Y += 18;
+        doc.addPage(); bg(); Y = HEADER + 8;
+        setF(true, 11); doc.setTextColor(...gold);
+        doc.text('MIND MAP', ML, Y); Y += 10;
+        para(data.mindmap.central || topic, 12, true, ink);
         data.mindmap.branches.forEach((b) => {
-          ensure(16);
-          write(b.name, ML, CW, 11, true, C.gold, 1.5);
+          para(b.name, 11, true, gold);
           (b.items || []).slice(0, 8).forEach((item) => {
-            fill(C.gold); doc.circle(ML + 3, Y - 1.4, 0.8, 'F');
-            write(String(item), ML + 8, CW - 8, 9, false, C.ink, 1.1);
+            doc.setFillColor(...gold);
+            need(7);
+            doc.circle(ML + 2, Y - 1.2, 0.8, 'F');
+            para(String(item), 9.5, false, ink, 7, 0.4, 1.4);
           });
-          Y += 3;
+          Y += 2;
         });
       }
 
       const total = doc.getNumberOfPages();
       for (let i = 1; i <= total; i++) {
         doc.setPage(i);
-        if (i === 1) {
-          fill(isDark ? [10,12,24] : [248,249,252]);
-          doc.rect(0, PH - MB, PW, MB, 'F');
-          fill(C.rule); doc.rect(0, PH - MB, PW, 0.6, 'F');
-          doc.setFont(FONT, 'normal'); doc.setFontSize(7); rgb(C.muted);
-          doc.text('Think less. Know more.  ·  Sooban Talha Technologies', ML, PH - 8);
-          doc.text(`1 / ${total}`, PW - MR, PH - 8, { align: 'right' });
-        } else {
-          paintChrome(i, total);
-        }
+        doc.setFillColor(...paper);
+        doc.rect(0, 0, PW, HEADER, 'F');
+        doc.rect(0, PH - FOOTER, PW, FOOTER, 'F');
+        doc.setDrawColor(...gold);
+        doc.setLineWidth(0.6);
+        doc.line(ML, HEADER - 2, PW - MR, HEADER - 2);
+        doc.line(ML, PH - FOOTER + 1, PW - MR, PH - FOOTER + 1);
+        setF(true, 7.5); doc.setTextColor(...gold);
+        doc.text('SAVOIRÉ AI', ML, 10);
+        setF(false, 7.5); doc.setTextColor(...muted);
+        doc.text(topic.slice(0, 42), PW - MR, 10, { align: 'right' });
+        doc.text('Think less. Know more.', ML, PH - 6);
+        doc.text(`${i} / ${total}`, PW - MR, PH - 6, { align: 'right' });
       }
 
-      const safeName = (data.topic || 'Study_Notes').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
+      const safeName = topic.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
       const dateStr = new Date().toISOString().slice(0, 10);
-      const suffix = options.fileSuffix ? `_${options.fileSuffix}` : `_${theme}`;
+      const suffix = options.fileSuffix ? `_${options.fileSuffix}` : `_${useDark ? 'dark' : 'light'}`;
       doc.save(`SavoireAI_${safeName}_${dateStr}${suffix}.pdf`);
-      this._toast('success', 'fa-file-pdf', `PDF ready — ${total} page${total > 1 ? 's' : ''} · atelier layout`);
+      this._toast('success', 'fa-file-pdf', `PDF ready — ${total} pages`);
     } catch (err) {
       console.error('PDF error:', err);
       this._toast('error', 'fa-times', `PDF failed: ${err.message.slice(0, 60)}`);

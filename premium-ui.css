@@ -234,3 +234,54 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .result-nav{overflow-x:auto;flex-wrap:nowrap}
 }
 
+/* Kill global gradient headings inside study output */
+.md-content h1,.md-content h2,.md-content h3,.md-content h4,.md-content h5,.md-content h6,
+.sfp-text h1,.sfp-text h2,.sfp-text h3,.ss-title,.wizard-step-heading,.wizard-tool-name,
+.wizard-review-header,.modal-title{
+  background:none!important;
+  -webkit-background-clip:border-box!important;
+  background-clip:border-box!important;
+  color:#fff!important;
+}
+.md-content h1{color:#f0d27a!important;font-size:1.45rem!important;margin:1.4em 0 .45em}
+.md-content h2{color:#67e8f9!important;font-size:1.18rem!important;border-bottom:1px solid rgba(34,211,238,.25);padding-bottom:.35em}
+.md-content h3{color:#e8ecf8!important;font-size:1.05rem!important}
+
+/* Wizard layout — no overlapping steps / footer */
+#wizardModal .modal{
+  max-height:min(90dvh,900px)!important;
+  width:min(920px,calc(100vw - 16px))!important;
+  display:flex;flex-direction:column;
+}
+#wizardModal .modal-body{overflow:hidden;display:flex;flex-direction:column;padding:16px 18px 8px!important}
+#wizardContent{min-height:0;flex:1;display:flex;flex-direction:column}
+.wizard-steps{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  overflow-x:auto;
+  gap:4px;
+  margin-bottom:16px!important;
+  padding-bottom:8px;
+}
+.wizard-step{flex:0 0 auto;min-width:72px}
+.wizard-step-line{min-width:16px;flex:0 0 16px;margin:0 4px!important}
+.wizard-step-desc{display:none}
+#wizardBody{flex:1;overflow-y:auto;min-height:0;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.wizard-footer{
+  position:sticky;bottom:0;z-index:5;
+  display:flex!important;flex-wrap:wrap;gap:10px;align-items:center;
+  margin-top:12px!important;padding:12px 0 6px!important;
+  background:linear-gradient(#0d1330,#0d1330);
+  border-top:1px solid rgba(255,255,255,.08)!important;
+}
+.wizard-btn{min-height:44px;border-radius:12px!important;padding:10px 18px!important}
+.wizard-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+.wizard-tool-card{padding:14px!important}
+.wizard-language-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))!important}
+@media (max-width:640px){
+  .wizard-tool-grid{grid-template-columns:1fr!important}
+  .wizard-step-label{display:none}
+  .wizard-footer{display:grid!important;grid-template-columns:1fr 1fr}
+  .wizard-step-info{grid-column:1/-1;order:-1}
+}
+
