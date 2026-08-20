@@ -2941,10 +2941,20 @@ Examples:
         }
         return btoa(binary);
       };
-      const [regRes, boldRes] = await Promise.all([
-        fetch('https://cdn.jsdelivr.net/gh/openmaptiles/fonts@master/noto-sans/NotoSans-Regular.ttf'),
-        fetch('https://cdn.jsdelivr.net/gh/openmaptiles/fonts@master/noto-sans/NotoSans-Bold.ttf'),
-      ]);
+      const FONT_URLS = [
+        ['https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/NotoSansDevanagari/full/ttf/NotoSansDevanagari-Regular.ttf',
+         'https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/NotoSansDevanagari/full/ttf/NotoSansDevanagari-Bold.ttf'],
+        ['https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/NotoSans/full/ttf/NotoSans-Regular.ttf',
+         'https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/NotoSans/full/ttf/NotoSans-Bold.ttf'],
+        ['https://cdn.jsdelivr.net/gh/openmaptiles/fonts@master/noto-sans/NotoSans-Regular.ttf',
+         'https://cdn.jsdelivr.net/gh/openmaptiles/fonts@master/noto-sans/NotoSans-Bold.ttf'],
+      ];
+      let regRes, boldRes;
+      for (const [ru, bu] of FONT_URLS) {
+        const pair = await Promise.all([fetch(ru), fetch(bu)]);
+        if (pair[0].ok && pair[1].ok) { regRes = pair[0]; boldRes = pair[1]; break; }
+      }
+      if (!regRes || !boldRes) throw new Error('font fetch failed');
       if (!regRes.ok || !boldRes.ok) throw new Error('font fetch failed');
       const [regBuf, boldBuf] = await Promise.all([regRes.arrayBuffer(), boldRes.arrayBuffer()]);
       this._pdfFontCache = { regular: toBase64(regBuf), bold: toBase64(boldBuf) };
@@ -3050,7 +3060,7 @@ Examples:
       const tCfg = options.labelOverride
         ? { sfpName: options.labelOverride }
         : (TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes);
-      const topic = clean(data.topic || 'Study notes');
+      const topic = clean(data.topic || 'Study notes').replace(/[A-Za-zÀ-ÿ]+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
       const wc = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
 
       // COVER
@@ -3236,16 +3246,20 @@ Examples:
       for (let i = 1; i <= total; i++) {
         doc.setPage(i);
         doc.setFillColor(...paper);
-        doc.rect(0, 0, PW, HEADER, 'F');
         doc.rect(0, PH - FOOTER, PW, FOOTER, 'F');
         doc.setDrawColor(...gold);
-        doc.setLineWidth(0.6);
-        doc.line(ML, HEADER - 2, PW - MR, HEADER - 2);
+        doc.setLineWidth(0.5);
         doc.line(ML, PH - FOOTER + 1, PW - MR, PH - FOOTER + 1);
-        setF(true, 7.5); doc.setTextColor(...gold);
-        doc.text('SAVOIRÉ AI', ML, 10);
+        if (i > 1) {
+          doc.setFillColor(...paper);
+          doc.rect(0, 0, PW, HEADER, 'F');
+          doc.line(ML, HEADER - 2, PW - MR, HEADER - 2);
+          setF(true, 7.5); doc.setTextColor(...gold);
+          doc.text('SAVOIRÉ AI', ML, 10);
+          setF(false, 7.5); doc.setTextColor(...muted);
+          doc.text(topic.slice(0, 48), PW - MR, 10, { align: 'right' });
+        }
         setF(false, 7.5); doc.setTextColor(...muted);
-        doc.text(topic.slice(0, 42), PW - MR, 10, { align: 'right' });
         doc.text('Think less. Know more.', ML, PH - 6);
         doc.text(`${i} / ${total}`, PW - MR, PH - 6, { align: 'right' });
       }

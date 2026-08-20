@@ -13,8 +13,9 @@
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="premium-ui.css">
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -835,7 +836,7 @@
             <button onclick="window.openCreditHistory && window.openCreditHistory()" style="padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer"><i class="fas fa-history"></i> History</button>
             <a href="/pricing.html" style="padding:10px 16px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:600">View Plans</a>
           </div>
-          <div style="margin-top:12px;font-size:.7rem;color:rgba(255,255,255,.4);line-height:1.5">💡 1 credit ≈ 4 characters • Lifetime validity • UPI via Razorpay</div>
+          <div style="margin-top:12px;font-size:.7rem;color:rgba(255,255,255,.4);line-height:1.5">1 credit ≈ 4 characters • Packs valid 30 days from purchase • UPI via Razorpay</div>
         </div>
 
         <!-- Account -->
@@ -1241,6 +1242,13 @@ try {
 }
 </script>
 
+  <nav class="sv-dock" aria-label="Mobile quick actions">
+    <button type="button" onclick="document.getElementById('sbToggle')?.click()"><i class="fas fa-bars"></i>Menu</button>
+    <button type="button" class="primary" onclick="document.getElementById('wizardHeaderBtn')?.click()"><i class="fas fa-magic"></i>Wizard</button>
+    <button type="button" onclick="document.getElementById('megaHeaderBtn')?.click()"><i class="fas fa-bolt"></i>Mega</button>
+    <button type="button" onclick="window.openBuyCreditsModal&&window.openBuyCreditsModal()"><i class="fas fa-coins"></i>Credits</button>
+    <button type="button" onclick="document.getElementById('settingsBtn')?.click()"><i class="fas fa-cog"></i>More</button>
+  </nav>
   <script src="app.js"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1d99b8eb8b7d1',t:'MTc4Mzg3ODIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 <!-- OLD PACKS HIDDEN — use #buyCreditsModal -->
@@ -1445,7 +1453,7 @@ function buyPlan(plan) {
 window.buyPlan = buyPlan;
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2daa7627eae4e7b',t:'MTc4NzE1ODE5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2e2dc554f17d90e',t:'MTc4NzI0NDI0NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {

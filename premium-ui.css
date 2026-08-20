@@ -285,3 +285,75 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   .wizard-step-info{grid-column:1/-1;order:-1}
 }
 
+/* Output screen — never collapse into a thin strip */
+#resultArea,
+.result-wrap,
+.study-sec,
+.ss-body,
+.md-content,
+#liveNotesContent {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: unset !important;
+  flex: none !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  float: none !important;
+}
+.md-content,
+#liveNotesContent {
+  font-family: Inter, 'Noto Sans Devanagari', 'Nirmala UI', system-ui, sans-serif !important;
+  font-size: 1.05rem !important;
+  line-height: 1.8 !important;
+  color: #e6ebf7 !important;
+  padding: 8px 8px 16px !important;
+}
+.md-content p,
+.md-content li,
+.md-content blockquote,
+#liveNotesContent p,
+#liveNotesContent li {
+  display: block !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.8 !important;
+  margin: 0.7em 0 !important;
+  max-width: 100% !important;
+  color: #e6ebf7 !important;
+}
+.md-content h1, .md-content h2, .md-content h3, .md-content h4,
+#liveNotesContent h1, #liveNotesContent h2, #liveNotesContent h3 {
+  display: block !important;
+  width: 100% !important;
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  -webkit-text-fill-color: unset !important;
+  white-space: normal !important;
+  line-height: 1.3 !important;
+  margin: 1.25em 0 0.5em !important;
+}
+.md-content h1, #liveNotesContent h1 { color: #f0d27a !important; font-size: 1.55rem !important; }
+.md-content h2, #liveNotesContent h2 { color: #7dd3fc !important; font-size: 1.22rem !important; border-bottom: 1px solid rgba(125,211,252,.25); padding-bottom: .3em; }
+.md-content h3, #liveNotesContent h3 { color: #fff !important; font-size: 1.08rem !important; }
+.md-content ul, .md-content ol { display: block !important; margin: .6em 0 .9em 1.25em !important; }
+.ss-body { padding: 16px 18px 22px !important; }
+.study-sec { margin-bottom: 18px !important; overflow: visible !important; }
+.result-hdr { flex-wrap: wrap !important; height: auto !important; }
+.rh-topic {
+  background: none !important;
+  -webkit-text-fill-color: #fff !important;
+  color: #fff !important;
+  white-space: normal !important;
+}
+html[data-theme="light"] .md-content,
+html[data-theme="light"] .md-content p,
+html[data-theme="light"] .md-content li,
+html[data-theme="light"] #liveNotesContent,
+html[data-theme="light"] #liveNotesContent p {
+  color: #1e293b !important;
+}
+

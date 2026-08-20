@@ -489,7 +489,9 @@ async function streamOneMeshModel(modelId, prompt, onChunk, maxTokens) {
       onChunk(content.slice(i, i + chunkSize));
       await sleep(5);
     }
-    log.ok(`P1 Mesh:${modelId} WON in ${Date.now() - t0}ms — ${content.length}ch`);
+    const used = Number(data?.usage?.total_tokens) || Math.ceil(Buffer.byteLength(content, 'utf8') / 4);
+    global.__savoireLastUsage = (global.__savoireLastUsage || 0) + used;
+    log.ok(`P1 Mesh:${modelId} WON in ${Date.now() - t0}ms — ${content.length}ch usage:${used}`);
     return content;
   } catch (err) {
     clearTimeout(timer);
@@ -990,6 +992,7 @@ module.exports = async function handler(req, res) {
   const reqId     = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const startTime = Date.now();
   log.info(`[${reqId}] ${req.method} /api/study`);
+  global.__savoireLastUsage = 0;
 
   setHeaders(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -1313,12 +1316,15 @@ module.exports = async function handler(req, res) {
     if (firebaseUid && !isPing && final) {
       try {
         // EXACT token deduction (not estimate)
-        const responseText = final.ultra_long_notes || final.response || message || '';
-        const tokensUsed = (final.usage && final.usage.total_tokens) || Math.ceil(String(responseText).length / 4);
-        console.log(`[EXACT TOKEN DEDUCTION] ${tokensUsed} tokens used for ${opts.tool}`);
+        const utf8Tok = (s) => Math.max(1, Math.ceil(Buffer.byteLength(String(s || ''), 'utf8') / 4));
+        const apiUsage = Number(global.__savoireLastUsage) || 0;
+        global.__savoireLastUsage = 0;
+        const fallbackTok = utf8Tok(message) + utf8Tok(final.ultra_long_notes) + utf8Tok(JSON.stringify(cardsData || {}));
+        const tokensUsed = apiUsage > 0 ? apiUsage : fallbackTok;
+        console.log(`[EXACT TOKEN DEDUCTION] api=${apiUsage} fallback=${fallbackTok} charged=${tokensUsed} tool=${opts.tool}`);
         const inputChars = message.length;
         const outputChars = (final.ultra_long_notes||'').length + JSON.stringify(cardsData||'').length;
-        const totalUsed = tokensUsed;
+        const totalUsed = Math.max(1, tokensUsed);
         const mult = 1;
 
         const _db2 = getDb();
