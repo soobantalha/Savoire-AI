@@ -402,3 +402,68 @@ html[data-theme="light"] .li-text,
 html[data-theme="light"] .trick-text,
 html[data-theme="light"] .concept-text{color:#1e293b!important}
 
+/* ══ Empty home — bigger brand + buttons ══ */
+.es-brand{
+  font-family:Inter,system-ui,sans-serif;
+  font-weight:900;
+  font-size:clamp(2.8rem,7vw,4.6rem);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#fff;
+  line-height:1;
+  margin:0 0 10px;
+  text-shadow:0 0 40px rgba(34,211,238,.25);
+}
+.es-brand span{color:#22d3ee}
+.es-title{
+  font-size:clamp(2.4rem,6vw,4.2rem)!important;
+  font-weight:800!important;
+  letter-spacing:-.04em!important;
+}
+.es-title em{
+  font-family:'Instrument Serif',Georgia,serif!important;
+  font-style:italic!important;
+  color:#d4af37!important;
+  font-weight:400!important;
+}
+.es-kicker{letter-spacing:.28em!important;font-size:12px!important;color:#22d3ee!important}
+.es-cta-row{gap:14px!important;margin:8px 0 4px}
+.empty-wizard-btn,.empty-mega-btn,#emptyBuyBtn,.feature-detail-launch{
+  min-height:56px!important;
+  padding:16px 28px!important;
+  font-size:1.02rem!important;
+  border-radius:18px!important;
+  font-weight:800!important;
+}
+.dh-name{font-size:1.05rem!important;letter-spacing:.14em!important}
+.dh-name-ai{color:#22d3ee!important;font-size:1.1em}
+.dh-mark{width:52px!important;height:52px!important}
+
+/* ══ Colorful tool output (not washed-out grey) ══ */
+.ss-title{color:#f0d27a!important;font-size:.9rem!important;letter-spacing:.1em}
+.ss-title i{color:#22d3ee}
+#sec-fc .ss-title,#sec-fc .ss-title i{color:#c084fc!important}
+#sec-quiz .ss-title,#quizContainer .ss-title, #sec-quiz .ss-title i{color:#34d399!important}
+#sec-mm .ss-title,#sec-mm .ss-title i{color:#f0d27a!important}
+#sec-notes .ss-title i{color:#22d3ee!important}
+.md-content h1{color:#f0d27a!important}
+.md-content h2{color:#22d3ee!important;border-bottom-color:rgba(34,211,238,.28)!important}
+.md-content h3{color:#e2e8f0!important}
+.md-content strong{color:#fff!important}
+.md-content blockquote{border-left-color:#d4af37!important;background:rgba(212,175,55,.08)!important}
+.mm-root{
+  background:linear-gradient(135deg,#22d3ee,#8b5cf6)!important;
+  color:#fff!important;
+  font-size:1.15rem!important;
+  padding:18px 28px!important;
+}
+.concept-card{border-left:3px solid #22d3ee!important}
+.trick-item{border-left:3px solid #d4af37!important}
+.list-item.app{border-left:3px solid #34d399!important}
+.list-item.misc{border-left:3px solid #f87171!important}
+.fc-front{border-color:rgba(34,211,238,.45)!important}
+.fc-back{border-color:rgba(212,175,55,.45)!important}
+.quiz-opt-btn.correct{background:rgba(52,211,153,.12)!important;border-color:#34d399!important}
+.es-feat{min-height:40px;padding:8px 16px!important}
+.es-feat-chip.active-detail{border-color:#22d3ee!important;color:#22d3ee!important}
+
