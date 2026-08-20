@@ -2083,7 +2083,7 @@ Examples:
           <div class="rbf-text">
             <a href="https://${SAVOIRÉ.WEBSITE}" target="_blank" style="font-family:'Orbitron',sans-serif;letter-spacing:.05em">${SAVOIRÉ.BRAND}</a> ·
             <a href="https://${SAVOIRÉ.DEVSITE}" target="_blank">${SAVOIRÉ.DEVELOPER}</a> ·
-            Free forever.
+            Think less. Know more.
           </div>
         </div>
         <div class="rbf-ts">${new Date().toLocaleString()}</div>
@@ -2987,13 +2987,11 @@ Examples:
   }
 
   _generatePDF(data, theme = 'dark', fontData = null, options = {}) {
-    this._toast('info', 'fa-spinner fa-pulse', `Generating ${theme === 'dark' ? '🌙 Dark' : '☀️ Light'} PDF…`);
+    this._toast('info', 'fa-spinner fa-pulse', `Composing premium ${theme === 'dark' ? 'dark' : 'light'} PDF…`);
     try {
       const { jsPDF } = window.jspdf;
-      const doc       = new jsPDF({ unit:'mm', format:'a4', compress:true });
+      const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true, putOnlyUsedFonts: true });
 
-      // Register the Unicode font if we have it; otherwise fall back to
-      // jsPDF's built-in Latin-only helvetica (still fine for English content).
       let FONT = 'helvetica';
       if (fontData) {
         try {
@@ -3002,14 +3000,8 @@ Examples:
           doc.addFileToVFS('NotoSans-Bold.ttf', fontData.bold);
           doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
           FONT = 'NotoSans';
-        } catch (fontErr) {
-          console.warn('Failed to register Unicode PDF font:', fontErr);
-          FONT = 'helvetica';
-        }
+        } catch (e) { FONT = 'helvetica'; }
       }
-      // Only normal/bold weights are registered for the Unicode font — map
-      // italic/bolditalic requests onto bold so styling degrades gracefully
-      // instead of silently reverting to Latin-only helvetica mid-document.
       const fontStyle = (style) => {
         if (FONT !== 'NotoSans') return style;
         return (style === 'italic' || style === 'bolditalic') ? 'bold' : style;
@@ -3017,292 +3009,319 @@ Examples:
       const _rawSetFont = doc.setFont.bind(doc);
       doc.setFont = (family, style) => _rawSetFont(FONT, fontStyle(style));
 
-      // Strip/replace only true emoji and unsupported symbol glyphs — actual
-      // language scripts (Cyrillic, Greek, accented Latin, etc.) are left
-      // alone since the Unicode font above can render them.
       const pdfSafe = (s) => {
-        if (s == null) return s;
+        if (s == null) return '';
         return String(s)
-          .replace(/[\u2713\u2714]/g, '(check)')
+          .replace(/[\u2713\u2714]/g, '✓')
           .replace(/[\u25B8\u25B6\u2023]/g, '>')
-          .replace(/\u2192/g, '->')
+          .replace(/\u2192/g, '→')
           .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F]/gu, '')
           .replace(/[ \t]{2,}/g, ' ')
           .trim();
       };
       const _rawText = doc.text.bind(doc);
-      doc.text = (txt, x, y, opts) => {
-        const clean = Array.isArray(txt) ? txt.map(pdfSafe) : pdfSafe(txt);
-        return _rawText(clean, x, y, opts);
-      };
+      doc.text = (txt, x, y, opts) => _rawText(Array.isArray(txt) ? txt.map(pdfSafe) : pdfSafe(txt), x, y, opts);
       const _rawSplit = doc.splitTextToSize.bind(doc);
       doc.splitTextToSize = (txt, maxW) => _rawSplit(pdfSafe(txt), maxW);
 
-      const PW=210, PH=297, ML=14, MR=14, CW=PW-ML-MR, MT=28, MB=16;
+      const PW = 210, PH = 297, ML = 18, MR = 18, CW = PW - ML - MR, MT = 22, MB = 18;
       const isDark = theme !== 'light';
-      let Y=0, pageNum=1;
+      let Y = 0;
 
       const C = isDark ? {
-        bg:[7,12,32], gold:[212,175,55], blue:[0,170,220], purple:[160,60,220],
-        green:[0,180,100], red:[210,55,55], text:[185,188,200], head:[238,240,255],
-        muted:[115,118,138], card:[14,20,52], hdr:[20,30,72], border:[28,40,88], correct:[0,170,90],
+        bg:[8,10,22], gold:[212,175,55], cyan:[34,211,238], ink:[226,230,242],
+        muted:[140,148,170], card:[16,20,38], line:[40,48,72], white:[255,255,255],
+        head:[248,250,255], rule:[212,175,55]
       } : {
-        bg:[255,255,255], gold:[170,135,30], blue:[0,100,190], purple:[130,40,200],
-        green:[0,130,70], red:[180,40,40], text:[38,40,56], head:[10,18,56],
-        muted:[100,106,126], card:[244,246,255], hdr:[228,232,252], border:[210,215,240], correct:[0,120,60],
+        bg:[255,255,255], gold:[154,122,28], cyan:[14,116,180], ink:[22,28,44],
+        muted:[90,98,118], card:[246,247,252], line:[220,224,236], white:[255,255,255],
+        head:[12,18,36], rule:[154,122,28]
       };
 
-      const setFG=([r,g,b])=>doc.setTextColor(r,g,b);
-      const setBG=([r,g,b])=>doc.setFillColor(r,g,b);
-      const setDC=([r,g,b])=>doc.setDrawColor(r,g,b);
-      const fillBg=()=>{ if(isDark){setBG(C.bg);doc.rect(0,0,PW,PH,'F');} };
+      const rgb = (a) => { doc.setTextColor(a[0], a[1], a[2]); };
+      const fill = (a) => { doc.setFillColor(a[0], a[1], a[2]); };
+      const stroke = (a) => { doc.setDrawColor(a[0], a[1], a[2]); };
+      const pageBg = () => { fill(C.bg); doc.rect(0, 0, PW, PH, 'F'); };
 
-      const addFooter=()=>{
-        setBG(isDark?[10,16,40]:[235,238,252]);
-        doc.rect(0,PH-MB,PW,MB,'F');
-        setDC(C.gold); doc.setLineWidth(0.25); doc.line(ML,PH-MB,PW-MR,PH-MB);
-        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text(`${SAVOIRÉ.BRAND} · ${SAVOIRÉ.DEVSITE} · "${SAVOIRÉ.TAGLINE}"`, ML, PH-6);
-        doc.text(`Page ${pageNum}`, PW-MR, PH-6, {align:'right'});
+      const paintChrome = (page, total) => {
+        fill(C.bg); doc.rect(0, 0, PW, MT - 2, 'F');
+        fill(C.rule); doc.rect(0, 0, PW, 2.2, 'F');
+        doc.setFont(FONT, 'bold'); doc.setFontSize(8); rgb(C.gold);
+        doc.text('SAVOIRÉ AI', ML, 12);
+        doc.setFont(FONT, 'normal'); rgb(C.muted); doc.setFontSize(7.5);
+        doc.text(pdfSafe((data.topic || 'Study notes').slice(0, 48)), PW - MR, 12, { align: 'right' });
+        stroke(C.line); doc.setLineWidth(0.2); doc.line(ML, MT - 3, PW - MR, MT - 3);
+
+        fill(isDark ? [10,12,24] : [248,249,252]);
+        doc.rect(0, PH - MB, PW, MB, 'F');
+        fill(C.rule); doc.rect(0, PH - MB, PW, 0.6, 'F');
+        doc.setFont(FONT, 'normal'); doc.setFontSize(7); rgb(C.muted);
+        doc.text('Think less. Know more.  ·  Sooban Talha Technologies', ML, PH - 8);
+        doc.text(`${page} / ${total}`, PW - MR, PH - 8, { align: 'right' });
       };
 
-      const addHeader=(sub='')=>{
-        setBG(C.hdr); doc.rect(0,0,PW,MT-4,'F');
-        setDC(C.gold); doc.setLineWidth(0.25); doc.line(0,MT-4,PW,MT-4);
-        doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG(C.gold);
-        doc.text(SAVOIRÉ.BRAND, ML, MT-9);
-        doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text((sub||(data.topic||'')).slice(0,72), PW-MR, MT-9, {align:'right'});
+      const ensure = (need = 12) => {
+        if (Y + need > PH - MB - 4) {
+          doc.addPage();
+          pageBg();
+          Y = MT + 4;
+        }
       };
 
-      const newPage=(sub)=>{
-        addFooter(); doc.addPage(); pageNum++; Y=MT+2;
-        fillBg(); addHeader(sub);
-      };
-
-      const ck=(need=12)=>{ if(Y+need>PH-MB-2)newPage(); };
-
-      const wt=(txt, x, maxW, sz, bold=false, color=C.text, lh=null)=>{
-        if(!txt)return;
-        doc.setFontSize(sz); doc.setFont('helvetica',bold?'bold':'normal'); setFG(color);
-        const lines=doc.splitTextToSize(String(txt),maxW);
-        const h=lh||sz*0.385;
-        ck(lines.length*h+1);
-        doc.text(lines,x,Y); Y+=lines.length*h+0.5;
+      const write = (txt, x, maxW, sz, bold, color, extra = 0.6) => {
+        if (!txt) return 0;
+        doc.setFont(FONT, bold ? 'bold' : 'normal');
+        doc.setFontSize(sz);
+        rgb(color);
+        const lines = doc.splitTextToSize(String(txt), maxW);
+        const lh = sz * 0.42;
+        ensure(lines.length * lh + 2);
+        doc.text(lines, x, Y);
+        Y += lines.length * lh + extra;
         return lines.length;
       };
 
-      const secHdr=(label,color=C.gold)=>{
-        ck(14); setBG(C.hdr); doc.rect(ML,Y,CW,9,'F');
-        setBG(color); doc.rect(ML,Y,3,9,'F');
-        doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(color);
-        doc.text(label,ML+6,Y+6.2); Y+=13;
+      const band = (label) => {
+        ensure(16);
+        fill(C.card);
+        doc.roundedRect(ML, Y, CW, 10, 1.6, 1.6, 'F');
+        fill(C.gold);
+        doc.rect(ML, Y, 2.4, 10, 'F');
+        doc.setFont(FONT, 'bold'); doc.setFontSize(9); rgb(C.gold);
+        doc.text(label, ML + 7, Y + 6.6);
+        Y += 16;
       };
 
-      // COVER PAGE
-      fillBg();
-      setBG(C.gold); doc.rect(0,0,PW,4,'F'); doc.rect(0,PH-4,PW,4,'F');
-      setBG([0,140,220]); doc.roundedRect(ML,14,22,22,4,4,'F');
-      doc.setFontSize(16); doc.setFont('helvetica','bold'); setFG([255,255,255]);
-      doc.text('S',ML+8,30);
-      doc.setFontSize(24); doc.setFont('helvetica','bold'); setFG(C.gold);
-      doc.text('SAVOIRÉ AI',ML+28,22);
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text("v2.0 — World's Most Advanced Free AI Study Assistant",ML+28,29);
-      doc.text(`${SAVOIRÉ.DEVELOPER} · ${SAVOIRÉ.DEVSITE} · Founder: ${SAVOIRÉ.FOUNDER}`,ML+28,36);
-      setDC(C.gold); doc.setLineWidth(0.4); doc.line(ML,43,PW-MR,43);
+      const stripInline = (t) => String(t || '')
+        .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/`(.+?)`/g, '$1')
+        .replace(/_{1,2}(.+?)_{1,2}/g, '$1');
 
+      // ── COVER ──
+      pageBg();
+      fill(C.gold); doc.rect(0, 0, PW, 6, 'F');
+      fill(C.cyan); doc.rect(0, 6, PW, 1.2, 'F');
+
+      fill(C.card);
+      doc.roundedRect(ML, 28, CW, 52, 4, 4, 'F');
+      doc.setFont(FONT, 'bold'); doc.setFontSize(11); rgb(C.gold);
+      doc.text('SAVOIRÉ AI  ·  STUDY DOSSIER', ML + 8, 42);
+      doc.setFont(FONT, 'bold'); doc.setFontSize(22); rgb(C.head);
+      const title = doc.splitTextToSize(data.topic || 'Study notes', CW - 16);
+      doc.text(title.slice(0, 3), ML + 8, 56);
+      doc.setFont(FONT, 'normal'); doc.setFontSize(10); rgb(C.muted);
       const tCfg = options.labelOverride ? { sfpName: options.labelOverride } : (TOOL_CONFIG[this.tool] || TOOL_CONFIG.notes);
-      setBG([0,80,160]); doc.roundedRect(ML,48,80,8,1.5,1.5,'F');
-      doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG([200,228,255]);
-      doc.text(`${tCfg.sfpName.toUpperCase()}${this.tool==='all' && !options.labelOverride ? ' — ALL 5 TOOLS' : ''}`,ML+4,53.5);
+      doc.text(`${tCfg.sfpName}${this.tool === 'all' && !options.labelOverride ? '  ·  Mega Bundle' : ''}   ·   ${data._language || 'English'}`, ML + 8, 72);
 
-      doc.setFontSize(20); doc.setFont('helvetica','bold'); setFG(C.head);
-      const titleLines=doc.splitTextToSize(data.topic||'Study Notes',CW);
-      doc.text(titleLines,ML,67);
-      let cy=67+titleLines.length*8.5;
+      Y = 92;
+      doc.setFont(FONT, 'italic'); doc.setFontSize(16); rgb(C.gold);
+      doc.text('Think less.  Know more.', PW / 2, Y, { align: 'center' });
+      Y = 108;
 
-      doc.setFontSize(9.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text(data.curriculum_alignment||'General Academic Study',ML,cy+4); cy+=14;
-
-      const wc=this._wordCount(this._stripMd(data.ultra_long_notes||''));
-      const stats=[
-        {l:'Score',v:`${data.study_score||97}/100`},{l:'Words',v:`~${wc.toLocaleString()}`},
-        {l:'Quality',v:data._quality==='ai_generated'?'AI':'Enhanced'},{l:'Lang',v:data._language||'English'},
-        {l:'Date',v:new Date().toLocaleDateString()},{l:'Tool',v:tCfg.sfpName},
+      const wc = this._wordCount(this._stripMd(data.ultra_long_notes || ''));
+      const stats = [
+        ['Score', `${data.study_score || 96}`],
+        ['Words', `~${wc.toLocaleString()}`],
+        ['Format', tCfg.sfpName],
+        ['Date', new Date().toLocaleDateString('en-IN')],
+        ['Cards', String(data.flashcards?.length || 0)],
+        ['Quiz', String(data.quiz_questions?.length || 0)],
       ];
-      const sw=CW/3;
-      stats.forEach((s,i)=>{
-        const sx=ML+(i%3)*sw, sy=cy+Math.floor(i/3)*20;
-        setBG(C.card); doc.roundedRect(sx,sy,sw-2,17,2,2,'F');
-        doc.setFontSize(11); doc.setFont('helvetica','bold'); setFG(C.gold);
-        doc.text(s.v,sx+(sw-2)/2,sy+9,{align:'center'});
-        doc.setFontSize(6.5); doc.setFont('helvetica','normal'); setFG(C.muted);
-        doc.text(s.l,sx+(sw-2)/2,sy+14.5,{align:'center'});
-      }); cy+=44;
+      const colW = CW / 3;
+      stats.forEach((s, i) => {
+        const sx = ML + (i % 3) * colW;
+        const sy = Y + Math.floor(i / 3) * 22;
+        fill(C.card);
+        doc.roundedRect(sx + 1, sy, colW - 4, 18, 2.2, 2.2, 'F');
+        doc.setFont(FONT, 'bold'); doc.setFontSize(12); rgb(C.gold);
+        doc.text(s[1], sx + (colW - 4) / 2 + 1, sy + 8.5, { align: 'center' });
+        doc.setFont(FONT, 'normal'); doc.setFontSize(7); rgb(C.muted);
+        doc.text(s[0].toUpperCase(), sx + (colW - 4) / 2 + 1, sy + 14.5, { align: 'center' });
+      });
 
-      doc.setFontSize(12); doc.setFont('helvetica','bolditalic'); setFG(C.gold);
-      doc.text(`"${SAVOIRÉ.TAGLINE}"`,PW/2,cy+6,{align:'center'});
-      doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.muted);
-      doc.text(`— ${SAVOIRÉ.FOUNDER}`,PW/2,cy+13,{align:'center'});
-      doc.text(`Generated: ${new Date().toLocaleString()} · Theme: ${isDark?'Dark':'Light'}`,PW/2,PH-22,{align:'center'});
-      addFooter();
+      Y = 168;
+      write(data.curriculum_alignment || 'Premium academic study pack — structured for revision, exams and teaching.', ML, CW, 10, false, C.ink, 4);
+      Y += 8;
+      fill(C.card);
+      doc.roundedRect(ML, Y, CW, 28, 3, 3, 'F');
+      doc.setFont(FONT, 'normal'); doc.setFontSize(8.5); rgb(C.muted);
+      doc.text('Generated for personal study use. Always verify critical facts against your syllabus.', ML + 8, Y + 11);
+      doc.text(`Sooban Talha Technologies  ·  savoireai.vercel.app  ·  ${new Date().toLocaleString()}`, ML + 8, Y + 20);
 
-      // CONTENT PAGES
-      newPage('Study Content');
+      // ── TOC ──
+      doc.addPage(); pageBg(); Y = MT + 8;
+      band('CONTENTS');
+      const toc = [];
+      if (data.ultra_long_notes) toc.push('01  Study notes');
+      if (data.key_concepts?.length) toc.push('02  Key concepts');
+      if (data.flashcards?.length) toc.push('03  Flashcards');
+      if (data.quiz_questions?.length) toc.push('04  Practice quiz');
+      if (data.mindmap?.branches?.length) toc.push('05  Mind map');
+      toc.forEach((line) => {
+        ensure(10);
+        doc.setFont(FONT, 'normal'); doc.setFontSize(11); rgb(C.ink);
+        doc.text(line, ML + 2, Y);
+        stroke(C.line); doc.setLineWidth(0.15);
+        doc.line(ML + 52, Y - 1, PW - MR, Y - 1);
+        Y += 9;
+      });
 
-      if (data.ultra_long_notes) {
-        secHdr('STUDY NOTES', C.gold);
-        const clean=this._stripMd(data.ultra_long_notes);
-        let prevBlank=false;
-        for (const raw of clean.split('\n')) {
-          const tr=raw.trim();
-          if(!tr){if(!prevBlank)Y+=2;prevBlank=true;continue;}
-          prevBlank=false; ck(9);
-          if(tr.match(/^#{1,4}/)){
-            const lv=(tr.match(/^#+/)||[''])[0].length;
-            const txt=tr.replace(/^#+\s*/,'').replace(/\*+/g,'').replace(/`/g,'');
-            Y+=lv<=2?4:2;
-            const sz=lv===1?14:lv===2?11.5:lv===3?10:9;
-            const col=lv<=2?C.gold:lv===3?C.blue:C.head;
-            if(lv<=2){setBG(col);doc.rect(ML,Y-1,3,sz*0.4,'F');wt(txt,ML+5,CW-5,sz,true,col);}
-            else wt(txt,ML,CW,sz,true,col);
-            Y+=lv<=2?3:1;
-          } else if(tr.match(/^[-•*]\s/)){
-            const txt=tr.replace(/^[-•*]\s*/,'');
-            setBG(C.gold); doc.circle(ML+2,Y-1.5,1,'F');
-            wt(txt,ML+5,CW-5,8.5,false,C.text); Y+=0.5;
-          } else if(tr.startsWith('>')){
-            ck(12); const qText=tr.replace(/^>\s*/,'');
-            setBG(isDark?[12,20,52]:[238,242,255]); doc.rect(ML,Y-2,CW,10,'F');
-            setBG(C.gold); doc.rect(ML,Y-2,2.5,10,'F');
-            wt(qText,ML+5,CW-5,8.5,false,isDark?[220,210,160]:[75,60,10]); Y+=3;
-          } else if(tr.startsWith('---')){
-            setDC(C.border); doc.setLineWidth(0.2); doc.line(ML,Y,PW-MR,Y); Y+=5;
+      // ── NOTES ──
+      const renderNotes = (raw) => {
+        if (!raw) return;
+        doc.addPage(); pageBg(); Y = MT + 6;
+        band('STUDY NOTES');
+        const lines = String(raw).replace(/\r\n/g, '\n').split('\n');
+        let blank = 0;
+        for (const rawLine of lines) {
+          const line = rawLine.replace(/\t/g, '  ');
+          const tr = line.trim();
+          if (!tr) {
+            blank++;
+            if (blank === 1) Y += 2.4;
+            continue;
+          }
+          blank = 0;
+          ensure(12);
+          if (/^#{1,6}\s/.test(tr)) {
+            const lv = (tr.match(/^#+/) || ['#'])[0].length;
+            const txt = stripInline(tr.replace(/^#+\s*/, ''));
+            Y += lv <= 2 ? 5 : 3;
+            if (lv === 1) {
+              fill(C.gold); doc.rect(ML, Y - 1, 2.2, 8, 'F');
+              write(txt, ML + 6, CW - 6, 14, true, C.gold, 3);
+            } else if (lv === 2) {
+              write(txt, ML, CW, 12, true, C.cyan, 2.4);
+              stroke(C.line); doc.setLineWidth(0.25); doc.line(ML, Y - 1, ML + 42, Y - 1);
+              Y += 2;
+            } else {
+              write(txt, ML, CW, 10.5, true, C.head, 1.8);
+            }
+          } else if (/^[-*•]\s+/.test(tr)) {
+            const txt = stripInline(tr.replace(/^[-*•]\s+/, ''));
+            fill(C.gold); doc.circle(ML + 2.2, Y - 1.4, 0.9, 'F');
+            write(txt, ML + 7, CW - 7, 10, false, C.ink, 1.2);
+          } else if (/^\d+[.)]\s+/.test(tr)) {
+            const m = tr.match(/^(\d+)[.)]\s+(.*)$/);
+            doc.setFont(FONT, 'bold'); doc.setFontSize(10); rgb(C.gold);
+            ensure(8);
+            doc.text(`${m[1]}.`, ML, Y);
+            write(stripInline(m[2]), ML + 8, CW - 8, 10, false, C.ink, 1.2);
+          } else if (tr.startsWith('>')) {
+            const q = stripInline(tr.replace(/^>\s*/, ''));
+            ensure(14);
+            fill(C.card); doc.roundedRect(ML, Y - 4, CW, 12, 1.5, 1.5, 'F');
+            fill(C.gold); doc.rect(ML, Y - 4, 2, 12, 'F');
+            write(q, ML + 7, CW - 10, 9.5, false, C.ink, 4);
+          } else if (/^---+$/.test(tr) || /^\*\*\*+$/.test(tr)) {
+            stroke(C.line); doc.setLineWidth(0.2); doc.line(ML, Y, PW - MR, Y); Y += 5;
+          } else if (tr.startsWith('```')) {
+            continue;
           } else {
-            wt(tr.replace(/\*\*(.+?)\*\*/g,'$1').replace(/\*/g,'').replace(/`(.+?)`/g,'[$1]'),ML,CW,8.5,false,C.text); Y+=1;
+            write(stripInline(tr), ML, CW, 10, false, C.ink, 2.2);
           }
         }
-        Y+=6;
-      }
+      };
+      renderNotes(data.ultra_long_notes);
 
-      if(data.key_concepts?.length){
-        secHdr('KEY CONCEPTS',C.gold);
-        data.key_concepts.slice(0,10).forEach((c,i)=>{
-          ck(16); setBG(C.card); doc.roundedRect(ML,Y,CW,14,2,2,'F');
-          setBG(C.gold); doc.circle(ML+5,Y+7,3.5,'F');
-          doc.setFontSize(7); doc.setFont('helvetica','bold'); setFG([8,14,35]);
-          doc.text(String(i+1),ML+5,Y+8.5,{align:'center'});
-          const cLines=doc.splitTextToSize(String(c).slice(0,220),CW-14);
-          doc.setFontSize(8); doc.setFont('helvetica','normal'); setFG(C.text);
-          doc.text(cLines.slice(0,2),ML+11,Y+6); Y+=17;
-        }); Y+=4;
-      }
-
-      if(data.flashcards?.length){
-        newPage('Flashcards');
-        secHdr('FLASHCARDS',C.purple);
-        data.flashcards.forEach((fc,i)=>{
-          ck(28);
-          setBG(C.card); doc.roundedRect(ML,Y,CW,26,2,2,'F');
-          setDC(C.purple); doc.setLineWidth(0.2); doc.roundedRect(ML,Y,CW,26,2,2,'S');
-          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.purple);
-          doc.text(`Q${i+1}`,ML+2.5,Y+5.5);
-          const fLines=doc.splitTextToSize(String(fc.front||fc.question||'').slice(0,90),CW-18);
-          doc.setFontSize(8.5); doc.setFont('helvetica','bold'); setFG(C.head);
-          doc.text(fLines.slice(0,2),ML+10,Y+6);
-          setDC(C.border); doc.setLineWidth(0.15); doc.line(ML+3,Y+12,PW-MR-3,Y+12);
-          doc.setFontSize(6.5); doc.setFont('helvetica','bold'); setFG(C.blue);
-          doc.text('A:',ML+2.5,Y+17);
-          const bLines=doc.splitTextToSize(String(fc.back||fc.answer||'').slice(0,160),CW-14);
-          doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
-          doc.text(bLines.slice(0,2),ML+10,Y+17); Y+=29;
-        }); Y+=4;
-      }
-
-      if(data.quiz_questions?.length){
-        newPage('Practice Quiz');
-        secHdr('PRACTICE QUIZ',C.green);
-        const letters=['A','B','C','D','E'];
-        data.quiz_questions.forEach((q,i)=>{
-          ck(42);
-          setBG(C.green); doc.circle(ML+4,Y+4,4,'F');
-          doc.setFontSize(7.5); doc.setFont('helvetica','bold'); setFG([255,255,255]);
-          doc.text(String(i+1),ML+4,Y+5.5,{align:'center'});
-          if(q.difficulty){
-            const dc=q.difficulty==='hard'?C.red:q.difficulty==='easy'?C.green:C.gold;
-            setBG(dc); doc.roundedRect(ML+10,Y+0.5,18,6,1,1,'F');
-            doc.setFontSize(5.5); setFG([255,255,255]);
-            doc.text(q.difficulty.toUpperCase(),ML+19,Y+5,{align:'center'});
-          }
-          doc.setFontSize(9); doc.setFont('helvetica','bold'); setFG(C.head);
-          const qLines=doc.splitTextToSize(q.question,CW-12);
-          doc.text(qLines.slice(0,3),ML+30,Y+5);
-          Y+=Math.min(qLines.length,3)*4.5+5;
-          (q.options||[]).forEach((opt,oi)=>{
-            ck(8);
-            const isCorrect=opt===q.correct_answer;
-            if(isCorrect){setBG(isDark?[0,40,18]:[215,255,228]);doc.roundedRect(ML+2,Y-2,CW-2,7.5,1,1,'F');}
-            doc.setFontSize(7.5); doc.setFont('helvetica',isCorrect?'bold':'normal'); setFG(isCorrect?C.correct:C.text);
-            doc.text(`${letters[oi]}. ${String(opt).slice(0,72)}${isCorrect?' (Correct)':''}`,ML+5,Y+3); Y+=8;
-          });
-          if(q.explanation){
-            ck(8); doc.setFontSize(6.8); doc.setFont('helvetica','italic'); setFG(C.muted);
-            const expLines=doc.splitTextToSize('Exp: '+q.explanation.slice(0,140),CW-6);
-            doc.text(expLines.slice(0,2),ML+3,Y+2); Y+=expLines.length>1?12:8;
-          }
-          Y+=4; setDC(C.border); doc.setLineWidth(0.12); doc.line(ML+10,Y,PW-MR-10,Y); Y+=6;
+      if (data.key_concepts?.length) {
+        ensure(24); band('KEY CONCEPTS');
+        data.key_concepts.slice(0, 16).forEach((c, i) => {
+          ensure(16);
+          fill(C.card); doc.roundedRect(ML, Y, CW, 14, 2, 2, 'F');
+          fill(C.gold); doc.circle(ML + 7, Y + 7, 3.4, 'F');
+          doc.setFont(FONT, 'bold'); doc.setFontSize(8); rgb([12, 14, 24]);
+          doc.text(String(i + 1), ML + 7, Y + 8.4, { align: 'center' });
+          doc.setFont(FONT, 'normal'); doc.setFontSize(9); rgb(C.ink);
+          const ls = doc.splitTextToSize(String(c).slice(0, 240), CW - 18);
+          doc.text(ls.slice(0, 2), ML + 13, Y + 6);
+          Y += 16;
         });
       }
 
-      if(data.mindmap?.branches?.length){
-        newPage('Mind Map');
-        secHdr('MIND MAP',C.blue);
-        setBG(C.gold); doc.roundedRect(ML+CW/2-40,Y,80,10,5,5,'F');
-        doc.setFontSize(9.5); doc.setFont('helvetica','bold'); setFG([8,14,35]);
-        doc.text((data.mindmap.central||data.topic||'').slice(0,30),ML+CW/2,Y+7,{align:'center'}); Y+=16;
-        data.mindmap.branches.forEach(b=>{
-          ck(24);
-          const bRGB=b.color?b.color.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)):[0,170,220];
-          try{setBG(bRGB);}catch{setBG(C.blue);}
-          doc.rect(ML,Y,3,9,'F');
-          setBG(C.card); doc.roundedRect(ML+4,Y,CW-4,9,1.5,1.5,'F');
-          try{setFG(bRGB);}catch{setFG(C.blue);}
-          doc.setFontSize(9); doc.setFont('helvetica','bold');
-          doc.text(`> ${b.name}`,ML+8,Y+6.2); Y+=12;
-          (b.items||[]).slice(0,6).forEach(item=>{
-            ck(6); setBG(C.hdr); doc.roundedRect(ML+8,Y,CW-8,6,1,1,'F');
-            doc.setFontSize(7.5); doc.setFont('helvetica','normal'); setFG(C.text);
-            doc.text(`• ${String(item).slice(0,85)}`,ML+12,Y+4.2); Y+=7;
-          }); Y+=4;
+      if (data.flashcards?.length) {
+        doc.addPage(); pageBg(); Y = MT + 6;
+        band('FLASHCARDS');
+        data.flashcards.forEach((fc, i) => {
+          ensure(32);
+          fill(C.card); doc.roundedRect(ML, Y, CW, 28, 2.4, 2.4, 'F');
+          stroke(C.line); doc.setLineWidth(0.2); doc.roundedRect(ML, Y, CW, 28, 2.4, 2.4, 'S');
+          doc.setFont(FONT, 'bold'); doc.setFontSize(7); rgb(C.gold);
+          doc.text(`CARD ${i + 1}`, ML + 5, Y + 6);
+          write(fc.front || fc.question || '', ML + 5, CW - 10, 10, true, C.head, 1);
+          stroke(C.line); doc.setLineWidth(0.12); doc.line(ML + 5, Y, PW - MR - 5, Y);
+          Y += 2;
+          write(stripInline(fc.back || fc.answer || ''), ML + 5, CW - 10, 9, false, C.ink, 4);
+          Y += 4;
         });
-        if(data.mindmap.connections?.length){
-          Y+=3; secHdr('CROSS-CONNECTIONS',C.purple);
-          data.mindmap.connections.forEach(c=>{
-            ck(14);
-            setBG(C.card); doc.roundedRect(ML,Y,CW,12,2,2,'F');
-            setBG(C.purple); doc.rect(ML,Y,2.5,12,'F');
-            doc.setFontSize(8); doc.setFont('helvetica','bold'); setFG(C.purple);
-            doc.text(`${String(c.from||'').slice(0,35)}  <->  ${String(c.to||'').slice(0,35)}`,ML+6,Y+5);
-            const descLines=doc.splitTextToSize(String(c.description||'').slice(0,180),CW-10);
-            doc.setFontSize(7.2); doc.setFont('helvetica','normal'); setFG(C.text);
-            doc.text(descLines.slice(0,2),ML+6,Y+9.5);
-            Y+=13;
+      }
+
+      if (data.quiz_questions?.length) {
+        doc.addPage(); pageBg(); Y = MT + 6;
+        band('PRACTICE QUIZ');
+        const letters = ['A', 'B', 'C', 'D', 'E'];
+        data.quiz_questions.forEach((q, i) => {
+          ensure(28);
+          doc.setFont(FONT, 'bold'); doc.setFontSize(10); rgb(C.gold);
+          doc.text(`Q${i + 1}`, ML, Y);
+          write(q.question, ML + 12, CW - 12, 10, true, C.head, 2);
+          (q.options || []).forEach((opt, oi) => {
+            const ok = opt === q.correct_answer;
+            ensure(8);
+            if (ok) { fill(isDark ? [12, 40, 32] : [226, 246, 234]); doc.roundedRect(ML + 4, Y - 3.5, CW - 8, 7.2, 1, 1, 'F'); }
+            write(`${letters[oi]}.  ${opt}${ok ? '   ✓ correct' : ''}`, ML + 8, CW - 12, 9, ok, ok ? C.cyan : C.ink, 1.4);
           });
+          if (q.explanation) {
+            write('Explanation: ' + stripInline(String(q.explanation).slice(0, 280)), ML + 8, CW - 12, 8, false, C.muted, 4);
+          }
+          Y += 3;
+        });
+      }
+
+      if (data.mindmap?.branches?.length) {
+        doc.addPage(); pageBg(); Y = MT + 6;
+        band('MIND MAP');
+        fill(C.gold);
+        doc.roundedRect(ML + 20, Y, CW - 40, 11, 5, 5, 'F');
+        doc.setFont(FONT, 'bold'); doc.setFontSize(10); rgb([12, 14, 24]);
+        doc.text(pdfSafe((data.mindmap.central || data.topic || '').slice(0, 40)), PW / 2, Y + 7.2, { align: 'center' });
+        Y += 18;
+        data.mindmap.branches.forEach((b) => {
+          ensure(16);
+          write(b.name, ML, CW, 11, true, C.gold, 1.5);
+          (b.items || []).slice(0, 8).forEach((item) => {
+            fill(C.gold); doc.circle(ML + 3, Y - 1.4, 0.8, 'F');
+            write(String(item), ML + 8, CW - 8, 9, false, C.ink, 1.1);
+          });
+          Y += 3;
+        });
+      }
+
+      const total = doc.getNumberOfPages();
+      for (let i = 1; i <= total; i++) {
+        doc.setPage(i);
+        if (i === 1) {
+          fill(isDark ? [10,12,24] : [248,249,252]);
+          doc.rect(0, PH - MB, PW, MB, 'F');
+          fill(C.rule); doc.rect(0, PH - MB, PW, 0.6, 'F');
+          doc.setFont(FONT, 'normal'); doc.setFontSize(7); rgb(C.muted);
+          doc.text('Think less. Know more.  ·  Sooban Talha Technologies', ML, PH - 8);
+          doc.text(`1 / ${total}`, PW - MR, PH - 8, { align: 'right' });
+        } else {
+          paintChrome(i, total);
         }
       }
 
-      addFooter();
-
-      const safeName=(data.topic||'Study_Notes').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
-      const dateStr=new Date().toISOString().slice(0,10);
+      const safeName = (data.topic || 'Study_Notes').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
+      const dateStr = new Date().toISOString().slice(0, 10);
       const suffix = options.fileSuffix ? `_${options.fileSuffix}` : `_${theme}`;
       doc.save(`SavoireAI_${safeName}_${dateStr}${suffix}.pdf`);
-      this._toast('success','fa-file-pdf', `✓ PDF ready — ${pageNum} page${pageNum>1?'s':''} · ${theme} theme`);
-
-    } catch(err) {
+      this._toast('success', 'fa-file-pdf', `PDF ready — ${total} page${total > 1 ? 's' : ''} · atelier layout`);
+    } catch (err) {
       console.error('PDF error:', err);
-      this._toast('error','fa-times', `PDF failed: ${err.message.slice(0,60)}`);
+      this._toast('error', 'fa-times', `PDF failed: ${err.message.slice(0, 60)}`);
     }
   }
 
