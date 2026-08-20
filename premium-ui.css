@@ -494,6 +494,53 @@ html[data-theme="light"] .concept-text{color:#1e293b!important}
   font-family:'Noto Sans Devanagari','Noto Naskh Arabic',Inter,system-ui,sans-serif!important;
 }
 
+/* Live Notes — contained scroll, no leak */
+#liveNotesModal.modal-overlay{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(2,6,18,.78)!important;
+  backdrop-filter:blur(16px);
+}
+#liveNotesModal .live-notes-modal-box{
+  width:min(840px,96vw)!important;
+  max-height:86vh!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,#12182e,#0b1020)!important;
+  border:1px solid rgba(34,211,238,.2)!important;
+  box-shadow:0 30px 80px rgba(0,0,0,.5)!important;
+}
+#liveNotesContent{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  padding:18px 22px 28px!important;
+  line-height:1.8!important;
+}
+#liveNotesContent h1,#liveNotesContent h2,#liveNotesContent h3{
+  display:block!important;
+  color:#7dd3fc!important;
+  margin:1.1em 0 .4em!important;
+}
+#liveNotesContent p,#liveNotesContent li{display:block!important;white-space:normal!important}
+
+/* Wizard — clearer, fewer visual errors */
+#wizardModal .modal{
+  max-width:min(720px,96vw)!important;
+  max-height:88vh!important;
+  border-radius:24px!important;
+}
+.wizard-steps{margin-bottom:12px!important}
+.wizard-step-desc{display:none!important}
+.wizard-topic-input{min-height:140px!important;font-size:1rem!important;line-height:1.5!important}
+.wizard-tool-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.wizard-btn-primary{min-height:48px!important;font-size:1rem!important}
+.wizard-language-grid{max-height:240px}
+
 @media (max-width:900px){
   .dash-hdr{padding:8px 10px!important;gap:8px!important}
   #tokenMeter,.dh-stats,#wizardHeaderBtn,#megaHeaderBtn,#themeBtn,.dh-greeting,.hdr-landing-btn{display:none!important}

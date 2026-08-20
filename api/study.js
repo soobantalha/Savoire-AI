@@ -459,13 +459,13 @@ async function getMeshFreeModelIds() {
 // pass is cheap (a fast winner returns immediately, firstSuccessOrAllFail
 // doesn't wait for stragglers), so 3 passes costs little extra latency in the
 // common case but meaningfully lowers the fallback rate in the bad case.
-const MAX_PASSES = 3;
+const MAX_PASSES = 2;
 
 async function streamOneMeshModel(modelId, prompt, onChunk, maxTokens) {
   const ctrl  = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), MESH_TIMEOUT_MS);
   const t0 = Date.now();
-  log.info(`P1 ⚡ starting Mesh:${modelId} (parallel)`);
+  log.info(`P1 ⚡ starting Mesh:${modelId}`);
   try {
     const res = await fetch(`${MESH_BASE_URL}/chat/completions`, {
       method: 'POST',
@@ -474,22 +474,48 @@ async function streamOneMeshModel(modelId, prompt, onChunk, maxTokens) {
         'Authorization': `Bearer ${process.env.MESH_API_KEY}`,
       },
       body: JSON.stringify({
-        model: modelId, max_tokens: maxTokens || 2400, temperature: 0.75, stream: false,
+        model: modelId, max_tokens: maxTokens || 2400, temperature: 0.7, stream: true,
         messages: [{ role: 'user', content: prompt }],
       }),
       signal: ctrl.signal,
     });
-    clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content?.trim();
-    if (!content || content.length < 80) throw new Error('Empty or too short response');
-    const chunkSize = 300;
-    for (let i = 0; i < content.length; i += chunkSize) {
-      onChunk(content.slice(i, i + chunkSize));
-      await sleep(5);
+    const ct = res.headers.get('content-type') || '';
+    let content = '';
+    let usageTok = 0;
+    if (res.body && (ct.includes('event-stream') || ct.includes('ndjson') || ct.includes('octet-stream') || ct.includes('text/plain'))) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop() || '';
+        for (const raw of lines) {
+          const line = raw.trim();
+          if (!line.startsWith('data:')) continue;
+          const payload = line.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          try {
+            const j = JSON.parse(payload);
+            const piece = j.choices?.[0]?.delta?.content || j.choices?.[0]?.message?.content || '';
+            if (piece) { content += piece; onChunk(piece); }
+            if (j.usage?.total_tokens) usageTok = Number(j.usage.total_tokens);
+          } catch { /* ignore */ }
+        }
+      }
+    } else {
+      const data = await res.json();
+      content = data?.choices?.[0]?.message?.content?.trim() || '';
+      usageTok = Number(data?.usage?.total_tokens) || 0;
+      const step = 90;
+      for (let i = 0; i < content.length; i += step) onChunk(content.slice(i, i + step));
     }
-    const used = Number(data?.usage?.total_tokens) || Math.ceil(Buffer.byteLength(content, 'utf8') / 4);
+    clearTimeout(timer);
+    if (!content || content.length < 80) throw new Error('Empty or too short response');
+    const used = usageTok || Math.ceil(Buffer.byteLength(content, 'utf8') / 4);
     global.__savoireLastUsage = (global.__savoireLastUsage || 0) + used;
     log.ok(`P1 Mesh:${modelId} WON in ${Date.now() - t0}ms — ${content.length}ch usage:${used}`);
     return content;
@@ -1278,7 +1304,7 @@ module.exports = async function handler(req, res) {
 
     // ── Wait for Phase 2 ──
     let cardsData = null, p2ok = false;
-    const deadline = opts.tool === 'notes' || opts.tool === 'summary' ? 45000 : 30000;
+    const deadline = opts.tool === 'notes' || opts.tool === 'summary' ? 12000 : 22000;
     const deadlineFallback = new Promise(resolve => {
       setTimeout(() => resolve({ status: 'deadline' }), deadline);
     });
@@ -1321,7 +1347,7 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 3, label: `🃏 Streaming ${cardsData.flashcards.length} flashcards live…` });
       for (let i = 0; i < cardsData.flashcards.length; i++) {
         sse('card', { idx: i, total: cardsData.flashcards.length, card: cardsData.flashcards[i] });
-        await sleep(50);
+        await sleep(12);
       }
       log.ok(`[${reqId}] Streamed ${cardsData.flashcards.length} flashcards`);
     }
@@ -1330,7 +1356,7 @@ module.exports = async function handler(req, res) {
       sse('stage', { idx: 3, label: `❓ Streaming ${cardsData.quiz_questions.length} quiz questions live…` });
       for (let i = 0; i < cardsData.quiz_questions.length; i++) {
         sse('question', { idx: i, total: cardsData.quiz_questions.length, q: cardsData.quiz_questions[i] });
-        await sleep(60);
+        await sleep(12);
       }
       log.ok(`[${reqId}] Streamed ${cardsData.quiz_questions.length} questions`);
     }
@@ -1338,10 +1364,10 @@ module.exports = async function handler(req, res) {
     if (cardsData?.mindmap?.branches?.length && (opts.tool === 'mindmap' || opts.tool === 'all')) {
       sse('stage', { idx: 3, label: `🗺️ Streaming ${cardsData.mindmap.branches.length} mind map branches live…` });
       sse('branch', { idx: -1, total: cardsData.mindmap.branches.length, branch: { name: '_central_', value: cardsData.mindmap.central, connections: cardsData.mindmap.connections || [] } });
-      await sleep(50);
+      await sleep(12);
       for (let i = 0; i < cardsData.mindmap.branches.length; i++) {
         sse('branch', { idx: i, total: cardsData.mindmap.branches.length, branch: cardsData.mindmap.branches[i] });
-        await sleep(70);
+        await sleep(16);
       }
       log.ok(`[${reqId}] Streamed ${cardsData.mindmap.branches.length} branches`);
     }

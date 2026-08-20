@@ -3400,7 +3400,7 @@ Examples:
       modal.id = 'liveNotesModal';
       modal.className = 'modal-overlay';
       modal.innerHTML = `
-        <div class="modal-box live-notes-modal-box" style="max-width:860px;width:95%;max-height:88vh;display:flex;flex-direction:column">
+        <div class="modal-box live-notes-modal-box">
           <div class="modal-hdr" style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
             <i class="fas fa-bolt" style="color:#00ff88"></i>
             <span style="font-weight:800;font-size:1rem;color:#00ff88">Live Notes</span>
