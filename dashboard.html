@@ -1242,13 +1242,29 @@ try {
 }
 </script>
 
-  <nav class="sv-dock" aria-label="Mobile tab bar">
-    <button type="button" onclick="document.getElementById('sbToggle')?.click()"><i class="fas fa-square"></i><span>Menu</span></button>
-    <button type="button" class="primary" onclick="document.getElementById('wizardHeaderBtn')?.click()"><i class="fas fa-plus"></i><span>Create</span></button>
-    <button type="button" onclick="document.getElementById('megaHeaderBtn')?.click()"><i class="fas fa-layer-group"></i><span>Bundle</span></button>
-    <button type="button" onclick="window.openBuyCreditsModal&&window.openBuyCreditsModal()"><i class="fas fa-credit-card"></i><span>Credits</span></button>
-    <button type="button" onclick="window._app?._toggleTheme()"><i class="fas fa-moon"></i><span>Theme</span></button>
+  <nav class="sv-dock" id="svDock" aria-label="Mobile tab bar">
+    <span class="sv-dock-pill" id="svDockPill"></span>
+    <button type="button" data-dock="menu" onclick="document.getElementById('sbToggle')?.click();window._svDockGo&&window._svDockGo('menu')"><i class="fas fa-square"></i><span>Menu</span></button>
+    <button type="button" class="primary" data-dock="create" onclick="document.getElementById('wizardHeaderBtn')?.click();window._svDockGo&&window._svDockGo('create')"><i class="fas fa-plus"></i><span>Create</span></button>
+    <button type="button" data-dock="bundle" onclick="document.getElementById('megaHeaderBtn')?.click();window._svDockGo&&window._svDockGo('bundle')"><i class="fas fa-layer-group"></i><span>Bundle</span></button>
+    <button type="button" data-dock="credits" onclick="window.openBuyCreditsModal&&window.openBuyCreditsModal();window._svDockGo&&window._svDockGo('credits')"><i class="fas fa-credit-card"></i><span>Credits</span></button>
+    <button type="button" data-dock="theme" onclick="window._app?._toggleTheme();window._svDockGo&&window._svDockGo('theme')"><i class="fas fa-moon"></i><span>Theme</span></button>
   </nav>
+  <script>
+  window._svDockGo = function(id){
+    const dock = document.getElementById('svDock');
+    const pill = document.getElementById('svDockPill');
+    if(!dock||!pill) return;
+    const btn = dock.querySelector('[data-dock="'+id+'"]');
+    if(!btn) return;
+    dock.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b===btn));
+    const r = btn.getBoundingClientRect();
+    const p = dock.getBoundingClientRect();
+    pill.style.width = r.width + 'px';
+    pill.style.transform = 'translateX(' + (r.left - p.left) + 'px)';
+    pill.classList.add('show');
+  };
+  </script>
   <script src="app.js"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1a1d99b8eb8b7d1',t:'MTc4Mzg3ODIwNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 <!-- OLD PACKS HIDDEN — use #buyCreditsModal -->
@@ -1453,7 +1469,7 @@ function buyPlan(plan) {
 window.buyPlan = buyPlan;
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2fb6eeeeca5ab4d',t:'MTc4NzUwMTkwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {

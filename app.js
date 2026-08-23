@@ -378,16 +378,43 @@ class SavoireApp {
   }
 
   _loadSessions() { return this._loadNum('sv_sessions', 0); }
-  _saveSessions()  { 
-    localStorage.setItem('sv_sessions', String(this.sessions));
+  _pushStatsCloud() {
+    const payload = {
+      sessions: this.sessions,
+      totalWords: this.totalWords,
+      streak: this.streak,
+      displayName: this.userName || ''
+    };
+    try {
+      const tok = this._getFbToken && this._getFbToken();
+      if (tok) {
+        fetch('/api/user-tokens', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+          body: JSON.stringify(payload)
+        }).catch(()=>{});
+      }
+    } catch(e){}
     try {
       if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
         import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js").then(({ doc, setDoc }) => {
           const uid = window.firebaseAuthInstance.currentUser.uid;
-          setDoc(doc(window.firebaseDB, `users/${uid}`), { sessions: this.sessions, totalWords: this.totalWords }, { merge: true }).catch(()=>{});
+          setDoc(doc(window.firebaseDB, `users/${uid}`), {
+            sessions: this.sessions,
+            totalWords: this.totalWords,
+            streak: this.streak.count,
+            bestStreak: this.streak.bestStreak,
+            lastStreakDate: this.streak.lastDate,
+            displayName: this.userName || ''
+          }, { merge: true }).catch(()=>{});
         });
       }
     } catch(e){}
+  }
+
+  _saveSessions()  { 
+    localStorage.setItem('sv_sessions', String(this.sessions));
+    this._pushStatsCloud();
   }
 
   _incrementSession() {
@@ -3965,6 +3992,17 @@ Examples:
           const data = await res.json();
           if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
           window.PAID_TOKENS = data;
+          try {
+            if (data.sessions) { this.sessions = Math.max(this.sessions||0, data.sessions); localStorage.setItem('sv_sessions', String(this.sessions)); }
+            if (data.totalWords) { this.totalWords = Math.max(this.totalWords||0, data.totalWords); localStorage.setItem('sv_total_words', String(this.totalWords)); }
+            if (data.streak || data.bestStreak) {
+              this.streak.count = Math.max(this.streak.count||0, data.streak||0);
+              this.streak.bestStreak = Math.max(this.streak.bestStreak||0, data.bestStreak||0);
+              if (data.lastStreakDate) this.streak.lastDate = data.lastStreakDate;
+              localStorage.setItem('sv_streak', JSON.stringify(this.streak));
+            }
+            this._updateAllStats();
+          } catch(e){}
           if (this._fetchCloudHistory) { try { await this._fetchCloudHistory(); } catch(e){} }
           if (this._fetchCloudSaved) { try { await this._fetchCloudSaved(); } catch(e){} }
           return;
@@ -4000,18 +4038,13 @@ Examples:
               }
               if (data.sessions !== undefined) {
                 const cloudSessions = data.sessions||0;
-                if (cloudSessions > this.sessions) {
-                  this.sessions = cloudSessions;
-                  this._saveSessions();
-                  console.log(`☁️ Synced sessions from cloud: ${this.sessions}`);
-                }
+                this.sessions = Math.max(this.sessions||0, cloudSessions);
+                localStorage.setItem('sv_sessions', String(this.sessions));
               }
               if (data.totalWords !== undefined) {
                 const cloudWords = data.totalWords||0;
-                if (cloudWords > this.totalWords) {
-                  this.totalWords = cloudWords;
-                  localStorage.setItem('sv_total_words', String(this.totalWords));
-                }
+                this.totalWords = Math.max(this.totalWords||0, cloudWords);
+                localStorage.setItem('sv_total_words', String(this.totalWords));
               }
               this._updateAllStats();
             } catch(e) { console.log('streak sync failed', e.message); }

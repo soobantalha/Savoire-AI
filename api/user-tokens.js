@@ -2,10 +2,10 @@ const { getAdmin, getDb, getAuth } = require('./_firebase');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Use GET' });
+  if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Use GET or POST' });
   try {
     const authHeader = req.headers.authorization || req.headers.Authorization;
     if (!authHeader?.startsWith('Bearer ')) return res.status(401).json({ error: 'Login required' });
@@ -119,6 +119,11 @@ module.exports = async function handler(req, res) {
       cycle_start: data.cycle_start,
       validity_till: data.validity_till||null,
       totalGenerations: data.totalGenerations||0,
+      sessions: data.sessions||0,
+      totalWords: data.totalWords||0,
+      streak: data.streak||0,
+      bestStreak: data.bestStreak||0,
+      lastStreakDate: data.lastStreakDate||null,
       isFreeResetInDays: Math.max(0, 30 - daysSince)
     });
   } catch (err) {
