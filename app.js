@@ -915,24 +915,16 @@ class SavoireApp {
     }).join('');
 
     this.el.wizardContent.innerHTML = `
-      <div class="wizard-progress-bar">
-        <div class="wizard-progress-fill" style="width:${pct}%"></div>
-      </div>
-      <div class="wizard-steps">${stepsHtml}</div>
-      <div id="wizardBody" class="wizard-body"></div>
-      <div class="wizard-footer">
-        <button class="wizard-btn wizard-btn-secondary" id="wizPrev" ${this.wizardStep === 0 ? 'disabled' : ''}>
-          <i class="fas fa-arrow-left"></i> Back
-        </button>
-        <div class="wizard-step-info">${this.wizardStep + 1} / ${steps.length}</div>
-        <button class="wizard-btn wizard-btn-primary" id="wizNext">
-          ${this.wizardStep === steps.length - 1
-            ? '<i class="fas fa-rocket"></i> Generate Now!'
-            : 'Next <i class="fas fa-arrow-right"></i>'}
-        </button>
-        <button class="wizard-btn wizard-btn-ghost" id="wizDraft" title="Save Draft">
-          <i class="fas fa-save"></i>
-        </button>
+      <div class="wiz-glass">
+        <div class="wiz-dots" aria-hidden="true">${steps.map((s,i)=>`<i class="${i===this.wizardStep?'on':(i<this.wizardStep?'done':'')}"></i>`).join('')}</div>
+        <div class="wiz-caption">${steps[this.wizardStep].name} · ${this.wizardStep + 1} of ${steps.length}</div>
+        <div id="wizardBody" class="wizard-body"></div>
+        <div class="wizard-footer">
+          <button class="wizard-btn wizard-btn-secondary" id="wizPrev" ${this.wizardStep === 0 ? 'disabled' : ''}>Back</button>
+          <button class="wizard-btn wizard-btn-primary" id="wizNext">
+            ${this.wizardStep === steps.length - 1 ? 'Generate' : 'Continue'}
+          </button>
+        </div>
       </div>`;
 
     const body = document.getElementById('wizardBody');
@@ -949,8 +941,6 @@ class SavoireApp {
 
     const prev  = this._el('wizPrev');
     const next  = this._el('wizNext');
-    const draft = this._el('wizDraft');
-
     if (prev) prev.onclick = () => {
       if (this.wizardStep > 0) { this.wizardStep--; this._renderWizardStep(); }
     };
@@ -962,15 +952,11 @@ class SavoireApp {
         this._runWizard();
       }
     };
-    if (draft) draft.onclick = () => {
-      this._save('sv_wiz_draft', { step: this.wizardStep, data: this.wizardData });
-      this._toast('success', 'fa-save', 'Draft saved!');
-    };
   }
 
   _wStepTool() {
     return `
-      <div class="wizard-step-heading"><i class="fas fa-magic"></i> Choose what you want to create:</div>
+      <div class="wizard-step-heading">What do you want to make?</div>
       <div class="wizard-tool-grid">
         ${Object.entries(TOOL_CONFIG).map(([k, cfg]) => `
           <div class="wizard-tool-card ${this.wizardData.tool === k ? 'selected' : ''}" data-tool="${k}">

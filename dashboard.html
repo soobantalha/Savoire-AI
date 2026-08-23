@@ -142,8 +142,7 @@
 @media (max-width: 1024px) {
   #tokenMeter { display:none !important; }
   .dh-stats { display:none !important; }
-  #wizardHeaderBtn, #megaHeaderBtn, #themeBtn { display:none !important; }
-  .dh-text { display:none !important; }
+  #wizardHeaderBtn, #megaHeaderBtn { display:none !important; }
   .mobile-menu-btn { display:none !important; }
 }
 </style>
@@ -649,7 +648,7 @@
             </div>
             <div class="mega-opt-group">
               <label class="mega-opt-label">Depth</label>
-              <select id="megaDepthSel" class="mega-select">
+            select">
                 <option value="standard">📏 Standard</option>
                 <option value="detailed" selected>📚 Detailed</option>
                 <option value="comprehensive">📖 Comprehensive</option>
@@ -1754,6 +1753,12 @@ document.addEventListener('DOMContentLoaded', () => {
     backdrop.addEventListener('click', () => {
       leftPanel?.classList.remove('mobile-open');
       backdrop.classList.remove('visible');
+    });
+  }
+});
+</script>
+
+('visible');
     });
   }
 });

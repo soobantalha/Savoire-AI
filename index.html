@@ -9,7 +9,10 @@
 <meta property="og:title" content="Savoiré AI — The Premium AI Study Companion">
 <meta property="og:description" content="Generate notes, flashcards, quizzes, summaries & mind maps instantly, in 20+ languages.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="clogo.png">
+<meta property="og:url" content="https://savoireai.vercel.app/">
+<meta property="og:image" content="https://savoireai.vercel.app/clogo.png">
+<link rel="canonical" href="https://savoireai.vercel.app/">
+<link rel="privacy-policy" href="https://savoireai.vercel.app/privacy.html">
 <meta name="theme-color" content="#06070d">
 <link rel="icon" href="clogo.png">
 <script type="application/ld+json">
@@ -19,12 +22,26 @@
   "name": "Savoiré AI",
   "applicationCategory": "EducationalApplication",
   "operatingSystem": "Web",
-  "publisher": {"@type": "Organization", "name": "Sooban Talha Technologies"}
+  "url": "https://savoireai.vercel.app/",
+  "description": "Savoiré AI is a premium AI study companion. Sign in with Google to generate notes, flashcards, quizzes, summaries and mind maps. We request your name, email and optional profile photo only to create your account, greet you, and sync credits and saved study material.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sooban Talha Technologies",
+    "url": "https://soobantalhatech.xyz/",
+    "email": "soobantalhtechnologies@gmail.com",
+    "sameAs": [
+      "https://soobantalhatech.xyz/",
+      "https://github.com/soobantalha",
+      "https://instagram.com/developer_sooban"
+    ]
+  },
+  "offers": {"@type": "Offer", "price": "19", "priceCurrency": "INR"}
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="premium-ui.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <style>
@@ -781,6 +798,7 @@ footer{
         <a href="#" id="openAbout">About</a>
       </div>
       <div class="nav-actions">
+        <button class="theme-fab" id="siteThemeBtn" type="button" aria-label="Toggle theme">◐</button>
         <a class="btn btn-text-hide" href="login.html" style="background:transparent;border:1px solid var(--hairline-strong);color:var(--ink);padding:9px 18px;font-size:13px">Sign in</a>
         <a class="btn" href="dashboard.html">Open Dashboard <i>→</i></a>
         <button class="nav-burger" id="burger" aria-label="Menu"><span></span></button>
@@ -921,7 +939,8 @@ footer{
         <p style="color:var(--ink-2);font-weight:400;line-height:1.65;font-size:15.5px;max-width:460px">
           Every format streams line-by-line inside a glass dashboard. No spinners, no blank screens — you watch the material form, like a private tutor dictating.
         </p>
-        <ul class="demo-checklist"="dot"></span>Live streaming output for every format</li>
+        <ul class="demo-checklist">
+          <li><span class="dot"></span>Live streaming output for every format</li>
           <li><span class="dot"></span>Glass dashboard, dark and light themes</li>
           <li><span class="dot"></span>One-tap PDF export, clean and on-brand</li>
           <li><span class="dot"></span>20+ languages, auto-detected from your topic</li>
@@ -1087,7 +1106,7 @@ footer{
       <div class="transp-card">
         <div class="transp-icon">📧</div>
         <h4>Your email</h4>
-        <p>To create your account, sync your credits, history and saved notes across devices, and send a one-time welcome email from <code style="color:var(--brass-soft);font-family:var(--mono);font-size:12px"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9ef0f1ecfbeef2e7deedffe8f1f7ecfbfff7b0e8fbecfdfbf2b0ffeeee">[email&#160;protected]</a></code>. Your email is never sold or shared.</p>
+        <p>To create your account, sync your credits, history and saved notes across devices, and send a one-time welcome email from <code style="color:var(--brass-soft);font-family:var(--mono);font-size:12px"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0b6564796e7b67724b786a7d6462796e6a62257d6e79686e67256a7b7b">[email&#160;protected]</a></code>. Your email is never sold or shared.</p>
       </div>
       <div class="transp-card">
         <div class="transp-icon">🖼️</div>
@@ -1102,6 +1121,18 @@ footer{
     <div class="transp-links reveal">
       <a href="privacy.html">📄 Read the full privacy policy</a>
       <a href="terms.html">📜 Read the terms of service</a>
+    </div>
+    <div class="legal-owner reveal">
+      <strong style="color:#fff">Savoiré AI</strong> is owned and operated by
+      <strong style="color:#fff">Sooban Talha Technologies</strong>
+      (developer: Sooban Talha). Homepage:
+      <a href="https://savoireai.vercel.app/">savoireai.vercel.app</a>
+      · Publisher:
+      <a href="https://soobantalhatech.xyz/" target="_blank" rel="noopener">soobantalhatech.xyz</a>
+      · Contact:
+      <a href="/cdn-cgi/l/email-protection#43302c2c21222d37222f2b3726202b2d2c2f2c242a263003242e222a2f6d202c2e"><span class="__cf_email__" data-cfemail="f1829e9e93909f85909d99859492999f9e9d9e96989482b1969c90989ddf929e9c">[email&#160;protected]</span></a>
+      · Privacy (same URL as OAuth consent screen):
+      <a href="https://savoireai.vercel.app/privacy.html">savoireai.vercel.app/privacy.html</a>
     </div>
   </div>
 </section>
@@ -1269,6 +1300,20 @@ footer{
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ── NAV scroll + mobile menu ───────────────────────── */
+(function(){
+  const saved = localStorage.getItem('sv_site_theme') || (JSON.parse(localStorage.getItem('sv_prefs')||'{}').theme) || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('siteThemeBtn');
+  const sync = () => { if(btn) btn.textContent = document.documentElement.dataset.theme === 'light' ? '☀' : '◐'; };
+  sync();
+  btn?.addEventListener('click', () => {
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sv_site_theme', next);
+    try{ const p=JSON.parse(localStorage.getItem('sv_prefs')||'{}'); p.theme=next; localStorage.setItem('sv_prefs', JSON.stringify(p)); }catch(e){}
+    sync();
+  });
+})();
 const nav = document.getElementById('nav');
 window.addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', window.scrollY > 24);
@@ -1591,5 +1636,19 @@ document.addEventListener('mousemove', (e) => {
   });
 });
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2da78bbab97756a',t:'MTc4NzE1NjI3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
+</html>
+�────────────────────────────── */
+let rafId = null;
+document.addEventListener('mousemove', (e) => {
+  if(rafId) return;
+  rafId = requestAnimationFrame(() => {
+    const x = (e.clientX/window.innerWidth - 0.5);
+    const y = (e.clientY/window.innerHeight - 0.5);
+    gsap.to('.hero-stage', {x:x*16, y:y*16, duration:0.8, ease:'power2.out', overwrite:true});
+    rafId = null;
+  });
+});
+</script>
+</body>
 </html>

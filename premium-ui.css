@@ -543,7 +543,7 @@ html[data-theme="light"] .concept-text{color:#1e293b!important}
 
 @media (max-width:900px){
   .dash-hdr{padding:8px 10px!important;gap:8px!important}
-  #tokenMeter,.dh-stats,#wizardHeaderBtn,#megaHeaderBtn,#themeBtn,.dh-greeting,.hdr-landing-btn{display:none!important}
+  #tokenMeter,.dh-stats,#wizardHeaderBtn,#megaHeaderBtn,.dh-greeting,.hdr-landing-btn{display:none!important}
   .dh-actions{gap:6px!important}
   .sv-dock{display:grid!important}
 }
