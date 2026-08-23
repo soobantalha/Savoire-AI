@@ -325,6 +325,7 @@ class SavoireApp {
     this.quizData  = []; this.quizIdx   = 0; this.quizScore  = 0;
 
     this.history  = this._load('sv_history', []);
+    try { this._dedupeHistory(); } catch(e){}
     this.saved    = this._load('sv_saved',   []);
     this.prefs    = this._load('sv_prefs',   {});
     this.userName = localStorage.getItem('sv_user') || '';
@@ -3510,15 +3511,35 @@ Examples:
 
   // ─── HISTORY & SAVED ─────────────────────────────────────────────────────────
 
+  _histKey(h) {
+    return `${String(h.tool||'notes')}|${String(h.topic||'').trim().toLowerCase()}`;
+  }
+
+  _dedupeHistory() {
+    const seen = new Set();
+    const next = [];
+    for (const h of (this.history || []).sort((a,b)=>(b.ts||0)-(a.ts||0))) {
+      const k = this._histKey(h);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      next.push(h);
+    }
+    this.history = next.slice(0, 30);
+    this._save('sv_history', this.history);
+  }
+
   _addHistory(item) {
-    this.history = this.history.filter(h => !(h.topic === item.topic && h.tool === item.tool));
+    const old = this.history.filter(h => this._histKey(h) === this._histKey(item));
+    this.history = this.history.filter(h => this._histKey(h) !== this._histKey(item));
     this.history.unshift(item);
     if (this.history.length > 30) this.history = this.history.slice(0, 30);
     this._save('sv_history', this.history);
     this._renderSidebarHistory();
     this._updateAllStats();
-    // Cloud sync
-    try { this._saveHistoryToCloud(item); } catch(e){}
+    try {
+      this._saveHistoryToCloud(item);
+      old.forEach(o => { if (o.id && o.id !== item.id) this._deleteHistoryFromCloud(o.id); });
+    } catch(e){}
   }
 
   _renderSidebarHistory() {
@@ -3915,6 +3936,8 @@ Examples:
     this._qsa('[data-theme-btn]').forEach(b => b.classList.toggle('active', b.dataset.themeBtn === theme));
     this.prefs.theme = theme;
     this._save('sv_prefs', this.prefs);
+    try { localStorage.setItem('sv_site_theme', theme); } catch(e){}
+    document.body.setAttribute('data-theme', theme);
   }
 
   _setFontSize(size) {
@@ -4061,19 +4084,22 @@ Examples:
     let addedFromCloud = 0;
     let pushedToCloud = 0;
 
+    const localKeys = new Set(this.history.map(h => this._histKey(h)));
     for (const ch of cloudHist) {
-      if (!localIds.has(ch.id)) {
-        this.history.push({
-          id: ch.id,
-          topic: ch.topic||'Untitled',
-          tool: ch.tool||'notes',
-          data: ch.data||null,
-          ts: ch.ts||Date.now(),
-          dur: ch.dur||0
-        });
-        addedFromCloud++;
-      }
+      const key = this._histKey(ch);
+      if (localIds.has(ch.id) || localKeys.has(key)) continue;
+      this.history.push({
+        id: ch.id,
+        topic: ch.topic||'Untitled',
+        tool: ch.tool||'notes',
+        data: ch.data||null,
+        ts: ch.ts||Date.now(),
+        dur: ch.dur||0
+      });
+      localKeys.add(key);
+      addedFromCloud++;
     }
+    this._dedupeHistory();
 
     const localToPush = this.history.filter(h => !cloudIds.has(h.id)).slice(0,20);
     for (const lh of localToPush) {
