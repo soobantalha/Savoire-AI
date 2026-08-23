@@ -216,13 +216,13 @@
       </div>
 
       <!-- Credit Sidebar -->
-      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view credit analytics, usage & plans">
+      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s" onclick="window.openCreditHistory && window.openCreditHistory()">
         <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.5),transparent)"></div>
         <div class="credit-sidebar-hdr">
           <span class="credit-sidebar-title">CREDITS</span>
           <span id="creditPlanBadge" class="welcome-badge">WELCOME 10K</span>
         </div>
-        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(34,211,238,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()" title="Click to view usage analytics">10,000 <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span></div>
+        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(34,211,238,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()">10,000 <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span></div>
         <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">10,000 welcome credits on signup • Top up packs from Rs 19</div>
         <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#22d3ee,#1970ff);box-shadow:0 0 10px rgba(34,211,238,.4)"></div></div>
         <div class="credit-meta"><span id="creditUsed">Used: 0</span><span id="creditRemaining">Remaining: 10,000</span></div>
@@ -345,7 +345,7 @@
       <!-- About Section (sidebar) -->
       <div class="sidebar-about">
         <button class="about-toggle-btn" id="aboutToggleBtn">
-          <i class="fas fa-info-circle"></i> About Savoiré AI
+          <i class="fas fa-info-circle"></i> About class="fas fa-info-circle"></i> About Savoiré AI
           <i class="fas fa-chevron-down about-chevron" id="aboutChevron"></i>
         </button>
         <div class="about-content" id="aboutContent">
@@ -545,10 +545,7 @@
 
       </div>
 
-      <footer class="dash-mini-footer">
-        <span>Developed by <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">Sooban Talha Technologies</a></span>
-        <span><strong>Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37">Know more.</em></span>
-      </footer>
+      <footer class="dash-mini-footer" aria-hidden="true"></footer>
 
       <!-- ═══════════ BACK TO TOP BUTTON ═══════════ -->
       <button class="back-to-top" id="backToTopBtn" title="Back to top"><i class="fas fa-arrow-up"></i></button>
@@ -1456,7 +1453,7 @@ function buyPlan(plan) {
 window.buyPlan = buyPlan;
 </script>
 
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2fb6eeeeca5ab4d',t:'MTc4NzUwMTkwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html><script>
 // PAID CREDIT SYSTEM - Dashboard Integration (Non-module, uses Razorpay global)
 window.openBuyCreditsModal = function() {
@@ -1750,6 +1747,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const backdrop = document.getElementById('sbBackdrop');
   // Close sidebar when clicking backdrop
   if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      leftPanel?.classList.remove('mobile-open');
+      backdrop.classList.remove('visible');
+    });
+  }
+});
+</script>
+
+('visible');
+    });
+  }
+});
+</script>
+
+backdrop) {
     backdrop.addEventListener('click', () => {
       leftPanel?.classList.remove('mobile-open');
       backdrop.classList.remove('visible');

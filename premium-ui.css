@@ -861,3 +861,145 @@ html[data-theme="light"] .concept-text{color:#1e293b!important}
     letter-spacing:-.02em!important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   PHONE = LAPTOP BLUE-DARK · iOS 26 glass · no junk chrome
+   ════════════════════════════════════════════════════════════ */
+@media (max-width: 1024px){
+  html, body, .dash-body, .out-area, .right-panel, #rightPanel{
+    background:
+      radial-gradient(80% 50% at 10% 0%, rgba(34,211,238,.10), transparent 55%),
+      radial-gradient(70% 40% at 90% 10%, rgba(25,112,255,.12), transparent 50%),
+      #060a18 !important;
+    color:#e8eef8 !important;
+  }
+  html[data-theme="golden"] body,
+  html[data-theme="golden"] .dash-body,
+  html[data-theme="golden"] .out-area{
+    background:
+      radial-gradient(80% 50% at 10% 0%, rgba(34,211,238,.10), transparent 55%),
+      #060a18 !important;
+  }
+
+  .dash-mini-footer,
+  .es-shortcuts,
+  .feature-detail-panel,
+  .otb-hint{display:none!important}
+
+  /* Sidebar — laptop blue glass, slide */
+  .left-panel, #leftPanel{
+    background:
+      linear-gradient(180deg, rgba(16,22,44,.82), rgba(8,12,26,.92)) !important;
+    backdrop-filter:saturate(180%) blur(36px) !important;
+    -webkit-backdrop-filter:saturate(180%) blur(36px) !important;
+    border-right:1px solid rgba(34,211,238,.16) !important;
+    box-shadow:20px 0 60px rgba(0,0,0,.45) !important;
+    transform:translateX(-108%);
+    transition:transform .42s cubic-bezier(.32,.72,0,1) !important;
+  }
+  .left-panel.mobile-open, #leftPanel.mobile-open, .left-panel.open{
+    transform:translateX(0)!important;
+  }
+  .left-panel::before, .left-panel::after{display:none!important}
+
+  .lp-title{
+    color:#8be9ff!important;
+    font-size:13px!important;
+    letter-spacing:.22em!important;
+    font-weight:700!important;
+  }
+  .user-profile-sidebar, .credit-sidebar, .stat-card-sidebar, .nav-item{
+    background:rgba(255,255,255,.05)!important;
+    border:1px solid rgba(255,255,255,.08)!important;
+    box-shadow:none!important;
+  }
+  .credit-sidebar{
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgba(34,211,238,.14), transparent 55%),
+      rgba(10,16,34,.55)!important;
+    border:1px solid rgba(34,211,238,.2)!important;
+    border-radius:20px!important;
+  }
+  .credit-btn-buy, .quick-buy-btn, .empty-wizard-btn, .wizard-btn-primary, .tier-buy-btn, .mega-generate-btn, .welcome-btn{
+    background:linear-gradient(135deg,#22d3ee,#1970ff)!important;
+    color:#fff!important;
+    border:0!important;
+    border-radius:16px!important;
+    box-shadow:0 10px 24px rgba(25,112,255,.28)!important;
+    font-weight:700!important;
+    min-height:46px;
+  }
+  .credit-btn-history, .empty-mega-btn, .wizard-btn-secondary, .dh-btn, .otb-btn{
+    background:rgba(255,255,255,.08)!important;
+    color:#e8eef8!important;
+    border:1px solid rgba(255,255,255,.1)!important;
+    border-radius:14px!important;
+    box-shadow:none!important;
+  }
+  .nav-item:hover, .nav-item-wizard, .nav-item-mega{
+    background:rgba(34,211,238,.10)!important;
+    border-color:rgba(34,211,238,.22)!important;
+  }
+  .nav-item-mega{box-shadow:none!important}
+  .nav-item-mega::before{display:none!important}
+
+  /* iOS 26 glass dock — cyan/blue not gold */
+  .sv-dock{
+    display:grid!important;
+    grid-template-columns:repeat(5,1fr)!important;
+    left:12px!important;right:12px!important;
+    bottom:calc(10px + var(--sv-safe-b))!important;
+    border-radius:28px!important;
+    padding:8px 6px!important;
+    background:linear-gradient(180deg,rgba(18,28,52,.55),rgba(8,12,24,.42))!important;
+    backdrop-filter:saturate(200%) blur(40px)!important;
+    -webkit-backdrop-filter:saturate(200%) blur(40px)!important;
+    border:0.5px solid rgba(120,200,255,.28)!important;
+    box-shadow:0 16px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.22)!important;
+  }
+  .sv-dock button{color:rgba(210,230,255,.62)!important}
+  .sv-dock button.primary{color:#fff!important}
+  .sv-dock button.primary i{
+    background:linear-gradient(180deg,#38d6ff,#1970ff)!important;
+    box-shadow:0 8px 18px rgba(25,112,255,.4)!important;
+  }
+
+  .dash-hdr{
+    background:rgba(8,12,24,.55)!important;
+    backdrop-filter:blur(28px) saturate(160%)!important;
+    border-bottom:0.5px solid rgba(34,211,238,.14)!important;
+  }
+
+  /* Wizard / settings sheets — same blue glass */
+  #wizardModal .modal, #settingsModal .modal, #megaModal .modal,
+  #histModal .modal, #savedModal .modal, .live-notes-modal-box, .plan-atelier{
+    background:linear-gradient(180deg,rgba(16,22,42,.88),rgba(8,12,24,.94))!important;
+    backdrop-filter:blur(36px) saturate(170%)!important;
+    border:1px solid rgba(34,211,238,.16)!important;
+    color:#e8eef8!important;
+  }
+  .wizard-step-heading, .modal-title, .lp-title{
+    background:none!important;
+    -webkit-text-fill-color:#fff!important;
+    color:#fff!important;
+  }
+  .wizard-tool-card, .wizard-language-card, .wizard-depth-card, .wizard-style-card{
+    background:rgba(255,255,255,.05)!important;
+    border:1px solid rgba(255,255,255,.08)!important;
+  }
+  .wizard-tool-card.selected, .wizard-language-card.selected{
+    outline:2px solid #22d3ee;
+    background:rgba(34,211,238,.12)!important;
+  }
+
+  html[data-theme="light"] .left-panel,
+  html[data-theme="light"] #wizardModal .modal{
+    background:rgba(242,244,250,.88)!important;
+    color:#111!important;
+  }
+  html[data-theme="light"] .sv-dock{
+    background:rgba(255,255,255,.62)!important;
+    border-color:rgba(0,0,0,.08)!important;
+  }
+  html[data-theme="light"] .sv-dock button{color:#3a3a3c!important}
+}
