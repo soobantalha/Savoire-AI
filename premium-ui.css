@@ -548,3 +548,268 @@ html[data-theme="light"] .concept-text{color:#1e293b!important}
   .sv-dock{display:grid!important}
 }
 
+/* ═══════════════════════════════════════════════
+   APPLE PHONE SHELL — ultra professional iOS
+   ═══════════════════════════════════════════════ */
+@media (max-width: 900px){
+  html, body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,system-ui,sans-serif!important;
+    background:#000!important;
+    -webkit-font-smoothing:antialiased;
+  }
+  body{padding-left:0!important;padding-right:0!important}
+
+  .dash-body{background:#000}
+
+  /* Compact frosted nav bar */
+  .dash-hdr{
+    position:sticky!important;
+    top:0;z-index:40;
+    min-height:calc(52px + var(--sv-safe-t));
+    padding:calc(8px + var(--sv-safe-t)) 12px 8px!important;
+    background:rgba(8,8,10,.62)!important;
+    backdrop-filter:saturate(180%) blur(28px)!important;
+    -webkit-backdrop-filter:saturate(180%) blur(28px)!important;
+    border-bottom:0.5px solid rgba(255,255,255,.12)!important;
+    box-shadow:none!important;
+    gap:8px!important;
+    align-items:center!important;
+  }
+  .dh-left{gap:8px}
+  .dh-btn{
+    width:36px!important;height:36px!important;
+    border-radius:50%!important;
+    background:rgba(255,255,255,.08)!important;
+    border:0!important;
+    color:#fff!important;
+  }
+  .dh-mark{width:34px!important;height:34px!important;border-radius:10px!important}
+  .dh-text{display:flex!important;flex-direction:column}
+  .dh-name{font-size:.95rem!important;letter-spacing:-.03em!important;font-weight:650!important}
+  .dh-ver{display:none!important}
+  .dh-actions{gap:8px!important}
+  .dh-av{
+    width:32px!important;height:32px!important;
+    border-radius:50%!important;
+    overflow:hidden;
+    border:0.5px solid rgba(255,255,255,.18);
+  }
+  #settingsBtn{display:none!important}
+
+  /* iOS tab bar */
+  .sv-dock{
+    display:grid!important;
+    left:0;right:0;bottom:0;
+    border-radius:0;
+    padding:6px 4px calc(8px + var(--sv-safe-b));
+    background:rgba(18,18,20,.78)!important;
+    backdrop-filter:saturate(190%) blur(30px)!important;
+    -webkit-backdrop-filter:saturate(190%) blur(30px)!important;
+    border:0!important;
+    border-top:0.5px solid rgba(255,255,255,.14)!important;
+    box-shadow:none!important;
+    grid-template-columns:repeat(5,1fr);
+  }
+  .sv-dock button{
+    color:rgba(235,235,245,.55);
+    font-size:10px;
+    font-weight:510;
+    letter-spacing:-.01em;
+    gap:4px;
+    min-height:50px;
+    padding:4px 0 2px;
+  }
+  .sv-dock button i{
+    font-size:20px;
+    width:48px;height:28px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:16px;
+  }
+  .sv-dock button.primary{color:#fff}
+  .sv-dock button.primary i{
+    background:linear-gradient(180deg,#3b82f6,#2563eb);
+    color:#fff;
+    box-shadow:0 6px 16px rgba(37,99,235,.35);
+  }
+
+  .out-area{
+    padding:12px 16px calc(88px + var(--sv-safe-b))!important;
+    background:#000!important;
+  }
+  .empty-state{padding:28px 8px 40px!important}
+  .es-kicker{
+    letter-spacing:.22em!important;
+    font-size:11px!important;
+    color:rgba(255,255,255,.38)!important;
+  }
+  .es-brand{
+    font-size:clamp(2.4rem,11vw,3.4rem)!important;
+    letter-spacing:-.03em!important;
+  }
+  .es-title{
+    font-size:clamp(1.55rem,6.4vw,2.1rem)!important;
+    font-weight:600!important;
+    letter-spacing:-.035em!important;
+    color:#fff!important;
+  }
+  .es-sub{
+    font-size:.95rem!important;
+    line-height:1.5!important;
+    color:rgba(235,235,245,.62)!important;
+    max-width:34ch;
+    margin:8px auto 18px!important;
+  }
+  .es-cta-row{width:100%;flex-direction:column}
+  .empty-wizard-btn,.empty-mega-btn,#emptyBuyBtn{
+    width:100%!important;
+    min-height:52px!important;
+    border-radius:14px!important;
+    font-size:1.02rem!important;
+    font-weight:600!important;
+    letter-spacing:-.02em!important;
+  }
+  .empty-wizard-btn{
+    background:#007aff!important;
+    box-shadow:none!important;
+    border:0!important;
+  }
+  .empty-mega-btn{
+    background:rgba(255,255,255,.1)!important;
+    color:#fff!important;
+    border:0!important;
+  }
+  #emptyBuyBtn{
+    background:transparent!important;
+    color:#0a84ff!important;
+    box-shadow:none!important;
+    border:0!important;
+    min-height:44px!important;
+  }
+  .es-features{justify-content:center;gap:8px}
+  .es-feat{
+    background:rgba(255,255,255,.06)!important;
+    border:0.5px solid rgba(255,255,255,.1)!important;
+    border-radius:999px!important;
+    color:rgba(255,255,255,.8)!important;
+    font-size:.78rem!important;
+  }
+  .es-shortcuts{display:none!important}
+
+  /* iOS grouped sidebar */
+  .left-panel,#leftPanel{
+    background:#1c1c1e!important;
+    border-right:0!important;
+    width:min(92vw,390px)!important;
+    padding-top:var(--sv-safe-t);
+  }
+  .lp-hdr{padding:16px 18px 8px}
+  .lp-title{
+    font-size:1.55rem!important;
+    font-weight:700!important;
+    letter-spacing:-.03em!important;
+    text-transform:none!important;
+    color:#fff!important;
+  }
+  .user-profile-sidebar{
+    margin:8px 14px 12px;
+    padding:14px!important;
+    background:rgba(255,255,255,.06)!important;
+    border:0.5px solid rgba(255,255,255,.08)!important;
+    border-radius:16px!important;
+  }
+  .credit-sidebar{
+    margin:0 14px 14px!important;
+    border-radius:16px!important;
+    background:rgba(255,255,255,.05)!important;
+    border:0.5px solid rgba(255,255,255,.08)!important;
+  }
+  .nav-item{
+    margin:0 10px;
+    border-radius:12px!important;
+    min-height:48px;
+  }
+
+  /* Bottom sheets */
+  .modal-overlay{
+    align-items:flex-end!important;
+    padding:0!important;
+    background:rgba(0,0,0,.45)!important;
+  }
+  .modal,.modal-box,.plan-atelier,#wizardModal .modal,#liveNotesModal .live-notes-modal-box{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    border-radius:22px 22px 0 0!important;
+    max-height:min(92dvh,920px)!important;
+    border:0!important;
+    background:#1c1c1e!important;
+    animation:svSheet .38s cubic-bezier(.32,.72,0,1);
+  }
+  @keyframes svSheet{
+    from{transform:translateY(18%)}
+    to{transform:translateY(0)}
+  }
+  .modal-header{
+    padding:18px 18px 10px!important;
+    border-bottom:0.5px solid rgba(255,255,255,.08)!important;
+  }
+  .modal-title{
+    font-size:1.15rem!important;
+    font-weight:700!important;
+    letter-spacing:-.03em!important;
+  }
+  .modal-close{
+    width:30px;height:30px;border-radius:50%;
+    background:rgba(255,255,255,.12)!important;
+    border:0!important;
+  }
+  .wizard-btn-primary,.mega-generate-btn,.welcome-btn,.wb-btn,.confirm-btn.ok{
+    background:#007aff!important;
+    box-shadow:none!important;
+    border:0!important;
+    border-radius:14px!important;
+  }
+
+  .result-hdr{
+    background:rgba(28,28,30,.9)!important;
+    border:0.5px solid rgba(255,255,255,.08)!important;
+    border-radius:16px!important;
+    padding:16px!important;
+  }
+  .study-sec{
+    background:#1c1c1e!important;
+    border:0.5px solid rgba(255,255,255,.08)!important;
+    border-radius:16px!important;
+  }
+  .out-toolbar{
+    background:rgba(8,8,10,.7);
+    backdrop-filter:blur(16px);
+    border-bottom:0.5px solid rgba(255,255,255,.08);
+    padding:8px 10px!important;
+  }
+  .otb-btn{
+    border-radius:999px!important;
+    background:rgba(255,255,255,.08)!important;
+    border:0!important;
+  }
+  .toast{
+    border-radius:14px!important;
+    background:rgba(44,44,46,.94)!important;
+    border:0.5px solid rgba(255,255,255,.1)!important;
+  }
+  .toast-container{bottom:calc(78px + var(--sv-safe-b))!important}
+
+  html[data-theme="light"] .dash-hdr{
+    background:rgba(249,249,249,.72)!important;
+    border-bottom-color:rgba(0,0,0,.08)!important;
+  }
+  html[data-theme="light"] .sv-dock{
+    background:rgba(249,249,249,.82)!important;
+    border-top-color:rgba(0,0,0,.1)!important;
+  }
+  html[data-theme="light"] .sv-dock button{color:rgba(60,60,67,.6)}
+  html[data-theme="light"] .sv-dock button.primary{color:#007aff}
+  html[data-theme="light"] .out-area{background:#f2f2f7!important}
+  html[data-theme="light"] .modal,html[data-theme="light"] .modal-box{background:#f2f2f7!important}
+}
+
