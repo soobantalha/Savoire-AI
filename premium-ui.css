@@ -1015,17 +1015,129 @@ html[data-theme="light"] .concept-text{color:#1e293b!important}
 .wizard-tool-badge{display:none!important}
 .wizard-step-heading{text-transform:none!important;letter-spacing:-.03em!important;font-size:1.2rem!important}
 
-/* Sliding glass ball on dock */
-.sv-dock{position:relative!important}
-.sv-dock-pill{
-  position:absolute;top:6px;bottom:6px;left:0;
-  width:18%;border-radius:22px;
-  background:rgba(255,255,255,.14);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 8px 20px rgba(25,112,255,.18);
-  backdrop-filter:blur(12px);
-  transition:transform .38s cubic-bezier(.32,.72,0,1), width .38s cubic-bezier(.32,.72,0,1);
+/* Sliding liquid-glass BALL on dock (WhatsApp iOS 26 style) */
+.sv-dock{position:relative!important;overflow:visible!important}
+.sv-dock-orb{
+  position:absolute;left:0;top:0;
+  width:56px;height:56px;border-radius:50%;
   pointer-events:none;z-index:0;opacity:0;
+  transform:translate(0,0);
+  transition:transform .48s cubic-bezier(.22,1,.36,1), width .32s ease, height .32s ease, opacity .25s;
+  background:
+    radial-gradient(120% 90% at 28% 18%, rgba(255,255,255,.72) 0%, rgba(255,255,255,.12) 28%, transparent 46%),
+    radial-gradient(80% 70% at 78% 82%, rgba(80,180,255,.45) 0%, transparent 55%),
+    radial-gradient(70% 60% at 18% 78%, rgba(255,80,180,.28) 0%, transparent 50%),
+    linear-gradient(145deg, rgba(255,255,255,.28), rgba(120,200,255,.18) 40%, rgba(40,60,120,.12));
+  backdrop-filter:saturate(220%) blur(18px);
+  -webkit-backdrop-filter:saturate(220%) blur(18px);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:
+    0 10px 28px rgba(0,20,60,.35),
+    inset 0 1px 0 rgba(255,255,255,.85),
+    inset 0 -8px 16px rgba(30,80,180,.18);
 }
-.sv-dock-pill.show{opacity:1}
+.sv-dock-orb.show{opacity:1}
+.sv-orb-shine{
+  position:absolute;inset:8% 18% auto 14%;
+  height:38%;border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,0));
+  filter:blur(1px);
+}
+.sv-orb-rim{
+  position:absolute;inset:0;border-radius:50%;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,180,80,.35),
+    inset 0 0 12px rgba(80,200,255,.25);
+  mix-blend-mode:screen;
+}
 .sv-dock button{position:relative;z-index:1}
 .sv-dock button.on{color:#fff!important}
+.sv-dock button.on i{
+  transform:scale(1.08);
+  filter:drop-shadow(0 0 8px rgba(255,255,255,.45));
+}
+
+/* Kill leaked text / leftover nodes after html */
+html + *, body + script, html + script { display:none !important; }
+
+@media (max-width: 900px){
+  /* No gold rails */
+  .left-panel::after, .right-panel::after, .dash-body::after { display:none !important; }
+
+  /* Header: only brand + theme + avatar */
+  .out-toolbar{
+    position:sticky; top:0; z-index:12;
+    padding:6px 8px !important;
+    background:rgba(6,10,24,.86)!important;
+    backdrop-filter:blur(16px);
+  }
+  .out-toolbar .otb-btn span, .otb-hint, .otb-sep{display:none!important}
+  .otb-btn{width:40px;height:40px;padding:0!important;justify-content:center}
+
+  /* Result header: hide score ring that wastes space */
+  .score-ring-wrap, .rh-score, .rh-powered, .live-notes-pill,
+  .result-live-notes-banner, .credit-result-banner{display:none!important}
+  .result-hdr{padding:12px 14px!important;margin-bottom:10px!important}
+  .rh-topic{font-size:1.05rem!important}
+
+  /* Wizard MUST scroll */
+  #wizardModal.modal-overlay{
+    align-items:flex-end!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  #wizardModal .modal{
+    height:min(92dvh,920px)!important;
+    max-height:92dvh!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+  }
+  #wizardModal .modal-body, #wizardContent, .wiz-glass{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    overflow:hidden!important;
+  }
+  #wizardBody{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    padding:4px 2px 96px!important;
+  }
+  .wizard-footer{
+    flex:none!important;
+    position:relative!important;
+    bottom:auto!important;
+  }
+
+  /* Live stream full screen readable */
+  .stream-overlay{padding-bottom:0!important}
+  .sfp-header{padding:10px 12px!important}
+  .sfp-stages-row,.sfp-fact{display:none!important}
+  .sfp-scroll{padding:14px 16px 28px!important}
+  .sfp-text{font-size:1rem!important;line-height:1.7!important}
+
+  /* Live notes nudge above dock, no code bleed */
+  .live-notes-nudge{
+    bottom:calc(86px + env(safe-area-inset-bottom,0px))!important;
+    left:12px!important;right:12px!important;width:auto!important;
+    z-index:70!important;
+  }
+
+  .sv-dock button.primary i{
+    background:transparent!important;
+    box-shadow:none!important;
+    color:#fff!important;
+  }
+  .sv-dock button i{
+    width:28px!important;height:28px!important;
+    font-size:22px!important;
+    border-radius:0!important;
+  }
+}
+
+/* Desktop gold rail leftover */
+.dash-body > .gold-rail, .side-gold{display:none!important}
