@@ -1243,12 +1243,12 @@ try {
 </script>
 
   <nav class="sv-dock" id="svDock" aria-label="Mobile tab bar">
-    <span class="sv-dock-orb" id="svDockPill" aria-hidden="true"><span class="sv-orb-shine"></span><span class="sv-orb-rim"></span></span>
-    <button type="button" data-dock="menu" onclick="document.getElementById('sbToggle')?.click();window._svDockGo&&window._svDockGo('menu')"><i class="far fa-square"></i><span>Menu</span></button>
+    <span class="sv-dock-orb" id="svDockPill" aria-hidden="true"></span>
+    <button type="button" data-dock="menu" onclick="document.getElementById('sbToggle')?.click();window._svDockGo&&window._svDockGo('menu')"><i class="fas fa-grip-horizontal"></i><span>Menu</span></button>
     <button type="button" class="primary" data-dock="create" onclick="document.getElementById('wizardHeaderBtn')?.click();window._svDockGo&&window._svDockGo('create')"><i class="fas fa-plus"></i><span>Create</span></button>
     <button type="button" data-dock="bundle" onclick="document.getElementById('megaHeaderBtn')?.click();window._svDockGo&&window._svDockGo('bundle')"><i class="fas fa-layer-group"></i><span>Bundle</span></button>
-    <button type="button" data-dock="credits" onclick="window.openBuyCreditsModal&&window.openBuyCreditsModal();window._svDockGo&&window._svDockGo('credits')"><i class="far fa-comment-dots"></i><span>Credits</span></button>
-    <button type="button" data-dock="theme" onclick="window._app?._toggleTheme();window._svDockGo&&window._svDockGo('theme')"><i class="far fa-moon"></i><span>Theme</span></button>
+    <button type="button" data-dock="credits" onclick="window.openBuyCreditsModal&&window.openBuyCreditsModal();window._svDockGo&&window._svDockGo('credits')"><i class="fas fa-wallet"></i><span>Credits</span></button>
+    <button type="button" data-dock="theme" onclick="window._app?._toggleTheme();window._svDockGo&&window._svDockGo('theme')"><i class="fas fa-circle-half-stroke"></i><span>Theme</span></button>
   </nav>
   <script>
   window._svDockGo = function(id){
@@ -1259,17 +1259,19 @@ try {
     if(!btn) return;
     dock.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b===btn));
     const icon = btn.querySelector('i') || btn;
-    const r = icon.getBoundingClientRect();
-    const p = dock.getBoundingClientRect();
-    const size = Math.max(r.width, r.height) + 22;
-    const x = (r.left - p.left) + r.width/2 - size/2;
-    const y = (r.top - p.top) + r.height/2 - size/2;
-    orb.style.width = size + 'px';
-    orb.style.height = size + 'px';
-    orb.style.transform = 'translate('+x+'px,'+y+'px)';
-    orb.classList.add('show');
+    requestAnimationFrame(function(){
+      const r = icon.getBoundingClientRect();
+      const p = dock.getBoundingClientRect();
+      const size = 54;
+      const x = (r.left - p.left) + r.width/2 - size/2;
+      const y = (r.top - p.top) + r.height/2 - size/2;
+      orb.style.width = size+'px';
+      orb.style.height = size+'px';
+      orb.style.transform = 'translate('+x+'px,'+y+'px)';
+      orb.classList.add('show');
+    });
   };
-  window.addEventListener('load', function(){ setTimeout(function(){ window._svDockGo('create'); }, 80); });
+  window.addEventListener('load', function(){ setTimeout(function(){ window._svDockGo('create'); }, 120); });
   window.addEventListener('resize', function(){
     const on = document.querySelector('#svDock button.on');
     if(on) window._svDockGo(on.getAttribute('data-dock'));
