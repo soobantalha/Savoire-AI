@@ -834,9 +834,7 @@ class SavoireApp {
     if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = emoji;
 
     if (this.el.dhGreeting) {
-      const hr    = new Date().getHours();
-      const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
-      this.el.dhGreeting.textContent = `${greet}, ${name}`;
+      this.el.dhGreeting.innerHTML = "<strong>Think less.</strong> <em style=\"font-family:'Instrument Serif',Georgia,serif;color:#d4af37\">Know more.</em>";
     }
   }
 

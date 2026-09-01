@@ -129,3 +129,24 @@
     border-color: rgba(255,255,255,.95) !important;
   }
 }
+
+/* Buttons must always receive taps */
+.credit-btn, .credit-btn-buy, .credit-btn-history, .quick-buy-btn, .tier-buy-btn,
+.plan-sheet, .plan-x, #svDock button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+.credit-btn-buy::after, .buy-plan button.buy::after, .btn::before {
+  pointer-events: none !important;
+}
+
+@media (max-width: 1024px){
+  .left-panel, #leftPanel {
+    z-index: 140 !important;
+    padding-bottom: 110px !important;
+  }
+  .sb-backdrop { z-index: 130 !important; }
+  #svDock.sv-dock { z-index: 90 !important; }
+}

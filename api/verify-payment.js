@@ -1,4 +1,3 @@
-
 const { getAdmin, getDb, getAuth } = require('./_firebase');
 const crypto = require('crypto');
 

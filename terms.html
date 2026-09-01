@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="premium-ui.css">
 <style>
 /* ═══════════════════════════════════════════════════════════════
    SAVOIRÉ AI — Legal page (aurora on obsidian, paired with index)
@@ -128,7 +129,8 @@ h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--bra
 .callout.danger strong{color:var(--danger)}
 
 /* PLAN GRID */
-.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+@media (max-width:800px){.plans{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:600px){.plans{grid-template-columns:1fr}}
 .plan{
   padding:18px;border-radius:14px;
@@ -190,7 +192,7 @@ h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--bra
 
   <div class="badge-row">
     <span class="badge">📄 Read carefully</span>
-    <span class="badge cyan">∞ Lifetime credit validity</span>
+    <span class="badge cyan">30-day pack validity from purchase</span>
     <span class="badge violet">🇮🇳 Governed by Indian law</span>
     <span class="badge green">✓ 7-day refund window for unused credits</span>
   </div>
@@ -220,7 +222,7 @@ h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--bra
   <section id="s2" class="card">
     <h2><span class="num">§ 2</span> What Savoiré AI is</h2>
     <p>Savoiré AI is a <b>premium AI study workspace</b> — a Software-as-a-Service product that generates study material (Notes, Flashcards, Quiz, Summary, Mind Map and the Mega Bundle) using a multi-model AI orchestration layer called <b>Mesh API</b>.</p>
-    <p>It is developed and operated by <b>Sooban Talha Technologies</b>, founded by Sooban Talha. Our tagline: <i>Study less. Know everything.</i></p>
+    <p>It is developed and operated by <b>Sooban Talha Technologies</b>, founded by Sooban Talha. Our tagline: <i>Think less. Know more.</i></p>
   </section>
 
   <section id="s3" class="card">
@@ -335,7 +337,7 @@ h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--bra
     <b>Product:</b> Savoiré AI<br>
     <b>Founder:</b> Sooban Talha<br>
     <b>Website:</b> <a href="https://savoireai.vercel.app">savoireai.vercel.app</a> · <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a><br>
-    <b>Email:</b> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d2a0bda3a7bca6bda0b3bda192a1b3a4bdbda6b1b5bdfca1bdbf">[email&#160;protected]</a><br>
+    <b>Email:</b> <a href="mailto:soobantalhtechnologies@gmail.com">soobantalhtechnologies@gmail.com</a><br>
     <b>Instagram:</b> <a href="https://instagram.com/developer_sooban" target="_blank" rel="noopener">@developer_sooban</a><br>
     <b>Registered address:</b> Moradabad, Uttar Pradesh, India</p>
     <p>These Terms are governed by the laws of the Republic of India. Any dispute arising out of or in connection with these Terms is subject to the exclusive jurisdiction of the competent courts at <b>Bareilly, Uttar Pradesh, India</b>.</p>

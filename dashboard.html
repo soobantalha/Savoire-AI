@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="premium-ui.css">
   <link rel="stylesheet" href="dock.css">
+  <link rel="stylesheet" href="gui-fix.css">
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -161,6 +162,7 @@
 }
 </style>
 
+  <link rel="stylesheet" href="atelier-final.css">
 </head>
 <body>
 <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar, .left-panel, #leftPanel')?.classList.toggle('open'); document.querySelector('#leftPanel')?.classList.toggle('mobile-open')">
@@ -217,7 +219,7 @@
       </div>
 
       <!-- Credit Sidebar -->
-      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s" onclick="window.openCreditHistory && window.openCreditHistory()">
+      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s">
         <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.5),transparent)"></div>
         <div class="credit-sidebar-hdr">
           <span class="credit-sidebar-title">CREDITS</span>
@@ -1099,9 +1101,14 @@ try {
       count.textContent = `${remaining.toLocaleString()} left`;
     }
     window.PAID_REMAINING = remaining;
-    // Also update sidebar
     const cb = document.getElementById('creditBalance');
-    if (cb) cb.innerHTML = `${remaining.toLocaleString()} <span>credits</span>`;
+    if (cb) cb.innerHTML = `${Number(remaining||0).toLocaleString()} <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span>`;
+    const badge = document.getElementById('creditPlanBadge');
+    if (badge) {
+      const pl = String(plan||'').toLowerCase();
+      const labels = { starter:'STARTER', pro:'PRO', popular:'POPULAR', ultra:'ULTRA' };
+      badge.textContent = (remaining >= 20000 && labels[pl]) ? labels[pl] : 'WELCOME 10K';
+    }
     const cr = document.getElementById('creditRemaining');
     if (cr) cr.textContent = `Remaining: ${remaining.toLocaleString()}`;
     const pf = document.getElementById('creditProgressFill');
@@ -1249,19 +1256,19 @@ try {
       <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
       <span>Menu</span>
     </button>
-    <button type="button" data-dock="create" onclick="document.getElementById('wizardHeaderBtn')?.click();window._svDockGo&&window._svDockGo('create')">
+    <button type="button" data-dock="create" onclick="event.preventDefault();if(window._app){window._app._openWizard();}window._svDockGo&&window._svDockGo('create')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 8.2v7.6M8.2 12h7.6"/></svg>
       <span>Create</span>
     </button>
-    <button type="button" data-dock="bundle" onclick="document.getElementById('megaHeaderBtn')?.click();window._svDockGo&&window._svDockGo('bundle')">
+    <button type="button" data-dock="bundle" onclick="event.preventDefault();if(window._app){window._app._openMega();}window._svDockGo&&window._svDockGo('bundle')">
       <svg viewBox="0 0 24 24"><path d="M4.5 8.2 12 4.6l7.5 3.6L12 11.8 4.5 8.2z"/><path d="M4.5 12.2 12 15.8l7.5-3.6"/><path d="M4.5 16.2 12 19.8l7.5-3.6"/></svg>
       <span>Bundle</span>
     </button>
-    <button type="button" data-dock="credits" onclick="window.openBuyCreditsModal&&window.openBuyCreditsModal();window._svDockGo&&window._svDockGo('credits')">
+    <button type="button" data-dock="credits" onclick="event.preventDefault();window.openBuyCreditsModal&&window.openBuyCreditsModal();window._svDockGo&&window._svDockGo('credits')">
       <svg viewBox="0 0 24 24"><rect x="3.6" y="6.4" width="16.8" height="11.2" rx="2.4"/><path d="M3.6 10.2h16.8"/><circle cx="16.2" cy="14.2" r="1.15"/></svg>
       <span>Credits</span>
     </button>
-    <button type="button" data-dock="theme" onclick="window._app?._toggleTheme();window._svDockGo&&window._svDockGo('theme')">
+    <button type="button" data-dock="theme" onclick="event.preventDefault();if(window._app){window._app._toggleTheme();}window._svDockGo&&window._svDockGo('theme')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 3.8v16.4"/><path d="M12 3.8a8.2 8.2 0 0 0 0 16.4"/></svg>
       <span>Theme</span>
     </button>
@@ -1291,6 +1298,7 @@ try {
     if(on) window._svDockGo(on.getAttribute('data-dock'));
   });
   </script>
+  <script src="payments.js"></script>
   <script src="app.js"></script>
 <!-- OLD PACKS HIDDEN — use #buyCreditsModal -->
 <div class="buy-credits-overlay" id="buyCreditsOverlay" style="display:none!important">
