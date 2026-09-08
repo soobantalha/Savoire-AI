@@ -15,9 +15,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="premium-ui.css">
-  <link rel="stylesheet" href="dock.css">
-  <link rel="stylesheet" href="gui-fix.css">
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -162,7 +159,6 @@
 }
 </style>
 
-  <link rel="stylesheet" href="atelier-final.css">
 </head>
 <body>
 <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar, .left-panel, #leftPanel')?.classList.toggle('open'); document.querySelector('#leftPanel')?.classList.toggle('mobile-open')">
@@ -1285,7 +1281,7 @@ try {
     requestAnimationFrame(function(){
       var r = mark.getBoundingClientRect();
       var p = dock.getBoundingClientRect();
-      var size = 52;
+      var size = 58;
       var x = (r.left - p.left) + r.width/2 - size/2;
       var y = (r.top - p.top) + r.height/2 - size/2;
       orb.style.transform = 'translate('+x+'px,'+y+'px)';
