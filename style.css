@@ -40338,3 +40338,141 @@ html[data-theme="light"] .stats-grid-sidebar .stat-card-sidebar:nth-child(6) .st
 html[data-theme="light"] .stats-grid-sidebar .stat-card-sidebar:nth-child(6) .stat-label-sidebar{ color:#047857 !important; }
 html[data-theme="light"] .stats-grid-sidebar .stat-card-sidebar:nth-child(7) .stat-value-sidebar,
 html[data-theme="light"] .stats-grid-sidebar .stat-card-sidebar:nth-child(7) .stat-label-sidebar{ color:#1d4ed8 !important; }
+
+
+/* ════════════════════════════════════════════════════════════
+   APPLE DOCK + STAT FONTS + THEME LOCK — last
+   ════════════════════════════════════════════════════════════ */
+
+/* Stats: original compact Inter, no wrap, color kept */
+.stats-grid-sidebar{
+  display:grid !important;
+  grid-template-columns:repeat(4,minmax(0,1fr)) !important;
+  gap:8px !important;
+}
+.stats-grid-sidebar .stat-card-sidebar{
+  min-height:72px !important;
+  padding:12px 6px 10px !important;
+  border-radius:14px !important;
+  overflow:hidden !important;
+}
+.stats-grid-sidebar .stat-value-sidebar{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif !important;
+  font-size:clamp(.82rem,2.6vw,1.05rem) !important;
+  font-weight:700 !important;
+  font-variant-numeric:tabular-nums !important;
+  letter-spacing:-.03em !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  line-height:1.2 !important;
+  background:none !important;
+  -webkit-text-fill-color:unset !important;
+}
+.stats-grid-sidebar .stat-label-sidebar{
+  font-family:Inter,-apple-system,sans-serif !important;
+  font-size:.55rem !important;
+  font-weight:600 !important;
+  letter-spacing:.06em !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  margin-top:4px !important;
+}
+
+@media (max-width:1024px){
+  .stats-grid-sidebar{ grid-template-columns:repeat(4,minmax(0,1fr)) !important; }
+  .stats-grid-sidebar .stat-card-sidebar:nth-child(7){ grid-column:span 2 !important; }
+}
+
+/* Apple sliding glass dock — 6 cells */
+@media (min-width:1025px){
+  #svDock.sv-dock{ display:none !important; }
+}
+@media (max-width:1024px){
+  #svDock.sv-dock{
+    display:grid !important;
+    grid-template-columns:repeat(6,1fr) !important;
+    position:fixed !important;
+    left:10px !important; right:10px !important;
+    bottom:calc(10px + env(safe-area-inset-bottom,0px)) !important;
+    height:70px !important;
+    padding:0 2px !important;
+    border-radius:35px !important;
+    z-index:120 !important;
+    overflow:hidden !important;
+    background:rgba(22,24,32,.55) !important;
+    backdrop-filter:blur(40px) saturate(190%) !important;
+    -webkit-backdrop-filter:blur(40px) saturate(190%) !important;
+    border:.5px solid rgba(255,255,255,.28) !important;
+    box-shadow:0 16px 40px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35) !important;
+  }
+  #svDock .sv-dock-orb{
+    position:absolute !important; width:48px !important; height:48px !important;
+    border-radius:50% !important; pointer-events:none !important; z-index:0 !important;
+    opacity:0;
+    transition:transform .48s cubic-bezier(.22,1,.36,1), opacity .2s !important;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(255,255,255,.7), rgba(255,255,255,.1) 34%, transparent 58%),
+      rgba(255,255,255,.14) !important;
+    border:.5px solid rgba(255,255,255,.5) !important;
+    box-shadow:0 8px 20px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.8) !important;
+  }
+  #svDock .sv-dock-orb.show{ opacity:1 !important; }
+  #svDock button{
+    position:relative; z-index:2;
+    background:transparent !important; border:0 !important; box-shadow:none !important;
+    height:70px !important; min-height:0 !important;
+    display:flex !important; flex-direction:column !important;
+    align-items:center !important; justify-content:center !important; gap:3px !important;
+    color:rgba(255,255,255,.46) !important;
+    font:510 9px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,sans-serif !important;
+    pointer-events:auto !important;
+  }
+  #svDock button svg{ width:20px !important; height:20px !important; stroke:currentColor !important; fill:none !important; stroke-width:1.7 !important; stroke-linecap:round !important; }
+  #svDock button i{ display:none !important; }
+  #svDock button.on, #svDock button.on span{ color:#fff !important; }
+  #svDock button span{ font-size:9px !important; font-weight:510 !important; }
+  .out-area{ padding-bottom:calc(92px + env(safe-area-inset-bottom,0px)) !important; }
+}
+
+/* Themes 100% */
+html[data-theme="light"], html[data-theme="light"] body{
+  background:#f2f4f8 !important; color:#111 !important;
+}
+html[data-theme="light"] .left-panel, html[data-theme="light"] #leftPanel,
+html[data-theme="light"] .dash-hdr, html[data-theme="light"] .modal,
+html[data-theme="light"] .credit-sidebar, html[data-theme="light"] .user-profile-sidebar{
+  background:#fff !important; color:#111 !important; border-color:rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] .user-name-sidebar, html[data-theme="light"] .credit-balance,
+html[data-theme="light"] .es-title, html[data-theme="light"] .es-brand,
+html[data-theme="light"] .lp-title, html[data-theme="light"] .nav-text{ color:#111 !important; -webkit-text-fill-color:#111 !important; }
+html[data-theme="light"] .nav-item{ background:#f4f6fa !important; color:#111 !important; }
+html[data-theme="light"] #svDock.sv-dock{
+  background:rgba(255,255,255,.72) !important;
+  border-color:rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"] #svDock button{ color:rgba(28,28,30,.45) !important; }
+html[data-theme="light"] #svDock button.on{ color:#111 !important; }
+html[data-theme="light"] .out-area, html[data-theme="light"] .dash-body{ background:#f2f4f8 !important; }
+
+html[data-theme="golden"] body, html[data-theme="golden"] .dash-body, html[data-theme="golden"] .out-area{
+  background:#100c08 !important; color:#f6ead0 !important;
+}
+html[data-theme="golden"] .left-panel, html[data-theme="golden"] .dash-hdr, html[data-theme="golden"] .modal{
+  background:#1a140e !important; border-color:rgba(212,175,55,.22) !important;
+}
+html[data-theme="golden"] .credit-sidebar{
+  border-color:rgba(212,175,55,.35) !important;
+  background:radial-gradient(120% 80% at 0% 0%,rgba(212,175,55,.16),rgba(16,12,8,.8)) !important;
+}
+html[data-theme="golden"] #svDock.sv-dock{
+  background:rgba(40,30,16,.62) !important;
+  border-color:rgba(240,210,122,.28) !important;
+}
+html[data-theme="golden"] .dh-name-ai, html[data-theme="golden"] .es-brand span{ color:#f0d27a !important; }
+
+html[data-theme="dark"] body, html[data-theme="dark"] .dash-body, html[data-theme="dark"] .out-area{
+  background:#060a18 !important; color:#e8eef8 !important;
+}
