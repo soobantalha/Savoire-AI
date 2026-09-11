@@ -394,11 +394,11 @@
             <div class="token-track"><div class="token-fill" id="tokenBar"></div></div>
             <span id="tokenCount">-- / --</span>
           </div>
-          <div class="dh-days" id="daysLeftChip" title="Pack validity">
+          <button type="button" class="dh-days" id="daysLeftChip" title="Plan details">
             <i class="far fa-clock"></i>
             <span id="daysLeftVal">—</span>
-            <span class="dh-days-lbl">days left</span>
-          </div>
+            <span class="dh-days-lbl" id="daysLeftLbl">days left</span>
+          </button>
           <div class="dh-stat dh-stat-streak" id="headerStreakWrap">
             <i class="fas fa-fire"></i>
             <span id="headerStreak" class="dh-streak-val">0</span>
@@ -1103,30 +1103,7 @@ try {
     }
     window.PAID_REMAINING = remaining;
     try {
-      const chip = document.getElementById('daysLeftVal');
-      const wrap = document.getElementById('daysLeftChip');
-      const tok = window.PAID_TOKENS || {};
-      function parseWhen(v){
-        if (!v) return null;
-        if (typeof v === 'object') {
-          if (v.seconds) return new Date(v.seconds * 1000);
-          if (v._seconds) return new Date(v._seconds * 1000);
-          return null;
-        }
-        const d = new Date(v);
-        return isNaN(d.getTime()) ? null : d;
-      }
-      let days = 30;
-      const till = parseWhen(tok.validity_till);
-      if (till) {
-        days = Math.ceil((till.getTime() - Date.now()) / 86400000);
-      } else if (typeof tok.isFreeResetInDays === 'number') {
-        days = tok.isFreeResetInDays;
-      }
-      if (!Number.isFinite(days) || days < 0) days = 0;
-      if (days > 31) days = 30;
-      if (chip) chip.textContent = String(days);
-      if (wrap) wrap.style.display = 'inline-flex';
+      window._svRefreshDaysChip && window._svRefreshDaysChip();
     } catch(e){}
     const cb = document.getElementById('creditBalance');
     if (cb) cb.innerHTML = `${Number(remaining||0).toLocaleString()} <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span>`;
@@ -1528,5 +1505,86 @@ function buyPlan(plan) {
 window.buyPlan = buyPlan;
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3973ba0dcd951de',t:'MTc4OTEzNTU4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
+<div class="modal-overlay" id="planBoxModal" style="display:none;z-index:20060">
+  <div class="modal modal-sm plan-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="planBoxTitle">Your plan</div>
+      <button class="modal-close" onclick="document.getElementById('planBoxModal').style.display='none'"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="planBoxBody"></div>
+  </div>
+</div>
+<script>
+window._svParseWhen = function(v){
+  if (!v) return null;
+  if (typeof v === 'object') {
+    if (v.seconds) return new Date(v.seconds*1000);
+    if (v._seconds) return new Date(v._seconds*1000);
+    return null;
+  }
+  var d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
+};
+window._svDaysLeft = function(){
+  var tok = window.PAID_TOKENS || {};
+  var till = window._svParseWhen(tok.validity_till);
+  var days = 30;
+  if (till) days = Math.ceil((till.getTime()-Date.now())/86400000);
+  else if (typeof tok.isFreeResetInDays === 'number') days = tok.isFreeResetInDays;
+  if (!isFinite(days) || days < 0) days = 0;
+  if (days > 31) days = 30;
+  return days;
+};
+window._svRefreshDaysChip = function(){
+  var tok = window.PAID_TOKENS || {};
+  var plan = String(tok.plan||'free').toLowerCase();
+  var isFree = !plan || plan === 'free';
+  var chip = document.getElementById('daysLeftVal');
+  var lbl = document.getElementById('daysLeftLbl');
+  var wrap = document.getElementById('daysLeftChip');
+  if (isFree) {
+    if (chip) chip.textContent = 'Free plan';
+    if (lbl) lbl.textContent = '';
+  } else {
+    var d = window._svDaysLeft();
+    if (chip) chip.textContent = String(d);
+    if (lbl) lbl.textContent = 'days left';
+  }
+  if (wrap) wrap.style.display = 'inline-flex';
+};
+window._svOpenPlanBox = function(){
+  var tok = window.PAID_TOKENS || {};
+  var plan = String(tok.plan||'free').toLowerCase();
+  var isFree = !plan || plan === 'free';
+  var names = {free:'Welcome (Free)', starter:'Starter', pro:'Pro', popular:'Popular', ultra:'Ultra'};
+  var days = window._svDaysLeft();
+  var till = window._svParseWhen(tok.validity_till);
+  var rem = tok.remaining != null ? tok.remaining : (window.PAID_REMAINING||0);
+  var used = tok.used || tok.totalUsed || 0;
+  var lim = tok.limit || (rem+used);
+  var body = document.getElementById('planBoxBody');
+  var title = document.getElementById('planBoxTitle');
+  if (title) title.textContent = isFree ? 'Free plan' : (names[plan]||plan) + ' plan';
+  if (body) body.innerHTML =
+    '<div class="plan-box-grid">' +
+      '<div class="plan-box-cell"><div class="pbk">Plan</div><div class="pbv">'+(isFree?'Free · 10,000 welcome credits':(names[plan]||plan))+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">'+(isFree?'Renews in':'Days left')+'</div><div class="pbv">'+days+' days</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Credits left</div><div class="pbv">'+Number(rem).toLocaleString()+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Used</div><div class="pbv">'+Number(used).toLocaleString()+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Valid till</div><div class="pbv">'+(till?till.toLocaleDateString():'—')+'</div></div>' +
+    '</div>' +
+    '<button type="button" class="credit-btn-buy" style="width:100%;margin-top:16px" onclick="document.getElementById(\'planBoxModal\').style.display=\'none\';window.openBuyCreditsModal&&window.openBuyCreditsModal()">Add credits · from ₹19</button>';
+  var m = document.getElementById('planBoxModal');
+  if (m) m.style.display = 'flex';
+};
+document.addEventListener('DOMContentLoaded', function(){
+  var chip = document.getElementById('daysLeftChip');
+  if (chip) chip.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); window._svOpenPlanBox(); });
+  var box = document.getElementById('planBoxModal');
+  if (box) box.addEventListener('click', function(e){ if(e.target===box) box.style.display='none'; });
+});
+</script>
+
+</body>
 </html>
