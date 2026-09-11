@@ -4977,3 +4977,12 @@ window.addEventListener('DOMContentLoaded', () => {
 // Founder: Sooban Talha | "Think Less. Know More."
 // Free forever for every student on Earth.
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════�
+
+window.performLogout = async function(){
+  try { localStorage.removeItem('sv_firebase_token'); sessionStorage.removeItem('sv_firebase_token'); } catch(e){}
+  try {
+    const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+    await signOut(window.firebaseAuthInstance || getAuth());
+  } catch(e){}
+  window.location.href = '/login.html';
+};

@@ -136,7 +136,8 @@
 <style>
 /* Hide old 15k/15k token bar - use new credit sidebar only */
 #headerStreakWrap, #statSessions, #statHistory, #statSaved { display:none !important; }
-.dh-stat-streak, .dh-stat-hide-md, .dh-stat-hide-sm { display:none !important; }
+.dh-stat-streak, .dh-stat-hide-sm { display:none !important; }
+.hdr-landing-btn.dh-stat-hide-md { }
 #tokenMeter { display:flex !important; }
 @media (max-width: 1024px) {
   #tokenMeter { display:none !important; }
@@ -850,7 +851,7 @@
             <button onclick="window.performLogout && window.performLogout()" style="padding:10px 18px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;font-weight:700;cursor:pointer"><i class="fas fa-sign-out-alt"></i> Log Out</button>
 
           </div>
-          <div style="margin-top:10px;font-size:.65rem;color:rgba(255,255,255,.35)">Log out clears local cache, your cloud data stays safe. Delete account removes everything forever (credits lost).</div>
+          <div style="margin-top:10px;font-size:.65rem;color:rgba(255,255,255,.35)">Log out only signs you out. Cloud credits, history and saved notes stay on your account.</div>
         </div>
 
         <!-- Backup & Restore - Only chats/saved -->
@@ -1174,7 +1175,7 @@ try {
           <div style="color:#f0d383;font-weight:700;margin-bottom:8px">Login check taking too long</div>
           <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">Token expired or Firebase blocked.<br>Clear cache and login again.</div>
           <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-            <button onclick="localStorage.clear();sessionStorage.clear();window.location.href='/login.html'" style="padding:10px 18px;background:linear-gradient(135deg,#f0d383,#d4af37);color:#140f00;border:none;border-radius:10px;font-weight:800;cursor:pointer">Clear & Go to Login</button>
+            <button onclick="localStorage.removeItem('sv_firebase_token');sessionStorage.removeItem('sv_firebase_token');window.location.href='/login.html'" style="padding:10px 18px;background:#fff;color:#05060a;border:none;border-radius:10px;font-weight:800;cursor:pointer">Go to Login</button>
             <button onclick="document.getElementById('authLoading').style.display='none'" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
           </div>
         </div>
@@ -1400,10 +1401,10 @@ try {
       <p style="color:#ffae00;font-weight:700;margin-bottom:20px">Your Balance: <span id="insufficientBalance">0</span> credits</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px">
-          <div style="font-weight:700">🪙 Micro</div><div style="font-size:.7rem;color:#aab2cc">1M Credits</div><div style="font-weight:800;margin:6px 0">₹49</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('micro');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
+          <div style="font-weight:700">🪙 Starter</div><div style="font-size:.7rem;color:#aab2cc">100k credits</div><div style="font-weight:800;margin:6px 0">₹19</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('starter');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
         </div>
-        <div style="background:linear-gradient(180deg,rgba(26,20,8,.9),rgba(13,19,48,.9));border:1px solid rgba(212,175,55,.35);border-radius:12px;padding:12px">
-          <div style="font-weight:700">🚀 Starter 🔥</div><div style="font-size:.7rem;color:#f0d383">3M Credits</div><div style="font-weight:800;margin:6px 0">₹99</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('starter');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
+        <div style="background:linear-gradient(180deg,rgba(8,18,28,.9),rgba(13,19,48,.9));border:1px solid rgba(34,211,238,.35);border-radius:12px;padding:12px">
+          <div style="font-weight:700">⭐ Popular</div><div style="font-size:.7rem;color:#7dd3fc">1M credits</div><div style="font-weight:800;margin:6px 0">₹99</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('popular');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
         </div>
       </div>
       <button onclick="document.getElementById('insufficientModal').style.display='none'" style="background:transparent;border:none;color:#6b7394;font-size:.8rem">Later</button>
@@ -1544,7 +1545,7 @@ window._svRefreshDaysChip = function(){
   var lbl = document.getElementById('daysLeftLbl');
   var wrap = document.getElementById('daysLeftChip');
   if (isFree) {
-    if (chip) chip.textContent = 'Free plan';
+    if (chip) chip.textContent = 'Welcome';
     if (lbl) lbl.textContent = '';
   } else {
     var d = window._svDaysLeft();
@@ -1557,7 +1558,7 @@ window._svOpenPlanBox = function(){
   var tok = window.PAID_TOKENS || {};
   var plan = String(tok.plan||'free').toLowerCase();
   var isFree = !plan || plan === 'free';
-  var names = {free:'Welcome (Free)', starter:'Starter', pro:'Pro', popular:'Popular', ultra:'Ultra'};
+  var names = {free:'Welcome', starter:'Starter', pro:'Pro', popular:'Popular', ultra:'Ultra'};
   var days = window._svDaysLeft();
   var till = window._svParseWhen(tok.validity_till);
   var rem = tok.remaining != null ? tok.remaining : (window.PAID_REMAINING||0);
@@ -1565,10 +1566,10 @@ window._svOpenPlanBox = function(){
   var lim = tok.limit || (rem+used);
   var body = document.getElementById('planBoxBody');
   var title = document.getElementById('planBoxTitle');
-  if (title) title.textContent = isFree ? 'Free plan' : (names[plan]||plan) + ' plan';
+  if (title) title.textContent = isFree ? 'Welcome credits' : (names[plan]||plan) + ' plan';
   if (body) body.innerHTML =
     '<div class="plan-box-grid">' +
-      '<div class="plan-box-cell"><div class="pbk">Plan</div><div class="pbv">'+(isFree?'Free · 10,000 welcome credits':(names[plan]||plan))+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Plan</div><div class="pbv">'+(isFree?'10,000 welcome credits':(names[plan]||plan))+'</div></div>' +
       '<div class="plan-box-cell"><div class="pbk">'+(isFree?'Renews in':'Days left')+'</div><div class="pbv">'+days+' days</div></div>' +
       '<div class="plan-box-cell"><div class="pbk">Credits left</div><div class="pbv">'+Number(rem).toLocaleString()+'</div></div>' +
       '<div class="plan-box-cell"><div class="pbk">Used</div><div class="pbv">'+Number(used).toLocaleString()+'</div></div>' +
@@ -1586,5 +1587,21 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
-</body>
+
+<script>
+window.performLogout = async function(){
+  try {
+    localStorage.removeItem('sv_firebase_token');
+    sessionStorage.removeItem('sv_firebase_token');
+  } catch(e){}
+  try {
+    const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+    if (window.firebaseAuthInstance) await signOut(window.firebaseAuthInstance);
+    else await signOut(getAuth());
+  } catch(e){}
+  window.location.href = '/login.html';
+};
+</script>
+
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a39821165fb486e5',t:'MTc4OTE0NDk4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
