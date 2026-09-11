@@ -40672,3 +40672,99 @@ body:has(.hero-headline), html:has(.hero-headline) body{
   .left-panel,#leftPanel{width:min(92vw,380px)!important}
   .stats-grid-sidebar{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   FORCE FIX — brand, 2-col stats, days, no gold rail
+   ══════════════════════════════════════════════════════════ */
+.left-panel::after,
+.right-panel::after,
+.dash-body::after,
+.gold-rail,
+.side-gold { display:none !important; width:0 !important; }
+
+#sidebarStats.stats-grid-sidebar {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+#sidebarStats .stat-card-sidebar {
+  min-height: 86px !important;
+  padding: 14px 10px 12px !important;
+  overflow: visible !important;
+}
+#sidebarStats .stat-card-sidebar:nth-child(7) { grid-column: 1 / -1 !important; }
+#sidebarStats .stat-value-sidebar {
+  font-family: Inter, -apple-system, sans-serif !important;
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  letter-spacing: -.03em !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  background: none !important;
+  -webkit-text-fill-color: unset !important;
+}
+#sidebarStats .stat-label-sidebar {
+  font-family: Inter, -apple-system, sans-serif !important;
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.es-brand {
+  font-family: "Instrument Serif", Georgia, serif !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  font-size: clamp(3.2rem, 7vw, 5.2rem) !important;
+  letter-spacing: -.03em !important;
+  text-transform: none !important;
+  color: #fff !important;
+  line-height: 1 !important;
+  margin: 0 0 12px !important;
+}
+.es-brand span {
+  font-family: Inter, sans-serif !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+  color: #22d3ee !important;
+  text-transform: uppercase !important;
+}
+.es-title {
+  font-family: Inter, sans-serif !important;
+  font-size: clamp(1.6rem, 4vw, 2.4rem) !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  letter-spacing: -.04em !important;
+}
+.es-title strong { color: #fff !important; font-weight: 800 !important; }
+.es-title em {
+  font-family: "Instrument Serif", Georgia, serif !important;
+  font-style: italic !important;
+  color: #d4af37 !important;
+  font-weight: 400 !important;
+}
+
+.dh-name {
+  font-family: "Instrument Serif", Georgia, serif !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  letter-spacing: -.02em !important;
+  text-transform: none !important;
+  font-size: 1.15rem !important;
+  color: #fff !important;
+}
+.dh-name-ai {
+  font-family: Inter, sans-serif !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  letter-spacing: .12em !important;
+  text-transform: uppercase !important;
+  color: #22d3ee !important;
+}
+
+.dh-days { display: inline-flex !important; }
