@@ -245,33 +245,40 @@
 
       <!-- Stats Grid (7 stats) -->
       <div class="stats-grid-sidebar" id="sidebarStats">
-        <div class="stat-card-sidebar">
+        <div class="stat-card-sidebar sc-fire">
+          <div class="stat-ico">🔥</div>
           <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
-          <div class="stat-label-sidebar"><i class="fas fa-fire"></i> Streak</div>
+          <div class="stat-label-sidebar">Streak</div>
         </div>
-        <div class="stat-card-sidebar">
+        <div class="stat-card-sidebar sc-gold">
+          <div class="stat-ico">🏆</div>
           <div class="stat-value-sidebar" id="sidebarBestStreak">0</div>
-          <div class="stat-label-sidebar"><i class="fas fa-trophy"></i> Best</div>
+          <div class="stat-label-sidebar">Best</div>
         </div>
-        <div class="stat-card-sidebar">
+        <div class="stat-card-sidebar sc-cyan">
+          <div class="stat-ico">⏱</div>
           <div class="stat-value-sidebar" id="sidebarSessionsValue">0</div>
-          <div class="stat-label-sidebar"><i class="fas fa-clock"></i> Sessions</div>
+          <div class="stat-label-sidebar">Sessions</div>
         </div>
-        <div class="stat-card-sidebar">
+        <div class="stat-card-sidebar sc-violet">
+          <div class="stat-ico">✦</div>
           <div class="stat-value-sidebar" id="sidebarWordsValue">0</div>
-          <div class="stat-label-sidebar"><i class="fas fa-file-alt"></i> Words</div>
+          <div class="stat-label-sidebar">Words</div>
         </div>
-        <div class="stat-card-sidebar">
+        <div class="stat-card-sidebar sc-pink">
+          <div class="stat-ico">🕘</div>
           <div class="stat-value-sidebar" id="sidebarHistoryValue">0</div>
-          <div class="stat-label-sidebar"><i class="fas fa-history"></i> History</div>
+          <div class="stat-label-sidebar">History</div>
         </div>
-        <div class="stat-card-sidebar">
+        <div class="stat-card-sidebar sc-mint">
+          <div class="stat-ico">★</div>
           <div class="stat-value-sidebar" id="sidebarSavedValue">0</div>
-          <div class="stat-label-sidebar"><i class="fas fa-star"></i> Saved</div>
+          <div class="stat-label-sidebar">Saved</div>
         </div>
-        <div class="stat-card-sidebar">
+        <div class="stat-card-sidebar sc-blue">
+          <div class="stat-ico">📅</div>
           <div class="stat-value-sidebar" id="sidebarLastActive">—</div>
-          <div class="stat-label-sidebar"><i class="fas fa-calendar"></i> Active</div>
+          <div class="stat-label-sidebar">Last active</div>
         </div>
       </div>
 
@@ -728,10 +735,10 @@
   </div>
 
   <!-- ─── Settings Modal ─── -->
-  <div class="modal-overlay" id="settingsModal">
-    <div class="modal modal-md">
+  <div class="modal-overlay sv-settings" id="settingsModal">
+    <div class="modal modal-md sv-settings-modal">
       <div class="modal-header">
-        <div class="modal-title"><i class="fas fa-cog"></i> Settings</div>
+        <div class="modal-title"><i class="fas fa-sliders-h"></i> Studio settings</div>
         <button class="modal-close" data-close="settingsModal"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
@@ -1106,13 +1113,23 @@ try {
     try {
       window._svRefreshDaysChip && window._svRefreshDaysChip();
     } catch(e){}
+    if (!window.PAID_TOKENS) window.PAID_TOKENS = {};
+    window.PAID_TOKENS.remaining = remaining;
+    window.PAID_TOKENS.limit = limit;
+    if (plan) window.PAID_TOKENS.plan = plan;
     const cb = document.getElementById('creditBalance');
     if (cb) cb.innerHTML = `${Number(remaining||0).toLocaleString()} <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span>`;
     const badge = document.getElementById('creditPlanBadge');
     if (badge) {
-      const pl = String(plan||'').toLowerCase();
+      let pl = String(plan|| (window.PAID_TOKENS&&window.PAID_TOKENS.plan) ||'').toLowerCase();
+      if (!pl || pl==='free') {
+        if (remaining>=1500000) pl='ultra';
+        else if (remaining>=800000) pl='popular';
+        else if (remaining>=300000) pl='pro';
+        else if (remaining>=80000) pl='starter';
+      }
       const labels = { starter:'STARTER', pro:'PRO', popular:'POPULAR', ultra:'ULTRA' };
-      badge.textContent = (remaining >= 20000 && labels[pl]) ? labels[pl] : 'WELCOME 10K';
+      badge.textContent = labels[pl] || 'WELCOME 10K';
     }
     const cr = document.getElementById('creditRemaining');
     if (cr) cr.textContent = `Remaining: ${remaining.toLocaleString()}`;
@@ -1215,6 +1232,7 @@ try {
           const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
           if (res.ok) {
             const bal = await res.json();
+            window.PAID_TOKENS = bal;
             if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
           } else if (res.status === 401) {
             // Try once more with fresh token
@@ -1223,6 +1241,7 @@ try {
             const res2 = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + newToken } });
             if (res2.ok) {
               const bal = await res2.json();
+              window.PAID_TOKENS = bal;
               if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
             }
           }
@@ -1539,12 +1558,12 @@ window._svDaysLeft = function(){
 };
 window._svRefreshDaysChip = function(){
   var tok = window.PAID_TOKENS || {};
-  var plan = String(tok.plan||'free').toLowerCase();
-  var isFree = !plan || plan === 'free';
+  var plan = window._svInferPlan ? window._svInferPlan(tok) : String(tok.plan||'welcome').toLowerCase();
+  var isWelcome = plan === 'welcome' || plan === 'free';
   var chip = document.getElementById('daysLeftVal');
   var lbl = document.getElementById('daysLeftLbl');
   var wrap = document.getElementById('daysLeftChip');
-  if (isFree) {
+  if (isWelcome) {
     if (chip) chip.textContent = 'Welcome';
     if (lbl) lbl.textContent = '';
   } else {
@@ -1554,26 +1573,56 @@ window._svRefreshDaysChip = function(){
   }
   if (wrap) wrap.style.display = 'inline-flex';
 };
+window._svInferPlan = function(tok){
+  var plan = String(tok.plan||'').toLowerCase();
+  var rem = Number(tok.remaining != null ? tok.remaining : (window.PAID_REMAINING||0));
+  if (!plan || plan === 'free') {
+    if (rem >= 1500000) plan = 'ultra';
+    else if (rem >= 800000) plan = 'popular';
+    else if (rem >= 300000) plan = 'pro';
+    else if (rem >= 80000) plan = 'starter';
+    else plan = 'welcome';
+  }
+  return plan;
+};
 window._svOpenPlanBox = function(){
   var tok = window.PAID_TOKENS || {};
-  var plan = String(tok.plan||'free').toLowerCase();
-  var isFree = !plan || plan === 'free';
-  var names = {free:'Welcome', starter:'Starter', pro:'Pro', popular:'Popular', ultra:'Ultra'};
+  var plan = window._svInferPlan(tok);
+  var isWelcome = plan === 'welcome' || plan === 'free';
+  var names = {welcome:'Welcome credits', free:'Welcome credits', starter:'Starter', pro:'Pro', popular:'Popular', ultra:'Ultra'};
+  var pack = {welcome:10000, free:10000, starter:100000, pro:500000, popular:1000000, ultra:2000000};
+  var price = {starter:'₹19', pro:'₹49', popular:'₹99', ultra:'₹199'};
   var days = window._svDaysLeft();
   var till = window._svParseWhen(tok.validity_till);
-  var rem = tok.remaining != null ? tok.remaining : (window.PAID_REMAINING||0);
-  var used = tok.used || tok.totalUsed || 0;
-  var lim = tok.limit || (rem+used);
+  var bought = window._svParseWhen(tok.lastPurchaseAt);
+  var rem = Number(tok.remaining != null ? tok.remaining : (window.PAID_REMAINING||0));
+  var used = Number(tok.used || tok.totalUsed || tok.tokens_used || 0);
+  var lim = Number(tok.limit || tok.tokens_limit || (rem+used) || pack[plan] || 0);
+  var paid = tok.totalPaid ? ('₹'+Number(tok.totalPaid).toLocaleString('en-IN')) : (price[plan]||'—');
+  var gens = tok.totalGenerations || 0;
+  var purchased = Number(tok.totalPurchased||0);
+  var pct = lim ? Math.min(100, Math.round((used/lim)*100)) : 0;
   var body = document.getElementById('planBoxBody');
   var title = document.getElementById('planBoxTitle');
-  if (title) title.textContent = isFree ? 'Welcome credits' : (names[plan]||plan) + ' plan';
+  if (title) title.textContent = (names[plan]||plan) + ' · details';
   if (body) body.innerHTML =
+    '<div class="pb-hero">' +
+      '<div class="pb-kicker">Current pack</div>' +
+      '<div class="pb-name">'+(names[plan]||plan)+'</div>' +
+      '<div class="pb-price">'+(isWelcome?'10,000 welcome credits':(price[plan]||'')+' · '+(pack[plan]||0).toLocaleString()+' credits')+'</div>' +
+    '</div>' +
+    '<div class="pb-meter"><div class="pb-meter-fill" style="width:'+pct+'%"></div></div>' +
+    '<div class="pb-meter-meta">'+used.toLocaleString()+' used · '+rem.toLocaleString()+' left'+(lim?(' · '+lim.toLocaleString()+' pack'):'')+'</div>' +
     '<div class="plan-box-grid">' +
-      '<div class="plan-box-cell"><div class="pbk">Plan</div><div class="pbv">'+(isFree?'10,000 welcome credits':(names[plan]||plan))+'</div></div>' +
-      '<div class="plan-box-cell"><div class="pbk">'+(isFree?'Renews in':'Days left')+'</div><div class="pbv">'+days+' days</div></div>' +
-      '<div class="plan-box-cell"><div class="pbk">Credits left</div><div class="pbv">'+Number(rem).toLocaleString()+'</div></div>' +
-      '<div class="plan-box-cell"><div class="pbk">Used</div><div class="pbv">'+Number(used).toLocaleString()+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Plan</div><div class="pbv">'+(names[plan]||plan)+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">'+(isWelcome?'Renews in':'Days left')+'</div><div class="pbv">'+days+' days</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Credits left</div><div class="pbv">'+rem.toLocaleString()+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Used</div><div class="pbv">'+used.toLocaleString()+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Purchased</div><div class="pbv">'+(purchased?purchased.toLocaleString()+' credits':'—')+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Paid</div><div class="pbv">'+paid+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Bought on</div><div class="pbv">'+(bought?bought.toLocaleDateString():'—')+'</div></div>' +
       '<div class="plan-box-cell"><div class="pbk">Valid till</div><div class="pbv">'+(till?till.toLocaleDateString():'—')+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Generations</div><div class="pbv">'+Number(gens).toLocaleString()+'</div></div>' +
     '</div>' +
     '<button type="button" class="credit-btn-buy" style="width:100%;margin-top:16px" onclick="document.getElementById(\'planBoxModal\').style.display=\'none\';window.openBuyCreditsModal&&window.openBuyCreditsModal()">Add credits · from ₹19</button>';
   var m = document.getElementById('planBoxModal');
@@ -1603,5 +1652,5 @@ window.performLogout = async function(){
 };
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a39821165fb486e5',t:'MTc4OTE0NDk4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

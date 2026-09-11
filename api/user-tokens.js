@@ -101,19 +101,30 @@ module.exports = async function handler(req, res) {
 
     const remaining = data.balance || 0;
     const limit = remaining + used;
+    let plan = data.plan || 'free';
+    if ((!plan || plan === 'free') && remaining >= 80000) {
+      if (remaining >= 1500000) plan = 'ultra';
+      else if (remaining >= 800000) plan = 'popular';
+      else if (remaining >= 300000) plan = 'pro';
+      else plan = 'starter';
+    }
 
     res.json({
       uid: decoded.uid,
       email: data.email,
       displayName: data.displayName,
       photoURL: data.photoURL||decoded.picture||'',
-      plan: data.plan||'free',
+      plan,
       balance: remaining,
       limit: limit,
       used: used,
       remaining: Math.max(0, remaining),
       totalPurchased: purchased,
       totalUsed: used,
+      totalPaid: data.totalPaid || 0,
+      lastPurchaseAt: data.lastPurchaseAt || null,
+      tokens_limit: data.tokens_limit || limit,
+      tokens_used: data.tokens_used || used,
       freeCreditsGiven: freeGiven,
       freeCreditsLastGiven: data.freeCreditsLastGiven||data.cycle_start,
       cycle_start: data.cycle_start,
