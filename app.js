@@ -3988,8 +3988,8 @@ Examples:
         const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + fbToken } });
         if (res.ok) {
           const data = await res.json();
-          if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
           window.PAID_TOKENS = data;
+          if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
           try {
             if (data.sessions) { this.sessions = Math.max(this.sessions||0, data.sessions); localStorage.setItem('sv_sessions', String(this.sessions)); }
             if (data.totalWords) { this.totalWords = Math.max(this.totalWords||0, data.totalWords); localStorage.setItem('sv_total_words', String(this.totalWords)); }

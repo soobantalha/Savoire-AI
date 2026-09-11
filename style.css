@@ -40476,3 +40476,76 @@ html[data-theme="golden"] .dh-name-ai, html[data-theme="golden"] .es-brand span{
 html[data-theme="dark"] body, html[data-theme="dark"] .dash-body, html[data-theme="dark"] .out-area{
   background:#060a18 !important; color:#e8eef8 !important;
 }
+
+
+/* ══ Days left chip ══ */
+.dh-days{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:999px;
+  background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.28);
+  color:#7dd3fc;font-size:.72rem;font-weight:700;white-space:nowrap;
+}
+.dh-days i{font-size:.7rem}
+.dh-days-lbl{opacity:.85;font-weight:600}
+
+/* ══ Apple dock 5-tab — clean ══ */
+@media (min-width:1025px){ #svDock.sv-dock{display:none!important} }
+@media (max-width:1024px){
+  #svDock.sv-dock{
+    display:grid!important;
+    grid-template-columns:repeat(5,1fr)!important;
+    position:fixed!important;
+    left:14px!important;right:14px!important;
+    bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;
+    height:64px!important;
+    border-radius:32px!important;
+    overflow:hidden!important;
+    z-index:120!important;
+    padding:0!important;
+    background:rgba(18,18,22,.72)!important;
+    backdrop-filter:blur(36px) saturate(180%)!important;
+    -webkit-backdrop-filter:blur(36px) saturate(180%)!important;
+    border:.5px solid rgba(255,255,255,.22)!important;
+    box-shadow:0 14px 36px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22)!important;
+  }
+  #svDock .sv-dock-orb{
+    position:absolute!important;width:44px!important;height:44px!important;
+    border-radius:50%!important;pointer-events:none!important;z-index:0!important;opacity:0;
+    background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.65),rgba(255,255,255,.12) 40%,transparent 60%),rgba(255,255,255,.12)!important;
+    border:.5px solid rgba(255,255,255,.45)!important;
+    transition:transform .45s cubic-bezier(.22,1,.36,1)!important;
+  }
+  #svDock .sv-dock-orb.show{opacity:1!important}
+  #svDock button{
+    background:none!important;border:0!important;box-shadow:none!important;
+    height:64px!important;color:rgba(255,255,255,.5)!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+    gap:3px!important;font:510 9px/1 -apple-system,BlinkMacSystemFont,Inter,sans-serif!important;
+    position:relative;z-index:2;pointer-events:auto!important;
+  }
+  #svDock button.on,#svDock button.on span{color:#fff!important}
+  #svDock button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round}
+  #svDock button i{display:none!important}
+  #daysLeftChip{display:inline-flex!important}
+  #tokenMeter{display:none!important}
+}
+
+/* ══ Landing black luxury ══ */
+body:has(.hero-headline), html:has(.hero-headline) body{
+  background:#05060a!important;color:#f4f4f2;
+}
+.hero-headline{
+  font-family:Syne,Manrope,Inter,sans-serif!important;
+  font-weight:800!important;letter-spacing:-.05em!important;
+}
+.hero-headline .accent{
+  font-family:"Cormorant Garamond","Instrument Serif",Georgia,serif!important;
+  font-style:italic!important;font-weight:500!important;
+  background:linear-gradient(120deg,#f0d27a,#fff4cc,#d4af37,#f0d27a)!important;
+  background-size:220% auto!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  color:transparent!important;
+  animation:svGoldFlow 7s linear infinite!important;
+}
+.nav{background:rgba(5,6,10,.62)!important;backdrop-filter:blur(24px) saturate(160%)!important;border-bottom:1px solid rgba(255,255,255,.06)!important}
+.brand .name{font-family:Syne,sans-serif!important;letter-spacing:.14em!important}

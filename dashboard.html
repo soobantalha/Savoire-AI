@@ -394,6 +394,11 @@
             <div class="token-track"><div class="token-fill" id="tokenBar"></div></div>
             <span id="tokenCount">-- / --</span>
           </div>
+          <div class="dh-days" id="daysLeftChip" title="Pack validity">
+            <i class="far fa-clock"></i>
+            <span id="daysLeftVal">—</span>
+            <span class="dh-days-lbl">days left</span>
+          </div>
           <div class="dh-stat dh-stat-streak" id="headerStreakWrap">
             <i class="fas fa-fire"></i>
             <span id="headerStreak" class="dh-streak-val">0</span>
@@ -843,7 +848,7 @@
           <div class="settings-title"><i class="fas fa-user-shield"></i> Account</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <button onclick="window.performLogout && window.performLogout()" style="padding:10px 18px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;font-weight:700;cursor:pointer"><i class="fas fa-sign-out-alt"></i> Log Out</button>
-            <button onclick="window._app && window._app._deleteAccountFlow && window._app._deleteAccountFlow()" style="padding:10px 18px;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:#ff6b6b;border-radius:10px;cursor:pointer;font-size:.8rem"><i class="fas fa-trash"></i> Delete Account (3-step)</button>
+
           </div>
           <div style="margin-top:10px;font-size:.65rem;color:rgba(255,255,255,.35)">Log out clears local cache, your cloud data stays safe. Delete account removes everything forever (credits lost).</div>
         </div>
@@ -1097,6 +1102,20 @@ try {
       count.textContent = `${remaining.toLocaleString()} left`;
     }
     window.PAID_REMAINING = remaining;
+    try {
+      const chip = document.getElementById('daysLeftVal');
+      const wrap = document.getElementById('daysLeftChip');
+      const till = (window.PAID_TOKENS && (window.PAID_TOKENS.validity_till || window.PAID_TOKENS.cycle_start)) || null;
+      let days = null;
+      if (till) {
+        const ms = new Date(till).getTime() - Date.now();
+        days = Math.max(0, Math.ceil(ms / 86400000));
+      } else if (window.PAID_TOKENS && window.PAID_TOKENS.isFreeResetInDays != null) {
+        days = window.PAID_TOKENS.isFreeResetInDays;
+      }
+      if (chip && days != null) chip.textContent = String(days);
+      if (wrap) wrap.style.display = 'inline-flex';
+    } catch(e){}
     const cb = document.getElementById('creditBalance');
     if (cb) cb.innerHTML = `${Number(remaining||0).toLocaleString()} <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span>`;
     const badge = document.getElementById('creditPlanBadge');
@@ -1281,7 +1300,7 @@ try {
     requestAnimationFrame(function(){
       var r = mark.getBoundingClientRect();
       var p = dock.getBoundingClientRect();
-      var size = 58;
+      var size = 44;
       var x = (r.left - p.left) + r.width/2 - size/2;
       var y = (r.top - p.top) + r.height/2 - size/2;
       orb.style.transform = 'translate('+x+'px,'+y+'px)';
