@@ -40828,3 +40828,111 @@ body:has(.hero-headline), html:has(.hero-headline) body{
   background:#fff!important;color:#05060a!important;font-weight:800!important;
 }
 @media(max-width:900px){.tier-grid{grid-template-columns:1fr!important}}
+
+/* Logo — no yellow plate */
+.dh-mark,
+.brand-mark,
+.footer-brand .brand-mark,
+.welcome-logo,
+.about-logo,
+.rbf-logo {
+  background: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  filter: none !important;
+  padding: 0 !important;
+}
+.dh-mark::before, .dh-mark::after,
+.brand-mark::before, .brand-mark::after { display: none !important; }
+.dh-mark img, .brand-mark img, .brand-logo-img {
+  width: 100% !important; height: 100% !important;
+  object-fit: contain !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+/* Brand wordmark = dashboard style */
+.dh-name, .brand-text .name, .footer-brand .name, .es-brand {
+  font-family: "Instrument Serif", Georgia, serif !important;
+  font-style: italic !important;
+  font-weight: 400 !important;
+  letter-spacing: -.02em !important;
+  text-transform: none !important;
+  color: #fff !important;
+}
+.dh-name-ai, .brand-text .ai, .es-brand span {
+  font-family: Inter, system-ui, sans-serif !important;
+  font-style: normal !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  color: #22d3ee !important;
+}
+.brand-text { gap: 0; }
+.brand-text .ai { margin-top: 0 !important; font-size: .72em !important; }
+
+/* Index — AiFiesta ultra black */
+html:has(.hero-headline), body:has(.hero-headline) {
+  background: #000 !important;
+  color: #fff !important;
+}
+body:has(.hero-headline) .aurora-bg {
+  background: #000 !important;
+}
+body:has(.hero-headline) .aurora-bg::before {
+  background:
+    radial-gradient(50% 40% at 50% 0%, rgba(80,80,255,.22), transparent 55%),
+    radial-gradient(40% 30% at 80% 20%, rgba(0,200,255,.12), transparent 50%) !important;
+}
+body:has(.hero-headline) .nav-inner {
+  background: rgba(0,0,0,.45) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+body:has(.hero-headline) .hero-headline {
+  font-family: Inter, system-ui, sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: -.05em !important;
+  color: #fff !important;
+}
+body:has(.hero-headline) .hero-headline .accent {
+  font-family: "Instrument Serif", Georgia, serif !important;
+  font-style: italic !important;
+  color: #fff !important;
+  background: none !important;
+  -webkit-text-fill-color: #fff !important;
+  animation: none !important;
+}
+body:has(.hero-headline) .btn {
+  background: #fff !important;
+  color: #000 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  font-weight: 700 !important;
+}
+body:has(.hero-headline) .btn-ghost {
+  background: transparent !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+}
+body:has(.hero-headline) .btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+body:has(.hero-headline) .tier-card {
+  background: #0a0a0c !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 24px !important;
+}
+body:has(.hero-headline) .tier-card .btn {
+  background: #fff !important;
+  color: #000 !important;
+}
+body:has(.hero-headline) .feature,
+body:has(.hero-headline) .t-card,
+body:has(.hero-headline) .mesh-card,
+body:has(.hero-headline) .compare {
+  background: #0a0a0c !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
