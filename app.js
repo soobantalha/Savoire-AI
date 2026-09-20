@@ -1892,7 +1892,15 @@ Examples:
       this.el.sfpText.classList.add('live-md');
     }
     if (this.el.sscProgressBar) this.el.sscProgressBar.style.width = '4%';
-    if (this.el.streamFullpage)  this.el.streamFullpage.style.display = 'flex';
+    if (this.el.streamFullpage) {
+      const ov = this.el.streamFullpage;
+      ov.style.display = 'flex';
+      ov.style.position = 'fixed';
+      ov.style.inset = '0';
+      ov.style.zIndex = '12000';
+      ov.style.flexDirection = 'column';
+      ov.style.background = '#05060a';
+    }
     if (this.el.emptyState)      this.el.emptyState.style.display = 'none';
     if (this.el.resultArea)      this.el.resultArea.style.display = 'none';
     if (this.el.thinkingWrap)    this.el.thinkingWrap.style.display = 'none';
