@@ -61,32 +61,6 @@ module.exports = async function handler(req, res) {
       });
     } catch(e) { console.log('purchaseHistory fetch failed', e.message); }
 
-    // Also check transactions collection for older purchases
-    try {
-      const transSnap = await db.collection('transactions').where('uid','==',uid).orderBy('createdAt','desc').limit(20).get();
-      transSnap.docs.forEach(d => {
-        const data = d.data();
-        // Avoid duplicate if already in purchaseHistory (check paymentId)
-        if (!all.some(a => a.paymentId && a.paymentId === data.paymentId)) {
-          all.push({
-            id: d.id,
-            type: 'purchase',
-            tool: 'purchase',
-            topic: `${data.plan||'Pack'} Pack`,
-            creditsChange: data.credits_credited || data.tokens_credited || 0,
-            creditsRemaining: 0,
-            timestamp: data.createdAt?.toMillis?.() || Date.now(),
-            description: `Purchased ${data.plan||'Pack'} - ₹${data.amount||''}`,
-            amount: data.amount,
-            plan: data.plan,
-            paymentId: data.paymentId,
-            icon: '💳',
-            status: data.status||'success'
-          });
-        }
-      });
-    } catch(e) { console.log('transactions fetch failed', e.message); }
-
     // 3. Usage history (generations)
     try {
       const usageSnap = await userRef.collection('usageHistory').orderBy('timestamp','desc').limit(50).get();

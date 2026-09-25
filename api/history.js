@@ -21,13 +21,23 @@ module.exports = async function handler(req, res) {
       return res.json({ history: items });
     }
     if (req.method === 'POST') {
-      const { id, topic, tool, data, ts, dur } = req.body;
+      const { id, topic, tool, data, ts, dur, creditsUsed, wordCount } = req.body;
       if (!id || !topic) return res.status(400).json({ error: 'Missing id or topic' });
       let dataToSave = data;
       if (data && data.ultra_long_notes && data.ultra_long_notes.length > 20000) {
         dataToSave = { ...data, ultra_long_notes: data.ultra_long_notes.slice(0,20000) + '... [truncated]' };
       }
-      await userRef.collection('history').doc(id).set({ id, topic: String(topic).slice(0,200), tool, data: dataToSave||null, ts: ts||Date.now(), dur: dur||0, createdAt: require('firebase-admin/firestore').FieldValue.serverTimestamp() }, { merge: true });
+      await userRef.collection('history').doc(id).set({
+        id,
+        topic: String(topic).slice(0,200),
+        tool,
+        data: dataToSave||null,
+        ts: ts||Date.now(),
+        dur: dur||0,
+        creditsUsed: creditsUsed||0,
+        wordCount: wordCount||0,
+        createdAt: require('firebase-admin/firestore').FieldValue.serverTimestamp()
+      }, { merge: true });
       return res.json({ success: true });
     }
     if (req.method === 'DELETE') {

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /index.html
+Disallow: /dashboard.html
+Disallow: /api/
+
+Sitemap: https://savoireai.vercel.app/sitemap.xml

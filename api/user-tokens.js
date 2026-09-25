@@ -21,17 +21,69 @@ module.exports = async function handler(req, res) {
     if (!snap.exists) {
       // New user - 10k free per month
       await userRef.set({
-        uid: decoded.uid, email: decoded.email||'', displayName: decoded.name||decoded.email?.split('@')[0]||'Scholar',
-        photoURL: decoded.picture||'', plan: 'free', balance: 10000, totalPurchased: 0, totalUsed: 0,
-        freeCreditsGiven: 10000, freeCreditsLastGiven: new Date().toISOString(),
-        totalGenerations: 0, createdAt: FieldValue.serverTimestamp(),
-        cycle_start: new Date().toISOString(), tokens_limit: 10000, tokens_used: 0,
-        validity_till: new Date(Date.now()+30*24*60*60*1000).toISOString()
+        uid: decoded.uid,
+        email: decoded.email || '',
+        displayName: decoded.name || decoded.email?.split('@')[0] || 'Scholar',
+        originalGoogleName: decoded.name || '',
+        photoURL: decoded.picture || '',
+        avatarEmoji: '🎓',
+        nameSource: 'google',
+        plan: 'free',
+        balance: 10000,
+        totalPurchased: 0,
+        totalUsed: 0,
+        totalPaid: 0,
+        freeCreditsGiven: 10000,
+        freeCreditsLastGiven: new Date().toISOString(),
+        cycle_start: new Date().toISOString(),
+        tokens_limit: 10000,
+        tokens_used: 0,
+        validity_till: new Date(Date.now()+30*24*60*60*1000).toISOString(),
+        lastPurchaseAt: null,
+        totalGenerations: 0,
+        totalWords: 0,
+        sessions: 0,
+        streak: 0,
+        bestStreak: 0,
+        lastStreakDate: null,
+        lastActive: new Date().toISOString().slice(0,10),
+        historyCount: 0,
+        savedCount: 0,
+        createdAt: FieldValue.serverTimestamp()
       }, { merge: true });
       snap = await userRef.get();
     }
     
     let data = snap.data();
+
+    if (req.method === 'POST') {
+      const body = req.body || {};
+      const patch = {};
+      const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
+      if (num(body.sessions) != null) patch.sessions = Math.max(0, Math.floor(body.sessions));
+      if (num(body.totalWords) != null) patch.totalWords = Math.max(0, Math.floor(body.totalWords));
+      if (num(body.totalGenerations) != null) patch.totalGenerations = Math.max(0, Math.floor(body.totalGenerations));
+      if (num(body.historyCount) != null) patch.historyCount = Math.max(0, Math.floor(body.historyCount));
+      if (num(body.savedCount) != null) patch.savedCount = Math.max(0, Math.floor(body.savedCount));
+      if (typeof body.lastActive === 'string' && body.lastActive.length < 40) patch.lastActive = body.lastActive;
+      if (typeof body.displayName === 'string' && body.displayName.trim()) patch.displayName = body.displayName.trim().slice(0, 80);
+      const st = body.streak;
+      if (st && typeof st === 'object') {
+        if (num(st.count) != null) patch.streak = Math.max(0, Math.floor(st.count));
+        if (num(st.bestStreak) != null) patch.bestStreak = Math.max(0, Math.floor(st.bestStreak));
+        if (typeof st.lastDate === 'string') patch.lastStreakDate = st.lastDate;
+      } else {
+        if (num(body.streak) != null) patch.streak = Math.max(0, Math.floor(body.streak));
+        if (num(body.bestStreak) != null) patch.bestStreak = Math.max(0, Math.floor(body.bestStreak));
+        if (typeof body.lastStreakDate === 'string') patch.lastStreakDate = body.lastStreakDate;
+      }
+      if (Object.keys(patch).length) {
+        patch.statsUpdatedAt = FieldValue.serverTimestamp();
+        await userRef.set(patch, { merge: true });
+        snap = await userRef.get();
+        data = snap.data();
+      }
+    }
     
     // Monthly free credits reset logic - 10k per month for free users
     const cycleStart = new Date(data.cycle_start || data.createdAt?.toDate?.() || new Date());
@@ -109,6 +161,33 @@ module.exports = async function handler(req, res) {
       else plan = 'starter';
     }
 
+    // Backfill pack dates for older paid accounts
+    if (plan && plan !== 'free') {
+      const patchDates = {};
+      if (!data.validity_till) {
+        const base = data.lastPurchaseAt || data.cycle_start || Date.now();
+        const start = (typeof base === 'object' && (base.seconds || base._seconds))
+          ? new Date((base.seconds || base._seconds) * 1000)
+          : new Date(base);
+        const till = new Date(start.getTime());
+        if (isNaN(till.getTime()) || till.getTime() < Date.now() - 2*86400000) {
+          till.setTime(Date.now() + 30*24*60*60*1000);
+        } else {
+          till.setTime(start.getTime() + 30*24*60*60*1000);
+        }
+        patchDates.validity_till = till.toISOString();
+        data.validity_till = patchDates.validity_till;
+      }
+      if (!data.lastPurchaseAt) {
+        patchDates.lastPurchaseAt = data.cycle_start || new Date().toISOString();
+        data.lastPurchaseAt = patchDates.lastPurchaseAt;
+      }
+      if (!data.plan || data.plan === 'free') patchDates.plan = plan;
+      if (Object.keys(patchDates).length) {
+        try { await userRef.set(patchDates, { merge: true }); } catch (e) {}
+      }
+    }
+
     res.json({
       uid: decoded.uid,
       email: data.email,
@@ -135,6 +214,9 @@ module.exports = async function handler(req, res) {
       streak: data.streak||0,
       bestStreak: data.bestStreak||0,
       lastStreakDate: data.lastStreakDate||null,
+      lastActive: data.lastActive||null,
+      historyCount: data.historyCount||0,
+      savedCount: data.savedCount||0,
       isFreeResetInDays: Math.max(0, 30 - daysSince)
     });
   } catch (err) {

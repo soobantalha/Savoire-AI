@@ -1405,6 +1405,8 @@ module.exports = async function handler(req, res) {
           totalWords: FieldValue.increment((final.ultra_long_notes||'').split(/\s+/).length),
           tokens_used: FieldValue.increment(totalUsed)
         });
+        const _preSnap = await userRef.get();
+        const _preBal = (_preSnap.data() || {}).balance || 0;
         await userRef.collection('usageHistory').add({
           timestamp: FieldValue.serverTimestamp(),
           type: 'generation',
@@ -1412,6 +1414,7 @@ module.exports = async function handler(req, res) {
           topic: message.slice(0,200),
           creditsChange: -totalUsed,
           creditsUsed: totalUsed,
+          creditsRemaining: Math.max(0, _preBal),
           description: `Generated ${opts.tool}`,
           inputChars,
           outputChars,
@@ -1436,12 +1439,6 @@ module.exports = async function handler(req, res) {
         const newRemaining = freshData.balance || 0;
         final._tokens_remaining = newRemaining;
         final._credits_remaining = newRemaining;
-        await _db2.collection('creditHistory').add({
-          uid: firebaseUid, type: 'generation', tool: opts.tool, credits: -tokensUsed,
-          description: 'Generated ' + opts.tool + ' - ' + tokensUsed + ' tokens used',
-          balanceAfter: newRemaining,
-          createdAt: FieldValue.serverTimestamp()
-        });
         res.setHeader('X-Tokens-Remaining', String(newRemaining));
         res.setHeader('X-Tokens-Used', String(totalUsed));
         res.setHeader('X-Credits-Remaining', String(newRemaining));

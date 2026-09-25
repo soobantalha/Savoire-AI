@@ -383,6 +383,12 @@ class SavoireApp {
       sessions: this.sessions,
       totalWords: this.totalWords,
       streak: this.streak,
+      bestStreak: this.streak.bestStreak,
+      lastStreakDate: this.streak.lastDate,
+      lastActive: this.lastActive || this._getISTDate(),
+      historyCount: (this.history || []).length,
+      savedCount: (this.saved || []).length,
+      totalGenerations: (this.history || []).length,
       displayName: this.userName || ''
     };
     try {
@@ -405,6 +411,10 @@ class SavoireApp {
             streak: this.streak.count,
             bestStreak: this.streak.bestStreak,
             lastStreakDate: this.streak.lastDate,
+            lastActive: this.lastActive || this._getISTDate(),
+            historyCount: (this.history || []).length,
+            savedCount: (this.saved || []).length,
+            totalGenerations: (this.history || []).length,
             displayName: this.userName || ''
           }, { merge: true }).catch(()=>{});
         });
@@ -615,11 +625,7 @@ class SavoireApp {
     dy.forEach(id => { this.el[id] = g(id); });
   }
 
-  // ─── PARTICLES ──────────────────────────────────────────────────────────────
-
-  _initParticles() {
-    const canvas = this.el.particleCanvas;
-    if (!canvas) return;
+  // ─── PARTICLES ────────    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', resize);
@@ -3043,7 +3049,7 @@ Examples:
     const gold = '#b8860b';
     const wrap = document.createElement('div');
     wrap.setAttribute('dir', /urdu|arabic|persian|farsi/i.test(String(data._language||'')) ? 'rtl' : 'ltr');
-    wrap.style.cssText = `position:fixed;left:-16000px;top:0;width:794px;padding:48px 52px 64px;background:${bg};color:${ink};font-family:'Noto Sans Devanagari','Noto Naskh Arabic',Inter,'Nirmala UI',serif;line-height:1.75;font-size:15px;z-index:-1;`;
+    wrap.style.cssText = `position:fixed;left:-16000px;top:0;width:794px;padding:48px 52px 64px;background:${bg};color:${ink};font-family:'Noto Sans Devanagari','Noto Naskh Arabic','Noto Sans',Inter,'Nirmala UI',serif;line-height:1.75;font-size:15px;z-index:-1;`;
     const topic = this._esc(data.topic || 'Study notes');
     const notes = this._renderMd(data.ultra_long_notes || '');
     let extra = '';
@@ -3067,7 +3073,14 @@ Examples:
     wrap.querySelectorAll('h1,h2,h3').forEach(h => { h.style.color = gold; h.style.margin = '1.1em 0 .4em'; });
     document.body.appendChild(wrap);
     try {
-      const canvas = await h2c(wrap, { scale: 2, backgroundColor: bg, useCORS: true, windowWidth: 794 });
+      try { await document.fonts.ready; } catch(e) {}
+      await new Promise(r => setTimeout(r, 250));
+      const canvas = await h2c(wrap, { scale: 2, backgroundColor: bg, useCORS: true, windowWidth: 794, onclone: (doc) => {
+        const n = doc.createElement('link');
+        n.rel = 'stylesheet';
+        n.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap';
+        doc.head.appendChild(n);
+      }});
       const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
       const pageW = 210, pageH = 297;
       const imgW = pageW;
@@ -4007,6 +4020,10 @@ Examples:
               if (data.lastStreakDate) this.streak.lastDate = data.lastStreakDate;
               localStorage.setItem('sv_streak', JSON.stringify(this.streak));
             }
+            if (data.lastActive) {
+              this.lastActive = data.lastActive;
+              localStorage.setItem('sv_last_active', data.lastActive);
+            }
             this._updateAllStats();
           } catch(e){}
           if (this._fetchCloudHistory) { try { await this._fetchCloudHistory(); } catch(e){} }
@@ -4069,6 +4086,10 @@ Examples:
 
   async _openCreditHistory() {
     const tok = this._getFbToken();
+    const modal = document.getElementById('creditHistoryModal');
+    if (modal) { modal.style.display = 'flex'; modal.classList.add('open'); }
+    const list = document.getElementById('creditHistoryList');
+    if (list) list.innerHTML = '<div style="text-align:center;padding:28px;color:rgba(255,255,255,.45)">Loading usage…</div>';
     if (!tok) return;
     try {
       const res = await fetch('/api/credit-history', {
@@ -4077,10 +4098,39 @@ Examples:
       if (res.ok) {
         const data = await res.json();
         this.creditHistory = data.history || [];
-        if (typeof this._renderCreditHistoryModal === 'function') this._renderCreditHistoryModal();
-        else if (window.openCreditHistory) window.openCreditHistory();
-      }
+        this._renderCreditHistoryModal(data);
+      } else if (list) list.innerHTML = '<div style="padding:24px;color:#f87171">Could not load history.</div>';
     } catch(e) { console.error('Credit history fetch failed', e); }
+  }
+
+  _renderCreditHistoryModal(data) {
+    const items = (data && data.history) || this.creditHistory || [];
+    const list = document.getElementById('creditHistoryList');
+    const sum = document.getElementById('creditHistorySummary');
+    const filt = this._creditHistFilter || 'all';
+    const shown = items.filter(it => filt === 'all' || it.type === filt);
+    if (sum && data && data.summary) {
+      sum.innerHTML = `<span>Total: ${Number(data.summary.total||0).toLocaleString()}</span><span>Used: ${Number(data.summary.used||0).toLocaleString()}</span><span>Left: ${Number(data.summary.remaining||0).toLocaleString()}</span>`;
+    }
+    if (!list) return;
+    if (!shown.length) {
+      list.innerHTML = '<div style="text-align:center;padding:32px;color:rgba(255,255,255,.4)">No usage yet.</div>';
+      return;
+    }
+    list.innerHTML = shown.map(it => {
+      const ts = it.timestamp ? new Date(it.timestamp).toLocaleString() : '';
+      const delta = Number(it.creditsChange || it.creditsUsed || 0);
+      const sign = delta > 0 ? '+' : '';
+      const col = delta > 0 ? '#34d399' : '#fbbf24';
+      return `<div class="ch-row" style="display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)">
+        <div style="font-size:1.2rem">${it.icon||'•'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:750;color:#fff;font-size:.88rem">${this._esc(it.topic||it.description||it.type)}</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.45);margin-top:2px">${this._esc(it.description||'')} · ${ts}</div>
+        </div>
+        <div style="font-weight:800;color:${col};white-space:nowrap">${sign}${Math.abs(delta).toLocaleString()}</div>
+      </div>`;
+    }).join('');
   }
 
   async _fetchCloudHistory() {
@@ -4773,6 +4823,10 @@ Examples:
     on(this.el.navWizard,  'click', () => this._openWizard());
     on(this.el.navAll,     'click', () => this._openMega());
     on(this.el.navHistory, 'click', () => this._openHistModal());
+    const shb = document.getElementById('statHistBtn');
+    const ssb = document.getElementById('statSavedBtn');
+    if (shb) shb.addEventListener('click', () => this._openHistModal());
+    if (ssb) ssb.addEventListener('click', () => this._openSavedModal());
     on(this.el.navSaved,   'click', () => this._openSavedModal());
     on(this.el.navSettings,'click', () => this._openSettingsModal());
     on(this.el.navFocus,   'click', () => this._toggleFocus());
@@ -4991,6 +5045,10 @@ window.performLogout = async function(){
   try {
     const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
     await signOut(window.firebaseAuthInstance || getAuth());
+  } catch(e){}
+  window.location.href = '/login.html';
+};
+
   } catch(e){}
   window.location.href = '/login.html';
 };

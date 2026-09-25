@@ -141,9 +141,10 @@
 #tokenMeter { display:flex !important; }
 @media (max-width: 1024px) {
   #tokenMeter { display:none !important; }
-  .dh-stats { display:none !important; }
+  .dh-stats .dh-stat { display:none !important; }
   #wizardHeaderBtn, #megaHeaderBtn { display:none !important; }
   .mobile-menu-btn { display:none !important; }
+  #daysLeftChip { display:inline-flex !important; }
 }
 </style>
 
@@ -215,71 +216,63 @@
         </div>
       </div>
 
-      <!-- Credit Sidebar -->
-      <div class="credit-sidebar" id="creditSidebar" style="position:relative;overflow:visible;cursor:pointer;transition:all .3s">
-        <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.5),transparent)"></div>
+      <div class="credit-sidebar" id="creditSidebar">
         <div class="credit-sidebar-hdr">
-          <span class="credit-sidebar-title">CREDITS</span>
-          <span id="creditPlanBadge" class="welcome-badge">WELCOME 10K</span>
+          <span class="credit-sidebar-title">Credits</span>
+          <span id="creditPlanBadge" class="welcome-badge">STARTER</span>
         </div>
-        <div class="credit-balance" id="creditBalance" style="color:#fff;font-size:2rem;font-weight:800;line-height:1;text-shadow:0 0 16px rgba(34,211,238,.4);cursor:pointer" onclick="window.openCreditHistory && window.openCreditHistory()">10,000 <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span></div>
-        <div style="font-size:.65rem;color:rgba(255,255,255,.4);margin-bottom:8px">10,000 welcome credits on signup • Top up packs from Rs 19</div>
-        <div class="credit-progress" style="display:block!important;height:8px!important;background:rgba(255,255,255,.1)!important"><div class="credit-progress-fill" id="creditProgressFill" style="width:100%;background:linear-gradient(90deg,#22d3ee,#1970ff);box-shadow:0 0 10px rgba(34,211,238,.4)"></div></div>
-        <div class="credit-meta"><span id="creditUsed">Used: 0</span><span id="creditRemaining">Remaining: 10,000</span></div>
+        <div class="credit-balance" id="creditBalance" onclick="window.openCreditHistory && window.openCreditHistory()">10,000 <span>credits</span></div>
+        <div class="credit-progress"><div class="credit-progress-fill" id="creditProgressFill"></div></div>
+        <div class="credit-meta"><span id="creditUsed">Used 0</span><span id="creditRemaining">Left 10,000</span></div>
         <div class="credit-actions">
-          <button class="credit-btn credit-btn-buy" onclick="event.stopPropagation(); window.openBuyCreditsModal && window.openBuyCreditsModal()"><i class="fas fa-coins"></i> Buy Credits • From Rs 19</button>
-          <button class="credit-btn credit-btn-history" onclick="event.stopPropagation(); window.openCreditHistory && window.openCreditHistory()"><i class="fas fa-chart-bar"></i> History</button>
+          <button type="button" class="credit-btn credit-btn-buy" onclick="event.stopPropagation(); window.openBuyCreditsModal && window.openBuyCreditsModal()">Add credits</button>
+          <button type="button" class="credit-btn credit-btn-history" onclick="event.stopPropagation(); window.openCreditHistory && window.openCreditHistory()">Usage</button>
         </div>
-        <div class="quick-buy" style="flex-direction:column;align-items:flex-start;gap:8px">
-          <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center">
-            <div class="quick-buy-left"><b>🚀 Pro - 500k</b> Regular study</div>
-            <button class="quick-buy-btn" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('pro')">Buy Rs 49</button>
-          </div>
-          <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center;background:rgba(34,211,238,.06);padding:6px 8px;border-radius:8px;border:1px solid rgba(34,211,238,.15)">
-            <div class="quick-buy-left"><b>⭐ Popular - 1M</b> Best Seller</div>
-            <button class="quick-buy-btn" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('popular')">Buy Rs 99</button>
-          </div>
-          <div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:4px">Packs valid 30 Days from purchase · Razorpay UPI</div>
+        <div class="pack-mini-grid">
+          <button type="button" class="pack-mini" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('starter')"><b>Starter</b><span>₹19 · 100k</span></button>
+          <button type="button" class="pack-mini" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('pro')"><b>Pro</b><span>₹49 · 500k</span></button>
+          <button type="button" class="pack-mini pack-mini-hot" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('popular')"><b>Popular</b><span>₹99 · 1M</span></button>
+          <button type="button" class="pack-mini" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('ultra')"><b>Ultra</b><span>₹199 · 2M</span></button>
         </div>
+        <div class="pack-mini-note">30-day packs · Razorpay UPI</div>
       </div>
 
-      <!-- Stats Grid (7 stats) -->
       <div class="stats-grid-sidebar" id="sidebarStats">
-        <div class="stat-card-sidebar sc-fire">
-          <div class="stat-ico">🔥</div>
-          <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
+        <button type="button" class="stat-card-sidebar sc-fire">
           <div class="stat-label-sidebar">Streak</div>
-        </div>
-        <div class="stat-card-sidebar sc-gold">
-          <div class="stat-ico">🏆</div>
-          <div class="stat-value-sidebar" id="sidebarBestStreak">0</div>
+          <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
+          <div class="stat-hint">days in a row</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-gold">
           <div class="stat-label-sidebar">Best</div>
-        </div>
-        <div class="stat-card-sidebar sc-cyan">
-          <div class="stat-ico">⏱</div>
-          <div class="stat-value-sidebar" id="sidebarSessionsValue">0</div>
+          <div class="stat-value-sidebar" id="sidebarBestStreak">0</div>
+          <div class="stat-hint">record streak</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-cyan">
           <div class="stat-label-sidebar">Sessions</div>
-        </div>
-        <div class="stat-card-sidebar sc-violet">
-          <div class="stat-ico">✦</div>
-          <div class="stat-value-sidebar" id="sidebarWordsValue">0</div>
+          <div class="stat-value-sidebar" id="sidebarSessionsValue">0</div>
+          <div class="stat-hint">study opens</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-violet">
           <div class="stat-label-sidebar">Words</div>
-        </div>
-        <div class="stat-card-sidebar sc-pink">
-          <div class="stat-ico">🕘</div>
-          <div class="stat-value-sidebar" id="sidebarHistoryValue">0</div>
+          <div class="stat-value-sidebar" id="sidebarWordsValue">0</div>
+          <div class="stat-hint">generated</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-pink" id="statHistBtn">
           <div class="stat-label-sidebar">History</div>
-        </div>
-        <div class="stat-card-sidebar sc-mint">
-          <div class="stat-ico">★</div>
-          <div class="stat-value-sidebar" id="sidebarSavedValue">0</div>
+          <div class="stat-value-sidebar" id="sidebarHistoryValue">0</div>
+          <div class="stat-hint">saved runs</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-mint" id="statSavedBtn">
           <div class="stat-label-sidebar">Saved</div>
-        </div>
-        <div class="stat-card-sidebar sc-blue">
-          <div class="stat-ico">📅</div>
-          <div class="stat-value-sidebar" id="sidebarLastActive">—</div>
+          <div class="stat-value-sidebar" id="sidebarSavedValue">0</div>
+          <div class="stat-hint">starred notes</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-blue">
           <div class="stat-label-sidebar">Last active</div>
-        </div>
+          <div class="stat-value-sidebar" id="sidebarLastActive">—</div>
+          <div class="stat-hint">this device + cloud</div>
+        </button>
       </div>
 
       <!-- Navigation -->
@@ -393,6 +386,11 @@
               <span class="dh-ver">v2.0</span>
             </div>
           </div>
+          <button type="button" class="dh-days" id="daysLeftChip" title="Plan details">
+            <i class="far fa-clock"></i>
+            <span id="daysLeftVal">—</span>
+            <span class="dh-days-lbl" id="daysLeftLbl">days left</span>
+          </button>
         </div>
 
         <!-- Header Stats -->
@@ -402,11 +400,6 @@
             <div class="token-track"><div class="token-fill" id="tokenBar"></div></div>
             <span id="tokenCount">-- / --</span>
           </div>
-          <button type="button" class="dh-days" id="daysLeftChip" title="Plan details">
-            <i class="far fa-clock"></i>
-            <span id="daysLeftVal">—</span>
-            <span class="dh-days-lbl" id="daysLeftLbl">days left</span>
-          </button>
           <div class="dh-stat dh-stat-streak" id="headerStreakWrap">
             <i class="fas fa-fire"></i>
             <span id="headerStreak" class="dh-streak-val">0</span>
@@ -1132,10 +1125,14 @@ try {
       badge.textContent = labels[pl] || 'WELCOME 10K';
     }
     const cr = document.getElementById('creditRemaining');
-    if (cr) cr.textContent = `Remaining: ${remaining.toLocaleString()}`;
+    if (cr) cr.textContent = `Left ${Number(remaining||0).toLocaleString()}`;
+    const cu = document.getElementById('creditUsed');
+    const usedN = Number((window.PAID_TOKENS && (window.PAID_TOKENS.used || window.PAID_TOKENS.totalUsed)) || Math.max(0, (limit||0) - (remaining||0)));
+    if (cu) cu.textContent = `Used ${usedN.toLocaleString()}`;
     const pf = document.getElementById('creditProgressFill');
-    if (pf && limit) {
-      const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
+    if (pf) {
+      const lim = limit || (remaining + usedN) || 1;
+      const pct = Math.max(0, Math.min(100, (remaining/lim)*100));
       pf.style.width = pct + '%';
     }
   };

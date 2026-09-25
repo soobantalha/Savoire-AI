@@ -16,40 +16,42 @@ module.exports = async function handler(req, res) {
     const creditsToAdd = creditsMap[plan];
     if (!creditsToAdd) return res.status(400).json({ error: 'Invalid plan' });
     const db = getDb();
-    const existingTx = await db.collection('creditHistory').where('paymentId', '==', paymentId).get();
-    if (!existingTx.empty) return res.json({ success: true, message: 'Already credited', credits_added: creditsToAdd });
     const userRef = db.collection('users').doc(uid);
+    const existingTx = await userRef.collection('purchaseHistory').where('paymentId', '==', paymentId).limit(1).get();
+    if (!existingTx.empty) return res.json({ success: true, message: 'Already credited', credits_added: creditsToAdd });
     const userSnap = await userRef.get();
-    const prevBalance = userSnap.exists ? (userSnap.data().balance || 0) : 0;
+    if (!userSnap.exists) return res.status(404).json({ error: 'User not found' });
+    const prevBalance = userSnap.data().balance || 0;
     const { FieldValue } = require('firebase-admin/firestore');
+    const validTill = new Date(); validTill.setDate(validTill.getDate() + 30);
     await db.runTransaction(async (t) => {
       const docSnap = await t.get(userRef);
       if (!docSnap.exists) throw new Error('User not found');
-      const validTill = new Date(); validTill.setDate(validTill.getDate()+30);
       t.update(userRef, {
         balance: FieldValue.increment(creditsToAdd),
         totalPurchased: FieldValue.increment(creditsToAdd),
-        plan, isPremium: true,
+        plan,
+        isPremium: true,
         lastPurchaseAt: FieldValue.serverTimestamp(),
         validity_till: validTill.toISOString(),
-        totalPaid: FieldValue.increment(amountMap[plan]||0),
+        totalPaid: FieldValue.increment(amountMap[plan] || 0),
         tokens_limit: FieldValue.increment(creditsToAdd)
       });
     });
     await userRef.collection('purchaseHistory').add({
-      timestamp: FieldValue.serverTimestamp(), type: 'purchase', plan, credits: creditsToAdd,
-      amount: amountMap[plan], paymentId, orderId, status: 'success',
-      creditsRemaining: prevBalance + creditsToAdd, description: 'Purchased ' + plan + ' - Monthly 30 Days',
-      validity: '30 Days', validTill: new Date(Date.now()+30*24*60*60*1000).toISOString()
+      timestamp: FieldValue.serverTimestamp(),
+      type: 'purchase',
+      plan,
+      credits: creditsToAdd,
+      amount: amountMap[plan],
+      paymentId,
+      orderId,
+      status: 'success',
+      creditsRemaining: prevBalance + creditsToAdd,
+      description: 'Purchased ' + plan + ' · 30 days',
+      validity: '30 Days',
+      validTill: validTill.toISOString()
     });
-    await db.collection('creditHistory').add({
-      uid, type: 'purchase', plan, credits: creditsToAdd,
-      amount: amountMap[plan], paymentId, orderId,
-      description: 'Purchased ' + plan + ' - ' + creditsToAdd.toLocaleString() + ' credits for Rs ' + amountMap[plan],
-      balanceAfter: prevBalance + creditsToAdd,
-      createdAt: FieldValue.serverTimestamp()
-    });
-    await db.collection('transactions').add({ uid, orderId, paymentId, signature, plan, amount: amountMap[plan], credits_credited: creditsToAdd, status: 'success', createdAt: FieldValue.serverTimestamp() });
     res.json({ success: true, credits_added: creditsToAdd, plan, new_balance: prevBalance + creditsToAdd });
   } catch (err) { console.error('Verify error', err); res.status(500).json({ error: err.message }); }
 };
