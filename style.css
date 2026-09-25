@@ -41974,3 +41974,71 @@ html[data-theme="dark"]:not(:has(.hero-headline)) .out-area {
 }
 .stat-card-sidebar.sc-blue .stat-value-sidebar { font-size:1.15rem !important; }
 .stat-card-sidebar:hover { border-color:rgba(255,255,255,.2)!important; background:#141822 !important; }
+
+
+/* ══ FIX collapsed credits + gold scrollbar + header junk ══ */
+.left-panel::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
+.left-panel { scrollbar-width: none !important; border-right: 1px solid rgba(255,255,255,.08) !important; box-shadow: none !important; }
+.left-panel::after, .left-panel::before,
+.right-panel::after, .dash-body::after { display:none !important; content:none !important; width:0 !important; }
+
+#creditSidebar.credit-sidebar,
+.credit-sidebar {
+  display: block !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+  padding: 16px !important;
+  margin: 12px !important;
+}
+#creditSidebar > * { display: block !important; height: auto !important; max-height: none !important; visibility: visible !important; opacity: 1 !important; }
+#creditSidebar .credit-sidebar-hdr { display: flex !important; }
+#creditBalance, .credit-balance, #creditSidebar .credit-balance {
+  display: block !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #fff !important;
+  color: #fff !important;
+  filter: none !important;
+  font-size: 1.7rem !important;
+  line-height: 1.15 !important;
+  min-height: 1.2em !important;
+}
+#creditBalance span { -webkit-text-fill-color: #22d3ee !important; color: #22d3ee !important; }
+#creditSidebar .credit-progress { display: block !important; height: 6px !important; }
+#creditSidebar .credit-meta { display: flex !important; }
+#creditSidebar .credit-actions { display: grid !important; grid-template-columns: 1.15fr .85fr !important; }
+#creditSidebar .pack-mini-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; }
+#creditSidebar .pack-mini { display: block !important; width: 100% !important; }
+#creditSidebar .credit-btn { display: flex !important; align-items: center !important; justify-content: center !important; }
+
+.dash-hdr .hdr-landing-btn,
+.dash-hdr .dh-stat,
+.dash-hdr .dh-stat-hide-md,
+.dash-hdr .dh-stat-hide-sm { display: none !important; }
+.dash-hdr #tokenMeter { display: flex !important; }
+.dash-hdr .dh-greeting { display: flex !important; }
+
+.stat-card-sidebar {
+  all: revert;
+}
+#sidebarStats .stat-card-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  min-height: 86px !important;
+  padding: 12px !important;
+  border-radius: 16px !important;
+  background: #10131a !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: #fff !important;
+  cursor: pointer !important;
+  font: inherit !important;
+  text-align: left !important;
+}
+#sidebarStats .stat-value-sidebar { color:#fff !important; font-size:1.3rem !important; font-weight:800 !important; }
+#sidebarStats .stat-label-sidebar { color:rgba(255,255,255,.45) !important; }
+#sidebarStats .stat-card-sidebar.sc-blue { grid-column: 1 / -1 !important; flex-direction: row !important; align-items: center !important; }

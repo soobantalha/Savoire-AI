@@ -625,7 +625,9 @@ class SavoireApp {
     dy.forEach(id => { this.el[id] = g(id); });
   }
 
-  // ─── PARTICLES ────────    if (!canvas) return;
+  _initParticles() {
+    const canvas = this.el.particleCanvas;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     window.addEventListener('resize', resize);
@@ -5048,7 +5050,6 @@ window.performLogout = async function(){
   } catch(e){}
   window.location.href = '/login.html';
 };
-
-  } catch(e){}
-  window.location.href = '/login.html';
+window.openCreditHistory = function(){
+  if (window._app && window._app._openCreditHistory) return window._app._openCreditHistory();
 };
