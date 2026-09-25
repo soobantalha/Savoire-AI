@@ -42042,3 +42042,64 @@ html[data-theme="dark"]:not(:has(.hero-headline)) .out-area {
 #sidebarStats .stat-value-sidebar { color:#fff !important; font-size:1.3rem !important; font-weight:800 !important; }
 #sidebarStats .stat-label-sidebar { color:rgba(255,255,255,.45) !important; }
 #sidebarStats .stat-card-sidebar.sc-blue { grid-column: 1 / -1 !important; flex-direction: row !important; align-items: center !important; }
+
+
+/* ══ No overlay: credits then stats, stacked ══ */
+#leftPanel, .left-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+#creditSidebar.credit-sidebar {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 10px 12px 14px !important;
+  padding: 16px !important;
+  transform: none !important;
+}
+#creditSidebar > * {
+  position: relative !important;
+  display: revert !important;
+  float: none !important;
+  transform: none !important;
+}
+#creditSidebar .credit-sidebar-hdr { display: flex !important; }
+#creditSidebar .credit-actions {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+#creditSidebar .credit-btn,
+#creditSidebar .pack-mini {
+  position: relative !important;
+  z-index: 1 !important;
+  transform: none !important;
+  inset: auto !important;
+}
+#creditSidebar .pack-mini-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  position: relative !important;
+}
+#sidebarStats {
+  position: relative !important;
+  z-index: 1 !important;
+  margin: 0 12px 16px !important;
+  clear: both !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+}
+#sidebarStats .stat-card-sidebar {
+  position: relative !important;
+  z-index: 0 !important;
+  transform: none !important;
+}
+.sidebar-nav { position: relative !important; z-index: 1 !important; margin-top: 4px !important; }

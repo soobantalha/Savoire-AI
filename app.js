@@ -4003,6 +4003,39 @@ Examples:
 
 
   // ─── PAID TOKEN SYSTEM (Added for Razorpay + Firebase) ────────────────────
+  _bindGoogleCloud(data) {
+    if (!data) return;
+    const uid = data.uid || '';
+    const prev = localStorage.getItem('sv_uid') || '';
+    if (uid && prev && prev !== uid) {
+      try {
+        ['sv_history','sv_saved','sv_sessions','sv_total_words','sv_streak','sv_last_active'].forEach(k => localStorage.removeItem(k));
+      } catch(e){}
+      this.history = [];
+      this.saved = [];
+      this.sessions = 0;
+      this.totalWords = 0;
+      this.streak = { count: 0, lastDate: null, bestStreak: 0 };
+    }
+    if (uid) localStorage.setItem('sv_uid', uid);
+    if (data.displayName) {
+      this.userName = data.displayName;
+      localStorage.setItem('sv_user', data.displayName);
+    }
+    if (data.sessions != null) this.sessions = Number(data.sessions) || 0;
+    if (data.totalWords != null) this.totalWords = Number(data.totalWords) || 0;
+    this.streak.count = Math.max(this.streak.count||0, Number(data.streak)||0);
+    this.streak.bestStreak = Math.max(this.streak.bestStreak||0, Number(data.bestStreak)||0);
+    if (data.lastStreakDate) this.streak.lastDate = data.lastStreakDate;
+    this.lastActive = this._getISTDate();
+    localStorage.setItem('sv_sessions', String(this.sessions));
+    localStorage.setItem('sv_total_words', String(this.totalWords));
+    localStorage.setItem('sv_streak', JSON.stringify(this.streak));
+    localStorage.setItem('sv_last_active', this.lastActive);
+    this._save('sv_history', this.history);
+    this._pushStatsCloud();
+  }
+
   async _fetchPaidTokenBalance() {
     try {
       const fbToken = localStorage.getItem('sv_firebase_token');
@@ -4014,19 +4047,9 @@ Examples:
           window.PAID_TOKENS = data;
           if (window._updatePaidTokenBar) window._updatePaidTokenBar(data.remaining, data.limit, data.plan);
           try {
-            if (data.sessions) { this.sessions = Math.max(this.sessions||0, data.sessions); localStorage.setItem('sv_sessions', String(this.sessions)); }
-            if (data.totalWords) { this.totalWords = Math.max(this.totalWords||0, data.totalWords); localStorage.setItem('sv_total_words', String(this.totalWords)); }
-            if (data.streak || data.bestStreak) {
-              this.streak.count = Math.max(this.streak.count||0, data.streak||0);
-              this.streak.bestStreak = Math.max(this.streak.bestStreak||0, data.bestStreak||0);
-              if (data.lastStreakDate) this.streak.lastDate = data.lastStreakDate;
-              localStorage.setItem('sv_streak', JSON.stringify(this.streak));
-            }
-            if (data.lastActive) {
-              this.lastActive = data.lastActive;
-              localStorage.setItem('sv_last_active', data.lastActive);
-            }
+            this._bindGoogleCloud(data);
             this._updateAllStats();
+            this._updateUserUI();
           } catch(e){}
           if (this._fetchCloudHistory) { try { await this._fetchCloudHistory(); } catch(e){} }
           if (this._fetchCloudSaved) { try { await this._fetchCloudSaved(); } catch(e){} }
