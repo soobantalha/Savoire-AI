@@ -15,6 +15,91 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style id="sv-lock">
+    /* Sidebar stack — credits then stats, never overlay (flex-shrink was the bug) */
+    #leftPanel.left-panel {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+    .sb-stack {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 14px !important;
+      flex: 0 0 auto !important;
+      width: auto !important;
+      margin: 8px 12px 12px !important;
+    }
+    #creditSidebar {
+      flex: 0 0 auto !important;
+      height: auto !important;
+      max-height: none !important;
+      min-height: 0 !important;
+      overflow: visible !important;
+      position: relative !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      padding: 16px !important;
+      margin: 0 !important;
+      transform: none !important;
+      z-index: 1 !important;
+    }
+    #creditSidebar .credit-actions {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      position: static !important;
+    }
+    #creditSidebar .pack-mini-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+      position: static !important;
+    }
+    #creditSidebar .pack-mini b, #creditSidebar .pack-mini span {
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+    #sidebarStats {
+      flex: 0 0 auto !important;
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+      margin: 0 !important;
+      position: relative !important;
+      z-index: 0 !important;
+      transform: none !important;
+    }
+    #sidebarStats .stat-card-sidebar {
+      position: relative !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+      min-height: 88px !important;
+      padding: 12px !important;
+      overflow: hidden !important;
+      transform: none !important;
+      float: none !important;
+    }
+    #sidebarStats .sc-blue { grid-column: 1 / -1 !important; flex-direction: row !important; align-items: center !important; min-height: 56px !important; }
+    #sidebarNav { flex: 0 0 auto !important; position: relative !important; z-index: 1 !important; }
+    .feature-detail-launch { display: none !important; }
+    .dash-hdr .dh-btn, .dash-hdr .dh-wizard-btn, .dash-hdr .dh-mega-btn, .dash-hdr .dh-av {
+      width: 40px !important; height: 40px !important;
+      background: rgba(255,255,255,.08) !important;
+      border: 1px solid rgba(255,255,255,.14) !important;
+      color: #fff !important; border-radius: 12px !important;
+    }
+    .lp-hist-list { max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent; }
+    .lp-hist-list::-webkit-scrollbar { width: 4px; }
+    .lp-hist-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 4px; }
+    @media (max-width: 1024px) {
+      .dash-hdr .dh-logo { display: flex !important; }
+      .dash-hdr #daysLeftChip { display: inline-flex !important; }
+      .dash-hdr #tokenMeter { display: flex !important; }
+    }
+  </style>
 
   <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -216,7 +301,8 @@
         </div>
       </div>
 
-      <div class="credit-sidebar" id="creditSidebar">
+      <div class="sb-stack">
+      <div class="credit-sidebar" id="creditSidebar" style="flex:0 0 auto;height:auto;overflow:visible;position:relative">
         <div class="credit-sidebar-hdr">
           <span class="credit-sidebar-title">Credits</span>
           <span id="creditPlanBadge" class="welcome-badge">STARTER</span>
@@ -237,7 +323,7 @@
         <div class="pack-mini-note">30-day packs · Razorpay UPI</div>
       </div>
 
-      <div class="stats-grid-sidebar" id="sidebarStats">
+      <div class="stats-grid-sidebar" id="sidebarStats" style="flex:0 0 auto;position:relative">
         <button type="button" class="stat-card-sidebar sc-fire">
           <div class="stat-label-sidebar">Streak</div>
           <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
@@ -273,6 +359,7 @@
           <div class="stat-value-sidebar" id="sidebarLastActive">—</div>
           <div class="stat-hint">this device + cloud</div>
         </button>
+      </div>
       </div>
 
       <!-- Navigation -->
@@ -1649,5 +1736,5 @@ window.performLogout = async function(){
 };
 </script>
 
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4134a718d6cf5b6',t:'MTc5MDQzNjQyNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
