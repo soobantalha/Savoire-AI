@@ -3599,10 +3599,12 @@ Examples:
     }
     this.el.lpHistList.innerHTML = this.history.slice(0, 6).map(h => `
       <div class="lp-hist-item" onclick="window._app._loadHistory('${h.id}')">
-        <i class="fas ${ICONS[h.tool]||'fa-book'} lp-hist-icon" ${h.tool==='all'?'style="color:#d4af37"':''}></i>
-        <div class="lp-hist-topic">${this._esc((h.topic||'').slice(0,28))}</div>
-        <div class="lp-hist-time">${this._relTime(h.ts)}</div>
-        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delHistory('${h.id}')">
+        <i class="fas ${ICONS[h.tool]||'fa-book'} lp-hist-icon"></i>
+        <div class="lp-hist-body">
+          <div class="lp-hist-topic">${this._esc(h.topic||'Untitled')}</div>
+          <div class="lp-hist-time">${this._relTime(h.ts)}</div>
+        </div>
+        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delHistory('${h.id}')" aria-label="Delete">
           <i class="fas fa-times"></i>
         </button>
       </div>`).join('');
@@ -3617,10 +3619,12 @@ Examples:
     }
     this.el.lpSavedList.innerHTML = this.saved.slice(0, 5).map(s => `
       <div class="lp-hist-item" onclick="window._app._loadSaved('${s.id}')">
-        <i class="fas ${ICONS[s.tool]||'fa-star'} lp-hist-icon" style="color:#d4af37"></i>
-        <div class="lp-hist-topic">${this._esc((s.topic||'').slice(0,28))}</div>
-        <div class="lp-hist-time">${this._relTime(s.savedAt)}</div>
-        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delSaved('${s.id}')">
+        <i class="fas ${ICONS[s.tool]||'fa-star'} lp-hist-icon"></i>
+        <div class="lp-hist-body">
+          <div class="lp-hist-topic">${this._esc(s.topic||'Untitled')}</div>
+          <div class="lp-hist-time">${this._relTime(s.savedAt)}</div>
+        </div>
+        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delSaved('${s.id}')" aria-label="Delete">
           <i class="fas fa-times"></i>
         </button>
       </div>`).join('');

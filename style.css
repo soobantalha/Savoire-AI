@@ -42103,3 +42103,245 @@ html[data-theme="dark"]:not(:has(.hero-headline)) .out-area {
   transform: none !important;
 }
 .sidebar-nav { position: relative !important; z-index: 1 !important; margin-top: 4px !important; }
+
+
+/* ════════════════════════════════════════════════════════════
+   GUI ERROR SWEEP — last win
+   ════════════════════════════════════════════════════════════ */
+
+/* Stats: strict 2-col, no overlap */
+#sidebarStats {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  margin: 0 12px 16px !important;
+  isolation: isolate;
+}
+#sidebarStats .stat-card-sidebar {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  gap: 4px !important;
+  min-height: 92px !important;
+  height: auto !important;
+  padding: 12px 12px 10px !important;
+  overflow: hidden !important;
+  border-radius: 16px !important;
+  background: #10131a !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  position: relative !important;
+  z-index: 0 !important;
+  transform: none !important;
+  float: none !important;
+}
+#sidebarStats .stat-label-sidebar {
+  display: block !important;
+  font-size: .62rem !important;
+  letter-spacing: .1em !important;
+  text-transform: uppercase !important;
+  color: rgba(255,255,255,.45) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  width: 100% !important;
+}
+#sidebarStats .stat-value-sidebar {
+  display: block !important;
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+#sidebarStats .stat-hint {
+  display: block !important;
+  font-size: .62rem !important;
+  color: rgba(255,255,255,.38) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  width: 100% !important;
+}
+#sidebarStats .stat-card-sidebar.sc-blue {
+  grid-column: 1 / -1 !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  min-height: 58px !important;
+  gap: 12px !important;
+}
+
+/* Credit packs readable */
+#creditSidebar { isolation: isolate; z-index: 2; }
+#creditSidebar .pack-mini-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+}
+#creditSidebar .pack-mini {
+  min-height: 58px !important;
+  padding: 10px !important;
+  overflow: hidden !important;
+}
+#creditSidebar .pack-mini b,
+#creditSidebar .pack-mini span {
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#creditSidebar .credit-actions {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Header buttons — one style */
+.dash-hdr .dh-btn,
+.dash-hdr .dh-wizard-btn,
+.dash-hdr .dh-mega-btn,
+.dash-hdr .dh-av {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.dash-hdr .dh-av { border-radius: 50% !important; overflow: hidden !important; }
+.dash-hdr .dh-wizard-btn, .dash-hdr .dh-mega-btn {
+  background: rgba(255,255,255,.07) !important;
+  color: #fff !important;
+}
+
+/* Nav active */
+.nav-item-wizard { background: #fff !important; color: #05060a !important; }
+.nav-item-wizard .nav-text, .nav-item-wizard i { color: #05060a !important; }
+.nav-item-mega { background: rgba(255,255,255,.06) !important; border: 1px solid rgba(255,255,255,.12) !important; }
+
+/* Recent study rows */
+.lp-hist-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 12px 14px !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  margin-bottom: 8px !important;
+}
+.lp-hist-body { flex: 1 !important; min-width: 0 !important; }
+.lp-hist-topic {
+  font-size: .82rem !important;
+  font-weight: 650 !important;
+  color: #fff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.lp-hist-time { font-size: .68rem !important; color: rgba(255,255,255,.42) !important; margin-top: 2px !important; }
+.lp-hist-delete {
+  flex-shrink: 0 !important;
+  width: 28px !important; height: 28px !important;
+  border: 0 !important;
+  background: rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.55) !important;
+  border-radius: 8px !important;
+}
+.lp-hist-icon { flex-shrink: 0 !important; width: 18px !important; text-align: center !important; }
+
+/* Empty CTAs */
+.es-cta-row { gap: 10px !important; }
+.empty-wizard-btn, .empty-mega-btn, #emptyBuyBtn {
+  min-height: 48px !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+}
+.empty-mega-btn {
+  background: rgba(255,255,255,.06) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  opacity: 1 !important;
+}
+
+.es-features {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0,1fr)) !important;
+  gap: 8px !important;
+  max-width: 520px !important;
+  margin: 18px auto 0 !important;
+}
+.es-feat, .es-feat-chip {
+  justify-content: center !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+/* Wizard tools */
+.wizard-tool-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+.wizard-tool-card {
+  position: relative !important;
+  padding: 16px !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  min-height: 120px !important;
+}
+.wizard-tool-card.selected {
+  border-color: #22d3ee !important;
+  background: rgba(34,211,238,.1) !important;
+  box-shadow: 0 0 0 1px #22d3ee inset !important;
+}
+.wizard-tool-card[data-tool="all"] {
+  grid-column: 1 / -1 !important;
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+}
+.wizard-tool-card[data-tool="all"].selected {
+  border-color: #22d3ee !important;
+  background: rgba(34,211,238,.1) !important;
+}
+#wizardModal .modal { padding-top: 8px !important; overflow: hidden !important; }
+#wizardModal .modal-header { padding: 16px 18px !important; }
+#wizardModal .modal-title img { width: 22px !important; height: 22px !important; }
+
+/* Mobile header keep logo + days + compact credits */
+@media (max-width: 1024px) {
+  .dash-hdr .dh-logo { display: flex !important; }
+  .dash-hdr .dh-name { font-size: 1rem !important; }
+  .dash-hdr #daysLeftChip { display: inline-flex !important; }
+  .dash-hdr #tokenMeter {
+    display: flex !important;
+    transform: scale(.86);
+    transform-origin: right center;
+    max-width: 150px;
+  }
+  .dash-hdr .dh-greeting, .dash-hdr .hdr-landing-btn { display: none !important; }
+  .es-features { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  .es-feat-chip.es-feat-mega { grid-column: 1 / -1 !important; }
+  #svDock.sv-dock {
+    background: rgba(16,16,22,.42) !important;
+    backdrop-filter: blur(48px) saturate(210%) !important;
+    -webkit-backdrop-filter: blur(48px) saturate(210%) !important;
+    border: .5px solid rgba(255,255,255,.28) !important;
+  }
+  #svDock button { opacity: 1 !important; }
+}
+
+html[data-theme="light"]:not(:has(.hero-headline)) #sidebarStats .stat-card-sidebar {
+  background: #fff !important; color: #111 !important; border-color: rgba(0,0,0,.08) !important;
+}
+html[data-theme="light"]:not(:has(.hero-headline)) #sidebarStats .stat-value-sidebar { color: #111 !important; }
+html[data-theme="golden"]:not(:has(.hero-headline)) #sidebarStats .stat-card-sidebar {
+  background: #1a140e !important; border-color: rgba(212,175,55,.22) !important;
+}
