@@ -16,89 +16,108 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style id="sv-lock">
-    /* Sidebar stack — credits then stats, never overlay (flex-shrink was the bug) */
-    #leftPanel.left-panel {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: stretch !important;
-    }
-    .sb-stack {
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 14px !important;
-      flex: 0 0 auto !important;
-      width: auto !important;
-      margin: 8px 12px 12px !important;
-    }
+    #leftPanel.left-panel { display:flex !important; flex-direction:column !important; }
+    .sb-stack { display:flex !important; flex-direction:column !important; gap:14px !important; flex:0 0 auto !important; margin:8px 12px 12px !important; }
     #creditSidebar {
-      flex: 0 0 auto !important;
-      height: auto !important;
-      max-height: none !important;
-      min-height: 0 !important;
-      overflow: visible !important;
-      position: relative !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 10px !important;
-      padding: 16px !important;
-      margin: 0 !important;
-      transform: none !important;
-      z-index: 1 !important;
+      flex:0 0 auto !important; height:auto !important; overflow:visible !important; position:relative !important;
+      display:flex !important; flex-direction:column !important; gap:10px !important; padding:16px !important; margin:0 !important;
+      background: radial-gradient(120% 80% at 0% 0%, rgba(34,211,238,.12), transparent 50%), #0c1018 !important;
+      border:1px solid rgba(34,211,238,.18) !important; border-radius:20px !important;
     }
-    #creditSidebar .credit-actions {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      position: static !important;
+    #creditBalance { font-size:1.85rem !important; letter-spacing:-.03em !important; color:#fff !important; -webkit-text-fill-color:#fff !important; }
+    #creditBalance span { color:#22d3ee !important; -webkit-text-fill-color:#22d3ee !important; }
+    .credit-progress-fill { background:linear-gradient(90deg,#22d3ee,#3b82f6) !important; box-shadow:0 0 10px rgba(34,211,238,.45) !important; }
+    #creditSidebar .credit-btn-buy {
+      background:linear-gradient(135deg,#f0d27a,#d4af37) !important; color:#140f00 !important;
+      font-weight:800 !important; border:0 !important; min-height:44px !important; border-radius:12px !important;
+      box-shadow:0 8px 20px rgba(212,175,55,.25) !important;
     }
-    #creditSidebar .pack-mini-grid {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 8px !important;
-      position: static !important;
+    #creditSidebar .credit-btn-history {
+      background:rgba(34,211,238,.1) !important; color:#67e8f9 !important; border:1px solid rgba(34,211,238,.28) !important;
+      min-height:44px !important; border-radius:12px !important;
     }
-    #creditSidebar .pack-mini b, #creditSidebar .pack-mini span {
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-    }
-    #sidebarStats {
-      flex: 0 0 auto !important;
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 8px !important;
-      margin: 0 !important;
-      position: relative !important;
-      z-index: 0 !important;
-      transform: none !important;
-    }
+    #creditSidebar .pack-mini-grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; }
+    #creditSidebar .pack-mini { padding:12px 10px !important; border-radius:14px !important; background:rgba(255,255,255,.04) !important; border:1px solid rgba(255,255,255,.1) !important; text-align:left !important; color:#fff !important; }
+    #creditSidebar .pack-mini b { display:block !important; font-size:.78rem !important; }
+    #creditSidebar .pack-mini span { display:block !important; font-size:.68rem !important; color:#67e8f9 !important; }
+    #creditSidebar .pack-mini-hot { border-color:rgba(212,175,55,.45) !important; background:rgba(212,175,55,.1) !important; }
+    #creditSidebar .pack-mini:hover { transform:translateY(-3px); box-shadow:0 8px 18px rgba(0,0,0,.3); }
+    #sidebarStats { flex:0 0 auto !important; display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; margin:0 !important; }
     #sidebarStats .stat-card-sidebar {
-      position: relative !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 4px !important;
-      min-height: 88px !important;
-      padding: 12px !important;
-      overflow: hidden !important;
-      transform: none !important;
-      float: none !important;
+      display:flex !important; flex-direction:column !important; gap:4px !important;
+      min-height:90px !important; padding:12px !important; overflow:hidden !important;
+      border-radius:16px !important; transform:none !important;
     }
-    #sidebarStats .sc-blue { grid-column: 1 / -1 !important; flex-direction: row !important; align-items: center !important; min-height: 56px !important; }
-    #sidebarNav { flex: 0 0 auto !important; position: relative !important; z-index: 1 !important; }
-    .feature-detail-launch { display: none !important; }
-    .dash-hdr .dh-btn, .dash-hdr .dh-wizard-btn, .dash-hdr .dh-mega-btn, .dash-hdr .dh-av {
-      width: 40px !important; height: 40px !important;
-      background: rgba(255,255,255,.08) !important;
-      border: 1px solid rgba(255,255,255,.14) !important;
-      color: #fff !important; border-radius: 12px !important;
+    #sidebarStats .sc-fire { background:linear-gradient(180deg,rgba(251,146,60,.16),#10131a) !important; border-left:3px solid #fb923c !important; }
+    #sidebarStats .sc-gold { background:linear-gradient(180deg,rgba(240,210,122,.16),#10131a) !important; border-left:3px solid #f0d27a !important; }
+    #sidebarStats .sc-cyan { background:linear-gradient(180deg,rgba(34,211,238,.16),#10131a) !important; border-left:3px solid #22d3ee !important; }
+    #sidebarStats .sc-violet { background:linear-gradient(180deg,rgba(167,139,250,.16),#10131a) !important; border-left:3px solid #a78bfa !important; }
+    #sidebarStats .sc-pink { background:linear-gradient(180deg,rgba(244,114,182,.16),#10131a) !important; border-left:3px solid #f472b6 !important; }
+    #sidebarStats .sc-mint { background:linear-gradient(180deg,rgba(52,211,153,.16),#10131a) !important; border-left:3px solid #34d399 !important; }
+    #sidebarStats .sc-blue { grid-column:1/-1 !important; flex-direction:row !important; align-items:center !important; min-height:58px !important; background:linear-gradient(90deg,rgba(96,165,250,.14),#10131a) !important; border-left:3px solid #60a5fa !important; }
+    #sidebarStats .sc-fire .stat-label-sidebar { color:#fb923c !important; }
+    #sidebarStats .sc-gold .stat-label-sidebar { color:#f0d27a !important; }
+    #sidebarStats .sc-cyan .stat-label-sidebar { color:#22d3ee !important; }
+    #sidebarStats .sc-violet .stat-label-sidebar { color:#a78bfa !important; }
+    #sidebarStats .sc-pink .stat-label-sidebar { color:#f472b6 !important; }
+    #sidebarStats .sc-mint .stat-label-sidebar { color:#34d399 !important; }
+    #sidebarStats .stat-value-sidebar { font-size:1.3rem !important; font-weight:800 !important; color:#fff !important; font-variant-numeric:tabular-nums !important; }
+    #sidebarStats .stat-hint { font-size:.65rem !important; color:rgba(255,255,255,.42) !important; }
+    #sidebarStats .sc-blue .stat-value-sidebar { font-size:1.05rem !important; }
+    .user-profile-sidebar { background:radial-gradient(80% 80% at 0% 0%,rgba(212,175,55,.12),transparent 55%),rgba(255,255,255,.03) !important; border:1px solid rgba(255,255,255,.08) !important; border-radius:16px !important; margin:0 12px 8px !important; padding:12px !important; }
+    .credit-sidebar-title, .lp-hist-title, .lp-title { letter-spacing:.14em !important; text-transform:uppercase !important; color:#f0d27a !important; font-size:.65rem !important; }
+    .nav-item { border-radius:14px !important; margin:6px 12px !important; }
+    .nav-item-wizard { background:#fff !important; color:#05060a !important; }
+    .nav-item-mega { border:1px solid rgba(212,175,55,.35) !important; }
+    .lp-home-link { background:rgba(255,255,255,.06) !important; border:1px solid rgba(255,255,255,.12) !important; border-radius:999px !important; padding:6px 12px !important; color:#fff !important; }
+    .sidebar-about { margin:12px !important; padding:12px !important; border-top:1px solid rgba(212,175,55,.2) !important; }
+    .sb-brand { display:flex; gap:10px; align-items:flex-start; }
+    .sb-brand img { width:28px; height:28px; object-fit:contain; }
+    .sb-brand p { font-size:.65rem; color:rgba(255,255,255,.5); line-height:1.45; margin:0; }
+    .sb-brand a { color:#f0d27a; text-decoration:none; }
+    .sb-brand a:hover { color:#fff; }
+    .feature-detail-launch { display:none !important; }
+    .dash-hdr .dh-btn, .dash-hdr .dh-av {
+      width:40px !important; height:40px !important; background:rgba(255,255,255,.06) !important;
+      border:1px solid rgba(255,255,255,.1) !important; color:#fff !important; border-radius:12px !important;
     }
-    .lp-hist-list { max-height: 220px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent; }
-    .lp-hist-list::-webkit-scrollbar { width: 4px; }
-    .lp-hist-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 4px; }
-    @media (max-width: 1024px) {
-      .dash-hdr .dh-logo { display: flex !important; }
-      .dash-hdr #daysLeftChip { display: inline-flex !important; }
-      .dash-hdr #tokenMeter { display: flex !important; }
+    .dash-hdr .dh-wizard-btn { background:#fff !important; color:#05060a !important; border:0 !important; }
+    .dash-hdr .dh-mega-btn { background:rgba(212,175,55,.15) !important; color:#f0d27a !important; border:1px solid rgba(212,175,55,.3) !important; }
+    #daysLeftChip { background:rgba(34,211,238,.12) !important; border:1px solid rgba(34,211,238,.3) !important; color:#7dd3fc !important; }
+    .es-features { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px !important; max-width:520px !important; margin:16px auto 0 !important; }
+    .es-feat-chip.es-feat-mega { grid-column:1/-1 !important; }
+    .empty-wizard-btn { background:#fff !important; color:#05060a !important; }
+    .empty-mega-btn { background:rgba(255,255,255,.08) !important; color:#fff !important; border:1px solid rgba(255,255,255,.2) !important; opacity:1 !important; }
+    .wizard-tool-card { background:rgba(255,255,255,.04) !important; border:1px solid rgba(255,255,255,.1) !important; }
+    .wizard-tool-card.selected { border-color:#22d3ee !important; background:rgba(34,211,238,.12) !important; box-shadow:0 0 0 1px #22d3ee inset !important; }
+    .wizard-tool-card[data-tool="all"] { grid-column:1/-1 !important; }
+    #wizardModal .modal-header { padding:18px 20px !important; }
+    .left-panel.collapsed { transform:translateX(-110%) !important; }
+    .dash-body.focus-on .right-panel { width:100% !important; }
+    #svExitFocus {
+      display:none; position:fixed; right:18px; bottom:22px; z-index:14000;
+      padding:10px 16px; border-radius:999px; border:1px solid rgba(255,255,255,.2);
+      background:rgba(18,18,24,.7); color:#fff; backdrop-filter:blur(20px); font-weight:700; cursor:pointer;
     }
+    .dash-body.focus-on #svExitFocus { display:inline-flex !important; }
+    @media (max-width:1024px) {
+      .dash-hdr .dh-logo { display:flex !important; }
+      .dash-hdr #daysLeftChip { display:inline-flex !important; }
+      .dash-hdr #tokenMeter { display:flex !important; }
+      .dash-hdr .dh-wizard-btn, .dash-hdr .dh-mega-btn { display:inline-flex !important; }
+      .es-features { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+      #svDock.sv-dock {
+        background:rgba(20,20,24,.65) !important;
+        backdrop-filter:blur(40px) saturate(200%) !important;
+        -webkit-backdrop-filter:blur(40px) saturate(200%) !important;
+        border:.5px solid rgba(255,255,255,.28) !important;
+        box-shadow:0 16px 40px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35) !important;
+      }
+      #svDock button { opacity:1 !important; font-size:9px !important; }
+      #svDock button.on { color:#fff !important; transform:scale(1.08); }
+    }
+    html[data-theme="light"] #creditSidebar { background:#fff !important; }
+    html[data-theme="golden"] #creditSidebar { border-color:rgba(212,175,55,.35) !important; }
   </style>
 
   <!-- Libraries -->
@@ -431,25 +450,11 @@
 
       <!-- About Section (sidebar) -->
       <div class="sidebar-about">
-        <button class="about-toggle-btn" id="aboutToggleBtn">
-          <i class="fas fa-info-circle"></i> About Savoiré AI
-          <i class="fas fa-chevron-down about-chevron" id="aboutChevron"></i>
-        </button>
-        <div class="about-content" id="aboutContent">
-          <div class="about-text">
-            <strong>Savoiré AI v2.0</strong> — World's most advanced AI study assistant.
-            Generate notes, flashcards, quizzes, summaries &amp; mind maps.
-          </div>
-          <div class="about-text">
-            <i class="fas fa-code"></i> Built by <strong>Sooban Talha Technologies</strong><br>
-            <i class="fas fa-globe"></i> <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a>
-          </div>
-          <div class="about-text" style="color:#d4af37;font-style:italic;font-size:0.72rem">
-            "Think Less. Know More." — Sooban Talha
-          </div>
-          <div class="about-text">
-            <i class="fas fa-heart" style="color:#ff4444"></i> 10,000 welcome credits for every student.
-          </div>
+        <div class="sb-brand">
+          <img src="clogo.png" alt="">
+          <p><strong style="color:#fff">Savoiré AI v2.0</strong><br>
+          Developed by Sooban Talha Technologies<br>
+          <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a></p>
         </div>
       </div>
 
@@ -637,7 +642,8 @@
 
       </div>
 
-      <footer class="dash-mini-footer" aria-hidden="true"></footer>
+      <footer class="dash-mini-footer" style="padding:10px 16px;font-size:.65rem;color:rgba(255,255,255,.4)">Developed by <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" style="color:#f0d27a">Sooban Talha Technologies</a></footer>
+      <button type="button" id="svExitFocus">Exit Focus</button>
 
       <!-- ═══════════ BACK TO TOP BUTTON ═══════════ -->
       <button class="back-to-top" id="backToTopBtn" title="Back to top"><i class="fas fa-arrow-up"></i></button>
@@ -1736,5 +1742,5 @@ window.performLogout = async function(){
 };
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a4134a718d6cf5b6',t:'MTc5MDQzNjQyNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a413577b0f3f1c96',t:'MTc5MDQzNjk2MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

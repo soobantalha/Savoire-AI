@@ -358,6 +358,9 @@ class SavoireApp {
     this._checkStreak();
     this._initDemoSystem();
     this._warmupAndTrack();
+    try {
+      if (localStorage.getItem('sv_focus_mode') === '1' && window.innerWidth > 1024) this._setFocusMode(true);
+    } catch(e){}
 
     console.log(`%c✨ ${SAVOIRÉ.BRAND} — ${SAVOIRÉ.TAGLINE}`, 'color:#d4af37;font-size:16px;font-weight:bold');
     console.log(`%c🔧 Built by ${SAVOIRÉ.DEVELOPER} | ${SAVOIRÉ.DEVSITE}`, 'color:#00d4ff;font-size:12px');
@@ -3990,6 +3993,8 @@ Examples:
     this._save('sv_prefs', this.prefs);
     try { localStorage.setItem('sv_site_theme', theme); } catch(e){}
     document.body.setAttribute('data-theme', theme);
+    const next = theme === 'dark' ? 'light' : theme === 'light' ? 'golden' : 'dark';
+    if (this.el.themeBtn) this.el.themeBtn.title = 'Switch to ' + next;
   }
 
   _setFontSize(size) {
@@ -4398,14 +4403,26 @@ Examples:
       const isOpen = this.el.leftPanel.classList.toggle('mobile-open');
       if (this.el.sbBackdrop) this.el.sbBackdrop.classList.toggle('visible', isOpen);
       if (this.el.sbToggle)   this.el.sbToggle.setAttribute('aria-expanded', String(isOpen));
-    } else {
-      const isCollapsed = this.el.leftPanel.classList.toggle('collapsed');
-      this.focusMode    = isCollapsed;
-      if (this.el.focusModeBtn) {
-        this.el.focusModeBtn.innerHTML = isCollapsed
-          ? '<i class="fas fa-compress-alt"></i> <span>Exit</span>'
-          : '<i class="fas fa-expand-alt"></i> <span>Focus</span>';
-      }
+      return;
+    }
+    this._setFocusMode(!this.focusMode);
+  }
+
+  _setFocusMode(on) {
+    this.focusMode = !!on;
+    try { localStorage.setItem('sv_focus_mode', this.focusMode ? '1' : '0'); } catch(e){}
+    if (this.el.leftPanel) this.el.leftPanel.classList.toggle('collapsed', this.focusMode);
+    document.body.classList.toggle('focus-on', this.focusMode);
+    document.querySelector('.dash-body')?.classList.toggle('focus-on', this.focusMode);
+    if (this.el.focusModeBtn) {
+      this.el.focusModeBtn.innerHTML = this.focusMode
+        ? '<i class="fas fa-compress-alt"></i> <span>Exit</span>'
+        : '<i class="fas fa-expand-alt"></i> <span>Focus</span>';
+    }
+    const nav = this.el.navFocus;
+    if (nav) {
+      const t = nav.querySelector('.nav-text');
+      if (t) t.textContent = this.focusMode ? 'Exit Focus' : 'Focus Mode';
     }
   }
 
@@ -4416,7 +4433,10 @@ Examples:
     if (this.el.sbToggle)   this.el.sbToggle.setAttribute('aria-expanded', 'false');
   }
 
-  _toggleFocus() { this._toggleSidebar(); }
+  _toggleFocus() {
+    if (window.innerWidth <= 1024) return;
+    this._setFocusMode(!this.focusMode);
+  }
 
   _initSwipeGestures() {
     let startX = 0;
@@ -4904,6 +4924,14 @@ Examples:
     on(this.el.clearBtn,    'click', () => this._clearOutput());
     on(this.el.newWizardBtn,'click', () => this._openWizard());
     on(this.el.focusModeBtn,'click', () => this._toggleFocus());
+    const exitF = document.getElementById('svExitFocus');
+    if (exitF) exitF.addEventListener('click', () => this._setFocusMode(false));
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
+        e.preventDefault();
+        this._toggleFocus();
+      }
+    });
 
     on(this.el.histSearchInput, 'input', e => {
       const active = this._qs('.hist-filter.active')?.dataset?.filter || 'all';
