@@ -60,9 +60,9 @@ module.exports = async function handler(req, res) {
       const body = req.body || {};
       const patch = {};
       const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
-      if (num(body.sessions) != null) patch.sessions = Math.max(0, Math.floor(body.sessions));
-      if (num(body.totalWords) != null) patch.totalWords = Math.max(0, Math.floor(body.totalWords));
-      if (num(body.totalGenerations) != null) patch.totalGenerations = Math.max(0, Math.floor(body.totalGenerations));
+      if (num(body.sessions) != null) patch.sessions = Math.max(Number(data.sessions)||0, Math.floor(body.sessions));
+      if (num(body.totalWords) != null) patch.totalWords = Math.max(Number(data.totalWords)||0, Math.floor(body.totalWords));
+      if (num(body.totalGenerations) != null) patch.totalGenerations = Math.max(Number(data.totalGenerations)||0, Math.floor(body.totalGenerations));
       if (num(body.historyCount) != null) patch.historyCount = Math.max(0, Math.floor(body.historyCount));
       if (num(body.savedCount) != null) patch.savedCount = Math.max(0, Math.floor(body.savedCount));
       if (typeof body.lastActive === 'string' && body.lastActive.length < 40) patch.lastActive = body.lastActive;

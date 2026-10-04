@@ -344,7 +344,6 @@ class SavoireApp {
     this._liveMMCentral = '';
     this._liveMMConns   = [];
 
-    this._incrementSession();
     this._cacheEl();
     this._applyPrefs();
     this._bindAll();
@@ -360,6 +359,7 @@ class SavoireApp {
     this._checkStreak();
     this._initDemoSystem();
     this._warmupAndTrack();
+    this._bootCloudSync();
     try {
       if (localStorage.getItem('sv_focus_mode') === '1' && window.innerWidth > 1024) this._setFocusMode(true);
     } catch(e){}
@@ -433,11 +433,41 @@ class SavoireApp {
   }
 
   _incrementSession() {
-    this.sessions++;
+    this._tickSessionOnce();
+  }
+
+  _tickSessionOnce() {
+    try {
+      if (sessionStorage.getItem('sv_sess_tick') === '1') return;
+      sessionStorage.setItem('sv_sess_tick', '1');
+    } catch(e) {}
+    this.sessions = (Number(this.sessions) || 0) + 1;
     this._saveSessions();
     const today = this._getISTDate();
     this._lsSet('sv_last_active', today);
     this.lastActive = today;
+    this._updateAllStats();
+    this._refreshWelcomeStats();
+  }
+
+  _bootCloudSync() {
+    const run = () => { try { this._fetchPaidTokenBalance(); } catch(e){} };
+    run();
+    let n = 0;
+    const id = setInterval(() => {
+      n++;
+      run();
+      if (n >= 12 || (window.PAID_TOKENS && window.PAID_TOKENS.uid)) clearInterval(id);
+    }, 600);
+  }
+
+  _refreshWelcomeStats() {
+    if (this.el.wbName && this.userName) this.el.wbName.textContent = this.userName;
+    if (this.el.wbStreak) this.el.wbStreak.textContent = this.streak.count || 0;
+    if (this.el.wbSessions) this.el.wbSessions.textContent = this.sessions || 0;
+    if (this.el.wbSaved) this.el.wbSaved.textContent = (this.saved || []).length;
+    this._updateAllStats();
+    this._updateUserUI();
   }
 
   _warmupAndTrack() {
@@ -4099,8 +4129,8 @@ Examples:
       this.userName = data.displayName;
       this._lsSet('sv_user', data.displayName);
     }
-    if (data.sessions != null) this.sessions = Number(data.sessions) || 0;
-    if (data.totalWords != null) this.totalWords = Number(data.totalWords) || 0;
+    this.sessions = Math.max(Number(this.sessions)||0, Number(data.sessions)||0);
+    this.totalWords = Math.max(Number(this.totalWords)||0, Number(data.totalWords)||0);
     this.streak.count = Math.max(this.streak.count||0, Number(data.streak)||0);
     this.streak.bestStreak = Math.max(this.streak.bestStreak||0, Number(data.bestStreak)||0);
     if (data.lastStreakDate) this.streak.lastDate = data.lastStreakDate;
@@ -4110,6 +4140,10 @@ Examples:
     this._save('sv_streak', this.streak);
     this._lsSet('sv_last_active', this.lastActive);
     this._save('sv_history', this.history);
+    this._tickSessionOnce();
+    this._refreshWelcomeStats();
+    this._renderSidebarHistory();
+    this._renderSidebarSaved();
     this._pushStatsCloud();
   }
 
