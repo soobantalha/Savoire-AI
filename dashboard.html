@@ -13,7 +13,7 @@
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@600;700;800;900&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style id="sv-lock">
     #leftPanel.left-panel { display:flex !important; flex-direction:column !important; }
@@ -152,6 +152,62 @@
     html[data-theme="light"] .wiz-live-q { color: #111 !important; }
 
     html[data-theme="golden"] .dash-body, html[data-theme="golden"] .out-area { background: #120e09 !important; color: #f6ead0 !important; }
+
+    /* Obsidian / Paper / Regal */
+    html[data-theme="dark"] {
+      --sv-bg:#060a18; --sv-text:#e8eef8; --sv-accent:#22ffd0;
+      font-family: Inter, system-ui, sans-serif !important;
+    }
+    html[data-theme="light"] {
+      --sv-bg:#faf8f3; --sv-text:#1a1a1a; --sv-accent:#c2410c;
+      font-family: Georgia, 'Times New Roman', serif !important;
+    }
+    html[data-theme="light"] body, html[data-theme="light"] .dash-body, html[data-theme="light"] .out-area,
+    html[data-theme="light"] .left-panel, html[data-theme="light"] .dash-hdr, html[data-theme="light"] .modal {
+      background: #faf8f3 !important; color: #1a1a1a !important;
+    }
+    html[data-theme="light"] .es-title, html[data-theme="light"] .es-title strong, html[data-theme="light"] .nav-text,
+    html[data-theme="light"] .stat-value-sidebar, html[data-theme="light"] .user-name-sidebar,
+    html[data-theme="light"] .md-content, html[data-theme="light"] .md-content p {
+      color:#1a1a1a !important; -webkit-text-fill-color:#1a1a1a !important;
+    }
+    html[data-theme="light"] .empty-wizard-btn, html[data-theme="light"] .credit-btn-buy {
+      background:#c2410c !important; color:#fff !important; border-radius:8px !important;
+    }
+    html[data-theme="golden"] {
+      font-family: 'Cormorant Garamond', Garamond, serif !important;
+    }
+    html[data-theme="golden"] .es-title, html[data-theme="golden"] .dh-name {
+      font-family: 'Playfair Display', serif !important;
+    }
+    html[data-theme="golden"] .empty-wizard-btn, html[data-theme="golden"] .credit-btn-buy {
+      background:linear-gradient(135deg,#8b6914,#f0d27a,#8b6914) !important; color:#140f00 !important;
+    }
+    .credit-btn-buy, .empty-wizard-btn, .dh-wizard-btn, .mega-generate-btn, .wizard-btn-primary, .tier-buy-btn {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 8px 22px rgba(0,0,0,.25) !important;
+      transition: transform .2s, box-shadow .2s !important;
+    }
+    .credit-btn-buy:hover, .empty-wizard-btn:hover, .dh-wizard-btn:hover {
+      transform: translateY(-2px) !important;
+    }
+    .credit-btn-buy:active, .empty-wizard-btn:active { transform: scale(.97) !important; }
+    @media (max-width:1024px) {
+      #svDock.sv-dock {
+        left:16px !important; right:16px !important;
+        bottom: calc(16px + env(safe-area-inset-bottom,0px)) !important;
+        height:68px !important; border-radius:32px !important;
+        background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(20,20,30,.55)) !important;
+        backdrop-filter: blur(50px) saturate(220%) brightness(1.08) !important;
+        -webkit-backdrop-filter: blur(50px) saturate(220%) brightness(1.08) !important;
+        border: .5px solid rgba(255,255,255,.28) !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4), 0 0 40px rgba(34,255,208,.08) !important;
+      }
+      #svDock .sv-dock-orb {
+        width:52px !important; height:52px !important;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(34,255,208,.2) 40%, transparent 70%) !important;
+      }
+      #svDock button.on { color:#22ffd0 !important; }
+    }
 
     /* 1 Dark theme neon bluish-green depth */
     html[data-theme="dark"] .dash-body,
@@ -1061,6 +1117,17 @@
 
           </div>
           <div style="margin-top:10px;font-size:.65rem;color:rgba(255,255,255,.35)">Log out only signs you out. Cloud credits, history and saved notes stay on your account.</div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-cloud"></i> Data Management</div>
+          <p id="svLastSync" style="font-size:.72rem;opacity:.6;margin-bottom:10px">Last synced: —</p>
+          <div class="settings-buttons">
+            <button type="button" class="settings-btn" id="svUploadCloud"><i class="fas fa-cloud-upload-alt"></i> Upload to Cloud</button>
+            <button type="button" class="settings-btn" id="svDownloadCloud"><i class="fas fa-cloud-download-alt"></i> Download from Cloud</button>
+            <button type="button" class="settings-btn" id="svClearLocalOnly" style="color:#f87171"><i class="fas fa-broom"></i> Clear Local History</button>
+          </div>
+          <div style="font-size:.65rem;opacity:.45;margin-top:8px">Cloud is tied to your Google account. Local files use your user id so other logins on this browser stay separate.</div>
         </div>
 
         <!-- Backup & Restore - Only chats/saved -->

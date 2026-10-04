@@ -305,11 +305,13 @@ class SavoireApp {
     this.streamBuffer  = '';
     this.focusMode     = false;
     this.pdfTheme      = 'dark';
+    try { this._uidCache = localStorage.getItem('sv_uid') || ''; } catch(e) { this._uidCache = ''; }
+    try { this._migrateUidKeys(); } catch(e){}
 
     this.streak        = this._loadStreak();
     this.sessions      = this._loadNum('sv_sessions', 0);
     this.totalWords    = this._loadNum('sv_total_words', 0);
-    this.lastActive    = localStorage.getItem('sv_last_active') || null;
+    this.lastActive    = this._lsGet('sv_last_active') || null;
     this.avatarEmojiIdx= this._loadNum('sv_avatar_emoji', 0);
 
     this.wizardStep  = 0;
@@ -328,7 +330,7 @@ class SavoireApp {
     try { this._dedupeHistory(); } catch(e){}
     this.saved    = this._load('sv_saved',   []);
     this.prefs    = this._load('sv_prefs',   {});
-    this.userName = localStorage.getItem('sv_user') || '';
+    this.userName = this._lsGet('sv_user') || '';
 
     this.pdfTheme        = this.prefs.pdfTheme || 'light';
     this.avatarEmojiIdx  = this._loadNum('sv_avatar_emoji', 0);
@@ -426,7 +428,7 @@ class SavoireApp {
   }
 
   _saveSessions()  { 
-    localStorage.setItem('sv_sessions', String(this.sessions));
+    this._lsSet('sv_sessions', String(this.sessions));
     this._pushStatsCloud();
   }
 
@@ -434,7 +436,7 @@ class SavoireApp {
     this.sessions++;
     this._saveSessions();
     const today = this._getISTDate();
-    localStorage.setItem('sv_last_active', today);
+    this._lsSet('sv_last_active', today);
     this.lastActive = today;
   }
 
@@ -464,7 +466,7 @@ class SavoireApp {
 
   _loadStreak() {
     try { 
-      const s = localStorage.getItem('sv_streak'); 
+      const s = this._lsGet('sv_streak'); 
       if (s) {
         const parsed = JSON.parse(s);
         return { 
@@ -478,7 +480,7 @@ class SavoireApp {
   }
 
   _saveStreak() { 
-    localStorage.setItem('sv_streak', JSON.stringify(this.streak));
+    this._save('sv_streak', this.streak);
     // Cloud sync streak
     try {
       if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
@@ -502,7 +504,7 @@ class SavoireApp {
   }
 
   _loadNum(key, def) {
-    try { const v = localStorage.getItem(key); return v ? parseInt(v, 10) : def; }
+    try { const v = localStorage.getItem(this._uk(key)); return v ? parseInt(v, 10) : def; }
     catch { return def; }
   }
 
@@ -669,8 +671,31 @@ class SavoireApp {
   _el(id)   { return document.getElementById(id); }
   _qs(sel)  { return document.querySelector(sel); }
   _qsa(sel) { return document.querySelectorAll(sel); }
-  _load(key, def) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; } }
-  _save(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+  _uk(key) {
+    const shared = { sv_firebase_token:1, sv_prefs:1, sv_site_theme:1, sv_focus_mode:1 };
+    if (shared[key]) return key;
+    let uid = this._uidCache;
+    if (uid == null) {
+      try { uid = localStorage.getItem('sv_uid') || ''; } catch(e) { uid = ''; }
+      this._uidCache = uid;
+    }
+    return uid ? key + '_' + uid : key;
+  }
+  _load(key, def) { try { const v = localStorage.getItem(this._uk(key)); return v ? JSON.parse(v) : def; } catch { return def; } }
+  _save(key, val) { try { localStorage.setItem(this._uk(key), JSON.stringify(val)); } catch {} }
+  _lsGet(key) { try { return localStorage.getItem(this._uk(key)); } catch { return null; } }
+  _lsSet(key, val) { try { localStorage.setItem(this._uk(key), val); } catch {} }
+  _lsDel(key) { try { localStorage.removeItem(this._uk(key)); } catch {} }
+  _migrateUidKeys() {
+    const uid = this._uidCache || localStorage.getItem('sv_uid');
+    if (!uid) return;
+    ['sv_history','sv_saved','sv_streak','sv_user','sv_user_photo','sv_avatar_emoji','sv_sessions','sv_total_words','sv_last_active','sv_wiz_draft'].forEach(k => {
+      const neu = k + '_' + uid;
+      try {
+        if (!localStorage.getItem(neu) && localStorage.getItem(k)) localStorage.setItem(neu, localStorage.getItem(k));
+      } catch(e){}
+    });
+  }
   _genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
   _wordCount(text) { return text?.trim().split(/\s+/).filter(Boolean).length || 0; }
   _esc(s) {
@@ -785,7 +810,7 @@ class SavoireApp {
       return;
     }
     this.userName = name;
-    localStorage.setItem('sv_user', name);
+    this._lsSet('sv_user', name);
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
@@ -808,7 +833,7 @@ class SavoireApp {
 
   _skipWelcome() {
     this.userName = 'Scholar';
-    localStorage.setItem('sv_user', 'Scholar');
+    this._lsSet('sv_user', 'Scholar');
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
@@ -898,7 +923,7 @@ class SavoireApp {
 
   _setAvatarEmoji(idx) {
     this.avatarEmojiIdx = idx;
-    localStorage.setItem('sv_avatar_emoji', String(idx));
+    this._lsSet('sv_avatar_emoji', String(idx));
     this._updateUserUI();
     this._renderAvatarPicker();
     this._renderAvatarPickerInSettings();
@@ -1445,7 +1470,7 @@ Examples:
       if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
       this._renderResult(data);
       this.totalWords += this._wordCount(data.ultra_long_notes || '');
-      localStorage.setItem('sv_total_words', String(this.totalWords));
+      this._lsSet('sv_total_words', String(this.totalWords));
       this._addHistory({ id: this._genId(), topic: data.topic || text, tool: this.tool, data, ts: Date.now(), dur: Date.now() - t0 });
       this._updateAllStats();
       // Save totalWords, sessions, streak to Firestore for cross-device sync
@@ -3798,7 +3823,7 @@ Examples:
     const name = this.el.nameInput?.value?.trim();
     if (!name || name.length < 2) { this._toast('error', 'fa-times', 'Name must be at least 2 characters.'); return; }
     this.userName = name;
-    localStorage.setItem('sv_user', name);
+    this._lsSet('sv_user', name);
     this._updateUserUI();
     this._warmupAndTrack();
     this._toast('success', 'fa-check', 'Name updated!');
@@ -3863,8 +3888,8 @@ Examples:
         this._save('sv_prefs', this.prefs);
         this._saveStreak();
         this._saveSessions();
-        localStorage.setItem('sv_total_words', String(this.totalWords));
-        if (d.userName) localStorage.setItem('sv_user', d.userName);
+        this._lsSet('sv_total_words', String(this.totalWords));
+        if (d.userName) this._lsSet('sv_user', d.userName);
         this._updateAllStats();
         this._renderSidebarHistory();
         this._renderSidebarSaved();
@@ -3881,9 +3906,9 @@ Examples:
       // Clear only history and saved - not user, streak, sessions, prefs
       this.history = [];
       this.saved = [];
-      localStorage.removeItem('sv_history');
-      localStorage.removeItem('sv_saved');
-      localStorage.removeItem('sv_wiz_draft');
+      this._lsDel('sv_history');
+      this._lsDel('sv_saved');
+      this._lsDel('sv_wiz_draft');
       // Also clear from cloud if possible
       try {
         if (window.firebaseDB && window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) {
@@ -4027,6 +4052,8 @@ Examples:
     this._save('sv_prefs', this.prefs);
     try { localStorage.setItem('sv_site_theme', theme); } catch(e){}
     document.body.setAttribute('data-theme', theme);
+    const names = { dark: 'Obsidian · Deep midnight aurora', light: 'Paper · Warm editorial', golden: 'Regal · Royal gold luxury' };
+    this._toast('info', theme==='light'?'fa-sun':theme==='golden'?'fa-star':'fa-moon', names[theme] || theme);
     const next = theme === 'dark' ? 'light' : theme === 'light' ? 'golden' : 'dark';
     if (this.el.themeBtn) this.el.themeBtn.title = 'Switch to ' + next;
   }
@@ -4050,20 +4077,22 @@ Examples:
     if (!data) return;
     const uid = data.uid || '';
     const prev = localStorage.getItem('sv_uid') || '';
+    if (uid) {
+      this._uidCache = uid;
+      localStorage.setItem('sv_uid', uid);
+      this._migrateUidKeys();
+    }
     if (uid && prev && prev !== uid) {
-      try {
-        ['sv_history','sv_saved','sv_sessions','sv_total_words','sv_streak','sv_last_active'].forEach(k => localStorage.removeItem(k));
-      } catch(e){}
-      this.history = [];
-      this.saved = [];
-      this.sessions = 0;
-      this.totalWords = 0;
-      this.streak = { count: 0, lastDate: null, bestStreak: 0 };
+      this.history = this._load('sv_history', []);
+      this.saved = this._load('sv_saved', []);
+      this.sessions = this._loadNum('sv_sessions', 0);
+      this.totalWords = this._loadNum('sv_total_words', 0);
+      this.streak = this._loadStreak();
     }
     if (uid) localStorage.setItem('sv_uid', uid);
     if (data.displayName) {
       this.userName = data.displayName;
-      localStorage.setItem('sv_user', data.displayName);
+      this._lsSet('sv_user', data.displayName);
     }
     if (data.sessions != null) this.sessions = Number(data.sessions) || 0;
     if (data.totalWords != null) this.totalWords = Number(data.totalWords) || 0;
@@ -4071,10 +4100,10 @@ Examples:
     this.streak.bestStreak = Math.max(this.streak.bestStreak||0, Number(data.bestStreak)||0);
     if (data.lastStreakDate) this.streak.lastDate = data.lastStreakDate;
     this.lastActive = this._getISTDate();
-    localStorage.setItem('sv_sessions', String(this.sessions));
-    localStorage.setItem('sv_total_words', String(this.totalWords));
-    localStorage.setItem('sv_streak', JSON.stringify(this.streak));
-    localStorage.setItem('sv_last_active', this.lastActive);
+    this._lsSet('sv_sessions', String(this.sessions));
+    this._lsSet('sv_total_words', String(this.totalWords));
+    this._save('sv_streak', this.streak);
+    this._lsSet('sv_last_active', this.lastActive);
     this._save('sv_history', this.history);
     this._pushStatsCloud();
   }
@@ -4123,19 +4152,19 @@ Examples:
                   this.streak.bestStreak = Math.max(localBest, cloudBest);
                   if (cloudStreak.lastDate) this.streak.lastDate = cloudStreak.lastDate;
                   this._save('sv_streak', this.streak);
-                  localStorage.setItem('sv_streak', JSON.stringify(this.streak));
+                  this._save('sv_streak', this.streak);
                   console.log(`☁️ Synced streak from cloud: ${this.streak.count} (best ${this.streak.bestStreak})`);
                 }
               }
               if (data.sessions !== undefined) {
                 const cloudSessions = data.sessions||0;
                 this.sessions = Math.max(this.sessions||0, cloudSessions);
-                localStorage.setItem('sv_sessions', String(this.sessions));
+                this._lsSet('sv_sessions', String(this.sessions));
               }
               if (data.totalWords !== undefined) {
                 const cloudWords = data.totalWords||0;
                 this.totalWords = Math.max(this.totalWords||0, cloudWords);
-                localStorage.setItem('sv_total_words', String(this.totalWords));
+                this._lsSet('sv_total_words', String(this.totalWords));
               }
               this._updateAllStats();
             } catch(e) { console.log('streak sync failed', e.message); }
@@ -4151,6 +4180,39 @@ Examples:
 
   // ─── CLOUD SYNC - History & Saved across devices ─────────────────────────
   _getFbToken() { try { return localStorage.getItem('sv_firebase_token')||''; } catch{ return ''; } }
+
+  async _uploadLocalToCloud() {
+    const tok = this._getFbToken();
+    if (!tok) { this._toast('error','fa-lock','Login required'); return; }
+    const items = [...(this.history||[]),];
+    const saved = [...(this.saved||[])];
+    const total = items.length + saved.length;
+    if (!total) { this._toast('info','fa-info','Nothing to upload'); return; }
+    let n = 0;
+    this._toast('info','fa-cloud-upload-alt',`Uploading 0/${total}…`);
+    for (const h of items) {
+      try { await this._saveHistoryToCloud(h); } catch(e){}
+      n++;
+      if (n % 5 === 0) this._toast('info','fa-cloud-upload-alt',`Uploading ${n}/${total}…`);
+    }
+    for (const s of saved) {
+      try { await this._saveSavedToCloud(s); } catch(e){}
+      n++;
+    }
+    this._lsSet('sv_last_sync', new Date().toISOString());
+    const el = document.getElementById('svLastSync');
+    if (el) el.textContent = 'Last synced: just now';
+    this._toast('success','fa-check', `${total} items uploaded`);
+  }
+
+  async _downloadCloudToLocal() {
+    await this._fetchCloudHistory();
+    await this._fetchCloudSaved();
+    this._lsSet('sv_last_sync', new Date().toISOString());
+    const el = document.getElementById('svLastSync');
+    if (el) el.textContent = 'Last synced: just now';
+    this._toast('success','fa-cloud-download-alt','Cloud data merged');
+  }
 
   async _openCreditHistory() {
     const tok = this._getFbToken();
@@ -4958,6 +5020,17 @@ Examples:
     on(this.el.clearBtn,    'click', () => this._clearOutput());
     on(this.el.newWizardBtn,'click', () => this._openWizard());
     on(this.el.focusModeBtn,'click', () => this._toggleFocus());
+    const up = document.getElementById('svUploadCloud');
+    const dn = document.getElementById('svDownloadCloud');
+    const cl = document.getElementById('svClearLocalOnly');
+    if (up) up.addEventListener('click', () => this._uploadLocalToCloud());
+    if (dn) dn.addEventListener('click', () => this._downloadCloudToLocal());
+    if (cl) cl.addEventListener('click', () => this._confirm('Clear local history & saved on this device? Cloud stays.', () => {
+      this.history = []; this.saved = [];
+      this._lsDel('sv_history'); this._lsDel('sv_saved');
+      this._renderSidebarHistory(); this._renderSidebarSaved(); this._updateAllStats();
+      this._toast('success','fa-broom','Local history cleared');
+    }));
     const exitF = document.getElementById('svExitFocus');
     if (exitF) exitF.addEventListener('click', () => this._setFocusMode(false));
     document.addEventListener('keydown', (e) => {
@@ -5087,7 +5160,7 @@ Examples:
 window._welcomeSetAvatar = function(idx) {
   if (!window._app) return;
   window._app.avatarEmojiIdx = idx;
-  localStorage.setItem('sv_avatar_emoji', String(idx));
+  window._app._lsSet('sv_avatar_emoji', String(idx));
   document.querySelectorAll('.wavatarBtn').forEach((btn, i) => {
     btn.classList.toggle('active', i === idx);
   });
