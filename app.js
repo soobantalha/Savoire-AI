@@ -353,7 +353,7 @@ class SavoireApp {
     this._renderSidebarHistory();
     this._renderSidebarSaved();
     this._updateUserUI();
-    this._showFeatureDetails('notes');
+    this._highlightFeatChip('notes');
     this._initBackToTop();
     this._initSwipeGestures();
     this._initParticles();
@@ -874,33 +874,39 @@ class SavoireApp {
     }
   }
 
-  _showFeatureDetails(tool = 'notes') {
-    const panel = this.el.featureDetailPanel || this._el('featureDetailPanel');
-    const cfg = FEATURE_DETAIL_CONFIG[tool] || FEATURE_DETAIL_CONFIG.notes;
-    if (!panel) return;
-
+  _highlightFeatChip(tool) {
     this._qsa('.es-feat-chip').forEach(chip => {
       chip.classList.toggle('active-detail', chip.dataset.tool === tool);
     });
+  }
 
-    panel.innerHTML = `
-      <div class="feature-detail-card" style="--fd-color:${cfg.color}">
-        <div class="feature-detail-header">
-          <div class="feature-detail-icon"><i class="fas ${cfg.icon}"></i></div>
-          <div>
-            <div class="feature-detail-title">${cfg.title}</div>
-            <div class="feature-detail-summary">${cfg.summary}</div>
-          </div>
-        </div>
-        <div class="feature-detail-points">
-          ${cfg.points.map(point => `<div class="feature-detail-point"><i class="fas fa-check-circle"></i><span>${point}</span></div>`).join('')}
-        </div>
-        <div class="feature-detail-actions">
-          <button class="feature-detail-launch" onclick="window._app.${tool === 'all' ? '_openMega()' : `_openWizard('${tool}')`} ">
-            <i class="fas ${cfg.icon}"></i> ${cfg.cta}
-          </button>
-        </div>
-      </div>`;
+  _showFeatureDetails(tool = 'notes') {
+    const cfg = FEATURE_DETAIL_CONFIG[tool] || FEATURE_DETAIL_CONFIG.notes;
+    this._highlightFeatChip(tool);
+    const panel = this.el.featureDetailPanel || this._el('featureDetailPanel');
+    if (panel) panel.style.display = 'none';
+    document.getElementById('featPop')?.remove();
+    const pop = document.createElement('div');
+    pop.id = 'featPop';
+    pop.className = 'feat-pop-overlay';
+    pop.innerHTML = `<div class="feat-pop" role="dialog">
+      <button type="button" class="feat-pop-x" aria-label="Close">✕</button>
+      <div class="feat-pop-ico"><i class="fas ${cfg.icon}"></i></div>
+      <h3>${cfg.title}</h3>
+      <p>${cfg.summary}</p>
+      <ul>${cfg.points.map(p => `<li>${p}</li>`).join('')}</ul>
+      <button type="button" class="feat-pop-cta">${cfg.cta || 'Open Wizard'}</button>
+    </div>`;
+    const close = () => pop.remove();
+    pop.addEventListener('click', e => { if (e.target === pop) close(); });
+    pop.querySelector('.feat-pop-x').addEventListener('click', close);
+    pop.querySelector('.feat-pop-cta').addEventListener('click', () => {
+      close();
+      if (tool === 'all') this._openMega();
+      else this._openWizard(tool);
+    });
+    document.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ close(); document.removeEventListener('keydown', esc); } });
+    document.body.appendChild(pop);
   }
 
   // ─── AVATAR PICKER ──────────────────────────────────────────────────────────
@@ -3487,50 +3493,49 @@ Examples:
   }
 
   // ── LIVE NOTES MODAL ───────────────────────────────────────────
+  _closeLiveNotesModal() {
+    const modal = document.getElementById('liveNotesModal');
+    if (modal) { modal.style.display = 'none'; modal.classList.remove('open'); }
+  }
+
   _showLiveNotesModal() {
     const notes = this.currentData?._live_notes_buffer || this.currentData?.ultra_long_notes || '';
     if (!notes || notes.length < 10) { this._toast('info', 'fa-info-circle', 'No live notes available yet.'); return; }
 
     let modal = document.getElementById('liveNotesModal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'liveNotesModal';
-      modal.className = 'modal-overlay';
-      modal.innerHTML = `
-        <div class="modal-box live-notes-modal-box">
-          <div class="modal-hdr" style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08)">
-            <i class="fas fa-bolt" style="color:#00ff88"></i>
-            <span style="font-weight:800;font-size:1rem;color:#00ff88">Live Notes</span>
-            <span style="font-size:.75rem;color:rgba(255,255,255,.4);margin-left:4px">— original stream captured during generation</span>
-            <button onclick="document.getElementById('liveNotesModal').style.display='none'"
-                    style="margin-left:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);padding:4px 12px;border-radius:8px;cursor:pointer;font-size:.8rem">
-              ✕ Close
-            </button>
-          </div>
-          <div id="liveNotesContent" style="flex:1;overflow-y:auto;padding:20px 24px;line-height:1.7"></div>
-          <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;flex-wrap:wrap">
-            <button onclick="window._app._copyTxt(document.getElementById('liveNotesContent').innerText)"
-                    style="background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:#00ff88;padding:8px 16px;border-radius:10px;cursor:pointer;font-size:.8rem;font-weight:700">
-              <i class="fas fa-copy"></i> Copy Live Notes
-            </button>
-            <button onclick="document.getElementById('liveNotesModal').style.display='none'; window._app._downloadPDF('live');"
-                    style="background:linear-gradient(135deg,#dcb54a,#c89617);border:none;color:#182235;padding:8px 16px;border-radius:10px;cursor:pointer;font-size:.8rem;font-weight:800">
-              <i class="fas fa-file-pdf"></i> Download Live Notes
-            </button>
-            <span style="font-size:.7rem;color:rgba(255,255,255,.3);margin-left:auto;align-self:center">
-              ${notes.length.toLocaleString()} characters
-            </span>
-          </div>
-        </div>`;
-      modal.onclick = e => { if (e.target === modal) modal.style.display = 'none'; };
-      document.body.appendChild(modal);
-    }
-
+    if (modal) modal.remove();
+    modal = document.createElement('div');
+    modal.id = 'liveNotesModal';
+    modal.className = 'modal-overlay open';
+    modal.style.cssText = 'display:flex;align-items:center;justify-content:center;position:fixed;inset:0;z-index:50000;background:rgba(0,0,0,.72);padding:16px;pointer-events:auto';
+    modal.innerHTML = `
+      <div class="live-notes-modal-box" style="pointer-events:auto;width:min(860px,100%);max-height:82dvh;overflow:hidden;display:flex;flex-direction:column;background:#0b0d12;border-radius:22px;border:1px solid rgba(255,255,255,.12)">
+        <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.08);flex:none">
+          <i class="fas fa-bolt" style="color:#00ff88"></i>
+          <span style="font-weight:800;color:#00ff88">Live Notes</span>
+          <button type="button" id="lnClose" style="margin-left:auto;pointer-events:auto;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;padding:8px 14px;border-radius:10px;font-weight:700">✕ Close</button>
+        </div>
+        <div id="liveNotesContent" style="flex:1;overflow-y:auto;padding:20px 24px;line-height:1.7;scrollbar-color:rgba(34,211,238,.35) transparent"></div>
+        <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px;flex-wrap:wrap;flex:none">
+          <button type="button" id="lnCopy" style="pointer-events:auto;cursor:pointer;background:rgba(0,255,136,.12);border:1px solid rgba(0,255,136,.35);color:#00ff88;padding:10px 16px;border-radius:10px;font-weight:800"><i class="fas fa-copy"></i> Copy Live Notes</button>
+          <button type="button" id="lnDl" style="pointer-events:auto;cursor:pointer;background:linear-gradient(135deg,#f0d27a,#d4af37);border:0;color:#140f00;padding:10px 16px;border-radius:10px;font-weight:800"><i class="fas fa-file-pdf"></i> Download Live Notes</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
     const contentEl = document.getElementById('liveNotesContent');
     if (contentEl) contentEl.innerHTML = this._renderMd(notes);
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
+    const close = () => this._closeLiveNotesModal();
+    modal.addEventListener('click', e => { if (e.target === modal) close(); });
+    document.getElementById('lnClose')?.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); close(); });
+    document.getElementById('lnCopy')?.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      this._copyTxt(contentEl ? contentEl.innerText : notes);
+    });
+    document.getElementById('lnDl')?.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      close();
+      this._downloadPDF('live');
+    });
   }
 
   _showLiveNotesNudge() {
@@ -5020,6 +5025,11 @@ Examples:
     on(this.el.clearBtn,    'click', () => this._clearOutput());
     on(this.el.newWizardBtn,'click', () => this._openWizard());
     on(this.el.focusModeBtn,'click', () => this._toggleFocus());
+    const lnBtn = document.getElementById('liveNotesBtn');
+    if (lnBtn) lnBtn.addEventListener('click', () => this._showLiveNotesModal());
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') this._closeLiveNotesModal();
+    });
     const up = document.getElementById('svUploadCloud');
     const dn = document.getElementById('svDownloadCloud');
     const cl = document.getElementById('svClearLocalOnly');

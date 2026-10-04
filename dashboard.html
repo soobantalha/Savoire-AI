@@ -437,6 +437,20 @@
 }
 </style>
 
+<style id="sv-fix-live">
+#liveNotesModal, #liveNotesModal * { pointer-events: auto !important; }
+.feat-pop-overlay { position:fixed;inset:0;z-index:40000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px }
+.feat-pop { width:min(440px,100%);background:#0c1220;border:1px solid rgba(34,255,208,.28);border-radius:22px;padding:28px 24px 22px;position:relative }
+.feat-pop-x { position:absolute;top:12px;right:12px;background:rgba(255,255,255,.08);border:0;color:#fff;width:32px;height:32px;border-radius:10px;cursor:pointer }
+.feat-pop h3 { margin:8px 0;color:#fff }
+.feat-pop p { color:rgba(232,238,248,.7);font-size:.9rem;line-height:1.55 }
+.feat-pop-cta { width:100%;min-height:46px;border:0;border-radius:999px;background:linear-gradient(135deg,#22ffd0,#22d3ee);color:#05060a;font-weight:800;cursor:pointer }
+.dash-hdr .dh-mark { width:40px!important;height:40px!important }
+.dash-hdr .dh-name { font-size:1.35rem!important }
+.dash-mini-footer { background:linear-gradient(180deg,transparent,rgba(0,0,0,.12))!important;border-top:1px solid rgba(34,255,208,.15)!important }
+.lp-hist-list { scrollbar-color: rgba(34,211,238,.3) transparent }
+button { cursor:pointer }
+</style>
 </head>
 <body>
 <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar, .left-panel, #leftPanel')?.classList.toggle('open'); document.querySelector('#leftPanel')?.classList.toggle('mobile-open')">
@@ -733,6 +747,7 @@
         <button class="otb-btn otb-danger" id="clearBtn" title="Clear output"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
         <div class="otb-sep"></div>
         <button class="otb-btn otb-new" id="newWizardBtn" title="New Study Material"><i class="fas fa-magic"></i> <span>New</span></button>
+        <button class="otb-btn" id="liveNotesBtn" title="Live Notes"><i class="fas fa-bolt"></i> <span>Live Notes</span></button>
         <button class="otb-btn" id="focusModeBtn" title="Focus Mode"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
         <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> wizard · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
       </div>
@@ -799,7 +814,7 @@
             </span>
           </div>
 
-          <div class="feature-detail-panel" id="featureDetailPanel"></div>
+          <div class="feature-detail-panel" id="featureDetailPanel" style="display:none"></div>
 
           <div class="es-shortcuts">
             <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
