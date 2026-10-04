@@ -119,6 +119,40 @@
     html[data-theme="light"] #creditSidebar { background:#fff !important; }
     html[data-theme="golden"] #creditSidebar { border-color:rgba(212,175,55,.35) !important; }
 
+    #streamFullpage[style*="flex"] { display: none !important; }
+    #streamFullpage.sfp-open { display: flex !important; position: fixed !important; inset: 0 !important; z-index: 12000 !important; }
+    .download-choice-overlay { z-index: 25000 !important; pointer-events: auto !important; }
+    .exp-btn, .otb-btn, #pdfBtn { pointer-events: auto !important; position: relative !important; z-index: 5 !important; }
+
+    .wiz-live-choice { margin: 14px 0; padding: 14px; border-radius: 16px; background: rgba(34,211,238,.08); border: 1px solid rgba(34,211,238,.22); }
+    .wiz-live-q { font-weight: 800; color: #fff; margin-bottom: 10px; }
+    .wiz-live-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+    .wiz-live-opt { padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; cursor: pointer; font-weight: 700; }
+    .wiz-live-opt.on { background: #fff; color: #05060a; }
+
+    html[data-theme="light"] body,
+    html[data-theme="light"] .dash-body,
+    html[data-theme="light"] .out-area,
+    html[data-theme="light"] .right-panel { background: #eef1f6 !important; color: #111827 !important; }
+    html[data-theme="light"] .es-title,
+    html[data-theme="light"] .es-title strong,
+    html[data-theme="light"] .es-sub,
+    html[data-theme="light"] .es-brand,
+    html[data-theme="light"] .md-content,
+    html[data-theme="light"] .md-content p,
+    html[data-theme="light"] .md-content li,
+    html[data-theme="light"] .rh-topic,
+    html[data-theme="light"] .stat-value-sidebar,
+    html[data-theme="light"] .user-name-sidebar,
+    html[data-theme="light"] .nav-text { color: #111827 !important; -webkit-text-fill-color: #111827 !important; }
+    html[data-theme="light"] .es-title em { color: #8a6914 !important; -webkit-text-fill-color: #8a6914 !important; }
+    html[data-theme="light"] .empty-mega-btn { color: #111 !important; border-color: rgba(0,0,0,.15) !important; }
+    html[data-theme="light"] .es-feat-chip { color: #111 !important; background: #fff !important; }
+    html[data-theme="light"] .feature-detail-card { background: #fff !important; color: #111 !important; }
+    html[data-theme="light"] .wiz-live-q { color: #111 !important; }
+
+    html[data-theme="golden"] .dash-body, html[data-theme="golden"] .out-area { background: #120e09 !important; color: #f6ead0 !important; }
+
     /* 1 Dark theme neon bluish-green depth */
     html[data-theme="dark"] .dash-body,
     html[data-theme="dark"] .out-area,
@@ -1616,7 +1650,7 @@ try {
     </div>
     <div class="plan-atelier-grid">
       <article class="plan-sheet" data-plan="starter" onclick="buyPlan('starter')">
-        <div class="plan-sheet-top"><span class="plan-emoji">🪙</span><span class="plan-role">Try karne ke liye</span></div>
+        <div class="plan-sheet-top"><span class="plan-emoji">🪙</span><span class="plan-role">Starter pack</span></div>
         <h4>Starter</h4>
         <div class="plan-price">₹19 <small>/ 30 days</small></div>
         <div class="plan-credits">100,000 credits</div>
@@ -1824,5 +1858,5 @@ window.performLogout = async function(){
 };
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a413aa2aeaafc8d9',t:'MTc5MDQ0MDM0Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

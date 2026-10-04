@@ -917,6 +917,7 @@ class SavoireApp {
       quizCount:   10,
       quizType:    'mixed',
       branchCount: 6,
+      wantLiveNotes: true,
     };
     this.wizardStep = presetTool ? 1 : 0;
     this.wizardFile = null;
@@ -972,7 +973,7 @@ class SavoireApp {
         case 2: body.innerHTML = this._wStepLang();   this._bindWLang();  break;
         case 3: body.innerHTML = this._wStepDepth();  this._bindWDepth();  break;
         case 4: body.innerHTML = this._wStepStyle();  this._bindWStyle(); break;
-        case 5: body.innerHTML = this._wStepReview(); break;
+        case 5: body.innerHTML = this._wStepReview(); this._bindWLiveChoice(); break;
       }
     }
 
@@ -1344,14 +1345,30 @@ Examples:
             </div>
           </div>`).join('')}
       </div>
+      <div class="wiz-live-choice">
+        <div class="wiz-live-q">Show live notes while generating?</div>
+        <div class="wiz-live-opts">
+          <button type="button" class="wiz-live-opt ${this.wizardData.wantLiveNotes !== false ? 'on' : ''}" data-live="yes">Yes — stream live</button>
+          <button type="button" class="wiz-live-opt ${this.wizardData.wantLiveNotes === false ? 'on' : ''}" data-live="no">No — final result only</button>
+        </div>
+      </div>
       <div class="wizard-review-info">
         <i class="fas fa-clock"></i>
-        <div class="wizard-review-copy">Generation typically takes <strong>20–40 seconds</strong>. Content will <strong>stream live to your screen</strong> as it's written!</div>
+        <div class="wizard-review-copy">Generation typically takes <strong>20–40 seconds</strong>.</div>
       </div>
       <div class="wizard-review-tip">
         <i class="fas fa-lightbulb"></i>
         <div class="wizard-review-copy"><strong>Pro tip:</strong> The more specific your topic, the better the output quality. Include context like subject level, exam board, or specific subtopics.</div>
       </div>`;
+  }
+
+  _bindWLiveChoice() {
+    this._qsa('.wiz-live-opt').forEach(b => {
+      b.onclick = () => {
+        this.wizardData.wantLiveNotes = b.dataset.live !== 'no';
+        this._qsa('.wiz-live-opt').forEach(x => x.classList.toggle('on', x === b));
+      };
+    });
   }
 
   _wValidate() {
@@ -1401,7 +1418,13 @@ Examples:
     this._liveMMConns   = [];
 
     this._showToolbar(false);
-    this._showStreamOverlay(text, this.tool);
+    this._wantLiveNotes = this.wizardData?.wantLiveNotes !== false;
+    if (this._wantLiveNotes) this._showStreamOverlay(text, this.tool);
+    else {
+      if (this.el.emptyState) this.el.emptyState.style.display = 'none';
+      if (this.el.resultArea) this.el.resultArea.style.display = 'none';
+      if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'block';
+    }
     this._startStages();
     const t0 = Date.now();
 
@@ -1417,7 +1440,9 @@ Examples:
         branchCount: counts?.branchCount || 6,
       });
       this.currentData = data;
+      if (!this._wantLiveNotes && data) data._live_notes_buffer = '';
       this._hideStreamOverlay();
+      if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
       this._renderResult(data);
       this.totalWords += this._wordCount(data.ultra_long_notes || '');
       localStorage.setItem('sv_total_words', String(this.totalWords));
@@ -1905,6 +1930,7 @@ Examples:
     if (this.el.sscProgressBar) this.el.sscProgressBar.style.width = '4%';
     if (this.el.streamFullpage) {
       const ov = this.el.streamFullpage;
+      ov.classList.add('sfp-open');
       ov.style.display = 'flex';
       ov.style.position = 'fixed';
       ov.style.inset = '0';
@@ -1919,12 +1945,15 @@ Examples:
 
   _hideStreamOverlay() {
     if (this.el.streamFullpage) {
-      this.el.streamFullpage.classList.add('fading-out');
-      setTimeout(() => {
-        this.el.streamFullpage.style.display = 'none';
-        this.el.streamFullpage.classList.remove('fading-out');
-      }, 300);
+      const ov = this.el.streamFullpage;
+      ov.classList.remove('sfp-open');
+      ov.classList.add('fading-out');
+      ov.style.display = 'none';
+      ov.style.flexDirection = '';
+      ov.style.zIndex = '';
+      setTimeout(() => ov.classList.remove('fading-out'), 200);
     }
+    if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
   }
 
   // ─── STAGE SYSTEM ────────────────────────────────────────────────────────────
@@ -2906,6 +2935,7 @@ Examples:
   // ─── WORLD-CLASS PDF GENERATION ─────────────────────────────────────────────
   // (unchanged – preserves full PDF functionality)
   async _downloadPDF(mode = null) {
+    try {
     const data = this.currentData;
     if (!data) { this._toast('info', 'fa-info-circle', 'Generate some content first.'); return; }
 
@@ -2951,6 +2981,10 @@ Examples:
     const pack = { labelOverride: 'Final Output', fileSuffix: 'final_output' };
     if (this._needsShapedPdf(data)) await this._generatePdfFromHtml(data, this.pdfTheme, pack);
     else this._generatePDF(data, this.pdfTheme, fontData, pack);
+    } catch (err) {
+      console.error('PDF download failed', err);
+      this._toast('error', 'fa-times', 'Download failed. Try again.');
+    }
   }
 
   // Loads a Unicode font (Noto Sans — covers Latin + Cyrillic + Greek, so

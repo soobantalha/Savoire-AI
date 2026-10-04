@@ -148,7 +148,15 @@
   background: rgba(255,255,255,.06) !important;
   border: 1px solid rgba(255,255,255,.12) !important;
   color:#fff !important; border-radius:14px !important; min-height:46px !important;
+
 }
+
+
+
+
+
+
+
 .demo-youtube-link{
   background: linear-gradient(135deg, rgba(255,40,80,.2), rgba(255,80,80,.08)) !important;
   border: 1px solid rgba(255,80,110,.3) !important;
