@@ -1073,7 +1073,7 @@ module.exports = async function handler(req, res) {
 
   if (!isPing) {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 10k welcome credits await!' });
+      return res.status(401).json({ error: 'LOGIN_REQUIRED', message: 'Please login to continue. 10k monthly credits await!' });
     }
     const idToken = authHeader.split('Bearer ')[1];
     try {

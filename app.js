@@ -175,13 +175,13 @@ const DEMO_STEPS = [
   {
     step: 1, title: 'Welcome to Savoiré AI ✨',
     subtitle: "The premium AI study companion",
-    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps. 10,000 welcome credits on signup — top-up packs from Rs 19.',
+    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps. 10,000 AI credits every month — top-up packs from Rs 19.',
     icon: 'fa-graduation-cap', color: '#d4af37', targetId: null, arrow: null,
     tips: [
-      { icon: 'fa-infinity',   text: '10,000 welcome credits on signup' },
+      { icon: 'fa-infinity',   text: '10,000 AI credits every month' },
       { icon: 'fa-globe',      text: 'Works in 20+ languages including Urdu, Hindi, Arabic' },
       { icon: 'fa-shield-alt', text: 'All your data stays on your device — private & secure' },
-      { icon: 'fa-bolt',       text: 'Powered by 14+ cutting-edge AI models with live fallback' },
+      { icon: 'fa-bolt',       text: 'Powered by 14 AI models with live fallback' },
       { icon: 'fa-code',       text: 'Built by Sooban Talha Technologies — soobantalhatech.xyz' },
     ],
     cta: 'Start Tour →',
@@ -897,6 +897,8 @@ class SavoireApp {
     if (this.el.avDropdownAvatar) this.el.avDropdownAvatar.textContent = emoji;
     if (this.el.avDropdownName)   this.el.avDropdownName.textContent   = name;
     if (this.el.sidebarUserName)  this.el.sidebarUserName.textContent  = name;
+    const hello = document.getElementById('esHello');
+    if (hello && name && name !== 'Scholar') hello.textContent = `What are you studying today, ${name}?`;
     if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = emoji;
 
     if (this.el.dhGreeting) {
