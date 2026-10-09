@@ -4985,8 +4985,10 @@ Examples:
   _closeAllModals() {
     this._qsa('.modal-overlay').forEach(m => { m.style.display = 'none'; });
     document.body.style.overflow = '';
+    document.body.classList.remove('sv-modal-open');
     this._closeDropdown();
     this._closeDemo();
+    this._closeLiveNotesModal();
   }
 
   _confirm(msg, cb) {

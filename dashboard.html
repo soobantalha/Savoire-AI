@@ -491,6 +491,27 @@ body.sv-modal-open #svDock { opacity:0 !important; pointer-events:none !importan
   border:2px solid #22d3ee !important;
   background:linear-gradient(180deg,rgba(34,211,238,.16),rgba(15,20,32,.9)) !important;
 }
+.left-panel.collapsed{transform:translateX(-110%)!important;pointer-events:none!important}
+.dash-body.focus-on .right-panel{width:100%!important}
+#svExitFocus{z-index:20000!important}
+#wizardModal .modal-close,#histModal .modal-close,#settingsModal .modal-close{
+  pointer-events:auto!important;z-index:5!important;min-width:40px;min-height:40px
+}
+#wizardModal, #wizardModal *{pointer-events:auto}
+.out-area{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}
+#leftPanel::-webkit-scrollbar,#wizardBody::-webkit-scrollbar,.wizard-body::-webkit-scrollbar{
+  width:4px
+}
+#leftPanel::-webkit-scrollbar-thumb,#wizardBody::-webkit-scrollbar-thumb{
+  background:rgba(34,211,238,.35);border-radius:8px
+}
+.empty-state{animation:esIn .5s ease}
+@keyframes esIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.dash-hdr{animation:hdrIn .4s ease}
+@keyframes hdrIn{from{opacity:0}to{opacity:1}}
+html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[data-theme="light"] .es-sub{
+  color:#111!important;-webkit-text-fill-color:#111!important
+}
 </style>
 </head>
 <body>
