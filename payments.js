@@ -24,12 +24,14 @@
     if (!m) { toast('Plans window missing', 'error'); return; }
     m.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('sv-modal-open');
   };
 
   window.closeBuyCreditsModal = function () {
     const m = document.getElementById('buyCreditsModal');
     if (m) m.style.display = 'none';
     document.body.style.overflow = '';
+    document.body.classList.remove('sv-modal-open');
   };
 
   window.openCreditHistory = async function () {
@@ -67,13 +69,16 @@
     }
   };
 
+  let paying = false;
   window.buyPlanDirect = async function (plan) {
     const spec = PLANS[plan];
     if (!spec) { toast('Invalid plan', 'error'); return; }
+    if (paying) { toast('Checkout already open'); return; }
     const tok = token();
     if (!tok) { toast('Please login first', 'error'); window.location.href = '/login.html'; return; }
     if (typeof Razorpay === 'undefined') { toast('Payment SDK not loaded. Refresh and try again.', 'error'); return; }
 
+    paying = true;
     toast('Opening secure checkout…');
     try {
       const res = await fetch('/api/create-order', {
@@ -110,6 +115,7 @@
             });
             const out = await vr.json();
             if (!vr.ok || !out.success) throw new Error(out.error || 'Verify failed');
+            paying = false;
             toast('Payment successful · credits added');
             if (window.closeBuyCreditsModal) window.closeBuyCreditsModal();
             if (window._app && window._app._fetchPaidTokenBalance) window._app._fetchPaidTokenBalance();
@@ -119,10 +125,13 @@
         }
       });
       rzp.on('payment.failed', function (resp) {
+        paying = false;
         toast((resp.error && resp.error.description) || 'Payment failed', 'error');
       });
+      rzp.on('close', function () { paying = false; });
       rzp.open();
     } catch (err) {
+      paying = false;
       toast(err.message || 'Checkout failed', 'error');
     }
   };

@@ -1,22 +1,22 @@
-/* Savoiré polish — load AFTER style.css. Phone + buttons + modals + dock. */
+/* polish.css — last stylesheet. P0–P2 mobile, modals, credits, a11y. */
 html,body{max-width:100%;overflow-x:hidden}
 img,svg,video{max-width:100%;height:auto}
-button,a,.nav-item,.pack-mini{cursor:pointer;-webkit-tap-highlight-color:transparent}
-button::before,button::after,.btn::before,.btn::after{pointer-events:none!important}
-
-#svDock.sv-dock{
-  display:none;
+button,a,.nav-item,.pack-mini,.otb-btn,.exp-btn,.dh-btn,.wizard-btn{
+  cursor:pointer;-webkit-tap-highlight-color:transparent;pointer-events:auto!important
 }
+button::before,button::after,.btn::before,.btn::after,.nav-item::before,.credit-btn::after{
+  pointer-events:none!important
+}
+:focus-visible{outline:2px solid #22d3ee;outline-offset:2px}
+.min0,.stat-card-sidebar,.credit-balance,.lp-hist-topic,.nav-text{min-width:0}
+
+#svDock.sv-dock{display:none}
 @media(max-width:1024px){
   #svDock.sv-dock{
-    display:grid!important;
-    grid-template-columns:repeat(5,1fr)!important;
-    position:fixed!important;
-    left:12px!important;right:12px!important;
+    display:grid!important;grid-template-columns:repeat(5,1fr)!important;
+    position:fixed!important;left:12px!important;right:12px!important;
     bottom:calc(12px + env(safe-area-inset-bottom,0px))!important;
-    height:64px!important;
-    z-index:11000!important;
-    border-radius:32px!important;
+    height:64px!important;z-index:11000!important;border-radius:32px!important;
     overflow:hidden!important;
     background:rgba(16,18,28,.62)!important;
     backdrop-filter:blur(44px) saturate(200%)!important;
@@ -24,35 +24,50 @@ button::before,button::after,.btn::before,.btn::after{pointer-events:none!import
     border:.5px solid rgba(255,255,255,.32)!important;
     box-shadow:0 16px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.4)!important;
   }
-  body.sv-modal-open #svDock{display:none!important}
-  .out-area,.empty-state{padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+  body.sv-modal-open #svDock,body.sv-modal-open #svDock.sv-dock{display:none!important;pointer-events:none!important}
+  .out-area,.empty-state,.lp-hist-list,#resultArea{
+    padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))!important
+  }
   .dash-hdr .dh-logo,.dash-hdr .dh-name,#daysLeftChip{display:flex!important}
   .dash-hdr .dh-name{font-size:1.15rem!important}
-  .modal-overlay{padding:0!important;align-items:flex-end!important}
-  .modal-overlay .modal,.modal-overlay .modal-md,.modal-overlay .modal-lg{
+  .modal-overlay{padding:0!important;align-items:flex-end!important;background:rgba(2,6,18,.58)!important}
+  .modal-overlay .modal,.modal-overlay .modal-md,.modal-overlay .modal-lg,.plan-atelier{
     width:100%!important;max-width:100%!important;max-height:90dvh!important;
     border-radius:20px 20px 0 0!important;overflow:hidden!important;
     display:flex!important;flex-direction:column!important;
   }
-  .modal-body,#wizardContent,#wizardBody{overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+  .modal-body,#wizardContent,#wizardBody,.wizard-body,.plan-atelier-grid{
+    overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;min-height:0!important
+  }
+  .plan-atelier-grid{grid-template-columns:1fr!important}
 }
 
 .wizard-tool-card[data-tool="all"]{
-  grid-column:1/-1!important;
-  border:2px solid #22d3ee!important;
-  background:linear-gradient(180deg,rgba(34,211,238,.18),#0c1220)!important;
+  grid-column:1/-1!important;border:2px solid #22d3ee!important;
+  background:linear-gradient(180deg,rgba(34,211,238,.18),#0c1220)!important
 }
+.left-panel.collapsed{transform:translateX(-110%)!important;pointer-events:none!important}
+.dash-body.focus-on .right-panel{width:100%!important}
+#liveNotesModal{z-index:50000!important}
+#creditSidebar,#sidebarStats{flex:none!important;min-width:0!important;overflow:visible!important}
+.sb-stack{display:flex!important;flex-direction:column!important;gap:14px!important;flex:none!important}
 
 html[data-theme="light"] .es-title,html[data-theme="light"] .es-sub,html[data-theme="light"] .nav-text,
-html[data-theme="light"] .md-content,html[data-theme="light"] .user-name-sidebar{
+html[data-theme="light"] .md-content,html[data-theme="light"] .user-name-sidebar,html[data-theme="light"] .lp-hist-topic,
+html[data-theme="light"] .stat-value-sidebar,html[data-theme="light"] input,html[data-theme="light"] textarea{
   color:#111!important;-webkit-text-fill-color:#111!important
 }
+html[data-theme="light"] ::placeholder{color:#555!important}
 
-.left-panel.collapsed{transform:translateX(-110%)!important}
-#liveNotesModal{z-index:50000!important}
 ::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-thumb{background:rgba(34,211,238,.28);border-radius:8px}
+::-webkit-scrollbar-thumb{background:rgba(34,211,238,.32);border-radius:8px}
 ::-webkit-scrollbar-track{background:transparent}
 
-.sb-stack{display:flex!important;flex-direction:column!important;gap:14px!important;flex:none!important}
-#creditSidebar,#sidebarStats{flex:none!important;position:relative!important;overflow:visible!important}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+@media(max-width:430px){
+  .es-cta-row{flex-direction:column!important}
+  .empty-wizard-btn,.empty-mega-btn{width:100%!important}
+}

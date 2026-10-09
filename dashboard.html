@@ -1860,11 +1860,11 @@ try {
 <script>
 function openBuyCreditsModal() {
   const m = document.getElementById('buyCreditsModal');
-  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; document.body.classList.add('sv-modal-open'); }
 }
 function closeBuyCreditsModal() {
   const m = document.getElementById('buyCreditsModal');
-  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; document.body.classList.remove('sv-modal-open'); }
 }
 window.openBuyCreditsModal = openBuyCreditsModal;
 window.closeBuyCreditsModal = closeBuyCreditsModal;
