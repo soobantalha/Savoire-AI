@@ -812,24 +812,31 @@ class SavoireApp {
   // ─── WELCOME SYSTEM ─────────────────────────────────────────────────────────
 
   _initWelcome() {
-    if (!this.userName) {
-      setTimeout(() => {
-        if (!this.el.welcomeOverlay) return;
-        this.el.welcomeOverlay.style.display = 'flex';
-        setTimeout(() => this.el.welcomeOverlay.classList.add('visible'), 60);
-        setTimeout(() => this.el.welcomeNameInput?.focus(), 450);
-      }, 600);
-    } else {
-      setTimeout(() => {
-        if (!this.el.welcomeBackOverlay) return;
-        if (this.el.wbName)    this.el.wbName.textContent    = this.userName;
-        if (this.el.wbStreak)  this.el.wbStreak.textContent  = this.streak.count;
-        if (this.el.wbSessions)this.el.wbSessions.textContent= this.sessions;
-        if (this.el.wbSaved)   this.el.wbSaved.textContent   = this.saved.length;
-        this.el.welcomeBackOverlay.style.display = 'flex';
-        setTimeout(() => this.el.welcomeBackOverlay.classList.add('visible'), 60);
-      }, 700);
-    }
+    const known = (this.userName || this._lsGet('sv_user') || '').trim();
+    const hasName = known && known.length > 1 && known !== 'Scholar';
+    if (hasName) this.userName = known;
+    setTimeout(() => {
+      const n = (this.userName || this._lsGet('sv_user') || '').trim();
+      if (n && n.length > 1 && n !== 'Scholar') {
+        this.userName = n;
+        this._showWelcomeBack();
+        return;
+      }
+      if (!this.el.welcomeOverlay) return;
+      this.el.welcomeOverlay.style.display = 'flex';
+      setTimeout(() => this.el.welcomeOverlay.classList.add('visible'), 60);
+    }, 900);
+  }
+
+  _showWelcomeBack() {
+    if (!this.el.welcomeBackOverlay) return;
+    if (this.el.wbName)     this.el.wbName.textContent     = this.userName;
+    if (this.el.wbStreak)   this.el.wbStreak.textContent   = this.streak.count || 0;
+    if (this.el.wbSessions) this.el.wbSessions.textContent = this.sessions || 0;
+    if (this.el.wbSaved)    this.el.wbSaved.textContent    = (this.saved || []).length;
+    this.el.welcomeBackOverlay.style.display = 'flex';
+    setTimeout(() => this.el.welcomeBackOverlay.classList.add('visible'), 40);
+    setTimeout(() => this._dismissOverlay('welcomeBackOverlay'), 2800);
   }
 
   _submitWelcome() {
@@ -4144,6 +4151,12 @@ Examples:
     this._save('sv_history', this.history);
     this._tickSessionOnce();
     this._refreshWelcomeStats();
+    if (this.userName && this.userName !== 'Scholar') {
+      if (this.el.welcomeOverlay) {
+        this.el.welcomeOverlay.style.display = 'none';
+        this.el.welcomeOverlay.classList.remove('visible');
+      }
+    }
     this._renderSidebarHistory();
     this._renderSidebarSaved();
     this._pushStatsCloud();
@@ -4950,6 +4963,7 @@ Examples:
     const el = this._el(id);
     if (!el) return;
     el.style.display = 'flex';
+    document.body.classList.add('sv-modal-open');
     document.body.style.overflow = 'hidden';
     setTimeout(() => {
       const f = el.querySelector('input, textarea, button, [tabindex]');
@@ -4961,7 +4975,11 @@ Examples:
     const el = this._el(id);
     if (!el) return;
     el.style.display = 'none';
-    if (!this._qs('.modal-overlay[style*="flex"]')) document.body.style.overflow = '';
+    const any = [...document.querySelectorAll('.modal-overlay')].some(m => m.style.display === 'flex');
+    if (!any) {
+      document.body.style.overflow = '';
+      document.body.classList.remove('sv-modal-open');
+    }
   }
 
   _closeAllModals() {
@@ -5002,6 +5020,18 @@ Examples:
 
   _bindAll() {
     const on = (el, ev, fn) => { if (el) el.addEventListener(ev, fn); };
+    document.addEventListener('click', (e) => {
+      const nav = e.target.closest('.nav-item[data-nav]');
+      if (nav && !e.defaultPrevented) {
+        const k = nav.getAttribute('data-nav');
+        if (k === 'wizard') this._openWizard();
+        else if (k === 'all') this._openMega();
+        else if (k === 'history') this._openHistModal();
+        else if (k === 'saved') this._openSavedModal();
+        else if (k === 'settings') this._openSettingsModal();
+        else if (k === 'focus') this._toggleFocus();
+      }
+    }, true);
 
     on(this.el.sbToggle,   'click', () => this._toggleSidebar());
     on(this.el.sbBackdrop, 'click', () => this._closeSidebar());

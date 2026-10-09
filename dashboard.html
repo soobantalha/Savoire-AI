@@ -449,7 +449,48 @@
 .dash-hdr .dh-name { font-size:1.35rem!important }
 .dash-mini-footer { background:linear-gradient(180deg,transparent,rgba(0,0,0,.12))!important;border-top:1px solid rgba(34,255,208,.15)!important }
 .lp-hist-list { scrollbar-color: rgba(34,211,238,.3) transparent }
-button { cursor:pointer }
+button, .btn, .nav-item, .pack-mini, .otb-btn, .exp-btn, .dh-btn, a { pointer-events: auto !important; cursor: pointer !important; }
+button::before, button::after, .btn::before, .btn::after, .nav-item::before, .credit-btn::after { pointer-events: none !important; }
+.nav-item { transition: transform .2s, box-shadow .2s !important; }
+.nav-item:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.28); }
+.nav-item:active { transform: scale(.97); }
+#svDock button { transition: transform .35s cubic-bezier(.34,1.56,.64,1), color .2s !important; }
+#svDock button:active { transform: scale(.88); }
+body.sv-modal-open #svDock { opacity:0 !important; pointer-events:none !important; transform:translateY(120%) !important; }
+@media (max-width:1024px){
+  #wizardModal.modal-overlay{
+    align-items:flex-end !important; padding:0 !important; background:rgba(0,0,0,.55) !important;
+  }
+  #wizardModal .modal{
+    width:100% !important; max-width:100% !important;
+    max-height:88dvh !important; height:auto !important;
+    border-radius:22px 22px 0 0 !important;
+    margin:0 !important; padding-bottom:12px !important;
+    overflow:hidden !important; display:flex !important; flex-direction:column !important;
+  }
+  #wizardModal .modal-header{ flex:none !important; padding:14px 16px !important; }
+  #wizardModal .modal-body, #wizardContent, #wizardBody, .wizard-body{
+    overflow-y:auto !important; -webkit-overflow-scrolling:touch !important;
+    max-height:none !important; flex:1 1 auto !important; min-height:0 !important;
+  }
+  .wizard-tool-grid{ grid-template-columns:1fr 1fr !important; gap:10px !important; padding:4px !important; }
+  .wizard-tool-card{ min-height:auto !important; padding:12px !important; }
+  .wizard-tool-card[data-tool="all"]{
+    grid-column:1/-1 !important;
+    border:2px solid #22d3ee !important;
+    background:rgba(34,211,238,.12) !important;
+    box-shadow:0 0 0 1px rgba(34,211,238,.35), 0 12px 32px rgba(34,211,238,.15) !important;
+  }
+  .dash-hdr .dh-name{ font-size:1.2rem !important; }
+  .dash-hdr .dh-mark{ width:34px !important; height:34px !important; }
+  .empty-state{ padding:16px 16px 110px !important; }
+  .es-title{ font-size:clamp(1.4rem,7vw,2rem) !important; }
+}
+.wizard-tool-card[data-tool="all"]{
+  grid-column:1/-1 !important;
+  border:2px solid #22d3ee !important;
+  background:linear-gradient(180deg,rgba(34,211,238,.16),rgba(15,20,32,.9)) !important;
+}
 </style>
 </head>
 <body>
