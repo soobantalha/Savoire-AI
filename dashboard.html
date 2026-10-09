@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="polish.css">
   <style id="sv-lock">
     #leftPanel.left-panel { display:flex !important; flex-direction:column !important; }
     .sb-stack { display:flex !important; flex-direction:column !important; gap:14px !important; flex:0 0 auto !important; margin:8px 12px 12px !important; }
@@ -1569,7 +1570,10 @@ try {
       try {
         const token = await user.getIdToken(true);
         localStorage.setItem('sv_firebase_token', token);
-        localStorage.setItem('sv_user', user.displayName || user.email.split('@')[0]);
+        localStorage.setItem('sv_uid', user.uid);
+        const _nm = user.displayName || (user.email ? user.email.split('@')[0] : 'Scholar');
+        localStorage.setItem('sv_user', _nm);
+        localStorage.setItem('sv_user_' + user.uid, _nm);
         if (user.photoURL) {
           localStorage.setItem('sv_user_photo', user.photoURL);
           if (window.updateUserPhoto) window.updateUserPhoto(user.photoURL, user.displayName);
