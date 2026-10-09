@@ -360,6 +360,9 @@ class SavoireApp {
     this._initDemoSystem();
     this._warmupAndTrack();
     this._bootCloudSync();
+    setTimeout(() => {
+      if (!this._sessBound) { this._sessBound = true; this._tickSessionOnce(); }
+    }, 2200);
     try {
       if (localStorage.getItem('sv_focus_mode') === '1' && window.innerWidth > 1024) this._setFocusMode(true);
     } catch(e){}
@@ -825,18 +828,21 @@ class SavoireApp {
       if (!this.el.welcomeOverlay) return;
       this.el.welcomeOverlay.style.display = 'flex';
       setTimeout(() => this.el.welcomeOverlay.classList.add('visible'), 60);
-    }, 900);
+    }, 1800);
   }
 
   _showWelcomeBack() {
     if (!this.el.welcomeBackOverlay) return;
-    if (this.el.wbName)     this.el.wbName.textContent     = this.userName;
+    const raw = this.userName || 'Scholar';
+    const first = String(raw).trim().split(/\s+/)[0];
+    if (this.el.wbName)     this.el.wbName.textContent     = first;
     if (this.el.wbStreak)   this.el.wbStreak.textContent   = this.streak.count || 0;
     if (this.el.wbSessions) this.el.wbSessions.textContent = this.sessions || 0;
     if (this.el.wbSaved)    this.el.wbSaved.textContent    = (this.saved || []).length;
     this.el.welcomeBackOverlay.style.display = 'flex';
+    document.body.classList.add('sv-modal-open');
     setTimeout(() => this.el.welcomeBackOverlay.classList.add('visible'), 40);
-    setTimeout(() => this._dismissOverlay('welcomeBackOverlay'), 2800);
+    setTimeout(() => this._dismissOverlay('welcomeBackOverlay'), 4200);
   }
 
   _submitWelcome() {
@@ -869,8 +875,9 @@ class SavoireApp {
   }
 
   _skipWelcome() {
-    this.userName = 'Scholar';
-    this._lsSet('sv_user', 'Scholar');
+    const g = this._lsGet('sv_user') || (window.firebaseAuthInstance?.currentUser?.displayName) || 'Scholar';
+    this.userName = g;
+    this._lsSet('sv_user', g);
     if (!this.streak.lastDate) {
       this.streak = { count: 1, lastDate: this._getISTDate(), bestStreak: 1 };
       this._saveStreak();
@@ -885,6 +892,7 @@ class SavoireApp {
     if (!el) return;
     el.classList.remove('visible');
     el.classList.add('dismissing');
+    document.body.classList.remove('sv-modal-open');
     setTimeout(() => { el.style.display = 'none'; el.classList.remove('dismissing'); }, 460);
   }
 
@@ -905,7 +913,10 @@ class SavoireApp {
     if (this.el.avDropdownName)   this.el.avDropdownName.textContent   = name;
     if (this.el.sidebarUserName)  this.el.sidebarUserName.textContent  = name;
     const hello = document.getElementById('esHello');
-    if (hello && name && name !== 'Scholar') hello.textContent = `What are you studying today, ${name}?`;
+    if (hello && name && name !== 'Scholar') {
+      const first = String(name).trim().split(/\s+/)[0];
+      hello.textContent = `Ready to study, ${first}?`;
+    }
     if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = emoji;
 
     if (this.el.dhGreeting) {
@@ -1998,6 +2009,17 @@ Examples:
       this.el.sfpText.classList.add('live-md');
     }
     if (this.el.sscProgressBar) this.el.sscProgressBar.style.width = '4%';
+    let cancel = document.getElementById('sfpCancel');
+    if (!cancel && this.el.streamFullpage) {
+      cancel = document.createElement('button');
+      cancel.id = 'sfpCancel';
+      cancel.type = 'button';
+      cancel.textContent = 'Cancel';
+      cancel.style.cssText = 'position:absolute;top:12px;right:12px;z-index:3;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.4);color:#fff;cursor:pointer;font-weight:700';
+      cancel.onclick = () => { try { this.streamCtrl?.abort(); } catch(e){} this._hideStreamOverlay(); };
+      this.el.streamFullpage.style.position = 'fixed';
+      this.el.streamFullpage.appendChild(cancel);
+    }
     if (this.el.streamFullpage) {
       const ov = this.el.streamFullpage;
       ov.classList.add('sfp-open');
@@ -4068,7 +4090,7 @@ Examples:
           } catch(e) { console.log('API delete failed', e.message); }
           await deleteUser(user);
           modal.remove();
-          localStorage.clear();
+          try { localStorage.removeItem('sv_firebase_token'); } catch(e){}
           alert('Account deleted. Redirecting to login.');
           window.location.href = '/login.html';
         } catch(err) {
@@ -4149,7 +4171,8 @@ Examples:
     this._save('sv_streak', this.streak);
     this._lsSet('sv_last_active', this.lastActive);
     this._save('sv_history', this.history);
-    this._tickSessionOnce();
+    if (!this._sessBound) { this._sessBound = true; this._tickSessionOnce(); }
+    else { this._updateAllStats(); }
     this._refreshWelcomeStats();
     if (this.userName && this.userName !== 'Scholar') {
       if (this.el.welcomeOverlay) {
@@ -5271,7 +5294,17 @@ window.addEventListener('DOMContentLoaded', () => {
   const wInp = document.getElementById('welcomeNameInput');
   if (wInp) wInp.addEventListener('input', window._welcomeValidateName);
 
-  console.log('%c✅ Savoiré AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
+    console.log('%c✅ Savoiré AI v2.0 — All Systems Online', 'color:#00ff88;font-size:13px;font-weight:bold');
+  try {
+    if (window.visualViewport) {
+      const syncDock = () => {
+        const vv = window.visualViewport;
+        const kb = vv.height < window.innerHeight - 80;
+        document.body.classList.toggle('sv-kb', kb);
+      };
+      window.visualViewport.addEventListener('resize', syncDock);
+    }
+  } catch(e){}
   console.log('%c📊 Sessions tracked | 🔥 Streak monitored | 📄 World-class PDF | 📡 Live streaming', 'color:#00d4ff;font-size:11px');
 });
 

@@ -1,12 +1,10 @@
-/* polish.css — last stylesheet. P0–P2 mobile, modals, credits, a11y. */
+/* polish.css — last stylesheet. P0–P2 + screenshot pass */
 html,body{max-width:100%;overflow-x:hidden}
 img,svg,video{max-width:100%;height:auto}
-button,a,.nav-item,.pack-mini,.otb-btn,.exp-btn,.dh-btn,.wizard-btn{
+button,a,.nav-item,.pack-mini,.otb-btn,.exp-btn,.dh-btn,.wizard-btn,.wb-btn,.es-feat-chip,.lp-hist-item,.lp-hist-delete{
   cursor:pointer;-webkit-tap-highlight-color:transparent;pointer-events:auto!important
 }
-button::before,button::after,.btn::before,.btn::after,.nav-item::before,.credit-btn::after{
-  pointer-events:none!important
-}
+button::before,button::after,.btn::before,.btn::after,.nav-item::before,.credit-btn::after{pointer-events:none!important}
 :focus-visible{outline:2px solid #22d3ee;outline-offset:2px}
 .min0,.stat-card-sidebar,.credit-balance,.lp-hist-topic,.nav-text{min-width:0}
 
@@ -25,9 +23,7 @@ button::before,button::after,.btn::before,.btn::after,.nav-item::before,.credit-
     box-shadow:0 16px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.4)!important;
   }
   body.sv-modal-open #svDock,body.sv-modal-open #svDock.sv-dock{display:none!important;pointer-events:none!important}
-  .out-area,.empty-state,.lp-hist-list,#resultArea{
-    padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))!important
-  }
+  .out-area,.empty-state,.lp-hist-list,#resultArea{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}
   .dash-hdr .dh-logo,.dash-hdr .dh-name,#daysLeftChip{display:flex!important}
   .dash-hdr .dh-name{font-size:1.15rem!important}
   .modal-overlay{padding:0!important;align-items:flex-end!important;background:rgba(2,6,18,.58)!important}
@@ -40,6 +36,14 @@ button::before,button::after,.btn::before,.btn::after,.nav-item::before,.credit-
     overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;min-height:0!important
   }
   .plan-atelier-grid{grid-template-columns:1fr!important}
+  #welcomeBackOverlay.modal-overlay{
+    align-items:center!important;justify-content:center!important;padding:16px!important;
+    z-index:40000!important;background:rgba(4,8,18,.72)!important;
+  }
+  #welcomeBackOverlay .modal{
+    width:min(420px,92vw)!important;max-width:420px!important;border-radius:24px!important;
+    margin-bottom:0!important;align-self:center!important;
+  }
 }
 
 .wizard-tool-card[data-tool="all"]{
@@ -71,3 +75,127 @@ html[data-theme="light"] ::placeholder{color:#555!important}
   .es-cta-row{flex-direction:column!important}
   .empty-wizard-btn,.empty-mega-btn{width:100%!important}
 }
+body.sv-kb #svDock{display:none!important}
+.wizard-footer{position:sticky;bottom:0;background:rgba(8,12,20,.92);padding:10px 0;backdrop-filter:blur(12px);z-index:2}
+.hist-filters{flex-wrap:wrap;gap:6px}
+.modal-overlay{backdrop-filter:blur(10px)}
+#sfpCancel{pointer-events:auto!important}
+#buyCreditsOverlay,.buy-credits-overlay{display:none!important}
+.dash-hdr .dh-name{font-weight:700;letter-spacing:-.02em}
+
+/* Compact empty workspace — kill the giant gap */
+.empty-state{
+  justify-content:flex-start!important;padding-top:28px!important;gap:10px!important;
+  min-height:auto!important;
+}
+.es-kicker{letter-spacing:.18em!important;font-size:.65rem!important;margin-bottom:4px!important}
+.es-title,.es-title strong,#esHello{
+  font-size:clamp(1.15rem,2.4vw,1.65rem)!important;line-height:1.25!important;
+  max-width:28ch!important;margin:0 auto!important;font-weight:700!important;
+}
+.es-sub{max-width:42ch!important;margin:4px auto 8px!important;font-size:.85rem!important}
+.es-cta-row{margin:8px 0 4px!important}
+.es-credit-line{margin:8px 0 4px!important;font-size:.72rem!important;color:rgba(255,255,255,.42)!important}
+
+.es-features{
+  display:flex!important;flex-wrap:wrap!important;justify-content:center!important;
+  gap:8px!important;max-width:520px!important;margin:8px auto 0!important;
+}
+.es-feat-chip{
+  display:inline-flex!important;align-items:center!important;gap:6px!important;
+  padding:8px 14px!important;border-radius:999px!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  background:rgba(255,255,255,.05)!important;color:#e8eef8!important;
+  font-size:.78rem!important;font-weight:650!important;letter-spacing:.01em;
+}
+.es-feat-chip.es-feat-mega,.es-feat-chip[data-tool="all"]{
+  border-color:#22d3ee!important;background:rgba(34,211,238,.16)!important;color:#a5f3fc!important;
+  width:100%!important;justify-content:center!important;max-width:280px!important;margin:2px auto 0;
+}
+.es-shortcuts{opacity:.55;margin-top:10px!important}
+
+/* Stats — graphic bars */
+#sidebarStats .stat-card-sidebar{
+  position:relative!important;overflow:hidden!important;
+  transition:transform .2s ease, box-shadow .2s ease!important;
+}
+#sidebarStats .stat-card-sidebar::after{
+  content:"";position:absolute;left:0;bottom:0;height:3px;width:55%;
+  background:currentColor;opacity:.55;border-radius:0 3px 0 0;
+  animation:statPulse 2.8s ease-in-out infinite;
+}
+#sidebarStats .stat-card-sidebar:hover{transform:translateY(-2px)!important}
+@keyframes statPulse{0%,100%{width:40%;opacity:.35}50%{width:78%;opacity:.8}}
+
+/* History / saved rows */
+.lp-hist-item{
+  display:flex!important;align-items:center!important;gap:10px!important;
+  padding:10px 10px 10px 12px!important;border-radius:14px!important;
+  background:rgba(255,255,255,.04)!important;border:1px solid rgba(255,255,255,.08)!important;
+  margin-bottom:8px!important;
+}
+.lp-hist-body{flex:1;min-width:0}
+.lp-hist-topic{
+  font-size:.82rem!important;font-weight:650!important;white-space:nowrap!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;color:#e8eef8!important;
+}
+.lp-hist-time{font-size:.65rem!important;color:rgba(255,255,255,.4)!important}
+.lp-hist-delete{
+  width:28px!important;height:28px!important;border-radius:8px!important;flex-shrink:0;
+  background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.08)!important;
+  color:rgba(255,255,255,.45)!important;display:grid!important;place-items:center!important;
+}
+.lp-hist-delete:hover{background:rgba(248,113,113,.18)!important;color:#fecaca!important}
+
+/* Paper theme — not all-white */
+html[data-theme="light"]{
+  font-family:Georgia,"Iowan Old Style",serif!important;
+}
+html[data-theme="light"] body,
+html[data-theme="light"] .dash-body,
+html[data-theme="light"] .out-area,
+html[data-theme="light"] .right-panel{
+  background:#f3eee6!important;color:#1c1917!important;
+}
+html[data-theme="light"] .left-panel,html[data-theme="light"] .dash-hdr{
+  background:#fffaf3!important;border-color:#e7dcc8!important;color:#1c1917!important;
+}
+html[data-theme="light"] .empty-wizard-btn{
+  background:#1c1917!important;color:#fffaf3!important;border:none!important;
+}
+html[data-theme="light"] .empty-mega-btn{
+  background:#c9a227!important;color:#1c1917!important;border:none!important;
+}
+html[data-theme="light"] .es-feat-chip{
+  background:#fff!important;color:#1c1917!important;border-color:#e7dcc8!important;
+}
+html[data-theme="light"] .es-credit-line{color:#57534e!important}
+html[data-theme="light"] .stat-card-sidebar{
+  background:#fff!important;border:1px solid #e7dcc8!important;color:#1c1917!important;
+}
+html[data-theme="light"] .stat-value-sidebar{color:#1c1917!important;-webkit-text-fill-color:#1c1917!important}
+html[data-theme="light"] .lp-hist-item{background:#fff!important;border-color:#e7dcc8!important}
+html[data-theme="light"] .lp-hist-topic{color:#1c1917!important}
+html[data-theme="light"] .credit-btn-buy{background:#1c1917!important;color:#fff!important}
+
+html[data-theme="golden"] body,html[data-theme="golden"] .dash-body,html[data-theme="golden"] .out-area{
+  background:#120e09!important;color:#f6ead0!important;
+  font-family:"Playfair Display",Cormorant,Georgia,serif!important;
+}
+html[data-theme="paper"] body{font-family:Georgia,serif}
+html[data-theme="regal"] body{font-family:Playfair Display,Cormorant Garamond,serif}
+
+/* Font scale including XS */
+html[data-font="xs"]{font-size:13px}
+html[data-font="small"]{font-size:14.5px}
+html[data-font="medium"]{font-size:16px}
+html[data-font="large"]{font-size:17.5px}
+html[data-font="xlarge"]{font-size:19px}
+
+#welcomeBackOverlay{z-index:40000!important}
+#welcomeBackOverlay .wb-btn{
+  pointer-events:auto!important;margin-top:16px;width:100%;
+  padding:12px 18px;border-radius:14px;border:none;
+  background:#fff;color:#05060a;font-weight:800;
+}
+#welcomeBackOverlay.visible{display:flex!important}
