@@ -9,7 +9,7 @@
   <meta property="og:title" content="Savoiré AI v2.0 — Ultimate AI Study Assistant">
   <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI. 10,000 AI credits every month.">
   <link rel="icon" href="clogo.png">
-  <title>Dashboard | Savoiré AI</title>
+  <title>Dashboard | Savoire AI v2.0</title>
 
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -514,7 +514,6 @@ html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[da
   color:#111!important;-webkit-text-fill-color:#111!important
 }
 </style>
-<link rel="stylesheet" href="fixes.css">
 </head>
 <body>
 <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar, .left-panel, #leftPanel')?.classList.toggle('open'); document.querySelector('#leftPanel')?.classList.toggle('mobile-open')">
@@ -838,9 +837,9 @@ html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[da
         </div>
 
         <!-- Empty State -->
-        <div id="emptyState" class="empty-state">
+        <div id="emptyState" class="empty-state" style="justify-content:flex-start;padding-top:28px;min-height:0">
           <div class="es-kicker">Savoiré AI · study workspace</div>
-          <div class="es-title"><strong id="esHello">What are you studying today?</strong></div>
+          <div class="es-title"><strong id="esHello">Ready to study?</strong></div>
           <div class="es-sub">Open the wizard — notes, flashcards, quiz, summary or mind map.</div>
 
           <div class="es-cta-row" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
@@ -1235,7 +1234,7 @@ html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[da
             </div>
             <div class="about-quote">
               <i class="fas fa-quote-left"></i>
-              "I built Savoiré AI because great learning tools shouldn't cost anything."
+              "I built Savoiré AI so serious study tools feel premium — 10,000 AI credits every month, packs from ₹19."
               <cite>— Sooban Talha</cite>
             </div>
             <div class="about-links">
@@ -1295,8 +1294,8 @@ html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[da
   </div>
 
   <!-- ─── Welcome Back Overlay ─── -->
-  <div class="modal-overlay" id="welcomeBackOverlay" style="z-index:40000;display:none">
-    <div class="modal" style="max-width:400px;text-align:center">
+  <div class="modal-overlay" id="welcomeBackOverlay" style="display:none;z-index:50000;align-items:center;justify-content:center;padding:20px;background:rgba(4,8,18,.78)">
+    <div class="modal" style="max-width:400px;width:min(400px,92vw);text-align:center;border-radius:24px;margin:0 auto;align-self:center">
       <div class="modal-body" style="text-align:center;padding:32px">
         <div class="wb-icon">🎓</div>
         <h2 class="wb-title">Welcome back, <span id="wbName">Scholar</span>!</h2>
@@ -1315,7 +1314,7 @@ html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[da
             <div class="wb-stat-lbl">Saved Notes</div>
           </div>
         </div>
-        <button id="welcomeBackBtn" class="wb-btn">Continue Studying →</button>
+        <button type="button" id="welcomeBackBtn" class="wb-btn" style="pointer-events:auto;position:relative;z-index:2;width:100%;margin-top:18px;padding:14px 18px;border:0;border-radius:14px;background:#fff;color:#05060a;font-weight:800;cursor:pointer">Continue studying</button>
       </div>
     </div>
   </div>
@@ -1676,7 +1675,6 @@ try {
   </script>
   <script src="payments.js"></script>
   <script src="app.js"></script>
-  <script src="fixes.js"></script>
 <!-- legacy overlay stub — 4-tier lives in #buyCreditsModal -->
 <div id="buyCreditsOverlay" style="display:none!important" hidden></div>
 <div class="buy-credits-overlay-REMOVED" style="display:none!important" aria-hidden="true">
@@ -1918,8 +1916,8 @@ window._svRefreshDaysChip = function(){
   var lbl = document.getElementById('daysLeftLbl');
   var wrap = document.getElementById('daysLeftChip');
   if (isWelcome) {
-    if (chip) chip.textContent = 'Welcome';
-    if (lbl) lbl.textContent = '';
+    if (chip) chip.textContent = '10K';
+    if (lbl) lbl.textContent = 'monthly';
   } else {
     var d = window._svDaysLeft();
     if (chip) chip.textContent = String(d);
@@ -2006,5 +2004,48 @@ window.performLogout = async function(){
 };
 </script>
 
+<style id="sv-shotfix">
+#emptyState.empty-state{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;min-height:calc(100dvh - 128px)!important;
+  padding:28px 18px 120px!important;gap:14px!important;border:0!important;box-shadow:none!important;
+}
+#emptyState .es-title,#emptyState #esHello{
+  font-size:clamp(1.7rem,6.4vw,2.35rem)!important;line-height:1.2!important;
+  letter-spacing:.012em!important;max-width:14ch!important;margin:0 auto!important;
+}
+#emptyState .es-sub{font-size:.85rem!important;max-width:40ch!important;margin:0 auto!important}
+#emptyState .es-features{
+  display:flex!important;flex-wrap:wrap!important;justify-content:center!important;
+  gap:8px!important;max-width:480px!important;margin:8px auto 0!important;
+}
+#emptyState .es-feat-chip{
+  display:inline-flex!important;align-items:center!important;gap:6px!important;
+  padding:8px 14px!important;border-radius:999px!important;font-size:.78rem!important;
+}
+#emptyState .es-feat-chip[data-tool="all"]{width:100%;max-width:260px;justify-content:center}
+html[data-theme="light"] #emptyWizardBtn{
+  background:#1c1917!important;color:#fffaf3!important;-webkit-text-fill-color:#fffaf3!important;
+}
+html[data-theme="light"] #emptyMegaBtn{
+  background:#c9a227!important;color:#1c1917!important;-webkit-text-fill-color:#1c1917!important;
+}
+#welcomeBackOverlay.modal-overlay,#welcomeBackOverlay{
+  display:none;align-items:center!important;justify-content:center!important;
+  padding:20px!important;z-index:50000!important;
+}
+#welcomeBackOverlay.visible,#welcomeBackOverlay[style*="flex"]{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+body.sv-modal-open #svDock{display:none!important;pointer-events:none!important}
+@media(max-width:1024px){
+  #welcomeBackOverlay.modal-overlay{
+    align-items:center!important;justify-content:center!important;
+  }
+  #welcomeBackOverlay .modal{
+    border-radius:24px!important;width:min(400px,92vw)!important;max-height:none!important;
+  }
+}
+</style>
 </body>
 </html>

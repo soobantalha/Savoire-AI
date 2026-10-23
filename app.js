@@ -3722,7 +3722,7 @@ Examples:
     if (!this.el.lpHistList) return;
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram', all:'fa-bolt' };
     if (!this.history.length) {
-      this.el.lpHistList.innerHTML = '<div class="lp-hist-empty">No history yet — start studying!</div>';
+      this.el.lpHistList.innerHTML = '<div class="lp-hist-empty-card">No study runs yet.<br>Tap Create to generate notes.</div>';
       return;
     }
     this.el.lpHistList.innerHTML = this.history.slice(0, 6).map(h => `
@@ -3732,7 +3732,7 @@ Examples:
           <div class="lp-hist-topic">${this._esc(h.topic||'Untitled')}</div>
           <div class="lp-hist-time">${this._relTime(h.ts)}</div>
         </div>
-        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delHistory('${h.id}')" aria-label="Delete">
+        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._confirmDelHistory('${h.id}')" aria-label="Delete">
           <i class="fas fa-times"></i>
         </button>
       </div>`).join('');
@@ -3742,7 +3742,7 @@ Examples:
     if (!this.el.lpSavedList) return;
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram', all:'fa-bolt' };
     if (!this.saved.length) {
-      this.el.lpSavedList.innerHTML = '<div class="lp-hist-empty">No saved notes yet.</div>';
+      this.el.lpSavedList.innerHTML = '<div class="lp-hist-empty-card">No saved notes yet.<br>Star a result to keep it here.</div>';
       return;
     }
     this.el.lpSavedList.innerHTML = this.saved.slice(0, 5).map(s => `
@@ -3752,7 +3752,7 @@ Examples:
           <div class="lp-hist-topic">${this._esc(s.topic||'Untitled')}</div>
           <div class="lp-hist-time">${this._relTime(s.savedAt)}</div>
         </div>
-        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delSaved('${s.id}')" aria-label="Delete">
+        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._confirmDelSaved('${s.id}')" aria-label="Delete">
           <i class="fas fa-times"></i>
         </button>
       </div>`).join('');
@@ -3801,6 +3801,8 @@ Examples:
   }
 
   _loadHistory(id)   { const h = this.history.find(x=>x.id===id); if(!h?.data)return; this._closeModal('histModal'); this.currentData=h.data; this.tool=h.tool||'notes'; this._renderResult(h.data); this._showToolbar(true); this._toast('info','fa-history',`Loaded: ${(h.topic||'').slice(0,40)}`); }
+  _confirmDelHistory(id){ this._confirm('Remove this study run from history?', () => this._delHistory(id)); }
+  _confirmDelSaved(id){ this._confirm('Remove this saved note?', () => this._delSaved(id)); }
   _delHistory(id)    { this.history=this.history.filter(x=>x.id!==id); this._save('sv_history',this.history); this._renderSidebarHistory(); this._updateAllStats(); this._renderHistModal(); try { this._deleteHistoryFromCloud(id); } catch(e){} }
   _openSavedModal()  { this._renderSavedModal(); this._openModal('savedModal'); }
 
@@ -4720,31 +4722,38 @@ Examples:
   }
 
   _openDemo() {
+    this._closeDemo();
+    document.body.classList.add('sv-modal-open');
+    const steps = [
+      { t: 'Create', d: 'Open the wizard. Choose notes, flashcards, quiz, summary or a mind map, then enter a topic.' },
+      { t: 'Mega Bundle', d: 'One topic becomes all five formats together — best for exam revision.' },
+      { t: 'Credits', d: 'You get 10,000 AI credits every month. Extra packs from ₹19 last 30 days from purchase.' },
+      { t: 'Your library', d: 'History and Saved live in Menu. They stay on your Google account.' }
+    ];
     this.demoStep = 0;
-    this.demoCanvas.width  = window.innerWidth;
-    this.demoCanvas.height = window.innerHeight;
-    this.demoCanvas.style.display  = 'block';
-    this.demoTooltip.style.display = 'block';
-
-    let hint = this._el('demoCHint');
-    if (!hint) {
-      hint = document.createElement('div');
-      hint.id = 'demoCHint';
-      hint.className = 'demo-canvas-hint';
-      hint.innerHTML = '<i class="fas fa-hand-pointer"></i> Tap dark area to continue · <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd>';
-      document.body.appendChild(hint);
-    }
-    hint.style.display = 'block';
-
-    this.demoCanvas.onclick = () => {
-      if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
-      else this._closeDemo();
+    const ov = document.createElement('div');
+    ov.id = 'svTour';
+    ov.className = 'sv-tour';
+    const paint = () => {
+      const s = steps[this.demoStep];
+      const last = this.demoStep === steps.length - 1;
+      ov.innerHTML = '<div class="sv-tour-card"><div class="sv-tour-k">'+(this.demoStep+1)+' / '+steps.length+'</div><h3>'+s.t+'</h3><p>'+s.d+'</p><div class="sv-tour-row"><button type="button" id="svTourSkip">Skip</button><button type="button" id="svTourNext">'+(last?'Start studying':'Next')+'</button></div></div>';
+      ov.querySelector('#svTourSkip').onclick = () => this._closeDemo();
+      ov.querySelector('#svTourNext').onclick = () => {
+        if (last) { this._closeDemo(); this._openWizard(); }
+        else { this.demoStep++; paint(); }
+      };
     };
-
-    this._renderDemoStep();
+    document.body.appendChild(ov);
+    paint();
+    if (this.demoCanvas) this.demoCanvas.style.display = 'none';
+    if (this.demoTooltip) this.demoTooltip.style.display = 'none';
   }
 
   _closeDemo() {
+    document.body.classList.remove('sv-modal-open');
+    const tour = document.getElementById('svTour');
+    if (tour) tour.remove();
     if (this.demoCanvas)  this.demoCanvas.style.display  = 'none';
     if (this.demoTooltip) this.demoTooltip.style.display = 'none';
     const hint = this._el('demoCHint');
