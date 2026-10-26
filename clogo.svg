@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-font="small">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <meta name="description" content="Savoiré AI v2.0 — Advanced AI Study Assistant. Generate notes, flashcards, quizzes, summaries & mind maps instantly.">
+  <meta name="author" content="Sooban Talha Technologies">
+  <meta name="theme-color" content="#0a1128">
+  <meta property="og:title" content="Savoiré AI v2.0 — Ultimate AI Study Assistant">
+  <meta property="og:description" content="Generate ultra-rich study notes, flashcards, quizzes, summaries & mind maps with AI. 10,000 AI credits every month.">
+  <link rel="icon" href="clogo.png">
+  <title>Dashboard | Savoire AI v2.0</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="polish.css">
+  <style id="sv-lock">
+    #leftPanel.left-panel { display:flex !important; flex-direction:column !important; }
+    .sb-stack { display:flex !important; flex-direction:column !important; gap:14px !important; flex:0 0 auto !important; margin:8px 12px 12px !important; }
+    #creditSidebar {
+      flex:0 0 auto !important; height:auto !important; overflow:visible !important; position:relative !important;
+      display:flex !important; flex-direction:column !important; gap:10px !important; padding:16px !important; margin:0 !important;
+      background: radial-gradient(120% 80% at 0% 0%, rgba(34,211,238,.12), transparent 50%), #0c1018 !important;
+      border:1px solid rgba(34,211,238,.18) !important; border-radius:20px !important;
+    }
+    #creditBalance { font-size:1.85rem !important; letter-spacing:-.03em !important; color:#fff !important; -webkit-text-fill-color:#fff !important; }
+    #creditBalance span { color:#22d3ee !important; -webkit-text-fill-color:#22d3ee !important; }
+    .credit-progress-fill { background:linear-gradient(90deg,#22d3ee,#3b82f6) !important; box-shadow:0 0 10px rgba(34,211,238,.45) !important; }
+    #creditSidebar .credit-btn-buy {
+      background:linear-gradient(135deg,#f0d27a,#d4af37) !important; color:#140f00 !important;
+      font-weight:800 !important; border:0 !important; min-height:44px !important; border-radius:12px !important;
+      box-shadow:0 8px 20px rgba(212,175,55,.25) !important;
+    }
+    #creditSidebar .credit-btn-history {
+      background:rgba(34,211,238,.1) !important; color:#67e8f9 !important; border:1px solid rgba(34,211,238,.28) !important;
+      min-height:44px !important; border-radius:12px !important;
+    }
+    #creditSidebar .pack-mini-grid { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; }
+    #creditSidebar .pack-mini { padding:12px 10px !important; border-radius:14px !important; background:rgba(255,255,255,.04) !important; border:1px solid rgba(255,255,255,.1) !important; text-align:left !important; color:#fff !important; }
+    #creditSidebar .pack-mini b { display:block !important; font-size:.78rem !important; }
+    #creditSidebar .pack-mini span { display:block !important; font-size:.68rem !important; color:#67e8f9 !important; }
+    #creditSidebar .pack-mini-hot { border-color:rgba(212,175,55,.45) !important; background:rgba(212,175,55,.1) !important; }
+    #creditSidebar .pack-mini:hover { transform:translateY(-3px); box-shadow:0 8px 18px rgba(0,0,0,.3); }
+    #sidebarStats { flex:0 0 auto !important; display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; margin:0 !important; }
+    #sidebarStats .stat-card-sidebar {
+      display:flex !important; flex-direction:column !important; gap:4px !important;
+      min-height:90px !important; padding:12px !important; overflow:hidden !important;
+      border-radius:16px !important; transform:none !important;
+    }
+    #sidebarStats .sc-fire { background:linear-gradient(180deg,rgba(251,146,60,.16),#10131a) !important; border-left:3px solid #fb923c !important; }
+    #sidebarStats .sc-gold { background:linear-gradient(180deg,rgba(240,210,122,.16),#10131a) !important; border-left:3px solid #f0d27a !important; }
+    #sidebarStats .sc-cyan { background:linear-gradient(180deg,rgba(34,211,238,.16),#10131a) !important; border-left:3px solid #22d3ee !important; }
+    #sidebarStats .sc-violet { background:linear-gradient(180deg,rgba(167,139,250,.16),#10131a) !important; border-left:3px solid #a78bfa !important; }
+    #sidebarStats .sc-pink { background:linear-gradient(180deg,rgba(244,114,182,.16),#10131a) !important; border-left:3px solid #f472b6 !important; }
+    #sidebarStats .sc-mint { background:linear-gradient(180deg,rgba(52,211,153,.16),#10131a) !important; border-left:3px solid #34d399 !important; }
+    #sidebarStats .sc-blue { grid-column:1/-1 !important; flex-direction:row !important; align-items:center !important; min-height:58px !important; background:linear-gradient(90deg,rgba(96,165,250,.14),#10131a) !important; border-left:3px solid #60a5fa !important; }
+    #sidebarStats .sc-fire .stat-label-sidebar { color:#fb923c !important; }
+    #sidebarStats .sc-gold .stat-label-sidebar { color:#f0d27a !important; }
+    #sidebarStats .sc-cyan .stat-label-sidebar { color:#22d3ee !important; }
+    #sidebarStats .sc-violet .stat-label-sidebar { color:#a78bfa !important; }
+    #sidebarStats .sc-pink .stat-label-sidebar { color:#f472b6 !important; }
+    #sidebarStats .sc-mint .stat-label-sidebar { color:#34d399 !important; }
+    #sidebarStats .stat-value-sidebar { font-size:1.3rem !important; font-weight:800 !important; color:#fff !important; font-variant-numeric:tabular-nums !important; }
+    #sidebarStats .stat-hint { font-size:.65rem !important; color:rgba(255,255,255,.42) !important; }
+    #sidebarStats .sc-blue .stat-value-sidebar { font-size:1.05rem !important; }
+    .user-profile-sidebar { background:radial-gradient(80% 80% at 0% 0%,rgba(212,175,55,.12),transparent 55%),rgba(255,255,255,.03) !important; border:1px solid rgba(255,255,255,.08) !important; border-radius:16px !important; margin:0 12px 8px !important; padding:12px !important; }
+    .credit-sidebar-title, .lp-hist-title, .lp-title { letter-spacing:.14em !important; text-transform:uppercase !important; color:#f0d27a !important; font-size:.65rem !important; }
+    .nav-item { border-radius:14px !important; margin:6px 12px !important; }
+    .nav-item-wizard { background:#fff !important; color:#05060a !important; }
+    .nav-item-mega { border:1px solid rgba(212,175,55,.35) !important; }
+    .lp-home-link { background:rgba(255,255,255,.06) !important; border:1px solid rgba(255,255,255,.12) !important; border-radius:999px !important; padding:6px 12px !important; color:#fff !important; }
+    .sidebar-about { margin:12px !important; padding:12px !important; border-top:1px solid rgba(212,175,55,.2) !important; }
+    .sb-brand { display:flex; gap:10px; align-items:flex-start; }
+    .sb-brand img { width:28px; height:28px; object-fit:contain; }
+    .sb-brand p { font-size:.65rem; color:rgba(255,255,255,.5); line-height:1.45; margin:0; }
+    .sb-brand a { color:#f0d27a; text-decoration:none; }
+    .sb-brand a:hover { color:#fff; }
+    .feature-detail-launch { display:none !important; }
+    .dash-hdr .dh-btn, .dash-hdr .dh-av {
+      width:40px !important; height:40px !important; background:rgba(255,255,255,.06) !important;
+      border:1px solid rgba(255,255,255,.1) !important; color:#fff !important; border-radius:12px !important;
+    }
+    .dash-hdr .dh-wizard-btn { background:#fff !important; color:#05060a !important; border:0 !important; }
+    .dash-hdr .dh-mega-btn { background:rgba(212,175,55,.15) !important; color:#f0d27a !important; border:1px solid rgba(212,175,55,.3) !important; }
+    #daysLeftChip { background:rgba(34,211,238,.12) !important; border:1px solid rgba(34,211,238,.3) !important; color:#7dd3fc !important; }
+    .es-features { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) !important; gap:8px !important; max-width:520px !important; margin:16px auto 0 !important; }
+    .es-feat-chip.es-feat-mega { grid-column:1/-1 !important; }
+    .empty-wizard-btn { background:#fff !important; color:#05060a !important; }
+    .empty-mega-btn { background:rgba(255,255,255,.08) !important; color:#fff !important; border:1px solid rgba(255,255,255,.2) !important; opacity:1 !important; }
+    .wizard-tool-card { background:rgba(255,255,255,.04) !important; border:1px solid rgba(255,255,255,.1) !important; }
+    .wizard-tool-card.selected { border-color:#22d3ee !important; background:rgba(34,211,238,.12) !important; box-shadow:0 0 0 1px #22d3ee inset !important; }
+    .wizard-tool-card[data-tool="all"] { grid-column:1/-1 !important; }
+    #wizardModal .modal-header { padding:18px 20px !important; }
+    .left-panel.collapsed { transform:translateX(-110%) !important; }
+    .dash-body.focus-on .right-panel { width:100% !important; }
+    #svExitFocus {
+      display:none; position:fixed; right:18px; bottom:22px; z-index:14000;
+      padding:10px 16px; border-radius:999px; border:1px solid rgba(255,255,255,.2);
+      background:rgba(18,18,24,.7); color:#fff; backdrop-filter:blur(20px); font-weight:700; cursor:pointer;
+    }
+    .dash-body.focus-on #svExitFocus { display:inline-flex !important; }
+    @media (max-width:1024px) {
+      .dash-hdr .dh-logo { display:flex !important; }
+      .dash-hdr #daysLeftChip { display:inline-flex !important; }
+      .dash-hdr #tokenMeter { display:flex !important; }
+      .dash-hdr .dh-wizard-btn, .dash-hdr .dh-mega-btn { display:inline-flex !important; }
+      .es-features { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+      #svDock.sv-dock {
+        background:rgba(20,20,24,.65) !important;
+        backdrop-filter:blur(40px) saturate(200%) !important;
+        -webkit-backdrop-filter:blur(40px) saturate(200%) !important;
+        border:.5px solid rgba(255,255,255,.28) !important;
+        box-shadow:0 16px 40px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.35) !important;
+      }
+      #svDock button { opacity:1 !important; font-size:9px !important; }
+      #svDock button.on { color:#fff !important; transform:scale(1.08); }
+    }
+    html[data-theme="light"] #creditSidebar { background:#fff !important; }
+    html[data-theme="golden"] #creditSidebar { border-color:rgba(212,175,55,.35) !important; }
+
+    #streamFullpage[style*="flex"] { display: none !important; }
+    #streamFullpage.sfp-open { display: flex !important; position: fixed !important; inset: 0 !important; z-index: 12000 !important; }
+    .download-choice-overlay { z-index: 25000 !important; pointer-events: auto !important; }
+    .exp-btn, .otb-btn, #pdfBtn { pointer-events: auto !important; position: relative !important; z-index: 5 !important; }
+
+    .wiz-live-choice { margin: 14px 0; padding: 14px; border-radius: 16px; background: rgba(34,211,238,.08); border: 1px solid rgba(34,211,238,.22); }
+    .wiz-live-q { font-weight: 800; color: #fff; margin-bottom: 10px; }
+    .wiz-live-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+    .wiz-live-opt { padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; cursor: pointer; font-weight: 700; }
+    .wiz-live-opt.on { background: #fff; color: #05060a; }
+
+    html[data-theme="light"] body,
+    html[data-theme="light"] .dash-body,
+    html[data-theme="light"] .out-area,
+    html[data-theme="light"] .right-panel { background: #eef1f6 !important; color: #111827 !important; }
+    html[data-theme="light"] .es-title,
+    html[data-theme="light"] .es-title strong,
+    html[data-theme="light"] .es-sub,
+    html[data-theme="light"] .es-brand,
+    html[data-theme="light"] .md-content,
+    html[data-theme="light"] .md-content p,
+    html[data-theme="light"] .md-content li,
+    html[data-theme="light"] .rh-topic,
+    html[data-theme="light"] .stat-value-sidebar,
+    html[data-theme="light"] .user-name-sidebar,
+    html[data-theme="light"] .nav-text { color: #111827 !important; -webkit-text-fill-color: #111827 !important; }
+    html[data-theme="light"] .es-title em { color: #8a6914 !important; -webkit-text-fill-color: #8a6914 !important; }
+    html[data-theme="light"] .empty-mega-btn { color: #111 !important; border-color: rgba(0,0,0,.15) !important; }
+    html[data-theme="light"] .es-feat-chip { color: #111 !important; background: #fff !important; }
+    html[data-theme="light"] .feature-detail-card { background: #fff !important; color: #111 !important; }
+    html[data-theme="light"] .wiz-live-q { color: #111 !important; }
+
+    html[data-theme="golden"] .dash-body, html[data-theme="golden"] .out-area { background: #120e09 !important; color: #f6ead0 !important; }
+
+    /* Obsidian / Paper / Regal */
+    html[data-theme="dark"] {
+      --sv-bg:#060a18; --sv-text:#e8eef8; --sv-accent:#22ffd0;
+      font-family: Inter, system-ui, sans-serif !important;
+    }
+    html[data-theme="light"] {
+      --sv-bg:#faf8f3; --sv-text:#1a1a1a; --sv-accent:#c2410c;
+      font-family: Georgia, 'Times New Roman', serif !important;
+    }
+    html[data-theme="light"] body, html[data-theme="light"] .dash-body, html[data-theme="light"] .out-area,
+    html[data-theme="light"] .left-panel, html[data-theme="light"] .dash-hdr, html[data-theme="light"] .modal {
+      background: #faf8f3 !important; color: #1a1a1a !important;
+    }
+    html[data-theme="light"] .es-title, html[data-theme="light"] .es-title strong, html[data-theme="light"] .nav-text,
+    html[data-theme="light"] .stat-value-sidebar, html[data-theme="light"] .user-name-sidebar,
+    html[data-theme="light"] .md-content, html[data-theme="light"] .md-content p {
+      color:#1a1a1a !important; -webkit-text-fill-color:#1a1a1a !important;
+    }
+    html[data-theme="light"] .empty-wizard-btn, html[data-theme="light"] .credit-btn-buy {
+      background:#c2410c !important; color:#fff !important; border-radius:8px !important;
+    }
+    html[data-theme="golden"] {
+      font-family: 'Cormorant Garamond', Garamond, serif !important;
+    }
+    html[data-theme="golden"] .es-title, html[data-theme="golden"] .dh-name {
+      font-family: 'Playfair Display', serif !important;
+    }
+    html[data-theme="golden"] .empty-wizard-btn, html[data-theme="golden"] .credit-btn-buy {
+      background:linear-gradient(135deg,#8b6914,#f0d27a,#8b6914) !important; color:#140f00 !important;
+    }
+    .credit-btn-buy, .empty-wizard-btn, .dh-wizard-btn, .mega-generate-btn, .wizard-btn-primary, .tier-buy-btn {
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 8px 22px rgba(0,0,0,.25) !important;
+      transition: transform .2s, box-shadow .2s !important;
+    }
+    .credit-btn-buy:hover, .empty-wizard-btn:hover, .dh-wizard-btn:hover {
+      transform: translateY(-2px) !important;
+    }
+    .credit-btn-buy:active, .empty-wizard-btn:active { transform: scale(.97) !important; }
+    @media (max-width:1024px) {
+      #svDock.sv-dock {
+        left:16px !important; right:16px !important;
+        bottom: calc(16px + env(safe-area-inset-bottom,0px)) !important;
+        height:68px !important; border-radius:32px !important;
+        background: linear-gradient(180deg, rgba(255,255,255,.1), rgba(20,20,30,.55)) !important;
+        backdrop-filter: blur(50px) saturate(220%) brightness(1.08) !important;
+        -webkit-backdrop-filter: blur(50px) saturate(220%) brightness(1.08) !important;
+        border: .5px solid rgba(255,255,255,.28) !important;
+        box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4), 0 0 40px rgba(34,255,208,.08) !important;
+      }
+      #svDock .sv-dock-orb {
+        width:52px !important; height:52px !important;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(34,255,208,.2) 40%, transparent 70%) !important;
+      }
+      #svDock button.on { color:#22ffd0 !important; }
+    }
+
+    /* 1 Dark theme neon bluish-green depth */
+    html[data-theme="dark"] .dash-body,
+    html[data-theme="dark"] .out-area,
+    html[data-theme="dark"] .right-panel {
+      background:
+        radial-gradient(70% 50% at 80% 0%, rgba(34,211,238,.10), transparent 55%),
+        radial-gradient(50% 40% at 10% 90%, rgba(16,185,129,.08), transparent 50%),
+        #05070c !important;
+    }
+    html[data-theme="dark"] #leftPanel {
+      background:
+        radial-gradient(90% 40% at 0% 0%, rgba(34,211,238,.12), transparent 45%),
+        #070a10 !important;
+    }
+
+    /* 2 Chips click info — 3x2, no lone wrap */
+    .es-features {
+      display:grid !important;
+      grid-template-columns:repeat(3, minmax(0,1fr)) !important;
+      gap:8px !important;
+      max-width:560px !important;
+    }
+    .es-feat-chip {
+      cursor:pointer !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+    }
+    .es-feat-chip.active-detail {
+      background:rgba(34,211,238,.16) !important;
+      border-color:rgba(34,211,238,.45) !important;
+      color:#fff !important;
+    }
+    .feature-detail-launch {
+      display:inline-flex !important;
+      margin-top:12px !important;
+      padding:10px 16px !important;
+      border-radius:999px !important;
+      background:#fff !important;
+      color:#05060a !important;
+      font-weight:800 !important;
+      border:0 !important;
+    }
+
+    /* 3 Mobile dock extreme liquid glass */
+    @media (max-width:1024px) {
+      #svDock.sv-dock {
+        height:68px !important;
+        border-radius:34px !important;
+        background:linear-gradient(180deg, rgba(255,255,255,.22), rgba(18,18,24,.35) 38%, rgba(10,12,18,.55)) !important;
+        backdrop-filter:blur(48px) saturate(220%) !important;
+        -webkit-backdrop-filter:blur(48px) saturate(220%) !important;
+        border:.5px solid rgba(255,255,255,.38) !important;
+        box-shadow:0 20px 50px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.5) !important;
+      }
+    }
+
+    /* 4 Wizard */
+    #wizardModal .modal {
+      background:#0b1018 !important;
+      border:1px solid rgba(34,211,238,.18) !important;
+      border-radius:24px !important;
+    }
+    .wizard-btn-primary {
+      background:linear-gradient(135deg,#22d3ee,#1970ff) !important;
+      color:#fff !important; border:0 !important; border-radius:12px !important; min-height:44px !important;
+    }
+    .wizard-btn-secondary[disabled] { opacity:.35 !important; }
+
+    /* 6 Footer branding + kill gold scrollbar */
+    .right-panel, .out-area, #leftPanel { scrollbar-width:thin; scrollbar-color:rgba(34,211,238,.25) transparent; }
+    .right-panel::-webkit-scrollbar, .out-area::-webkit-scrollbar, #leftPanel::-webkit-scrollbar { width:6px; }
+    .right-panel::-webkit-scrollbar-thumb, .out-area::-webkit-scrollbar-thumb { background:rgba(34,211,238,.28); border-radius:8px; }
+    .dash-mini-footer {
+      display:flex !important; justify-content:center !important; align-items:center !important;
+      gap:6px !important; flex-wrap:wrap !important;
+      padding:12px 16px 18px !important;
+      font-size:.72rem !important; color:rgba(255,255,255,.5) !important;
+      border-top:1px solid rgba(255,255,255,.06) !important;
+      text-align:center !important;
+    }
+  </style>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+
+  <!-- Critical inline styles for loading state and base layout -->
+  <style>
+    /* ── RESET & BASE ── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a1128 0%, #050814 50%, #000000 100%);
+      color: #c0c0c0;
+      display: flex;
+      flex-direction: column;
+    }
+    .dash-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+    /* ── LOADING SPINNER ── */
+    .loading-spinner {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 56px;
+      height: 56px;
+      border: 3px solid rgba(212, 175, 55, 0.2);
+      border-top-color: #d4af37;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      z-index: 9999;
+    }
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    .loaded .loading-spinner {
+      display: none;
+    }
+    /* ── TOAST CONTAINER ── */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background: rgba(15, 23, 42, 0.97);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 12px;
+      font-size: .82rem;
+      color: #fff;
+      animation: slideInToast .3s ease;
+      cursor: pointer;
+      max-width: 340px;
+      min-width: 200px;
+    }
+    .toast.success { border-left: 4px solid #00ff88; }
+    .toast.error   { border-left: 4px solid #ff4444; }
+    .toast.info    { border-left: 4px solid #00d4ff; }
+    @keyframes slideInToast {
+      from { opacity: 0; transform: translateX(100%); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    /* ── SIDEBAR BACKDROP ── */
+    .sb-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .75);
+      backdrop-filter: blur(4px);
+      z-index: 48;
+      cursor: pointer;
+    }
+    .sb-backdrop.visible {
+      display: block;
+      animation: fadeIn .25s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+  </style>
+
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    .token-meter{display:flex;align-items:center;gap:8px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);padding:6px 14px;border-radius:999px;font-size:.72rem;color:#f0d383}
+    .token-track{width:84px;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
+    .token-fill{height:100%;background:linear-gradient(90deg,#d4af37,#ffae00);transition:width .4s ease;width:100%}
+    #authLoading{position:fixed;inset:0;z-index:99999;background:#03050c;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    #authLoading .spin{width:40px;height:40px;border:3px solid rgba(212,175,55,.2);border-top-color:#d4af37;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+
+<style>
+/* Hide old 15k/15k token bar - use new credit sidebar only */
+#headerStreakWrap, #statSessions, #statHistory, #statSaved { display:none !important; }
+.dh-stat-streak, .dh-stat-hide-sm { display:none !important; }
+.hdr-landing-btn.dh-stat-hide-md { }
+#tokenMeter { display:flex !important; }
+@media (max-width: 1024px) {
+  #tokenMeter { display:none !important; }
+  .dh-stats .dh-stat { display:none !important; }
+  #wizardHeaderBtn, #megaHeaderBtn { display:none !important; }
+  .mobile-menu-btn { display:none !important; }
+  #daysLeftChip { display:inline-flex !important; }
+}
+</style>
+
+
+<style>
+/* Premium dashboard mobile fixes */
+@media (max-width: 768px) {
+  .dash-hdr{backdrop-filter:blur(20px);background:rgba(7,10,24,.9)!important}
+  .es-cta-row{flex-direction:column;gap:10px}
+  .es-cta-row .empty-wizard-btn, .es-cta-row .empty-mega-btn{width:100%;justify-content:center}
+  .credit-sidebar{border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+  .out-toolbar{overflow-x:auto;flex-wrap:nowrap;padding-bottom:8px}
+  .out-toolbar::-webkit-scrollbar{display:none}
+}
+</style>
+
+<style id="sv-fix-live">
+#liveNotesModal, #liveNotesModal * { pointer-events: auto !important; }
+.feat-pop-overlay { position:fixed;inset:0;z-index:40000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px }
+.feat-pop { width:min(440px,100%);background:#0c1220;border:1px solid rgba(34,255,208,.28);border-radius:22px;padding:28px 24px 22px;position:relative }
+.feat-pop-x { position:absolute;top:12px;right:12px;background:rgba(255,255,255,.08);border:0;color:#fff;width:32px;height:32px;border-radius:10px;cursor:pointer }
+.feat-pop h3 { margin:8px 0;color:#fff }
+.feat-pop p { color:rgba(232,238,248,.7);font-size:.9rem;line-height:1.55 }
+.feat-pop-cta { width:100%;min-height:46px;border:0;border-radius:999px;background:linear-gradient(135deg,#22ffd0,#22d3ee);color:#05060a;font-weight:800;cursor:pointer }
+.dash-hdr .dh-mark { width:40px!important;height:40px!important }
+.dash-hdr .dh-name { font-size:1.35rem!important }
+.dash-mini-footer { background:linear-gradient(180deg,transparent,rgba(0,0,0,.12))!important;border-top:1px solid rgba(34,255,208,.15)!important }
+.lp-hist-list { scrollbar-color: rgba(34,211,238,.3) transparent }
+button, .btn, .nav-item, .pack-mini, .otb-btn, .exp-btn, .dh-btn, a { pointer-events: auto !important; cursor: pointer !important; }
+button::before, button::after, .btn::before, .btn::after, .nav-item::before, .credit-btn::after { pointer-events: none !important; }
+.nav-item { transition: transform .2s, box-shadow .2s !important; }
+.nav-item:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.28); }
+.nav-item:active { transform: scale(.97); }
+#svDock button { transition: transform .35s cubic-bezier(.34,1.56,.64,1), color .2s !important; }
+#svDock button:active { transform: scale(.88); }
+body.sv-modal-open #svDock { opacity:0 !important; pointer-events:none !important; transform:translateY(120%) !important; }
+@media (max-width:1024px){
+  #wizardModal.modal-overlay{
+    align-items:flex-end !important; padding:0 !important; background:rgba(0,0,0,.55) !important;
+  }
+  #wizardModal .modal{
+    width:100% !important; max-width:100% !important;
+    max-height:88dvh !important; height:auto !important;
+    border-radius:22px 22px 0 0 !important;
+    margin:0 !important; padding-bottom:12px !important;
+    overflow:hidden !important; display:flex !important; flex-direction:column !important;
+  }
+  #wizardModal .modal-header{ flex:none !important; padding:14px 16px !important; }
+  #wizardModal .modal-body, #wizardContent, #wizardBody, .wizard-body{
+    overflow-y:auto !important; -webkit-overflow-scrolling:touch !important;
+    max-height:none !important; flex:1 1 auto !important; min-height:0 !important;
+  }
+  .wizard-tool-grid{ grid-template-columns:1fr 1fr !important; gap:10px !important; padding:4px !important; }
+  .wizard-tool-card{ min-height:auto !important; padding:12px !important; }
+  .wizard-tool-card[data-tool="all"]{
+    grid-column:1/-1 !important;
+    border:2px solid #22d3ee !important;
+    background:rgba(34,211,238,.12) !important;
+    box-shadow:0 0 0 1px rgba(34,211,238,.35), 0 12px 32px rgba(34,211,238,.15) !important;
+  }
+  .dash-hdr .dh-name{ font-size:1.2rem !important; }
+  .dash-hdr .dh-mark{ width:34px !important; height:34px !important; }
+  .empty-state{ padding:16px 16px 110px !important; }
+  .es-title{ font-size:clamp(1.4rem,7vw,2rem) !important; }
+}
+.wizard-tool-card[data-tool="all"]{
+  grid-column:1/-1 !important;
+  border:2px solid #22d3ee !important;
+  background:linear-gradient(180deg,rgba(34,211,238,.16),rgba(15,20,32,.9)) !important;
+}
+.left-panel.collapsed{transform:translateX(-110%)!important;pointer-events:none!important}
+.dash-body.focus-on .right-panel{width:100%!important}
+#svExitFocus{z-index:20000!important}
+#wizardModal .modal-close,#histModal .modal-close,#settingsModal .modal-close{
+  pointer-events:auto!important;z-index:5!important;min-width:40px;min-height:40px
+}
+#wizardModal, #wizardModal *{pointer-events:auto}
+.out-area{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))!important}
+#leftPanel::-webkit-scrollbar,#wizardBody::-webkit-scrollbar,.wizard-body::-webkit-scrollbar{
+  width:4px
+}
+#leftPanel::-webkit-scrollbar-thumb,#wizardBody::-webkit-scrollbar-thumb{
+  background:rgba(34,211,238,.35);border-radius:8px
+}
+.empty-state{animation:esIn .5s ease}
+@keyframes esIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.dash-hdr{animation:hdrIn .4s ease}
+@keyframes hdrIn{from{opacity:0}to{opacity:1}}
+html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[data-theme="light"] .es-sub{
+  color:#111!important;-webkit-text-fill-color:#111!important
+}
+</style>
+</head>
+<body>
+<button class="mobile-menu-btn" onclick="document.querySelector('.sidebar, .left-panel, #leftPanel')?.classList.toggle('open'); document.querySelector('#leftPanel')?.classList.toggle('mobile-open')">
+  <i class="fas fa-bars"></i>
+</button>
+<div id="authLoading"><div class="spin"></div><div style="color:#d4af37;font-family:monospace;font-size:.8rem">Checking login...</div></div>
+
+
+  <!-- ═══════════ NOSCRIPT MESSAGE ═══════════ -->
+  <noscript>
+    <div style="position:fixed;inset:0;background:#0a1128;display:flex;align-items:center;justify-content:center;z-index:9999;color:#fff;text-align:center;padding:20px">
+      <div>
+        <h1>⚠️ JavaScript Required</h1>
+        <p>Savoiré AI requires JavaScript to function. Please enable it in your browser.</p>
+      </div>
+    </div>
+  </noscript>
+
+  <!-- ═══════════ LOADING SPINNER ═══════════ -->
+  <div class="loading-spinner"></div>
+
+  <!-- ═══════════ PARTICLES BACKGROUND ═══════════ -->
+  <canvas id="particleCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0"></canvas>
+
+  <!-- ═══════════ TOAST CONTAINER ═══════════ -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- ═══════════ SIDEBAR BACKDROP ═══════════ -->
+  <div class="sb-backdrop" id="sbBackdrop"></div>
+
+  <!-- ═══════════════════════════════════ MAIN LAYOUT ═══════════════════════════════════════ -->
+  <div class="dash-body">
+
+    <!-- ═══════════ LEFT PANEL / SIDEBAR ═══════════ -->
+    <aside class="left-panel" id="leftPanel">
+
+      <!-- Panel Header -->
+      <div class="lp-hdr">
+        <div class="lp-hdr-row">
+          <span class="lp-title">MENU</span>
+          <div class="lp-header-links">
+            <a href="#" class="lp-home-link" id="homeLink"><i class="fas fa-home"></i> Home</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Profile -->
+      <div class="user-profile-sidebar">
+        <div class="user-avatar-sidebar" id="sidebarAvatar">🎓</div>
+        <div class="user-info-sidebar">
+          <div class="user-name-sidebar" id="sidebarUserName">Scholar</div>
+          <div class="user-tagline-sidebar"><strong style="color:#fff">Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37;font-style:italic">Know more.</em></div>
+        </div>
+      </div>
+
+      <div class="sb-stack">
+      <div class="credit-sidebar" id="creditSidebar" style="flex:0 0 auto;height:auto;overflow:visible;position:relative">
+        <div class="credit-sidebar-hdr">
+          <span class="credit-sidebar-title">Credits</span>
+          <span id="creditPlanBadge" class="welcome-badge">STARTER</span>
+        </div>
+        <div class="credit-balance" id="creditBalance" onclick="window.openCreditHistory && window.openCreditHistory()">10,000 <span>credits</span></div>
+        <div class="credit-progress"><div class="credit-progress-fill" id="creditProgressFill"></div></div>
+        <div class="credit-meta"><span id="creditUsed">Used 0</span><span id="creditRemaining">Left 10,000</span></div>
+        <div class="credit-actions">
+          <button type="button" class="credit-btn credit-btn-buy" onclick="event.stopPropagation(); window.openBuyCreditsModal && window.openBuyCreditsModal()">Add credits</button>
+          <button type="button" class="credit-btn credit-btn-history" onclick="event.stopPropagation(); window.openCreditHistory && window.openCreditHistory()">Usage</button>
+        </div>
+        <div class="pack-mini-grid">
+          <button type="button" class="pack-mini" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('starter')"><b>Starter</b><span>₹19 · 100k</span></button>
+          <button type="button" class="pack-mini" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('pro')"><b>Pro</b><span>₹49 · 500k</span></button>
+          <button type="button" class="pack-mini pack-mini-hot" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('popular')"><b>Popular</b><span>₹99 · 1M</span></button>
+          <button type="button" class="pack-mini" onclick="event.stopPropagation(); window.buyPlan && window.buyPlan('ultra')"><b>Ultra</b><span>₹199 · 2M</span></button>
+        </div>
+        <div class="pack-mini-note">30-day packs · Razorpay UPI</div>
+      </div>
+
+      <div class="stats-grid-sidebar" id="sidebarStats" style="flex:0 0 auto;position:relative">
+        <button type="button" class="stat-card-sidebar sc-fire">
+          <div class="stat-label-sidebar">Streak</div>
+          <div class="stat-value-sidebar" id="sidebarStreakValue">0</div>
+          <div class="stat-hint">days in a row</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-gold">
+          <div class="stat-label-sidebar">Best</div>
+          <div class="stat-value-sidebar" id="sidebarBestStreak">0</div>
+          <div class="stat-hint">record streak</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-cyan">
+          <div class="stat-label-sidebar">Sessions</div>
+          <div class="stat-value-sidebar" id="sidebarSessionsValue">0</div>
+          <div class="stat-hint">study opens</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-violet">
+          <div class="stat-label-sidebar">Words</div>
+          <div class="stat-value-sidebar" id="sidebarWordsValue">0</div>
+          <div class="stat-hint">generated</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-pink" id="statHistBtn">
+          <div class="stat-label-sidebar">History</div>
+          <div class="stat-value-sidebar" id="sidebarHistoryValue">0</div>
+          <div class="stat-hint">saved runs</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-mint" id="statSavedBtn">
+          <div class="stat-label-sidebar">Saved</div>
+          <div class="stat-value-sidebar" id="sidebarSavedValue">0</div>
+          <div class="stat-hint">starred notes</div>
+        </button>
+        <button type="button" class="stat-card-sidebar sc-blue">
+          <div class="stat-label-sidebar">Last active</div>
+          <div class="stat-value-sidebar" id="sidebarLastActive">—</div>
+          <div class="stat-hint">this device + cloud</div>
+        </button>
+      </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="sidebar-nav" id="sidebarNav">
+        <!-- Wizard CTA -->
+        <div class="nav-item nav-item-wizard" data-nav="wizard" id="navWizard">
+          <i class="fas fa-magic nav-icon"></i>
+          <span class="nav-text">✨ Create Study Material</span>
+          <span class="nav-badge new-badge">Wizard</span>
+        </div>
+        <!-- Mega Bundle -->
+        <div class="nav-item nav-item-mega" data-nav="all" id="navAll">
+          <i class="fas fa-bolt nav-icon"></i>
+          <span class="nav-text">⚡ Mega Study Bundle</span>
+          <span class="nav-badge mega-badge">ALL 5</span>
+        </div>
+        <div class="nav-divider"></div>
+        <!-- History -->
+        <div class="nav-item" data-nav="history" id="navHistory">
+          <i class="fas fa-history nav-icon"></i>
+          <span class="nav-text">Study History</span>
+        </div>
+        <!-- Saved -->
+        <div class="nav-item" data-nav="saved" id="navSaved">
+          <i class="fas fa-star nav-icon"></i>
+          <span class="nav-text">Saved Notes</span>
+        </div>
+        <!-- Settings -->
+        <div class="nav-item" data-nav="settings" id="navSettings">
+          <i class="fas fa-cog nav-icon"></i>
+          <span class="nav-text">Settings</span>
+        </div>
+        <!-- Focus Mode -->
+        <div class="nav-item" data-nav="focus" id="navFocus">
+          <i class="fas fa-expand-alt nav-icon"></i>
+          <span class="nav-text">Focus Mode</span>
+        </div>
+      </nav>
+
+      <!-- Demo Replay Button -->
+      <button class="demo-replay-btn" id="demoReplayBtn">
+        <i class="fas fa-play-circle"></i> Watch Demo
+      </button>
+
+      <!-- Recent History (sidebar) -->
+      <div class="lp-history" id="lpHistory">
+        <div class="lp-hist-header">
+          <span class="lp-hist-title">Recent Study</span>
+          <button class="lp-hist-all" id="lpHistAll">View All</button>
+        </div>
+        <div class="lp-hist-list" id="lpHistList">
+          <div class="lp-hist-empty">No history yet — start studying!</div>
+        </div>
+      </div>
+
+      <!-- Saved Notes (sidebar) -->
+      <div class="lp-history" id="lpSavedStrip">
+        <div class="lp-hist-header">
+          <span class="lp-hist-title">Saved Notes</span>
+          <button class="lp-hist-all" id="lpSavedAll">View All</button>
+        </div>
+        <div class="lp-hist-list" id="lpSavedList">
+          <div class="lp-hist-empty">No saved notes yet.</div>
+        </div>
+      </div>
+
+      <!-- Avatar Picker (sidebar) -->
+      <div id="sidebarAvatarPicker"></div>
+
+      <!-- About Section (sidebar) -->
+      <div class="sidebar-about">
+        <div class="sb-brand">
+          <img src="clogo.png" alt="">
+          <p><strong style="color:#fff">Savoiré AI v2.0</strong><br>
+          Developed by Sooban Talha Technologies<br>
+          <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a></p>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ═══════════ RIGHT PANEL ═══════════ -->
+    <main class="right-panel" id="rightPanel">
+
+      <!-- ══════════════════════════════════ HEADER ══════════════════════════════════ -->
+      <header class="dash-hdr" id="dashHdr">
+        <div class="dh-left">
+          <button class="dh-btn" id="sbToggle" aria-label="Toggle sidebar">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="dh-logo" id="dhLogo" role="button" tabindex="0" aria-label="Home">
+            <div class="dh-mark">
+              <img src="clogo.png" alt="Savoiré AI" class="brand-logo-img" onerror="this.onerror=null;this.src='clogo.svg'">
+            </div>
+            <div class="dh-text">
+              <span class="dh-name">Savoiré <span class="dh-name-ai">AI</span></span>
+              <span class="dh-ver">v2.0</span>
+            </div>
+          </div>
+          <button type="button" class="dh-days" id="daysLeftChip" title="Plan details">
+            <i class="far fa-clock"></i>
+            <span id="daysLeftVal">—</span>
+            <span class="dh-days-lbl" id="daysLeftLbl">days left</span>
+          </button>
+        </div>
+
+        <!-- Header Stats -->
+        <div class="dh-stats">
+          <div class="token-meter" id="tokenMeter" title="Your tokens">
+            <i class="fas fa-coins" style="color:#d4af37"></i>
+            <div class="token-track"><div class="token-fill" id="tokenBar"></div></div>
+            <span id="tokenCount">-- / --</span>
+          </div>
+          <div class="dh-stat dh-stat-streak" id="headerStreakWrap">
+            <i class="fas fa-fire"></i>
+            <span id="headerStreak" class="dh-streak-val">0</span>
+            <span class="dh-stat-lbl">Streak</span>
+          </div>
+          <div class="dh-stat dh-stat-hide-md">
+            <i class="fas fa-clock"></i>&nbsp;Sessions: <span id="statSessions" class="dh-stat-val">0</span>
+          </div>
+          <div class="dh-stat dh-stat-hide-md">
+            <i class="fas fa-history"></i>&nbsp;History: <span id="statHistory" class="dh-stat-val">0</span>
+          </div>
+          <div class="dh-stat dh-stat-hide-sm">
+            <i class="fas fa-star"></i>&nbsp;Saved: <span id="statSaved" class="dh-stat-val">0</span>
+          </div>
+        </div>
+
+        <div class="dh-greeting dh-stat-hide-md" id="dhGreeting"><strong>Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37">Know more.</em></div>
+
+        <a href="index.html" class="hdr-landing-btn dh-stat-hide-md" title="Home">
+          <i class="fas fa-home"></i> Home
+        </a>
+
+        <!-- Header Actions -->
+        <div class="dh-actions">
+          <button class="dh-btn" id="themeBtn" aria-label="Toggle theme" title="Toggle Theme">
+            <i class="fas fa-moon" id="themeIcon"></i>
+          </button>
+          <button class="dh-btn" id="settingsBtn" aria-label="Settings" title="Settings">
+            <i class="fas fa-cog"></i>
+          </button>
+          <button class="dh-btn dh-wizard-btn" id="wizardHeaderBtn" aria-label="Open Wizard" title="✨ Create Study Material">
+            <i class="fas fa-magic"></i>
+          </button>
+          <button class="dh-btn dh-mega-btn" id="megaHeaderBtn" aria-label="Mega Study Bundle" title="⚡ Mega Bundle — All 5 Tools">
+            <i class="fas fa-bolt"></i>
+          </button>
+          <div class="dh-av" id="avBtn" role="button" tabindex="0" aria-label="User menu" title="User Menu">
+            <span id="avInitials">🎓</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ═══════════ AVATAR DROPDOWN ═══════════ -->
+      <div class="av-dropdown" id="avDropdown">
+        <div class="av-user">
+          <div class="av-u-av" id="avDropdownAvatar">🎓</div>
+          <div>
+            <div class="av-u-name" id="avDropdownName">Scholar</div>
+            <div class="av-u-sub">Savoiré AI Member</div>
+          </div>
+        </div>
+        <div class="av-divider"></div>
+        <button class="av-item" id="avHist"><i class="fas fa-history"></i> Study History</button>
+        <button class="av-item" id="avSaved"><i class="fas fa-star"></i> Saved Notes</button>
+        <button class="av-item" id="avSettings"><i class="fas fa-cog"></i> Settings</button>
+        <div class="av-divider"></div>
+        <button class="av-item" id="avLogout" style="color:#00d4ff"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+        <button class="av-item av-danger" id="avClear" style="display:none"><i class="fas fa-trash-alt"></i> Clear All Data</button>
+      </div>
+
+      <!-- ═══════════ OUTPUT TOOLBAR (hidden until generation) ═══════════ -->
+      <div class="out-toolbar" id="outToolbar" style="display:none">
+        <button class="otb-btn" id="copyBtn" title="Copy all content"><i class="fas fa-copy"></i> <span>Copy</span></button>
+        <button class="otb-btn otb-pdf" id="pdfBtn" data-theme="🌙" title="Download PDF"><i class="fas fa-file-pdf"></i> <span>Download</span></button>
+        <button class="otb-btn" id="saveBtn" title="Save to library"><i class="fas fa-star"></i> <span>Save</span></button>
+        <button class="otb-btn" id="shareBtn" title="Share"><i class="fas fa-share-alt"></i> <span>Share</span></button>
+        <button class="otb-btn otb-danger" id="clearBtn" title="Clear output"><i class="fas fa-trash-alt"></i> <span>Clear</span></button>
+        <div class="otb-sep"></div>
+        <button class="otb-btn otb-new" id="newWizardBtn" title="New Study Material"><i class="fas fa-magic"></i> <span>New</span></button>
+        <button class="otb-btn" id="liveNotesBtn" title="Live Notes"><i class="fas fa-bolt"></i> <span>Live Notes</span></button>
+        <button class="otb-btn" id="focusModeBtn" title="Focus Mode"><i class="fas fa-expand-alt"></i> <span>Focus</span></button>
+        <div class="otb-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> wizard · <kbd>Ctrl</kbd>+<kbd>H</kbd> history · <kbd>Esc</kbd> close</div>
+      </div>
+
+      <!-- ═══════════ OUTPUT AREA ═══════════ -->
+      <div class="out-area" id="outArea">
+
+        <!-- Thinking Indicator -->
+        <div id="thinkingWrap" style="display:none">
+          <div class="thinking-card">
+            <div class="th-av"><i class="fas fa-brain"></i></div>
+            <div class="th-body">
+              <div class="th-title">Savoiré AI is generating your study materials…</div>
+              <div class="th-dots"><span></span><span></span><span></span></div>
+              <div class="th-stages">
+                <span class="ths" id="ts0">🎯 Analysing</span>
+                <span class="ths" id="ts1">📝 Writing</span>
+                <span class="ths" id="ts2">🔍 Building</span>
+                <span class="ths" id="ts3">✨ Crafting</span>
+                <span class="ths" id="ts4">✅ Finalising</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state">
+          <div class="es-kicker">Savoiré AI · study workspace</div>
+          <div class="es-title"><strong id="esHello">Ready to study?</strong></div>
+          <div class="es-sub">Open the wizard — notes, flashcards, quiz, summary or mind map.</div>
+
+          <div class="es-cta-row" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+            <button class="empty-wizard-btn" id="emptyWizardBtn">
+              <i class="fas fa-magic"></i> Start studying
+            </button>
+            <button class="empty-mega-btn" id="emptyMegaBtn">
+              <i class="fas fa-bolt"></i> All 5 formats
+            </button>
+          </div>
+          <div class="es-credit-line">10,000 AI credits every month · Packs from ₹19</div>
+
+          <div class="es-features">
+            <span class="es-feat es-feat-chip" data-tool="notes" title="Generate comprehensive study notes">
+              <i class="fas fa-book-open"></i> Notes
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="flashcards" title="Create 15-20 flashcards">
+              <i class="fas fa-layer-group"></i> Flashcards
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="quiz" title="Build 10-12 quiz questions">
+              <i class="fas fa-question-circle"></i> Quiz
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="summary" title="Create smart TL;DR summary">
+              <i class="fas fa-align-left"></i> Summary
+            </span>
+            <span class="es-feat es-feat-chip" data-tool="mindmap" title="Build visual mind map">
+              <i class="fas fa-project-diagram"></i> Mind Map
+            </span>
+            <span class="es-feat es-feat-chip es-feat-mega" data-tool="all" title="⚡ All 5 tools at once!">
+              <i class="fas fa-bolt"></i> All 5 at once
+            </span>
+          </div>
+
+          <div class="feature-detail-panel" id="featureDetailPanel" style="display:none"></div>
+
+          <div class="es-shortcuts">
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>K</kbd> Open Wizard</div>
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>H</kbd> History</div>
+            <div class="shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd> Save note</div>
+            <div class="shortcut"><kbd>Esc</kbd> Close</div>
+          </div>
+        </div>
+
+        <!-- Result Area (populated by JavaScript) -->
+        <div id="resultArea"></div>
+
+      </div>
+
+      <footer class="dash-mini-footer">Developed by <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" style="color:#f0d27a">Sooban Talha Technologies</a></footer>
+      <button type="button" id="svExitFocus">Exit Focus</button>
+
+      <!-- ═══════════ BACK TO TOP BUTTON ═══════════ -->
+      <button class="back-to-top" id="backToTopBtn" title="Back to top"><i class="fas fa-arrow-up"></i></button>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════ STREAM OVERLAY ═══════════════════════ -->
+  <div class="stream-overlay" id="streamFullpage" style="display:none">
+    <div class="sfp-header">
+      <div class="sfp-left">
+        <div class="sfp-indicator">
+          <span class="sfp-dot"></span>
+          <span class="sfp-dot"></span>
+          <span class="sfp-dot"></span>
+        </div>
+        <div>
+          <div class="sfp-label" id="sfpLabel">Generating…</div>
+          <div class="sfp-topic" id="sfpTopic"></div>
+        </div>
+      </div>
+      <div class="sfp-right">
+        <div class="sfp-tool-badge">
+          <i class="fas fa-book-open" id="sfpToolIcon"></i>
+          <span id="sfpToolName">Notes</span>
+        </div>
+        <div class="sfp-stages-row">
+          <span class="ssc-stage" id="ss0" title="Analysing">🎯</span>
+          <span class="ssc-stage" id="ss1" title="Writing">📝</span>
+          <span class="ssc-stage" id="ss2" title="Building">🔍</span>
+          <span class="ssc-stage" id="ss3" title="Crafting">✨</span>
+          <span class="ssc-stage" id="ss4" title="Finalising">✅</span>
+        </div>
+      </div>
+    </div>
+    <div class="sfp-fact" id="sfpFact"></div>
+    <div class="sfp-progress-track">
+      <div class="sfp-progress-fill" id="sscProgressBar"></div>
+    </div>
+    <div class="sfp-scroll" id="sfpScroll">
+      <div class="sfp-text md-content" id="sfpText"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MODALS ═══════════════════════════════ -->
+
+  <!-- ─── Wizard Modal ─── -->
+  <div class="modal-overlay" id="wizardModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-magic"></i> Study Wizard — Step-by-Step Generator</div>
+        <button class="modal-close" data-close="wizardModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body" id="wizardContent"></div>
+    </div>
+  </div>
+
+  <!-- ─── Mega Bundle Modal ─── -->
+  <div class="modal-overlay" id="megaModal">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-bolt"></i> ⚡ Mega Study Bundle — All 5 Tools</div>
+        <button class="modal-close" data-close="megaModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="mega-intro">
+          <div class="mega-badge-big">⚡ MEGA BUNDLE</div>
+          <p class="mega-desc">Generate <strong>all 5 study tools</strong> for your topic in one premium generation — Notes, Flashcards, Quiz, Summary &amp; Mind Map.</p>
+          <div class="mega-tools-preview">
+            <span class="mega-tool-chip"><i class="fas fa-book-open"></i> Notes</span>
+            <span class="mega-tool-chip"><i class="fas fa-layer-group"></i> Flashcards</span>
+            <span class="mega-tool-chip"><i class="fas fa-question-circle"></i> Quiz</span>
+            <span class="mega-tool-chip"><i class="fas fa-align-left"></i> Summary</span>
+            <span class="mega-tool-chip"><i class="fas fa-project-diagram"></i> Mind Map</span>
+          </div>
+        </div>
+        <div class="mega-form">
+          <label class="mega-label"><i class="fas fa-pencil-alt"></i> What topic should we cover?</label>
+          <textarea class="mega-textarea" id="megaTopicInput" rows="4"
+            placeholder="Enter any topic, concept, or paste text to study… e.g. Photosynthesis, World War II, Machine Learning, Newton's Laws"></textarea>
+          <div class="mega-char-count" id="megaCharCount">0 / 4000</div>
+          <div class="mega-options">
+            <div class="mega-opt-group">
+              <label class="mega-opt-label">Language</label>
+              <select id="megaLangSel" class="mega-select">
+                <option value="English">🇬🇧 English</option>
+                <option value="Urdu">🇵🇰 Urdu</option>
+                <option value="Hindi">🇮🇳 Hindi</option>
+                <option value="Arabic">🇸🇦 Arabic</option>
+                <option value="French">🇫🇷 French</option>
+                <option value="German">🇩🇪 German</option>
+                <option value="Spanish">🇪🇸 Spanish</option>
+                <option value="Portuguese">🇧🇷 Portuguese</option>
+                <option value="Russian">🇷🇺 Russian</option>
+                <option value="Chinese (Simplified)">🇨🇳 Chinese</option>
+              </select>
+            </div>
+            <div class="mega-opt-group">
+              <label class="mega-opt-label">Depth</label>
+              <select id="megaDepthSel" class="mega-select">
+                <option value="standard">📏 Standard</option>
+                <option value="detailed" selected>📚 Detailed</option>
+                <option value="comprehensive">📖 Comprehensive</option>
+                <option value="expert">🎓 Expert</option>
+              </select>
+            </div>
+          </div>
+          <div class="mega-sugg">
+            <div class="mega-sugg-label">Quick picks:</div>
+            <div class="mega-sugg-pills">
+              <button class="mega-sugg-pill" data-topic="Photosynthesis">🌿 Photosynthesis</button>
+              <button class="mega-sugg-pill" data-topic="Newton's Three Laws of Motion">⚡ Newton's Laws</button>
+              <button class="mega-sugg-pill" data-topic="World War II — causes, events, consequences">🌍 World War II</button>
+              <button class="mega-sugg-pill" data-topic="Machine Learning fundamentals">🤖 Machine Learning</button>
+              <button class="mega-sugg-pill" data-topic="DNA Replication and Protein Synthesis">🧬 DNA Replication</button>
+              <button class="mega-sugg-pill" data-topic="French Revolution — causes and legacy">🇫🇷 French Revolution</button>
+            </div>
+          </div>
+          <button class="mega-generate-btn" id="megaGenerateBtn">
+            <i class="fas fa-bolt"></i> Generate Mega Bundle — All 5 Tools
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── History Modal ─── -->
+  <div class="modal-overlay" id="histModal">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-history"></i> Study History <span id="histBadge" class="modal-badge">0</span></div>
+        <button class="modal-close" data-close="histModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="hist-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="histSearchInput" placeholder="Search history…">
+          <button id="histSearchClear"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="hist-filters">
+          <button class="hist-filter active" data-filter="all">All</button>
+          <button class="hist-filter" data-filter="notes">Notes</button>
+          <button class="hist-filter" data-filter="flashcards">Flashcards</button>
+          <button class="hist-filter" data-filter="quiz">Quiz</button>
+          <button class="hist-filter" data-filter="summary">Summary</button>
+          <button class="hist-filter" data-filter="mindmap">Mind Map</button>
+          <button class="hist-filter" data-filter="all">Mega</button>
+        </div>
+        <div class="hist-actions">
+          <button id="clearHistBtn" class="hist-action"><i class="fas fa-trash"></i> Clear All</button>
+          <button id="exportHistBtn" class="hist-action"><i class="fas fa-download"></i> Export JSON</button>
+        </div>
+        <div id="histList" class="hist-list"></div>
+        <div id="histEmpty" class="hist-empty" style="display:none">
+          <i class="fas fa-history"></i><p>No history yet. Generate some study materials!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Saved Notes Modal ─── -->
+  <div class="modal-overlay" id="savedModal">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-star"></i> Saved Notes <span id="savedCount" class="modal-badge">0</span></div>
+        <button class="modal-close" data-close="savedModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="savedList" class="saved-list"></div>
+        <div id="savedEmpty" class="saved-empty" style="display:none">
+          <i class="fas fa-star"></i><p>No saved notes yet. Save your generated content using the Save button!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Settings Modal ─── -->
+  <div class="modal-overlay sv-settings" id="settingsModal">
+    <div class="modal modal-md sv-settings-modal">
+      <div class="modal-header">
+        <div class="modal-title"><i class="fas fa-sliders-h"></i> Studio settings</div>
+        <button class="modal-close" data-close="settingsModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <!-- Profile -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-user"></i> Your Profile</div>
+          <div class="settings-row">
+            <div class="settings-label">Display Name</div>
+            <div class="settings-input-group">
+              <input type="text" id="nameInput" placeholder="Your name" class="settings-input">
+              <button id="saveNameBtn" class="settings-btn">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Avatar Picker -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-palette"></i> Avatar</div>
+          <div id="avatarPickerSettings"></div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-palette"></i> Appearance</div>
+          <div class="settings-row">
+            <div class="settings-label">Theme</div>
+            <div class="theme-buttons">
+              <button class="theme-btn active" data-theme-btn="dark"><i class="fas fa-moon"></i> Dark</button>
+              <button class="theme-btn" data-theme-btn="light"><i class="fas fa-sun"></i> Light</button>
+              <button class="theme-btn" data-theme-btn="golden"><i class="fas fa-star"></i> Golden</button>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">Font Size</div>
+            <div class="font-buttons">
+              <button class="font-btn font-sz" data-size="xs">XS</button>
+              <button class="font-btn font-sz active" data-size="small">S</button>
+              <button class="font-btn font-sz" data-size="medium">M</button>
+              <button class="font-btn font-sz" data-size="large">L</button>
+              <button class="font-btn font-sz" data-size="xlarge">XL</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Default Language -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-language"></i> Default Language</div>
+          <div class="settings-row">
+            <div class="settings-label">Output Language</div>
+            <div class="settings-input-group">
+              <select id="defaultLangSel" class="settings-input" style="flex:1;max-width:200px">
+                <option value="English" selected>🇬🇧 English</option>
+                <option value="Urdu">🇵🇰 Urdu</option>
+                <option value="Hindi">🇮🇳 Hindi</option>
+                <option value="Arabic">🇸🇦 Arabic</option>
+                <option value="French">🇫🇷 French</option>
+                <option value="German">🇩🇪 German</option>
+                <option value="Spanish">🇪🇸 Spanish</option>
+                <option value="Portuguese">🇧🇷 Portuguese</option>
+                <option value="Russian">🇷🇺 Russian</option>
+                <option value="Turkish">🇹🇷 Turkish</option>
+                <option value="Chinese (Simplified)">🇨🇳 Chinese</option>
+                <option value="Japanese">🇯🇵 Japanese</option>
+                <option value="Korean">🇰🇷 Korean</option>
+              </select>
+              <button id="saveDefaultLangBtn" class="settings-btn">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PDF Style -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-file-pdf"></i> PDF Style</div>
+          <div class="settings-row">
+            <div class="settings-label">PDF Theme</div>
+            <div class="theme-buttons">
+              <button class="theme-btn active" data-pdf-theme="dark"><i class="fas fa-moon"></i> Dark PDF</button>
+              <button class="theme-btn" data-pdf-theme="light"><i class="fas fa-sun"></i> Light PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-chart-bar"></i> Your Statistics</div>
+          <div class="stats-grid" id="dsStats"></div>
+        </div>
+
+        <!-- Credits & Billing -->
+        <div class="settings-section" style="background:linear-gradient(135deg,rgba(212,175,55,.06),rgba(0,212,255,.04));border:1px solid rgba(212,175,55,.15);border-radius:16px;padding:16px">
+          <div class="settings-title"><i class="fas fa-coins"></i> Credits & Billing</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+            <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#fff" id="settingsBalance">--</div>
+              <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Available</div>
+            </div>
+            <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;text-align:center">
+              <div style="font-size:1.2rem;font-weight:800;color:#aab2cc" id="settingsUsed">--</div>
+              <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Used</div>
+            </div>
+            <div style="background:rgba(212,175,55,.1);border-radius:12px;padding:12px;text-align:center;border:1px solid rgba(212,175,55,.2)">
+              <div style="font-size:1.2rem;font-weight:800;color:#22d3ee" id="settingsPlan">Welcome</div>
+              <div style="font-size:.65rem;color:rgba(255,255,255,.5)">Plan</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="window.openBuyCreditsModal && window.openBuyCreditsModal()" style="flex:1;padding:10px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border:none;border-radius:10px;font-weight:800;cursor:pointer"><i class="fas fa-coins"></i> Buy Credits</button>
+            <button onclick="window.openCreditHistory && window.openCreditHistory()" style="padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer"><i class="fas fa-history"></i> History</button>
+            <a href="/pricing.html" style="padding:10px 16px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:600">View Plans</a>
+          </div>
+          <div style="margin-top:12px;font-size:.7rem;color:rgba(255,255,255,.4);line-height:1.5">1 credit ≈ 4 characters • Packs valid 30 days from purchase • UPI via Razorpay</div>
+        </div>
+
+        <!-- Account -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-user-shield"></i> Account</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="window.performLogout && window.performLogout()" style="padding:10px 18px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;border-radius:10px;font-weight:700;cursor:pointer"><i class="fas fa-sign-out-alt"></i> Log Out</button>
+
+          </div>
+          <div style="margin-top:10px;font-size:.65rem;color:rgba(255,255,255,.35)">Log out only signs you out. Cloud credits, history and saved notes stay on your account.</div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-cloud"></i> Data Management</div>
+          <p id="svLastSync" style="font-size:.72rem;opacity:.6;margin-bottom:10px">Last synced: —</p>
+          <div class="settings-buttons">
+            <button type="button" class="settings-btn" id="svUploadCloud"><i class="fas fa-cloud-upload-alt"></i> Upload to Cloud</button>
+            <button type="button" class="settings-btn" id="svDownloadCloud"><i class="fas fa-cloud-download-alt"></i> Download from Cloud</button>
+            <button type="button" class="settings-btn" id="svClearLocalOnly" style="color:#f87171"><i class="fas fa-broom"></i> Clear Local History</button>
+          </div>
+          <div style="font-size:.65rem;opacity:.45;margin-top:8px">Cloud is tied to your Google account. Local files use your user id so other logins on this browser stay separate.</div>
+        </div>
+
+        <!-- Backup & Restore - Only chats/saved -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-database"></i> Backup & Restore</div>
+          <div class="settings-buttons">
+            <button id="exportDataBtn" class="settings-btn"><i class="fas fa-download"></i> Export JSON</button>
+            <button id="importBackupBtn" class="settings-btn"><i class="fas fa-upload"></i> Import</button>
+            <button id="clearDataBtn" class="settings-btn" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#aab2cc"><i class="fas fa-broom"></i> Clear Chats & Saved</button>
+          </div>
+          <div style="font-size:.65rem;color:rgba(255,255,255,.35);margin-top:8px">Clear only removes local chats & saved notes, not credits or account. Use Log Out for full logout.</div>
+        </div>
+
+        <!-- About -->
+        <div class="settings-section">
+          <div class="settings-title"><i class="fas fa-info-circle"></i> About</div>
+          <div class="about-card-settings">
+            <div class="about-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
+            <div class="about-name">Savoiré <span class="about-name-ai">AI</span> <span class="about-name-ver">v2.0</span></div>
+            <div class="about-tagline"><strong>Think less.</strong> <em>Know more.</em></div>
+            <div class="about-desc">A premium AI study companion built for students everywhere. 10,000 AI credits every month — top-up packs from Rs 19.</div>
+            <div class="about-founder">
+              <div class="founder-avatar">ST</div>
+              <div class="founder-info">
+                <div class="founder-name">Sooban Talha</div>
+                <div class="founder-role">Founder &amp; Developer</div>
+                <div class="founder-company">Sooban Talha Technologies</div>
+              </div>
+            </div>
+            <div class="about-quote">
+              <i class="fas fa-quote-left"></i>
+              "I built Savoiré AI so serious study tools feel premium — 10,000 AI credits every month, packs from ₹19."
+              <cite>— Sooban Talha</cite>
+            </div>
+            <div class="about-links">
+              <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener" class="about-link"><i class="fas fa-building"></i> soobantalhatech.xyz</a>
+              <a href="https://savoireai.vercel.app" target="_blank" rel="noopener" class="about-link"><i class="fas fa-external-link-alt"></i> savoireai.vercel.app</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Confirm Modal ─── -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <div class="modal-title">Confirm Action</div>
+        <button class="modal-close" data-close="confirmModal"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMsg">Are you sure?</p>
+        <div class="confirm-buttons">
+          <button id="confirmOkBtn" class="confirm-btn ok">Yes, Confirm</button>
+          <button class="confirm-btn cancel" data-close="confirmModal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Welcome Overlay (New User) ─── -->
+  <div class="modal-overlay" id="welcomeOverlay" style="z-index:3000">
+    <div class="modal" style="max-width:460px;text-align:center">
+      <div class="modal-body" style="text-align:center;padding:32px">
+        <div class="welcome-logo"><img src="clogo.png" alt="Savoiré AI logo" class="brand-logo-img"></div>
+        <h2 class="welcome-title">Welcome to <span class="welcome-brand">Savoiré <span class="welcome-brand-ai">AI</span></span></h2>
+        <p class="welcome-tagline"><strong style="color:#fff">Think less.</strong> <em style="font-family:'Instrument Serif',Georgia,serif;color:#d4af37">Know more.</em></p>
+        <p class="welcome-subtitle">The world's most advanced AI study assistant — 10,000 AI credits every month</p>
+        <div class="welcome-features">
+          <span class="welcome-feat"><i class="fas fa-book-open"></i> Notes</span>
+          <span class="welcome-feat"><i class="fas fa-layer-group"></i> Flashcards</span>
+          <span class="welcome-feat"><i class="fas fa-question-circle"></i> Quiz</span>
+          <span class="welcome-feat"><i class="fas fa-align-left"></i> Summary</span>
+          <span class="welcome-feat"><i class="fas fa-project-diagram"></i> Mind Map</span>
+          <span class="welcome-feat" style="border-color:rgba(212,175,55,.4);color:#d4af37"><i class="fas fa-bolt"></i> All 5!</span>
+        </div>
+        <div class="welcome-name-section">
+          <label class="welcome-name-label">Your Name <span class="welcome-name-req">*</span></label>
+          <input type="text" id="welcomeNameInput" class="welcome-input" placeholder="Enter your name to get started…" autocomplete="given-name">
+          <div id="welcomeNameHint" class="welcome-name-hint"></div>
+        </div>
+        <button id="welcomeBtn" class="welcome-btn">
+          <i class="fas fa-graduation-cap"></i> Start Studying →
+        </button>
+        <p class="welcome-footer">10,000 AI credits every month · Built by Sooban Talha Technologies</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Welcome Back Overlay ─── -->
+  <div class="modal-overlay" id="welcomeBackOverlay" style="display:none;z-index:50000;align-items:center;justify-content:center;padding:20px;background:rgba(4,8,18,.78)">
+    <div class="modal" style="max-width:400px;width:min(400px,92vw);text-align:center;border-radius:24px;margin:0 auto;align-self:center">
+      <div class="modal-body" style="text-align:center;padding:32px">
+        <div class="wb-icon">🎓</div>
+        <h2 class="wb-title">Welcome back, <span id="wbName">Scholar</span>!</h2>
+        <p class="wb-sub">Ready to continue your learning journey?</p>
+        <div class="wb-stats">
+          <div class="wb-stat">
+            <div class="wb-stat-val" id="wbStreak">0</div>
+            <div class="wb-stat-lbl">Day Streak</div>
+          </div>
+          <div class="wb-stat">
+            <div class="wb-stat-val" id="wbSessions">0</div>
+            <div class="wb-stat-lbl">Sessions</div>
+          </div>
+          <div class="wb-stat">
+            <div class="wb-stat-val" id="wbSaved">0</div>
+            <div class="wb-stat-lbl">Saved Notes</div>
+          </div>
+        </div>
+        <button type="button" id="welcomeBackBtn" class="wb-btn" style="pointer-events:auto;position:relative;z-index:2;width:100%;margin-top:18px;padding:14px 18px;border:0;border-radius:14px;background:#fff;color:#05060a;font-weight:800;cursor:pointer">Continue studying</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── NEW: Command Palette Modal ─── -->
+  <div class="modal-overlay" id="cmdPaletteModal" style="z-index:4000;display:none">
+    <div class="modal modal-md" style="max-width:600px;margin-top:10vh">
+      <div class="modal-body" style="padding:0">
+        <div style="display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1);padding:8px 16px">
+          <i class="fas fa-search" style="color:#d4af37;opacity:0.7;margin-right:12px"></i>
+          <input type="text" id="cmdInput" placeholder="Search commands…" style="flex:1;background:transparent;border:none;color:#fff;font-size:1rem;outline:none">
+          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);font-family:monospace">Esc</span>
+        </div>
+        <div id="cmdResults" style="max-height:300px;overflow-y:auto;padding:8px"></div>
+        <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,0.05);font-size:0.6rem;color:rgba(255,255,255,0.3);display:flex;gap:12px">
+          <span><kbd>↑</kbd> <kbd>↓</kbd> navigate</span>
+          <span><kbd>Enter</kbd> run</span>
+          <span><kbd>Esc</kbd> close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── NEW: Focus Timer (Floating) ─── -->
+  <div id="focusTimer" style="position:fixed;bottom:90px;right:24px;z-index:500;display:none;background:rgba(15,23,42,0.95);backdrop-filter:blur(12px);border:1px solid rgba(212,175,55,0.3);border-radius:20px;padding:16px;width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:0.7rem;font-weight:600;color:#d4af37">FOCUS TIMER</span>
+      <button id="timerCloseBtn" style="background:transparent;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:0.8rem">&times;</button>
+    </div>
+    <div style="display:flex;justify-content:center;margin-bottom:10px">
+      <svg width="80" height="80" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="8"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#d4af37" stroke-width="8" stroke-dasharray="314.16" stroke-dashoffset="0" id="timerCircle" style="transition:stroke-dashoffset 0.5s ease"/>
+      </svg>
+    </div>
+    <div style="text-align:center;font-size:1.2rem;font-weight:700;font-family:monospace;color:#fff" id="timerDisplay">25:00</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px">
+      <button class="timer-preset" data-minutes="15" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">15m</button>
+      <button class="timer-preset" data-minutes="25" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">25m</button>
+      <button class="timer-preset" data-minutes="45" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">45m</button>
+      <button class="timer-preset" data-minutes="60" style="padding:3px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;font-size:0.6rem;color:#fff;cursor:pointer">60m</button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+      <button id="timerStartBtn" style="padding:6px 16px;background:linear-gradient(135deg,#00d4ff,#0099cc);border:none;border-radius:30px;color:#fff;font-weight:600;cursor:pointer;font-size:0.7rem">Start</button>
+      <button id="timerResetBtn" style="padding:6px 16px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:30px;color:#fff;cursor:pointer;font-size:0.7rem">Reset</button>
+    </div>
+  </div>
+
+  <!-- ─── NEW: Find in Output Bar ─── -->
+  <div id="findBar" style="position:fixed;top:70px;right:24px;z-index:100;display:none;background:rgba(15,23,42,0.95);backdrop-filter:blur(8px);border:1px solid rgba(212,175,55,0.2);border-radius:12px;padding:8px 12px;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">
+    <i class="fas fa-search" style="color:#d4af37;font-size:0.8rem"></i>
+    <input type="text" id="findInput" placeholder="Find in output…" style="background:transparent;border:none;color:#fff;font-size:0.9rem;outline:none;width:180px">
+    <span id="findCount" style="font-size:0.7rem;color:rgba(255,255,255,0.4);font-family:monospace">0/0</span>
+    <button id="findNextBtn" style="background:transparent;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:0.8rem" title="Next match"><i class="fas fa-arrow-down"></i></button>
+    <button id="findCloseBtn" style="background:transparent;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:0.8rem" title="Close"><i class="fas fa-times"></i></button>
+  </div>
+
+  <!-- ═══════════════════════════════════ SCRIPT: Theme flash prevention and loader removal ═══════════════════════════════════ -->
+  <script>
+    // ── Theme flash prevention ──
+    (function(){
+      try {
+        const p = JSON.parse(localStorage.getItem('sv_prefs') || '{}');
+        if (p.theme)    document.documentElement.setAttribute('data-theme', p.theme);
+        if (p.fontSize) document.documentElement.setAttribute('data-font', p.fontSize);
+        else document.documentElement.setAttribute('data-font', 'small');
+      } catch(e) {}
+    })();
+
+    // ── Remove loading spinner once page is loaded ──
+    window.addEventListener('load', function(){
+      document.body.classList.add('loaded');
+      const spinner = document.querySelector('.loading-spinner');
+      if (spinner) spinner.remove();
+    });
+  </script>
+
+  <!-- ═══════════════════════════════════ MAIN APPLICATION SCRIPT ═══════════════════════════════════ -->
+  
+
+
+  
+<script type="module">
+// CLEAN FIREBASE INIT - Single instance, fixes db is not defined and token expired
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, browserPopupRedirectResolver, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBDgKVvzsOAb0ZrsSooTEU0mgvLxadphoM",
+  authDomain: "savoire-ai.firebaseapp.com",
+  projectId: "savoire-ai",
+  storageBucket: "savoire-ai.firebasestorage.app",
+  messagingSenderId: "528576008706",
+  appId: "1:528576008706:web:4514bd93193df05ba7cd1b"
+};
+
+let app, auth, db;
+try {
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApps()[0];
+  }
+  auth = getAuth(app);
+  db = getFirestore(app);
+  
+  // Expose globally for app.js to use
+  window.firebaseAppInstance = app;
+  window.firebaseAuthInstance = auth;
+  window.firebaseDB = db;
+  
+  // Set persistence for mobile fix
+  try { await setPersistence(auth, browserLocalPersistence); } catch(e){ console.log('Persistence failed', e.message); }
+
+  // Global token bar updater
+  window._updatePaidTokenBar = (remaining, limit, plan) => {
+    const bar = document.getElementById('tokenBar');
+    const count = document.getElementById('tokenCount');
+    if (!bar || !count) return;
+    if (limit) {
+      const pct = Math.max(0, Math.min(100, (remaining/limit)*100));
+      bar.style.width = pct + '%';
+      count.textContent = `${remaining.toLocaleString()} / ${limit.toLocaleString()}`;
+      if (plan && plan !== 'free') {
+        count.textContent += ' • ' + plan;
+        bar.style.background = 'linear-gradient(90deg,#00d4ff,#bf00ff)';
+      }
+      if (remaining < 1000) {
+        bar.style.background = '#ff4444';
+        const meter = document.getElementById('tokenMeter');
+        if (meter) meter.style.borderColor = '#ff4444';
+      } else if (remaining < 3000) {
+        bar.style.background = '#ffae00';
+      }
+    } else {
+      count.textContent = `${remaining.toLocaleString()} left`;
+    }
+    window.PAID_REMAINING = remaining;
+    try {
+      window._svRefreshDaysChip && window._svRefreshDaysChip();
+    } catch(e){}
+    if (!window.PAID_TOKENS) window.PAID_TOKENS = {};
+    window.PAID_TOKENS.remaining = remaining;
+    window.PAID_TOKENS.limit = limit;
+    if (plan) window.PAID_TOKENS.plan = plan;
+    const cb = document.getElementById('creditBalance');
+    if (cb) cb.innerHTML = `${Number(remaining||0).toLocaleString()} <span style="font-size:.95rem;color:#22d3ee;font-weight:700">credits</span>`;
+    const badge = document.getElementById('creditPlanBadge');
+    if (badge) {
+      let pl = String(plan|| (window.PAID_TOKENS&&window.PAID_TOKENS.plan) ||'').toLowerCase();
+      if (!pl || pl==='free') {
+        if (remaining>=1500000) pl='ultra';
+        else if (remaining>=800000) pl='popular';
+        else if (remaining>=300000) pl='pro';
+        else if (remaining>=80000) pl='starter';
+      }
+      const labels = { starter:'STARTER', pro:'PRO', popular:'POPULAR', ultra:'ULTRA' };
+      badge.textContent = labels[pl] || 'MONTHLY 10K';
+    }
+    const cr = document.getElementById('creditRemaining');
+    if (cr) cr.textContent = `Left ${Number(remaining||0).toLocaleString()}`;
+    const cu = document.getElementById('creditUsed');
+    const usedN = Number((window.PAID_TOKENS && (window.PAID_TOKENS.used || window.PAID_TOKENS.totalUsed)) || Math.max(0, (limit||0) - (remaining||0)));
+    if (cu) cu.textContent = `Used ${usedN.toLocaleString()}`;
+    const pf = document.getElementById('creditProgressFill');
+    if (pf) {
+      const lim = limit || (remaining + usedN) || 1;
+      const pct = Math.max(0, Math.min(100, (remaining/lim)*100));
+      pf.style.width = pct + '%';
+    }
+  };
+
+  window._showPaidLoginNeeded = () => {
+    window.location.href = '/login.html';
+  };
+
+  window._showPaidUpgradeModal = (data) => {
+    const existing = document.getElementById('paidUpgradeModal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'paidUpgradeModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = `
+      <div style="background:#0f172a;border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center">
+        <div style="font-size:2.2rem;margin-bottom:12px">🔋</div>
+        <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
+        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your monthly credits finished. Top up with Popular - 1M for just Rs 99 via UPI.'}</p>
+        <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '10,000'}</p>
+        <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits — From Rs 19</a>
+        <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
+      </div>
+    `;
+    modal.onclick = (e) => { if(e.target===modal) modal.remove(); };
+    document.body.appendChild(modal);
+  };
+
+  // Handle redirect result for mobile
+  try {
+    const redirectResult = await getRedirectResult(auth, browserPopupRedirectResolver);
+    if (redirectResult && redirectResult.user) {
+      const loader = document.getElementById('authLoading');
+      if (loader) loader.innerHTML = '<div class="spin"></div><div style="color:#f0d383;font-size:.8rem">Login success, redirecting...</div>';
+      const token = await redirectResult.user.getIdToken();
+      localStorage.setItem('sv_firebase_token', token);
+      localStorage.setItem('sv_user', redirectResult.user.displayName || redirectResult.user.email);
+      if (redirectResult.user.photoURL) localStorage.setItem('sv_user_photo', redirectResult.user.photoURL);
+      setTimeout(()=> window.location.href = '/dashboard.html', 500);
+      // Don't continue, let redirect handle
+    }
+  } catch(e) {
+    console.log('No redirect result', e.code, e.message);
+  }
+
+  // Timeout to avoid stuck screen
+  setTimeout(()=>{
+    const loader = document.getElementById('authLoading');
+    if (loader && loader.style.display !== 'none') {
+      console.warn('Auth timeout - showing bypass');
+      loader.innerHTML = `
+        <div style="text-align:center;padding:20px">
+          <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+          <div style="color:#f0d383;font-weight:700;margin-bottom:8px">Login check taking too long</div>
+          <div style="color:#aab2cc;font-size:.8rem;margin-bottom:16px">Token expired or Firebase blocked.<br>Clear cache and login again.</div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button onclick="localStorage.removeItem('sv_firebase_token');sessionStorage.removeItem('sv_firebase_token');window.location.href='/login.html'" style="padding:10px 18px;background:#fff;color:#05060a;border:none;border-radius:10px;font-weight:800;cursor:pointer">Go to Login</button>
+            <button onclick="document.getElementById('authLoading').style.display='none'" style="padding:10px 18px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;border-radius:10px;cursor:pointer">Continue Anyway</button>
+          </div>
+        </div>
+      `;
+      loader.style.background = 'rgba(3,5,12,.96)';
+    }
+  }, 3500);
+
+  onAuthStateChanged(auth, async (user) => {
+    const loader = document.getElementById('authLoading');
+    if (loader) loader.style.display = 'none';
+    if (!user) {
+      const hasToken = localStorage.getItem('sv_firebase_token');
+      if (!hasToken) {
+        window.location.href = '/login.html';
+      } else {
+        // Token exists but no user - try to refresh or go to login
+        try {
+          const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + hasToken } });
+          if (res.status === 401) {
+            localStorage.removeItem('sv_firebase_token');
+            window.location.href = '/login.html';
+          }
+        } catch(e) {}
+      }
+      return;
+    } else {
+      try {
+        const token = await user.getIdToken(true);
+        localStorage.setItem('sv_firebase_token', token);
+        localStorage.setItem('sv_uid', user.uid);
+        const _nm = user.displayName || (user.email ? user.email.split('@')[0] : 'Scholar');
+        localStorage.setItem('sv_user', _nm);
+        localStorage.setItem('sv_user_' + user.uid, _nm);
+        if (user.photoURL) {
+          localStorage.setItem('sv_user_photo', user.photoURL);
+          if (window.updateUserPhoto) window.updateUserPhoto(user.photoURL, user.displayName);
+        }
+        try {
+          const res = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + token } });
+          if (res.ok) {
+            const bal = await res.json();
+            window.PAID_TOKENS = bal;
+            if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
+          } else if (res.status === 401) {
+            // Try once more with fresh token
+            const newToken = await user.getIdToken(true);
+            localStorage.setItem('sv_firebase_token', newToken);
+            const res2 = await fetch('/api/user-tokens', { headers: { 'Authorization': 'Bearer ' + newToken } });
+            if (res2.ok) {
+              const bal = await res2.json();
+              window.PAID_TOKENS = bal;
+              if (window._updatePaidTokenBar) window._updatePaidTokenBar(bal.remaining, bal.limit || (bal.balance + (bal.totalUsed||0)), bal.plan);
+            }
+          }
+        } catch(e) { console.log('balance fetch failed', e.message); }
+
+        if (!window._tokenRefreshInterval) {
+          window._tokenRefreshInterval = setInterval(async ()=>{
+            try {
+              if (auth.currentUser) {
+                const freshToken = await auth.currentUser.getIdToken(true);
+                localStorage.setItem('sv_firebase_token', freshToken);
+                console.log('🔄 Token refreshed');
+              }
+            } catch(e) {}
+          }, 50*60*1000);
+        }
+      } catch(e) {
+        console.error('Auth handling error', e);
+        if (loader) loader.style.display = 'none';
+      }
+    }
+  });
+
+} catch(e) {
+  console.error('Firebase init failed', e);
+  const loader = document.getElementById('authLoading');
+  if (loader) {
+    loader.innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b">Firebase init failed: ' + e.message + '<br><br><button onclick="window.location.href=\'/login.html\'" style="padding:10px 18px;background:#f0d383;color:#140f00;border:none;border-radius:10px;font-weight:800">Go to Login</button></div>';
+  }
+}
+</script>
+
+  <nav class="sv-dock" id="svDock" aria-label="Mobile tab bar">
+    <span class="sv-dock-orb" id="svDockPill" aria-hidden="true"></span>
+    <button type="button" data-dock="menu" onclick="document.getElementById('sbToggle')?.click();window._svDockGo&&window._svDockGo('menu')">
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></svg>
+      <span>Menu</span>
+    </button>
+    <button type="button" data-dock="create" onclick="event.preventDefault();if(window._app){window._app._openWizard();}window._svDockGo&&window._svDockGo('create')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 8.2v7.6M8.2 12h7.6"/></svg>
+      <span>Create</span>
+    </button>
+    <button type="button" data-dock="bundle" onclick="event.preventDefault();if(window._app){window._app._openMega();}window._svDockGo&&window._svDockGo('bundle')">
+      <svg viewBox="0 0 24 24"><path d="M4.5 8.2 12 4.6l7.5 3.6L12 11.8 4.5 8.2z"/><path d="M4.5 12.2 12 15.8l7.5-3.6"/><path d="M4.5 16.2 12 19.8l7.5-3.6"/></svg>
+      <span>Bundle</span>
+    </button>
+    <button type="button" data-dock="credits" onclick="event.preventDefault();window.openBuyCreditsModal&&window.openBuyCreditsModal();window._svDockGo&&window._svDockGo('credits')">
+      <svg viewBox="0 0 24 24"><rect x="3.6" y="6.4" width="16.8" height="11.2" rx="2.4"/><path d="M3.6 10.2h16.8"/><circle cx="16.2" cy="14.2" r="1.15"/></svg>
+      <span>Credits</span>
+    </button>
+    <button type="button" data-dock="theme" onclick="event.preventDefault();if(window._app){window._app._toggleTheme();}window._svDockGo&&window._svDockGo('theme')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M12 3.8v16.4"/><path d="M12 3.8a8.2 8.2 0 0 0 0 16.4"/></svg>
+      <span>Theme</span>
+    </button>
+  </nav>
+  <script>
+  window._svDockGo = function(id){
+    var dock = document.getElementById('svDock');
+    var orb = document.getElementById('svDockPill');
+    if(!dock || !orb) return;
+    var btn = dock.querySelector('[data-dock="'+id+'"]');
+    if(!btn) return;
+    dock.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b===btn); });
+    var mark = btn.querySelector('svg') || btn;
+    requestAnimationFrame(function(){
+      var r = mark.getBoundingClientRect();
+      var p = dock.getBoundingClientRect();
+      var size = 44;
+      var x = (r.left - p.left) + r.width/2 - size/2;
+      var y = (r.top - p.top) + r.height/2 - size/2;
+      orb.style.transform = 'translate('+x+'px,'+y+'px)';
+      orb.classList.add('show');
+    });
+  };
+  window.addEventListener('load', function(){ setTimeout(function(){ window._svDockGo('create'); }, 80); });
+  window.addEventListener('resize', function(){
+    var on = document.querySelector('#svDock button.on');
+    if(on) window._svDockGo(on.getAttribute('data-dock'));
+  });
+  </script>
+  <script src="payments.js"></script>
+  <script src="app.js"></script>
+<!-- legacy overlay stub — 4-tier lives in #buyCreditsModal -->
+<div id="buyCreditsOverlay" style="display:none!important" hidden></div>
+<div class="buy-credits-overlay-REMOVED" style="display:none!important" aria-hidden="true">
+  <div class="buy-credits-modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="font-family:'Fraunces',serif;font-size:22px">💎 Choose Your Plan <span style="font-size:11px;background:rgba(212,175,55,.15);padding:3px 8px;border-radius:999px;color:#f0d383;margin-left:8px"></span></h3>
+      <button onclick="document.getElementById('buyCreditsOverlay').classList.remove('active')" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#fff;cursor:pointer">✕</button>
+    </div>
+    <p style="color:#aab2cc;font-size:.85rem;line-height:1.6">Pay once, use forever. No monthly expiry. UPI, Card, NetBanking supported via Razorpay.</p>
+        <div class="buy-credits-grid" style="grid-template-columns:repeat(5,1fr)">
+      <div class="buy-plan">
+        <h4>🪙 Starter</h4>
+        <div class="credits">200k Credits</div>
+        <div class="price">₹19 <small>/ 30 Days</small></div>
+        <div class="per">₹145 per 1M • Monthly</div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:8px;font-size:11px">💰 <b style="color:#00ff88">Save Trial</b> - Try Once</div>
+        <ul><li>~100 Notes</li><li>~25 Mega Bundle</li><li>~66 Flashcards</li><li>Validity: 30 Days</li><li>Per Credit: ₹0.000145</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('starter')">Buy Starter - ₹19</button>
+      </div>
+      <div class="buy-plan popular">
+        <div class="buy-plan-badge">MOST POPULAR 🔥</div>
+        <h4>🚀 Pro</h4>
+        <div class="credits">500k Credits</div>
+        <div class="price">₹49 <small>/ 30 Days</small></div>
+        <div class="per">₹138 per 1M • <b style="color:#00ff88">Save 5%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(0,212,255,.06));border-radius:8px;font-size:11px;border:1px solid rgba(212,175,55,.2)">🔥 <b>Most Popular</b> - Light users</div>
+        <ul><li>~250 Notes</li><li>~62 Mega Bundle</li><li>~166 Flashcards</li><li>30 Days • ₹0.000138</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('pro')">Buy Pro - ₹49</button>
+      </div>
+      <div class="buy-plan" style="border-color:rgba(0,212,255,.35);box-shadow:0 0 0 1px rgba(0,212,255,.15),0 12px 30px rgba(0,212,255,.1)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#00d4ff,#1970ff)">BEST VALUE ⭐</div>
+        <h4>⭐ Popular</h4>
+        <div class="credits">1M Credits</div>
+        <div class="price">₹99 <small>/ 30 Days</small></div>
+        <div class="per">₹99 per 1M</div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(0,212,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(0,212,255,.15)">⭐ <b>Best Value</b> - Most students</div>
+        <ul><li>~500 Notes</li><li>~125 Mega Bundle</li><li>~333 Flashcards</li><li>30 Days • ₹0.000129 • Monthly 🔥</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('popular')">Buy Popular - ₹99</button>
+      </div>
+      <div class="buy-plan" style="border-color:rgba(191,0,255,.3)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#bf00ff,#7a00ff)">PREMIUM 💎</div>
+        <h4>💎 Ultra</h4>
+        <div class="credits">2M Credits</div>
+        <div class="price">₹199 <small>/ 30 Days</small></div>
+        <div class="per">₹124.5 per 1M • <b style="color:#00ff88">Save 14%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(191,0,255,.08);border-radius:8px;font-size:11px;border:1px solid rgba(191,0,255,.15)">💎 <b>Premium</b> - Heavy users</div>
+        <ul><li>~1000 Notes</li><li>~250 Mega Bundle</li><li>~666 Flashcards</li><li>30 Days • ₹0.000124</li></ul>
+        <button class="buy" onclick="window.buyPlanDirect('ultra')">Buy Ultra - ₹199</button>
+      </div>
+      <div class="buy-plan" style="border-color:rgba(255,174,0,.35)">
+        <div class="buy-plan-badge" style="background:linear-gradient(135deg,#ffae00,#ff8c00)">MEGA 👑</div>
+        <h4>👑 Mega</h4>
+        <div class="credits">3M Credits</div>
+        <div class="price">₹199 <small>/ 30 Days</small></div>
+        <div class="per">₹116 per 1M • <b style="color:#00ff88">Save 20%</b></div>
+        <div style="margin:8px 0;padding:6px 10px;background:rgba(255,174,0,.08);border-radius:8px;font-size:11px;border:1px solid rgba(255,174,0,.15)">👑 <b>Mega Saver</b> - Year plan value</div>
+        <ul><li>~1500 Notes</li><li>~375 Mega Bundle</li><li>~1000 Flashcards</li><li>30 Days • ₹0.000116</li></ul>
+        <button class="buy" type="button" disabled>Removed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREDIT HISTORY MODAL -->
+<div class="modal-overlay" id="creditHistoryModal">
+  <div class="modal modal-md">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fas fa-chart-bar"></i> Credit History</div>
+      <button class="modal-close" onclick="document.getElementById('creditHistoryModal').style.display='none'"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="hist-filter active" data-ch-filter="all">All</button>
+        <button class="hist-filter" data-ch-filter="generation">Generated</button>
+        <button class="hist-filter" data-ch-filter="purchase">Purchased</button>
+        <button class="hist-filter" data-ch-filter="bonus">Bonus</button>
+      </div>
+      <div id="creditHistoryList" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+        <div style="text-align:center;padding:40px;color:rgba(255,255,255,.4)">Loading history...</div>
+      </div>
+      <div id="creditHistorySummary" style="margin-top:16px;padding:12px;background:rgba(255,255,255,.03);border-radius:12px;font-size:.75rem;color:#aab2cc;display:flex;justify-content:space-between">
+        <span>Total: 0</span><span>Used: 0</span><span>Remaining: 0</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INSUFFICIENT CREDITS MODAL -->
+<div class="modal-overlay" id="insufficientModal">
+  <div class="modal modal-sm" style="text-align:center">
+    <div class="modal-header"><div class="modal-title">🚫 Insufficient Credits</div><button class="modal-close" onclick="document.getElementById('insufficientModal').style.display='none'"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <div style="font-size:2rem;margin-bottom:12px">🔋</div>
+      <p style="color:#aab2cc;font-size:.85rem;margin-bottom:6px">You need at least 500 credits to generate.</p>
+      <p style="color:#ffae00;font-weight:700;margin-bottom:20px">Your Balance: <span id="insufficientBalance">0</span> credits</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px">
+          <div style="font-weight:700">🪙 Starter</div><div style="font-size:.7rem;color:#aab2cc">100k credits</div><div style="font-weight:800;margin:6px 0">₹19</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('starter');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
+        </div>
+        <div style="background:linear-gradient(180deg,rgba(8,18,28,.9),rgba(13,19,48,.9));border:1px solid rgba(34,211,238,.35);border-radius:12px;padding:12px">
+          <div style="font-weight:700">⭐ Popular</div><div style="font-size:.7rem;color:#7dd3fc">1M credits</div><div style="font-weight:800;margin:6px 0">₹99</div><button class="credit-btn credit-btn-buy" style="width:100%" onclick="window.buyPlanDirect('popular');document.getElementById('insufficientModal').style.display='none'">Buy Now</button>
+        </div>
+      </div>
+      <button onclick="document.getElementById('insufficientModal').style.display='none'" style="background:transparent;border:none;color:#6b7394;font-size:.8rem">Later</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="buyCreditsModal" style="display:none">
+  <div class="modal-box plan-atelier" onclick="event.stopPropagation()">
+    <div class="plan-atelier-glow"></div>
+    <div class="plan-atelier-hdr">
+      <div>
+        <div class="plan-kicker">Savoiré Credits · 30-day packs</div>
+        <h3>Choose the depth of your study.</h3>
+        <p>10,000 AI credits every month. Need more? Starter ₹19 · Pro ₹49 · Popular ₹99 · Ultra ₹199. Pay with UPI, cards or netbanking via Razorpay.</p>
+      </div>
+      <button class="plan-x" onclick="closeBuyCreditsModal()" aria-label="Close">×</button>
+    </div>
+    <div class="plan-atelier-grid">
+      <article class="plan-sheet" data-plan="starter" onclick="buyPlan('starter')">
+        <div class="plan-sheet-top"><span class="plan-emoji">🪙</span><span class="plan-role">Starter pack</span></div>
+        <h4>Starter</h4>
+        <div class="plan-price">₹19 <small>/ 30 days</small></div>
+        <div class="plan-credits">100,000 credits</div>
+        <ul class="plan-facts">
+          <li>~80–120 study notes</li>
+          <li>~15–25 Mega Bundles</li>
+          <li>~50–70 flashcard decks</li>
+          <li>Exact token deduction</li>
+          <li>UPI · Cards · NetBanking</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Starter</button>
+      </article>
+      <article class="plan-sheet" data-plan="pro" onclick="buyPlan('pro')">
+        <div class="plan-sheet-top"><span class="plan-emoji">🚀</span><span class="plan-role">Regular study</span></div>
+        <h4>Pro</h4>
+        <div class="plan-price">₹49 <small>/ 30 days</small></div>
+        <div class="plan-credits">500,000 credits</div>
+        <ul class="plan-facts">
+          <li>~400–600 study notes</li>
+          <li>~70–90 Mega Bundles</li>
+          <li>~250+ flashcard decks</li>
+          <li>Quiz + mind map headroom</li>
+          <li>Best for daily revision</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Pro</button>
+      </article>
+      <article class="plan-sheet plan-sheet-star" data-plan="popular" onclick="buyPlan('popular')">
+        <div class="tier-badge">BEST SELLER · 80% choose this</div>
+        <div class="plan-sheet-top"><span class="plan-emoji">⭐</span><span class="plan-role">Serious students</span></div>
+        <h4>Popular</h4>
+        <div class="plan-price">₹99 <small>/ 30 days</small></div>
+        <div class="plan-credits">1,000,000 credits</div>
+        <ul class="plan-facts">
+          <li>~800–1,200 notes</li>
+          <li>~140–180 Mega Bundles</li>
+          <li>Full exam-cycle runway</li>
+          <li>Lowest cost per 1M</li>
+          <li>Priority checkout</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Popular</button>
+      </article>
+      <article class="plan-sheet" data-plan="ultra" onclick="buyPlan('ultra')">
+        <div class="plan-sheet-top"><span class="plan-emoji">💎</span><span class="plan-role">Heavy usage</span></div>
+        <h4>Ultra</h4>
+        <div class="plan-price">₹199 <small>/ 30 days</small></div>
+        <div class="plan-credits">2,000,000 credits</div>
+        <ul class="plan-facts">
+          <li>~1,600–2,400 notes</li>
+          <li>~280–360 Mega Bundles</li>
+          <li>Coaching / batch volume</li>
+          <li>All 5 tools, all month</li>
+          <li>Maximum headroom</li>
+        </ul>
+        <button type="button" class="tier-buy-btn">Select Ultra</button>
+      </article>
+    </div>
+    <div class="plan-atelier-foot">
+      <span><i class="fas fa-shield-alt"></i> Secure payment via Razorpay</span>
+      <span>Credits deduct exactly as used · unused pack expires in 30 days</span>
+    </div>
+  </div>
+</div>
+<script>
+function openBuyCreditsModal() {
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; document.body.classList.add('sv-modal-open'); }
+}
+function closeBuyCreditsModal() {
+  const m = document.getElementById('buyCreditsModal');
+  if (m) { m.style.display = 'none'; document.body.style.overflow = ''; document.body.classList.remove('sv-modal-open'); }
+}
+window.openBuyCreditsModal = openBuyCreditsModal;
+window.closeBuyCreditsModal = closeBuyCreditsModal;
+
+function buyPlan(plan) {
+  if (window.buyPlanDirect) return window.buyPlanDirect(plan);
+}
+window.buyPlan = buyPlan;
+</script>
+
+
+<div class="modal-overlay" id="planBoxModal" style="display:none;z-index:20060">
+  <div class="modal modal-sm plan-box" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="planBoxTitle">Your plan</div>
+      <button class="modal-close" onclick="document.getElementById('planBoxModal').style.display='none'"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="planBoxBody"></div>
+  </div>
+</div>
+<script>
+window._svParseWhen = function(v){
+  if (!v) return null;
+  if (typeof v === 'object') {
+    if (v.seconds) return new Date(v.seconds*1000);
+    if (v._seconds) return new Date(v._seconds*1000);
+    return null;
+  }
+  var d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
+};
+window._svDaysLeft = function(){
+  var tok = window.PAID_TOKENS || {};
+  var till = window._svParseWhen(tok.validity_till);
+  var days = 30;
+  if (till) days = Math.ceil((till.getTime()-Date.now())/86400000);
+  else if (typeof tok.isFreeResetInDays === 'number') days = tok.isFreeResetInDays;
+  if (!isFinite(days) || days < 0) days = 0;
+  if (days > 31) days = 30;
+  return days;
+};
+window._svRefreshDaysChip = function(){
+  var tok = window.PAID_TOKENS || {};
+  var plan = window._svInferPlan ? window._svInferPlan(tok) : String(tok.plan||'welcome').toLowerCase();
+  var isWelcome = plan === 'welcome' || plan === 'free';
+  var chip = document.getElementById('daysLeftVal');
+  var lbl = document.getElementById('daysLeftLbl');
+  var wrap = document.getElementById('daysLeftChip');
+  if (isWelcome) {
+    if (chip) chip.textContent = '10K';
+    if (lbl) lbl.textContent = 'monthly';
+  } else {
+    var d = window._svDaysLeft();
+    if (chip) chip.textContent = String(d);
+    if (lbl) lbl.textContent = 'days left';
+  }
+  if (wrap) wrap.style.display = 'inline-flex';
+};
+window._svInferPlan = function(tok){
+  var plan = String(tok.plan||'').toLowerCase();
+  var rem = Number(tok.remaining != null ? tok.remaining : (window.PAID_REMAINING||0));
+  if (!plan || plan === 'free') {
+    if (rem >= 1500000) plan = 'ultra';
+    else if (rem >= 800000) plan = 'popular';
+    else if (rem >= 300000) plan = 'pro';
+    else if (rem >= 80000) plan = 'starter';
+    else plan = 'welcome';
+  }
+  return plan;
+};
+window._svOpenPlanBox = function(){
+  var tok = window.PAID_TOKENS || {};
+  var plan = window._svInferPlan(tok);
+  var isWelcome = plan === 'welcome' || plan === 'free';
+  var names = {welcome:'Welcome credits', free:'Welcome credits', starter:'Starter', pro:'Pro', popular:'Popular', ultra:'Ultra'};
+  var pack = {welcome:10000, free:10000, starter:100000, pro:500000, popular:1000000, ultra:2000000};
+  var price = {starter:'₹19', pro:'₹49', popular:'₹99', ultra:'₹199'};
+  var days = window._svDaysLeft();
+  var till = window._svParseWhen(tok.validity_till);
+  var bought = window._svParseWhen(tok.lastPurchaseAt);
+  var rem = Number(tok.remaining != null ? tok.remaining : (window.PAID_REMAINING||0));
+  var used = Number(tok.used || tok.totalUsed || tok.tokens_used || 0);
+  var lim = Number(tok.limit || tok.tokens_limit || (rem+used) || pack[plan] || 0);
+  var paid = tok.totalPaid ? ('₹'+Number(tok.totalPaid).toLocaleString('en-IN')) : (price[plan]||'—');
+  var gens = tok.totalGenerations || 0;
+  var purchased = Number(tok.totalPurchased||0);
+  var pct = lim ? Math.min(100, Math.round((used/lim)*100)) : 0;
+  var body = document.getElementById('planBoxBody');
+  var title = document.getElementById('planBoxTitle');
+  if (title) title.textContent = (names[plan]||plan) + ' · details';
+  if (body) body.innerHTML =
+    '<div class="pb-hero">' +
+      '<div class="pb-kicker">Current pack</div>' +
+      '<div class="pb-name">'+(names[plan]||plan)+'</div>' +
+      '<div class="pb-price">'+(isWelcome?'10,000 AI credits every month':(price[plan]||'')+' · '+(pack[plan]||0).toLocaleString()+' credits')+'</div>' +
+    '</div>' +
+    '<div class="pb-meter"><div class="pb-meter-fill" style="width:'+pct+'%"></div></div>' +
+    '<div class="pb-meter-meta">'+used.toLocaleString()+' used · '+rem.toLocaleString()+' left'+(lim?(' · '+lim.toLocaleString()+' pack'):'')+'</div>' +
+    '<div class="plan-box-grid">' +
+      '<div class="plan-box-cell"><div class="pbk">Plan</div><div class="pbv">'+(names[plan]||plan)+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">'+(isWelcome?'Renews in':'Days left')+'</div><div class="pbv">'+days+' days</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Credits left</div><div class="pbv">'+rem.toLocaleString()+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Used</div><div class="pbv">'+used.toLocaleString()+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Purchased</div><div class="pbv">'+(purchased?purchased.toLocaleString()+' credits':'—')+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Paid</div><div class="pbv">'+paid+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Bought on</div><div class="pbv">'+(bought?bought.toLocaleDateString():'—')+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Valid till</div><div class="pbv">'+(till?till.toLocaleDateString():'—')+'</div></div>' +
+      '<div class="plan-box-cell"><div class="pbk">Generations</div><div class="pbv">'+Number(gens).toLocaleString()+'</div></div>' +
+    '</div>' +
+    '<button type="button" class="credit-btn-buy" style="width:100%;margin-top:16px" onclick="document.getElementById(\'planBoxModal\').style.display=\'none\';window.openBuyCreditsModal&&window.openBuyCreditsModal()">Add credits · from ₹19</button>';
+  var m = document.getElementById('planBoxModal');
+  if (m) m.style.display = 'flex';
+};
+document.addEventListener('DOMContentLoaded', function(){
+  var chip = document.getElementById('daysLeftChip');
+  if (chip) chip.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); window._svOpenPlanBox(); });
+  var box = document.getElementById('planBoxModal');
+  if (box) box.addEventListener('click', function(e){ if(e.target===box) box.style.display='none'; });
+});
+</script>
+
+
+<script>
+window.performLogout = async function(){
+  try {
+    localStorage.removeItem('sv_firebase_token');
+    sessionStorage.removeItem('sv_firebase_token');
+  } catch(e){}
+  try {
+    const { getAuth, signOut } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+    if (window.firebaseAuthInstance) await signOut(window.firebaseAuthInstance);
+    else await signOut(getAuth());
+  } catch(e){}
+  window.location.href = '/login.html';
+};
+</script>
+
+<style id="sv-shotfix">
+#emptyState.empty-state{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;min-height:calc(100dvh - 128px)!important;
+  padding:28px 18px 120px!important;gap:14px!important;border:0!important;box-shadow:none!important;
+}
+#emptyState .es-title,#emptyState #esHello{
+  font-size:clamp(1.7rem,6.4vw,2.35rem)!important;line-height:1.2!important;
+  letter-spacing:.012em!important;max-width:14ch!important;margin:0 auto!important;
+}
+#emptyState .es-sub{font-size:.85rem!important;max-width:40ch!important;margin:0 auto!important}
+#emptyState .es-features{
+  display:flex!important;flex-wrap:wrap!important;justify-content:center!important;
+  gap:8px!important;max-width:480px!important;margin:8px auto 0!important;
+}
+#emptyState .es-feat-chip{
+  display:inline-flex!important;align-items:center!important;gap:6px!important;
+  padding:8px 14px!important;border-radius:999px!important;font-size:.78rem!important;
+}
+#emptyState .es-feat-chip[data-tool="all"]{width:100%;max-width:260px;justify-content:center}
+html[data-theme="light"] #emptyWizardBtn{
+  background:#1c1917!important;color:#fffaf3!important;-webkit-text-fill-color:#fffaf3!important;
+}
+html[data-theme="light"] #emptyMegaBtn{
+  background:#c9a227!important;color:#1c1917!important;-webkit-text-fill-color:#1c1917!important;
+}
+#welcomeBackOverlay.modal-overlay,#welcomeBackOverlay{
+  display:none;align-items:center!important;justify-content:center!important;
+  padding:20px!important;z-index:50000!important;
+}
+#welcomeBackOverlay.visible,#welcomeBackOverlay[style*="flex"]{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+}
+body.sv-modal-open #svDock{display:none!important;pointer-events:none!important}
+@media(max-width:1024px){
+  #welcomeBackOverlay.modal-overlay{
+    align-items:center!important;justify-content:center!important;
+  }
+  #welcomeBackOverlay .modal{
+    border-radius:24px!important;width:min(400px,92vw)!important;max-height:none!important;
+  }
+}
+</style>
+</body>
+</html>

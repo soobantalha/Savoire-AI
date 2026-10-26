@@ -1,145 +1,485 @@
-/* Savoiré — checkout + credit history (wired to sidebar / dock) */
-(function () {
-  const PLANS = {
-    starter: { amount: 19, credits: 100000, name: 'Starter' },
-    pro:     { amount: 49, credits: 500000, name: 'Pro' },
-    popular: { amount: 99, credits: 1000000, name: 'Popular' },
-    ultra:   { amount: 199, credits: 2000000, name: 'Ultra' }
-  };
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="google-site-verification" content="4BDDXS2yt8nxlysyoEk3UzFg4qKsxu1z49c7sbjl4Po" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Privacy Policy | Savoiré AI</title>
+<meta name="description" content="Privacy Policy for Savoiré AI — the premium AI study companion by Sooban Talha Technologies.">
+<meta name="theme-color" content="#06070d">
+<link rel="icon" href="clogo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   SAVOIRÉ AI — Legal page (aurora on obsidian, paired with index)
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --void:#06070d;
+  --obsidian:#0a0c16;
+  --panel:#10131f;
+  --panel-2:#161a28;
+  --hairline:rgba(255,255,255,0.06);
+  --hairline-strong:rgba(255,255,255,0.12);
+  --ink:#f3f5fb;
+  --ink-2:#c2c8d8;
+  --ink-3:#8b91a6;
+  --ink-4:#5b6178;
+  --brass:#d4af37;
+  --brass-soft:#f0d27a;
+  --aurora-violet:#8b5cf6;
+  --aurora-cyan:#22d3ee;
+  --aurora-teal:#14b8a6;
+  --success:#34d399;
+  --glass:rgba(16,19,31,0.55);
+  --ease:cubic-bezier(.16,.84,.44,1);
+  --serif:'Instrument Serif', 'Times New Roman', serif;
+  --sans:'Inter','Manrope', system-ui, sans-serif;
+  --display:'Manrope', var(--sans);
+  --mono:'JetBrains Mono', ui-monospace, monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--void);color:var(--ink);
+  font-family:var(--sans);font-weight:400;line-height:1.6;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  min-height:100vh;letter-spacing:-0.005em;
+}
+::selection{background:var(--brass-soft);color:#100c00}
+a{color:var(--brass-soft);text-decoration:none;border-bottom:1px solid rgba(212,175,55,0.18);transition:color .25s,border-color .25s}
+a:hover{color:var(--brass);border-bottom-color:var(--brass)}
+img{display:block;max-width:100%}
+button{font-family:inherit;border:0;background:none;cursor:pointer;color:inherit}
 
-  function token() {
-    try { return localStorage.getItem('sv_firebase_token') || ''; } catch (e) { return ''; }
+/* AURORA */
+.aurora-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--void)}
+.aurora-bg::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(60% 40% at 18% 8%, rgba(139,92,246,0.16), transparent 60%),
+    radial-gradient(55% 38% at 84% 14%, rgba(34,211,238,0.14), transparent 60%),
+    radial-gradient(50% 36% at 50% 90%, rgba(20,184,166,0.12), transparent 60%),
+    radial-gradient(40% 28% at 70% 60%, rgba(212,175,55,0.08), transparent 60%);
+  filter:saturate(115%);
+}
+.aurora-bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size:80px 80px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 80%);
+}
+#starfield{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.45}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.04;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.65'/></svg>")}
+
+/* LAYOUT */
+.shell{position:relative;z-index:5;max-width:880px;margin:0 auto;padding:120px 28px 80px}
+@media (max-width:640px){.shell{padding:100px 20px 60px}}
+
+/* NAV */
+.legal-nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  padding:18px 0;transition:padding .35s var(--ease);
+}
+.legal-nav-inner{
+  max-width:880px;margin:0 auto;padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  background:rgba(10,12,22,0.55);
+  border:1px solid var(--hairline);
+  border-radius:16px;backdrop-filter:blur(20px) saturate(140%);
+  box-shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 10px 30px rgba(0,0,0,0.25);
+}
+.legal-nav.scrolled .legal-nav-inner{background:rgba(10,12,22,0.85)}
+.legal-nav.scrolled{padding:10px 0}
+.legal-brand{display:flex;align-items:center;gap:10px;text-decoration:none;border:none;color:inherit}
+.legal-brand-mark{
+  width:32px;height:32px;border-radius:10px;
+  background:radial-gradient(circle at 30% 30%, #f3d27a, #d4af37 55%, #6a4f0d 100%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 1px rgba(212,175,55,0.3), 0 6px 16px rgba(212,175,55,0.2), inset 0 1px 0 rgba(255,255,255,0.4);
+  overflow:hidden;
+}
+.legal-brand-mark img{width:22px;height:22px;object-fit:contain}
+.legal-brand-name{font-family:var(--display);font-weight:800;letter-spacing:0.1em;text-transform:uppercase;font-size:12.5px;color:#fff}
+.legal-brand-ai{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:0;text-transform:none;color:var(--brass-soft);font-size:13.5px;margin-top:1px;display:block}
+.legal-nav-links{display:flex;gap:4px}
+.legal-nav-links a{
+  border:none;padding:7px 12px;font-size:13px;color:var(--ink-2);
+  border-radius:8px;transition:all .25s;
+}
+.legal-nav-links a:hover{color:#fff;background:rgba(255,255,255,0.05)}
+.legal-nav-links a.active{color:var(--brass-soft);background:rgba(212,175,55,0.08)}
+@media (max-width:600px){.legal-nav-links a span{display:none}.legal-nav-links a{padding:7px 10px}}
+
+/* HEADINGS */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:14px;
+  font-family:var(--mono);font-size:11px;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--brass-soft);font-weight:500;margin-bottom:18px;
+}
+.eyebrow::before{content:'';width:28px;height:1px;background:linear-gradient(90deg,transparent,var(--brass))}
+
+h1{
+  font-family:var(--display);font-weight:800;
+  font-size:clamp(36px, 5.4vw, 64px);line-height:1.02;letter-spacing:-0.03em;
+  color:#fff;margin-bottom:14px;
+}
+h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--brass-soft)}
+.sub{color:var(--ink-2);font-size:15px;margin-bottom:36px;line-height:1.6}
+.sub code{font-family:var(--mono);font-size:13px;color:var(--aurora-cyan);background:rgba(34,211,238,0.06);padding:2px 8px;border-radius:6px;border:1px solid rgba(34,211,238,0.15)}
+
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:36px}
+.badge{
+  display:inline-flex;gap:6px;align-items:center;
+  padding:6px 12px;border-radius:999px;
+  font-family:var(--mono);font-size:11px;letter-spacing:0.06em;
+  background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.25);
+  color:var(--brass-soft);
+}
+.badge.cyan{background:rgba(34,211,238,0.08);border-color:rgba(34,211,238,0.22);color:var(--aurora-cyan)}
+.badge.violet{background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.22);color:#c4b5fd}
+.badge.green{background:rgba(52,211,153,0.08);border-color:rgba(52,211,153,0.22);color:var(--success)}
+
+/* CARDS */
+.card{
+  position:relative;
+  background:linear-gradient(180deg, rgba(22,26,40,0.7), rgba(10,12,22,0.7));
+  border:1px solid var(--hairline);
+  border-radius:20px;padding:32px;margin-bottom:18px;
+  backdrop-filter:blur(14px);
+  transition:border-color .3s, transform .3s, box-shadow .3s;
+}
+.card:hover{
+  border-color:var(--hairline-strong);
+  transform:translateY(-2px);
+  box-shadow:0 20px 50px rgba(0,0,0,0.25);
+}
+.card h2{
+  font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:-0.015em;
+  color:#fff;margin-bottom:14px;display:flex;align-items:baseline;gap:14px;
+}
+.card h2 .num{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  color:var(--brass-soft);letter-spacing:0.16em;
+}
+.card h3{
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  color:var(--brass-soft);text-transform:uppercase;letter-spacing:0.14em;
+  margin:20px 0 8px;
+}
+.card p{color:var(--ink-2);font-size:14.5px;line-height:1.7;margin-bottom:12px}
+.card p:last-child{margin-bottom:0}
+.card ul{margin:8px 0 14px 0;color:var(--ink-2);font-size:14px;line-height:1.7;list-style:none}
+.card ul li{padding:6px 0 6px 22px;position:relative}
+.card ul li::before{
+  content:'';position:absolute;left:4px;top:14px;
+  width:6px;height:6px;border-radius:50%;background:var(--brass-soft);
+  box-shadow:0 0 8px var(--brass-soft);
+}
+.card code{font-family:var(--mono);font-size:12.5px;color:var(--aurora-cyan);background:rgba(34,211,238,0.06);padding:2px 8px;border-radius:5px;border:1px solid rgba(34,211,238,0.12)}
+.card b{color:#fff;font-weight:600}
+
+/* CALLOUT */
+.callout{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:18px 20px;border-radius:14px;
+  background:rgba(52,211,153,0.05);
+  border:1px solid rgba(52,211,153,0.18);
+  font-size:13.5px;color:var(--ink-2);line-height:1.65;
+  margin-top:14px;
+}
+.callout .ic{font-size:18px;flex:none;margin-top:2px}
+.callout strong{color:var(--success)}
+.callout.warn{background:rgba(251,191,36,0.05);border-color:rgba(251,191,36,0.18)}
+.callout.warn strong{color:var(--warn)}
+
+/* SUBLINK GRID */
+.subgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
+@media (max-width:600px){.subgrid{grid-template-columns:1fr}}
+.subgrid a{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--hairline);
+  border-radius:12px;color:var(--ink-2);font-size:13.5px;
+  transition:border-color .25s, color .25s, background .25s;
+}
+.subgrid a:hover{border-color:rgba(212,175,55,0.35);color:var(--brass-soft);background:rgba(212,175,55,0.04)}
+.subgrid a .ext{opacity:0.5;margin-left:auto;font-size:11px}
+
+/* FOOTER */
+.legal-foot{
+  margin-top:48px;padding-top:24px;
+  border-top:1px solid var(--hairline);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;
+  color:var(--ink-4);font-size:12.5px;
+}
+.legal-foot .legal-links{display:flex;gap:18px;flex-wrap:wrap}
+.legal-foot a{border:none;color:var(--ink-2)}
+.legal-foot a:hover{color:var(--brass-soft)}
+
+/* TOC */
+.toc{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--hairline);
+  border-radius:16px;padding:18px 22px;
+  margin-bottom:28px;
+}
+.toc h4{font-family:var(--mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-4);margin-bottom:12px;font-weight:500}
+.toc ul{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+@media (max-width:600px){.toc ul{grid-template-columns:1fr}}
+.toc a{
+  border:none;padding:6px 0;font-size:13.5px;color:var(--ink-2);
+  display:flex;align-items:center;gap:10px;
+}
+.toc a:hover{color:var(--brass-soft)}
+.toc a::before{content:'';width:14px;height:1px;background:currentColor;opacity:0.4;flex:none}
+</style>
+</head>
+<body>
+
+<div class="aurora-bg"></div>
+<canvas id="starfield"></canvas>
+<div class="grain"></div>
+
+<nav class="legal-nav" id="legalNav">
+  <div class="legal-nav-inner">
+    <a class="legal-brand" href="index.html" aria-label="Savoiré AI home">
+      <div class="legal-brand-mark"><img src="clogo.png" alt=""></div>
+      <div>
+        <div class="legal-brand-name">Savoiré</div>
+        <div class="legal-brand-ai">AI</div>
+      </div>
+    </a>
+    <div class="legal-nav-links">
+      <a href="index.html"><span>Home</span></a>
+      <a href="privacy.html" class="active"><span>Privacy</span></a>
+      <a href="terms.html"><span>Terms</span></a>
+    </div>
+  </div>
+</nav>
+
+<main class="shell">
+
+  <span class="eyebrow">Legal · Privacy</span>
+  <h1>Privacy <em>Policy</em></h1>
+  <p class="sub">Last updated: <strong style="color:#fff">23 October 2026</strong> · Savoiré AI v2.0 · Product of <strong style="color:#fff">Sooban Talha Technologies</strong> · Founder: Sooban Talha</p>
+
+  <div class="badge-row">
+    <span class="badge">🔒 Encrypted in transit & at rest</span>
+    <span class="badge cyan">⚙️ GDPR & India DPDP aligned</span>
+    <span class="badge violet">🚫 Never sold · never advertised</span>
+    <span class="badge green">✓ You can export or delete anytime</span>
+  </div>
+
+  <div class="toc">
+    <h4>On this page</h4>
+    <ul>
+      <li><a href="#s1">1. Introduction</a></li>
+      <li><a href="#s2">2. What we collect</a></li>
+      <li><a href="#s3">3. How we use your data</a></li>
+      <li><a href="#s4">4. Where we store data</a></li>
+      <li><a href="#s5">5. Third-party services</a></li>
+      <li><a href="#s6">6. What we never do</a></li>
+      <li><a href="#s7">7. Your rights</a></li>
+      <li><a href="#s8">8. AI engine & Mesh API</a></li>
+      <li><a href="#s9">9. Google sign-in & emails</a></li>
+      <li><a href="#s10">10. Cookies & storage</a></li>
+      <li><a href="#s11">11. Children's privacy</a></li>
+      <li><a href="#s12">12. Changes & contact</a></li>
+    </ul>
+  </div>
+
+  <section id="s1" class="card">
+    <h2><span class="num">§ 1</span> Introduction</h2>
+    <p>Welcome to <b>Savoiré AI</b> (<a href="https://savoireai.vercel.app" target="_blank" rel="noopener">savoireai.vercel.app</a>), a product of <b>Sooban Talha Technologies</b>. We build a premium AI study workspace — Notes, Flashcards, Quiz, Summary and Mind Map — powered by our AI engine (a third-party generation service).</p>
+    <p>This Privacy Policy explains what data we collect, how we use it, where it lives, and the rights you have over it. By using Savoiré AI, you agree to this policy. If you do not agree, please do not use the service.</p>
+  </section>
+
+  <section id="s2" class="card">
+    <h2><span class="num">§ 2</span> What we collect</h2>
+    <h3>A · Account information (via Firebase Authentication)</h3>
+    <ul>
+      <li>Email address, display name and profile photo (when you sign in with Google or with email + password)</li>
+      <li>Firebase UID — an anonymous identifier we use to associate your data with your account</li>
+      <li>Sign-in timestamps and authentication method</li>
+    </ul>
+    <h3>B · Study data (via Firebase Firestore)</h3>
+    <ul>
+      <li>Topics you submit and the study material generated from them (notes, flashcards, quiz, summary, mind map) — stored under <code>users/{uid}/history</code> and <code>users/{uid}/saved</code></li>
+      <li>Credit balance, plan tier, generation count, usage timestamps, streak, sessions and total words generated</li>
+      <li>Aggregated, anonymised usage logs (topic length, tool, duration, model used) for reliability and quality work</li>
+    </ul>
+    <h3>C · Payment data (via Razorpay)</h3>
+    <ul>
+      <li>We <b>never</b> store your card number, UPI PIN, CVV or bank password. Razorpay is PCI DSS Level 1 certified and RBI-authorised; it handles every payment instrument on our behalf.</li>
+      <li>We do store: <code>razorpay_payment_id</code>, <code>razorpay_order_id</code>, plan name, credits issued, settlement status, and timestamp — kept for accounting, refunds and fraud prevention.</li>
+      <li>Razorpay may collect your phone number for UPI verification; that data is processed by Razorpay under its own privacy terms.</li>
+    </ul>
+    <h3>D · Technical data</h3>
+    <ul>
+      <li>Device type, browser family, IP address — used for rate limiting, abuse prevention and aggregate analytics</li>
+      <li>Serverless function logs (anonymised request ID, latency, status) for debugging on Vercel</li>
+    </ul>
+  </section>
+
+  <section id="s3" class="card">
+    <h2><span class="num">§ 3</span> How we use your data</h2>
+    <ul>
+      <li>To generate your study material via <b>our AI engine</b> (a third-party generation service)</li>
+      <li>To show your credit balance, history and saved notes across your devices</li>
+      <li>To process payments and issue credits via Razorpay</li>
+      <li>To send a one-time welcome email from <code>noreply@savoireai.vercel.app</code> (only on first sign-in, only if email delivery is configured)</li>
+      <li>To improve reliability, prompts and quality through anonymised, aggregated metrics</li>
+      <li>To prevent abuse — rate limits, token-exhaustion checks, fraud signals</li>
+    </ul>
+    <div class="callout">
+      <span class="ic">💡</span>
+      <div><strong>No advertising.</strong> Savoiré AI does not run ads, does not run recommendation engines against your study content, and does not share data with advertising networks. Period.</div>
+    </div>
+  </section>
+
+  <section id="s4" class="card">
+    <h2><span class="num">§ 4</span> Where we store data</h2>
+    <ul>
+      <li><b>Firebase Authentication & Firestore</b> — Google Cloud, <code>asia-south1</code> (Mumbai), encrypted in transit (TLS 1.3) and at rest (AES-256). Per-user security rules: <code>allow read, write if request.auth.uid == userId</code>.</li>
+      <li><b>Vercel</b> — serverless function hosting, with environment variables encrypted and runtime logs auto-purged per their retention policy.</li>
+      <li><b>Razorpay</b> — payment data, PCI DSS Level 1, RBI-authorised Payment Aggregator, with settlement to our bank via NEFT / IMPS.</li>
+      <li><b>AI generation provider</b> — receives the topic, selected tool and language to generate content. Account identity and payment data are not sent with that request.</li>
+    </ul>
+  </section>
+
+  <section id="s5" class="card">
+    <h2><span class="num">§ 5</span> Third-party services</h2>
+    <p>Savoiré AI uses a small set of carefully chosen sub-processors. Each is bound by its own privacy and security commitments.</p>
+    <div class="subgrid">
+      <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">Firebase / Google Cloud <span class="ext">↗</span></a>
+      <a href="https://razorpay.com/privacy/" target="_blank" rel="noopener">Razorpay <span class="ext">↗</span></a>
+      <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">Hosting provider <span class="ext">↗</span></a>
+      <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">Vercel <span class="ext">↗</span></a>
+      <a href="https://resend.com/legal/privacy-policy" target="_blank" rel="noopener">Resend (email, optional) <span class="ext">↗</span></a>
+    </div>
+  </section>
+
+  <section id="s6" class="card">
+    <h2><span class="num">§ 6</span> What we never do</h2>
+    <ul>
+      <li>We <b>do not</b> sell your data to advertisers, data brokers or any third party</li>
+      <li>We <b>do not</b> store your UPI PIN, card CVV, or bank password — ever</li>
+      <li>We <b>do not</b> read your private study content for advertising, profiling or training</li>
+      <li>We <b>do not</b> share your email with third parties except where strictly required to provide the service (Firebase for sign-in, Razorpay for payment)</li>
+      <li>We <b>do not</b> run third-party tracking cookies, pixels or fingerprinting scripts</li>
+    </ul>
+  </section>
+
+  <section id="s7" class="card">
+    <h2><span class="num">§ 7</span> Your rights</h2>
+    <ul>
+      <li><b>Access</b> — view all your data in <i>Dashboard → Settings → Backup &amp; Restore → Export JSON</i></li>
+      <li><b>Delete</b> — <i>Dashboard → Settings → sign-out and email support to close your account</i> (3-step confirmation). Removes your Firestore data, your Firebase Auth account, and every trace of your history and saved notes. Takes 1–2 minutes by design to prevent exploit.</li>
+      <li><b>Sign out</b> — <i>Avatar → Log Out</i> drops only the auth token and signs you out; cloud credits, history and saved notes stay on your account</li>
+      <li><b>Correction</b> — change your display name and avatar at any time in <i>Settings</i></li>
+      <li><b>Portability</b> — Export your entire workspace as a JSON backup whenever you want</li>
+    </ul>
+    <p>For any data request that can't be self-served inside the dashboard, write to us at <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d2a0bda3a7bca6bda0b3bda192a1b3a4bdbda6b1b5bdfca1bdbf">[email&#160;protected]</a> and we'll respond within 7 working days.</p>
+  </section>
+
+  <section id="s8" class="card">
+    <h2><span class="num">§ 8</span> AI engine</h2>
+    <p>Savoiré AI runs generations through a third-party AI engine. When you submit a topic, we send the topic, the selected tool and the language preference. The first valid response is returned. We do not publish model names in the product.</p>
+    <p>Specifically:</p>
+    <ul>
+      <li>Only the <b>topic text</b>, the <b>selected tool</b> and the <b>language preference</b> are sent per request. We do not send your name, email, photo or payment information with that request.</li>
+      <li>The generated text is stored in your Firestore history and shown in the dashboard.</li>
+      <li>The engine provider processes that prompt under their own terms as a sub-processor.</li>
+    </ul>
+    <div class="callout warn">
+      <span class="ic">⚠️</span>
+      <div><strong>AI accuracy:</strong> Generated notes can contain mistakes. Always verify exam, medical, legal or financial facts against authoritative sources.</div>
+    </div>
+  </section>
+
+  <section id="s9" class="card">
+    <h2><span class="num">§ 9</span> Google sign-in &amp; email notifications</h2>
+    <p>When you sign in with Google, Google itself sends you a one-time security email titled something like <i>"You granted access to Savoiré AI to see your name and photo"</i>. This email is sent by Google, not by us, as part of Google's account security policy. It cannot be disabled from our side, and it shows our product name and logo so you can verify the request was real.</p>
+    <p>Separately, if email delivery is configured on our end, you'll also receive a single welcome email from <code>noreply@savoireai.vercel.app</code> with your plan and credit details. You can opt out of future emails at any time by replying <i>unsubscribe</i>.</p>
+  </section>
+
+  <section id="s10" class="card">
+    <h2><span class="num">§ 10</span> Cookies &amp; storage</h2>
+    <ul>
+      <li><b>localStorage</b> — Firebase ID token (<code>sv_firebase_token</code>), user name, avatar, streak, sessions, theme preferences — used so the app works offline and feels instant</li>
+      <li><b>sessionStorage</b> — used during the Firebase Auth redirect flow (for mobile sign-in fallback when popups are blocked)</li>
+      <li><b>Firestore</b> — cloud sync of your history, saved notes, credits and streak across devices</li>
+      <li><b>No third-party tracking cookies, no advertising cookies, no analytics pixels</b></li>
+    </ul>
+  </section>
+
+  <section id="s11" class="card">
+    <h2><span class="num">§ 11</span> Children's privacy</h2>
+    <p>Savoiré AI is intended for users aged <b>13 and above</b>, or younger with the consent of a parent or legal guardian. We do not knowingly collect personal information from children under 13 without verifiable parental consent. If you believe a child under 13 has signed up, contact us and we will delete the account within 7 days.</p>
+  </section>
+
+  <section id="s12" class="card">
+    <h2><span class="num">§ 12</span> Changes &amp; contact</h2>
+    <p>We may update this policy from time to time. Material changes will be announced on the dashboard and reflected by the "Last updated" date at the top. Continued use of the service after an update constitutes acceptance of the revised policy.</p>
+    <p><b>Company:</b> Sooban Talha Technologies<br>
+    <b>Product:</b> Savoiré AI<br>
+    <b>Founder:</b> Sooban Talha<br>
+    <b>Website:</b> <a href="https://savoireai.vercel.app">savoireai.vercel.app</a> · <a href="https://soobantalhatech.xyz" target="_blank" rel="noopener">soobantalhatech.xyz</a><br>
+    <b>Email:</b> <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="d2a0bda3a7bca6bda0b3bda192a1b3a4bdbda6b1b5bdfca1bdbf">[email&#160;protected]</a><br>
+    <b>Instagram:</b> <a href="https://instagram.com/developer_sooban" target="_blank" rel="noopener">@developer_sooban</a><br>
+    <b>Registered address:</b> Moradabad, Uttar Pradesh, India</p>
+  </section>
+
+  <div class="legal-foot">
+    <span>© 2026 Sooban Talha Technologies. All rights reserved.</span>
+    <span class="legal-links">
+      <a href="terms.html">Terms of Service</a>
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+    </span>
+  </div>
+
+</main>
+
+<script>
+/* NAV scroll state */
+const nav = document.getElementById('legalNav');
+window.addEventListener('scroll', () => nav.classList.toggle('scrolled', window.scrollY > 24), {passive:true});
+
+/* STARFIELD */
+(function(){
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let w, h, stars = [];
+  const COLORS = ['#d4af37','#22d3ee','#8b5cf6','#f3f5fb'];
+  function resize(){ w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+  function init(){
+    resize();
+    const count = Math.min(160, Math.floor(w*h/11000));
+    stars = Array.from({length:count}, () => ({
+      x: Math.random()*w, y: Math.random()*h,
+      r: Math.random()*1.3+0.2,
+      c: COLORS[Math.floor(Math.random()*COLORS.length)],
+      s: Math.random()*0.18+0.03, o: Math.random()*0.45+0.15
+    }));
   }
-
-  function toast(msg, type) {
-    if (window._app && window._app._toast) {
-      window._app._toast(type === 'error' ? 'error' : 'info', 'fa-info-circle', msg);
-      return;
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    for(const s of stars){
+      s.y -= s.s; if(s.y < -5) s.y = h+5;
+      ctx.beginPath(); ctx.fillStyle = s.c; ctx.globalAlpha = s.o;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
     }
-    alert(msg);
+    ctx.globalAlpha = 1; requestAnimationFrame(draw);
   }
-
-  window.openBuyCreditsModal = function () {
-    const m = document.getElementById('buyCreditsModal');
-    if (!m) { toast('Plans window missing', 'error'); return; }
-    m.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    document.body.classList.add('sv-modal-open');
-  };
-
-  window.closeBuyCreditsModal = function () {
-    const m = document.getElementById('buyCreditsModal');
-    if (m) m.style.display = 'none';
-    document.body.style.overflow = '';
-    document.body.classList.remove('sv-modal-open');
-  };
-
-  window.openCreditHistory = async function () {
-    const modal = document.getElementById('creditHistoryModal');
-    const list = document.getElementById('creditHistoryList');
-    if (modal) modal.style.display = 'flex';
-    if (list) list.innerHTML = '<div style="text-align:center;padding:28px;color:rgba(255,255,255,.45)">Loading…</div>';
-    const tok = token();
-    if (!tok) {
-      if (list) list.innerHTML = '<div style="text-align:center;padding:28px">Login required</div>';
-      return;
-    }
-    try {
-      const res = await fetch('/api/credit-history', { headers: { Authorization: 'Bearer ' + tok } });
-      const data = await res.json().catch(() => ({}));
-      const rows = data.history || data.items || [];
-      if (!rows.length) {
-        if (list) list.innerHTML = '<div style="text-align:center;padding:32px;color:rgba(255,255,255,.5)">No credit activity yet.</div>';
-        return;
-      }
-      if (list) {
-        list.innerHTML = rows.slice(0, 40).map(function (h) {
-          const pos = (h.type === 'purchase' || h.type === 'bonus' || (h.credits || 0) > 0) && h.type !== 'generation';
-          const amt = h.credits || h.amount || h.change || 0;
-          const title = h.description || h.plan || h.type || 'Activity';
-          const when = h.createdAt?.seconds ? new Date(h.createdAt.seconds * 1000).toLocaleString() : (h.date || '');
-          return '<div class="credit-history-item"><div class="credit-history-info"><div class="credit-history-title">' +
-            String(title).replace(/</g, '&lt;') + '</div><div class="credit-history-sub">' + when +
-            '</div></div><div class="credit-history-change ' + (pos ? 'pos' : 'neg') + '">' +
-            (pos ? '+' : '-') + Math.abs(Number(amt) || 0).toLocaleString() + '</div></div>';
-        }).join('');
-      }
-    } catch (e) {
-      if (list) list.innerHTML = '<div style="text-align:center;padding:28px">Could not load history.</div>';
-    }
-  };
-
-  let paying = false;
-  window.buyPlanDirect = async function (plan) {
-    const spec = PLANS[plan];
-    if (!spec) { toast('Invalid plan', 'error'); return; }
-    if (paying) { toast('Checkout already open'); return; }
-    const tok = token();
-    if (!tok) { toast('Please login first', 'error'); window.location.href = '/login.html'; return; }
-    if (typeof Razorpay === 'undefined') { toast('Payment SDK not loaded. Refresh and try again.', 'error'); return; }
-
-    paying = true;
-    toast('Opening secure checkout…');
-    try {
-      const res = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
-        body: JSON.stringify({ plan: plan })
-      });
-      const order = await res.json();
-      if (!res.ok) throw new Error(order.error || 'Order failed');
-
-      const user = (window.firebaseAuthInstance && window.firebaseAuthInstance.currentUser) || {};
-      const rzp = new Razorpay({
-        key: order.key,
-        amount: order.amount,
-        currency: order.currency || 'INR',
-        name: 'Savoiré AI',
-        description: spec.name + ' · ' + spec.credits.toLocaleString() + ' credits · 30 days',
-        order_id: order.orderId,
-        prefill: { name: user.displayName || '', email: user.email || '' },
-        theme: { color: '#1970ff' },
-        handler: async function (resp) {
-          try {
-            const uid = user.uid || '';
-            const vr = await fetch('/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
-              body: JSON.stringify({
-                orderId: resp.razorpay_order_id,
-                paymentId: resp.razorpay_payment_id,
-                signature: resp.razorpay_signature,
-                plan: plan,
-                uid: uid
-              })
-            });
-            const out = await vr.json();
-            if (!vr.ok || !out.success) throw new Error(out.error || 'Verify failed');
-            paying = false;
-            toast('Payment successful · credits added');
-            if (window.closeBuyCreditsModal) window.closeBuyCreditsModal();
-            if (window._app && window._app._fetchPaidTokenBalance) window._app._fetchPaidTokenBalance();
-          } catch (err) {
-            toast(err.message || 'Verify failed', 'error');
-          }
-        }
-      });
-      rzp.on('payment.failed', function (resp) {
-        paying = false;
-        toast((resp.error && resp.error.description) || 'Payment failed', 'error');
-      });
-      rzp.on('close', function () { paying = false; });
-      rzp.open();
-    } catch (err) {
-      paying = false;
-      toast(err.message || 'Checkout failed', 'error');
-    }
-  };
-
-  window.buyPlan = function (plan) { return window.buyPlanDirect(plan); };
-
-  document.addEventListener('click', function (e) {
-    const modal = document.getElementById('buyCreditsModal');
-    if (e.target === modal) window.closeBuyCreditsModal();
-  });
+  window.addEventListener('resize', resize); init(); draw();
 })();
+</script>
+</body>
+</html>

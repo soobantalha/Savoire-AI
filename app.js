@@ -606,7 +606,7 @@ class SavoireApp {
       e.sidebarLastActive.textContent = !this.lastActive ? 'Never'
         : this.lastActive === today     ? 'Today'
         : this.lastActive === yesterday ? 'Yesterday'
-        : this.lastActive;
+        : String(this.lastActive).slice(0, 10);
     }
 
     if (e.headerStreak)  e.headerStreak.textContent  = this.streak.count;
@@ -835,7 +835,7 @@ class SavoireApp {
     if (!this.el.welcomeBackOverlay) return;
     const raw = this.userName || 'Scholar';
     const first = String(raw).trim().split(/\s+/)[0];
-    if (this.el.wbName)     this.el.wbName.textContent     = first;
+    if (this.el.wbName)     this.el.wbName.textContent     = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
     if (this.el.wbStreak)   this.el.wbStreak.textContent   = this.streak.count || 0;
     if (this.el.wbSessions) this.el.wbSessions.textContent = this.sessions || 0;
     if (this.el.wbSaved)    this.el.wbSaved.textContent    = (this.saved || []).length;
@@ -915,7 +915,8 @@ class SavoireApp {
     const hello = document.getElementById('esHello');
     if (hello && name && name !== 'Scholar') {
       const first = String(name).trim().split(/\s+/)[0];
-      hello.textContent = `Ready to study, ${first}?`;
+      const nice = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+      hello.textContent = `Ready to study, ${nice}?`;
     }
     if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = emoji;
 
