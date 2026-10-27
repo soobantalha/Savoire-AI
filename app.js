@@ -2106,6 +2106,8 @@ Examples:
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
     if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
     if (this.el.resultArea)   this.el.resultArea.style.display   = 'none';
+    document.body.classList.toggle('sv-has-result', state === 'result' || state === 'error');
+    if (this.el.emptyState) this.el.emptyState.classList.toggle('is-off', state === 'result' || state === 'error');
 
     switch (state) {
       case 'result':
@@ -3801,7 +3803,7 @@ Examples:
     ).join('');
   }
 
-  _loadHistory(id)   { const h = this.history.find(x=>x.id===id); if(!h?.data)return; this._closeModal('histModal'); this.currentData=h.data; this.tool=h.tool||'notes'; this._renderResult(h.data); this._showToolbar(true); this._toast('info','fa-history',`Loaded: ${(h.topic||'').slice(0,40)}`); }
+  _loadHistory(id)   { const h = this.history.find(x=>x.id===id); if(!h?.data)return; this._closeModal('histModal'); try{ document.getElementById('leftPanel')?.classList.remove('open','mobile-open'); }catch(e){} this.currentData=h.data; this.tool=h.tool||'notes'; this._renderResult(h.data); this._showState('result'); this._showToolbar(true); this._toast('info','fa-history',`Loaded: ${(h.topic||'').slice(0,40)}`); }
   _confirmDelHistory(id){ this._confirm('Remove this study run from history?', () => this._delHistory(id)); }
   _confirmDelSaved(id){ this._confirm('Remove this saved note?', () => this._delSaved(id)); }
   _delHistory(id)    { this.history=this.history.filter(x=>x.id!==id); this._save('sv_history',this.history); this._renderSidebarHistory(); this._updateAllStats(); this._renderHistModal(); try { this._deleteHistoryFromCloud(id); } catch(e){} }
@@ -3837,7 +3839,7 @@ Examples:
       </div>`).join('');
   }
 
-  _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
+  _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); try{ document.getElementById('leftPanel')?.classList.remove('open','mobile-open'); }catch(e){} this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showState('result'); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
   _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); try { this._deleteSavedFromCloud(id); } catch(e){} }
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
