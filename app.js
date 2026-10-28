@@ -1085,9 +1085,7 @@ class SavoireApp {
             </div>
             <div class="wizard-tool-name">${cfg.label}</div>
             <div class="wizard-tool-desc">${cfg.description}</div>
-            <div class="wizard-tool-badge ${k === 'all' ? 'mega' : ''}">
-              ${k === 'all' ? '⚡ ALL 5 TOOLS' : cfg.sfpName}
-            </div>
+            ${k === 'all' ? '<div class="wizard-tool-badge mega">ALL 5</div>' : ''}
             ${this.wizardData.tool === k ? '<div class="wizard-tool-check"><i class="fas fa-check-circle"></i></div>' : ''}
           </div>
         `).join('')}
