@@ -6786,3 +6786,163 @@ html body :is(.bg-purple,.bg-violet) { color:#171221 !important; background:line
 html body .rbf-logo { color:#f0d27a !important; }
 html body .otb-pdf,html body #outToolbar .otb-pdf { color:#17130a !important; background:linear-gradient(135deg,#f0d27a,#d4af37) !important; border-color:rgba(240,210,122,.38) !important; }
 html body .avatar-emoji-btn.active,html body .avatar-color-btn.active { border-color:#f0d27a !important; box-shadow:0 0 0 2px rgba(212,175,55,.16) !important; }
+
+/* Wizard refinement: clearer card identity over a deeper graphite canvas. */
+html body .dash-body {
+  background:radial-gradient(ellipse 760px 440px at 7% 0%,rgba(212,175,55,.028),transparent 65%),
+             radial-gradient(ellipse 650px 420px at 96% 4%,rgba(34,211,238,.028),transparent 68%),
+             linear-gradient(145deg,#080b10 0%,#050609 72%) !important;
+}
+html body #rightPanel.right-panel,
+html body #outArea.out-area {
+  background:linear-gradient(160deg,#080b10 0%,#06080c 55%,#050609 100%) !important;
+}
+html body #outArea.out-area {
+  background-image:radial-gradient(ellipse 820px 420px at 52% 0%,rgba(212,175,55,.025),transparent 68%),
+                   radial-gradient(ellipse 640px 500px at 100% 40%,rgba(34,211,238,.02),transparent 72%),
+                   linear-gradient(160deg,#080b10 0%,#06080c 55%,#050609 100%) !important;
+}
+html body #wizardModal.modal-overlay {
+  background:rgba(1,2,4,.78) !important;
+  backdrop-filter:blur(10px) saturate(112%) !important;
+  -webkit-backdrop-filter:blur(10px) saturate(112%) !important;
+}
+html body #wizardModal > .modal {
+  background:#090c11 !important;
+  border-color:rgba(240,210,122,.17) !important;
+  box-shadow:0 30px 90px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.025),inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+html body #wizardModal .modal-header {
+  border-bottom:1px solid rgba(240,210,122,.13) !important;
+  background:linear-gradient(135deg,#11151c,#0c0f14) !important;
+}
+html body #wizardModal .modal-title { color:#f0eee8 !important; }
+html body #wizardModal .modal-title i { color:#f0d27a !important; }
+html body #wizardModal .modal-close {
+  color:#cbd2dc !important; border-color:rgba(255,255,255,.12) !important;
+  background:rgba(255,255,255,.045) !important;
+}
+html body #wizardModal .modal-close:hover { color:#f0d27a !important; border-color:rgba(240,210,122,.4) !important; background:rgba(212,175,55,.09) !important; }
+html body #wizardModal .modal-body,
+html body #wizardModal #wizardContent {
+  background:radial-gradient(ellipse 82% 45% at 50% 0%,rgba(212,175,55,.035),transparent 72%),
+             linear-gradient(180deg,#0b0e13 0%,#080b10 100%) !important;
+}
+html body #wizardModal .wiz-glass {
+  background:radial-gradient(ellipse 82% 48% at 50% -12%,rgba(34,211,238,.045),transparent 75%),
+             radial-gradient(ellipse 68% 55% at 100% 100%,rgba(139,92,246,.025),transparent 70%),
+             linear-gradient(180deg,#0d1118 0%,#090c11 100%) !important;
+}
+html body #wizardModal .wizard-step-heading { color:#f1f0eb !important; }
+html body #wizardModal .wizard-step-heading > i { color:#f0d27a !important; }
+
+/* All wizard choices get a visible edge, a subtle surface tint and a matching icon. */
+html body #wizardModal #wizardBody :is(.wizard-tool-card,.wizard-language-card,.wizard-depth-card,.wizard-style-card) {
+  --wiz-accent:#77e1e8;
+  --wiz-tint:rgba(119,225,232,.045);
+  --wiz-selected:rgba(119,225,232,.15);
+  --wiz-border:rgba(119,225,232,.18);
+  --wiz-glow:rgba(119,225,232,.12);
+  position:relative !important; isolation:isolate !important; overflow:hidden !important;
+  min-width:0 !important;
+  border:1px solid var(--wiz-border) !important;
+  color:#e8edf4 !important;
+  background:linear-gradient(145deg,var(--wiz-tint),rgba(17,20,27,.97)) !important;
+  box-shadow:0 9px 22px rgba(0,0,0,.19),inset 0 1px 0 rgba(255,255,255,.055) !important;
+}
+html body #wizardModal #wizardBody :is(.wizard-tool-card,.wizard-depth-card,.wizard-style-card)::before {
+  content:"" !important; position:absolute !important; top:0 !important; left:13px !important;
+  width:42px !important; height:3px !important; border-radius:0 0 999px 999px !important;
+  background:var(--wiz-accent) !important; box-shadow:0 0 12px var(--wiz-glow) !important;
+  opacity:.84 !important; pointer-events:none !important;
+}
+html body #wizardModal #wizardBody .wizard-tool-icon,
+html body #wizardModal #wizardBody .wizard-depth-card .wdc-icon,
+html body #wizardModal #wizardBody .wizard-style-card .wsc-icon {
+  color:var(--wiz-accent) !important; filter:drop-shadow(0 0 8px var(--wiz-glow)) !important;
+}
+html body #wizardModal #wizardBody :is(.wizard-tool-name,.wizard-depth-name,.wizard-style-name) {
+  color:#f2f3f4 !important; font-size:13px !important; font-weight:780 !important; line-height:1.25 !important;
+}
+html body #wizardModal #wizardBody :is(.wizard-tool-desc,.wizard-depth-desc,.wizard-depth-subdesc,.wizard-style-desc) {
+  color:#b8c1ce !important; font-size:12px !important; line-height:1.42 !important;
+}
+html body #wizardModal #wizardBody .wizard-depth-words { color:#d4c19a !important; font-size:11px !important; }
+html body #wizardModal #wizardBody :is(.wizard-tool-card,.wizard-language-card,.wizard-depth-card,.wizard-style-card):hover {
+  transform:translateY(-2px) !important; border-color:var(--wiz-accent) !important;
+  box-shadow:0 12px 25px rgba(0,0,0,.26),0 0 20px var(--wiz-glow),inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+html body #wizardModal #wizardBody :is(.wizard-tool-card,.wizard-language-card,.wizard-depth-card,.wizard-style-card).selected {
+  border-color:var(--wiz-accent) !important;
+  color:#fff !important;
+  background:linear-gradient(145deg,var(--wiz-selected),rgba(17,20,27,.96)) !important;
+  box-shadow:0 0 0 1px var(--wiz-border) inset,0 10px 26px rgba(0,0,0,.24),0 0 20px var(--wiz-glow) !important;
+}
+html body #wizardModal #wizardBody :is(.wizard-tool-card,.wizard-language-card,.wizard-depth-card,.wizard-style-card).selected::before { width:64px !important; height:4px !important; opacity:1 !important; }
+
+/* Tool, count, difficulty and writing-style options use restrained jewel-tone accents. */
+html body #wizardModal #wizardBody .wizard-tool-card[data-tool="notes"] { --wiz-accent:#77e1e8;--wiz-tint:rgba(34,211,238,.055);--wiz-selected:rgba(34,211,238,.17);--wiz-border:rgba(34,211,238,.22);--wiz-glow:rgba(34,211,238,.15); }
+html body #wizardModal #wizardBody .wizard-tool-card[data-tool="flashcards"] { --wiz-accent:#b9a0ff;--wiz-tint:rgba(139,92,246,.07);--wiz-selected:rgba(139,92,246,.19);--wiz-border:rgba(167,139,250,.25);--wiz-glow:rgba(139,92,246,.17); }
+html body #wizardModal #wizardBody .wizard-tool-card[data-tool="quiz"] { --wiz-accent:#f0d27a;--wiz-tint:rgba(212,175,55,.065);--wiz-selected:rgba(212,175,55,.18);--wiz-border:rgba(212,175,55,.25);--wiz-glow:rgba(212,175,55,.15); }
+html body #wizardModal #wizardBody .wizard-tool-card[data-tool="summary"] { --wiz-accent:#ffad68;--wiz-tint:rgba(251,146,60,.06);--wiz-selected:rgba(251,146,60,.18);--wiz-border:rgba(251,146,60,.24);--wiz-glow:rgba(251,146,60,.14); }
+html body #wizardModal #wizardBody .wizard-tool-card[data-tool="mindmap"] { --wiz-accent:#f08db9;--wiz-tint:rgba(244,114,182,.06);--wiz-selected:rgba(244,114,182,.17);--wiz-border:rgba(244,114,182,.24);--wiz-glow:rgba(244,114,182,.14); }
+html body #wizardModal #wizardBody .wizard-tool-card[data-tool="all"] { --wiz-accent:#f0d27a;--wiz-tint:rgba(212,175,55,.075);--wiz-selected:rgba(212,175,55,.2);--wiz-border:rgba(212,175,55,.3);--wiz-glow:rgba(212,175,55,.18); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-count="5"] { --wiz-accent:#71ded2;--wiz-tint:rgba(45,212,191,.055);--wiz-selected:rgba(45,212,191,.17);--wiz-border:rgba(45,212,191,.24);--wiz-glow:rgba(45,212,191,.15); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-count="10"] { --wiz-accent:#f0d27a;--wiz-tint:rgba(212,175,55,.065);--wiz-selected:rgba(212,175,55,.18);--wiz-border:rgba(212,175,55,.25);--wiz-glow:rgba(212,175,55,.16); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-count="15"] { --wiz-accent:#b9a0ff;--wiz-tint:rgba(139,92,246,.065);--wiz-selected:rgba(139,92,246,.18);--wiz-border:rgba(167,139,250,.24);--wiz-glow:rgba(139,92,246,.16); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-count="20"] { --wiz-accent:#ff91b9;--wiz-tint:rgba(244,114,182,.06);--wiz-selected:rgba(244,114,182,.17);--wiz-border:rgba(244,114,182,.23);--wiz-glow:rgba(244,114,182,.15); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-quiztype="mixed"] { --wiz-accent:#f0d27a;--wiz-tint:rgba(212,175,55,.07);--wiz-selected:rgba(212,175,55,.19);--wiz-border:rgba(212,175,55,.25);--wiz-glow:rgba(212,175,55,.16); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-quiztype="easy"] { --wiz-accent:#61dca7;--wiz-tint:rgba(52,211,153,.065);--wiz-selected:rgba(52,211,153,.17);--wiz-border:rgba(52,211,153,.23);--wiz-glow:rgba(52,211,153,.15); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-quiztype="medium"] { --wiz-accent:#77e1e8;--wiz-tint:rgba(34,211,238,.06);--wiz-selected:rgba(34,211,238,.17);--wiz-border:rgba(34,211,238,.24);--wiz-glow:rgba(34,211,238,.15); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-quiztype="hard"] { --wiz-accent:#ff8d8a;--wiz-tint:rgba(248,113,113,.065);--wiz-selected:rgba(248,113,113,.17);--wiz-border:rgba(248,113,113,.24);--wiz-glow:rgba(248,113,113,.15); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-quiztype="exam"] { --wiz-accent:#c0a6ff;--wiz-tint:rgba(139,92,246,.07);--wiz-selected:rgba(139,92,246,.18);--wiz-border:rgba(167,139,250,.24);--wiz-glow:rgba(139,92,246,.16); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-depth="standard"] { --wiz-accent:#71ded2;--wiz-tint:rgba(45,212,191,.055);--wiz-selected:rgba(45,212,191,.16);--wiz-border:rgba(45,212,191,.22);--wiz-glow:rgba(45,212,191,.13); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-depth="detailed"] { --wiz-accent:#f0d27a;--wiz-tint:rgba(212,175,55,.06);--wiz-selected:rgba(212,175,55,.17);--wiz-border:rgba(212,175,55,.23);--wiz-glow:rgba(212,175,55,.14); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-depth="comprehensive"] { --wiz-accent:#b9a0ff;--wiz-tint:rgba(139,92,246,.06);--wiz-selected:rgba(139,92,246,.17);--wiz-border:rgba(167,139,250,.23);--wiz-glow:rgba(139,92,246,.14); }
+html body #wizardModal #wizardBody .wizard-depth-card[data-depth="expert"] { --wiz-accent:#ffad68;--wiz-tint:rgba(251,146,60,.06);--wiz-selected:rgba(251,146,60,.17);--wiz-border:rgba(251,146,60,.23);--wiz-glow:rgba(251,146,60,.14); }
+html body #wizardModal #wizardBody .wizard-style-card[data-style="simple"] { --wiz-accent:#71ded2;--wiz-tint:rgba(45,212,191,.055);--wiz-selected:rgba(45,212,191,.16);--wiz-border:rgba(45,212,191,.22);--wiz-glow:rgba(45,212,191,.13); }
+html body #wizardModal #wizardBody .wizard-style-card[data-style="academic"] { --wiz-accent:#77e1e8;--wiz-tint:rgba(34,211,238,.055);--wiz-selected:rgba(34,211,238,.16);--wiz-border:rgba(34,211,238,.22);--wiz-glow:rgba(34,211,238,.13); }
+html body #wizardModal #wizardBody .wizard-style-card[data-style="detailed"] { --wiz-accent:#f0d27a;--wiz-tint:rgba(212,175,55,.06);--wiz-selected:rgba(212,175,55,.17);--wiz-border:rgba(212,175,55,.23);--wiz-glow:rgba(212,175,55,.14); }
+html body #wizardModal #wizardBody .wizard-style-card[data-style="exam"] { --wiz-accent:#ffad68;--wiz-tint:rgba(251,146,60,.06);--wiz-selected:rgba(251,146,60,.17);--wiz-border:rgba(251,146,60,.23);--wiz-glow:rgba(251,146,60,.14); }
+html body #wizardModal #wizardBody .wizard-style-card[data-style="visual"] { --wiz-accent:#b9a0ff;--wiz-tint:rgba(139,92,246,.06);--wiz-selected:rgba(139,92,246,.17);--wiz-border:rgba(167,139,250,.23);--wiz-glow:rgba(139,92,246,.14); }
+
+/* Mobile blueprint: stacked home actions, thumb-sized controls, bottom-sheet wizard. */
+@media (max-width:767px) {
+  html body #dashHdr.dash-hdr { height:calc(56px + var(--safe-t)) !important; min-height:calc(56px + var(--safe-t)) !important; max-height:calc(56px + var(--safe-t)) !important; padding-top:var(--safe-t) !important; padding-bottom:0 !important; }
+  html body .mobile-menu-btn { width:44px !important; height:44px !important; min-width:44px !important; min-height:44px !important; }
+  html body #emptyState .es-cta-row { display:grid !important; grid-template-columns:minmax(0,1fr) !important; width:min(100%,430px) !important; max-width:430px !important; gap:9px !important; }
+  html body #emptyState .empty-wizard-btn,html body #emptyState .empty-mega-btn { width:100% !important; min-height:48px !important; font-size:.85rem !important; }
+  html body #emptyState .empty-wizard-btn { color:#17130a !important; background:linear-gradient(135deg,#f6f3e9,#e8e3d3) !important; border-color:rgba(246,243,233,.6) !important; }
+  html body #emptyState .empty-mega-btn { color:#d8d1ea !important; background:rgba(255,255,255,.045) !important; border-color:rgba(167,139,250,.3) !important; }
+  html body #wizardModal.modal-overlay { align-items:flex-end !important; justify-content:center !important; padding:0 !important; }
+  html body #wizardModal > .modal { width:100% !important; max-width:100% !important; max-height:min(92dvh,calc(100dvh - var(--safe-t) - 40px)) !important; margin:0 !important; border-radius:24px 24px 0 0 !important; padding-bottom:var(--safe-b) !important; }
+  html body #wizardModal .modal-header { min-height:58px !important; padding:9px 14px !important; }
+  html body #wizardModal .modal-body { display:flex !important; flex:1 1 auto !important; min-height:0 !important; overflow:hidden !important; padding:0 !important; }
+  html body #wizardModal #wizardContent { display:flex !important; flex:1 1 auto !important; flex-direction:column !important; min-height:0 !important; overflow:hidden !important; }
+  html body #wizardModal .wiz-glass { display:flex !important; flex:1 1 auto !important; flex-direction:column !important; min-height:0 !important; height:100% !important; padding:12px 16px 0 !important; }
+  html body #wizardModal #wizardBody { flex:1 1 auto !important; min-height:0 !important; max-height:calc(100dvh - 190px - var(--safe-t) - var(--safe-b)) !important; overflow-x:hidden !important; overflow-y:auto !important; overscroll-behavior:contain !important; -webkit-overflow-scrolling:touch !important; }
+  html body #wizardModal .wizard-footer { position:sticky !important; bottom:0 !important; z-index:4 !important; display:grid !important; flex:0 0 auto !important; grid-template-columns:1fr 1fr !important; gap:9px !important; padding:10px 16px calc(16px + var(--safe-b)) !important; }
+  html body #wizardModal .wizard-btn { min-height:50px !important; font-size:.85rem !important; }
+  html body #wizardModal .wizard-tool-grid,html body #wizardModal .wizard-language-grid,html body #wizardModal .wizard-depth-grid,html body #wizardModal .wizard-style-grid { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:9px !important; }
+  html body #wizardModal .wizard-tool-card { min-height:96px !important; padding:13px !important; }
+  html body #wizardModal .wizard-depth-card,html body #wizardModal .wizard-style-card { min-height:90px !important; padding:12px 10px !important; }
+  html body #wizardModal #wizardBody :is(.wizard-tool-desc,.wizard-depth-desc,.wizard-depth-subdesc,.wizard-style-desc) { font-size:12px !important; }
+  html body #wizardModal #wizardBody :is(.wizard-depth-name,.wizard-style-name,.wizard-tool-name) { font-size:13px !important; }
+  html body #wizardModal .wizard-topic-input { min-height:120px !important; font-size:16px !important; }
+  html body #wizardModal .wizard-sugg-pills { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:8px !important; }
+  html body #wizardModal .wizard-sugg-pill { min-height:44px !important; font-size:12px !important; }
+  html body #wizardModal .wizard-language-card { min-height:44px !important; font-size:12px !important; }
+  html body #buyCreditsModal .plan-atelier-grid,html body #buyCreditsModal .plan-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:9px !important; }
+  html body #resultArea .quiz-options-grid { grid-template-columns:minmax(0,1fr) !important; }
+  html body #resultArea .quiz-opt-btn { min-height:56px !important; font-size:.95rem !important; }
+  html body #resultArea .fc-wrap { min-height:320px !important; aspect-ratio:auto !important; }
+  html body #resultArea :is(.fc-face,.fc-front,.fc-back) { padding:18px !important; }
+  html body #outToolbar.out-toolbar { flex-wrap:nowrap !important; overflow-x:auto !important; overflow-y:hidden !important; scrollbar-width:none !important; }
+  html body #outToolbar.out-toolbar::-webkit-scrollbar { display:none !important; }
+  html body #outToolbar .otb-btn { flex:0 0 auto !important; min-width:44px !important; min-height:44px !important; }
+  html body input,html body textarea,html body select { font-size:16px !important; }
+}
+@media (max-width:374px) {
+  html body #wizardModal .wizard-tool-grid { grid-template-columns:minmax(0,1fr) !important; }
+  html body #wizardModal .wizard-tool-card { min-height:86px !important; }
+}
