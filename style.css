@@ -10518,3 +10518,143 @@ html body #wizardModal .wizard-tool-card.selected {
 }
 html body #wizardModal .wizard-tool-card:hover { border-color: rgba(112,216,242,.38) !important; }
 html body:has(#leftPanel.mobile-open) #dashHdr::after { display: none !important; }
+
+/* Restore the earlier Dark and Light theme identities; keep the third slot as Rose Noir. */
+:root {
+  --bg: #05060d; --bg-1: #090b10; --bg-2: #10131a; --bg-3: #171b24; --bg-4: #1f2430;
+  --ink: #f8fafc; --ink-2: #cbd5e1; --ink-3: #94a3b8; --ink-4: #64748b; --ink-5: #475569;
+  --glass: rgba(255,255,255,.04); --glass-2: rgba(255,255,255,.07); --glass-3: rgba(255,255,255,.11);
+  --line: rgba(255,255,255,.08); --line-2: rgba(255,255,255,.14); --line-3: rgba(255,255,255,.22);
+  --cyan: #22d3ee; --cyan-soft: #a5f3fc; --cyan-deep: #0e7490;
+  --blue: #3b82f6; --blue-deep: #1d4ed8; --indigo: #5e68c9; --indigo-deep: #434a9c;
+  --purple: #786f96; --purple-soft: #c4b5fd; --purple-deep: #5c4e77;
+  --pink: #d78399; --pink-soft: #f2c3d0; --pink-deep: #9f5268;
+  --green: #48bed3; --green-soft: #a8eaf2; --orange: #ee9277; --amber: #e99578;
+  --red: #f07881; --red-soft: #fecaca;
+  --aurora: linear-gradient(135deg, #1eaec7 0%, #5364c3 58%, #8b709d 100%);
+  --aurora-h: linear-gradient(90deg, #1eaec7, #5364c3 58%, #8b709d);
+  --aurora-v: linear-gradient(180deg, #1eaec7, #5364c3 58%, #8b709d);
+  --aurora-soft: linear-gradient(135deg, rgba(34,211,238,.16), rgba(94,104,201,.13), rgba(135,104,153,.10));
+  --aurora-soft-h: linear-gradient(90deg, rgba(34,211,238,.16), rgba(94,104,201,.13), rgba(135,104,153,.10));
+  --cyan-g: linear-gradient(135deg, #22d3ee, #1689ae);
+  --indigo-g: linear-gradient(135deg, #5e68c9, #424a9e);
+  --purple-g: linear-gradient(135deg, #7b6e99, #594c75);
+  --pink-g: linear-gradient(135deg, #cc7188, #a54f69);
+  --green-g: linear-gradient(135deg, #208da7, #536bc1);
+  --orange-g: linear-gradient(135deg, #bd6658, #e18770);
+  --gradient-mesh: radial-gradient(circle at 18% 15%, rgba(34,211,238,.17), transparent 45%),
+                   radial-gradient(circle at 82% 22%, rgba(94,104,201,.12), transparent 45%),
+                   radial-gradient(circle at 50% 84%, rgba(190,92,116,.08), transparent 45%);
+  --gold: var(--cyan); --gold-2: var(--cyan-soft); --gold-g: var(--aurora); --p-gold: var(--cyan);
+  --brass: var(--cyan); --brass-soft: var(--cyan-soft); --brass-deep: var(--cyan-deep);
+  --aurora-violet: #5e68c9; --aurora-cyan: #22d3ee; --aurora-teal: #248aa6;
+  --aurora-pink: #c66d84; --aurora-amber: #ee9277;
+  --void: #05060d; --obsidian: #090b10; --panel: #10131a; --panel-2: #171b24;
+  --hairline: rgba(255,255,255,.08); --hairline-strong: rgba(255,255,255,.14);
+  --success: #48bed3; --info: #22d3ee; --warn: #ee9277;
+}
+html[data-theme="dark"] body {
+  color-scheme: dark;
+  --bg: #05060d; --bg-1: #090b10; --bg-2: #10131a; --bg-3: #171b24; --bg-4: #1f2430;
+  --ink: #f8fafc; --ink-2: #cbd5e1; --ink-3: #94a3b8; --ink-4: #64748b;
+  --cyan: #22d3ee; --cyan-soft: #a5f3fc; --cyan-deep: #0e7490;
+  --blue: #3b82f6; --indigo: #5e68c9; --purple: #786f96; --purple-soft: #c4b5fd;
+  --pink: #d78399; --green: #48bed3; --green-soft: #a8eaf2; --orange: #ee9277; --amber: #e99578;
+  --aurora: linear-gradient(135deg, #1eaec7 0%, #5364c3 58%, #8b709d 100%);
+  --aurora-soft: linear-gradient(135deg, rgba(34,211,238,.16), rgba(94,104,201,.13), rgba(135,104,153,.10));
+  --gold: var(--cyan); --gold-2: var(--cyan-soft); --gold-g: var(--aurora); --p-gold: var(--cyan);
+  --brass: var(--cyan); --brass-soft: var(--cyan-soft); --brass-deep: var(--cyan-deep);
+  --void: #05060d; --obsidian: #090b10; --panel: #10131a; --panel-2: #171b24;
+}
+html[data-theme="light"] body {
+  color-scheme: light;
+  --bg: #f4f6fc; --bg-1: #ffffff; --bg-2: #ffffff; --bg-3: #f1f5f9; --bg-4: #e2e8f0;
+  --glass: rgba(15,23,42,.045); --glass-2: rgba(15,23,42,.08); --glass-3: rgba(15,23,42,.12);
+  --line: rgba(15,23,42,.10); --line-2: rgba(15,23,42,.16); --line-3: rgba(15,23,42,.24);
+  --ink: #0b1020; --ink-2: #1e293b; --ink-3: #475569; --ink-4: #64748b; --ink-5: #94a3b8;
+  --cyan: #087f9b; --cyan-soft: #075b70; --cyan-deep: #06495e;
+  --blue: #2563a0; --indigo: #515ab4; --purple: #6c6387; --purple-soft: #5c5476;
+  --pink: #ad5369; --pink-soft: #8f455a; --green: #147b92; --green-soft: #125c71;
+  --orange: #b95f4e; --amber: #b95f4e; --red: #bd4a58;
+  --aurora: linear-gradient(135deg, #087f9b 0%, #4f5bb5 58%, #8d4b67 100%);
+  --aurora-soft: linear-gradient(135deg, rgba(8,127,155,.12), rgba(81,90,180,.09), rgba(173,83,105,.08));
+  --gold: var(--cyan); --gold-2: var(--cyan-soft); --gold-g: var(--aurora); --p-gold: var(--cyan);
+  --brass: var(--cyan); --brass-soft: var(--cyan-soft); --brass-deep: var(--cyan-deep);
+  --void: #f4f6fc; --obsidian: #ffffff; --panel: #ffffff; --panel-2: #f1f5f9;
+  --hairline: rgba(15,23,42,.10); --hairline-strong: rgba(15,23,42,.16);
+  --success: #147b92; --info: #087f9b; --warn: #b95f4e;
+}
+
+/* Theme-aware color skins, applied without changing the responsive layout. */
+html[data-theme="dark"] body .dash-body,
+html[data-theme="dark"] body .right-panel,
+html[data-theme="dark"] body .out-area {
+  background: radial-gradient(55% 38% at 82% 0%, rgba(34,211,238,.11), transparent 58%),
+              radial-gradient(46% 36% at 8% 94%, rgba(94,104,201,.075), transparent 58%),
+              #05060d !important;
+  color: #f8fafc !important;
+}
+html[data-theme="dark"] body #leftPanel.left-panel { background: linear-gradient(180deg,#0a0c18,#070812) !important; }
+html[data-theme="dark"] body #dashHdr.dash-hdr { background: rgba(5,6,13,.95) !important; }
+html[data-theme="dark"] body #dashHdr.dash-hdr::after { background: linear-gradient(90deg,transparent,rgba(34,211,238,.48),rgba(94,104,201,.24),transparent) !important; }
+html[data-theme="dark"] body #svDock.sv-dock { background: rgba(9,11,16,.96) !important; }
+html[data-theme="dark"] body #svDock button.on { background: rgba(34,211,238,.13) !important; color: #b9f2fb !important; border-color: rgba(34,211,238,.25) !important; }
+html[data-theme="dark"] body #leftPanel #creditSidebar { background: linear-gradient(145deg,#121a21,#10131a 65%,#171522) !important; border-color: rgba(34,211,238,.24) !important; }
+html[data-theme="dark"] body #leftPanel #sidebarStats .stat-card-sidebar { background-color: #11151d !important; }
+html[data-theme="dark"] body #emptyState .es-features .es-feat-chip { background: linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018)) !important; }
+html[data-theme="dark"] body #buyCreditsModal .modal-box.plan-atelier { background: linear-gradient(180deg,#141727,#090b12) !important; }
+html[data-theme="dark"] body #buyCreditsModal .plan-sheet { background: rgba(255,255,255,.035) !important; }
+
+html[data-theme="light"] body .dash-body,
+html[data-theme="light"] body .right-panel,
+html[data-theme="light"] body .out-area { background: #f4f6fc !important; color: #0b1020 !important; }
+html[data-theme="light"] body #leftPanel.left-panel { background: linear-gradient(180deg,#fff,#f4f6fc) !important; border-right-color: rgba(15,23,42,.14) !important; }
+html[data-theme="light"] body #dashHdr.dash-hdr { background: rgba(255,255,255,.96) !important; border-bottom-color: rgba(15,23,42,.13) !important; }
+html[data-theme="light"] body #dashHdr .dh-name { color: #0b1020 !important; }
+html[data-theme="light"] body #dashHdr .dh-name-ai { color: #087f9b !important; }
+html[data-theme="light"] body #dashHdr .dh-btn,
+html[data-theme="light"] body #dashHdr .dh-av { background: #fff !important; color: #344554 !important; border-color: rgba(15,23,42,.15) !important; }
+html[data-theme="light"] body #svDock.sv-dock { background: rgba(255,255,255,.97) !important; border-color: rgba(15,23,42,.16) !important; }
+html[data-theme="light"] body #svDock button { color: #526171 !important; }
+html[data-theme="light"] body #svDock button.on { background: rgba(8,127,155,.11) !important; color: #075b70 !important; border-color: rgba(8,127,155,.22) !important; }
+html[data-theme="light"] body #leftPanel .user-profile-sidebar,
+html[data-theme="light"] body #leftPanel #creditSidebar,
+html[data-theme="light"] body #leftPanel #sidebarStats .stat-card-sidebar { background: #fff !important; color: #17222b !important; border-color: rgba(15,23,42,.14) !important; }
+html[data-theme="light"] body #leftPanel .user-name-sidebar,
+html[data-theme="light"] body #leftPanel .nav-item { color: #17222b !important; }
+html[data-theme="light"] body #leftPanel .stat-label-sidebar,
+html[data-theme="light"] body #leftPanel .stat-value-sidebar { color: #2c4051 !important; }
+html[data-theme="light"] body #emptyState .es-feat-chip { background: #fff !important; border-color: rgba(15,23,42,.14) !important; color: #233544 !important; }
+html[data-theme="light"] body #buyCreditsModal .modal-box.plan-atelier { background: linear-gradient(180deg,#fff,#f2f5fb) !important; border-color: rgba(15,23,42,.15) !important; }
+html[data-theme="light"] body #buyCreditsModal .plan-sheet { background: #fff !important; border-color: rgba(15,23,42,.14) !important; }
+
+/* Rose Noir remains the third, premium dark theme. */
+html[data-theme="golden"] body .dash-body,
+html[data-theme="golden"] body .right-panel,
+html[data-theme="golden"] body .out-area { background: radial-gradient(55% 38% at 82% 0%,rgba(166,72,93,.12),transparent 58%),#08090c !important; color:#fbf5f6 !important; }
+html[data-theme="golden"] body #leftPanel.left-panel { background: linear-gradient(180deg,#171216,#0b0c10) !important; border-right-color:rgba(232,137,155,.18) !important; }
+html[data-theme="golden"] body #dashHdr.dash-hdr { background:rgba(12,11,14,.96) !important; border-bottom-color:rgba(232,137,155,.18) !important; }
+html[data-theme="golden"] body #svDock.sv-dock { background:rgba(16,12,15,.96) !important; }
+html[data-theme="golden"] body #svDock button.on { background:rgba(173,75,97,.18) !important; color:#ffd1d8 !important; border-color:rgba(232,137,155,.27) !important; }
+html[data-theme="golden"] body #leftPanel #creditSidebar { background:linear-gradient(145deg,#21161b,#141217 65%,#1c1218) !important; border-color:rgba(232,137,155,.24) !important; }
+html[data-theme="golden"] body #leftPanel #sidebarStats .stat-card-sidebar { background-color:#171216 !important; }
+html[data-theme="golden"] body #buyCreditsModal .modal-box.plan-atelier { background:linear-gradient(180deg,#1a1418,#0d0c10) !important; border-color:rgba(232,137,155,.20) !important; }
+html[data-theme="golden"] body #buyCreditsModal .plan-sheet { background:rgba(255,238,242,.035) !important; }
+html[data-theme="golden"] body #dashHdr .dh-name-ai { color:#f0a4b1 !important; }
+
+/* Keep the landing secondary actions restrained in each old theme. */
+body:has(.hero-headline) .btn-ghost,
+body:has(.hero-headline) .nav-actions .btn-text-hide {
+  background: rgba(226,236,243,.055) !important;
+  color: #edf3f6 !important;
+  border-color: rgba(198,216,229,.20) !important;
+  box-shadow: none !important;
+}
+body:has(.hero-headline) .btn,
+body:has(.hero-headline) .btn-aurora { background: var(--aurora) !important; }
+html[data-theme="light"] body:has(.hero-headline) .btn-ghost,
+html[data-theme="light"] body:has(.hero-headline) .nav-actions .btn-text-hide { background:rgba(15,23,42,.04) !important; color:#1e293b !important; border-color:rgba(15,23,42,.16) !important; }
+html[data-theme="golden"] body:has(.hero-headline) .btn-ghost,
+html[data-theme="golden"] body:has(.hero-headline) .nav-actions .btn-text-hide { background:rgba(255,240,244,.05) !important; color:#fff0f3 !important; border-color:rgba(232,137,155,.20) !important; }
+html body button.theme-btn[data-theme-btn="golden"]::after { content: "Rose Noir"; }
+html[data-theme="golden"] body button.theme-btn[data-theme-btn="golden"]::after { content: "Rose Noir" !important; }
