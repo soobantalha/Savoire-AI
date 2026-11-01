@@ -606,7 +606,7 @@ class SavoireApp {
       e.sidebarLastActive.textContent = !this.lastActive ? 'Never'
         : this.lastActive === today     ? 'Today'
         : this.lastActive === yesterday ? 'Yesterday'
-        : String(this.lastActive).slice(0, 10);
+        : this.lastActive;
     }
 
     if (e.headerStreak)  e.headerStreak.textContent  = this.streak.count;
@@ -835,7 +835,7 @@ class SavoireApp {
     if (!this.el.welcomeBackOverlay) return;
     const raw = this.userName || 'Scholar';
     const first = String(raw).trim().split(/\s+/)[0];
-    if (this.el.wbName)     this.el.wbName.textContent     = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+    if (this.el.wbName)     this.el.wbName.textContent     = first;
     if (this.el.wbStreak)   this.el.wbStreak.textContent   = this.streak.count || 0;
     if (this.el.wbSessions) this.el.wbSessions.textContent = this.sessions || 0;
     if (this.el.wbSaved)    this.el.wbSaved.textContent    = (this.saved || []).length;
@@ -915,8 +915,7 @@ class SavoireApp {
     const hello = document.getElementById('esHello');
     if (hello && name && name !== 'Scholar') {
       const first = String(name).trim().split(/\s+/)[0];
-      const nice = first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
-      hello.textContent = `Ready to study, ${nice}?`;
+      hello.textContent = `Ready to study, ${first}?`;
     }
     if (this.el.sidebarAvatar)    this.el.sidebarAvatar.textContent    = emoji;
 
@@ -1085,7 +1084,9 @@ class SavoireApp {
             </div>
             <div class="wizard-tool-name">${cfg.label}</div>
             <div class="wizard-tool-desc">${cfg.description}</div>
-            ${k === 'all' ? '<div class="wizard-tool-badge mega">ALL 5</div>' : ''}
+            <div class="wizard-tool-badge ${k === 'all' ? 'mega' : ''}">
+              ${k === 'all' ? '⚡ ALL 5 TOOLS' : cfg.sfpName}
+            </div>
             ${this.wizardData.tool === k ? '<div class="wizard-tool-check"><i class="fas fa-check-circle"></i></div>' : ''}
           </div>
         `).join('')}
@@ -2104,8 +2105,6 @@ Examples:
     if (this.el.emptyState)   this.el.emptyState.style.display   = 'none';
     if (this.el.thinkingWrap) this.el.thinkingWrap.style.display = 'none';
     if (this.el.resultArea)   this.el.resultArea.style.display   = 'none';
-    document.body.classList.toggle('sv-has-result', state === 'result' || state === 'error');
-    if (this.el.emptyState) this.el.emptyState.classList.toggle('is-off', state === 'result' || state === 'error');
 
     switch (state) {
       case 'result':
@@ -3026,7 +3025,66 @@ Examples:
   }
 
   // ─── WORLD-CLASS PDF GENERATION ─────────────────────────────────────────────
-  // (unchanged – preserves full PDF functionality)
+  // Keep a temporary PDF blob so users can open the just-downloaded file from the toolbar.
+  _rememberGeneratedPdf(doc, filename) {
+    try {
+      const URLApi = window.URL || URL;
+      if (!doc || !URLApi || typeof URLApi.createObjectURL !== 'function') return false;
+      const blob = doc.output('blob');
+      if (!blob) return false;
+
+      const previousUrl = this._lastPdfUrl;
+      this._lastPdfUrl = URLApi.createObjectURL(blob);
+      this._lastPdfFilename = filename || 'Savoiré AI study material.pdf';
+      if (previousUrl) window.setTimeout(() => { try { URLApi.revokeObjectURL(previousUrl); } catch (e) {} }, 300000);
+
+      const toolbar = this.el.outToolbar || document.getElementById('outToolbar');
+      if (!toolbar) return true;
+      let button = document.getElementById('openPdfBtn');
+      if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.id = 'openPdfBtn';
+        button.className = 'otb-btn otb-open-pdf';
+        button.title = 'Open the most recently generated PDF';
+        button.setAttribute('aria-label', 'Open the most recently generated PDF');
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-arrow-up-right-from-square';
+        icon.setAttribute('aria-hidden', 'true');
+        const label = document.createElement('span');
+        label.textContent = 'Open PDF';
+        button.append(icon, label);
+        button.addEventListener('click', e => { e.preventDefault(); this._openGeneratedPdf(); });
+      }
+      const downloadButton = document.getElementById('pdfBtn');
+      if (downloadButton && downloadButton.parentElement === toolbar) downloadButton.insertAdjacentElement('afterend', button);
+      else if (button.parentElement !== toolbar) toolbar.appendChild(button);
+      button.hidden = false;
+      button.dataset.ready = 'true';
+      button.title = 'Open the latest PDF in a new tab: ' + this._lastPdfFilename;
+      button.setAttribute('aria-label', 'Open the latest PDF: ' + this._lastPdfFilename);
+      return true;
+    } catch (err) {
+      console.warn('Could not prepare the PDF open action:', err);
+      return false;
+    }
+  }
+
+  _openGeneratedPdf() {
+    if (!this._lastPdfUrl) {
+      this._toast('info', 'fa-info-circle', 'Download a PDF first.');
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = this._lastPdfUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.setAttribute('aria-label', 'Open ' + (this._lastPdfFilename || 'PDF'));
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
   async _downloadPDF(mode = null) {
     try {
     const data = this.currentData;
@@ -3235,7 +3293,9 @@ Examples:
         y += slice;
       }
       const safe = (data.topic || 'Study').replace(/[^\w\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
-      doc.save(`SavoireAI_${safe}_${new Date().toISOString().slice(0,10)}_${options.fileSuffix||'notes'}.pdf`);
+      const filename = `SavoireAI_${safe}_${new Date().toISOString().slice(0,10)}_${options.fileSuffix||'notes'}.pdf`;
+      doc.save(filename);
+      this._rememberGeneratedPdf(doc, filename);
       this._toast('success', 'fa-file-pdf', `PDF ready — ${doc.getNumberOfPages()} pages`);
     } finally {
       wrap.remove();
@@ -3512,7 +3572,9 @@ Examples:
       const safeName = topic.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
       const dateStr = new Date().toISOString().slice(0, 10);
       const suffix = options.fileSuffix ? `_${options.fileSuffix}` : `_${useDark ? 'dark' : 'light'}`;
-      doc.save(`SavoireAI_${safeName}_${dateStr}${suffix}.pdf`);
+      const filename = `SavoireAI_${safeName}_${dateStr}${suffix}.pdf`;
+      doc.save(filename);
+      this._rememberGeneratedPdf(doc, filename);
       this._toast('success', 'fa-file-pdf', `PDF ready — ${total} pages`);
     } catch (err) {
       console.error('PDF error:', err);
@@ -3723,7 +3785,7 @@ Examples:
     if (!this.el.lpHistList) return;
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram', all:'fa-bolt' };
     if (!this.history.length) {
-      this.el.lpHistList.innerHTML = '<div class="lp-hist-empty-card">No study runs yet.<br>Tap Create to generate notes.</div>';
+      this.el.lpHistList.innerHTML = '<div class="lp-hist-empty">No history yet — start studying!</div>';
       return;
     }
     this.el.lpHistList.innerHTML = this.history.slice(0, 6).map(h => `
@@ -3733,7 +3795,7 @@ Examples:
           <div class="lp-hist-topic">${this._esc(h.topic||'Untitled')}</div>
           <div class="lp-hist-time">${this._relTime(h.ts)}</div>
         </div>
-        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._confirmDelHistory('${h.id}')" aria-label="Delete">
+        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delHistory('${h.id}')" aria-label="Delete">
           <i class="fas fa-times"></i>
         </button>
       </div>`).join('');
@@ -3743,7 +3805,7 @@ Examples:
     if (!this.el.lpSavedList) return;
     const ICONS = { notes:'fa-book-open', flashcards:'fa-layer-group', quiz:'fa-question-circle', summary:'fa-align-left', mindmap:'fa-project-diagram', all:'fa-bolt' };
     if (!this.saved.length) {
-      this.el.lpSavedList.innerHTML = '<div class="lp-hist-empty-card">No saved notes yet.<br>Star a result to keep it here.</div>';
+      this.el.lpSavedList.innerHTML = '<div class="lp-hist-empty">No saved notes yet.</div>';
       return;
     }
     this.el.lpSavedList.innerHTML = this.saved.slice(0, 5).map(s => `
@@ -3753,7 +3815,7 @@ Examples:
           <div class="lp-hist-topic">${this._esc(s.topic||'Untitled')}</div>
           <div class="lp-hist-time">${this._relTime(s.savedAt)}</div>
         </div>
-        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._confirmDelSaved('${s.id}')" aria-label="Delete">
+        <button class="lp-hist-delete" onclick="event.stopPropagation();window._app._delSaved('${s.id}')" aria-label="Delete">
           <i class="fas fa-times"></i>
         </button>
       </div>`).join('');
@@ -3801,9 +3863,7 @@ Examples:
     ).join('');
   }
 
-  _loadHistory(id)   { const h = this.history.find(x=>x.id===id); if(!h?.data)return; this._closeModal('histModal'); try{ document.getElementById('leftPanel')?.classList.remove('open','mobile-open'); }catch(e){} this.currentData=h.data; this.tool=h.tool||'notes'; this._renderResult(h.data); this._showState('result'); this._showToolbar(true); this._toast('info','fa-history',`Loaded: ${(h.topic||'').slice(0,40)}`); }
-  _confirmDelHistory(id){ this._confirm('Remove this study run from history?', () => this._delHistory(id)); }
-  _confirmDelSaved(id){ this._confirm('Remove this saved note?', () => this._delSaved(id)); }
+  _loadHistory(id)   { const h = this.history.find(x=>x.id===id); if(!h?.data)return; this._closeModal('histModal'); this.currentData=h.data; this.tool=h.tool||'notes'; this._renderResult(h.data); this._showToolbar(true); this._toast('info','fa-history',`Loaded: ${(h.topic||'').slice(0,40)}`); }
   _delHistory(id)    { this.history=this.history.filter(x=>x.id!==id); this._save('sv_history',this.history); this._renderSidebarHistory(); this._updateAllStats(); this._renderHistModal(); try { this._deleteHistoryFromCloud(id); } catch(e){} }
   _openSavedModal()  { this._renderSavedModal(); this._openModal('savedModal'); }
 
@@ -3837,7 +3897,7 @@ Examples:
       </div>`).join('');
   }
 
-  _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); try{ document.getElementById('leftPanel')?.classList.remove('open','mobile-open'); }catch(e){} this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showState('result'); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
+  _loadSaved(id)    { const s=this.saved.find(x=>x.id===id); if(!s?.data)return; this._closeModal('savedModal'); this.currentData=s.data; this.tool=s.tool||'notes'; this._renderResult(s.data); this._showToolbar(true); this._toast('success','fa-star','Loaded saved note!'); }
   _delSaved(id)     { this.saved=this.saved.filter(x=>x.id!==id); this._save('sv_saved',this.saved); this._updateAllStats(); this._renderSavedModal(); this._renderSidebarSaved(); try { this._deleteSavedFromCloud(id); } catch(e){} }
 
   // ─── SETTINGS ────────────────────────────────────────────────────────────────
@@ -4576,9 +4636,13 @@ Examples:
   _toggleSidebar() {
     if (!this.el.leftPanel) return;
     if (window.innerWidth <= 1024) {
-      const isOpen = this.el.leftPanel.classList.toggle('mobile-open');
+      const isOpen = !this.el.leftPanel.classList.contains('mobile-open');
+      this.el.leftPanel.classList.toggle('mobile-open', isOpen);
+      this.el.leftPanel.classList.toggle('open', isOpen);
       if (this.el.sbBackdrop) this.el.sbBackdrop.classList.toggle('visible', isOpen);
-      if (this.el.sbToggle)   this.el.sbToggle.setAttribute('aria-expanded', String(isOpen));
+      if (this.el.sbToggle) this.el.sbToggle.setAttribute('aria-expanded', String(isOpen));
+      const mobileToggle = document.querySelector('.mobile-menu-btn');
+      if (mobileToggle) mobileToggle.setAttribute('aria-expanded', String(isOpen));
       return;
     }
     this._setFocusMode(!this.focusMode);
@@ -4604,9 +4668,11 @@ Examples:
 
   _closeSidebar() {
     if (!this.el.leftPanel) return;
-    this.el.leftPanel.classList.remove('mobile-open');
+    this.el.leftPanel.classList.remove('mobile-open', 'open');
     if (this.el.sbBackdrop) this.el.sbBackdrop.classList.remove('visible');
-    if (this.el.sbToggle)   this.el.sbToggle.setAttribute('aria-expanded', 'false');
+    if (this.el.sbToggle) this.el.sbToggle.setAttribute('aria-expanded', 'false');
+    const mobileToggle = document.querySelector('.mobile-menu-btn');
+    if (mobileToggle) mobileToggle.setAttribute('aria-expanded', 'false');
   }
 
   _toggleFocus() {
@@ -4615,17 +4681,45 @@ Examples:
   }
 
   _initSwipeGestures() {
-    let startX = 0;
-    document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+    let startX = null;
+    let startY = 0;
+    let startTarget = null;
+    const reset = () => { startX = null; startY = 0; startTarget = null; };
+
+    document.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) { reset(); return; }
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startTarget = e.target;
+    }, { passive: true });
+
     document.addEventListener('touchend', e => {
-      if (window.innerWidth > 1024) return;
-      const dx = e.changedTouches[0].clientX - startX;
-      if (dx > 60 && startX < 35) {
-        if (this.el.leftPanel) { this.el.leftPanel.classList.add('mobile-open'); if (this.el.sbBackdrop) this.el.sbBackdrop.classList.add('visible'); }
-      } else if (dx < -60) {
+      if (window.innerWidth > 1024 || startX === null || !e.changedTouches.length) { reset(); return; }
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      const horizontalIntent = Math.abs(dx) >= 68 && Math.abs(dx) > Math.abs(dy) * 1.35;
+      if (!horizontalIntent || !this.el.leftPanel) { reset(); return; }
+
+      const isOpen = this.el.leftPanel.classList.contains('mobile-open');
+      const targetElement = startTarget instanceof Element ? startTarget : null;
+      const startedInDrawer = this.el.leftPanel.contains(startTarget);
+      const startedOnControl = !!targetElement?.closest('button,a,input,textarea,select,[role="button"]');
+      const startedInHorizontalScroller = !!targetElement?.closest('#outToolbar,.out-toolbar,#resultArea .result-nav,#resultArea .export-bar');
+
+      // Open only from the screen edge, without stealing toolbar/tab scrolling;
+      // close only on a deliberate left swipe from non-interactive drawer content.
+      // Vertical scrolls never toggle it.
+      if (dx > 0 && startX <= 32 && !isOpen && !startedOnControl && !startedInHorizontalScroller) {
+        this._toggleSidebar();
+      } else if (dx < 0 && isOpen && startedInDrawer && !startedOnControl) {
         this._closeSidebar();
       }
+      reset();
     }, { passive: true });
+
+    document.addEventListener('touchcancel', reset, { passive: true });
   }
 
   // ─── BACK TO TOP ─────────────────────────────────────────────────────────────
@@ -4723,38 +4817,31 @@ Examples:
   }
 
   _openDemo() {
-    this._closeDemo();
-    document.body.classList.add('sv-modal-open');
-    const steps = [
-      { t: 'Create', d: 'Open the wizard. Choose notes, flashcards, quiz, summary or a mind map, then enter a topic.' },
-      { t: 'Mega Bundle', d: 'One topic becomes all five formats together — best for exam revision.' },
-      { t: 'Credits', d: 'You get 10,000 AI credits every month. Extra packs from ₹19 last 30 days from purchase.' },
-      { t: 'Your library', d: 'History and Saved live in Menu. They stay on your Google account.' }
-    ];
     this.demoStep = 0;
-    const ov = document.createElement('div');
-    ov.id = 'svTour';
-    ov.className = 'sv-tour';
-    const paint = () => {
-      const s = steps[this.demoStep];
-      const last = this.demoStep === steps.length - 1;
-      ov.innerHTML = '<div class="sv-tour-card"><div class="sv-tour-k">'+(this.demoStep+1)+' / '+steps.length+'</div><h3>'+s.t+'</h3><p>'+s.d+'</p><div class="sv-tour-row"><button type="button" id="svTourSkip">Skip</button><button type="button" id="svTourNext">'+(last?'Start studying':'Next')+'</button></div></div>';
-      ov.querySelector('#svTourSkip').onclick = () => this._closeDemo();
-      ov.querySelector('#svTourNext').onclick = () => {
-        if (last) { this._closeDemo(); this._openWizard(); }
-        else { this.demoStep++; paint(); }
-      };
+    this.demoCanvas.width  = window.innerWidth;
+    this.demoCanvas.height = window.innerHeight;
+    this.demoCanvas.style.display  = 'block';
+    this.demoTooltip.style.display = 'block';
+
+    let hint = this._el('demoCHint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'demoCHint';
+      hint.className = 'demo-canvas-hint';
+      hint.innerHTML = '<i class="fas fa-hand-pointer"></i> Tap dark area to continue · <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd>';
+      document.body.appendChild(hint);
+    }
+    hint.style.display = 'block';
+
+    this.demoCanvas.onclick = () => {
+      if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
+      else this._closeDemo();
     };
-    document.body.appendChild(ov);
-    paint();
-    if (this.demoCanvas) this.demoCanvas.style.display = 'none';
-    if (this.demoTooltip) this.demoTooltip.style.display = 'none';
+
+    this._renderDemoStep();
   }
 
   _closeDemo() {
-    document.body.classList.remove('sv-modal-open');
-    const tour = document.getElementById('svTour');
-    if (tour) tour.remove();
     if (this.demoCanvas)  this.demoCanvas.style.display  = 'none';
     if (this.demoTooltip) this.demoTooltip.style.display = 'none';
     const hint = this._el('demoCHint');
@@ -5070,6 +5157,14 @@ Examples:
 
     on(this.el.sbToggle,   'click', () => this._toggleSidebar());
     on(this.el.sbBackdrop, 'click', () => this._closeSidebar());
+    if (this.el.sbToggle) this.el.sbToggle.setAttribute('aria-expanded', 'false');
+    const mobileMenuToggle = document.querySelector('.mobile-menu-btn');
+    if (mobileMenuToggle) {
+      // Replace the legacy inline class-toggles so backdrop and aria state stay in sync.
+      mobileMenuToggle.onclick = null;
+      mobileMenuToggle.addEventListener('click', e => { e.preventDefault(); this._toggleSidebar(); });
+      mobileMenuToggle.setAttribute('aria-expanded', 'false');
+    }
 
     on(this.el.navWizard,  'click', () => this._openWizard());
     on(this.el.navAll,     'click', () => this._openMega());

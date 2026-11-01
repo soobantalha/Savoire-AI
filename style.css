@@ -13302,3 +13302,280 @@ html[data-theme="light"] body:has(.hero-headline) .vs-left > p,
 html[data-theme="light"] body:has(.hero-headline) .vs-hero > p { color: #475569 !important; }
 html[data-theme="light"] body:has(.hero-headline) .vs-hero .price { color: #0369A1 !important; }
 html[data-theme="light"] body:has(.hero-headline) .vs-hero .price span { color: #475569 !important; }
+
+/* Mobile sidebar and result controls — steady motion, reliable touch scrolling. */
+@media (max-width: 1024px) {
+  html body #leftPanel.left-panel {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    width: min(88vw,360px) !important;
+    max-width: 360px !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    touch-action: pan-y !important;
+    scroll-behavior: auto !important;
+    scrollbar-gutter: stable !important;
+    transform: translate3d(-105%,0,0) !important;
+    transition: transform .24s cubic-bezier(.2,.75,.25,1) !important;
+    will-change: transform !important;
+    contain: layout paint !important;
+    pointer-events: none !important;
+  }
+  html body #leftPanel.left-panel.mobile-open {
+    transform: translate3d(0,0,0) !important;
+    pointer-events: auto !important;
+    box-shadow: 16px 0 42px rgba(0,0,0,.34) !important;
+  }
+  html body #leftPanel.left-panel::-webkit-scrollbar { width: 4px !important; }
+  html body #leftPanel.left-panel::-webkit-scrollbar-thumb { background: rgba(148,163,184,.28) !important; border-radius: 999px !important; }
+  html body .sb-backdrop {
+    background: rgba(3,6,12,.58) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    animation: none !important;
+    transition: opacity .18s ease !important;
+  }
+  html body .sb-backdrop.visible { opacity: 1 !important; }
+  html body:has(#leftPanel.mobile-open) #svDock,
+  html body:has(#leftPanel.mobile-open) .dash-mini-footer {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity .12s ease !important;
+  }
+  html body:has(#leftPanel.mobile-open) #leftPanel .sidebar-about { padding-bottom: calc(16px + env(safe-area-inset-bottom,0px)) !important; }
+}
+
+/* Dashboard output toolbar: one consistent row that scrolls instead of jumping. */
+html body #outToolbar.out-toolbar {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 9px 14px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scroll-behavior: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(148,163,184,.28) transparent !important;
+  background: linear-gradient(120deg,rgba(11,16,32,.96),rgba(17,24,39,.91)) !important;
+  border-bottom: 1px solid rgba(255,255,255,.09) !important;
+}
+html body #outToolbar .otb-btn {
+  flex: 0 0 auto !important;
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 9px 13px !important;
+  border: 1px solid rgba(255,255,255,.11) !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,.045) !important;
+  color: #CBD5E1 !important;
+  font-size: .78rem !important;
+  font-weight: 750 !important;
+  white-space: nowrap !important;
+  transform: none !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+  transition: color .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease !important;
+}
+html body #outToolbar .otb-btn:hover,
+html body #outToolbar .otb-btn:focus-visible {
+  color: #F8FAFC !important;
+  border-color: rgba(0,217,255,.38) !important;
+  background: rgba(0,217,255,.08) !important;
+  box-shadow: 0 0 0 2px rgba(0,217,255,.08),inset 0 1px 0 rgba(255,255,255,.07) !important;
+}
+html body #outToolbar .otb-btn:active { transform: scale(.98) !important; }
+html body #outToolbar .otb-pdf {
+  color: #04121A !important;
+  background: linear-gradient(115deg,#00D9FF,#3B82F6 72%,#6366F1) !important;
+  border-color: rgba(0,217,255,.35) !important;
+  box-shadow: 0 6px 18px rgba(59,130,246,.18),inset 0 1px 0 rgba(255,255,255,.28) !important;
+}
+html body #outToolbar .otb-pdf:hover { color: #04121A !important; filter: brightness(1.06) !important; }
+html body #outToolbar .otb-new { color: #E9D5FF !important; border-color: rgba(168,85,247,.30) !important; }
+html body #outToolbar .otb-danger { color: #FDA4AF !important; border-color: rgba(244,63,94,.22) !important; }
+html body #outToolbar .otb-sep { flex: 0 0 1px !important; height: 26px !important; margin: 0 2px !important; background: rgba(255,255,255,.13) !important; }
+html body #outToolbar .otb-hint { flex: 0 0 auto !important; margin-left: auto !important; white-space: nowrap !important; }
+
+/* Result-format tabs stay attached to the output while its content scrolls. */
+html body #resultArea .result-nav {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 24 !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 7px !important;
+  max-width: 100% !important;
+  margin: 0 0 16px !important;
+  padding: 8px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 16px !important;
+  background: rgba(5,6,13,.88) !important;
+  backdrop-filter: blur(14px) saturate(125%) !important;
+}
+html body #resultArea .result-nav::-webkit-scrollbar,
+html body #resultArea .export-bar::-webkit-scrollbar,
+html body #outToolbar::-webkit-scrollbar { display: none !important; height: 0 !important; }
+html body #resultArea .result-nav-btn {
+  flex: 0 0 auto !important;
+  min-height: 42px !important;
+  padding: 9px 13px !important;
+  border-radius: 12px !important;
+  color: #CBD5E1 !important;
+  background: rgba(17,24,39,.88) !important;
+  border-color: rgba(255,255,255,.10) !important;
+  font-size: .76rem !important;
+  white-space: nowrap !important;
+  transform: none !important;
+}
+html body #resultArea .result-nav-btn:hover,
+html body #resultArea .result-nav-btn:focus-visible {
+  color: #B8F4FF !important;
+  background: rgba(0,217,255,.09) !important;
+  border-color: rgba(0,217,255,.33) !important;
+}
+html body #resultArea .export-bar {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding-top: 14px !important;
+  border-top-color: rgba(255,255,255,.10) !important;
+}
+html body #resultArea .exp-btn {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 9px 13px !important;
+  border-radius: 13px !important;
+  color: #CBD5E1 !important;
+  background: rgba(17,24,39,.92) !important;
+  border-color: rgba(255,255,255,.11) !important;
+  transform: none !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.045) !important;
+}
+html body #resultArea .exp-btn:hover,
+html body #resultArea .exp-btn:focus-visible {
+  color: #F8FAFC !important;
+  border-color: rgba(0,217,255,.36) !important;
+  background: rgba(0,217,255,.08) !important;
+}
+html body #resultArea .exp-btn.pdf {
+  color: #04121A !important;
+  background: linear-gradient(115deg,#00D9FF,#3B82F6 72%,#6366F1) !important;
+  border-color: rgba(0,217,255,.32) !important;
+  box-shadow: 0 7px 19px rgba(59,130,246,.17) !important;
+}
+html body #resultArea .exp-btn.save { color: #E9D5FF !important; border-color: rgba(168,85,247,.27) !important; }
+html body #resultArea .exp-btn.share { color: #B8F4FF !important; border-color: rgba(0,217,255,.26) !important; }
+html body #resultArea .exp-btn.new { color: #D8B4FE !important; border-color: rgba(168,85,247,.30) !important; }
+@media (max-width: 700px) {
+  html body #outToolbar.out-toolbar { gap: 7px !important; padding: 8px 10px !important; }
+  html body #outToolbar .otb-btn { min-height: 44px !important; padding-inline: 11px !important; }
+  html body #outToolbar .otb-hint { display: none !important; }
+  html body #outToolbar .otb-sep { display: none !important; }
+  html body #resultArea .result-nav { margin-inline: 0 !important; }
+  html body #resultArea .export-bar {
+    flex-wrap: nowrap !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    overscroll-behavior-x: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  html body #resultArea .exp-btn { flex: 0 0 auto !important; white-space: nowrap !important; }
+  html body #resultArea .exp-brand { display: none !important; }
+}
+html[data-theme="light"] body #outToolbar.out-toolbar {
+  background: rgba(248,250,252,.96) !important;
+  border-bottom-color: rgba(15,23,42,.11) !important;
+}
+html[data-theme="light"] body #outToolbar .otb-btn,
+html[data-theme="light"] body #resultArea .result-nav-btn,
+html[data-theme="light"] body #resultArea .exp-btn {
+  color: #334155 !important;
+  background: #FFFFFF !important;
+  border-color: rgba(15,23,42,.12) !important;
+}
+html[data-theme="light"] body #resultArea .result-nav { background: rgba(248,250,252,.94) !important; border-color: rgba(15,23,42,.12) !important; }
+html[data-theme="light"] body #outToolbar .otb-pdf,
+html[data-theme="light"] body #resultArea .exp-btn.pdf { color: #04121A !important; background: linear-gradient(115deg,#00D9FF,#3B82F6 72%,#6366F1) !important; }
+html[data-theme="golden"] body #outToolbar.out-toolbar { background: rgba(20,12,20,.96) !important; }
+html[data-theme="golden"] body #resultArea .result-nav { background: rgba(20,12,20,.92) !important; }
+
+/* Final-output action: keep Open PDF visible, distinct, and theme-aware. */
+html body #outToolbar .otb-open-pdf {
+  color: #06251B !important;
+  background: linear-gradient(115deg,#A7F3D0,#34D399 58%,#06B6D4) !important;
+  border-color: rgba(52,211,153,.42) !important;
+  box-shadow: 0 6px 18px rgba(16,185,129,.18),inset 0 1px 0 rgba(255,255,255,.34) !important;
+}
+html body #outToolbar .otb-open-pdf:hover,
+html body #outToolbar .otb-open-pdf:focus-visible {
+  color: #04251B !important;
+  border-color: rgba(52,211,153,.72) !important;
+  background: linear-gradient(115deg,#BBF7D0,#6EE7B7 58%,#22D3EE) !important;
+  box-shadow: 0 0 0 2px rgba(52,211,153,.12),0 8px 22px rgba(16,185,129,.22) !important;
+}
+html body #outToolbar .otb-open-pdf[hidden] { display: none !important; }
+html body #outToolbar .otb-open-pdf i { font-size: .86em !important; }
+html[data-theme="light"] body #outToolbar .otb-open-pdf {
+  color: #064E3B !important;
+  background: linear-gradient(115deg,#A7F3D0,#6EE7B7 58%,#67E8F9) !important;
+  border-color: rgba(5,150,105,.28) !important;
+}
+html[data-theme="golden"] body #outToolbar .otb-open-pdf {
+  color: #FFF6F7 !important;
+  background: linear-gradient(115deg,#713744,#A84E64 58%,#C56B83) !important;
+  border-color: rgba(232,137,155,.36) !important;
+  box-shadow: 0 6px 18px rgba(139,55,76,.24),inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+html[data-theme="golden"] body #outToolbar .otb-open-pdf:hover,
+html[data-theme="golden"] body #outToolbar .otb-open-pdf:focus-visible {
+  color: #FFF6F7 !important;
+  background: linear-gradient(115deg,#8B4055,#B85A72 58%,#D27A91) !important;
+  border-color: rgba(255,185,196,.52) !important;
+}
+
+/* Prevent a long profile name from forcing the drawer wider or appearing frozen. */
+html body #leftPanel .user-profile-sidebar {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
+html body #leftPanel .user-info-sidebar {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+html body #leftPanel .user-name-sidebar,
+html body #leftPanel .user-tagline-sidebar {
+  max-width: 100% !important;
+  overflow-wrap: anywhere !important;
+}
+@media (max-width: 1024px) {
+  html body #leftPanel.left-panel {
+    overscroll-behavior-y: contain !important;
+    touch-action: pan-y !important;
+    scroll-padding-block: 12px !important;
+    contain: none !important;
+  }
+  html body #leftPanel .user-profile-sidebar { scroll-margin-block: 12px !important; }
+}
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
+  html body #leftPanel.left-panel { transition: none !important; will-change: auto !important; }
+}
