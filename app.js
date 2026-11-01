@@ -173,119 +173,44 @@ const AVATAR_EMOJIS = ['🎓','🧠','⚡','🌟','🔥','💎','🚀','🦋','�
 
 const DEMO_STEPS = [
   {
-    step: 1, title: 'Welcome to Savoiré AI ✨',
-    subtitle: "The premium AI study companion",
-    content: 'Savoiré AI generates ultra-rich study notes, flashcards, quizzes, summaries and mind maps. 10,000 AI credits every month — top-up packs from Rs 19.',
-    icon: 'fa-graduation-cap', color: '#d4af37', targetId: null, arrow: null,
-    tips: [
-      { icon: 'fa-infinity',   text: '10,000 AI credits every month' },
-      { icon: 'fa-globe',      text: 'Works in 20+ languages including Urdu, Hindi, Arabic' },
-      { icon: 'fa-shield-alt', text: 'All your data stays on your device — private & secure' },
-      { icon: 'fa-bolt',       text: 'Powered by 14 AI models with live fallback' },
-      { icon: 'fa-code',       text: 'Built by Sooban Talha Technologies — soobantalhatech.xyz' },
-    ],
-    cta: 'Start Tour →',
+    step: 1, key: 'workspace', kicker: 'THE STUDY STUDIO',
+    title: 'A clearer place to learn.',
+    body: 'Start with one topic, question, or set of notes. Savoiré turns that starting point into a focused study session, right here in your workspace.',
+    target: ['#emptyState', '#outArea'], targetLabel: 'Your study workspace', focusIcon: 'fa-crosshairs', arrow: 'right', visual: 'workspace',
   },
   {
-    step: 2, title: '✨ Study Wizard — Your Main Tool',
-    subtitle: 'Click to open 6-step guided generation',
-    content: 'The <strong>✨ Create Study Material</strong> button in the sidebar opens the Study Wizard. It guides you through 6 steps: choose tool → enter topic → select language → set detail level → choose writing style → generate.',
-    icon: 'fa-magic', color: '#00d4ff', targetId: 'navWizard', arrow: 'right',
-    tips: [
-      { icon: 'fa-mouse-pointer', text: 'Click this button to open the 6-step wizard' },
-      { icon: 'fa-book-open',     text: 'Choose: Notes, Flashcards, Quiz, Summary or Mind Map' },
-      { icon: 'fa-globe',         text: 'Output in any of 20+ languages' },
-      { icon: 'fa-sliders-h',     text: 'Step 4 = Detail Level — Step 5 = Writing Style (separate)' },
-      { icon: 'fa-keyboard',      text: 'Keyboard shortcut: Ctrl+K opens the wizard instantly' },
-    ],
-    cta: 'Next: Mega Bundle →',
-    action: { label: 'Open Wizard Now', fn: '_openWizard' },
+    step: 2, key: 'routes', kicker: 'PICK YOUR PACE',
+    title: 'Two ways to begin.',
+    body: 'Use Start studying for the step-by-step wizard, or choose All 5 formats to build a complete study pack from one topic.',
+    target: ['.es-cta-row', '#wizardHeaderBtn', '#navWizard'], targetLabel: 'Choose a starting point', focusIcon: 'fa-route', arrow: 'left', visual: 'routes',
   },
   {
-    step: 3, title: '⚡ Mega Bundle — All 5 Tools At Once',
-    subtitle: 'Notes + Flashcards + Quiz + Summary + Mind Map in one generation',
-    content: 'The <strong>⚡ Mega Study Bundle</strong> generates ALL 5 study tools simultaneously. Enter one topic, get a complete study package with 15-20 flashcards, 10-12 quiz questions, and a full visual mind map.',
-    icon: 'fa-bolt', color: '#d4af37', targetId: 'navAll', arrow: 'right',
-    tips: [
-      { icon: 'fa-mouse-pointer',   text: 'Click this button for the mega bundle' },
-      { icon: 'fa-layer-group',     text: '15-20 interactive 3D flip flashcards' },
-      { icon: 'fa-question-circle', text: '10-12 quiz questions with instant feedback' },
-      { icon: 'fa-project-diagram', text: 'Visual mind map with 5-7 branches' },
-      { icon: 'fa-align-left',      text: 'Smart TL;DR summary included' },
-    ],
-    cta: 'Next: Tool Buttons →',
-    action: { label: 'Try Mega Bundle', fn: '_openMega' },
+    step: 3, key: 'formats', kicker: 'CHOOSE YOUR FORMAT',
+    title: 'Built around how you learn.',
+    body: 'Create clear notes, active-recall flashcards, a quiz, a concise summary, or a visual mind map. The All 5 option combines them in one go.',
+    target: ['.wizard-tool-grid', '#wizardContent'], targetLabel: 'The real tool picker', focusIcon: 'fa-layer-group', arrow: 'right', visual: 'formats',
+    openWizard: true, wizardStep: 0,
   },
   {
-    step: 4, title: '🎯 Quick Tool Buttons — One Click',
-    subtitle: 'Each chip opens Wizard with that tool pre-selected',
-    content: 'The <strong>Notes, Flashcards, Quiz, Summary, Mind Map</strong> chips in the main area open the Wizard with that tool already selected — no need to go through Step 1!',
-    icon: 'fa-mouse-pointer', color: '#00ff88', targetId: 'emptyState', arrow: 'down',
-    tips: [
-      { icon: 'fa-book-open',       text: 'Notes chip → opens Wizard with Notes pre-selected' },
-      { icon: 'fa-layer-group',     text: 'Flashcards chip → opens Wizard with Flashcards ready' },
-      { icon: 'fa-question-circle', text: 'Quiz chip → opens Wizard with Quiz pre-selected' },
-      { icon: 'fa-align-left',      text: 'Summary chip → opens Wizard with Summary ready' },
-      { icon: 'fa-project-diagram', text: 'Mind Map chip → opens Wizard with Mind Map selected' },
-    ],
-    cta: 'Next: Live Output →',
+    step: 4, key: 'topic', kicker: 'GIVE IT A TOPIC',
+    title: 'A question is enough.',
+    body: 'Type a concept, ask a question, or paste your own notes. You can also start from a suggested topic—no special prompt-writing needed.',
+    target: ['#wTopicInp'], targetLabel: 'Your topic goes here', focusIcon: 'fa-lightbulb', arrow: 'left', visual: 'topic',
+    openWizard: true, wizardStep: 1,
   },
   {
-    step: 5, title: '📡 Live Streaming — Watch AI Write',
-    subtitle: 'Content appears in real-time with full formatting',
-    content: 'When you generate, the AI streams content <strong>live to your screen</strong>. Notes appear word-by-word with full markdown formatting. Flashcards appear <strong>card-by-card with deck animation</strong>, quiz questions build up rapidly, and mind map branches grow one by one.',
-    icon: 'fa-stream', color: '#bf00ff', targetId: null, arrow: null,
-    tips: [
-      { icon: 'fa-pen',             text: 'Notes stream live with headings, bullets, blockquotes' },
-      { icon: 'fa-layer-group',     text: 'Flashcards appear with deck-shuffle spring animation' },
-      { icon: 'fa-question-circle', text: 'Quiz questions appear one-by-one at rapid speed' },
-      { icon: 'fa-project-diagram', text: 'Mind map branches appear with color animation' },
-      { icon: 'fa-tasks',           text: '5 progress stages shown in the overlay header' },
-    ],
-    cta: 'Next: Interactive Tools →',
+    step: 5, key: 'personalize', kicker: 'MAKE IT YOURS',
+    title: 'Set the learning style.',
+    body: 'Choose the output language, then tune the depth and writing style in the next steps. The wizard keeps the setup simple and reversible.',
+    target: ['.wizard-language-card', '.wizard-body'], targetLabel: 'Language & learning preferences', focusIcon: 'fa-sliders-h', arrow: 'right', visual: 'personalize',
+    openWizard: true, wizardStep: 2,
   },
   {
-    step: 6, title: '🃏 Interactive Study Tools',
-    subtitle: 'Flashcards flip, quiz gives instant feedback, mind map is visual',
-    content: 'After generation, your study materials are <strong>fully interactive</strong>. Flashcards flip in 3D, quiz questions give instant feedback with explanations, and the mind map shows visual branches with cross-connections.',
-    icon: 'fa-layer-group', color: '#bf00ff', targetId: 'resultArea', arrow: null,
-    tips: [
-      { icon: 'fa-hand-pointer', text: 'Flashcards: Tap/click to flip (or press Space)' },
-      { icon: 'fa-arrow-right',  text: 'Arrow keys ← → navigate between flashcards' },
-      { icon: 'fa-random',       text: 'Shuffle button randomizes flashcard order' },
-      { icon: 'fa-check-circle', text: 'Quiz: click an option → instant feedback + explanation' },
-      { icon: 'fa-trophy',       text: 'Quiz result shows score, grade and full answer review' },
-    ],
-    cta: 'Next: PDF Export →',
-  },
-  {
-    step: 7, title: '📄 World-Class PDF Export',
-    subtitle: 'Professional formatted PDF with all your content',
-    content: 'Download a beautifully formatted PDF with a <strong>cover page</strong>, all notes sections, flashcards list, quiz with answers highlighted, and mind map branches. Choose <strong>Dark or Light</strong> PDF theme in Settings.',
-    icon: 'fa-file-pdf', color: '#ff4444', targetId: 'pdfBtn', arrow: 'up',
-    tips: [
-      { icon: 'fa-moon',  text: 'Dark PDF: black background, gold accents, professional' },
-      { icon: 'fa-sun',   text: 'Light PDF: white background, clean, print-ready' },
-      { icon: 'fa-cog',   text: 'Change PDF theme in Settings → PDF Style section' },
-      { icon: 'fa-copy',  text: 'Copy button copies all content as clean markdown text' },
-      { icon: 'fa-star',  text: 'Save button stores notes in your local library' },
-    ],
-    cta: 'Next: Streak & Stats →',
-  },
-  {
-    step: 8, title: '🔥 Streak, Stats & Personalisation',
-    subtitle: 'Track your learning progress and customise your experience',
-    content: "Your <strong>fire streak</strong> shows how many days in a row you've studied — visible in gold at the top. Sessions count every page visit. Customise theme, font size, avatar, and PDF style in Settings.",
-    icon: 'fa-fire', color: '#ffae00', targetId: 'headerStreak', arrow: 'down',
-    tips: [
-      { icon: 'fa-fire',        text: '🔥 Gold streak in header — study daily to keep it alive!' },
-      { icon: 'fa-user-circle', text: 'Click your avatar → pick from 8 color themes' },
-      { icon: 'fa-palette',     text: '3 app themes: Dark, Light, and Golden' },
-      { icon: 'fa-font',        text: '5 font sizes: XSmall to XLarge — accessible for all' },
-      { icon: 'fa-history',     text: 'Full study history and saved notes in sidebar' },
-    ],
-    cta: "Let's Start Studying! 🚀",
-    isLast: true,
+    step: 6, key: 'create', kicker: 'READY WHEN YOU ARE',
+    title: 'Generate, then keep exploring.',
+    body: 'When you choose Generate, your materials appear in the workspace. Flip cards, answer the quiz, save your work, copy it, share it, or export a polished PDF.',
+    target: ['#wizNext'], targetLabel: 'Generate your study set', focusIcon: 'fa-rocket', arrow: 'left', visual: 'output',
+    openWizard: true, wizardStep: 5, isLast: true,
   },
 ];
 
@@ -844,17 +769,27 @@ class SavoireApp {
     const known = (this.userName || this._lsGet('sv_user') || '').trim();
     const hasName = known && known.length > 1 && known !== 'Scholar';
     if (hasName) this.userName = known;
-    setTimeout(() => {
+    const revealWelcome = () => {
+      const authLoader = this._el('authLoading');
+      if (authLoader && getComputedStyle(authLoader).display !== 'none') {
+        setTimeout(revealWelcome, 350);
+        return;
+      }
       const n = (this.userName || this._lsGet('sv_user') || '').trim();
       if (n && n.length > 1 && n !== 'Scholar') {
         this.userName = n;
+        if (!this._hasSeenPremiumTour()) {
+          this._showTourOffer();
+          return;
+        }
         this._showWelcomeBack();
         return;
       }
       if (!this.el.welcomeOverlay) return;
       this.el.welcomeOverlay.style.display = 'flex';
       setTimeout(() => this.el.welcomeOverlay.classList.add('visible'), 60);
-    }, 1800);
+    };
+    setTimeout(revealWelcome, 1800);
   }
 
   _showWelcomeBack() {
@@ -896,8 +831,8 @@ class SavoireApp {
     this._updateUserUI();
     this._updateAllStats();
     this._warmupAndTrack();
-    this._toast('success', 'fa-hand-wave', `Welcome, ${name}! Let me show you around 🎓`);
-    setTimeout(() => this._openDemo(), 800);
+    this._toast('success', 'fa-hand-wave', `Welcome, ${name}! Your study space is ready 🎓`);
+    setTimeout(() => this._maybeOfferFirstDemo(), 520);
   }
 
   _skipWelcome() {
@@ -911,6 +846,7 @@ class SavoireApp {
     this._dismissOverlay('welcomeOverlay');
     this._updateUserUI();
     this._warmupAndTrack();
+    setTimeout(() => this._maybeOfferFirstDemo(), 520);
   }
 
   _dismissOverlay(id) {
@@ -4857,333 +4793,636 @@ Examples:
   // ─── DEMO SYSTEM ─────────────────────────────────────────────────────────────
 
   _initDemoSystem() {
+    if (!document.getElementById('svPremiumTourStyles')) {
+      const style = document.createElement('style');
+      style.id = 'svPremiumTourStyles';
+      style.textContent = `
+        #demoCanvas{display:none;position:fixed;inset:0;width:100%;height:100%;z-index:2147483000;pointer-events:all;cursor:default}
+        #demoTooltip{display:none;position:fixed;z-index:2147483004;width:min(430px,calc(100vw - 28px));max-width:calc(100vw - 28px);color:#f7f5ef;pointer-events:auto;box-sizing:border-box}
+        #svDemoArrowSvg{display:none;position:fixed;inset:0;width:100vw;height:100vh;z-index:2147483001;overflow:visible;pointer-events:none}
+        #svDemoArrowPath{fill:none;stroke:url(#svDemoArrowGradient);stroke-width:3;stroke-linecap:round;stroke-dasharray:8 10;filter:drop-shadow(0 0 8px rgba(212,175,55,.7));animation:svTourArrowFlow 1.2s linear infinite}
+        #svDemoArrowHead{fill:var(--sv-tour-accent,#d4af37);filter:drop-shadow(0 0 5px rgba(212,175,55,.75))}
+        #svDemoHalo{display:none;position:fixed;z-index:2147483002;pointer-events:none;border:1.5px solid rgba(255,226,142,.96);border-radius:16px;box-shadow:0 0 0 5px rgba(212,175,55,.12),0 0 34px rgba(212,175,55,.5),inset 0 0 22px rgba(212,175,55,.08);animation:svTourHalo 2s ease-in-out infinite}
+        #demoTooltip{--sv-tour-accent:#d4af37;--sv-tour-text:#f7f5ef;--sv-tour-muted:#a7afbf;--sv-tour-line:rgba(255,255,255,.11)}
+        html[data-theme="light"] #demoTooltip{--sv-tour-accent:#16798a;--sv-tour-text:#12202a;--sv-tour-muted:#5b6875;--sv-tour-line:rgba(21,58,75,.15)}
+        html[data-theme="golden"] #demoTooltip{--sv-tour-accent:#ec4899;--sv-tour-text:#fff3f8;--sv-tour-muted:#c5aebe;--sv-tour-line:rgba(236,72,153,.2)}
+        .sv-tour-panel{position:relative;box-sizing:border-box;width:100%;max-height:inherit;overflow-y:auto;overscroll-behavior:contain;padding:22px 22px 16px;border-radius:26px;border:1px solid rgba(212,175,55,.28);background:radial-gradient(ellipse at 100% 0%,rgba(212,175,55,.13),transparent 46%),linear-gradient(145deg,rgba(15,22,39,.985),rgba(7,11,21,.99));color:var(--sv-tour-text);box-shadow:0 34px 100px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.035),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(24px);animation:svTourPanelIn .46s cubic-bezier(.2,.75,.25,1) both;scrollbar-width:thin;scrollbar-color:rgba(212,175,55,.35) transparent}
+        html[data-theme="light"] .sv-tour-panel{border-color:rgba(22,121,138,.22);background:radial-gradient(ellipse at 100% 0%,rgba(22,121,138,.12),transparent 46%),linear-gradient(145deg,rgba(255,255,255,.99),rgba(240,247,250,.99));box-shadow:0 34px 90px rgba(20,40,55,.22),0 0 0 1px rgba(20,40,55,.04),inset 0 1px 0 rgba(255,255,255,.9)}
+        html[data-theme="golden"] .sv-tour-panel{border-color:rgba(236,72,153,.3);background:radial-gradient(ellipse at 100% 0%,rgba(236,72,153,.16),transparent 46%),linear-gradient(145deg,rgba(28,16,34,.99),rgba(14,10,22,.99));box-shadow:0 34px 100px rgba(0,0,0,.6),0 0 0 1px rgba(236,72,153,.07),inset 0 1px 0 rgba(255,255,255,.08)}
+        .sv-tour-topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:19px}
+        .sv-tour-brand{display:flex;align-items:center;gap:9px;color:var(--sv-tour-muted);font:800 .63rem/1 Inter,system-ui,sans-serif;letter-spacing:.17em;text-transform:uppercase}
+        .sv-tour-mark{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;color:#0b0b0b;background:linear-gradient(135deg,#f8df9c,#b88a2d);font-size:.95rem;box-shadow:0 4px 16px rgba(212,175,55,.25)}
+        html[data-theme="light"] .sv-tour-mark{color:#fff;background:linear-gradient(135deg,#249eb0,#126b80)}
+        html[data-theme="golden"] .sv-tour-mark{color:#fff;background:linear-gradient(135deg,#f472b6,#a855f7)}
+        .sv-tour-close{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;border:1px solid var(--sv-tour-line);background:rgba(255,255,255,.045);color:var(--sv-tour-muted);font-size:1.1rem;cursor:pointer;transition:all .2s ease}
+        .sv-tour-close:hover{color:var(--sv-tour-text);border-color:var(--sv-tour-accent);transform:rotate(7deg)}
+        .sv-tour-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px;color:var(--sv-tour-accent);font:800 .63rem/1.3 Inter,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase}
+        .sv-tour-counter{color:var(--sv-tour-muted);letter-spacing:.12em;white-space:nowrap}
+        .sv-tour-title{margin:0 0 10px;color:var(--sv-tour-text);font:600 clamp(1.45rem,3.1vw,2rem)/1.08 Georgia,"Times New Roman",serif;letter-spacing:-.035em}
+        .sv-tour-copy{margin:0;color:var(--sv-tour-muted);font:400 .91rem/1.6 Inter,system-ui,sans-serif;letter-spacing:.005em}
+        .sv-tour-visual{position:relative;min-height:98px;margin:17px 0 14px;padding:13px 14px;border:1px solid var(--sv-tour-line);border-radius:17px;background:linear-gradient(135deg,rgba(255,255,255,.055),rgba(255,255,255,.018));overflow:hidden;display:flex;align-items:center;justify-content:center}
+        html[data-theme="light"] .sv-tour-visual{background:linear-gradient(135deg,rgba(22,121,138,.055),rgba(255,255,255,.55))}
+        html[data-theme="golden"] .sv-tour-visual{background:linear-gradient(135deg,rgba(236,72,153,.09),rgba(168,85,247,.045))}
+        .sv-tour-visual::after{content:"";position:absolute;inset:-40% auto -40% -35%;width:35%;transform:rotate(18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.065),transparent);animation:svTourShimmer 4.5s ease-in-out infinite;pointer-events:none}
+        .sv-mini-flow{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;z-index:1}
+        .sv-mini-node{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:74px;color:var(--sv-tour-text);font:700 .66rem/1.2 Inter,system-ui,sans-serif;text-align:center}
+        .sv-mini-node i{width:31px;height:31px;display:grid;place-items:center;border-radius:11px;color:var(--sv-tour-accent);background:rgba(212,175,55,.12);font-size:.84rem}
+        html[data-theme="light"] .sv-mini-node i{background:rgba(22,121,138,.1)}
+        html[data-theme="golden"] .sv-mini-node i{background:rgba(236,72,153,.12)}
+        .sv-mini-line{width:23px;height:1px;background:linear-gradient(90deg,transparent,var(--sv-tour-accent),transparent);position:relative}
+        .sv-mini-line::after{content:"";position:absolute;left:0;top:-2px;width:5px;height:5px;border-radius:50%;background:var(--sv-tour-accent);animation:svTourPing 1.6s ease-in-out infinite}
+        .sv-mini-route{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:9px;position:relative;z-index:1}
+        .sv-mini-route-card{display:flex;align-items:center;gap:10px;min-height:54px;padding:9px 11px;border-radius:13px;border:1px solid var(--sv-tour-line);background:rgba(255,255,255,.035);color:var(--sv-tour-text);font:700 .72rem/1.25 Inter,system-ui,sans-serif}
+        .sv-mini-route-card i{font-size:1rem;color:var(--sv-tour-accent)}
+        .sv-mini-route-card small{display:block;margin-top:3px;color:var(--sv-tour-muted);font-size:.59rem;font-weight:500}
+        .sv-mini-chiprow{width:100%;display:flex;justify-content:center;align-items:center;gap:7px;flex-wrap:wrap;position:relative;z-index:1}
+        .sv-mini-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--sv-tour-line);border-radius:999px;padding:8px 10px;color:var(--sv-tour-text);background:rgba(255,255,255,.035);font:700 .65rem/1 Inter,system-ui,sans-serif;animation:svTourChipIn .45s both}
+        .sv-mini-chip i{color:var(--sv-tour-accent)}
+        .sv-mini-input{width:100%;max-width:340px;padding:11px 13px;border-radius:12px;border:1px solid rgba(212,175,55,.3);background:rgba(0,0,0,.14);color:var(--sv-tour-text);font:500 .72rem/1.5 Inter,system-ui,sans-serif;position:relative;z-index:1}
+        html[data-theme="light"] .sv-mini-input{background:rgba(255,255,255,.72);border-color:rgba(22,121,138,.25)}
+        .sv-mini-input span{display:block;color:var(--sv-tour-muted);font-size:.58rem;margin-top:4px}
+        .sv-mini-caret{display:inline-block;width:1px;height:12px;margin-left:3px;vertical-align:-2px;background:var(--sv-tour-accent);animation:svTourBlink .8s steps(2,end) infinite}
+        .sv-mini-tune{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative;z-index:1}
+        .sv-mini-tune div{padding:10px 8px;border-radius:12px;border:1px solid var(--sv-tour-line);background:rgba(255,255,255,.035);text-align:center;color:var(--sv-tour-muted);font:700 .59rem/1.25 Inter,system-ui,sans-serif}
+        .sv-mini-tune i{display:block;margin-bottom:7px;color:var(--sv-tour-accent);font-size:.95rem}
+        .sv-mini-output{width:100%;display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:7px;position:relative;z-index:1}
+        .sv-mini-output-card{min-height:47px;padding:8px 9px;border-radius:12px;border:1px solid var(--sv-tour-line);background:rgba(255,255,255,.035);color:var(--sv-tour-muted);font:700 .59rem/1.25 Inter,system-ui,sans-serif}
+        .sv-mini-output-card strong{display:block;margin-top:5px;color:var(--sv-tour-text);font-size:.68rem}
+        .sv-mini-output-card i{color:var(--sv-tour-accent);margin-right:4px}
+        .sv-tour-focus{display:flex;align-items:center;gap:10px;margin:2px 0 13px;padding:10px 11px;border-radius:13px;border:1px solid var(--sv-tour-line);background:rgba(255,255,255,.025)}
+        .sv-tour-focus-icon{width:30px;height:30px;display:grid;place-items:center;flex:none;border-radius:10px;background:rgba(212,175,55,.11);color:var(--sv-tour-accent)}
+        html[data-theme="light"] .sv-tour-focus-icon{background:rgba(22,121,138,.1)}
+        html[data-theme="golden"] .sv-tour-focus-icon{background:rgba(236,72,153,.12)}
+        .sv-tour-focus-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
+        .sv-tour-focus-copy small{color:var(--sv-tour-muted);font:800 .53rem/1 Inter,system-ui,sans-serif;letter-spacing:.15em}
+        .sv-tour-focus-copy strong{color:var(--sv-tour-text);font:700 .74rem/1.25 Inter,system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .sv-tour-focus-arrow{margin-left:auto;color:var(--sv-tour-accent);font-size:.94rem;animation:svTourNudge .9s ease-in-out infinite alternate}
+        .sv-tour-progress{width:100%;height:3px;margin:0 0 13px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+        .sv-tour-progress-fill{height:100%;border-radius:inherit;background:linear-gradient(90deg,#a87925,var(--sv-tour-accent),#ffe6aa);box-shadow:0 0 14px rgba(212,175,55,.5);transition:width .45s cubic-bezier(.2,.75,.25,1)}
+        html[data-theme="light"] .sv-tour-progress-fill{background:linear-gradient(90deg,#147384,#40bac1)}
+        html[data-theme="golden"] .sv-tour-progress-fill{background:linear-gradient(90deg,#a855f7,#ec4899,#f9a8d4)}
+        .sv-tour-controls{display:flex;align-items:center;justify-content:space-between;gap:10px}
+        .sv-tour-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 15px;border-radius:12px;border:1px solid var(--sv-tour-line);background:rgba(255,255,255,.045);color:var(--sv-tour-text);font:750 .76rem/1 Inter,system-ui,sans-serif;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}
+        .sv-tour-btn:hover{transform:translateY(-1px);border-color:var(--sv-tour-accent)}
+        .sv-tour-btn:focus-visible,.sv-tour-close:focus-visible,.sv-tour-offer-x:focus-visible{outline:2px solid var(--sv-tour-accent,#d4af37);outline-offset:3px}
+        .sv-tour-btn:disabled{opacity:.38;cursor:default;transform:none}
+        .sv-tour-btn-primary{border-color:transparent;color:#17130a;background:linear-gradient(135deg,#f3d992,#c69a41);box-shadow:0 8px 26px rgba(212,175,55,.18)}
+        html[data-theme="light"] .sv-tour-btn-primary{color:#fff;background:linear-gradient(135deg,#248fa0,#126b80);box-shadow:0 8px 24px rgba(22,121,138,.18)}
+        html[data-theme="golden"] .sv-tour-btn-primary{color:#fff;background:linear-gradient(135deg,#ec4899,#a855f7);box-shadow:0 8px 24px rgba(236,72,153,.2)}
+        .sv-tour-step-count{color:var(--sv-tour-muted);font:700 .62rem/1 Inter,system-ui,sans-serif;letter-spacing:.14em}
+        .sv-tour-footnote{margin-top:12px;padding-top:10px;border-top:1px solid var(--sv-tour-line);color:var(--sv-tour-muted);font:500 .61rem/1.45 Inter,system-ui,sans-serif;letter-spacing:.015em}
+        #svTourOffer{--sv-tour-accent:#d4af37;--sv-tour-text:#f8f5ed;--sv-tour-muted:#a7afbf;--sv-tour-line:rgba(255,255,255,.12);display:none;position:fixed;inset:0;z-index:2147483006;align-items:center;justify-content:center;padding:24px;background:rgba(3,6,14,.78);backdrop-filter:blur(14px);box-sizing:border-box}
+        html[data-theme="light"] #svTourOffer{--sv-tour-accent:#16798a;--sv-tour-text:#13202a;--sv-tour-muted:#637280;--sv-tour-line:rgba(22,121,138,.18)}
+        html[data-theme="golden"] #svTourOffer{--sv-tour-accent:#ec4899;--sv-tour-text:#fff3f8;--sv-tour-muted:#c5aebe;--sv-tour-line:rgba(236,72,153,.2)}
+        .sv-tour-offer-card{position:relative;isolation:isolate;overflow:hidden;width:min(560px,100%);max-height:min(88vh,800px);overflow-y:auto;padding:34px 38px 28px;border-radius:30px;border:1px solid rgba(212,175,55,.29);background:radial-gradient(ellipse at 50% -14%,rgba(212,175,55,.2),transparent 52%),linear-gradient(145deg,#121a2c,#080d18);color:#f8f5ed;box-shadow:0 40px 120px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.1);text-align:center;animation:svTourPanelIn .58s cubic-bezier(.2,.75,.25,1) both}
+        html[data-theme="light"] .sv-tour-offer-card{border-color:rgba(22,121,138,.22);background:radial-gradient(ellipse at 50% -14%,rgba(22,121,138,.15),transparent 52%),linear-gradient(145deg,#fff,#f0f7f9);color:#13202a;box-shadow:0 40px 100px rgba(20,40,55,.24),inset 0 1px 0 #fff}
+        html[data-theme="golden"] .sv-tour-offer-card{border-color:rgba(236,72,153,.32);background:radial-gradient(ellipse at 50% -14%,rgba(236,72,153,.2),transparent 52%),linear-gradient(145deg,#211326,#100b18);color:#fff3f8}
+        .sv-tour-offer-x{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.045);color:inherit;font-size:1.15rem;cursor:pointer}
+        .sv-tour-offer-brand{display:inline-flex;align-items:center;gap:8px;color:var(--sv-tour-accent,#d4af37);font:800 .64rem/1 Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase}
+        .sv-tour-offer-brand b{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,#f3d992,#c69a41);color:#15110a;font-size:.9rem}
+        html[data-theme="light"] .sv-tour-offer-brand b{background:linear-gradient(135deg,#248fa0,#126b80);color:#fff}
+        html[data-theme="golden"] .sv-tour-offer-brand b{background:linear-gradient(135deg,#ec4899,#a855f7);color:#fff}
+        .sv-tour-orb{position:relative;width:94px;height:94px;margin:23px auto 19px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff4d1,#e7c675 34%,#a97927 75%,#4d351a);box-shadow:0 0 0 9px rgba(212,175,55,.07),0 0 55px rgba(212,175,55,.32);animation:svTourOrb 4.8s ease-in-out infinite}
+        .sv-tour-orb::before,.sv-tour-orb::after{content:"";position:absolute;inset:-12px;border:1px solid rgba(232,195,105,.36);border-radius:50%;animation:svTourOrbit 3.6s ease-out infinite}
+        .sv-tour-orb::after{inset:-23px;animation-delay:1.5s;opacity:.52}
+        .sv-tour-orb i{color:#37240b;font-size:1.7rem;filter:drop-shadow(0 1px 0 rgba(255,255,255,.6))}
+        html[data-theme="light"] .sv-tour-orb{background:radial-gradient(circle at 35% 30%,#eaffff,#68c7cf 38%,#16798a 78%,#0e4452);box-shadow:0 0 0 9px rgba(22,121,138,.07),0 0 55px rgba(22,121,138,.23)}
+        html[data-theme="light"] .sv-tour-orb i{color:#fff}
+        html[data-theme="golden"] .sv-tour-orb{background:radial-gradient(circle at 35% 30%,#ffe4f3,#f472b6 38%,#a855f7 78%,#4b1f59);box-shadow:0 0 0 9px rgba(236,72,153,.08),0 0 55px rgba(236,72,153,.28)}
+        html[data-theme="golden"] .sv-tour-orb i{color:#fff}
+        .sv-tour-offer-kicker{margin:0 0 10px;color:var(--sv-tour-accent,#d4af37);font:800 .64rem/1.3 Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase}
+        .sv-tour-offer-title{margin:0 auto 12px;max-width:480px;font:600 clamp(2rem,7vw,3rem)/1.02 Georgia,"Times New Roman",serif;letter-spacing:-.045em}
+        .sv-tour-offer-title em{color:#e6c778;font-style:italic}
+        html[data-theme="light"] .sv-tour-offer-title em{color:#16798a}
+        html[data-theme="golden"] .sv-tour-offer-title em{color:#f472b6}
+        .sv-tour-offer-copy{max-width:430px;margin:0 auto;color:#aeb6c7;font:400 .91rem/1.65 Inter,system-ui,sans-serif}
+        html[data-theme="light"] .sv-tour-offer-copy{color:#5b6875}
+        html[data-theme="golden"] .sv-tour-offer-copy{color:#c5aebe}
+        .sv-tour-offer-pills{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:20px 0 22px}
+        .sv-tour-offer-pills span{padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:inherit;font:700 .64rem/1 Inter,system-ui,sans-serif}
+        html[data-theme="light"] .sv-tour-offer-pills span{border-color:rgba(22,121,138,.15);background:rgba(22,121,138,.04)}
+        .sv-tour-offer-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+        .sv-tour-offer-actions .sv-tour-btn{min-height:48px;padding-inline:20px}
+        .sv-tour-offer-note{margin:15px 0 0;color:#8c95a7;font:500 .65rem/1.45 Inter,system-ui,sans-serif}
+        html[data-theme="light"] .sv-tour-offer-note{color:#697887}
+        @keyframes svTourPanelIn{from{opacity:0;transform:translateY(15px) scale(.985);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+        @keyframes svTourArrowFlow{to{stroke-dashoffset:-36}}
+        @keyframes svTourHalo{0%,100%{box-shadow:0 0 0 4px rgba(212,175,55,.1),0 0 25px rgba(212,175,55,.38),inset 0 0 18px rgba(212,175,55,.05)}50%{box-shadow:0 0 0 8px rgba(212,175,55,.04),0 0 42px rgba(212,175,55,.62),inset 0 0 24px rgba(212,175,55,.1)}}
+        @keyframes svTourShimmer{0%,45%{left:-45%;opacity:0}55%{opacity:.8}100%{left:120%;opacity:0}}
+        @keyframes svTourPing{0%{left:0;opacity:0}20%{opacity:1}100%{left:calc(100% - 5px);opacity:0}}
+        @keyframes svTourChipIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes svTourBlink{50%{opacity:0}}
+        @keyframes svTourNudge{from{transform:translateX(-2px)}to{transform:translateX(3px)}}
+        @keyframes svTourOrb{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.03)}}
+        @keyframes svTourOrbit{0%{transform:scale(.88);opacity:.7}100%{transform:scale(1.2);opacity:0}}
+        @media(max-width:760px){
+          #demoTooltip{width:calc(100vw - 20px);max-width:calc(100vw - 20px)}
+          .sv-tour-panel{padding:16px 16px 13px;border-radius:23px;max-height:62dvh}
+          .sv-tour-topline{margin-bottom:13px}
+          .sv-tour-title{font-size:clamp(1.38rem,6vw,1.8rem);margin-bottom:7px}
+          .sv-tour-copy{font-size:.82rem;line-height:1.48}
+          .sv-tour-visual{display:none}
+          .sv-tour-focus{margin:11px 0;padding:8px 9px}
+          .sv-tour-progress{margin-bottom:10px}
+          .sv-tour-footnote{font-size:.56rem;margin-top:9px;padding-top:8px}
+          .sv-tour-btn{min-height:43px;padding:0 12px;font-size:.72rem}
+          .sv-tour-offer-card{width:100%;padding:28px 20px 22px;border-radius:26px;max-height:90dvh}
+          .sv-tour-orb{width:76px;height:76px;margin:18px auto 16px}
+          .sv-tour-offer-copy{font-size:.84rem}
+          .sv-tour-offer-actions{flex-direction:column}
+          .sv-tour-offer-actions .sv-tour-btn{width:100%}
+        }
+        @media(prefers-reduced-motion:reduce){#demoTooltip *,#svTourOffer *{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+      `;
+      document.head.appendChild(style);
+    }
+
     this.demoCanvas = document.createElement('canvas');
     this.demoCanvas.id = 'demoCanvas';
-    Object.assign(this.demoCanvas.style, {
-      display: 'none', position: 'fixed', inset: '0',
-      width: '100%', height: '100%',
-      zIndex: '9990', pointerEvents: 'all', cursor: 'pointer',
-    });
+    this.demoCanvas.setAttribute('aria-hidden', 'true');
     document.body.appendChild(this.demoCanvas);
+
+    this.demoArrowSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    this.demoArrowSvg.id = 'svDemoArrowSvg';
+    this.demoArrowSvg.setAttribute('aria-hidden', 'true');
+    this.demoArrowSvg.innerHTML = `
+      <defs>
+        <linearGradient id="svDemoArrowGradient" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#fff0bd" stop-opacity=".72"></stop>
+          <stop offset="55%" stop-color="#d4af37"></stop>
+          <stop offset="100%" stop-color="#fff0bd"></stop>
+        </linearGradient>
+        <marker id="svDemoArrowMarker" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+          <path id="svDemoArrowHead" d="M1 1 L10 6 L1 11 Z"></path>
+        </marker>
+      </defs>
+      <path id="svDemoArrowPath" d=""></path>
+      <circle id="svDemoArrowDot" r="4.5" cx="0" cy="0" fill="#fff2c2"></circle>`;
+    document.body.appendChild(this.demoArrowSvg);
+    this.demoArrowPath = this.demoArrowSvg.querySelector('#svDemoArrowPath');
+    this.demoArrowDot = this.demoArrowSvg.querySelector('#svDemoArrowDot');
+
+    this.demoHalo = document.createElement('div');
+    this.demoHalo.id = 'svDemoHalo';
+    this.demoHalo.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(this.demoHalo);
 
     this.demoTooltip = document.createElement('div');
     this.demoTooltip.id = 'demoTooltip';
-    Object.assign(this.demoTooltip.style, {
-      display: 'none', position: 'fixed', zIndex: '9999',
-      background: 'rgba(5,10,30,.97)',
-      border: '1.5px solid rgba(212,175,55,.5)',
-      borderRadius: '18px',
-      boxShadow: '0 24px 64px rgba(0,0,0,.7)',
-      padding: '20px', maxWidth: '360px', minWidth: '260px',
-      fontFamily: 'Inter,sans-serif',
-    });
+    this.demoTooltip.setAttribute('role', 'dialog');
+    this.demoTooltip.setAttribute('aria-modal', 'true');
+    this.demoTooltip.setAttribute('aria-label', 'Guided tour of the study workspace');
     document.body.appendChild(this.demoTooltip);
 
-    window.addEventListener('resize', () => {
-      if (this.demoCanvas.style.display !== 'none') this._drawDemoSpotlight();
-    });
+    this.demoOffer = document.createElement('div');
+    this.demoOffer.id = 'svTourOffer';
+    this.demoOffer.setAttribute('role', 'dialog');
+    this.demoOffer.setAttribute('aria-modal', 'true');
+    this.demoOffer.setAttribute('aria-labelledby', 'svTourOfferTitle');
+    document.body.appendChild(this.demoOffer);
+
+    this._tourActive = false;
+    this._tourOfferOpen = false;
+    this._tourWizardOpened = false;
+    this._tourState = null;
+    this._tourOfferBodySnapshot = null;
+
+    this.demoCanvas.onclick = e => { e.preventDefault(); e.stopPropagation(); };
+    window.addEventListener('resize', () => { if (this._tourActive) this._updateDemoGeometry(); });
+    window.addEventListener('scroll', () => { if (this._tourActive) this._updateDemoGeometry(); }, true);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => { if (this._tourActive) this._updateDemoGeometry(); });
+      window.visualViewport.addEventListener('scroll', () => { if (this._tourActive) this._updateDemoGeometry(); });
+    }
+  }
+
+  _premiumTourStorageKey() {
+    let uid = '', email = '', identity = '';
+    try {
+      const user = window.firebaseAuthInstance?.currentUser;
+      uid = user?.uid || localStorage.getItem('sv_uid') || '';
+      email = user?.email || '';
+      if (!uid && !email) {
+        const rawName = user?.displayName || this.userName || localStorage.getItem('sv_user') || 'device';
+        identity = String(rawName).trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64) || 'device';
+      }
+    } catch(e) { identity = 'device'; }
+    const raw = uid ? `uid_${uid}` : email ? `email_${email.toLowerCase()}` : `name_${identity || 'device'}`;
+    let hash = 2166136261;
+    for (let i = 0; i < raw.length; i++) { hash ^= raw.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+    return `sv_premium_tour_v3_${(hash >>> 0).toString(36)}`;
+  }
+
+  _hasSeenPremiumTour() {
+    try { return localStorage.getItem(this._premiumTourStorageKey()) === '1'; } catch(e) { return false; }
+  }
+
+  _markPremiumTourSeen() {
+    try { localStorage.setItem(this._premiumTourStorageKey(), '1'); } catch(e){}
+  }
+
+  _maybeOfferFirstDemo() {
+    if (this._tourActive || this._tourOfferOpen || this._hasSeenPremiumTour()) return;
+    this._showTourOffer();
+  }
+
+  _showTourOffer() {
+    if (!this.demoOffer || this._tourOfferOpen || this._hasSeenPremiumTour()) return;
+    const rawName = this.userName || this._lsGet('sv_user') || '';
+    const firstName = String(rawName).trim().split(/\s+/)[0];
+    const greeting = firstName && firstName !== 'Scholar' ? `Welcome, <strong>${this._esc(firstName)}</strong>.` : 'Welcome to your study studio.';
+    this.demoOffer.innerHTML = `
+      <div class="sv-tour-offer-card">
+        <button class="sv-tour-offer-x" type="button" data-offer-action="later" aria-label="Close guided tour offer">×</button>
+        <div class="sv-tour-offer-brand"><b>✦</b> SAVOIRÉ · GUIDED MODE</div>
+        <div class="sv-tour-orb" aria-hidden="true"><i class="fas fa-graduation-cap"></i></div>
+        <div class="sv-tour-offer-kicker">YOUR FIRST STUDY SESSION</div>
+        <h1 class="sv-tour-offer-title" id="svTourOfferTitle">${greeting}<br>Want to see a <em>demo?</em></h1>
+        <p class="sv-tour-offer-copy">Take a short, animated walkthrough of the real dashboard. See how one topic becomes a complete, interactive study session.</p>
+        <div class="sv-tour-offer-pills" aria-label="Included in the tour">
+          <span><i class="fas fa-book-open"></i> Notes</span>
+          <span><i class="fas fa-layer-group"></i> Flashcards</span>
+          <span><i class="fas fa-question-circle"></i> Quizzes</span>
+          <span><i class="fas fa-project-diagram"></i> Mind maps</span>
+        </div>
+        <div class="sv-tour-offer-actions">
+          <button class="sv-tour-btn sv-tour-btn-primary" type="button" data-offer-action="start"><i class="fas fa-play"></i> Yes — show me around</button>
+          <button class="sv-tour-btn" type="button" data-offer-action="later">Not now</button>
+        </div>
+        <p class="sv-tour-offer-note">About a minute · replay anytime from <strong>Watch Demo</strong> in the sidebar</p>
+      </div>`;
+    this.demoOffer.style.display = 'flex';
+    this._tourOfferOpen = true;
+    this._tourOfferBodySnapshot = { overflow: document.body.style.overflow, hadModalClass: document.body.classList.contains('sv-modal-open') };
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('sv-modal-open');
+    const handleOfferAction = action => {
+      this._markPremiumTourSeen();
+      this._closeTourOffer();
+      if (action === 'start') setTimeout(() => this._openDemo(), 120);
+    };
+    this.demoOffer.querySelectorAll('[data-offer-action="start"]').forEach(btn => btn.addEventListener('click', () => handleOfferAction('start')));
+    this.demoOffer.querySelectorAll('[data-offer-action="later"]').forEach(btn => btn.addEventListener('click', () => handleOfferAction('later')));
+    this.demoOffer.onclick = e => { if (e.target === this.demoOffer) handleOfferAction('later'); };
+    setTimeout(() => this.demoOffer.querySelector('[data-offer-action="start"]')?.focus(), 100);
+  }
+
+  _closeTourOffer() {
+    if (!this.demoOffer || !this._tourOfferOpen) return;
+    this._markPremiumTourSeen();
+    this.demoOffer.style.display = 'none';
+    this._tourOfferOpen = false;
+    this.demoOffer.onclick = null;
+    const snapshot = this._tourOfferBodySnapshot;
+    const otherModalOpen = [...document.querySelectorAll('.modal-overlay')].some(m => getComputedStyle(m).display !== 'none');
+    if (!otherModalOpen) {
+      document.body.style.overflow = snapshot?.overflow || '';
+      if (snapshot?.hadModalClass) document.body.classList.add('sv-modal-open');
+      else document.body.classList.remove('sv-modal-open');
+    }
+    this._tourOfferBodySnapshot = null;
   }
 
   _drawDemoSpotlight(rect) {
     const canvas = this.demoCanvas;
     if (!canvas) return;
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(vw * dpr);
+    canvas.height = Math.round(vh * dpr);
+    canvas.style.width = vw + 'px';
+    canvas.style.height = vh + 'px';
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgba(0,0,8,0.78)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, vw, vh);
+    ctx.fillStyle = 'rgba(3,6,14,.78)';
+    ctx.fillRect(0, 0, vw, vh);
+    if (!rect || rect.width <= 0 || rect.height <= 0) return;
 
-    if (rect) {
-      const pad = Math.min(8, Math.max(4, rect.width * 0.04));
-      const r = 12;
-      const x = rect.left - pad, y = rect.top - pad;
-      const w = rect.width + pad * 2, h = rect.height + pad * 2;
+    const pad = Math.max(7, Math.min(14, Math.min(rect.width, rect.height) * .035));
+    const x = Math.max(4, rect.left - pad), y = Math.max(4, rect.top - pad);
+    const w = Math.min(vw - x - 4, rect.width + pad * 2), h = Math.min(vh - y - 4, rect.height + pad * 2);
+    const r = Math.min(22, Math.max(10, Math.min(w, h) * .08));
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.strokeStyle = document.documentElement.dataset.theme === 'golden' ? 'rgba(244,132,191,.98)' : document.documentElement.dataset.theme === 'light' ? 'rgba(71,183,194,.98)' : 'rgba(235,201,121,.98)';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = document.documentElement.dataset.theme === 'golden' ? '#ec4899' : document.documentElement.dataset.theme === 'light' ? '#16899a' : '#d4af37';
+    ctx.shadowBlur = 17;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); ctx.stroke();
+    ctx.restore();
 
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.beginPath();
-      ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
-      ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-      ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-      ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-      ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
-      ctx.closePath(); ctx.fill();
+    if (this.demoHalo) {
+      Object.assign(this.demoHalo.style, { display: 'block', left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px', borderRadius: r + 'px' });
+    }
+  }
 
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.strokeStyle = 'rgba(212,175,55,0.9)';
-      ctx.lineWidth   = 2.5;
-      ctx.shadowColor = '#d4af37';
-      ctx.shadowBlur  = 18;
-      ctx.beginPath();
-      ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y);
-      ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-      ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-      ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-      ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
-      ctx.closePath(); ctx.stroke();
-      ctx.shadowBlur = 0;
+  _getDemoTarget(step) {
+    const selectors = step?.target || [];
+    for (const selector of selectors) {
+      const el = document.querySelector(selector);
+      if (!el) continue;
+      const cs = getComputedStyle(el);
+      const rect = el.getBoundingClientRect();
+      if (cs.display !== 'none' && cs.visibility !== 'hidden' && rect.width > 0 && rect.height > 0) return el;
+    }
+    return null;
+  }
+
+  _scrollDemoTargetIntoView(target) {
+    if (!target) return;
+    const r = target.getBoundingClientRect();
+    const vh = window.innerHeight;
+    if (r.top < 48 || r.bottom > vh - 48) {
+      try { target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' }); } catch(e){}
+    }
+  }
+
+  _getDemoVisual(type) {
+    switch (type) {
+      case 'workspace':
+        return `<div class="sv-mini-flow"><div class="sv-mini-node"><i class="fas fa-lightbulb"></i>One topic</div><span class="sv-mini-line"></span><div class="sv-mini-node"><i class="fas fa-sparkles"></i>Study session</div><span class="sv-mini-line"></span><div class="sv-mini-node"><i class="fas fa-brain"></i>Learn it</div></div>`;
+      case 'routes':
+        return `<div class="sv-mini-route"><div class="sv-mini-route-card"><i class="fas fa-magic"></i><span>Study Wizard<small>Step-by-step control</small></span></div><div class="sv-mini-route-card"><i class="fas fa-bolt"></i><span>All 5 formats<small>One complete pack</small></span></div></div>`;
+      case 'formats':
+        return `<div class="sv-mini-chiprow"><span class="sv-mini-chip"><i class="fas fa-book-open"></i>Notes</span><span class="sv-mini-chip"><i class="fas fa-layer-group"></i>Cards</span><span class="sv-mini-chip"><i class="fas fa-question-circle"></i>Quiz</span><span class="sv-mini-chip"><i class="fas fa-align-left"></i>Summary</span><span class="sv-mini-chip"><i class="fas fa-project-diagram"></i>Mind map</span></div>`;
+      case 'topic':
+        return `<div class="sv-mini-input"><i class="fas fa-pen" style="color:var(--sv-tour-accent)"></i> &nbsp;Photosynthesis — how plants make energy<span>Question, concept, or your own notes<span class="sv-mini-caret"></span></span></div>`;
+      case 'personalize':
+        return `<div class="sv-mini-tune"><div><i class="fas fa-globe"></i>Language<strong>English</strong></div><div><i class="fas fa-chart-line"></i>Depth<strong>Detailed</strong></div><div><i class="fas fa-pen-fancy"></i>Style<strong>Simple</strong></div></div>`;
+      default:
+        return `<div class="sv-mini-output"><div class="sv-mini-output-card"><i class="fas fa-book-open"></i> NOTES<strong>Ready to review</strong></div><div class="sv-mini-output-card"><i class="fas fa-layer-group"></i> CARDS<strong>Flip to recall</strong></div><div class="sv-mini-output-card"><i class="fas fa-file-pdf"></i> EXPORT<strong>Save or share</strong></div></div>`;
     }
   }
 
   _openDemo() {
-    this.demoStep = 0;
-    this.demoCanvas.width  = window.innerWidth;
-    this.demoCanvas.height = window.innerHeight;
-    this.demoCanvas.style.display  = 'block';
-    this.demoTooltip.style.display = 'block';
-
-    let hint = this._el('demoCHint');
-    if (!hint) {
-      hint = document.createElement('div');
-      hint.id = 'demoCHint';
-      hint.className = 'demo-canvas-hint';
-      hint.innerHTML = '<i class="fas fa-hand-pointer"></i> Tap dark area to continue · <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd>';
-      document.body.appendChild(hint);
-    }
-    hint.style.display = 'block';
-
-    this.demoCanvas.onclick = () => {
-      if (this.demoStep < DEMO_STEPS.length - 1) this._nextDemo();
-      else this._closeDemo();
+    if (!this.demoCanvas || !this.demoTooltip || this._tourActive) return;
+    this._markPremiumTourSeen();
+    const wizard = this.el.wizardModal;
+    const wizardWasOpen = !!wizard && getComputedStyle(wizard).display !== 'none';
+    const savedData = this.wizardData ? JSON.parse(JSON.stringify(this.wizardData)) : null;
+    this._tourState = {
+      wizardWasOpen,
+      wizardData: savedData,
+      wizardStep: this.wizardStep,
+      wizardFile: this.wizardFile,
+      bodyOverflow: document.body.style.overflow,
+      hadModalClass: document.body.classList.contains('sv-modal-open'),
     };
-
+    if (wizardWasOpen) this._closeModal('wizardModal');
+    this._tourWizardOpened = false;
+    this._tourActive = true;
+    this.demoStep = 0;
+    this.demoCanvas.style.display = 'block';
+    this.demoTooltip.style.display = 'block';
+    this.demoArrowSvg.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('sv-modal-open');
     this._renderDemoStep();
   }
 
-  _closeDemo() {
-    if (this.demoCanvas)  this.demoCanvas.style.display  = 'none';
-    if (this.demoTooltip) this.demoTooltip.style.display = 'none';
-    const hint = this._el('demoCHint');
-    if (hint) hint.style.display = 'none';
-    this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
-  }
-
   _renderDemoStep() {
-    const step    = DEMO_STEPS[this.demoStep];
-    const isFirst = this.demoStep === 0;
-    const isLast  = !!step.isLast;
+    const step = DEMO_STEPS[this.demoStep];
     if (!step || !this.demoTooltip) return;
 
-    this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
-    this._drawDemoSpotlight(null);
-    this._placeDemoTooltipCenter();
+    if (!step.openWizard && this._tourWizardOpened) {
+      this._closeModal('wizardModal');
+      this._tourWizardOpened = false;
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('sv-modal-open');
+    }
+
+    if (step.openWizard) {
+      if (!this._tourWizardOpened || !this.el.wizardModal || getComputedStyle(this.el.wizardModal).display === 'none') {
+        this._openWizard();
+        this._tourWizardOpened = true;
+      }
+      if (typeof step.wizardStep === 'number' && this.wizardStep !== step.wizardStep) {
+        this.wizardStep = step.wizardStep;
+        this._renderWizardStep();
+      }
+    }
 
     const pct = Math.round(((this.demoStep + 1) / DEMO_STEPS.length) * 100);
-
-    const dotsHtml = DEMO_STEPS.map((_, i) => {
-      const s = i === this.demoStep ? 'active' : i < this.demoStep ? 'done' : 'pending';
-      return `<button class="demo-tt-dot demo-dot-${s}" onclick="window._app._jumpDemo(${i})" title="Step ${i+1}">
-        ${i < this.demoStep ? '<i class="fas fa-check"></i>' : (i + 1)}
-      </button>`;
-    }).join('');
-
-    const tipsHtml = (step.tips || []).map((t, i) => `
-      <div class="demo-tip-item" style="animation-delay:${i*60}ms">
-        <div class="demo-tip-ic"><i class="fas ${t.icon}"></i></div>
-        <div class="demo-tip-text">${t.text}</div>
-      </div>`).join('');
-
-    const actionBtn = step.action ? `
-      <button class="demo-action-btn" onclick="window._app._closeDemo();window._app.${step.action.fn}();return false;">
-        <i class="fas fa-play"></i> ${step.action.label}
-      </button>` : '';
-
-    const youtubeBtn = `
-      <a class="demo-youtube-link" href="https://www.youtube.com/watch?v=5uK0gRKC8oc" target="_blank" rel="noopener">
-        <i class="fab fa-youtube"></i> Watch Video Demo
-      </a>`;
-
+    const count = String(step.step).padStart(2, '0');
+    const isLast = !!step.isLast;
     this.demoTooltip.innerHTML = `
-      <div class="demo-tt-shell">
-        <div class="demo-tt-top">
-          <div class="demo-tt-step-badge">Step ${step.step} of ${DEMO_STEPS.length}</div>
-          <button class="demo-tt-x" onclick="window._app._closeDemo()" title="Close (Esc)">
-            <i class="fas fa-times"></i>
-          </button>
+      <section class="sv-tour-panel" aria-label="${step.kicker}">
+        <div class="sv-tour-topline">
+          <div class="sv-tour-brand"><span class="sv-tour-mark">✦</span><span>SAVOIRÉ · GUIDED TOUR</span></div>
+          <button class="sv-tour-close" type="button" data-tour-action="close" aria-label="Close guided tour">×</button>
         </div>
-        <div class="demo-tt-icon-row">
-          <div class="demo-tt-icon-wrap" style="--demo-color:${step.color};background:${step.color}18;border:2px solid ${step.color}44">
-            <i class="fas ${step.icon}" style="color:${step.color};font-size:1.6rem"></i>
-          </div>
-          <div class="demo-tt-titles">
-            <div class="demo-tt-title" style="color:${step.color}">${step.title}</div>
-            <div class="demo-tt-subtitle">${step.subtitle}</div>
-          </div>
+        <div class="sv-tour-meta"><span>${step.kicker}</span><span class="sv-tour-counter">${count} / ${String(DEMO_STEPS.length).padStart(2, '0')}</span></div>
+        <h2 class="sv-tour-title">${step.title}</h2>
+        <p class="sv-tour-copy">${step.body}</p>
+        <div class="sv-tour-visual" aria-hidden="true">${this._getDemoVisual(step.visual)}</div>
+        <div class="sv-tour-focus">
+          <span class="sv-tour-focus-icon"><i class="fas ${step.focusIcon}"></i></span>
+          <span class="sv-tour-focus-copy"><small>FOLLOW THE GLOW</small><strong>${step.targetLabel}</strong></span>
+          <i class="fas fa-arrow-up-right-from-square sv-tour-focus-arrow" aria-hidden="true"></i>
         </div>
-        <div class="demo-tt-progress">
-          <div class="demo-tt-prog-bar">
-            <div class="demo-tt-prog-fill" style="width:${pct}%;background:${step.color}"></div>
-          </div>
-          <div class="demo-tt-dots">${dotsHtml}</div>
+        <div class="sv-tour-progress" aria-label="Tour progress"><div class="sv-tour-progress-fill" style="width:${pct}%"></div></div>
+        <div class="sv-tour-controls">
+          <button class="sv-tour-btn" type="button" data-tour-action="back" ${this.demoStep === 0 ? 'disabled' : ''}><i class="fas fa-arrow-left"></i> Back</button>
+          <span class="sv-tour-step-count">${count} / ${String(DEMO_STEPS.length).padStart(2, '0')}</span>
+          <button class="sv-tour-btn sv-tour-btn-primary" type="button" data-tour-action="next">${isLast ? '<i class="fas fa-rocket"></i> Start studying' : 'Continue <i class="fas fa-arrow-right"></i>'}</button>
         </div>
-        <div class="demo-tt-content">${step.content}</div>
-        <div class="demo-tt-visual">${this._getDemoVisual(step.step)}</div>
-        <div class="demo-tt-tips">${tipsHtml}</div>
-        <div class="demo-tt-actions">
-          ${actionBtn}
-          ${youtubeBtn}
-        </div>
-        <div class="demo-tt-footer">
-          <div class="demo-tt-nav-row">
-            <button class="demo-btn-prev" onclick="window._app._prevDemo()" ${isFirst ? 'disabled' : ''} title="Previous (←)">
-              <i class="fas fa-arrow-left"></i> Back
-            </button>
-            ${isLast
-              ? `<button class="demo-btn-finish" onclick="window._app._closeDemo();window._app._openWizard();">
-                   <i class="fas fa-rocket"></i> Start Studying!
-                 </button>`
-              : `<button class="demo-btn-next" onclick="window._app._nextDemo()">
-                   ${step.cta || 'Next →'}
-                 </button>`}
-          </div>
-          <div class="demo-tt-nav-info">
-            <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>Esc</kbd> close · tap outside to continue
-          </div>
-        </div>
-      </div>`;
+        <div class="sv-tour-footnote">← / → to move · Esc to close · Replay anytime from <strong>Watch Demo</strong></div>
+      </section>`;
+
+    this.demoTooltip.querySelector('[data-tour-action="close"]')?.addEventListener('click', () => this._closeDemo());
+    this.demoTooltip.querySelector('[data-tour-action="back"]')?.addEventListener('click', () => this._prevDemo());
+    this.demoTooltip.querySelector('[data-tour-action="next"]')?.addEventListener('click', () => isLast ? this._finishDemoAndStart() : this._nextDemo());
+    setTimeout(() => { if (this._tourActive) this.demoTooltip.querySelector('[data-tour-action="next"]')?.focus({ preventScroll: true }); }, 170);
+
+    const target = this._getDemoTarget(step);
+    this._scrollDemoTargetIntoView(target);
+    this.demoTooltip.style.display = 'block';
+    this.demoCanvas.style.display = 'block';
+    this.demoArrowSvg.style.display = 'block';
+    requestAnimationFrame(() => this._updateDemoGeometry());
   }
 
-  _getDemoVisual(stepNo) {
-    switch (stepNo) {
-      case 1:
-        return `
-          <div class="demo-flow-grid">
-            <div class="demo-flow-pill active">Topic</div>
-            <div class="demo-flow-line"></div>
-            <div class="demo-flow-pill">Tool</div>
-            <div class="demo-flow-line"></div>
-            <div class="demo-flow-pill">Generate</div>
-            <div class="demo-flow-line"></div>
-            <div class="demo-flow-pill">Study</div>
-          </div>`;
-      case 2:
-        return `
-          <div class="demo-mini-stack">
-            <span>1. Tool</span><span>2. Topic</span><span>3. Language</span><span>4. Depth</span><span>5. Style</span><span>6. Generate</span>
-          </div>`;
-      case 3:
-        return `
-          <div class="demo-mini-stack colorful">
-            <span>Notes</span><span>Flashcards</span><span>Quiz</span><span>Summary</span><span>Mind Map</span>
-          </div>`;
-      case 4:
-        return `
-          <div class="demo-chip-cloud">
-            <span>Notes</span><span>Flashcards</span><span>Quiz</span><span>Summary</span><span>Mind Map</span><span>All 5</span>
-          </div>`;
-      case 5:
-        return `
-          <div class="demo-stage-stack">
-            <div>🎯 Analysing</div><div>📝 Writing</div><div>🔍 Building</div><div>✨ Crafting</div><div>✅ Ready</div>
-          </div>`;
-      case 6:
-        return `
-          <div class="demo-chip-cloud interactive">
-            <span>Flip Cards</span><span>Instant Quiz Feedback</span><span>Mindmap Branches</span><span>Live Notes</span>
-          </div>`;
-      case 7:
-        return `
-          <div class="demo-flow-grid compact">
-            <div class="demo-flow-pill gold">Final Output PDF</div>
-            <div class="demo-flow-pill green">Live Notes PDF</div>
-          </div>`;
-      default:
-        return `
-          <div class="demo-chip-cloud">
-            <span>Streak</span><span>Sessions</span><span>Saved</span><span>Theme</span><span>Font</span>
-          </div>`;
+  _updateDemoGeometry() {
+    if (!this._tourActive) return;
+    const step = DEMO_STEPS[this.demoStep];
+    const target = this._getDemoTarget(step);
+    if (!target) {
+      this._drawDemoSpotlight(null);
+      if (this.demoHalo) this.demoHalo.style.display = 'none';
+      this._placeDemoTooltip(null, null);
+      if (this.demoArrowPath) this.demoArrowPath.setAttribute('d', '');
+      return;
     }
+    const rect = target.getBoundingClientRect();
+    this._drawDemoSpotlight(rect);
+    this._placeDemoTooltip(rect, step.arrow);
+    this._drawDemoArrow(rect);
   }
-
-  _nextDemo() { if (this.demoStep < DEMO_STEPS.length-1) { this.demoStep++; this._renderDemoStep(); } }
-  _prevDemo() { if (this.demoStep > 0)                   { this.demoStep--; this._renderDemoStep(); } }
-  _jumpDemo(step) { this.demoStep = step; this._renderDemoStep(); }
 
   _placeDemoTooltip(rect, preferredArrow) {
-    if (!this.demoTooltip || !rect) { this._placeDemoTooltipCenter(); return; }
-    if (window.innerWidth <= 760) { this._placeDemoTooltipCenter(); return; }
-
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const M  = 22;
-    const w  = Math.min(430, vw - M * 2);
-    const h  = Math.min(620, vh - M * 2);
-
-    this.demoTooltip.style.transform = '';
-    this.demoTooltip.style.width = w + 'px';
-    this.demoTooltip.style.maxHeight = h + 'px';
-    this.demoTooltip.style.overflowY = 'auto';
-    this.demoTooltip.style.bottom = 'auto';
+    if (!this.demoTooltip) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const mobile = vw <= 760;
+    const margin = mobile ? 10 : 18;
+    const width = mobile ? Math.max(280, vw - 20) : Math.min(430, vw - margin * 2);
+    const maxH = mobile ? Math.max(260, Math.round(vh * .62)) : Math.max(320, vh - margin * 2);
+    this.demoTooltip.style.width = width + 'px';
+    this.demoTooltip.style.maxWidth = `calc(100vw - ${margin * 2}px)`;
+    this.demoTooltip.style.maxHeight = maxH + 'px';
+    this.demoTooltip.style.transform = 'none';
+    this.demoTooltip.style.left = margin + 'px';
+    this.demoTooltip.style.top = margin + 'px';
     this.demoTooltip.style.right = 'auto';
+    this.demoTooltip.style.bottom = 'auto';
+    const panel = this.demoTooltip.firstElementChild;
+    if (panel) { panel.style.maxHeight = maxH + 'px'; panel.style.overflowY = 'auto'; }
+    const h = Math.min(Math.max(panel?.getBoundingClientRect().height || 360, 220), maxH);
 
-    const fits = {
-      below: rect.bottom + h + M < vh,
-      above: rect.top - h - M > 0,
-      right: rect.right + w + M < vw,
-      left: rect.left - w - M > 0,
-    };
-
-    let top, left, placed = false;
-    const tryDir = (dir) => {
-      if (dir === 'right' && fits.right) {
-        top = Math.max(M, Math.min(vh - h - M, rect.top + rect.height / 2 - h / 2));
-        left = rect.right + M;
-        return true;
-      }
-      if (dir === 'left' && fits.left) {
-        top = Math.max(M, Math.min(vh - h - M, rect.top + rect.height / 2 - h / 2));
-        left = rect.left - w - M;
-        return true;
-      }
-      if (dir === 'down' && fits.below) {
-        top = rect.bottom + M;
-        left = Math.max(M, Math.min(vw - w - M, rect.left + rect.width / 2 - w / 2));
-        return true;
-      }
-      if (dir === 'up' && fits.above) {
-        top = rect.top - h - M;
-        left = Math.max(M, Math.min(vw - w - M, rect.left + rect.width / 2 - w / 2));
-        return true;
-      }
-      return false;
-    };
-
-    const mapped = { down: 'down', up: 'up', right: 'right', left: 'left' };
-    if (preferredArrow) placed = tryDir(mapped[preferredArrow] || preferredArrow);
-
-    if (!placed) {
-      const order = rect.left < vw * 0.33 ? ['right', 'down', 'up', 'left']
-        : rect.right > vw * 0.66 ? ['left', 'down', 'up', 'right']
-        : ['down', 'right', 'left', 'up'];
-      for (const dir of order) {
-        if (tryDir(dir)) { placed = true; break; }
-      }
+    if (!rect) {
+      this.demoTooltip.style.left = Math.max(margin, (vw - width) / 2) + 'px';
+      this.demoTooltip.style.top = Math.max(margin, (vh - h) / 2) + 'px';
+      return;
     }
 
-    if (!placed) { this._placeDemoTooltipCenter(); return; }
+    if (mobile) {
+      const above = Math.max(0, rect.top - margin);
+      const below = Math.max(0, vh - rect.bottom - margin);
+      const placeAtTop = above >= h + 14 || (above >= below && rect.top > vh * .42);
+      this.demoTooltip.style.left = margin + 'px';
+      this.demoTooltip.style.top = (placeAtTop ? margin : Math.max(margin, vh - h - margin)) + 'px';
+      return;
+    }
 
-    this.demoTooltip.style.top = top + 'px';
-    this.demoTooltip.style.left = left + 'px';
+    const targetCx = rect.left + rect.width / 2;
+    const targetCy = rect.top + rect.height / 2;
+    const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+    const dirOrder = [];
+    if (preferredArrow) dirOrder.push(preferredArrow);
+    const fallback = rect.left < vw * .36 ? ['right','down','up','left'] : rect.right > vw * .64 ? ['left','down','up','right'] : ['down','up','right','left'];
+    fallback.forEach(d => { if (!dirOrder.includes(d)) dirOrder.push(d); });
+    const candidates = dirOrder.map(dir => {
+      let left = targetCx - width / 2, top = targetCy - h / 2;
+      if (dir === 'right') { left = rect.right + 18; top = targetCy - h / 2; }
+      if (dir === 'left')  { left = rect.left - width - 18; top = targetCy - h / 2; }
+      if (dir === 'down')  { left = targetCx - width / 2; top = rect.bottom + 18; }
+      if (dir === 'up')    { left = targetCx - width / 2; top = rect.top - h - 18; }
+      const rawLeft = left, rawTop = top;
+      left = clamp(left, margin, Math.max(margin, vw - width - margin));
+      top = clamp(top, margin, Math.max(margin, vh - h - margin));
+      const ix = Math.max(0, Math.min(left + width, rect.right) - Math.max(left, rect.left));
+      const iy = Math.max(0, Math.min(top + h, rect.bottom) - Math.max(top, rect.top));
+      const overlap = ix * iy;
+      const fits = rawLeft >= margin && rawTop >= margin && rawLeft + width <= vw - margin && rawTop + h <= vh - margin;
+      return { left, top, fits, overlap, dir };
+    });
+    const chosen = candidates.find(c => c.fits && c.overlap < width * h * .08) || candidates.find(c => c.fits) || candidates.sort((a,b) => a.overlap - b.overlap)[0];
+    this.demoTooltip.style.left = chosen.left + 'px';
+    this.demoTooltip.style.top = chosen.top + 'px';
   }
 
-  _placeDemoTooltipCenter() {
-    if (!this.demoTooltip) return;
-    const isMobile = window.innerWidth <= 760;
-    if (isMobile) {
-      Object.assign(this.demoTooltip.style, {
-        position: 'fixed', bottom: '0', left: '0', right: '0', top: 'auto',
-        transform: 'none', width: '100%', maxWidth: '100%',
-        borderRadius: '28px 28px 0 0', padding: '18px',
-        maxHeight: '76vh', overflowY: 'auto',
-      });
+  _drawDemoArrow(rect) {
+    const svg = this.demoArrowSvg, path = this.demoArrowPath;
+    if (!svg || !path || !rect) return;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    svg.setAttribute('viewBox', `0 0 ${vw} ${vh}`);
+    svg.setAttribute('width', String(vw));
+    svg.setAttribute('height', String(vh));
+    const card = this.demoTooltip.getBoundingClientRect();
+    const tx = rect.left + rect.width / 2, ty = rect.top + rect.height / 2;
+    const cx = card.left + card.width / 2, cy = card.top + card.height / 2;
+    const dx = tx - cx, dy = ty - cy;
+    let sx, sy, ex, ey;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      sx = dx > 0 ? card.right : card.left;
+      sy = Math.max(card.top + 24, Math.min(card.bottom - 24, ty));
+      ex = dx > 0 ? rect.left : rect.right;
+      ey = Math.max(rect.top + 8, Math.min(rect.bottom - 8, sy));
     } else {
-      const w = Math.min(440, window.innerWidth - 40);
-      Object.assign(this.demoTooltip.style, {
-        width: w + 'px', top: '50%', left: '50%',
-        transform: 'translate(-50%,-50%)', bottom: 'auto', right: 'auto',
-        maxHeight: (window.innerHeight - 44) + 'px', overflowY: 'auto',
-      });
+      sx = Math.max(card.left + 28, Math.min(card.right - 28, tx));
+      sy = dy > 0 ? card.bottom : card.top;
+      ex = Math.max(rect.left + 8, Math.min(rect.right - 8, sx));
+      ey = dy > 0 ? rect.top : rect.bottom;
     }
+    const bend = Math.max(36, Math.min(125, Math.hypot(ex - sx, ey - sy) * .34));
+    const c1x = sx + (Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) * bend : 0);
+    const c1y = sy + (Math.abs(dx) > Math.abs(dy) ? 0 : Math.sign(dy) * bend);
+    const c2x = ex - (Math.abs(dx) > Math.abs(dy) ? Math.sign(dx) * bend : 0);
+    const c2y = ey - (Math.abs(dx) > Math.abs(dy) ? 0 : Math.sign(dy) * bend);
+    path.setAttribute('d', `M ${sx.toFixed(1)} ${sy.toFixed(1)} C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${ex.toFixed(1)} ${ey.toFixed(1)}`);
+    path.setAttribute('marker-end', 'url(#svDemoArrowMarker)');
+    if (this.demoArrowDot) { this.demoArrowDot.setAttribute('cx', ex.toFixed(1)); this.demoArrowDot.setAttribute('cy', ey.toFixed(1)); }
+  }
+
+  _nextDemo() {
+    if (this.demoStep < DEMO_STEPS.length - 1) { this.demoStep++; this._renderDemoStep(); }
+  }
+
+  _prevDemo() {
+    if (this.demoStep > 0) { this.demoStep--; this._renderDemoStep(); }
+  }
+
+  _jumpDemo(step) {
+    const n = Math.max(0, Math.min(DEMO_STEPS.length - 1, Number(step) || 0));
+    this.demoStep = n;
+    this._renderDemoStep();
+  }
+
+  _finishDemoAndStart() {
+    if (!this._tourWizardOpened) {
+      this._openWizard();
+      this._tourWizardOpened = true;
+    }
+    this.wizardData.topic = '';
+    this.wizardStep = 1;
+    this._renderWizardStep();
+    this._closeDemo(true);
+    if (window.innerWidth > 760) setTimeout(() => this._el('wTopicInp')?.focus(), 180);
+  }
+
+  _closeDemo(keepWizard = false, force = false) {
+    if (this.demoCanvas) this.demoCanvas.style.display = 'none';
+    if (this.demoTooltip) this.demoTooltip.style.display = 'none';
+    if (this.demoArrowSvg) this.demoArrowSvg.style.display = 'none';
+    if (this.demoHalo) this.demoHalo.style.display = 'none';
+    this._qsa('.demo-highlighted').forEach(el => el.classList.remove('demo-highlighted'));
+
+    const state = this._tourState;
+    if (state && !keepWizard && !force) {
+      if (state.wizardWasOpen) {
+        this.wizardData = state.wizardData || this.wizardData;
+        this.wizardStep = state.wizardStep;
+        this.wizardFile = state.wizardFile || null;
+        this._renderWizardStep();
+        this._openModal('wizardModal');
+      } else if (this._tourWizardOpened) {
+        this._closeModal('wizardModal');
+      }
+    }
+    this._tourActive = false;
+    this._tourWizardOpened = false;
+
+    if (!keepWizard && !force && !state?.wizardWasOpen) {
+      const otherModalOpen = [...document.querySelectorAll('.modal-overlay')].some(m => getComputedStyle(m).display !== 'none');
+      if (!otherModalOpen) {
+        document.body.style.overflow = state?.bodyOverflow || '';
+        if (state?.hadModalClass) document.body.classList.add('sv-modal-open');
+        else document.body.classList.remove('sv-modal-open');
+      }
+    }
+    this._tourState = null;
   }
 
   // ─── MODAL SYSTEM ────────────────────────────────────────────────────────────
@@ -5216,7 +5455,8 @@ Examples:
     document.body.style.overflow = '';
     document.body.classList.remove('sv-modal-open');
     this._closeDropdown();
-    this._closeDemo();
+    this._closeDemo(false, true);
+    if (this._tourOfferOpen) this._closeTourOffer();
     this._closeLiveNotesModal();
   }
 
@@ -5437,7 +5677,7 @@ Examples:
     });
 
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { this._closeAllModals(); return; }
+      if (e.key === 'Escape') { if (this._tourOfferOpen) this._closeTourOffer(); this._closeAllModals(); return; }
       const tag = document.activeElement?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
 
@@ -5452,7 +5692,7 @@ Examples:
         }
       }
 
-      if (this.demoCanvas?.style.display !== 'none') {
+      if (this._tourActive) {
         if (e.key === 'ArrowRight') this._nextDemo();
         else if (e.key === 'ArrowLeft') this._prevDemo();
         return;
