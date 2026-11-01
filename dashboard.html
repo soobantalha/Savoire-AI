@@ -577,6 +577,7 @@ html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[da
           <span class="credit-sidebar-title">Credits</span>
           <span id="creditPlanBadge" class="welcome-badge">STARTER</span>
         </div>
+        <div id="mobilePlanStatus" aria-label="Plan and token status"></div>
         <div class="credit-balance" id="creditBalance" onclick="window.openCreditHistory && window.openCreditHistory()">10,000 <span>credits</span></div>
         <div class="credit-progress"><div class="credit-progress-fill" id="creditProgressFill"></div></div>
         <div class="credit-meta"><span id="creditUsed">Used 0</span><span id="creditRemaining">Left 10,000</span></div>
@@ -1505,8 +1506,8 @@ try {
     modal.innerHTML = `
       <div style="background:#0f172a;border:1px solid rgba(212,175,55,.3);border-radius:20px;padding:28px;max-width:400px;width:100%;text-align:center">
         <div style="font-size:2.2rem;margin-bottom:12px">🔋</div>
-        <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Tokens Khatam!</h3>
-        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your monthly credits finished. Top up with Popular - 1M for just Rs 99 via UPI.'}</p>
+        <h3 style="font-size:1.25rem;color:#f0d383;margin-bottom:8px">Credits Exhausted</h3>
+        <p style="color:#aab2cc;font-size:.88rem;margin-bottom:6px">${(data && data.message) || 'Your credits are exhausted. Top up with the Popular 1M pack for Rs 99 via UPI.'}</p>
         <p style="color:#6b7394;font-size:.75rem;margin-bottom:20px">Used: ${(data && data.tokens_used) || '--'} / ${(data && data.tokens_limit) || '10,000'}</p>
         <a href="#" onclick="event.preventDefault(); document.getElementById('paidUpgradeModal').remove(); window.openBuyCreditsModal && window.openBuyCreditsModal()" style="display:block;padding:14px;background:linear-gradient(135deg,#22d3ee,#1970ff);color:#fff;border-radius:12px;font-weight:800;text-decoration:none">Buy Credits — From Rs 19</a>
         <button onclick="document.getElementById('paidUpgradeModal').remove()" style="margin-top:12px;background:transparent;border:none;color:#6b7394;font-size:.85rem;cursor:pointer">Cancel</button>
@@ -2009,5 +2010,5 @@ window.performLogout = async function(){
 };
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a539d0392e41dc7f',t:'MTc5MzUyNDcxOQ=='};var l=window.parent.location,o;try{o=new URL(l.origin).origin}catch(e){try{o=new URL(new URL(l.href).origin).origin}catch(e){o=''}}var u='/cdn-cgi/challenge-platform/scripts/jsd/main.js?ray=a539d0392e41dc7f',a=document.createElement('script');a.src=o?new URL(u,o).href:u;document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

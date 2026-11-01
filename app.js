@@ -5540,3 +5540,73 @@ window.performLogout = async function(){
 window.openCreditHistory = function(){
   if (window._app && window._app._openCreditHistory) return window._app._openCreditHistory();
 };
+
+// On phones, move the live plan-expiry chip and token meter into the sidebar Credits card.
+(function installMobilePlanStatus(){
+  const styleId = 'sv-mobile-plan-status-style';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      html body #mobilePlanStatus { display:none !important; }
+      html body.sv-mobile-plan-status #mobilePlanStatus { display:flex !important; flex-direction:column !important; align-items:stretch !important; gap:8px !important; width:100% !important; margin:0 0 3px !important; }
+      html body.sv-mobile-plan-status #mobilePlanStatus #daysLeftChip { position:relative !important; inset:auto !important; transform:none !important; align-self:flex-start !important; display:inline-flex !important; width:max-content !important; max-width:100% !important; min-width:0 !important; height:36px !important; min-height:36px !important; margin:0 !important; padding:0 12px !important; gap:7px !important; border-radius:12px !important; background:linear-gradient(135deg,rgba(34,211,238,.13),rgba(59,130,246,.09)) !important; border:1px solid rgba(34,211,238,.28) !important; color:#A5F3FC !important; box-shadow:none !important; white-space:nowrap !important; }
+      html body.sv-mobile-plan-status #mobilePlanStatus #daysLeftChip::after { content:none !important; display:none !important; }
+      html body.sv-mobile-plan-status #mobilePlanStatus #tokenMeter { position:relative !important; inset:auto !important; transform:none !important; display:grid !important; grid-template-columns:18px minmax(0,1fr) !important; grid-template-rows:auto 5px !important; align-items:center !important; gap:6px 9px !important; width:100% !important; max-width:100% !important; min-width:0 !important; min-height:52px !important; margin:0 !important; padding:8px 10px !important; box-sizing:border-box !important; border-radius:13px !important; background:rgba(255,255,255,.045) !important; border:1px solid rgba(255,255,255,.13) !important; color:#DDE8F3 !important; font-size:.64rem !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.04) !important; }
+      html body.sv-mobile-plan-status #mobilePlanStatus #tokenMeter > i { grid-column:1 !important; grid-row:1 !important; color:#22D3EE !important; }
+      html body.sv-mobile-plan-status #mobilePlanStatus #tokenMeter #tokenCount { grid-column:2 !important; grid-row:1 !important; display:block !important; min-width:0 !important; justify-self:stretch !important; text-align:right !important; white-space:normal !important; overflow-wrap:anywhere !important; font-family:var(--font-mono,ui-monospace,monospace) !important; font-size:.62rem !important; line-height:1.2 !important; color:var(--ink-2,#CBD5E1) !important; }
+      html body.sv-mobile-plan-status #mobilePlanStatus #tokenMeter .token-track { grid-column:1/-1 !important; grid-row:2 !important; width:100% !important; height:5px !important; min-width:0 !important; background:rgba(255,255,255,.12) !important; border-radius:999px !important; }
+      html body.sv-mobile-plan-status #leftPanel #creditSidebar #creditBalance, html body.sv-mobile-plan-status #leftPanel #creditSidebar .credit-progress, html body.sv-mobile-plan-status #leftPanel #creditSidebar .credit-meta, html body.sv-mobile-plan-status #leftPanel #creditSidebar #creditPlanBadge { display:none !important; }
+      html body.sv-mobile-plan-status #leftPanel.mobile-open .user-profile-sidebar { margin-top:0 !important; }
+      html[data-theme="light"] body.sv-mobile-plan-status #mobilePlanStatus #tokenMeter { background:rgba(32,70,78,.045) !important; border-color:rgba(32,70,78,.16) !important; color:#213A43 !important; }
+      html[data-theme="light"] body.sv-mobile-plan-status #mobilePlanStatus #tokenMeter #tokenCount { color:#263F48 !important; }
+      html[data-theme="golden"] body.sv-mobile-plan-status #mobilePlanStatus #daysLeftChip { background:linear-gradient(135deg,rgba(236,72,153,.14),rgba(168,85,247,.09)) !important; border-color:rgba(236,72,153,.30) !important; color:#F9A8D4 !important; }
+      html[data-theme="golden"] body.sv-mobile-plan-status #mobilePlanStatus #tokenMeter { background:rgba(236,72,153,.06) !important; border-color:rgba(236,72,153,.19) !important; color:#FCE7F3 !important; }
+    `;
+    (document.head || document.documentElement).appendChild(style);
+  }
+
+  function mount(){
+    const days = document.getElementById('daysLeftChip');
+    const meter = document.getElementById('tokenMeter');
+    const host = document.getElementById('mobilePlanStatus');
+    if (!days || !meter || !host) return;
+
+    let daysMarker = days.__svHomeMarker;
+    if (!daysMarker) {
+      daysMarker = document.createComment('daysLeftChip home position');
+      days.parentNode.insertBefore(daysMarker, days);
+      days.__svHomeMarker = daysMarker;
+    }
+    let meterMarker = meter.__svHomeMarker;
+    if (!meterMarker) {
+      meterMarker = document.createComment('tokenMeter home position');
+      meter.parentNode.insertBefore(meterMarker, meter);
+      meter.__svHomeMarker = meterMarker;
+    }
+
+    function applyLayout(){
+      const mobile = window.matchMedia ? window.matchMedia('(max-width: 1024px)').matches : window.innerWidth <= 1024;
+      document.body.classList.toggle('sv-mobile-plan-status', mobile);
+      if (mobile) {
+        if (days.parentNode !== host) host.appendChild(days);
+        if (meter.parentNode !== host) host.appendChild(meter);
+      } else {
+        if (daysMarker.parentNode) daysMarker.parentNode.insertBefore(days, daysMarker.nextSibling);
+        if (meterMarker.parentNode) meterMarker.parentNode.insertBefore(meter, meterMarker.nextSibling);
+      }
+    }
+    let resizeFrame = 0;
+    const schedule = () => {
+      if (resizeFrame) cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => { resizeFrame = 0; applyLayout(); });
+    };
+    applyLayout();
+    window.addEventListener('resize', schedule, {passive:true});
+    window.addEventListener('orientationchange', schedule, {passive:true});
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', schedule, {passive:true});
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once:true});
+  else mount();
+})();

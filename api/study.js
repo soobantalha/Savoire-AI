@@ -1119,7 +1119,7 @@ module.exports = async function handler(req, res) {
       if (remaining < 500) {
         return res.status(402).json({
           error: 'TOKEN_EXHAUSTED',
-          message: `Tokens finished! Used ${firebaseUserData.totalUsed||0}/${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Top up with Popular - 1M for just Rs 99`,
+          message: `Your credits are exhausted. Used ${firebaseUserData.totalUsed||0} of ${(firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0)}. Top up with the Popular 1M pack for Rs 99.`, 
           tokens_used: firebaseUserData.totalUsed||0,
           tokens_limit: (firebaseUserData.balance||0)+(firebaseUserData.totalUsed||0),
           tokens_remaining: remaining,
