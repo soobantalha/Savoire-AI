@@ -13604,3 +13604,53 @@ html body #leftPanel.left-panel::-webkit-scrollbar-thumb {
   background: rgba(148,163,184,.30) !important;
   border-radius: 999px !important;
 }
+
+/* Result tabs should scroll away with the content; avoid the oversized pinned slab. */
+html body #resultArea .result-nav {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  width: 100% !important;
+  margin: 8px 0 16px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-theme="light"] body #resultArea .result-nav,
+html[data-theme="golden"] body #resultArea .result-nav {
+  position: static !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Clear, tappable Open PDF action in the result export row. */
+html body #resultArea .exp-btn.open-pdf {
+  color: #06251B !important;
+  background: linear-gradient(115deg,#A7F3D0,#34D399 58%,#06B6D4) !important;
+  border-color: rgba(52,211,153,.42) !important;
+  box-shadow: 0 6px 18px rgba(16,185,129,.17),inset 0 1px 0 rgba(255,255,255,.30) !important;
+}
+html body #resultArea .exp-btn.open-pdf:hover,
+html body #resultArea .exp-btn.open-pdf:focus-visible {
+  color: #04251B !important;
+  background: linear-gradient(115deg,#BBF7D0,#6EE7B7 58%,#22D3EE) !important;
+  border-color: rgba(52,211,153,.7) !important;
+}
+html[data-theme="golden"] body #resultArea .exp-btn.open-pdf {
+  color: #FFF6F7 !important;
+  background: linear-gradient(115deg,#713744,#A84E64 58%,#C56B83) !important;
+  border-color: rgba(232,137,155,.36) !important;
+}
+html[data-theme="golden"] body #resultArea .exp-btn.open-pdf:hover,
+html[data-theme="golden"] body #resultArea .exp-btn.open-pdf:focus-visible {
+  color: #FFF6F7 !important;
+  background: linear-gradient(115deg,#8B4055,#B85A72 58%,#D27A91) !important;
+  border-color: rgba(255,185,196,.52) !important;
+}

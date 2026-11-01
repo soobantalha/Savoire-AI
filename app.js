@@ -2236,8 +2236,11 @@ Examples:
 
     const exportBar = `
       <div class="export-bar">
-        <button class="exp-btn pdf" onclick="window._app._downloadPDF()">
+        <button type="button" class="exp-btn pdf" onclick="window._app._downloadPDF()" title="Download the study PDF">
           <i class="fas fa-file-pdf"></i><span>Download</span>
+        </button>
+        <button type="button" class="exp-btn open-pdf" id="openPdfResultBtn" onclick="window._app._openPdfAction()" title="Open this study as a PDF">
+          <i class="fas fa-arrow-up-right-from-square"></i><span>Open PDF</span>
         </button>
         <button class="exp-btn copy" onclick="window._app._copyResult()">
           <i class="fas fa-copy"></i><span>Copy</span>
@@ -3051,18 +3054,44 @@ Examples:
   }
 
   // ─── WORLD-CLASS PDF GENERATION ─────────────────────────────────────────────
-  // Keep a temporary PDF blob so users can open the just-downloaded file from the toolbar.
-  _rememberGeneratedPdf(doc, filename) {
+  // Keep a PDF blob URL and expose a user-gesture-safe viewer action for iPhone/Safari.
+  _rememberGeneratedPdf(doc, filename, sourceData = this.currentData) {
     try {
       const URLApi = window.URL || URL;
-      if (!doc || !URLApi || typeof URLApi.createObjectURL !== 'function') return false;
-      const blob = doc.output('blob');
-      if (!blob) return false;
+      if (!doc || !URLApi || typeof URLApi.createObjectURL !== 'function') {
+        this._closePendingPdfWindow();
+        return false;
+      }
+      let blob = null;
+      try { blob = doc.output('blob'); } catch (e) {}
+      if ((!blob || !blob.size) && typeof Blob === 'function') {
+        try { blob = new Blob([doc.output('arraybuffer')], { type: 'application/pdf' }); } catch (e) {}
+      }
+      if (!blob || !blob.size) {
+        this._closePendingPdfWindow();
+        return false;
+      }
 
       const previousUrl = this._lastPdfUrl;
       this._lastPdfUrl = URLApi.createObjectURL(blob);
       this._lastPdfFilename = filename || 'Savoiré AI study material.pdf';
+      this._lastPdfData = sourceData;
+      this._pdfOpenPreparing = false;
       if (previousUrl) window.setTimeout(() => { try { URLApi.revokeObjectURL(previousUrl); } catch (e) {} }, 300000);
+
+      const pendingWindow = this._pendingPdfWindow;
+      this._pendingPdfWindow = null;
+      if (pendingWindow && !pendingWindow.closed) {
+        try { pendingWindow.location.replace(this._lastPdfUrl); }
+        catch (e) { try { pendingWindow.location.href = this._lastPdfUrl; } catch (ignore) {} }
+      }
+
+      const label = 'Open the latest PDF: ' + this._lastPdfFilename;
+      const resultButton = document.getElementById('openPdfResultBtn');
+      if (resultButton) {
+        resultButton.title = 'Open the latest PDF in a new tab: ' + this._lastPdfFilename;
+        resultButton.setAttribute('aria-label', label);
+      }
 
       const toolbar = this.el.outToolbar || document.getElementById('outToolbar');
       if (!toolbar) return true;
@@ -3077,10 +3106,10 @@ Examples:
         const icon = document.createElement('i');
         icon.className = 'fas fa-arrow-up-right-from-square';
         icon.setAttribute('aria-hidden', 'true');
-        const label = document.createElement('span');
-        label.textContent = 'Open PDF';
-        button.append(icon, label);
-        button.addEventListener('click', e => { e.preventDefault(); this._openGeneratedPdf(); });
+        const text = document.createElement('span');
+        text.textContent = 'Open PDF';
+        button.append(icon, text);
+        button.addEventListener('click', e => { e.preventDefault(); this._openPdfAction(); });
       }
       const downloadButton = document.getElementById('pdfBtn');
       if (downloadButton && downloadButton.parentElement === toolbar) downloadButton.insertAdjacentElement('afterend', button);
@@ -3088,28 +3117,68 @@ Examples:
       button.hidden = false;
       button.dataset.ready = 'true';
       button.title = 'Open the latest PDF in a new tab: ' + this._lastPdfFilename;
-      button.setAttribute('aria-label', 'Open the latest PDF: ' + this._lastPdfFilename);
+      button.setAttribute('aria-label', label);
       return true;
     } catch (err) {
+      this._closePendingPdfWindow();
       console.warn('Could not prepare the PDF open action:', err);
       return false;
     }
   }
 
-  _openGeneratedPdf() {
-    if (!this._lastPdfUrl) {
-      this._toast('info', 'fa-info-circle', 'Download a PDF first.');
+  _closePendingPdfWindow() {
+    const pendingWindow = this._pendingPdfWindow;
+    this._pendingPdfWindow = null;
+    this._pdfOpenPreparing = false;
+    try { if (pendingWindow && !pendingWindow.closed) pendingWindow.close(); } catch (e) {}
+  }
+
+  _openPdfAction() {
+    if (!this.currentData) {
+      this._toast('info', 'fa-info-circle', 'Generate study material first.');
       return;
     }
-    const link = document.createElement('a');
-    link.href = this._lastPdfUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.setAttribute('aria-label', 'Open ' + (this._lastPdfFilename || 'PDF'));
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    if (this._pendingPdfWindow && this._pendingPdfWindow.closed) this._pendingPdfWindow = null;
+    if (this._pdfOpenPreparing) {
+      this._toast('info', 'fa-spinner fa-pulse', 'Your PDF is already being prepared.');
+      return;
+    }
+
+    if (this._lastPdfUrl && this._lastPdfData === this.currentData) {
+      let viewer = null;
+      try { viewer = window.open(this._lastPdfUrl, '_blank'); } catch (e) {}
+      if (viewer) { try { viewer.opener = null; } catch (e) {} return; }
+
+      // Fallback for browsers that allow anchor navigation but return no WindowProxy.
+      const link = document.createElement('a');
+      link.href = this._lastPdfUrl;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.setAttribute('aria-label', 'Open ' + (this._lastPdfFilename || 'PDF'));
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return;
+    }
+
+    // Reserve the tab synchronously inside the tap; Safari blocks tabs opened after async PDF work.
+    this._pdfOpenPreparing = true;
+    let pendingWindow = null;
+    try { pendingWindow = window.open('about:blank', '_blank'); } catch (e) {}
+    if (pendingWindow && !pendingWindow.closed) {
+      this._pendingPdfWindow = pendingWindow;
+      try {
+        pendingWindow.document.open();
+        pendingWindow.document.write('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Preparing PDF</title></head><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1020;color:#e8eef8;font:600 16px system-ui,sans-serif"><main style="text-align:center;padding:24px">Preparing your PDF…<br><small style="display:block;margin-top:8px;opacity:.65">This tab will open the PDF when it is ready.</small></main></body></html>');
+        pendingWindow.document.close();
+      } catch (e) {}
+    } else {
+      this._toast('info', 'fa-info-circle', 'Preparing PDF. If Safari blocks the tab, tap Open PDF again when it is ready.');
+    }
+    this._downloadPDF();
   }
+
+  _openGeneratedPdf() { return this._openPdfAction(); }
 
   async _downloadPDF(mode = null) {
     try {
@@ -3131,7 +3200,7 @@ Examples:
         sc.onerror  = () => { this._toast('error', 'fa-times', 'Could not load PDF library.'); resolve(); };
         document.head.appendChild(sc);
       });
-      if (!window.jspdf?.jsPDF) return;
+      if (!window.jspdf?.jsPDF) { this._closePendingPdfWindow(); return; }
     }
     const fontData = await this._ensurePdfUnicodeFont();
 
@@ -3159,6 +3228,7 @@ Examples:
     if (this._needsShapedPdf(data)) await this._generatePdfFromHtml(data, this.pdfTheme, pack);
     else this._generatePDF(data, this.pdfTheme, fontData, pack);
     } catch (err) {
+      this._closePendingPdfWindow();
       console.error('PDF download failed', err);
       this._toast('error', 'fa-times', 'Download failed. Try again.');
     }
@@ -3214,7 +3284,7 @@ Examples:
     modal.className = 'download-choice-overlay';
     modal.innerHTML = `
       <div class="download-choice-modal">
-        <button class="download-choice-close" aria-label="Close" onclick="document.getElementById('downloadChoiceModal')?.remove()">
+        <button class="download-choice-close" aria-label="Close" onclick="window._app?._closePendingPdfWindow(); document.getElementById('downloadChoiceModal')?.remove()">
           <i class="fas fa-times"></i>
         </button>
         <div class="download-choice-badge">PREMIUM DOWNLOAD</div>
@@ -3233,7 +3303,9 @@ Examples:
           </button>
         </div>
       </div>`;
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) { this._closePendingPdfWindow(); modal.remove(); }
+    });
     document.body.appendChild(modal);
   }
 
@@ -3321,8 +3393,8 @@ Examples:
       const safe = (data.topic || 'Study').replace(/[^\w\s]/g, '').replace(/\s+/g, '_').slice(0, 40);
       const filename = `SavoireAI_${safe}_${new Date().toISOString().slice(0,10)}_${options.fileSuffix||'notes'}.pdf`;
       doc.save(filename);
-      this._rememberGeneratedPdf(doc, filename);
-      this._toast('success', 'fa-file-pdf', `PDF ready — ${doc.getNumberOfPages()} pages`);
+      this._rememberGeneratedPdf(doc, filename, data);
+      this._toast('success', 'fa-file-pdf', `PDF ready — ${doc.getNumberOfPages()} pages. Tap Open PDF to view.`);
     } finally {
       wrap.remove();
     }
@@ -3600,11 +3672,12 @@ Examples:
       const suffix = options.fileSuffix ? `_${options.fileSuffix}` : `_${useDark ? 'dark' : 'light'}`;
       const filename = `SavoireAI_${safeName}_${dateStr}${suffix}.pdf`;
       doc.save(filename);
-      this._rememberGeneratedPdf(doc, filename);
-      this._toast('success', 'fa-file-pdf', `PDF ready — ${total} pages`);
+      this._rememberGeneratedPdf(doc, filename, data);
+      this._toast('success', 'fa-file-pdf', `PDF ready — ${total} pages. Tap Open PDF to view.`);
     } catch (err) {
+      this._closePendingPdfWindow();
       console.error('PDF error:', err);
-      this._toast('error', 'fa-times', `PDF failed: ${err.message.slice(0, 60)}`);
+      this._toast('error', 'fa-times', `PDF failed: ${(err.message || 'unknown error').slice(0, 60)}`);
     }
   }
 
