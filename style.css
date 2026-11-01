@@ -12372,3 +12372,19 @@ html[data-theme="dark"] body #emptyState .es-feat-chip.active-detail { box-shado
 @media (prefers-reduced-motion: reduce) {
   html[data-theme="dark"] body:has(.hero-headline) .hero-headline .accent { animation: none !important; }
 }
+
+/* Final neon depth: very fine CRT-like linework from the reference, layered
+   over black obsidian with controlled Aurora blooms. No structural changes. */
+:root,
+html[data-theme="dark"],
+body[data-theme="dark"],
+html[data-theme="dark"] body,
+html[data-theme="dark"] body[data-theme="dark"] {
+  --canvas:
+    repeating-linear-gradient(180deg,rgba(248,250,252,.014) 0,rgba(248,250,252,.014) 1px,transparent 1px,transparent 4px),
+    radial-gradient(1000px 640px at 13% -8%,rgba(0,217,255,.105),transparent 65%),
+    radial-gradient(920px 680px at 100% 18%,rgba(99,102,241,.095),transparent 66%),
+    radial-gradient(820px 560px at 72% 100%,rgba(168,85,247,.075),transparent 68%),
+    radial-gradient(640px 480px at 46% 52%,rgba(59,130,246,.035),transparent 72%),
+    linear-gradient(135deg,#05060D 0%,#05060D 70%,#070A14 100%);
+}
