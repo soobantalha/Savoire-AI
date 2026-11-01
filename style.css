@@ -196,6 +196,7 @@ html[data-theme="golden"] {
 }
 
 /* ═══ FONT SIZE SCALE ═══ */
+html[data-font="xs-1"]   { font-size: 10px; }
 html[data-font="xs"]     { font-size: 13px; }
 html[data-font="small"]  { font-size: 15px; }
 html[data-font="medium"] { font-size: 16px; }
@@ -13578,4 +13579,28 @@ html body #leftPanel .user-tagline-sidebar {
 }
 @media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
   html body #leftPanel.left-panel { transition: none !important; will-change: auto !important; }
+}
+
+/* One vertical scroll surface for the complete sidebar (profile, menu and footer). */
+html body #leftPanel.left-panel {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  scroll-behavior: auto !important;
+  scrollbar-gutter: stable !important;
+}
+html body #leftPanel.left-panel > #sbScroll.sb-scroll-area {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  scroll-behavior: auto !important;
+}
+html body #leftPanel.left-panel::-webkit-scrollbar { width: 4px !important; }
+html body #leftPanel.left-panel::-webkit-scrollbar-thumb {
+  background: rgba(148,163,184,.30) !important;
+  border-radius: 999px !important;
 }

@@ -345,6 +345,7 @@ class SavoireApp {
     this._liveMMConns   = [];
 
     this._cacheEl();
+    this._ensureSidebarScroll();
     this._applyPrefs();
     this._bindAll();
     this._initWelcome();
@@ -654,6 +655,31 @@ class SavoireApp {
       'featureDetailPanel','particleCanvas','toastContainer',
     ];
     IDS.forEach(id => { this.el[id] = g(id); });
+  }
+
+  _ensureSidebarScroll() {
+    const sidebar = this.el.leftPanel;
+    if (!sidebar) return;
+
+    // Use the sidebar itself as the single scroll container. Nested flex scrollers
+    // can swallow touch scrolls on mobile, leaving the name/profile and footer stranded.
+    const important = (element, property, value) => element.style.setProperty(property, value, 'important');
+    important(sidebar, 'overflow-x', 'hidden');
+    important(sidebar, 'overflow-y', 'auto');
+    important(sidebar, '-webkit-overflow-scrolling', 'touch');
+    important(sidebar, 'overscroll-behavior-y', 'contain');
+    important(sidebar, 'touch-action', 'pan-y');
+    important(sidebar, 'scroll-behavior', 'auto');
+
+    const middle = document.getElementById('sbScroll') || sidebar.querySelector('.sb-scroll-area');
+    if (middle) {
+      important(middle, 'flex', '0 0 auto');
+      important(middle, 'height', 'auto');
+      important(middle, 'min-height', 'auto');
+      important(middle, 'max-height', 'none');
+      important(middle, 'overflow', 'visible');
+      important(middle, 'scroll-behavior', 'auto');
+    }
   }
 
   _recacheDynamic() {
@@ -4188,7 +4214,17 @@ Examples:
   }
 
   _setFontSize(size) {
-    document.documentElement.setAttribute('data-font', size);
+    const root = document.documentElement;
+    const fontPx = { 'xs-1': 10, xs: 13, small: 15, medium: 16, large: 18, xlarge: 20 }[size];
+    root.setAttribute('data-font', size);
+    // Apply to both root/rem sizing and inherited body text; the linked stylesheet may be a sibling copy.
+    if (Number.isFinite(fontPx)) {
+      root.style.fontSize = `${fontPx}px`;
+      if (document.body) document.body.style.fontSize = `${fontPx}px`;
+    } else {
+      root.style.removeProperty('font-size');
+      if (document.body) document.body.style.removeProperty('font-size');
+    }
     this._qsa('.font-sz').forEach(b => b.classList.toggle('active', b.dataset.size === size));
     this.prefs.fontSize = size;
     this._save('sv_prefs', this.prefs);
