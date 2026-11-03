@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<title>Cyber Stack · Savoiré AI School Carnival</title>
+<style>
+  :root{color-scheme:dark;--bg:#05070d;--panel:#0b101b;--line:rgba(255,255,255,.10);--text:#f6f7fb;--muted:#a7afc1;--cyan:#34f5ff;--pink:#ff3eb5;--gold:#f6d278;--green:#82ffbd;--danger:#ff638c}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 50% 2%,rgba(14,73,87,.24),transparent 40%),radial-gradient(ellipse at 100% 100%,rgba(106,21,87,.18),transparent 40%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  body{min-height:100dvh;display:grid;place-items:center;padding:8px;overflow:hidden}
+  button,input{font:inherit}
+  button{touch-action:manipulation}
+  .game-shell{position:relative;isolation:isolate;width:min(100vw - 16px,430px,56.25dvh);aspect-ratio:9/16;max-height:calc(100dvh - 16px);display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(87,245,255,.22);border-radius:30px;background:linear-gradient(160deg,rgba(14,21,35,.96),rgba(5,8,15,.98));box-shadow:0 35px 100px rgba(0,0,0,.56),0 0 55px rgba(30,224,239,.08),inset 0 1px 0 rgba(255,255,255,.08)}
+  .game-shell:before{content:"";position:absolute;inset:-1px;z-index:-1;border-radius:inherit;background:linear-gradient(140deg,rgba(52,245,255,.22),transparent 35%,rgba(255,62,181,.16));opacity:.6;pointer-events:none}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(13px,4vw,19px) clamp(15px,4.5vw,22px) 8px}
+  .brand{display:flex;align-items:center;gap:10px;min-width:0}
+  .brand-mark{width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(52,245,255,.35);border-radius:13px;color:var(--cyan);background:linear-gradient(145deg,rgba(52,245,255,.14),rgba(255,62,181,.08));box-shadow:0 0 24px rgba(52,245,255,.12);font-weight:900;font-size:1.05rem}
+  .eyebrow{display:block;color:var(--cyan);font-size:.58rem;font-weight:850;letter-spacing:.2em;text-transform:uppercase}
+  h1{margin:3px 0 0;font-size:clamp(1.05rem,5vw,1.35rem);line-height:1;letter-spacing:-.04em}
+  .round-link{flex:none;display:inline-grid;place-items:center;width:36px;height:36px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.035)}
+  .subhead{margin:0;padding:0 clamp(15px,4.5vw,22px) 12px;color:var(--muted);font-size:.72rem;letter-spacing:.015em}
+  .hud{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin:0 14px;padding:10px 12px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.035);box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+  .hud-label{display:block;margin-bottom:3px;color:var(--muted);font-size:.55rem;font-weight:850;letter-spacing:.15em;text-transform:uppercase}
+  .hud-value{font-size:1rem;font-weight:850;letter-spacing:.02em}
+  .hud-value strong{color:var(--cyan)}
+  .lives{font-size:1rem;letter-spacing:.13em;white-space:nowrap;color:#ff5f92;text-shadow:0 0 12px rgba(255,95,146,.34)}
+  .scene{position:relative;flex:1;min-height:150px;margin:12px 13px 7px;overflow:hidden;border:1px solid rgba(52,245,255,.13);border-radius:20px;background:radial-gradient(ellipse at 50% 95%,rgba(37,128,151,.15),transparent 58%),linear-gradient(180deg,rgba(10,16,28,.84),rgba(4,7,13,.98))}
+  .scene:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 24%,transparent 78%,rgba(52,245,255,.035));pointer-events:none}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  .tap-hint{min-height:22px;text-align:center;color:var(--muted);font-size:.65rem;letter-spacing:.035em}
+  .tap-hint b{color:var(--cyan)}
+  .controls{display:flex;gap:9px;padding:6px 14px 15px}
+  .btn{min-height:46px;border:0;border-radius:14px;padding:0 17px;font-weight:850;cursor:pointer;transition:transform .16s ease,filter .16s ease,box-shadow .16s ease}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{flex:1;color:#061014;background:linear-gradient(100deg,var(--cyan),#9affdc);box-shadow:0 9px 26px rgba(52,245,255,.17)}
+  .btn-secondary{color:var(--text);border:1px solid var(--line);background:rgba(255,255,255,.055)}
+  .footer{padding:0 12px 12px;text-align:center;color:#667186;font-size:.55rem;letter-spacing:.05em}
+  .footer a{color:#7eeaf1;text-decoration:none}
+  .overlay{position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:18px;background:rgba(3,5,12,.74);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .overlay[hidden]{display:none!important}
+  .dialog{position:relative;width:min(100%,360px);max-height:100%;overflow:auto;padding:24px 21px 20px;border:1px solid rgba(52,245,255,.23);border-radius:23px;background:radial-gradient(ellipse at 95% 0%,rgba(52,245,255,.13),transparent 46%),linear-gradient(150deg,#121a2a,#080c15);box-shadow:0 25px 80px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.08);text-align:center;animation:rise .38s cubic-bezier(.2,.75,.25,1) both}
+  .dialog .icon{display:grid;place-items:center;width:54px;height:54px;margin:0 auto 14px;border:1px solid rgba(52,245,255,.25);border-radius:17px;background:rgba(52,245,255,.085);color:var(--cyan);font-size:1.4rem;box-shadow:0 0 28px rgba(52,245,255,.12)}
+  .dialog .tag{color:var(--cyan);font-size:.57rem;font-weight:900;letter-spacing:.19em;text-transform:uppercase}
+  .dialog h2{margin:9px 0 9px;font-size:1.45rem;line-height:1.1;letter-spacing:-.04em}
+  .dialog p{margin:0 0 16px;color:var(--muted);font-size:.78rem;line-height:1.55}
+  .name-input{width:100%;height:46px;margin:0 0 10px;padding:0 13px;border:1px solid rgba(255,255,255,.13);border-radius:12px;outline:none;background:rgba(0,0,0,.22);color:var(--text);font-size:.86rem}
+  .name-input:focus{border-color:rgba(52,245,255,.6);box-shadow:0 0 0 3px rgba(52,245,255,.09)}
+  .reward{margin:14px 0;padding:13px;border:1px solid rgba(246,210,120,.23);border-radius:15px;background:linear-gradient(135deg,rgba(246,210,120,.095),rgba(52,245,255,.045));color:var(--gold);font-size:.82rem;font-weight:850;line-height:1.45}
+  .code-box{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0;padding:12px 10px;border:1px dashed rgba(52,245,255,.5);border-radius:13px;background:rgba(52,245,255,.06);color:#eaffff;font-size:clamp(.92rem,4.3vw,1.15rem);font-weight:950;letter-spacing:.1em;overflow-wrap:anywhere}
+  .code-box[hidden]{display:none!important}
+  .status{min-height:20px;margin:8px 0;color:var(--muted);font-size:.68rem;line-height:1.45}
+  .status.error{color:#ff9bad}.status.success{color:#9bffd0}
+  .tiny-link{display:inline-block;margin-top:8px;color:#8deff4;text-decoration:none;font-size:.7rem;font-weight:750}
+  .loading-dot{display:inline-block;width:7px;height:7px;margin-right:3px;border-radius:50%;background:var(--cyan);animation:pulse .8s ease-in-out infinite alternate}
+  .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @keyframes rise{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
+  @keyframes pulse{to{opacity:.35;transform:scale(.7)}}
+  @media(max-height:680px){.subhead{padding-bottom:7px}.hud{padding:8px 10px}.scene{margin-top:8px;margin-bottom:4px}.controls{padding-bottom:9px}.footer{padding-bottom:7px}.dialog{padding:18px 17px}}
+  @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main class="game-shell" aria-label="Cyber Stack school carnival game">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark" aria-hidden="true">S✦</div><div><span class="eyebrow">Savoiré AI · School Carnival</span><h1>Cyber Stack</h1></div></div>
+    <a class="round-link" href="/dashboard.html" aria-label="Back to Savoiré AI">↗</a>
+  </header>
+  <p class="subhead">Stack six clean drops. Misses cost a life. Win the Starter pack.</p>
+  <section class="hud" aria-label="Game status">
+    <div><span class="hud-label">Stacked</span><div class="hud-value"><strong id="stackedCount">0</strong> / 6</div></div>
+    <div style="text-align:right"><span class="hud-label">Lives</span><div id="livesDisplay" class="lives" aria-label="5 lives">♥♥♥♥♥</div></div>
+  </section>
+  <div class="scene" id="scene"><canvas id="gameCanvas" aria-label="Moving stack blocks. Tap the screen to drop a block."></canvas></div>
+  <div class="tap-hint" id="tapHint">Tap the scene or press <b>SPACE</b> to drop</div>
+  <div class="controls"><button type="button" class="btn btn-primary" id="dropBtn">DROP BLOCK</button><button type="button" class="btn btn-secondary" id="resetBtn" aria-label="Restart game">↻</button></div>
+  <footer class="footer">A school-carnival reward · <a href="/dashboard.html">Savoiré AI</a></footer>
+
+  <section class="overlay" id="startOverlay" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+    <div class="dialog">
+      <div class="icon" aria-hidden="true">▰</div><div class="tag">Easy mode · 5 lives</div>
+      <h2 id="startTitle">Build your stack.</h2>
+      <p>Place six blocks on the tower. A complete miss costs one life; keep your eyes on the moving edge.</p>
+      <label class="sr-only" for="playerName">Your name</label>
+      <input class="name-input" id="playerName" maxlength="48" autocomplete="name" placeholder="Your name" required>
+      <button class="btn btn-primary" id="startBtn" type="button" style="width:100%">START PLAYING</button>
+      <div class="status" id="authNotice" aria-live="polite"></div>
+      <a class="tiny-link" href="/login.html">Need to sign in to Savoiré AI?</a>
+    </div>
+  </section>
+
+  <section class="overlay" id="resultOverlay" role="dialog" aria-modal="true" aria-labelledby="resultTitle" hidden>
+    <div class="dialog">
+      <div class="icon" id="resultIcon" aria-hidden="true">✦</div><div class="tag" id="resultTag">CARNIVAL RESULT</div>
+      <h2 id="resultTitle">Nice stack!</h2>
+      <p id="resultMessage"></p>
+      <div class="reward" id="rewardLine" hidden>You won a ₹19 Starter Pack!<br>100,000 AI Credits.</div>
+      <div class="code-box" id="couponCodeBox" hidden><span id="couponCode"></span></div>
+      <button type="button" class="btn btn-secondary" id="copyCodeBtn" hidden>Copy code</button>
+      <div class="status" id="resultStatus" aria-live="polite"></div>
+      <a class="tiny-link" id="redeemLink" href="/dashboard.html" hidden>Go to Savoiré AI to redeem →</a>
+      <button class="btn btn-primary" id="tryAgainBtn" type="button" style="width:100%;margin-top:14px">TRY AGAIN</button>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const TARGET = 6, START_LIVES = 5, BASE_RATIO = .58, BLOCK_H = 23;
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const scene = document.getElementById('scene');
+  const startOverlay = document.getElementById('startOverlay');
+  const resultOverlay = document.getElementById('resultOverlay');
+  const playerName = document.getElementById('playerName');
+  const authNotice = document.getElementById('authNotice');
+  const stackedCount = document.getElementById('stackedCount');
+  const livesDisplay = document.getElementById('livesDisplay');
+  const tapHint = document.getElementById('tapHint');
+  const dropBtn = document.getElementById('dropBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  let width = 320, height = 420, dpr = 1, raf = 0, lastFrame = 0;
+  let state = 'intro';
+  let stacked = 0, lives = START_LIVES, tower = [], moving = null, player = '';
+  let requestBusy = false;
+  const colors = ['#34f5ff','#58f7cf','#f6d278','#ff71c7','#9e8bff','#8fff97'];
+
+  function getToken(){ try{return localStorage.getItem('sv_firebase_token')||'';}catch(e){return '';} }
+  function resizeCanvas(){
+    const r=scene.getBoundingClientRect();
+    if(r.width<40||r.height<40)return;
+    width=r.width;height=r.height;dpr=Math.min(2,window.devicePixelRatio||1);
+    canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  function roundedRect(c,x,y,w,h,r){
+    const rr=Math.max(0,Math.min(r,w/2,h/2));
+    c.beginPath();c.moveTo(x+rr,y);c.arcTo(x+w,y,x+w,y+h,rr);c.arcTo(x+w,y+h,x,y+h,rr);c.arcTo(x,y+h,x,y,rr);c.arcTo(x,y,x+w,y,rr);c.closePath();
+  }
+  function baseGeometry(){
+    const baseW=width*BASE_RATIO, baseX=(width-baseW)/2, baseY=height-32-BLOCK_H;
+    return {x:baseX,y:baseY,w:baseW,h:BLOCK_H,color:'#f6d278'};
+  }
+  function updateHud(){
+    stackedCount.textContent=String(stacked);
+    livesDisplay.textContent='♥'.repeat(lives)+'♡'.repeat(START_LIVES-lives);
+    livesDisplay.setAttribute('aria-label',lives+' '+(lives===1?'life':'lives')+' remaining');
+  }
+  function resetGame(){
+    cancelAnimationFrame(raf);raf=0;lastFrame=0;
+    stacked=0;lives=START_LIVES;tower=[];moving=null;requestBusy=false;
+    updateHud();resultOverlay.hidden=true;startOverlay.hidden=true;state='playing';tapHint.innerHTML='Tap the scene or press <b>SPACE</b> to drop';
+    createMovingBlock();draw();raf=requestAnimationFrame(tick);
+  }
+  function createMovingBlock(){
+    const previous=tower.length?tower[tower.length-1]:baseGeometry();
+    const w=previous.w;const dir=stacked%2===0?1:-1;
+    moving={x:dir>0?8:width-w-8,y:previous.y-BLOCK_H,w,h:BLOCK_H,dir,speed:50+stacked*8,color:colors[stacked%colors.length]};
+  }
+  function draw(){
+    if(!ctx||width<40||height<40)return;
+    ctx.clearRect(0,0,width,height);
+    // Fine neon grid and a soft horizon glow.
+    ctx.save();ctx.strokeStyle='rgba(110,192,210,.065)';ctx.lineWidth=1;
+    for(let x=0;x<width;x+=28){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke();}
+    for(let y=10;y<height;y+=28){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();}
+    const glow=ctx.createRadialGradient(width/2,height-34,5,width/2,height-34,width*.62);glow.addColorStop(0,'rgba(52,245,255,.14)');glow.addColorStop(1,'rgba(52,245,255,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,width,height);
+    ctx.restore();
+    const base=baseGeometry();
+    drawBlock(base,0);
+    tower.forEach((b,i)=>drawBlock(b,i+1));
+    if(moving&&state==='playing')drawBlock(moving,stacked+1,true);
+    // Small guide marker at the current tower edge.
+    const top=tower.length?tower[tower.length-1]:base;
+    ctx.save();ctx.strokeStyle='rgba(246,210,120,.24)';ctx.setLineDash([3,6]);ctx.beginPath();ctx.moveTo(top.x,top.y-14);ctx.lineTo(top.x+top.w,top.y-14);ctx.stroke();ctx.restore();
+  }
+  function drawBlock(b,index,isMoving=false){
+    ctx.save();ctx.shadowColor=b.color;ctx.shadowBlur=isMoving?23:13;
+    const grad=ctx.createLinearGradient(b.x,b.y,b.x+b.w,b.y+b.h);
+    grad.addColorStop(0,isMoving?'#c7ffff':b.color);grad.addColorStop(.5,b.color);grad.addColorStop(1,isMoving?'#5c86ff':'rgba(255,255,255,.42)');
+    roundedRect(ctx,b.x,b.y,b.w,b.h,7);ctx.fillStyle=grad;ctx.fill();ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(255,255,255,.68)';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='rgba(5,9,16,.42)';ctx.fillRect(b.x+5,b.y+5,Math.max(0,b.w-10),2);
+    if(b.w>54){ctx.fillStyle='rgba(3,8,18,.7)';ctx.font='800 8px system-ui';ctx.textAlign='center';ctx.fillText(isMoving?'DROP':'STACK '+index,b.x+b.w/2,b.y+b.h/2+3);}
+    ctx.restore();
+  }
+  function tick(now){
+    if(state!=='playing')return;
+    if(!lastFrame)lastFrame=now;
+    const dt=Math.min(.04,(now-lastFrame)/1000);lastFrame=now;
+    if(moving){moving.x+=moving.dir*moving.speed*dt;if(moving.x+moving.w>=width-5){moving.x=width-5-moving.w;moving.dir=-1;}else if(moving.x<=5){moving.x=5;moving.dir=1;}}
+    draw();raf=requestAnimationFrame(tick);
+  }
+  function dropBlock(){
+    if(state!=='playing'||!moving||requestBusy)return;
+    const target=tower.length?tower[tower.length-1]:baseGeometry();
+    const left=Math.max(moving.x,target.x),right=Math.min(moving.x+moving.w,target.x+target.w),overlap=right-left;
+    if(overlap<=0){
+      lives=Math.max(0,lives-1);updateHud();
+      tapHint.textContent='Missed — one life lost. The tower stays steady; try again.';
+      if(lives===0){finishGame(false);return;}
+      moving.x=moving.dir>0?8:width-moving.w-8;moving.dir*=-1;draw();return;
+    }
+    const nearPerfect=Math.abs(moving.x-target.x)<8;
+    const block=nearPerfect?{x:target.x,y:moving.y,w:target.w,h:BLOCK_H,color:moving.color}:{x:left,y:moving.y,w:overlap,h:BLOCK_H,color:moving.color};
+    tower.push(block);stacked=Math.min(TARGET,stacked+1);updateHud();
+    if(stacked>=TARGET){finishGame(true);return;}
+    tapHint.textContent=nearPerfect?'Perfect alignment!':'Nice drop — keep the tower centered.';
+    createMovingBlock();draw();
+  }
+  function setStatus(el,text,type){el.textContent=text;el.className='status'+(type?' '+type:'');}
+  async function postGameResult(status){
+    const token=getToken();
+    if(!token)throw new Error('Please sign in to Savoiré AI before claiming a carnival reward.');
+    const res=await fetch('/api/generate-coupon',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({name:player,score:stacked,status})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!data.success)throw new Error(data.error||'Could not contact the carnival reward service.');
+    return data;
+  }
+  async function finishGame(won){
+    cancelAnimationFrame(raf);raf=0;state=won?'won':'lost';resultOverlay.hidden=false;
+    document.getElementById('resultIcon').textContent=won?'✦':'↻';
+    document.getElementById('resultTag').textContent=won?'CARNIVAL WINNER':'ONE MORE ROUND';
+    document.getElementById('resultTitle').textContent=won?'You did it!':'Stack stopped.';
+    document.getElementById('resultMessage').textContent=won?'Your Starter pack reward is being created securely.':'You used all five lives. Try the slow, easy stack again.';
+    const reward=document.getElementById('rewardLine'),codeBox=document.getElementById('couponCodeBox'),copy=document.getElementById('copyCodeBtn'),redeem=document.getElementById('redeemLink'),status=document.getElementById('resultStatus'),tryAgain=document.getElementById('tryAgainBtn');
+    reward.hidden=!won;codeBox.hidden=true;copy.hidden=true;redeem.hidden=true;setStatus(status,won?'Creating your one-time reward…':'Saving your game result…');
+    requestBusy=true;if(tryAgain)tryAgain.disabled=true;
+    try{
+      if(won){
+        const data=await postGameResult('won');
+        document.getElementById('resultMessage').textContent=data.alreadyClaimed?'This account already claimed its carnival reward. Your original unused code is shown below.':'Use this unique coupon on the Savoiré AI dashboard.';
+        document.getElementById('couponCode').textContent=data.code;codeBox.hidden=false;copy.hidden=false;redeem.hidden=false;
+        setStatus(status,'Code is bound to the signed-in Savoiré account. Redeem it from the dashboard.','success');
+      }else{
+        await postGameResult('lost');
+        setStatus(status,'Game result saved. You can play again any time.');
+      }
+    }catch(err){setStatus(status,(won?'Reward could not be issued: ':'Could not save the result: ')+(err.message||'please check your connection.'),'error');}
+    finally{requestBusy=false;if(tryAgain)tryAgain.disabled=false;}
+  }
+  function startGame(){
+    const name=playerName.value.trim();
+    if(name.length<2){setStatus(authNotice,'Please enter at least two characters for your name.','error');playerName.focus();return;}
+    if(!getToken()){setStatus(authNotice,'Sign in to Savoiré AI first, then return here to claim your reward.','error');return;}
+    player=name.slice(0,48);try{localStorage.setItem('sv_carnival_player_name',player);}catch(e){}
+    startOverlay.hidden=true;resetGame();
+  }
+  function copyCode(){
+    const code=document.getElementById('couponCode').textContent;
+    if(!code)return;
+    const btn=document.getElementById('copyCodeBtn');
+    if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(code).then(()=>{btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy code',1500);}).catch(()=>fallbackCopy(code,btn));}
+    else fallbackCopy(code,btn);
+  }
+  function fallbackCopy(text,btn){
+    const input=document.createElement('textarea');input.value=text;input.style.position='fixed';input.style.opacity='0';document.body.appendChild(input);input.select();
+    try{document.execCommand('copy');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy code',1500);}catch(e){setStatus(document.getElementById('resultStatus'),'Copy failed — select the code manually.','error');}input.remove();
+  }
+  document.getElementById('startBtn').addEventListener('click',startGame);
+  document.getElementById('tryAgainBtn').addEventListener('click',()=>{if(!getToken()){resultOverlay.hidden=true;startOverlay.hidden=false;setStatus(authNotice,'Your sign-in expired. Please sign in and try again.','error');return;}resetGame();});
+  dropBtn.addEventListener('click',dropBlock);
+  resetBtn.addEventListener('click',()=>{if(state==='intro'){return;}if(state==='won'||state==='lost'){resetGame();return;}if(state==='playing'&&confirm('Restart this round?'))resetGame();});
+  document.getElementById('copyCodeBtn').addEventListener('click',copyCode);
+  canvas.addEventListener('pointerdown',e=>{e.preventDefault();dropBlock();});
+  playerName.addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
+  document.addEventListener('keydown',e=>{if((e.code==='Space'||e.code==='Enter')&&state==='playing'){e.preventDefault();dropBlock();}});
+  const storedName=(()=>{try{return localStorage.getItem('sv_carnival_player_name')||localStorage.getItem('sv_user')||'';}catch(e){return '';}})();
+  if(storedName)playerName.value=storedName.slice(0,48);
+  if(!getToken())setStatus(authNotice,'Sign in first to play for a redeemable reward.','error');
+  if('ResizeObserver'in window){new ResizeObserver(resizeCanvas).observe(scene);}else window.addEventListener('resize',resizeCanvas);
+  requestAnimationFrame(resizeCanvas);
+})();
+</script>
+</body>
+</html>
