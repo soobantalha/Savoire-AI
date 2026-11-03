@@ -5780,7 +5780,35 @@ window.performLogout = async function(){
 window.openCreditHistory = function(){
   if (window._app && window._app._openCreditHistory) return window._app._openCreditHistory();
 };
+async function redeemCarnivalCode() {
+    const code = document.getElementById('couponInput').value.trim();
+    const msgBox = document.getElementById('redeemMsg');
+    const token = localStorage.getItem('sv_firebase_token');
+    
+    if (!code) { msgBox.style.color = '#f87171'; msgBox.innerText = 'Please enter a code.'; return; }
+    msgBox.style.color = '#ffae00'; msgBox.innerText = 'Checking...';
 
+    try {
+        const res = await fetch('/api/redeem-coupon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ code: code })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            msgBox.style.color = '#00FF88';
+            msgBox.innerText = data.message;
+            setTimeout(() => location.reload(), 2000); // 2 sec baad page refresh hoga
+        } else {
+            msgBox.style.color = '#f87171';
+            msgBox.innerText = data.error;
+        }
+    } catch (e) {
+        msgBox.style.color = '#f87171';
+        msgBox.innerText = 'Network error. Try again.';
+    }
+}
 // On phones, move the live plan-expiry chip and token meter into the sidebar Credits card.
 (function installMobilePlanStatus(){
   const styleId = 'sv-mobile-plan-status-style';
