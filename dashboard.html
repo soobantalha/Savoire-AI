@@ -593,6 +593,12 @@ html[data-theme="light"] .empty-state,html[data-theme="light"] .es-title,html[da
         </div>
         <div class="pack-mini-note">30-day packs · Razorpay UPI</div>
       </div>
+      <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid rgba(0,217,255,0.3);">
+          <div style="font-size: 12px; color: #94A3B8; margin-bottom: 8px;">Redeem Carnival Code</div>
+          <input type="text" id="couponInput" placeholder="SV-19PACK-XXX" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #00D9FF; background: transparent; color: white; margin-bottom: 10px; outline: none; text-transform: uppercase;">
+          <button onclick="redeemCarnivalCode()" style="width: 100%; padding: 10px; background: #00D9FF; color: black; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">Redeem ₹19 Pack</button>
+          <div id="redeemMsg" style="font-size: 12px; margin-top: 8px; text-align: center;"></div>
+      </div>
 
       <div class="stats-grid-sidebar" id="sidebarStats" style="flex:0 0 auto;position:relative">
         <button type="button" class="stat-card-sidebar sc-fire">
